@@ -15,16 +15,11 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.Assertions.assertLifecycleEvent;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.enableService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
-import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_PAUSED;
-import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_RESUMED;
-import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_STARTED;
-import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_STOPPED;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -57,8 +52,7 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
     public void testIt() throws Exception {
         enableService();
 
-        // TODO(b/119638958): move to super class
-        final ActivityWatcher watcher = mActivitiesWatcher.watch(BlankActivity.class);
+        final ActivityWatcher watcher = startWatcher();
 
         final BlankActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
@@ -67,16 +61,13 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         watcher.waitFor(DESTROYED);
 
         final CtsSmartSuggestionsService service = CtsSmartSuggestionsService.getInstance();
-        final Session session = service.getFinishedSession(BlankActivity.class);
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
 
-        assertRightActivity(session, activity);
+        assertRightActivity(session, session.id, activity);
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
-        assertThat(events).hasSize(4);
-        assertLifecycleEvent(events.get(0), TYPE_ACTIVITY_STARTED);
-        assertLifecycleEvent(events.get(1), TYPE_ACTIVITY_RESUMED);
-        assertLifecycleEvent(events.get(2), TYPE_ACTIVITY_PAUSED);
-        assertLifecycleEvent(events.get(3), TYPE_ACTIVITY_STOPPED);
+        assertThat(events).isEmpty();
     }
 }

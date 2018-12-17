@@ -22,11 +22,12 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEA
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.Activity;
 import android.contentcaptureservice.cts.CtsSmartSuggestionsService.Session;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureSession;
+import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.ViewNode;
 import android.widget.TextView;
 
@@ -41,20 +42,13 @@ final class Assertions {
     /**
      * Asserts a session belongs to the right activity.
      */
-    public static void assertRightActivity(@NonNull Session session, @NonNull Activity activity) {
+    public static void assertRightActivity(@NonNull Session session,
+            @NonNull ContentCaptureSessionId expectedSessionId,
+            @NonNull AbstractContentCaptureActivity activity) {
         assertWithMessage("wrong activity for %s", session)
                 .that(session.context.getActivityComponent())
                 .isEqualTo(activity.getComponentName());
-    }
-
-    /**
-     * Asserts an activity lifecycle event.
-     *
-     * @deprecated most like activity lifecycle events will go away.
-     */
-    @Deprecated
-    public static void assertLifecycleEvent(@NonNull ContentCaptureEvent event, int expected) {
-        assertWithMessage("wrong event: %s", event).that(event.getType()).isEqualTo(expected);
+        assertThat(session.id).isEqualTo(expectedSessionId);
     }
 
     /**
@@ -82,6 +76,16 @@ final class Assertions {
     }
 
     /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
+     */
+    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
+            @NonNull ContentCaptureSessionId expectedSessionId,
+            @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
+        assertViewAppeared(event, expectedView, expectedParentId);
+        assertSessionId(expectedSessionId, expectedView);
+    }
+
+    /**
      * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event.
      */
     public static void assertViewDisappeared(@NonNull ContentCaptureEvent event,
@@ -97,9 +101,21 @@ final class Assertions {
         assertWithMessage("event %s should not have flags", event).that(event.getFlags())
             .isEqualTo(0);
         assertWithMessage("event %s should not have a ViewNode", event).that(event.getViewNode())
-        .isNull();
+            .isNull();
         assertWithMessage("wrong autofillId on event %s", event).that(event.getId())
-                .isEqualTo(expectedId);
+            .isEqualTo(expectedId);
+    }
+
+    /**
+     * Asserts a view has the given session id.
+     */
+    public static void assertSessionId(@NonNull ContentCaptureSessionId expectedSessionId,
+            @NonNull View view) {
+        assertThat(expectedSessionId).isNotNull();
+        final ContentCaptureSession session = view.getContentCaptureSession();
+        assertWithMessage("no session for view %s", view).that(session).isNotNull();
+        assertWithMessage("wrong session id for for view %s", view)
+                .that(session.getContentCaptureSessionId()).isEqualTo(expectedSessionId);
     }
 
     private Assertions() {
