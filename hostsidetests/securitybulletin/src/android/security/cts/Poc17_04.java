@@ -47,7 +47,7 @@ public class Poc17_04 extends SecurityTestCase {
   @SecurityTest(minPatchLevel = "2017-04")
   public void testPocCVE_2016_10229() throws Exception {
     String out = AdbUtils.runPoc("CVE-2016-10229", getDevice());
-    assertNotMatchesMultiLine(".*OVERWRITE.*", out);
+    assertNotMatchesMultiLine("OVERWRITE", out);
   }
 
     /**
