@@ -74,10 +74,10 @@ final class Helper {
     }
 
     /**
-     * Sets {@link CtsSmartSuggestionsService} as the service for the current user.
+     * Sets {@link CtsContentCaptureService} as the service for the current user.
      */
     public static void enableService() {
-        setService(CtsSmartSuggestionsService.SERVICE_NAME);
+        setService(CtsContentCaptureService.SERVICE_NAME);
     }
 
     private Helper() {

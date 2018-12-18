@@ -20,15 +20,12 @@ import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.enableService;
-import static android.contentcaptureservice.cts.LoginActivity.EXTRA_CONTENT_CAPTURE_CONTEXT;
-import static android.contentcaptureservice.cts.LoginActivity.EXTRA_START_OPTIONS;
-import static android.contentcaptureservice.cts.LoginActivity.START_OPTION_ROOT_VIEW_SESSION;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.contentcaptureservice.cts.CtsSmartSuggestionsService.Session;
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,8 +35,12 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureManager;
+import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
@@ -58,6 +59,12 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         return sActivityRule;
     }
 
+    @Before
+    @After
+    public void resetActivityStaticState() {
+        LoginActivity.onRootView(null);
+    }
+
     @Test
     public void testSimpleLifecycle_defaultSession() throws Exception {
         enableService();
@@ -70,7 +77,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsSmartSuggestionsService service = CtsSmartSuggestionsService.getInstance();
+        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
         Log.v(TAG, "session id: " + sessionId);
@@ -120,10 +127,14 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final ContentCaptureContext clientContext = new ContentCaptureContext.Builder()
                 .setUri(uri).setExtras(bundle).build();
 
-        final LoginActivity activity = launchActivity(
-                (intent) -> intent
-                        .putExtra(EXTRA_START_OPTIONS, START_OPTION_ROOT_VIEW_SESSION)
-                        .putExtra(EXTRA_CONTENT_CAPTURE_CONTEXT, clientContext));
+        LoginActivity.onRootView((activity, rootView) -> {
+            final ContentCaptureManager cm = activity.getContentCaptureManager();
+            final ContentCaptureSession session = cm.createContentCaptureSession(clientContext);
+            Log.i(TAG, "Setting root view (" + rootView + ") session to " + session);
+            rootView.setContentCaptureSession(session);
+        });
+
+        final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
         activity.finish();
@@ -133,7 +144,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 .getContentCaptureSessionId();
         Log.v(TAG, "session id: " + sessionId);
 
-        final CtsSmartSuggestionsService service = CtsSmartSuggestionsService.getInstance();
+        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getFinishedSession(sessionId);
 
         assertRightActivity(session, sessionId, activity);

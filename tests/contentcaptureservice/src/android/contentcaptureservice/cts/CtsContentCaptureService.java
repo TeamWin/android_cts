@@ -43,17 +43,16 @@ import java.util.concurrent.CountDownLatch;
 // onXXXX methods in a separate thread
 // Either way, we need to make sure its methods are thread safe
 
-//TODO(b/119638958): rename to CtsContentCaptureService
-public class CtsSmartSuggestionsService extends ContentCaptureService {
+public class CtsContentCaptureService extends ContentCaptureService {
 
-    private static final String TAG = CtsSmartSuggestionsService.class.getSimpleName();
+    private static final String TAG = CtsContentCaptureService.class.getSimpleName();
 
     public static final String SERVICE_NAME = MY_PACKAGE + "/."
-            + CtsSmartSuggestionsService.class.getSimpleName();
+            + CtsContentCaptureService.class.getSimpleName();
 
     private static final CountDownLatch sInstanceLatch = new CountDownLatch(1);
 
-    private static CtsSmartSuggestionsService sInstance;
+    private static CtsContentCaptureService sInstance;
 
     /** Used by {@link #getOnlyFinishedSession()}. */
     private static ContentCaptureSessionId sFirstSessionId;
@@ -61,7 +60,7 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
     // TODO(b/119638958): add method to clear static state / call it from @Before
     private static final ArrayList<Throwable> sExceptions = new ArrayList<>();
 
-    public static CtsSmartSuggestionsService getInstance() throws InterruptedException {
+    public static CtsContentCaptureService getInstance() throws InterruptedException {
         await(sInstanceLatch, "Service not started");
         return sInstance;
     }
