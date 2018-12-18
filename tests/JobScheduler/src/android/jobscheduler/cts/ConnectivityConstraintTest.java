@@ -96,24 +96,9 @@ public class ConnectivityConstraintTest extends ConstraintTest {
         }
 
         // Ensure that we leave WiFi in its previous state.
-        if (mWifiManager.isWifiEnabled() == mInitialWiFiState) {
-            return;
+        if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
+            setWifiState(mInitialWiFiState, mContext, mCm, mWifiManager);
         }
-        NetworkInfo.State expectedState = mInitialWiFiState ?
-                NetworkInfo.State.CONNECTED : NetworkInfo.State.DISCONNECTED;
-        ConnectivityActionReceiver receiver =
-                new ConnectivityActionReceiver(ConnectivityManager.TYPE_WIFI,
-                        expectedState);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        mContext.registerReceiver(receiver, filter);
-
-        assertTrue(mWifiManager.setWifiEnabled(mInitialWiFiState));
-        receiver.waitForStateChange();
-        assertTrue("Failure to restore previous WiFi state",
-                mWifiManager.isWifiEnabled() == mInitialWiFiState);
-
-        mContext.unregisterReceiver(receiver);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -129,7 +114,7 @@ public class ConnectivityConstraintTest extends ConstraintTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        connectToWiFi();
+        connectToWifi();
 
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(
@@ -150,7 +135,7 @@ public class ConnectivityConstraintTest extends ConstraintTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        connectToWiFi();
+        connectToWifi();
 
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(
@@ -246,7 +231,7 @@ public class ConnectivityConstraintTest extends ConstraintTest {
             Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
             return;
         }
-        connectToWiFi();
+        connectToWifi();
 
         kTestEnvironment.setExpectedExecutions(0);
         mJobScheduler.schedule(
@@ -282,22 +267,43 @@ public class ConnectivityConstraintTest extends ConstraintTest {
 
     /**
      * Ensure WiFi is enabled, and block until we've verified that we are in fact connected.
+     */
+    private void connectToWifi()
+            throws InterruptedException {
+        setWifiState(true, mContext, mCm, mWifiManager);
+    }
+
+    /**
+     * Ensure WiFi is disabled, and block until we've verified that we are in fact disconnected.
+     */
+    private void disconnectFromWifi()
+            throws InterruptedException {
+        setWifiState(false, mContext, mCm, mWifiManager);
+    }
+
+    /**
+     * Set Wifi connection to specific state , and block until we've verified
+     * that we are in the state.
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
-    private void connectToWiFi() throws InterruptedException {
-        if (!mWifiManager.isWifiEnabled()) {
+    static void setWifiState(boolean enable, Context context, ConnectivityManager cm,
+            WifiManager wm) throws InterruptedException  {
+        if (enable != wm.isWifiEnabled()) {
+            NetworkInfo.State expectedState = enable ?
+                    NetworkInfo.State.CONNECTED : NetworkInfo.State.DISCONNECTED;
             ConnectivityActionReceiver receiver =
                     new ConnectivityActionReceiver(ConnectivityManager.TYPE_WIFI,
-                            NetworkInfo.State.CONNECTED);
+                            expectedState, cm);
             IntentFilter filter = new IntentFilter();
             filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-            mContext.registerReceiver(receiver, filter);
+            context.registerReceiver(receiver, filter);
 
-            assertTrue(mWifiManager.setWifiEnabled(true));
-            assertTrue("Wifi must be configured to connect to an access point for this test.",
+            assertTrue(wm.setWifiEnabled(enable));
+            assertTrue("Wifi must be configured to " + (enable ? "connect" : "disconnect")
+                            + " to an access point for this test.",
                     receiver.waitForStateChange());
 
-            mContext.unregisterReceiver(receiver);
+            context.unregisterReceiver(receiver);
         }
     }
 
@@ -311,24 +317,18 @@ public class ConnectivityConstraintTest extends ConstraintTest {
      */
     private void disconnectWifiToConnectToMobile() throws InterruptedException {
         if (mHasWifi && mWifiManager.isWifiEnabled()) {
+            disconnectFromWifi();
             ConnectivityActionReceiver connectMobileReceiver =
                     new ConnectivityActionReceiver(ConnectivityManager.TYPE_MOBILE,
-                            NetworkInfo.State.CONNECTED);
-            ConnectivityActionReceiver disconnectWifiReceiver =
-                    new ConnectivityActionReceiver(ConnectivityManager.TYPE_WIFI,
-                            NetworkInfo.State.DISCONNECTED);
+                            NetworkInfo.State.CONNECTED, mCm);
             IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
             mContext.registerReceiver(connectMobileReceiver, filter);
-            mContext.registerReceiver(disconnectWifiReceiver, filter);
 
-            assertTrue(mWifiManager.setWifiEnabled(false));
-            assertTrue("Failure disconnecting from WiFi.",
-                    disconnectWifiReceiver.waitForStateChange());
+
             assertTrue("Device must have access to a metered network for this test.",
                     connectMobileReceiver.waitForStateChange());
 
             mContext.unregisterReceiver(connectMobileReceiver);
-            mContext.unregisterReceiver(disconnectWifiReceiver);
         }
     }
 
@@ -343,7 +343,7 @@ public class ConnectivityConstraintTest extends ConstraintTest {
     }
 
     /** Capture the last connectivity change's network type and state. */
-    private class ConnectivityActionReceiver extends BroadcastReceiver {
+    private static class ConnectivityActionReceiver extends BroadcastReceiver {
 
         private final CountDownLatch mReceiveLatch = new CountDownLatch(1);
 
@@ -351,9 +351,13 @@ public class ConnectivityConstraintTest extends ConstraintTest {
 
         private final NetworkInfo.State mExpectedState;
 
-        ConnectivityActionReceiver(int networkType, NetworkInfo.State expectedState) {
+        private final ConnectivityManager mCm;
+
+        ConnectivityActionReceiver(int networkType, NetworkInfo.State expectedState,
+                ConnectivityManager cm) {
             mNetworkType = networkType;
             mExpectedState = expectedState;
+            mCm = cm;
         }
 
         public void onReceive(Context context, Intent intent) {
