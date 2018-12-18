@@ -36,7 +36,6 @@ import java.util.concurrent.Callable;
  * Rule used to safely run clean up code after a test is finished, so that exceptions thrown by
  * the cleanup code don't hide exception thrown by the test body
  */
-// TODO: move to common CTS code
 public final class SafeCleanerRule implements TestRule {
 
     private static final String TAG = "SafeCleanerRule";

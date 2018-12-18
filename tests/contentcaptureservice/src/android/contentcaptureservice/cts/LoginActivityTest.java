@@ -15,7 +15,10 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertChildSessionContext;
+import static android.contentcaptureservice.cts.Assertions.assertMainSessionContext;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertRightRelationship;
 import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
@@ -36,7 +39,6 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
-import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
 
@@ -45,6 +47,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<LoginActivity> {
 
@@ -129,11 +132,17 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final ContentCaptureContext clientContext = new ContentCaptureContext.Builder()
                 .setUri(uri).setExtras(bundle).build();
 
+        final AtomicReference<ContentCaptureSession> mainSessionRef = new AtomicReference<>();
+        final AtomicReference<ContentCaptureSession> childSessionRef = new AtomicReference<>();
+
         LoginActivity.onRootView((activity, rootView) -> {
-            final ContentCaptureManager cm = activity.getContentCaptureManager();
-            final ContentCaptureSession session = cm.createContentCaptureSession(clientContext);
-            Log.i(TAG, "Setting root view (" + rootView + ") session to " + session);
-            rootView.setContentCaptureSession(session);
+            final ContentCaptureSession mainSession = rootView.getContentCaptureSession();
+            mainSessionRef.set(mainSession);
+            final ContentCaptureSession childSession = mainSession
+                    .createContentCaptureSession(clientContext);
+            childSessionRef.set(childSession);
+            Log.i(TAG, "Setting root view (" + rootView + ") session to " + childSession);
+            rootView.setContentCaptureSession(childSession);
         });
 
         final LoginActivity activity = launchActivity();
@@ -142,52 +151,72 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final ContentCaptureSessionId sessionId = activity.getRootView().getContentCaptureSession()
-                .getContentCaptureSessionId();
-        Log.v(TAG, "session id: " + sessionId);
+        final ContentCaptureSessionId mainSessionId =
+                mainSessionRef.get().getContentCaptureSessionId();
+        final ContentCaptureSessionId childSessionId =
+                childSessionRef.get().getContentCaptureSessionId();
+        Log.v(TAG, "session ids: main=" + mainSessionId + ", child=" + childSessionId);
 
+        // Sanity checks
+        assertSessionId(childSessionId, activity.getRootView());
+        assertSessionId(childSessionId, activity.mUsernameLabel);
+        assertSessionId(childSessionId, activity.mUsername);
+        assertSessionId(childSessionId, activity.mPassword);
+        assertSessionId(childSessionId, activity.mPasswordLabel);
+
+        // Get the sessions
         final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
-        final Session session = service.getFinishedSession(sessionId);
+        final List<ContentCaptureSessionId> allSessionIds = service.getAllSessionIds();
+        assertThat(allSessionIds).containsExactly(mainSessionId, childSessionId);
+        final Session mainSession = service.getFinishedSession(mainSessionId);
+        final Session childSession = service.getFinishedSession(childSessionId);
+        assertRightActivity(mainSession, mainSessionId, activity);
+        assertRightRelationship(mainSession, childSession);
 
-        assertRightActivity(session, sessionId, activity);
+        /*
+         *  Asserts main session
+         */
 
         // Checks context
-        assertThat(session.context.getUri()).isEqualTo(uri);
-        final Bundle extras = session.context.getExtras();
-        assertThat(extras.keySet()).containsExactly("DUDE");
-        assertThat(extras.getString("DUDE")).isEqualTo("SWEET");
-
-        // Sanity check
-        assertSessionId(sessionId, activity.mUsernameLabel);
-        assertSessionId(sessionId, activity.mUsername);
-        assertSessionId(sessionId, activity.mPassword);
-        assertSessionId(sessionId, activity.mPasswordLabel);
+        assertMainSessionContext(mainSession, activity);
 
         // Check events
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638958): ideally it should be 5 so it reflects just the views defined
-        // in the layout - right now it's generating events for 2 intermediate parents
-        // (android:action_mode_bar_stub and android:content), we should try to create an
-        // activity without them
+        final List<ContentCaptureEvent> mainEvents = mainSession.getEvents();
+        Log.v(TAG, "events for main session: " + mainEvents);
 
-        final AutofillId rootId = activity.getRootView().getAutofillId();
-
-        assertThat(events).hasSize(7);
-        assertViewAppeared(events.get(0), sessionId, activity.mUsernameLabel, rootId);
-        assertViewAppeared(events.get(1), sessionId, activity.mUsername, rootId);
-        assertViewAppeared(events.get(2), sessionId, activity.mPasswordLabel, rootId);
-        assertViewAppeared(events.get(3), sessionId, activity.mPassword, rootId);
-
-        // TODO(b/119638958): get rid of those intermediate parents
+        // TODO(b/119638958): ideally it should be empty - right now it's generating events for 2
+        // intermediate parents (android:action_mode_bar_stub and android:content), we should try to
+        // create an activity without them
+        assertThat(mainEvents).hasSize(2);
         final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
+        assertViewAppeared(mainEvents.get(0), grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(mainEvents.get(1), grandpa2, decorView.getAutofillId());
 
-        assertViewAppeared(events.get(4), sessionId, activity.getRootView(),
+        /*
+         *  Asserts child session
+         */
+
+        // Checks context
+        assertChildSessionContext(childSession);
+
+        assertThat(childSession.context.getUri()).isEqualTo(uri);
+        final Bundle extras = childSession.context.getExtras();
+        assertThat(extras.keySet()).containsExactly("DUDE");
+        assertThat(extras.getString("DUDE")).isEqualTo("SWEET");
+
+        // Check events
+        final List<ContentCaptureEvent> childEvents = childSession.getEvents();
+        Log.v(TAG, "events for child session: " + childEvents);
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+        assertThat(childEvents).hasSize(5);
+        assertViewAppeared(childEvents.get(0), childSessionId, activity.mUsernameLabel, rootId);
+        assertViewAppeared(childEvents.get(1), childSessionId, activity.mUsername, rootId);
+        assertViewAppeared(childEvents.get(2), childSessionId, activity.mPasswordLabel, rootId);
+        assertViewAppeared(childEvents.get(3), childSessionId, activity.mPassword, rootId);
+        assertViewAppeared(childEvents.get(4), childSessionId, activity.getRootView(),
                 grandpa1.getAutofillId());
-        assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
     }
 
     @Test
