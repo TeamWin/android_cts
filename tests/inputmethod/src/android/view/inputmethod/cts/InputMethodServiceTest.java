@@ -124,7 +124,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 waitOnMainUntil(() -> testActivity.getOnBackPressedCallCount() > 0,
                         EXPECTED_TIMEOUT);
                 fail("Activity#onBackPressed() should not be called");
-            } catch (TimeoutException e){
+            } catch (TimeoutException e) {
                 // This is fine.  We actually expect timeout.
             }
         }

@@ -1816,6 +1816,7 @@
     <string name="nas_note_enqueued_received">Check that notification was enqueued.</string>
     <string name="nls_note_received">Check that notification was received.</string>
     <string name="nls_payload_intact">Check that notification payload was intact.</string>
+    <string name="nls_audibly_alerted">Check that notification audibly alerting was reported correctly.</string>
     <string name="nas_adjustment_payload_intact">Check that the Assistant can adjust notifications.</string>
     <string name="nas_adjustment_enqueue_payload_intact">Check that the Assistant can adjust notifications on enqueue.</string>
     <string name="nas_create_channel">Check that the Assistant can create a Notification Channel for another app.</string>

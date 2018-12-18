@@ -23,12 +23,15 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
+import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
+import android.contentcaptureservice.cts.common.Visitor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
@@ -79,9 +82,13 @@ public abstract class AbstractContentCaptureIntegrationTest
             // Finally, let subclasses set their ActivityTestRule
             .around(getActivityTestRule());
 
-
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
+    }
+
+    @Before
+    public void clearState() {
+        CtsSmartSuggestionsService.resetStaticState();
     }
 
     @Before
@@ -118,5 +125,20 @@ public abstract class AbstractContentCaptureIntegrationTest
         Log.d(TAG, "Launching " + mActivityClass.getSimpleName());
 
         return getActivityTestRule().launchActivity(new Intent(sContext, mActivityClass));
+    }
+
+    protected A launchActivity(@Nullable Visitor<Intent> visitor) {
+        Log.d(TAG, "Launching " + mActivityClass.getSimpleName());
+
+        final Intent intent = new Intent(sContext, mActivityClass);
+        if (visitor != null) {
+            visitor.visit(intent);
+        }
+        return getActivityTestRule().launchActivity(intent);
+    }
+
+    @NonNull
+    protected ActivityWatcher startWatcher() {
+        return mActivitiesWatcher.watch(mActivityClass);
     }
 }

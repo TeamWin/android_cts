@@ -42,6 +42,7 @@ import android.widget.ScrollView;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -128,6 +129,21 @@ public class ViewTreeObserverTest {
         mViewTreeObserver.addOnDrawListener(listener);
         mViewTreeObserver.dispatchOnDraw();
         verify(listener, times(1)).onDraw();
+    }
+
+    @Test
+    public void testFrameCommitListener() throws Throwable {
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
+
+        final Runnable activeListener = mock(Runnable.class);
+        final Runnable removedListener = mock(Runnable.class);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mLinearLayout, () -> {
+            mViewTreeObserver.registerFrameCommitCallback(activeListener);
+            mViewTreeObserver.registerFrameCommitCallback(removedListener);
+            mViewTreeObserver.unregisterFrameCommitCallback(removedListener);
+        });
+        verify(activeListener, within(TIMEOUT_MS)).run();
+        verifyZeroInteractions(removedListener);
     }
 
     @Test(expected=IllegalStateException.class)

@@ -286,6 +286,38 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
+     * Tests launching an existing activity from an activity that resided on secondary display.
+     */
+    @Test
+    public void testLaunchActivityFromSecondaryDisplay() throws Exception {
+        getLaunchActivityBuilder().setUseInstrumentation()
+                .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                .setDisplayId(DEFAULT_DISPLAY).execute();
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+            final int newDisplayId = newDisplay.mId;
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).setNewTask(true)
+                    .setDisplayId(newDisplayId).execute();
+            waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
+                    "Activity should be resumed on secondary display");
+
+            mBroadcastActionTrigger.launchActivityNewTask(getActivityName(TEST_ACTIVITY));
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity should be the top resumed on default display");
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                    .setDisplayId(newDisplayId).execute();
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                    "Activity should be resumed on secondary display");
+        }
+    }
+
+    /**
      * Tests launching a non-resizeable activity on virtual display. It should land on the
      * virtual display.
      */
@@ -1518,15 +1550,19 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
-     * Tests that an activity is launched on the preferred display when both displays have
-     * matching task.
+     * Tests that an activity is launched on the preferred display where the caller resided when
+     * both displays have matching tasks.
      */
     @Test
     public void testTaskMatchOrderAcrossDisplays() throws Exception {
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
                 .setDisplayId(DEFAULT_DISPLAY).execute();
-        final int defaultDisplayStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+        final int stackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+
+        getLaunchActivityBuilder().setUseInstrumentation()
+                .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).setNewTask(true)
+                .setDisplayId(DEFAULT_DISPLAY).execute();
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
@@ -1535,15 +1571,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                             .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
                             .setDisplayId(newDisplay.mId).execute());
             assertNotEquals("Top focus stack should not be on default display",
-                    defaultDisplayStackId, mAmWmState.getAmState().getFocusedStackId());
+                    stackId, mAmWmState.getAmState().getFocusedStackId());
 
-            // Launch activity without specified display id to avoid adding
-            // FLAG_ACTIVITY_MULTIPLE_TASK flag to this launch. And without specify display id,
-            // AM should search a matching task on default display prior than other displays.
-            getLaunchActivityBuilder().setUseInstrumentation()
-                    .setTargetActivity(TEST_ACTIVITY).setNewTask(true).execute();
+            mBroadcastActionTrigger.launchActivityNewTask(getActivityName(TEST_ACTIVITY));
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity must be launched on default display");
             mAmWmState.assertFocusedStack("Top focus stack must be on the default display",
-                    defaultDisplayStackId);
+                    stackId);
         }
     }
 

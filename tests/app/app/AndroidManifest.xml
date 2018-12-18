@@ -364,6 +364,16 @@
             </intent-filter>
         </service>
 
+        <activity android:name="android.app.stubs.AutomaticZenRuleActivity">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE" />
+            </intent-filter>
+            <meta-data android:name="android.app.automatic.ruleType"
+                       android:value="@string/automatic_zen_rule_name" />
+            <meta-data android:name="android.app.zen.automatic.ruleInstanceLimit"
+                       android:value="1" />
+        </activity>
+
         <receiver android:name="android.app.stubs.CommandReceiver"
                   android:exported="true" />
     </application>

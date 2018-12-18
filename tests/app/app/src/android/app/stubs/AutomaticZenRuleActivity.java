@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.contentcaptureservice.cts;
+
+package android.app.stubs;
 
 import android.app.Activity;
-import android.view.contentcapture.ContentCaptureManager;
 
-import androidx.annotation.Nullable;
+public class AutomaticZenRuleActivity extends Activity {
 
-/**
- * Base class for all activities.
- */
-abstract class AbstractContentCaptureActivity extends Activity {
-
-    @Nullable
-    public ContentCaptureManager getContentCaptureManager() {
-        return getSystemService(ContentCaptureManager.class);
-    }
 }

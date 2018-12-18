@@ -26,9 +26,8 @@
             android:name=".RequestRoleActivity"
             android:exported="true" />
 
-        <activity android:name=".EmptyActivity">
-
-            <!-- Dialer -->
+        <!-- Dialer -->
+        <activity android:name=".DialerDialActivity">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
             </intent-filter>
@@ -37,5 +36,46 @@
                 <data android:scheme="tel" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".DialerInCallService"
+            android:permission="android.permission.BIND_INCALL_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+        </service>
+
+        <!-- Sms -->
+        <activity android:name=".SmsSendToActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="smsto" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".SmsRespondViaMessageService"
+            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="smsto" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name=".SmsDelieverReceiver"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".SmsWapPushDelieverReceiver"
+            android:permission="android.permission.BROADCAST_WAP_PUSH">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+                <data android:mimeType="application/vnd.wap.mms-message" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

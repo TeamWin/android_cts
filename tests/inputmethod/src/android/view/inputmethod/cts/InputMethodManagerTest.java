@@ -28,7 +28,6 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-import androidx.annotation.NonNull;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -44,6 +43,8 @@ import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+
+import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;

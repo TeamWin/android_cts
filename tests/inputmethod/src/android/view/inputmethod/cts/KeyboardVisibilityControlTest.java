@@ -26,7 +26,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -39,6 +38,8 @@ import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+
+import androidx.annotation.NonNull;
 
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;

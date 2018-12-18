@@ -16,19 +16,18 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.view.inputmethod.cts"
-    android:targetSandboxVersion="2">
+    package="com.android.cts.mockime">
 
     <application
         android:multiArch="true"
         android:supportsRtl="true">
 
-        <!-- In order to test typical use cases, let this MockIME run in a separate process -->
+        <meta-data android:name="instantapps.clients.allowed" android:value="true" />
+
         <service
             android:name="com.android.cts.mockime.MockIme"
             android:label="Mock IME"
-            android:permission="android.permission.BIND_INPUT_METHOD"
-            android:process=":mockime">
+            android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
             </intent-filter>
@@ -36,6 +35,13 @@
                 android:name="android.view.im"
                 android:resource="@xml/method" />
         </service>
+
+        <provider
+            android:authorities="com.android.cts.mockime.provider"
+            android:name="com.android.cts.mockime.SettingsProvider"
+            android:exported="true"
+            android:visibleToInstantApps="true">
+        </provider>
 
     </application>
 </manifest>

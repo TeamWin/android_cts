@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
@@ -27,6 +28,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BA
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
 import android.app.ActivityManager;
+import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -34,6 +36,7 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
@@ -49,6 +52,7 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
+import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.support.test.InstrumentationRegistry;
@@ -65,6 +69,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class NotificationManagerTest extends AndroidTestCase {
@@ -77,6 +82,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private ActivityManager mActivityManager;
     private String mId;
     private TestNotificationListener mListener;
+    private List<String> mRuleIds;
 
     @Override
     protected void setUp() throws Exception {
@@ -91,6 +97,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         mPackageManager = mContext.getPackageManager();
+        mRuleIds = new ArrayList<>();
+
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
             Thread.sleep(500);
@@ -101,6 +109,13 @@ public class NotificationManagerTest extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         mNotificationManager.cancelAll();
+
+        for (String id : mRuleIds) {
+            mNotificationManager.removeAutomaticZenRule(id);
+        }
+
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
         List<NotificationChannel> channels = mNotificationManager.getNotificationChannels();
         // Delete all channels.
         for (NotificationChannel nc : channels) {
@@ -111,6 +126,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), false);
 
         List<NotificationChannelGroup> groups = mNotificationManager.getNotificationChannelGroups();
@@ -153,9 +170,6 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertTrue((policy.priorityCategories &
                     NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) == 0);
         }
-
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), false);
     }
 
     public void testCreateChannelGroup() throws Exception {
@@ -904,6 +918,151 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
+    public void testAddAutomaticZenRule_configActivity() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+
+        assertNotNull(id);
+        mRuleIds.add(id);
+        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
+    }
+
+    public void testUpdateAutomaticZenRule_configActivity() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        ruleToCreate.setEnabled(false);
+        mNotificationManager.updateAutomaticZenRule(id, ruleToCreate);
+
+        assertNotNull(id);
+        mRuleIds.add(id);
+        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
+    }
+
+    public void testRemoveAutomaticZenRule_configActivity() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+
+        assertNotNull(id);
+        mRuleIds.add(id);
+        mNotificationManager.removeAutomaticZenRule(id);
+
+        assertNull(mNotificationManager.getAutomaticZenRule(id));
+        assertEquals(0, mNotificationManager.getAutomaticZenRules().size());
+    }
+
+    public void testSetAutomaticZenRuleState() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+
+        // make sure DND is off
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
+        // enable DND
+        Condition condition =
+                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
+    }
+
+    public void testSetAutomaticZenRuleState_turnOff() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+
+        // make sure DND is off
+        // make sure DND is off
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
+        // enable DND
+        Condition condition =
+                new Condition(ruleToCreate.getConditionId(), "on", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
+
+        // disable DND
+        condition = new Condition(ruleToCreate.getConditionId(), "off", Condition.STATE_FALSE);
+
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        // make sure DND is off
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+    }
+
+    public void testSetAutomaticZenRuleState_deletedRule() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+
+        // make sure DND is off
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
+        // enable DND
+        Condition condition =
+                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
+
+        mNotificationManager.removeAutomaticZenRule(id);
+
+        // make sure DND is off
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+    }
+
+    public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("Rule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+
+        AutomaticZenRule secondRuleToCreate = createRule("Rule 2");
+        secondRuleToCreate.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+        String secondId = mNotificationManager.addAutomaticZenRule(secondRuleToCreate);
+        mRuleIds.add(secondId);
+
+        // make sure DND is off
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
+        // enable DND
+        Condition condition =
+                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+        Condition secondCondition =
+                new Condition(secondRuleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(secondId, secondCondition);
+
+        // the second rule has a 'more silent' DND filter, so the system wide DND should be
+        // using its filter
+        assertExpectedDndState(secondRuleToCreate.getInterruptionFilter());
+
+        // remove intense rule, system should fallback to other rule
+        mNotificationManager.removeAutomaticZenRule(secondId);
+        assertExpectedDndState(ruleToCreate.getInterruptionFilter());
+    }
+
     public void testSetNotificationPolicy_P_setOldFields() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
@@ -922,8 +1081,6 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertEquals(expected,
                     mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
         }
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), false);
     }
 
     public void testSetNotificationPolicy_P_setNewFields() throws Exception {
@@ -944,8 +1101,6 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertEquals(expected,
                     mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
         }
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), false);
     }
 
     public void testSetNotificationPolicy_P_setOldNewFields() throws Exception {
@@ -974,8 +1129,6 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertEquals(expected,
                     mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
         }
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), false);
     }
 
     public void testPostFullScreenIntent_permission() {
@@ -994,30 +1147,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         StatusBarNotification n = findPostedNotification(id);
         assertNotNull(n);
         assertEquals(notification.fullScreenIntent, n.getNotification().fullScreenIntent);
-    }
-
-    private StatusBarNotification findPostedNotification(int id) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
-        StatusBarNotification n = null;
-        for (int tries = 3; tries-- > 0; ) {
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            for (StatusBarNotification sbn : sbns) {
-                Log.d(TAG, "Found " + sbn.getKey());
-                if (sbn.getId() == id) {
-                    n = sbn;
-                    break;
-                }
-            }
-            if (n != null) break;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
-            }
-        }
-        return n;
     }
 
     public void testNotificationPolicyVisualEffectsEqual() {
@@ -1049,6 +1178,30 @@ public class NotificationManagerTest extends AndroidTestCase {
                 SUPPRESSED_EFFECT_LIGHTS);
         assertFalse(policy.equals(policy2));
         assertFalse(policy2.equals(policy));
+    }
+
+    private StatusBarNotification findPostedNotification(int id) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 300ms before giving up
+        StatusBarNotification n = null;
+        for (int tries = 3; tries-- > 0; ) {
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            for (StatusBarNotification sbn : sbns) {
+                Log.d(TAG, "Found " + sbn.getKey());
+                if (sbn.getId() == id) {
+                    n = sbn;
+                    break;
+                }
+            }
+            if (n != null) break;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return n;
     }
 
     private PendingIntent getPendingIntent() {
@@ -1265,7 +1418,39 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    private Instrumentation getInstrumentation() {
-        return InstrumentationRegistry.getInstrumentation();
+    private boolean areRulesSame(AutomaticZenRule a, AutomaticZenRule b) {
+        return a.isEnabled() == b.isEnabled()
+                && Objects.equals(a.getName(), b.getName())
+                && a.getInterruptionFilter() == b.getInterruptionFilter()
+                && Objects.equals(a.getConditionId(), b.getConditionId())
+                && Objects.equals(a.getOwner(), b.getOwner())
+                && Objects.equals(a.getZenPolicy(), b.getZenPolicy())
+                && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
+    }
+
+    private AutomaticZenRule createRule(String name) {
+        return new AutomaticZenRule(name, null,
+                new ComponentName(mContext, AutomaticZenRuleActivity.class),
+                new Uri.Builder().scheme("scheme")
+                        .appendPath("path")
+                        .appendQueryParameter("fake_rule", "fake_value")
+                        .build(), null, NotificationManager.INTERRUPTION_FILTER_PRIORITY, true);
+    }
+
+    private void assertExpectedDndState(int expectedState) {
+        int tries = 3;
+        for (int i = tries; i >=0; i--) {
+            if (expectedState ==
+                    mNotificationManager.getCurrentInterruptionFilter()) {
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
     }
 }

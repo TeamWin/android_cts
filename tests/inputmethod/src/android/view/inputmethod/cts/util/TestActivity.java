@@ -21,13 +21,14 @@ import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.annotation.AnyThread;
-import androidx.annotation.NonNull;
-import androidx.annotation.UiThread;
 import android.support.test.InstrumentationRegistry;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -164,17 +165,18 @@ public final class TestActivity extends Activity {
     @Override
     public void onEnterAnimationComplete() {
         synchronized (this) {
-           mEnterAnimationComplete = true;
-           notifyAll();
+            mEnterAnimationComplete = true;
+            notifyAll();
         }
     }
 
     private void waitForEnterAnimationComplete() {
-        synchronized(this) {
-            if (mEnterAnimationComplete == false) {
+        synchronized (this) {
+            if (!mEnterAnimationComplete) {
                 try {
                     wait(5000);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
         }
     }

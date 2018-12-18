@@ -22,7 +22,10 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
+
 import android.app.Activity;
+import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.role.RoleManager;
 import android.app.role.RoleManagerCallback;
@@ -40,6 +43,8 @@ import android.support.test.uiautomator.Until;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.AppOpsUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -117,6 +122,15 @@ public class RoleManagerTest {
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
+    }
+
+    @Test
+    public void revokeSingleRoleThenEnsureOtherRolesAppopsIntact() throws Exception {
+        addRoleHolder(RoleManager.ROLE_DIALER, APP_PACKAGE_NAME);
+        addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
+        removeRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
+        assertEquals(AppOpsManager.MODE_ALLOWED,
+                AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS));
     }
 
     private void requestRole(@NonNull String roleName) {
