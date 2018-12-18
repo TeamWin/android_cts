@@ -100,13 +100,6 @@ public class MediaStore_Video_ThumbnailsTest {
         assertNotNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MINI_KIND, null));
         assertNotNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MICRO_KIND, null));
 
-        try {
-            Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.FULL_SCREEN_KIND, null);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // Full screen thumbnails not supported by getThumbnail...
-        }
-
         // Check that an additional thumbnails have been registered.
         int count2 = getThumbnailCount(Thumbnails.EXTERNAL_CONTENT_URI);
         assertTrue(count2 > count);

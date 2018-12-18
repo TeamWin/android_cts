@@ -1,0 +1,130 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.media.cts;
+
+import static org.junit.Assert.fail;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.util.Size;
+
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+@RunWith(AndroidJUnit4.class)
+public class ThumbnailUtilsTest {
+    private static final Size[] TEST_SIZES = new Size[] {
+            new Size(50, 50),
+            new Size(500, 500),
+            new Size(5000, 5000),
+    };
+
+    @After
+    public void tearDown() {
+        deleteContents(new File(System.getProperty("java.io.tmpdir")));
+    }
+
+    @Test
+    public void testCreateAudioThumbnail() throws Exception {
+        final File file = stageFile(R.raw.testmp3, File.createTempFile("cts", ".mp3"));
+        for (Size size : TEST_SIZES) {
+            assertSaneThumbnail(size, ThumbnailUtils.createAudioThumbnail(file, size, null));
+        }
+    }
+
+    @Test
+    public void testCreateAudioThumbnail_SeparateFile() throws Exception {
+        final File dir = File.createTempFile("cts", null);
+        dir.delete();
+        dir.mkdirs();
+
+        final File file = stageFile(R.raw.monotestmp3, new File(dir, "audio.mp3"));
+        stageFile(R.raw.volantis, new File(dir, "AlbumArt.jpg"));
+
+        for (Size size : TEST_SIZES) {
+            assertSaneThumbnail(size, ThumbnailUtils.createAudioThumbnail(file, size, null));
+        }
+    }
+
+    @Test
+    public void testCreateAudioThumbnail_None() throws Exception {
+        final File file = stageFile(R.raw.monotestmp3, File.createTempFile("cts", ".mp3"));
+        try {
+            ThumbnailUtils.createAudioThumbnail(file, TEST_SIZES[0], null);
+            fail("Somehow made a thumbnail out of nothing?");
+        } catch (IOException expected) {
+        }
+    }
+
+    @Test
+    public void testCreateImageThumbnail() throws Exception {
+        final File file = stageFile(R.raw.volantis, File.createTempFile("cts", ".jpg"));
+        for (Size size : TEST_SIZES) {
+            assertSaneThumbnail(size, ThumbnailUtils.createImageThumbnail(file, size, null));
+        }
+    }
+
+    @Test
+    public void testCreateVideoThumbnail() throws Exception {
+        final File file = stageFile(
+                R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz,
+                File.createTempFile("cts", ".mp4"));
+        for (Size size : TEST_SIZES) {
+            assertSaneThumbnail(size, ThumbnailUtils.createVideoThumbnail(file, size, null));
+        }
+    }
+
+    private static File stageFile(int resId, File file) throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        try (InputStream source = context.getResources().openRawResource(resId);
+                OutputStream target = new FileOutputStream(file)) {
+            android.os.FileUtils.copy(source, target);
+        }
+        return file;
+    }
+
+    private static void deleteContents(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteContents(file);
+                }
+                file.delete();
+            }
+        }
+    }
+
+    private static void assertSaneThumbnail(Size expected, Bitmap actualBitmap) {
+        final Size actual = new Size(actualBitmap.getWidth(), actualBitmap.getHeight());
+        final int maxWidth = (expected.getWidth() * 3) / 2;
+        final int maxHeight = (expected.getHeight() * 3) / 2;
+        if ((actual.getWidth() > maxWidth) || (actual.getHeight() > maxHeight)) {
+            fail("Actual " + actual + " differs too much from expected " + expected);
+        }
+    }
+}
