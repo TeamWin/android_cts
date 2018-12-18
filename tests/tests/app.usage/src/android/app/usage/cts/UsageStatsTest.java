@@ -150,16 +150,15 @@ public class UsageStatsTest {
                 Activities.ActivityTwo.class,
                 Activities.ActivityThree.class,
         };
+        mUiDevice.wakeUp();
 
-        final long startTime = System.currentTimeMillis() - MINUTE;
-
+        final long startTime = System.currentTimeMillis();
         // Launch the series of Activities.
         launchSubActivities(activitySequence);
-
         final long endTime = System.currentTimeMillis();
         UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
 
-        // Consume all the events.
+        // Only look at events belongs to mTargetPackage.
         ArrayList<UsageEvents.Event> eventList = new ArrayList<>();
         while (events.hasNextEvent()) {
             UsageEvents.Event event = new UsageEvents.Event();
@@ -169,40 +168,66 @@ public class UsageStatsTest {
             }
         }
 
-        // Find the last Activity's MOVE_TO_FOREGROUND event.
-        int end = eventList.size();
-        while (end > 0) {
-            UsageEvents.Event event = eventList.get(end - 1);
-            if (event.getClassName().equals(activitySequence[activitySequence.length - 1].getName())
-                    && event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                break;
-            }
-            end--;
-        }
-
-        // We expect 2 events per Activity launched (foreground + background)
-        // except for the last Activity, which was in the foreground when
-        // we queried the event log.
-        final int start = end - ((activitySequence.length * 2) - 1);
-        assertTrue("Not enough events", start >= 0);
-
         final int activityCount = activitySequence.length;
         for (int i = 0; i < activityCount; i++) {
-            final int index = start + (i * 2);
-
-            // Check for foreground event.
-            UsageEvents.Event event = eventList.get(index);
-            assertEquals(activitySequence[i].getName(), event.getClassName());
-            assertEquals(UsageEvents.Event.MOVE_TO_FOREGROUND, event.getEventType());
-
-            // Only check for the background event if this is not the
-            // last activity.
+            String className = activitySequence[i].getName();
+            ArrayList<UsageEvents.Event> activityEvents = new ArrayList<>();
+            final int size = eventList.size();
+            for (int j = 0; j < size; j++) {
+                Event evt = eventList.get(j);
+                if (className.equals(evt.getClassName())) {
+                    activityEvents.add(evt);
+                }
+            }
+            // We expect 3 events per Activity launched (ACTIVITY_RESUMED + ACTIVITY_PAUSED
+            // + ACTIVITY_STOPPED) except for the last Activity, which only has
+            // ACTIVITY_RESUMED event.
             if (i < activityCount - 1) {
-                event = eventList.get(index + 1);
-                assertEquals(activitySequence[i].getName(), event.getClassName());
-                assertEquals(UsageEvents.Event.MOVE_TO_BACKGROUND, event.getEventType());
+                assertEquals(3, activityEvents.size());
+                assertEquals(Event.ACTIVITY_RESUMED, activityEvents.get(0).getEventType());
+                assertEquals(Event.ACTIVITY_PAUSED, activityEvents.get(1).getEventType());
+                assertEquals(Event.ACTIVITY_STOPPED, activityEvents.get(2).getEventType());
+            } else {
+                // The last activity
+                assertEquals(1, activityEvents.size());
+                assertEquals(Event.ACTIVITY_RESUMED, activityEvents.get(0).getEventType());
             }
         }
+    }
+
+    @Test
+    public void testActivityOnBackButton() throws Exception {
+        testActivityOnButton(mUiDevice::pressBack);
+    }
+
+    @Test
+    public void testActivityOnHomeButton() throws Exception {
+        testActivityOnButton(mUiDevice::pressHome);
+    }
+
+    private void testActivityOnButton(Runnable pressButton) throws Exception {
+        mUiDevice.wakeUp();
+        final long startTime = System.currentTimeMillis();
+        final Class clazz = Activities.ActivityOne.class;
+        launchSubActivity(clazz);
+        pressButton.run();
+        Thread.sleep(1000);
+        final long endTime = System.currentTimeMillis();
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        ArrayList<UsageEvents.Event> eventList = new ArrayList<>();
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            if (mTargetPackage.equals(event.getPackageName())
+                && clazz.getName().equals(event.getClassName())) {
+                eventList.add(event);
+            }
+        }
+        assertEquals(3, eventList.size());
+        assertEquals(Event.ACTIVITY_RESUMED, eventList.get(0).getEventType());
+        assertEquals(Event.ACTIVITY_PAUSED, eventList.get(1).getEventType());
+        assertEquals(Event.ACTIVITY_STOPPED, eventList.get(2).getEventType());
     }
 
     @AppModeFull // No usage events access in instant apps
@@ -865,6 +890,8 @@ public class UsageStatsTest {
 
     @Test
     public void testForegroundService() throws Exception {
+        // This test start a foreground service then stop it. The event list should have one
+        // FOREGROUND_SERVICE_START and one FOREGROUND_SERVICE_STOP event.
         final long startTime = System.currentTimeMillis();
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         context.startService(new Intent(context, TestService.class));
