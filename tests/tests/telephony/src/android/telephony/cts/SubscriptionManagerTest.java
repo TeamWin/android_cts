@@ -125,6 +125,13 @@ public class SubscriptionManagerTest {
         for (int i = 0; i < subList.size(); i++) {
             assertTrue(subList.get(i).getSubscriptionId() >= 0);
             assertTrue(subList.get(i).getSimSlotIndex() >= 0);
+            if (i >= 1) {
+                assertTrue(subList.get(i - 1).getSimSlotIndex()
+                        <= subList.get(i).getSimSlotIndex());
+                assertTrue(subList.get(i - 1).getSimSlotIndex() < subList.get(i).getSimSlotIndex()
+                        || subList.get(i - 1).getSubscriptionId()
+                        < subList.get(i).getSubscriptionId());
+            }
         }
     }
 
