@@ -682,7 +682,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                     mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
             int i = -1;
-            List<TrackInfo> trackInfos = mPlayer.getTrackInfo();
+            List<TrackInfo> trackInfos = mPlayer.getTrackInfo(mPlayer.getCurrentDataSource());
             for (i = 0; i < trackInfos.size(); i++) {
                 TrackInfo trackInfo = trackInfos.get(i);
                 if (trackInfo.getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_METADATA) {
@@ -690,7 +690,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
             assertTrue("Stream has no timed ID3 track", i >= 0);
-            mPlayer.selectTrack(i);
+            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), i);
 
             synchronized (completion) {
                 completion.wait();

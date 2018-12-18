@@ -278,7 +278,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             onLoopCurrentCalled.waitForSignal();
             assertTrue(mp.isLooping());
 
-            assertEquals(mp3Duration, mp.getDuration(), tolerance);
+            assertEquals(mp3Duration, mp.getDuration(mp.getCurrentDataSource()), tolerance);
             long pos = mp.getCurrentPosition();
             assertTrue(pos >= 0);
             assertTrue(pos < mp3Duration - seekDuration);
@@ -378,7 +378,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             onLoopCurrentCalled.waitForSignal();
             assertTrue(mp.isLooping());
 
-            assertEquals(mp3Duration, mp.getDuration(), tolerance);
+            assertEquals(mp3Duration, mp.getDuration(mp.getCurrentDataSource()), tolerance);
             long pos = mp.getCurrentPosition();
             assertTrue(pos >= 0);
             assertTrue(pos < mp3Duration - seekDuration);
@@ -538,7 +538,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             onPlayCalled.waitForSignal();
             assertTrue(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
-            long duration = mp.getDuration();
+            long duration = mp.getDuration(mp.getCurrentDataSource());
             Thread.sleep(duration * 4); // allow for several loops
             assertTrue(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             assertEquals("wrong number of completion signals", 0,
@@ -608,7 +608,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             onLoopCurrentCalled.waitForSignal();
             assertTrue(mp.isLooping());
 
-            assertEquals(midiDuration, mp.getDuration(), tolerance);
+            assertEquals(midiDuration, mp.getDuration(mp.getCurrentDataSource()), tolerance);
             long pos = mp.getCurrentPosition();
             assertTrue(pos >= 0);
             assertTrue(pos < midiDuration - seekDuration);
@@ -1299,7 +1299,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertTrue("MediaPlayer2 should not be playing",
                 mPlayer.getState() != MediaPlayer2.PLAYER_STATE_PLAYING);
 
-        long duration = mPlayer.getDuration();
+        long duration = mPlayer.getDuration(mPlayer.getCurrentDataSource());
         mOnSeekCompleteCalled.reset();
         mPlayer.seekTo(duration - 1000, MediaPlayer2.SEEK_PREVIOUS_SYNC);
         mOnSeekCompleteCalled.waitForSignal();
@@ -1753,7 +1753,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     private void readSubtitleTracks() throws Exception {
         mSubtitleTrackIndex.clear();
-        List<MediaPlayer2.TrackInfo> trackInfos = mPlayer.getTrackInfo();
+        List<MediaPlayer2.TrackInfo> trackInfos =
+                mPlayer.getTrackInfo(mPlayer.getCurrentDataSource());
         if (trackInfos == null || trackInfos.size() == 0) {
             return;
         }
@@ -1772,14 +1773,14 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     private void selectSubtitleTrack(int index) throws Exception {
         int trackIndex = mSubtitleTrackIndex.get(index);
-        mPlayer.selectTrack(trackIndex);
+        mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackIndex);
         mSelectedSubtitleIndex = index;
     }
 
     private void deselectSubtitleTrack(int index) throws Exception {
         int trackIndex = mSubtitleTrackIndex.get(index);
         mOnDeselectTrackCalled.reset();
-        mPlayer.deselectTrack(trackIndex);
+        mPlayer.deselectTrack(mPlayer.getCurrentDataSource(), trackIndex);
         mOnDeselectTrackCalled.waitForSignal();
         if (mSelectedSubtitleIndex == index) {
             mSelectedSubtitleIndex = -1;
@@ -2107,7 +2108,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mPlayer.prepare();
         mOnPrepareCalled.waitForSignal();
 
-        long duration = mPlayer.getDuration();
+        long duration = mPlayer.getDuration(mPlayer.getCurrentDataSource());
         assertTrue("resource too short", duration > 6000);
         mPlayer.seekTo(duration - 5000, MediaPlayer2.SEEK_PREVIOUS_SYNC);
         mOnPlayCalled.reset();
