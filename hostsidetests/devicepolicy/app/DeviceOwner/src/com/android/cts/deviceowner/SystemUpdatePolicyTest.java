@@ -15,6 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
+import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FreezePeriod;
@@ -27,12 +28,17 @@ import android.content.IntentFilter;
 import android.icu.util.Calendar;
 import android.provider.Settings;
 import android.provider.Settings.Global;
+import android.util.Log;
 import android.util.Pair;
+
+import android.provider.Settings;
+import android.provider.Settings.Global;
 
 import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +48,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
 
+    private static final String TAG = "SystemUpdatePolicyTest";
+
     private static final int TIMEOUT_MS = 20_000;
+    private static final int TIMEOUT_SEC = 5;
 
     private final Semaphore mPolicyChangedSemaphore = new Semaphore(0);
     private final Semaphore mTimeChangedSemaphore = new Semaphore(0);
@@ -61,6 +70,7 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
     private int mSavedAutoTimeConfig;
     private LocalDate mSavedSystemDate;
     private boolean mRestoreDate;
+    private int mSavedAirplaneMode;
 
     @Override
     protected void setUp() throws Exception {
@@ -75,6 +85,12 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         executeShellCommand("settings put global auto_time 0");
         mSavedSystemDate = LocalDate.now();
         mRestoreDate = false;
+        mSavedAirplaneMode = getAirplaneMode();
+        Log.i(TAG, "Before testing, AIRPLANE_MODE is set to: " + mSavedAirplaneMode);
+        if (mSavedAirplaneMode == 0) {
+            // No need to set mode if AirplaneMode is 1 or error.
+            setAirplaneModeAndWaitBroadcast(1);
+        }
     }
 
     @Override
@@ -89,6 +105,10 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         // This needs to happen last since setSystemDate() relies on the receiver for
         // synchronization.
         mContext.unregisterReceiver(policyChangedReceiver);
+        if (mSavedAirplaneMode == 0) {
+            // Restore AirplaneMode value.
+            setAirplaneModeAndWaitBroadcast(0);
+        }
         super.tearDown();
     }
 
@@ -340,5 +360,43 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         } catch (InterruptedException e) {
             fail("Interrupted while waiting for broadcast.");
         }
+    }
+
+    private int getAirplaneMode() throws Settings.SettingNotFoundException {
+        int airplaneMode = 0xFF;
+        try {
+            airplaneMode = Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.AIRPLANE_MODE_ON);
+        } catch (Settings.SettingNotFoundException e) {
+            airplaneMode = 0xFF;
+            // if the mode is not supported, return a non zero value.
+            Log.i(TAG, "Airplane mode is not found in Settings. Skipping AirplaneMode update");
+        } finally {
+            return airplaneMode;
+        }
+    }
+
+    private boolean setAirplaneModeAndWaitBroadcast (int state) throws Exception {
+        Log.i(TAG, "setAirplaneModeAndWaitBroadcast setting state(0=disable, 1=enable): " + state);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG, "Received broadcast for AirplaneModeUpdate");
+                latch.countDown();
+            }
+        };
+        mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED));
+        try {
+            Settings.Global.putInt(mContext.getContentResolver(), AIRPLANE_MODE_ON, state);
+            if (!latch.await(TIMEOUT_SEC, TimeUnit.SECONDS)) {
+                Log.d(TAG, "Failed to receive broadcast in " + TIMEOUT_SEC + "sec");
+                return false;
+            }
+        } finally {
+            mContext.unregisterReceiver(receiver);
+        }
+        return true;
     }
 }
