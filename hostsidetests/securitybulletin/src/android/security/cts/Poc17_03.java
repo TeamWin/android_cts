@@ -79,8 +79,8 @@ public class Poc17_03 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
         String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine(".*Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
-                         "audioserver <<<.*", logcatOut);
+        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
+                         "audioserver <<<", logcatOut);
     }
 
     /*
