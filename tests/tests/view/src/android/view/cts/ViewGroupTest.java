@@ -2780,6 +2780,7 @@ public class ViewGroupTest implements CTSResult {
     @UiThreadTest
     @Test
     public void testLayoutNotCalledWithSuppressLayoutTrue() {
+        mMockViewGroup.isRequestLayoutCalled = false;
         mMockViewGroup.suppressLayout(true);
         mMockViewGroup.layout(0, 0, 100, 100);
 
@@ -2802,6 +2803,7 @@ public class ViewGroupTest implements CTSResult {
     @UiThreadTest
     @Test
     public void testRequestLayoutCalledAfterSettingSuppressToFalseWhenItWasCalledWithTrue() {
+        mMockViewGroup.isRequestLayoutCalled = false;
         mMockViewGroup.suppressLayout(true);
         // now we call layout while in suppressed state
         mMockViewGroup.layout(0, 0, 100, 100);
