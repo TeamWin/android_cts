@@ -67,11 +67,12 @@ public class DeviceAdminKeyguardDisabledFeaturesActivity extends KeyguardDisable
                     R.string.device_admin_keyguard_disable_camera_instruction,
                     new Intent(ByodHelperActivity.ACTION_LOCKNOW)));
         }
-
-        adapter.add(new DialogTestListItem(this, R.string.device_admin_disable_notifications,
-                "DeviceAdmin_DisableNotifications",
-                R.string.device_admin_disable_notifications_instruction,
-                new Intent(ByodHelperActivity.ACTION_NOTIFICATION_ON_LOCKSCREEN)));
+        if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(new DialogTestListItem(this, R.string.device_admin_disable_notifications,
+                    "DeviceAdmin_DisableNotifications",
+                    R.string.device_admin_disable_notifications_instruction,
+                    new Intent(ByodHelperActivity.ACTION_NOTIFICATION_ON_LOCKSCREEN)));
+        }
     }
 
     private boolean hasTrustAgents() {

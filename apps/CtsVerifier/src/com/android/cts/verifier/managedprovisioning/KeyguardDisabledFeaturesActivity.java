@@ -110,12 +110,14 @@ public class KeyguardDisabledFeaturesActivity extends DialogTestListActivity {
     }
 
     protected void setupDisableUnredactedWorkNotification(ArrayTestListAdapter adapter) {
-        adapter.add(new DialogTestListItemWithIcon(this,
-                R.string.provisioning_byod_disable_unredacted_notifications,
-                getTestIdPrefix() + "DisableUnredactedNotifications",
-                R.string.provisioning_byod_disable_unredacted_notifications_instruction,
-                new Intent(ByodHelperActivity.ACTION_NOTIFICATION_ON_LOCKSCREEN),
-                R.drawable.ic_corp_icon));
+        if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(new DialogTestListItemWithIcon(this,
+                    R.string.provisioning_byod_disable_unredacted_notifications,
+                    getTestIdPrefix() + "DisableUnredactedNotifications",
+                    R.string.provisioning_byod_disable_unredacted_notifications_instruction,
+                    new Intent(ByodHelperActivity.ACTION_NOTIFICATION_ON_LOCKSCREEN),
+                    R.drawable.ic_corp_icon));
+        }
     }
 
     protected void setupFingerprintTests(ArrayTestListAdapter adapter) {

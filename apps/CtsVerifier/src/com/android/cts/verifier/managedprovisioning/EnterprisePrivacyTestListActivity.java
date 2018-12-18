@@ -312,20 +312,22 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                                         CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
                                         .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
                                                 "Foo, Inc."))}));
-        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_KEYGUARD,
-                R.string.enterprise_privacy_keyguard,
-                R.string.enterprise_privacy_keyguard_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
-                                new Intent(Settings.ACTION_SETTINGS)),
-                        new ButtonInfo(R.string.enterprise_privacy_clear_organization,
-                                buildCommandIntent(
-                                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)),
-                        new ButtonInfo(R.string.enterprise_privacy_set_organization,
-                                buildCommandIntent(
-                                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
-                                        .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
-                                                "Foo, Inc."))}));
+        if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_KEYGUARD,
+                    R.string.enterprise_privacy_keyguard,
+                    R.string.enterprise_privacy_keyguard_info,
+                    new ButtonInfo[]{
+                            new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                    new Intent(Settings.ACTION_SETTINGS)),
+                            new ButtonInfo(R.string.enterprise_privacy_clear_organization,
+                                    buildCommandIntent(
+                                            CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)),
+                            new ButtonInfo(R.string.enterprise_privacy_set_organization,
+                                    buildCommandIntent(
+                                            CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
+                                            .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
+                                                    "Foo, Inc."))}));
+        }
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ADD_ACCOUNT,
                 R.string.enterprise_privacy_add_account,
                 R.string.enterprise_privacy_add_account_info,
