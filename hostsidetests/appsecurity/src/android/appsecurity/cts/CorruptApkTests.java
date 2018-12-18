@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -40,6 +41,7 @@ import java.io.File;
  * Set of tests that verify that corrupt APKs are properly rejected by PackageManager and
  * do not cause the system to crash.
  */
+@AppModeFull(reason = "the corrupt APKs were provided as-is and we cannot modify them to comply with instant mode")
 public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
 
     private IBuildInfo mBuildInfo;
