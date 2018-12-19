@@ -74,6 +74,10 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     static final int CUSTOM_DENSITY_DPI = 222;
     private static final int INVALID_DENSITY_DPI = -1;
 
+    ActivityDisplay getDisplayState(int displayId) {
+        return getDisplayState(getDisplaysStates(), displayId);
+    }
+
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
         for (ActivityDisplay display : displays) {
             if (display.mId == displayId) {

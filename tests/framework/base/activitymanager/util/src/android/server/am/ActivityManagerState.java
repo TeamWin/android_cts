@@ -608,11 +608,13 @@ public class ActivityManagerState {
         ArrayList<ActivityStack> mStacks = new ArrayList<>();
         int mFocusedStackId;
         String mResumedActivity;
+        boolean mSingleTaskInstance;
 
         ActivityDisplay(ActivityDisplayProto proto, ActivityManagerState amState) {
             super(proto.configurationContainer);
             mId = proto.id;
             mFocusedStackId = proto.focusedStackId;
+            mSingleTaskInstance = proto.singleTaskInstance;
             if (proto.resumedActivity != null) {
                 mResumedActivity = proto.resumedActivity.title;
                 amState.mResumedActivitiesInDisplays.add(mResumedActivity);
@@ -626,6 +628,20 @@ public class ActivityManagerState {
                     amState.mResumedActivitiesInStacks.add(activityStack.mResumedActivity);
                 }
             }
+        }
+
+        boolean containsActivity(ComponentName activityName) {
+            final String fullName = getActivityName(activityName);
+            for (ActivityStack stack : mStacks) {
+                for (ActivityTask task : stack.mTasks) {
+                    for (Activity activity : task.mActivities) {
+                        if (activity.name.equals(fullName)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
     }
 

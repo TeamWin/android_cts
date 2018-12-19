@@ -45,6 +45,9 @@ import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.SINGLE_HOME_ACTIVITY;
+import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY;
+import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2;
+import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TOAST_ACTIVITY;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
@@ -2642,6 +2645,43 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
             waitAndAssertNavBarStatesAreTheSame(expected);
+        }
+    }
+
+    /** Tests launching of activities on a single task instance display. */
+    @Test
+    public void testSingleTaskInstanceDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            ActivityDisplay display =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+            final int displayId = display.mId;
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mAtm.setDisplayToSingleTaskInstance(displayId));
+            display = getDisplayState(displayId);
+            assertTrue("Display must be set to singleTaskInstance", display.mSingleTaskInstance);
+
+            // SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY will launch
+            // SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2 in the same task and
+            // SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3 in different task.
+            launchActivityOnDisplay(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY, displayId);
+
+            waitAndAssertTopResumedActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3, DEFAULT_DISPLAY,
+                    "Activity should be resumed on default display");
+
+            display = getDisplayState(displayId);
+            // Verify that the 2 activities in the same task are on the display and the one in a
+            // different task isn't on the display, but on the default display
+            assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY",
+                    display.containsActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY));
+            assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2",
+                    display.containsActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2));
+
+            assertFalse("Display shouldn't contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3",
+                    display.containsActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3));
+            assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3",
+                    getDisplayState(DEFAULT_DISPLAY).containsActivity(
+                            SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3));
         }
     }
 
