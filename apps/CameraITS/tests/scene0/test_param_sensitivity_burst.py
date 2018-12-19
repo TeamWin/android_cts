@@ -19,7 +19,7 @@ import its.objects
 import its.target
 
 NUM_STEPS = 3
-ERROR_TOLERANCE = 0.97  # Allow ISO to be rounded down by 3%
+ERROR_TOLERANCE = 0.96  # Allow ISO to be rounded down by 4%
 
 
 def main():
