@@ -29,9 +29,9 @@ public class Poc16_12 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPocNoOutput("CVE-2016-6759", getDevice(), 60);
         String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\)" +
                          "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+                         "mediaserver <<<", logcatOut);
     }
 
     //Criticals
