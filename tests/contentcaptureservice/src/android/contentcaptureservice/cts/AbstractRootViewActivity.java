@@ -27,15 +27,14 @@ import androidx.annotation.NonNull;
 /**
  * Base class for classes that have a {@code root_view} root view.
  */
-abstract class AbstractRootViewActivity<A extends AbstractRootViewActivity<A>>
-        extends AbstractContentCaptureActivity {
-    protected LinearLayout mRootView;
+abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
 
     private static DoubleVisitor<AbstractContentCaptureActivity, LinearLayout> sRootViewVisitor;
 
+    private LinearLayout mRootView;
+
     /**
      * Applies a visitor to the root view {@code onCreate()}.
-     *
      */
     static void onRootView(
             @NonNull DoubleVisitor<AbstractContentCaptureActivity, LinearLayout> visitor) {
@@ -53,6 +52,10 @@ abstract class AbstractRootViewActivity<A extends AbstractRootViewActivity<A>>
             Log.d(TAG, "Applying visitor to " + this + "/" + mRootView);
             sRootViewVisitor.visit(this, mRootView);
         }
+    }
+
+    public LinearLayout getRootView() {
+        return mRootView;
     }
 
     /**

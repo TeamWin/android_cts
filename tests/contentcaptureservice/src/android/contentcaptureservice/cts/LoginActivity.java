@@ -30,24 +30,9 @@ public class LoginActivity extends AbstractRootViewActivity {
     protected void setContentViewOnCreate(Bundle savedInstanceState) {
         setContentView(R.layout.login_activity);
 
-        mRootView = findViewById(R.id.root_view);
         mUsernameLabel = findViewById(R.id.username_label);
         mUsername = findViewById(R.id.username);
         mPasswordLabel = findViewById(R.id.password_label);
         mPassword = findViewById(R.id.password);
-    }
-
-    /**
-     * Set username on UI thread.
-     */
-    void setUsername(String text) {
-        syncRunOnUiThread(() -> mUsername.setText(text));
-    }
-
-    /**
-     * Set password on UI thread.
-     */
-    void setPassword(String text) {
-        syncRunOnUiThread(() -> mPassword.setText(text));
     }
 }
