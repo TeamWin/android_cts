@@ -27,7 +27,8 @@ import androidx.annotation.NonNull;
 /**
  * Base class for classes that have a {@code root_view} root view.
  */
-abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
+abstract class AbstractRootViewActivity<A extends AbstractRootViewActivity<A>>
+        extends AbstractContentCaptureActivity {
     protected LinearLayout mRootView;
 
     private static DoubleVisitor<AbstractContentCaptureActivity, LinearLayout> sRootViewVisitor;

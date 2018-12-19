@@ -36,4 +36,18 @@ public class LoginActivity extends AbstractRootViewActivity {
         mPasswordLabel = findViewById(R.id.password_label);
         mPassword = findViewById(R.id.password);
     }
+
+    /**
+     * Set username on UI thread.
+     */
+    void setUsername(String text) {
+        syncRunOnUiThread(() -> mUsername.setText(text));
+    }
+
+    /**
+     * Set password on UI thread.
+     */
+    void setPassword(String text) {
+        syncRunOnUiThread(() -> mPassword.setText(text));
+    }
 }

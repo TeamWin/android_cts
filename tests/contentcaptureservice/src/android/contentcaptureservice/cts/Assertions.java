@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.MY_EPOCH;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEARED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -29,7 +30,6 @@ import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.ViewNode;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -56,6 +56,14 @@ final class Assertions {
      */
     public static ViewNode assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
             @NonNull View expectedView) {
+        return assertViewWithUnknownParentAppeared(event, expectedView, /* expectedText= */ null);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
+     */
+    public static ViewNode assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
+            @NonNull View expectedView, @Nullable String expectedText) {
         assertWithMessage("wrong event: %s", event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_APPEARED);
         final ViewNode node = event.getViewNode();
@@ -66,21 +74,33 @@ final class Assertions {
                 .isEqualTo(expectedView.getClass().getName());
         assertWithMessage("wrong autofill id on %s", node).that(node.getAutofillId())
                 .isEqualTo(expectedView.getAutofillId());
-        if (expectedView instanceof TextView) {
+
+        if (expectedText != null) {
             assertWithMessage("wrong text id on %s", node).that(node.getText().toString())
-                    .isEqualTo(((TextView) expectedView).getText().toString());
+                    .isEqualTo(expectedText);
         }
         // TODO(b/119638958): test more fields, like resource id
         return node;
     }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
+     */
+    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
+            @NonNull View expectedView, @Nullable AutofillId expectedParentId,
+            @Nullable String expectedText) {
+        final ViewNode node = assertViewWithUnknownParentAppeared(event, expectedView,
+                expectedText);
+        assertWithMessage("wrong parent autofill id on %s", node).that(node.getParentAutofillId())
+                .isEqualTo(expectedParentId);
+    }
+
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
      */
     public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
             @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
-        final ViewNode node = assertViewWithUnknownParentAppeared(event, expectedView);
-        assertWithMessage("wrong parent autofill id on %s", node).that(node.getParentAutofillId())
-                .isEqualTo(expectedParentId);
+        assertViewAppeared(event, expectedView, expectedParentId, /* expectedText= */ null);
     }
 
     /**
@@ -134,6 +154,17 @@ final class Assertions {
         assertWithMessage("no session for view %s", view).that(session).isNotNull();
         assertWithMessage("wrong session id for for view %s", view)
                 .that(session.getContentCaptureSessionId()).isEqualTo(expectedSessionId);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_TEXT_CHANGED} event.
+     */
+    public static void assertViewTextChanged(@NonNull ContentCaptureEvent event,
+            @NonNull String expectedText, @NonNull AutofillId expectedId) {
+        assertWithMessage("wrong event: %s", event).that(event.getType())
+                .isEqualTo(TYPE_VIEW_TEXT_CHANGED);
+        assertWithMessage("Wrong text on %s", event).that(event.getText().toString())
+                .isEqualTo(expectedText);
     }
 
     private Assertions() {
