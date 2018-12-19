@@ -31,8 +31,8 @@ public class Poc17_07 extends SecurityTestCase {
           AdbUtils.runCommandLine("logcat -c", getDevice());
           AdbUtils.runPoc("Bug-36991414", getDevice(), 60);
           String pocOut =  AdbUtils.runCommandLine("logcat -d", getDevice());
-          assertNotMatches("[\\s\\n\\S]*Fatal signal 11" +
-                           "[\\s\\n\\S]*/system/lib64/libgui.so [\\s\\n\\S]*", pocOut);
+          assertNotMatchesMultiLine("Fatal signal 11" +
+                           "[\\s\\n\\S]*/system/lib64/libgui.so", pocOut);
         }
     }
 
@@ -44,9 +44,9 @@ public class Poc17_07 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0340", getDevice(), 60);
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\)" +
                          "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+                         "mediaserver <<<", logcat);
     }
 
     /**

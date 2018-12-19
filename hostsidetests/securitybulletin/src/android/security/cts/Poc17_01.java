@@ -133,9 +133,9 @@ public class Poc17_01 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0387", getDevice(), 60);
         String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\)" +
                          "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+                         "mediaserver <<<", logcatOut);
     }
 
     /**
@@ -147,7 +147,7 @@ public class Poc17_01 extends SecurityTestCase {
         AdbUtils.runPoc("CVE-2017-0386", getDevice(), 60);
 
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertMatches("[\\s\\n\\S]*No Integer overflow[\\s\\n\\S]*", logcat);
+        assertMatchesMultiLine("No Integer overflow", logcat);
     }
 
     /**
