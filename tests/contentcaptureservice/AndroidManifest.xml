@@ -44,10 +44,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ChildlessActivity"
+                  android:label="Childless"
+                  android:taskAffinity=".ChildlessActivity"
+                  android:theme="@android:style/Theme.NoTitleBar">
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it makes easier to launch
+                     this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service
-            android:name=".CtsSmartSuggestionsService"
-            android:label="CtsSmartSuggestionsService"
+            android:name=".CtsContentCaptureService"
+            android:label="CtsContentCaptureService"
             android:permission="android.permission.BIND_CONTENT_CAPTURE_SERVICE">
             <intent-filter>
                 <action android:name="android.service.contentcapture.ContentCaptureService" />

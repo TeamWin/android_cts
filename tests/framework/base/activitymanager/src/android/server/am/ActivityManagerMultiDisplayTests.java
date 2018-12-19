@@ -1299,6 +1299,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Test that the update of display metrics updates all its content.
      */
     @Test
+    @FlakyTest(bugId = 121105810)
     public void testDisplayResize() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -2328,6 +2329,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Test that navigation bar should show on display with system decoration.
      */
     @Test
+    @FlakyTest(bugId = 120748674)
     public void testNavBarShowingOnDisplayWithDecor() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession
@@ -2341,6 +2343,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Test that navigation bar should not show on display without system decoration.
      */
     @Test
+    @FlakyTest(bugId = 120748674)
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             virtualDisplaySession.setPublicDisplay(true)
@@ -2357,6 +2360,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * supports system decoration.
      */
     @Test
+    @FlakyTest(bugId = 120748674)
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             virtualDisplaySession.setPublicDisplay(false)

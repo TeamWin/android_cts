@@ -16,17 +16,90 @@
 package android.contentcaptureservice.cts;
 
 import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.contentcapture.ContentCaptureManager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for all activities.
  */
 abstract class AbstractContentCaptureActivity extends Activity {
 
+    protected final String mTag = getClass().getSimpleName();
+
     @Nullable
     public ContentCaptureManager getContentCaptureManager() {
         return getSystemService(ContentCaptureManager.class);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        Log.i(mTag, "onCreate()");
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onStart() {
+        Log.i(mTag, "onStart()");
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.i(mTag, "onResume()");
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.i(mTag, "onPause()");
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.i(mTag, "onStop()");
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.i(mTag, "onDestroy()");
+        super.onDestroy();
+    }
+
+    /**
+     * Run an action in the UI thread, and blocks caller until the action is finished.
+     */
+    public final void syncRunOnUiThread(@NonNull Runnable action) {
+        syncRunOnUiThread(action, Helper.GENERIC_TIMEOUT_MS);
+    }
+
+    /**
+     * Run an action in the UI thread, and blocks caller until the action is finished or it times
+     * out.
+     */
+    public final void syncRunOnUiThread(@NonNull Runnable action, long timeoutMs) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            action.run();
+            latch.countDown();
+        });
+        try {
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
+                // TODO(b/120665995): throw RetryableException (once moved from Autofill to common)
+                throw new IllegalStateException(
+                        String.format("action on UI thread timed out after %d ms", timeoutMs));
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted", e);
+        }
     }
 }

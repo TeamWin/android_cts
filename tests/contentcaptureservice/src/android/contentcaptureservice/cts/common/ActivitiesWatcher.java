@@ -30,12 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Helper object used to watch for activities lifecycle events.
  *
- * <p><b>NOTE:</b> currently it's limited to:
- *
- * <ul>
- *   <li>Just RESUMED and DESTROYED events.
- *   <li>Just one occurrence of each event.
- * </ul>
+ * <p><b>NOTE:</b> currently it's limited to just one occurrence of each event.
  *
  * <p>These limitations will be fixed as needed (A.K.A. K.I.S.S. :-)
  */
@@ -58,11 +53,13 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         Log.v(TAG, "onActivityCreated(): " + activity);
+        notifyWatcher(activity, ActivityLifecycle.CREATED);
     }
 
     @Override
     public void onActivityStarted(Activity activity) {
         Log.v(TAG, "onActivityStarted(): " + activity);
+        notifyWatcher(activity, ActivityLifecycle.STARTED);
     }
 
     @Override
@@ -74,16 +71,19 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
     @Override
     public void onActivityPaused(Activity activity) {
         Log.v(TAG, "onActivityPaused(): " + activity);
+        notifyWatcher(activity, ActivityLifecycle.PAUSED);
     }
 
     @Override
     public void onActivityStopped(Activity activity) {
         Log.v(TAG, "onActivityStopped(): " + activity);
+        notifyWatcher(activity, ActivityLifecycle.STOPPED);
     }
 
     @Override
     public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
         Log.v(TAG, "onActivitySaveInstanceState(): " + activity);
+        notifyWatcher(activity, ActivityLifecycle.SAVE_INSTANCE);
     }
 
     @Override
@@ -133,7 +133,12 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
      * <p><b>NOTE: </b>currently it only supports one occurrence for each event.
      */
     public static final class ActivityWatcher {
+        private final CountDownLatch mCreatedLatch = new CountDownLatch(1);
+        private final CountDownLatch mStartedLatch = new CountDownLatch(1);
         private final CountDownLatch mResumedLatch = new CountDownLatch(1);
+        private final CountDownLatch mPausedLatch = new CountDownLatch(1);
+        private final CountDownLatch mStoppedLatch = new CountDownLatch(1);
+        private final CountDownLatch mSaveInstanceLatch = new CountDownLatch(1);
         private final CountDownLatch mDestroyedLatch = new CountDownLatch(1);
         private final long mTimeoutMs;
 
@@ -157,8 +162,18 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
 
         private CountDownLatch getLatch(@NonNull ActivityLifecycle lifecycle) {
             switch (lifecycle) {
+                case CREATED:
+                    return mCreatedLatch;
+                case STARTED:
+                    return mStartedLatch;
                 case RESUMED:
                     return mResumedLatch;
+                case PAUSED:
+                    return mPausedLatch;
+                case STOPPED:
+                    return mStoppedLatch;
+                case SAVE_INSTANCE:
+                    return mSaveInstanceLatch;
                 case DESTROYED:
                     return mDestroyedLatch;
                 default:
@@ -175,7 +190,12 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
      * Supported activity lifecycle.
      */
     public enum ActivityLifecycle {
+        CREATED,
+        STARTED,
         RESUMED,
+        PAUSED,
+        STOPPED,
+        SAVE_INSTANCE,
         DESTROYED
     }
 }

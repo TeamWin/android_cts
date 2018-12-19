@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import trebuchet.io.BufferProducer;
 import trebuchet.io.DataSlice;
@@ -143,6 +144,7 @@ public class AtraceHostTestBase extends DeviceTestCase implements IBuildReceiver
 
         RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
                 pkgName, TEST_RUNNER, getDevice().getIDevice());
+        testRunner.setMaxTimeout(60, TimeUnit.SECONDS);
         if (testClassName != null && testMethodName != null) {
             testRunner.setMethodName(testClassName, testMethodName);
         } else if (testClassName != null) {

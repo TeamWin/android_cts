@@ -65,10 +65,44 @@ public class SubscriptionManagerTest {
     private int mSubId;
     private String mPackageName;
 
+    /**
+     * Callback used in testRegisterNetworkCallback that allows caller to block on
+     * {@code onAvailable}.
+     */
+    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
+        private final CountDownLatch mAvailableLatch = new CountDownLatch(1);
+
+        public void waitForAvailable() throws InterruptedException {
+            assertTrue("Cellular network did not come up after 5 seconds",
+                    mAvailableLatch.await(5, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void onAvailable(Network network) {
+            mAvailableLatch.countDown();
+        }
+    }
+
     @BeforeClass
     public static void setUpClass() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("svc wifi disable");
+
+        final TestNetworkCallback callback = new TestNetworkCallback();
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        cm.registerNetworkCallback(new NetworkRequest.Builder()
+                .addTransportType(TRANSPORT_CELLULAR)
+                .addCapability(NET_CAPABILITY_INTERNET)
+                .build(), callback);
+        try {
+            // Wait to get callback for availability of internet
+            callback.waitForAvailable();
+        } catch (InterruptedException e) {
+            fail("NetworkCallback wait was interrupted.");
+        } finally {
+            cm.unregisterNetworkCallback(callback);
+        }
     }
 
     @AfterClass
@@ -126,6 +160,13 @@ public class SubscriptionManagerTest {
         for (int i = 0; i < subList.size(); i++) {
             assertTrue(subList.get(i).getSubscriptionId() >= 0);
             assertTrue(subList.get(i).getSimSlotIndex() >= 0);
+            if (i >= 1) {
+                assertTrue(subList.get(i - 1).getSimSlotIndex()
+                        <= subList.get(i).getSimSlotIndex());
+                assertTrue(subList.get(i - 1).getSimSlotIndex() < subList.get(i).getSimSlotIndex()
+                        || subList.get(i - 1).getSubscriptionId()
+                        < subList.get(i).getSubscriptionId());
+            }
         }
     }
 

@@ -66,6 +66,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,7 +83,6 @@ import javax.annotation.concurrent.GuardedBy;
  *     atest WindowFocusTests
  */
 @Presubmit
-@FlakyTest(detail = "Can be promoted to pre-submit once confirmed stable.")
 @RunWith(AndroidJUnit4.class)
 public class WindowFocusTests {
 
@@ -105,7 +106,9 @@ public class WindowFocusTests {
     private static void sendKey(int action, int keyCode, int displayId) {
         final KeyEvent keyEvent = new KeyEvent(action, keyCode);
         keyEvent.setDisplayId(displayId);
-        getInstrumentation().sendKeySync(keyEvent);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            getInstrumentation().sendKeySync(keyEvent);
+        });
     }
 
     private static void sendAndAssertTargetConsumedKey(InputTargetActivity target, int keyCode,
@@ -214,6 +217,7 @@ public class WindowFocusTests {
      * - The window which lost top-focus can be notified about pointer-capture lost.
      */
     @Test
+    @FlakyTest(bugId = 121122996)
     public void testPointerCapture() throws InterruptedException {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
