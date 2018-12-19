@@ -41,7 +41,6 @@ public class NotificationChannelGroupTest extends AndroidTestCase {
         assertNull(group.getDescription());
         assertEquals(0, group.getChannels().size());
         assertEquals(0, group.getUserLockedFields());
-        assertTrue(group.canOverlayApps());
     }
 
     public void testIsBlocked() {
@@ -50,21 +49,10 @@ public class NotificationChannelGroupTest extends AndroidTestCase {
         assertTrue(group.isBlocked());
     }
 
-    public void testAppOverlay() {
-        NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
-        group.setAllowAppOverlay(false);
-        assertFalse(group.canOverlayApps());
-
-        group.setAllowAppOverlay(true);
-        assertTrue(group.canOverlayApps());
-    }
-
     public void testWriteToParcel() {
         NotificationChannelGroup group = new NotificationChannelGroup("1", "one");
         group.setBlocked(true);
         group.setDescription("bananas!");
-        group.lockFields(NotificationChannelGroup.USER_LOCKED_ALLOW_APP_OVERLAY);
-        group.setAllowAppOverlay(false);
         Parcel parcel = Parcel.obtain();
         group.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -77,15 +65,10 @@ public class NotificationChannelGroupTest extends AndroidTestCase {
         NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
         group.setBlocked(true);
         group.setDescription("bananas");
-        group.lockFields(NotificationChannelGroup.USER_LOCKED_ALLOW_APP_OVERLAY);
-        group.setAllowAppOverlay(false);
         NotificationChannelGroup cloned = group.clone();
         assertEquals("1", cloned.getId());
         assertEquals("one", cloned.getName());
         assertTrue(cloned.isBlocked());
         assertEquals("bananas", cloned.getDescription());
-        assertEquals(NotificationChannelGroup.USER_LOCKED_ALLOW_APP_OVERLAY,
-                group.getUserLockedFields());
-        assertFalse(cloned.canOverlayApps());
     }
 }
