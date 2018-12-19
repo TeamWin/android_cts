@@ -33,6 +33,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
 import android.server.am.WindowManagerState.Display;
 import android.server.am.WindowManagerState.WindowState;
 
@@ -92,6 +93,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @Presubmit
     public void testMinimalSizeDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
