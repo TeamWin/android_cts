@@ -70,6 +70,14 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.telecom.cts.CtsPhoneAccountSuggestionService"
+                 android:permission="android.permission.BIND_PHONE_ACCOUNT_SUGGESTION_SERVICE"
+                 android:enabled="false" >
+            <intent-filter>
+                <action android:name="android.telecom.PhoneAccountSuggestionService"/>
+            </intent-filter>
+        </service>
+
         <receiver android:name="android.telecom.cts.MockMissedCallNotificationReceiver">
             <intent-filter>
                 <action android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION" />

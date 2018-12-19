@@ -66,9 +66,12 @@ public class TestUtils {
     public static final String SELF_MANAGED_COMPONENT =
             "android.telecom.cts.CtsSelfManagedConnectionService";
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
-    public static final String ACCOUNT_ID = "xtstest_CALL_PROVIDER_ID";
+    public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID";
+    public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID";
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
-            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID);
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
+    public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE_2 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_2);
     public static final PhoneAccountHandle TEST_HANDOVER_SRC_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), "handoverFrom");
     public static final PhoneAccountHandle TEST_HANDOVER_DEST_PHONE_ACCOUNT_HANDLE =
@@ -102,6 +105,21 @@ public class TestUtils {
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
+
+    public static final PhoneAccount TEST_PHONE_ACCOUNT_2 = PhoneAccount.builder(
+            TEST_PHONE_ACCOUNT_HANDLE_2, ACCOUNT_LABEL + "2")
+            .setAddress(Uri.parse("tel:555-TEST2"))
+            .setSubscriptionAddress(Uri.parse("tel:555-TEST2"))
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER |
+                    PhoneAccount.CAPABILITY_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_RTT |
+                    PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+
     private static final Bundle SUPPORTS_HANDOVER_FROM_EXTRAS = new Bundle();
     private static final Bundle SUPPORTS_HANDOVER_TO_EXTRAS = new Bundle();
     static {
@@ -177,6 +195,9 @@ public class TestUtils {
 
     private static final String COMMAND_ENABLE = "telecom set-phone-account-enabled ";
 
+    private static final String COMMAND_SET_ACCT_SUGGESTION =
+            "telecom set-phone-acct-suggestion-component ";
+
     private static final String COMMAND_REGISTER_SIM = "telecom register-sim-phone-account ";
 
     private static final String COMMAND_WAIT_ON_HANDLERS = "telecom wait-on-handlers";
@@ -197,6 +218,13 @@ public class TestUtils {
     public static String setDefaultDialer(Instrumentation instrumentation, String packageName)
             throws Exception {
         return executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_DIALER + packageName);
+    }
+
+    public static String setCtsPhoneAccountSuggestionService(Instrumentation instrumentation,
+            ComponentName componentName) throws Exception {
+        return executeShellCommand(instrumentation,
+                COMMAND_SET_ACCT_SUGGESTION
+                        + (componentName == null ? "" : componentName.flattenToString()));
     }
 
     public static String getDefaultDialer(Instrumentation instrumentation) throws Exception {
