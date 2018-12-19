@@ -53,7 +53,7 @@ public class CtsAngleCommon {
             ANGLE_DRIVER_TEST_PKG + "/com.android.angleIntegrationTest.common.AngleIntegrationTestActivity";
     static final String ANGLE_DRIVER_TEST_SEC_ACTIVITY =
             ANGLE_DRIVER_TEST_SEC_PKG + "/com.android.angleIntegrationTest.common.AngleIntegrationTestActivity";
-    static final String ANGLE_MAIN_ACTIVTY = ANGLE_PKG + "/.MainActivity";
+    static final String ANGLE_MAIN_ACTIVTY = "android.app.action.ANGLE_FOR_ANDROID";
 
     enum OpenGlDriverChoice {
         DEFAULT,
@@ -108,9 +108,9 @@ public class CtsAngleCommon {
         return true;
     }
 
-    static void startActivity(ITestDevice device, String activity) throws Exception {
+    static void startActivity(ITestDevice device, String action) throws Exception {
         // Run the ANGLE activity so it'll clear up any 'default' settings.
-        device.executeShellCommand("am start -S -W -n \"" + activity + "\"");
+        device.executeShellCommand("am start -S -W -a \"" + action + "\"");
     }
 
     static void stopPackage(ITestDevice device, String pkgName) throws Exception {
