@@ -51,8 +51,7 @@ public class UsePermissionTest28 extends BasePermissionsTest {
                 BasePermissionActivity.class,
                 () -> {
                     try {
-                        selectAlwaysOption();
-                        clickAllowButton();
+                        clickAllowAlwaysButton();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
