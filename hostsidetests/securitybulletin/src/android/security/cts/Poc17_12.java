@@ -27,7 +27,7 @@ public class Poc17_12 extends SecurityTestCase {
   @SecurityTest(minPatchLevel = "2017-12")
   public void testPocCVE_2017_6262() throws Exception {
     if(containsDriver(getDevice(),"/dev/dri/renderD128")) {
-      AdbUtils.runPocNoOutput("CVE-2017-6262", getDevice(), 900);
+      AdbUtils.runPocNoOutput("CVE-2017-6262", getDevice(), 300);
     }
   }
 }
