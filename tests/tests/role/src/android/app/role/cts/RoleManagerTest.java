@@ -133,6 +133,11 @@ public class RoleManagerTest {
                 AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS));
     }
 
+    @Test
+    public void migratedRoleHoldersNotEmpty() throws Exception {
+        assertThat(getRoleHolders(RoleManager.ROLE_SMS)).isNotEmpty();
+    }
+
     private void requestRole(@NonNull String roleName) {
         Intent intent = new Intent()
                 .setComponent(new ComponentName(APP_PACKAGE_NAME, APP_REQUEST_ROLE_ACTIVITY_NAME))
