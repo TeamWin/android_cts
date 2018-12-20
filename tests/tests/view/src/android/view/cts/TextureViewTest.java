@@ -46,7 +46,6 @@ import android.view.Window;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,8 +59,10 @@ import java.util.concurrent.TimeoutException;
 public class TextureViewTest {
 
     static final int EGL_GL_COLORSPACE_SRGB_KHR = 0x3089;
+    static final int EGL_GL_COLORSPACE_LINEAR_KHR = 0x308A;
     static final int EGL_GL_COLORSPACE_DISPLAY_P3_EXT = 0x3363;
     static final int EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT = 0x3362;
+    static final int EGL_GL_COLORSPACE_SCRGB_EXT = 0x3351;
     static final int EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT = 0x3350;
 
     @Rule
@@ -121,7 +122,6 @@ public class TextureViewTest {
     }
 
     @Test
-    @Ignore // Temporary, see b/111801626
     public void testRotateScale() throws Throwable {
         final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
         final TextureView textureView = activity.getTextureView();
@@ -161,7 +161,6 @@ public class TextureViewTest {
     }
 
     @Test
-    @Ignore // Temporary, see b/111801626
     public void testTransformScale() throws Throwable {
         final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
         final TextureView textureView = activity.getTextureView();
@@ -220,38 +219,61 @@ public class TextureViewTest {
                 screenshot.getPixel(texturePos.right - 10, texturePos.bottom - 10));
     }
 
-    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGetBitmap_8888_P3() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.Named.DISPLAY_P3, false,
-                new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
+                false, false, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
-    @Ignore // Disabled temporarily, b/119504473
     @Test
-    public void testGetBitmap_FP16_P3() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT, ColorSpace.Named.DISPLAY_P3, true,
-                new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    public void testGetBitmap_FP16_LinearP3() throws Throwable {
+        ColorSpace.Rgb displayP3 = (ColorSpace.Rgb) ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
+        ColorSpace.Rgb linearDisplayP3 = new ColorSpace.Rgb(
+                "Display P3 Linear",
+                displayP3.getTransform(),
+                displayP3.getWhitePoint(),
+                x -> x,
+                x -> x,
+                0.0f, 1.0f
+        );
+
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT, linearDisplayP3, true,
+                true, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    }
+
+    @Test
+    public void testGetBitmap_FP16_ExtendedSRGB() throws Throwable {
+        // isLinear is "true", because the spec says
+        // GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING is GL_LINEAR for EGL_GL_COLORSPACE_SCRGB_EXT.
+        // See https://www.khronos.org/registry/EGL/extensions/EXT/EGL_EXT_gl_colorspace_scrgb.txt.
+        testGetBitmap(EGL_GL_COLORSPACE_SCRGB_EXT,
+                ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB), true,
+                true, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
     @Test
     public void testGetBitmap_FP16_LinearExtendedSRGB() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT, ColorSpace.Named.LINEAR_EXTENDED_SRGB,
+        testGetBitmap(EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT,
+                ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), true,
                 true, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
-    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGet565Bitmap_SRGB() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, false,
-                new SRGBCompare(Bitmap.Config.RGB_565));
+        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.get(ColorSpace.Named.SRGB),
+                false, false, new SRGBCompare(Bitmap.Config.RGB_565));
     }
 
-    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGetBitmap_SRGB() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, false,
-                new SRGBCompare(Bitmap.Config.ARGB_8888));
+        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.get(ColorSpace.Named.SRGB),
+                false, false, new SRGBCompare(Bitmap.Config.ARGB_8888));
+    }
+
+    @Test
+    public void testGetBitmap_SRGBLinear() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_LINEAR_KHR, ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
+                false, true, new SRGBCompare(Bitmap.Config.ARGB_8888));
     }
 
     /**
@@ -348,7 +370,7 @@ public class TextureViewTest {
     interface CompareFunction {
         Bitmap.Config getConfig();
         ColorSpace getColorSpace();
-        void verify(float[] srcColor, ColorSpace.Named srcColorSpace, Bitmap dstBitmap);
+        void verify(float[] srcColor, ColorSpace srcColorSpace, Bitmap dstBitmap);
     }
 
     private class FP16Compare implements CompareFunction {
@@ -366,7 +388,7 @@ public class TextureViewTest {
             return mDstColorSpace;
         }
 
-        public void verify(float[] srcColor, ColorSpace.Named srcColorSpace, Bitmap dstBitmap) {
+        public void verify(float[] srcColor, ColorSpace srcColorSpace, Bitmap dstBitmap) {
             // read pixels into buffer and compare using colorspace connector
             ByteBuffer buffer = ByteBuffer.allocate(dstBitmap.getAllocationByteCount());
             buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -374,9 +396,8 @@ public class TextureViewTest {
             Half alpha = Half.valueOf(buffer.getShort(6));
             assertEquals(1.0f, alpha.floatValue(), 0.0f);
 
-            final ColorSpace srcSpace = ColorSpace.get(srcColorSpace);
             final ColorSpace dstSpace = getColorSpace();
-            float[] expectedColor = ColorSpace.connect(srcSpace, dstSpace).transform(srcColor);
+            float[] expectedColor = ColorSpace.connect(srcColorSpace, dstSpace).transform(srcColor);
             float[] outputColor = {
                     Half.valueOf(buffer.getShort(0)).floatValue(),
                     Half.valueOf(buffer.getShort(2)).floatValue(),
@@ -403,7 +424,7 @@ public class TextureViewTest {
             return ColorSpace.get(ColorSpace.Named.SRGB);
         }
 
-        public void verify(float[] srcColor, ColorSpace.Named srcColorSpace, Bitmap dstBitmap) {
+        public void verify(float[] srcColor, ColorSpace srcColorSpace, Bitmap dstBitmap) {
             int color = dstBitmap.getPixel(0, 0);
             assertEquals(1.0f, Color.alpha(color) / 255.0f, 0.0f);
             assertEquals(srcColor[0], Color.red(color) / 255.0f, 0.01f);
@@ -412,8 +433,11 @@ public class TextureViewTest {
         }
     }
 
-    private void testGetBitmap(int eglColorSpace, ColorSpace.Named colorSpace,
-            boolean useHalfFloat, CompareFunction compareFunction) throws Throwable {
+    // isFramebufferLinear is true, when GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING is GL_LINEAR.
+    // It is false, when GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING is GL_SRGB.
+    private void testGetBitmap(int eglColorSpace, ColorSpace colorSpace,
+            boolean useHalfFloat, boolean isFramebufferLinear,
+            CompareFunction compareFunction) throws Throwable {
         final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
         activity.waitForSurface();
 
@@ -439,7 +463,18 @@ public class TextureViewTest {
 
         final Bitmap bitmap = activity.getContents(compareFunction.getConfig(),
                 compareFunction.getColorSpace());
-        compareFunction.verify(inputColor, colorSpace, bitmap);
+
+        // If GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING is GL_SRGB, then glClear will treat the input
+        // color as linear and write a converted sRGB color into the framebuffer.
+        if (isFramebufferLinear) {
+            compareFunction.verify(inputColor, colorSpace, bitmap);
+        } else {
+            ColorSpace.Connector connector;
+            connector = ColorSpace.connect(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
+                    ColorSpace.get(ColorSpace.Named.SRGB));
+            float[] outputColor = connector.transform(inputColor);
+            compareFunction.verify(outputColor, colorSpace, bitmap);
+        }
     }
 
     private static void drawGlQuad(int width, int height) {
