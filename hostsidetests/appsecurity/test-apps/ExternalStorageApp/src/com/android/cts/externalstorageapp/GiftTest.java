@@ -20,6 +20,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKA
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_READ;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_WRITE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNoAccess;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNotPresent;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
@@ -60,6 +61,23 @@ public class GiftTest extends AndroidTestCase {
         for (File none : noneList) {
             assertFileReadWriteAccess(none);
             assertEquals(100, readInt(none));
+        }
+    }
+
+    public void testRemoveObbGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+            none.delete();
+        }
+    }
+
+    /**
+     * Verify we can't access gifts in obb dirs.
+     */
+    public void testNoObbGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+            assertFileNotPresent(none);
         }
     }
 }

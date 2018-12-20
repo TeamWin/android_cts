@@ -374,6 +374,10 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         }
     }
 
+    public static void assertFileNotPresent(File path) {
+        assertFalse(path + " exists!", path.exists());
+    }
+
     public static void assertMediaNoAccess(ContentResolver resolver, boolean legacyApp)
             throws Exception {
         final ContentValues values = new ContentValues();
