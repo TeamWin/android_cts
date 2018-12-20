@@ -29,6 +29,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.UserManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.os.SystemProperties;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -139,6 +140,19 @@ public class ReflectorVpnService extends VpnService {
                         continue;
                     }
                 }
+            }
+        }
+
+        if (allowedArray == null &&
+            (SystemProperties.getInt("persist.adb.tcp.port", -1) > -1
+            || SystemProperties.getInt("service.adb.tcp.port", -1) > -1)) {
+            try {
+                // If adb TCP port opened the test may be running by adb over network.
+                // Add com.android.shell application into blacklist to exclude adb socket
+                // for VPN tests.
+                builder.addDisallowedApplication("com.android.shell");
+            } catch(NameNotFoundException e) {
+                Log.w(TAG, "com.android.shell not found");
             }
         }
 
