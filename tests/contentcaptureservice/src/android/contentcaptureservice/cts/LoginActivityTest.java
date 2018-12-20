@@ -98,7 +98,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
 
-        final AutofillId rootId = activity.mRootView.getAutofillId();
+        final AutofillId rootId = activity.getRootView().getAutofillId();
 
         assertThat(events).hasSize(7);
         assertViewAppeared(events.get(0), sessionId, activity.mUsernameLabel, rootId);
@@ -107,11 +107,12 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events.get(3), sessionId, activity.mPassword, rootId);
 
         // TODO(b/119638958): get rid of those intermediated parents
-        final View grandpa1 = (View) activity.mRootView.getParent();
+        final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
 
-        assertViewAppeared(events.get(4), sessionId, activity.mRootView, grandpa1.getAutofillId());
+        assertViewAppeared(events.get(4), sessionId, activity.getRootView(),
+                grandpa1.getAutofillId());
         assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
     }
@@ -141,7 +142,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final ContentCaptureSessionId sessionId = activity.mRootView.getContentCaptureSession()
+        final ContentCaptureSessionId sessionId = activity.getRootView().getContentCaptureSession()
                 .getContentCaptureSessionId();
         Log.v(TAG, "session id: " + sessionId);
 
@@ -170,7 +171,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
 
-        final AutofillId rootId = activity.mRootView.getAutofillId();
+        final AutofillId rootId = activity.getRootView().getAutofillId();
 
         assertThat(events).hasSize(7);
         assertViewAppeared(events.get(0), sessionId, activity.mUsernameLabel, rootId);
@@ -179,17 +180,14 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events.get(3), sessionId, activity.mPassword, rootId);
 
         // TODO(b/119638958): get rid of those intermediate parents
-        final View grandpa1 = (View) activity.mRootView.getParent();
+        final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
 
-        assertViewAppeared(events.get(4), sessionId, activity.mRootView, grandpa1.getAutofillId());
+        assertViewAppeared(events.get(4), sessionId, activity.getRootView(),
+                grandpa1.getAutofillId());
         assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
-
-        // TODO(b/119638958): right now we're testing all events that happened after the activity
-        // is finished, but we should test intermediate steps (like asserting all views appear
-        // after the acitivty starts, then all of them disappear when it's finished
     }
 
     @Test
@@ -220,7 +218,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
 
-        final AutofillId rootId = activity.mRootView.getAutofillId();
+        final AutofillId rootId = activity.getRootView().getAutofillId();
 
         assertThat(events).hasSize(9);
         assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
@@ -228,17 +226,13 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
         assertViewAppeared(events.get(3), activity.mPassword, rootId, "");
         // TODO(b/119638958): get rid of those intermediated parents
-        final View grandpa1 = (View) activity.mRootView.getParent();
+        final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
 
-        assertViewAppeared(events.get(4), activity.mRootView, grandpa1.getAutofillId());
+        assertViewAppeared(events.get(4), activity.getRootView(), grandpa1.getAutofillId());
         assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
-
-        // TODO(b/119638958): VIEW_DISAPPEARED events should be send before the activity
-        // stopped - if we don't deprecate the latter, we should change the manager to make sure
-        // they're send in that order (or dropped)
 
         assertViewTextChanged(events.get(7), "USER", activity.mUsername.getAutofillId());
         assertViewTextChanged(events.get(8), "PASS", activity.mUsername.getAutofillId());

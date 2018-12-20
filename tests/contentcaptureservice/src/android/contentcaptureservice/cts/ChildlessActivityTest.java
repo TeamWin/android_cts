@@ -112,7 +112,7 @@ public class ChildlessActivityTest
 
         // Remove view
         final TextView child = childRef.get();
-        activity.syncRunOnUiThread(() -> activity.mRootView.removeView(child));
+        activity.syncRunOnUiThread(() -> activity.getRootView().removeView(child));
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -153,7 +153,7 @@ public class ChildlessActivityTest
 
         // Remove view
         final TextView child = childRef.get();
-        activity.syncRunOnUiThread(() -> activity.mRootView.removeView(child));
+        activity.syncRunOnUiThread(() -> activity.getRootView().removeView(child));
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -174,9 +174,9 @@ public class ChildlessActivityTest
         assertThat(events).hasSize(5);
 
         // Assert just the relevant events
-        final AutofillId rootId = activity.mRootView.getAutofillId();
+        final AutofillId rootId = activity.getRootView().getAutofillId();
         assertViewAppeared(events.get(0), sessionId, child, rootId);
-        assertViewWithUnknownParentAppeared(events.get(1), sessionId, activity.mRootView);
+        assertViewWithUnknownParentAppeared(events.get(1), sessionId, activity.getRootView());
         // Ignore events 2 and 3 (intermediate parents appeared)
         assertViewDisappeared(events.get(4), child.getAutofillId());
     }
