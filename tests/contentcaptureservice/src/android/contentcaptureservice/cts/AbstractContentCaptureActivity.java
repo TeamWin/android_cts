@@ -33,6 +33,8 @@ abstract class AbstractContentCaptureActivity extends Activity {
 
     protected final String mTag = getClass().getSimpleName();
 
+    private int mRealTaskId;
+
     @Nullable
     public ContentCaptureManager getContentCaptureManager() {
         return getSystemService(ContentCaptureManager.class);
@@ -40,7 +42,9 @@ abstract class AbstractContentCaptureActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(mTag, "onCreate()");
+        mRealTaskId = getTaskId();
+
+        Log.i(mTag, "onCreate(): taskId= " + mRealTaskId);
         super.onCreate(savedInstanceState);
     }
 
@@ -72,6 +76,14 @@ abstract class AbstractContentCaptureActivity extends Activity {
     protected void onDestroy() {
         Log.i(mTag, "onDestroy()");
         super.onDestroy();
+    }
+
+    /**
+     * Gets the real task id associated with the activity, as {@link #getTaskId()} returns
+     * {@code -1} after it's gone.
+     */
+    public final int getRealTaskId() {
+        return mRealTaskId;
     }
 
     /**

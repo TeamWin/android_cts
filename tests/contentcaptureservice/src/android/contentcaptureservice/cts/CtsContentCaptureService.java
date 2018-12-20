@@ -54,6 +54,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private static CtsContentCaptureService sInstance;
 
+    // TODO(b/119638958): reuse with allSessions
     /** Used by {@link #getOnlyFinishedSession()}. */
     private static ContentCaptureSessionId sFirstSessionId;
 
@@ -65,8 +66,24 @@ public class CtsContentCaptureService extends ContentCaptureService {
         return sInstance;
     }
 
+    /**
+     * List of all sessions started - never reset.
+     */
+    private final ArrayList<ContentCaptureSessionId> mAllSessions = new ArrayList<>();
+
+    /**
+     * Map of all sessions started but not finished yet - sessions are removed as they're finished.
+     */
     private final ArrayMap<ContentCaptureSessionId, Session> mOpenSessions = new ArrayMap<>();
+
+    /**
+     * Map of all sessions finished.
+     */
     private final ArrayMap<ContentCaptureSessionId, Session> mFinishedSessions = new ArrayMap<>();
+
+    /**
+     * Map of latches for sessions that started but haven't finished yet.
+     */
     private final ArrayMap<ContentCaptureSessionId, CountDownLatch> mUnfinishedSessionLatches =
             new ArrayMap<>();
 
@@ -75,6 +92,16 @@ public class CtsContentCaptureService extends ContentCaptureService {
         sExceptions.clear();
         // TODO(b/119638958): should probably set sInstance to null as well, but first we would need
         // to make sure each test unbinds the service.
+
+        // TODO(b/119638958): each test should use a different service instance, but we need
+        // to provide onConnected() / onDisconnected() methods first and then change the infra so
+        // we can wait for those
+        if (sInstance != null) {
+            sInstance.mAllSessions.clear();
+            sInstance.mOpenSessions.clear();
+            sInstance.mFinishedSessions.clear();
+            sInstance.mUnfinishedSessionLatches.clear();
+        }
     }
 
     @Override
@@ -106,6 +133,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             ContentCaptureSessionId sessionId) {
         Log.i(TAG, "onCreateContentCaptureSession(ctx=" + context + ", id=" + sessionId
                 + ", firstId=" + sFirstSessionId + ")");
+        mAllSessions.add(sessionId);
         if (sFirstSessionId == null) {
             sFirstSessionId = sessionId;
         }
@@ -189,6 +217,14 @@ public class CtsContentCaptureService extends ContentCaptureService {
         return getFinishedSession(sFirstSessionId);
     }
 
+    /**
+     * Gets all sessions that have been created so far.
+     */
+    @NonNull
+    public List<ContentCaptureSessionId> getAllSessionIds() {
+        return Collections.unmodifiableList(mAllSessions);
+    }
+
     @Override
     protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         super.dump(fd, pw, args);
@@ -220,6 +256,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private void throwIllegalSessionStateException(@NonNull String fmt, @Nullable Object...args) {
         throw new IllegalStateException(String.format(fmt, args)
+                + ".\nAll=" + mAllSessions
                 + ".\nOpen=" + mOpenSessions
                 + ".\nLatches=" + mUnfinishedSessionLatches
                 + ".\nFinished=" + mFinishedSessions);

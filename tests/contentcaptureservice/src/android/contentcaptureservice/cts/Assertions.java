@@ -48,7 +48,68 @@ final class Assertions {
         assertWithMessage("wrong activity for %s", session)
                 .that(session.context.getActivityComponent())
                 .isEqualTo(activity.getComponentName());
+        // TODO(b/119638958): merge both or replace check above by:
+        //  assertMainSessionContext(session, activity);
         assertThat(session.id).isEqualTo(expectedSessionId);
+    }
+
+    /**
+     * Asserts the context of a main session.
+     */
+    public static void assertMainSessionContext(@NonNull Session session,
+            @NonNull AbstractContentCaptureActivity activity) {
+        assertMainSessionContext(session, activity, /* flags= */ 0);
+    }
+
+    /**
+     * Asserts the context of a main session.
+     */
+    public static void assertMainSessionContext(@NonNull Session session,
+            @NonNull AbstractContentCaptureActivity activity, int expectedFlags) {
+        assertWithMessage("no context on %s", session).that(session.context).isNotNull();
+        assertWithMessage("wrong activity for %s", session)
+                .that(session.context.getActivityComponent())
+                .isEqualTo(activity.getComponentName());
+        // TODO(b/121260224): add this assertion when it's set
+        // assertWithMessage("context for session %s should have displayId", session)
+        //        .that(session.context.getDisplayId()).isNotEqualTo(0);
+        assertWithMessage("wrong task id for session %s", session)
+                .that(session.context.getTaskId()).isEqualTo(activity.getRealTaskId());
+        assertWithMessage("wrong flags on context for session %s", session)
+                .that(session.context.getFlags()).isEqualTo(expectedFlags);
+        assertWithMessage("context for session %s should not have URI", session)
+                .that(session.context.getUri()).isNull();
+        assertWithMessage("context for session %s should not have extras", session)
+                .that(session.context.getExtras()).isNull();
+    }
+
+    /**
+     * Asserts the invariants of a child session.
+     */
+    public static void assertChildSessionContext(@NonNull Session session) {
+        assertWithMessage("no context on %s", session).that(session.context).isNotNull();
+        assertWithMessage("context for session %s should not have component", session)
+                .that(session.context.getActivityComponent()).isNull();
+        assertWithMessage("context for session %s should not have displayId", session)
+                .that(session.context.getDisplayId()).isEqualTo(0);
+        assertWithMessage("context for session %s should not have taskId", session)
+                .that(session.context.getTaskId()).isEqualTo(0);
+        assertWithMessage("context for session %s should not have flags", session)
+                .that(session.context.getFlags()).isEqualTo(0);
+    }
+
+    /**
+     * Asserts a session belongs to the right parent
+     */
+    public static void assertRightRelationship(@NonNull Session parent, @NonNull Session child) {
+        final ContentCaptureSessionId expectedParentId = parent.id;
+        assertWithMessage("No id on parent session %s", parent).that(expectedParentId).isNotNull();
+        assertWithMessage("No context on child session %s", child).that(child.context).isNotNull();
+        final ContentCaptureSessionId actualParentId = child.context.getParentSessionId();
+        assertWithMessage("No parent id on context %s of child session %s", child.context, child)
+                .that(actualParentId).isNotNull();
+        assertWithMessage("id of parent session doesn't match child").that(actualParentId)
+                .isEqualTo(expectedParentId);
     }
 
     /**
