@@ -17,7 +17,7 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Helper.TAG;
-import static android.contentcaptureservice.cts.Helper.enableService;
+import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -47,10 +47,9 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         return sActivityRule;
     }
 
-    // TODO(b/119638958): rename once we add moar tests
     @Test
-    public void testIt() throws Exception {
-        enableService();
+    public void testSimpleSessionLifecycle() throws Exception {
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -60,7 +59,6 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         Log.v(TAG, "session id: " + session.id);
 
@@ -69,5 +67,14 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
         assertThat(events).isEmpty();
+    }
+
+    @Test
+    public void testOnConnectionEvents() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        service.waitUntilConnected();
+
+        resetService();
+        service.waitUntilDisconnected();
     }
 }

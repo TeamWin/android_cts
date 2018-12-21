@@ -18,11 +18,13 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.resetService;
+import static android.contentcaptureservice.cts.Helper.setService;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.Visitor;
@@ -82,6 +84,12 @@ public abstract class AbstractContentCaptureIntegrationTest
             // Finally, let subclasses set their ActivityTestRule
             .around(getActivityTestRule());
 
+    /**
+     * Watcher set on {@link #enableService()} and used to wait until it's gone after the test
+     * finishes.
+     */
+    private ServiceWatcher mServiceWatcher;
+
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
     }
@@ -123,10 +131,30 @@ public abstract class AbstractContentCaptureIntegrationTest
         }
     }
 
+    // TODO(b/119638958): this method should be called from the SafeCleaner, but we'll need to
+    // add a run() method that takes an object that can throw an exception
     @After
-    public void restoreDefaultService() {
+    public void restoreDefaultService() throws InterruptedException {
         Log.v(TAG, "@After: restoreDefaultService()");
         resetService();
+
+        if (mServiceWatcher != null) {
+            mServiceWatcher.waitOnDestroy();
+        }
+    }
+
+    /**
+     * Sets {@link CtsContentCaptureService} as the service for the current user and waits until
+     * its created.
+     */
+    public CtsContentCaptureService enableService() throws InterruptedException {
+        if (mServiceWatcher != null) {
+            throw new IllegalStateException("There Can Be Only One!");
+        }
+        mServiceWatcher = CtsContentCaptureService.setServiceWatcher();
+        setService(CtsContentCaptureService.SERVICE_NAME);
+
+        return mServiceWatcher.waitOnCreate();
     }
 
     /**
