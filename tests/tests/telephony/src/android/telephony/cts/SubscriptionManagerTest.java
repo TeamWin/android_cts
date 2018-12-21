@@ -25,6 +25,7 @@ import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -326,6 +327,32 @@ public class SubscriptionManagerTest {
                 .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
                 .build();
         assertOverrideSuccess(older, newer);
+    }
+
+    @Test
+    public void testSubscriptionGrouping() throws Exception {
+        if (!isSupported()) return;
+
+        // Set subscription group with current sub Id. This should fail
+        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
+        int[] subGroup = new int[] {mSubId};
+        try {
+            mSm.setSubscriptionGroup(subGroup);
+            fail();
+        } catch (SecurityException expected) {
+        }
+
+        // Getting subscriptions in group should return null as setSubscriptionGroup
+        // should fail.
+        assertNull(mSm.getSubscriptionsInGroup(mSubId));
+
+        // Remove from subscription group with current sub Id. This should fail
+        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
+        try {
+            mSm.removeSubscriptionsFromGroup(subGroup);
+            fail();
+        } catch (SecurityException expected) {
+        }
     }
 
     private void assertOverrideSuccess(SubscriptionPlan... plans) {
