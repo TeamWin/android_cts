@@ -23,10 +23,13 @@ import static android.server.am.Components.REPORT_FULLY_DRAWN_ACTIVITY;
 import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
-
+import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
+import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.util.TimeUtils.formatDuration;
+
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION_DELAY_MS;
@@ -37,6 +40,7 @@ import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TR
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.FIELD_CLASS_NAME;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.TYPE_TRANSITION_COLD_LAUNCH;
+import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.TYPE_TRANSITION_HOT_LAUNCH;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.TYPE_TRANSITION_REPORTED_DRAWN_NO_BUNDLE;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.TYPE_TRANSITION_WARM_LAUNCH;
 
@@ -54,6 +58,8 @@ import android.content.ComponentName;
 import android.metrics.LogMaker;
 import android.metrics.MetricsReader;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 
@@ -93,6 +99,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * In all three cases, verify the delay measurements are the same.
      */
     @Test
+    @Presubmit
     public void testAppLaunchIsLogged() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -171,6 +178,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * See {@link Activity#reportFullyDrawn()}
      */
     @Test
+    @Presubmit
     public void testAppFullyDrawnReportIsLogged() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -201,12 +209,87 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Launch an activity with wait option and verify that {@link android.app.WaitResult#totalTime}
+     * Warm launch an activity with wait option and verify that {@link android.app.WaitResult#totalTime}
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
-     * metrics logs.
+     * metrics logs. Verify we output the correct launch state.
      */
     @Test
-    public void testAppLaunchSetsWaitResultDelayData() {
+    @Presubmit
+    public void testAppWarmLaunchSetsWaitResultDelayData() {
+        runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
+
+        // Test warm launch
+        pressBackButton();
+        waitForDeviceIdle(1000);
+        mMetricsReader.checkpoint(); // clear out old logs
+
+        final String amStartOutput =
+                runShellCommand("am start -W " + TEST_ACTIVITY.flattenToShortString());
+
+        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
+        assertNotNull("log should have windows drawn delay", metricsLog);
+
+        final int windowsDrawnDelayMs =
+                (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
+
+        assertEquals("Expected a cold launch.", metricsLog.getType(), TYPE_TRANSITION_WARM_LAUNCH);
+
+        assertThat("did not find component in am start output.", amStartOutput,
+                containsString(TEST_ACTIVITY.flattenToShortString()));
+
+        assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
+                containsString(Integer.toString(windowsDrawnDelayMs)));
+
+        assertThat("did not find launch state in am start output.", amStartOutput,
+                containsString("WARM"));
+    }
+
+
+    /**
+     * Hot launch an activity with wait option and verify that {@link android.app.WaitResult#totalTime}
+     * totalTime is set correctly. Make sure the reported value is consistent with value reported to
+     * metrics logs. Verify we output the correct launch state.
+     */
+    @Test
+    @Presubmit
+    public void testAppHotLaunchSetsWaitResultDelayData() {
+        runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
+
+        // Test hot launch
+        pressHomeButton();
+        waitForDeviceIdle(1000);
+        mMetricsReader.checkpoint(); // clear out old logs
+
+        final String amStartOutput =
+                runShellCommand("am start -W " + TEST_ACTIVITY.flattenToShortString());
+
+        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
+        assertNotNull("log should have windows drawn delay", metricsLog);
+
+        final int windowsDrawnDelayMs =
+                (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
+
+        assertEquals("Expected a cold launch.", metricsLog.getType(), TYPE_TRANSITION_HOT_LAUNCH);
+
+        assertThat("did not find component in am start output.", amStartOutput,
+                containsString(TEST_ACTIVITY.flattenToShortString()));
+
+        // TODO (b/120981435) use ActivityMetricsLogger to populate hot launch times
+        // assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
+        //       containsString(Integer.toString(windowsDrawnDelayMs)));
+
+        assertThat("did not find launch state in am start output.", amStartOutput,
+                containsString("HOT"));
+    }
+
+  /**
+     * Cold launch an activity with wait option and verify that {@link android.app.WaitResult#totalTime}
+     * totalTime is set correctly. Make sure the reported value is consistent with value reported to
+     * metrics logs. Verify we output the correct launch state.
+     */
+    @Test
+    @Presubmit
+    public void testAppColdLaunchSetsWaitResultDelayData() {
         final String amStartOutput =
                 runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -223,6 +306,9 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
                 containsString(Integer.toString(windowsDrawnDelayMs)));
+
+        assertThat("did not find launch state in am start output.", amStartOutput,
+                containsString("COLD"));
     }
 
     /**
@@ -231,6 +317,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * see b/117148004
      */
     @Test
+    @Presubmit
     public void testLaunchOfVisibleApp() {
         // Launch an activity.
         getLaunchActivityBuilder()
@@ -281,6 +368,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * trampoline activity. See b/80380150 (Long warm launch times reported in dev play console)
      */
     @Test
+    @Presubmit
+    @FlakyTest(bugId = 80380150)
     public void testNoDisplayActivityLaunch() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -306,6 +395,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * draws on screen.
      */
     @Test
+    @Presubmit
     public void testTrampolineActivityLaunch() {
         // Launch a trampoline activity that will launch single task activity.
         getLaunchActivityBuilder()
