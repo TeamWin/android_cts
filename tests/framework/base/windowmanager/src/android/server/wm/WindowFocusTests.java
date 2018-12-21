@@ -166,8 +166,9 @@ public class WindowFocusTests {
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3,
                     secondaryDisplay.getDisplayId());
 
-            if (getTargetContext().getResources().getBoolean(
-                    com.android.internal.R.bool.config_perDisplayFocusEnabled)) {
+            final boolean perDisplayFocusEnabled = getTargetContext().getResources().getBoolean(
+                    com.android.internal.R.bool.config_perDisplayFocusEnabled);
+            if (perDisplayFocusEnabled) {
                 primaryActivity.assertWindowFocusState(true /* hasFocus */);
                 sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
             } else {
@@ -185,9 +186,13 @@ public class WindowFocusTests {
             tapOnCenterOfDisplay(DEFAULT_DISPLAY);
 
             // Assert only display-unspecified key would be cancelled after secondary activity is
-            // not top focused.
+            // not top focused if per-display focus is enabled. Otherwise, assert all non-released
+            // key events sent to secondary activity would be cancelled.
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_5, FLAG_CANCELED);
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_7, FLAG_CANCELED);
+            if (!perDisplayFocusEnabled) {
+                secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
+            }
             assertEquals(secondaryActivity.getLogTag() + " must only receive expected events.",
                     0 /* expected event count */, secondaryActivity.getKeyEventCount());
 
