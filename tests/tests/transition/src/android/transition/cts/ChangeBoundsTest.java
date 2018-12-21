@@ -43,8 +43,8 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ChangeBoundsTest extends BaseTransitionTest {
-    private static final int SMALL_SQUARE_SIZE_DP = 10;
-    private static final int LARGE_SQUARE_SIZE_DP = 30;
+    private static final int SMALL_SQUARE_SIZE_DP = 30;
+    private static final int LARGE_SQUARE_SIZE_DP = 50;
     private static final int SMALL_OFFSET_DP = 2;
 
     ChangeBounds mChangeBounds;
@@ -325,21 +325,27 @@ public class ChangeBoundsTest extends BaseTransitionTest {
                 width = view.getWidth();
                 height = view.getHeight();
             }
-            validateDim(name, "width", dimensions.x, width);
-            validateDim(name, "height", dimensions.y, height);
-            dimensions.set(width, height);
+            int newWidth = validateDim(name, "width", dimensions.x, width);
+            int newHeight = validateDim(name, "height", dimensions.y, height);
+            dimensions.set(newWidth, newHeight);
         }
 
-        private void validateDim(String name, String dimen, int lastDim, int newDim) {
+        private int validateDim(String name, String dimen, int lastDim, int newDim) {
+            int dim = newDim;
             if (lastDim != -1) {
+                // We must give a pixel's buffer because the top-left and
+                // bottom-right may move independently, causing a rounding error
+                // in size change.
                 if (mGrow) {
                     assertTrue(name + " new " + dimen + " " + newDim
                                     + " is less than previous " + lastDim,
-                            newDim >= lastDim);
+                            newDim >= lastDim - 1);
+                    dim = Math.max(lastDim, newDim);
                 } else {
                     assertTrue(name + " new " + dimen + " " + newDim
                                     + " is more than previous " + lastDim,
-                            newDim <= lastDim);
+                            newDim <= lastDim + 1);
+                    dim = Math.min(lastDim, newDim);
                 }
                 if (newDim != lastDim) {
                     mDidChangeSize = true;
@@ -349,6 +355,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
                     newDim <= mMax);
             assertTrue(name + " " + dimen + " " + newDim + " must be >= " + mMin,
                     newDim >= mMin);
+            return dim;
         }
 
         @Override
