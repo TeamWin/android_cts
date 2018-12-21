@@ -228,8 +228,6 @@ public class MediaExtractorTest extends AndroidTestCase {
         refPresentations.set(3, refPresentations.get(1));
         boolean[] presentationsMatched = new boolean[refPresentations.size()];
         mExtractor.selectTrack(ac4TrackIndex);
-        // See b/120846068, the call to 'seek' is needed to guarantee a reset of the AP parser.
-        mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
         for (int i = 0; i < refPresentations.size(); ) {
             List<AudioPresentation> presentations = mExtractor.getAudioPresentations(ac4TrackIndex);
             assertNotNull(presentations);
