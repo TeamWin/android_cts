@@ -310,7 +310,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         mJobScheduler.enqueue(ji, new JobWorkItem(work5));
         mJobScheduler.enqueue(ji, new JobWorkItem(work6));
         kTestEnvironment.readyToWork();
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run "
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run --user cur "
                 + kJobServiceComponent.getPackageName() + " " + ENQUEUE_WORK_JOB_ID);
 
         assertTrue("Restarted with work enqueued did not execute.",
@@ -365,7 +365,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         mJobScheduler.enqueue(ji, new JobWorkItem(work5));
         mJobScheduler.enqueue(ji, new JobWorkItem(work6));
         kTestEnvironment.readyToWork();
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run "
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run --user cur "
                 + kJobServiceComponent.getPackageName() + " " + ENQUEUE_WORK_JOB_ID);
 
         assertTrue("Restarted with work enqueued did not execute.",
