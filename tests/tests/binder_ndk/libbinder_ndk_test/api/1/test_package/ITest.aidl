@@ -2,10 +2,10 @@ package test_package;
 interface ITest {
   String GetName();
   void TestVoidReturn();
-  void TestOneway();
+  oneway void TestOneway();
   int GiveMeMyCallingPid();
   int GiveMeMyCallingUid();
-  void CacheCallingInfoFromOneway();
+  oneway void CacheCallingInfoFromOneway();
   int GiveMeMyCallingPidFromOneway();
   int GiveMeMyCallingUidFromOneway();
   int RepeatInt(int value);
@@ -33,7 +33,7 @@ interface ITest {
   float[] RepeatFloatArray(in float[] input, out float[] repeated);
   double[] RepeatDoubleArray(in double[] input, out double[] repeated);
   String[] RepeatStringArray(in String[] input, out String[] repeated);
-  RegularPolygon[] RepeatRegularPolygonArray(in RegularPolygon[] input, out RegularPolygon[] repeated);
+  test_package.RegularPolygon[] RepeatRegularPolygonArray(in test_package.RegularPolygon[] input, out test_package.RegularPolygon[] repeated);
   @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
   @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
   @nullable char[] RepeatNullableCharArray(in @nullable char[] input);
