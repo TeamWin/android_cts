@@ -16,8 +16,6 @@
 
 package android.permission.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -213,22 +211,6 @@ public class ProviderPermissionTest extends AndroidTestCase {
                         + ") can request the MANAGE_DOCUMENTS permission; found package "
                         + pi.packageName + " which must be revoked for security reasons");
             }
-        }
-    }
-
-    /**
-     * Verify that the holder of the MANAGE_DOCUMENTS permission is com.android.documentsui.
-     */
-    public void testManageDocumentsMustIncludedInDocumentUi() {
-        final PackageManager pm = getContext().getPackageManager();
-
-        final List<PackageInfo> holding = pm.getPackagesHoldingPermissions(new String[] {
-                android.Manifest.permission.MANAGE_DOCUMENTS
-        }, PackageManager.MATCH_UNINSTALLED_PACKAGES);
-
-        assertThat(holding.size()).isAtMost(1);
-        if (holding.size() == 1) {
-            assertThat(holding.get(0).packageName).isEqualTo("com.android.documentsui");
         }
     }
 }
