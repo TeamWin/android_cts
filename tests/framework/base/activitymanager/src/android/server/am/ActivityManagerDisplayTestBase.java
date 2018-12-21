@@ -225,6 +225,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
         private boolean mMustBeCreated = true;
+        private Size mSimulationDisplaySize = new Size(1024 /* width */, 768 /* height */);
 
         private boolean mVirtualDisplayCreated = false;
         private final OverlayDisplayDevicesSession mOverlayDisplayDeviceSession =
@@ -275,6 +276,11 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
+        VirtualDisplaySession setSimulationDisplaySize(int width, int height) {
+            mSimulationDisplaySize = new Size(width, height);
+            return this;
+        }
+
         VirtualDisplaySession setMustBeCreated(boolean mustBeCreated) {
             mMustBeCreated = mustBeCreated;
             return this;
@@ -318,8 +324,8 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private List<ActivityDisplay> simulateDisplay() throws Exception {
             final List<ActivityDisplay> originalDs = getDisplaysStates();
 
-            // Create virtual display with custom density dpi.
-            mOverlayDisplayDeviceSession.set("1024x768/" + mDensityDpi);
+            // Create virtual display with custom density dpi and specified size.
+            mOverlayDisplayDeviceSession.set(mSimulationDisplaySize + "/" + mDensityDpi);
 
             return assertAndGetNewDisplays(1, originalDs);
         }

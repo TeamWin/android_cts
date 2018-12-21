@@ -538,6 +538,15 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
+    protected void launchActivityOnDisplay(ComponentName activityName, int windowingMode,
+            int displayId, final String... keyValuePairs) {
+        executeShellCommand(getAmStartCmd(activityName, displayId, keyValuePairs)
+                + " --windowingMode " + windowingMode);
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setWindowingMode(windowingMode)
+                .build());
+    }
+
     protected void launchActivityOnDisplay(ComponentName activityName, int displayId,
             String... keyValuePairs) {
         launchActivityOnDisplayNoWait(activityName, displayId, keyValuePairs);
