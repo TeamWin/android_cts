@@ -18,7 +18,10 @@ package android.view.cts.surfacevalidator;
 public class PixelColor {
     public static final int BLACK = 0xFF000000;
     public static final int RED = 0xFF0000FF;
+    public static final int GREEN = 0xFF00FF00;
     public static final int BLUE = 0xFFFF0000;
+
+    public static final int TRANSPARENT_RED = 0x7F0000FF;
 
     // Default to black
     public short mMinAlpha;
