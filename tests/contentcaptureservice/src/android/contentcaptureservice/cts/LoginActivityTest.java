@@ -264,7 +264,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
     @Test
     public void testTextChangeBuffer() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -287,7 +287,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
 
