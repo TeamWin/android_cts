@@ -2804,4 +2804,101 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertEquals(MediaPlayer2.CALL_COMPLETED_PAUSE, (int) commandsCompleted.get(2));
         assertEquals(0, mOnErrorCalled.getNumSignal());
     }
+
+    public void testHandleFileDataSourceDesc() throws Exception {
+        final int resid1 = R.raw.testmp3;
+        final int resid2 = R.raw.testmp3_4;
+
+        MediaPlayer2 mp = new MediaPlayer2(mContext);
+
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock =
+                pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                        "MediaPlayer2Test");
+        mp.setWakeLock(wakeLock);
+
+        Monitor onPrepareCalled = new Monitor();
+        Monitor onSetDataSourceCalled = new Monitor();
+        Monitor onDataSourceListEndCalled = new Monitor();
+        Monitor onSetNextDataSourceCalled = new Monitor();
+        Monitor onClearNextDataSourcesCalled = new Monitor();
+        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
+            @Override
+            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
+                    onPrepareCalled.signal();
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_LIST_END) {
+                    onDataSourceListEndCalled.signal();
+                }
+            }
+
+            @Override
+            public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
+                if (what == MediaPlayer2.CALL_COMPLETED_SET_DATA_SOURCE) {
+                    onSetDataSourceCalled.signal();
+                } else if (what == MediaPlayer2.CALL_COMPLETED_CLEAR_NEXT_DATA_SOURCES) {
+                    onClearNextDataSourcesCalled.signal();
+                } else if (what == MediaPlayer2.CALL_COMPLETED_SET_NEXT_DATA_SOURCE) {
+                    onSetNextDataSourceCalled.signal();
+                }
+            }
+        };
+        mp.registerEventCallback(mExecutor, ecb);
+
+        FileDataSourceDesc fdsd1 = openFile(resid1);
+        FileDataSourceDesc fdsd2 = openFile(resid2);
+
+        mp.setDataSource(fdsd1);
+        mp.setNextDataSource(fdsd2);
+        mp.prepare();
+        onPrepareCalled.waitForSignal();
+        mp.reset();
+        assertTrue(isFileDataSourceDescClosed(fdsd1));
+        assertTrue(isFileDataSourceDescClosed(fdsd2));
+
+        fdsd1 = openFile(resid1);
+        fdsd2 = openFile(resid2);
+        mp.setDataSource(fdsd1);
+        mp.setNextDataSource(fdsd2);
+        onClearNextDataSourcesCalled.reset();
+        mp.clearNextDataSources();
+        onClearNextDataSourcesCalled.waitForSignal();
+        assertTrue(isFileDataSourceDescClosed(fdsd2));
+
+        fdsd2 = openFile(resid2);
+        onSetNextDataSourceCalled.reset();
+        mp.setNextDataSource(fdsd2);
+        onSetNextDataSourceCalled.waitForSignal();
+        onSetNextDataSourceCalled.reset();
+        mp.setNextDataSource(fdsd2);
+        onSetNextDataSourceCalled.waitForSignal();
+        assertFalse(isFileDataSourceDescClosed(fdsd2));
+
+        onDataSourceListEndCalled.reset();
+        mp.prepare();
+        mp.play();
+        onDataSourceListEndCalled.waitForSignal();
+        assertTrue(isFileDataSourceDescClosed(fdsd1));
+
+        mp.close();
+    }
+
+    private FileDataSourceDesc openFile(int resid) throws Exception {
+        AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
+        FileDataSourceDesc fdsd = new FileDataSourceDesc.Builder()
+                .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                    afd.getStartOffset(), afd.getLength())
+                .build();
+        afd.close();
+        return fdsd;
+    }
+
+    private boolean isFileDataSourceDescClosed(FileDataSourceDesc fdsd) {
+        try {
+            fdsd.getParcelFileDescriptor().getFd();
+        } catch (IllegalStateException e) {
+            return true;
+        }
+        return false;
+    }
 }
