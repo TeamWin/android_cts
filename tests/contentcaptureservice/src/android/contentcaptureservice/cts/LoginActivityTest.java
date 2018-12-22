@@ -220,8 +220,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
     public void testTextChanged() throws Exception {
         final CtsContentCaptureService service = enableService();
 
-        // TODO(b/119638958): move to super class
-        final ActivityWatcher watcher = mActivitiesWatcher.watch(LoginActivity.class);
+        final ActivityWatcher watcher = startWatcher();
 
         LoginActivity.onRootView((activity, rootView) -> ((LoginActivity) activity).mUsername
                 .setText("user"));
@@ -260,7 +259,62 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
 
         assertViewTextChanged(events.get(7), "USER", activity.mUsername.getAutofillId());
-        assertViewTextChanged(events.get(8), "PASS", activity.mUsername.getAutofillId());
+        assertViewTextChanged(events.get(8), "PASS", activity.mPassword.getAutofillId());
+    }
+
+    @Test
+    public void testTextChangeBuffer() throws Exception {
+        enableService();
+
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> ((LoginActivity) activity).mUsername
+                .setText(""));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.syncRunOnUiThread(() -> {
+            activity.mUsername.setText("a");
+            activity.mUsername.setText("ab");
+
+            activity.mPassword.setText("d");
+            activity.mPassword.setText("de");
+
+            activity.mUsername.setText("abc");
+        });
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
+        final Session session = service.getOnlyFinishedSession();
+        final ContentCaptureSessionId sessionId = session.id;
+
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+
+        assertThat(events).hasSize(10);
+        assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
+        assertViewAppeared(events.get(1), activity.mUsername, rootId, "");
+        assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
+        assertViewAppeared(events.get(3), activity.mPassword, rootId, "");
+        // TODO(b/119638958): get rid of those intermediated parents
+        final View grandpa1 = (View) activity.getRootView().getParent();
+        final View grandpa2 = (View) grandpa1.getParent();
+        final View decorView = (View) grandpa2.getParent();
+
+        assertViewAppeared(events.get(4), activity.getRootView(), grandpa1.getAutofillId());
+        assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
+
+        assertViewTextChanged(events.get(7), "ab", activity.mUsername.getAutofillId());
+        assertViewTextChanged(events.get(8), "de", activity.mPassword.getAutofillId());
+        assertViewTextChanged(events.get(9), "abc", activity.mUsername.getAutofillId());
     }
 
     // TODO(b/119638958): add moar test cases for different sessions:
