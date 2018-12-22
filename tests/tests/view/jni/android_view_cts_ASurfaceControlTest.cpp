@@ -16,14 +16,78 @@
 
 #define LOG_TAG "ASurfaceControlTest"
 
-
-#include <android/surface_control.h>
+#include <unistd.h>
 
 #include <array>
+#include <string>
+
+#include <android/hardware_buffer.h>
+#include <android/log.h>
+#include <android/native_window_jni.h>
+#include <android/surface_control.h>
 
 #include <jni.h>
 
 namespace {
+
+static AHardwareBuffer* allocateBuffer(int32_t width, int32_t height) {
+    AHardwareBuffer* buffer = nullptr;
+    AHardwareBuffer_Desc desc = {};
+    desc.width = width;
+    desc.height = height;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_COMPOSER_OVERLAY | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
+    desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+
+    AHardwareBuffer_allocate(&desc, &buffer);
+
+    return buffer;
+}
+
+static void fillRegion(void* data, int32_t left, int32_t top, int32_t right,
+                       int32_t bottom, uint32_t color, uint32_t stride) {
+    uint32_t* ptr = static_cast<uint32_t*>(data);
+
+    ptr += stride * top;
+
+    for (uint32_t y = top; y < bottom; y++) {
+        for (uint32_t x = left; x < right; x++) {
+            ptr[x] = color;
+        }
+        ptr += stride;
+    }
+}
+
+static bool getSolidBuffer(int32_t width, int32_t height, uint32_t color,
+                           AHardwareBuffer** outHardwareBuffer,
+                           int* outFence) {
+    AHardwareBuffer* buffer = allocateBuffer(width, height);
+    if (!buffer) {
+        return true;
+    }
+
+    AHardwareBuffer_Desc desc = {};
+    AHardwareBuffer_describe(buffer, &desc);
+
+    void* data = nullptr;
+    const ARect rect{0, 0, width, height};
+    AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, -1, &rect,
+                                             &data);
+    if (!data) {
+        return true;
+    }
+
+    fillRegion(data, 0, 0, width, height, color, desc.stride);
+
+    AHardwareBuffer_unlock(buffer, outFence);
+
+    *outHardwareBuffer = buffer;
+    return false;
+}
+
+void SurfaceTransaction_releaseBuffer(JNIEnv* /*env*/, jclass, jlong buffer) {
+    AHardwareBuffer_release(reinterpret_cast<AHardwareBuffer*>(buffer));
+}
 
 jlong SurfaceTransaction_create(JNIEnv* /*env*/, jclass) {
     return reinterpret_cast<jlong>(ASurfaceTransaction_create());
@@ -39,10 +103,72 @@ void SurfaceTransaction_apply(JNIEnv* /*env*/, jclass, jlong surfaceTransaction)
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction));
 }
 
-const std::array<JNINativeMethod, 3> JNI_METHODS = {{
+long SurfaceControl_createFromWindow(JNIEnv* env, jclass, jobject jSurface) {
+    if (!jSurface) {
+        return 0;
+    }
+
+    ANativeWindow* window = ANativeWindow_fromSurface(env, jSurface);
+    if (!window) {
+        return 0;
+    }
+
+    const std::string debugName = "SurfaceControl_createFromWindowLayer";
+    ASurfaceControl* surfaceControl =
+            ASurfaceControl_createFromWindow(window, debugName.c_str());
+    if (!surfaceControl) {
+        return 0;
+    }
+
+    ANativeWindow_release(window);
+
+    return reinterpret_cast<jlong>(surfaceControl);
+}
+
+jlong SurfaceControl_create(JNIEnv* /*env*/, jclass, jlong parentSurfaceControlId) {
+    ASurfaceControl* surfaceControl = nullptr;
+    const std::string debugName = "SurfaceControl_create";
+
+    surfaceControl = ASurfaceControl_create(
+            reinterpret_cast<ASurfaceControl*>(parentSurfaceControlId),
+            debugName.c_str());
+
+    return reinterpret_cast<jlong>(surfaceControl);
+}
+
+void SurfaceControl_destroy(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
+    ASurfaceControl_destroy(reinterpret_cast<ASurfaceControl*>(surfaceControl));
+}
+
+jlong SurfaceTransaction_setSolidBuffer(JNIEnv* /*env*/, jclass,
+                                        jlong surfaceControl,
+                                        jlong surfaceTransaction, jint width,
+                                        jint height, jint color) {
+    AHardwareBuffer* buffer = nullptr;
+    int fence = -1;
+
+    bool err = getSolidBuffer(width, height, color, &buffer, &fence);
+    if (err) {
+        return 0;
+    }
+
+    ASurfaceTransaction_setBuffer(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+            reinterpret_cast<ASurfaceControl*>(surfaceControl), buffer, fence);
+
+    return reinterpret_cast<jlong>(buffer);
+}
+
+const std::array<JNINativeMethod, 8> JNI_METHODS = {{
     {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
     {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
     {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
+    {"nSurfaceControl_createFromWindow", "(Landroid/view/Surface;)J",
+                                            (void*)SurfaceControl_createFromWindow},
+    {"nSurfaceControl_create", "(J)J", (void*)SurfaceControl_create},
+    {"nSurfaceControl_destroy", "(J)V", (void*)SurfaceControl_destroy},
+    {"nSurfaceTransaction_setSolidBuffer", "(JJIII)J", (void*)SurfaceTransaction_setSolidBuffer},
+    {"nSurfaceTransaction_releaseBuffer", "(J)V", (void*)SurfaceTransaction_releaseBuffer},
 }};
 
 }  // anonymous namespace

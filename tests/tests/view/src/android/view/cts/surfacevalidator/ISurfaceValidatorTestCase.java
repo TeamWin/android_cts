@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,13 @@
  */
 package android.view.cts.surfacevalidator;
 
-public abstract class PixelChecker {
-    private PixelColor mPixelColor;
+import android.content.Context;
+import android.widget.FrameLayout;
 
-    public PixelChecker() {
-        mPixelColor = new PixelColor();
-    }
+public interface ISurfaceValidatorTestCase {
+    PixelChecker getChecker();
 
-    public PixelChecker(int color) {
-        mPixelColor = new PixelColor(color);
-    }
+    void start(Context context, FrameLayout parent);
 
-    PixelColor getColor() {
-        return mPixelColor;
-    }
-
-    public abstract boolean checkPixels(int matchingPixelCount, int width, int height);
+    void end();
 }
