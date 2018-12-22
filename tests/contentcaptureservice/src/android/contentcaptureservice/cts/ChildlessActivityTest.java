@@ -20,7 +20,6 @@ import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Helper.TAG;
-import static android.contentcaptureservice.cts.Helper.enableService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -66,7 +65,7 @@ public class ChildlessActivityTest
 
     @Test
     public void testDefaultLifecycle() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -76,7 +75,6 @@ public class ChildlessActivityTest
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
         Log.v(TAG, "session id: " + sessionId);
@@ -92,7 +90,7 @@ public class ChildlessActivityTest
 
     @Test
     public void testAddAndRemoveNoImportantChild() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -117,7 +115,6 @@ public class ChildlessActivityTest
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
         Log.v(TAG, "session id: " + sessionId);
@@ -133,7 +130,7 @@ public class ChildlessActivityTest
 
     @Test
     public void testAddAndRemoveImportantChild() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -158,7 +155,6 @@ public class ChildlessActivityTest
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
         Log.v(TAG, "session id: " + sessionId);

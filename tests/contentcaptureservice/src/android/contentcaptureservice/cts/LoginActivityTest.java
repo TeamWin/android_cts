@@ -23,7 +23,6 @@ import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Helper.TAG;
-import static android.contentcaptureservice.cts.Helper.enableService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -71,7 +70,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
     @Test
     public void testSimpleLifecycle_defaultSession() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -81,7 +80,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
         Log.v(TAG, "session id: " + sessionId);
@@ -122,7 +120,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
     @Test
     public void testSimpleLifecycle_rootViewSession() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         final ActivityWatcher watcher = startWatcher();
 
@@ -165,7 +163,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertSessionId(childSessionId, activity.mPasswordLabel);
 
         // Get the sessions
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final List<ContentCaptureSessionId> allSessionIds = service.getAllSessionIds();
         assertThat(allSessionIds).containsExactly(mainSessionId, childSessionId);
         final Session mainSession = service.getFinishedSession(mainSessionId);
@@ -221,7 +218,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
     @Test
     public void testTextChanged() throws Exception {
-        enableService();
+        final CtsContentCaptureService service = enableService();
 
         // TODO(b/119638958): move to super class
         final ActivityWatcher watcher = mActivitiesWatcher.watch(LoginActivity.class);
@@ -238,7 +235,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         final ContentCaptureSessionId sessionId = session.id;
 

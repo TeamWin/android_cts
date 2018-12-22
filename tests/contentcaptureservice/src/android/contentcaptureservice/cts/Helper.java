@@ -57,12 +57,8 @@ final class Helper {
      */
     public static void setService(@NonNull String service) {
         Log.d(TAG, "Setting service to " + service);
-        // TODO(b/119638958): use @TestingAPI for max duration constant
+        // TODO(b/119638958): use @TestingAPI to get max duration constant
         runShellCommand("cmd content_capture set temporary-service 0 " + service + " 12000");
-        // TODO(b/119638958): add a more robust mechanism to wait for service to be set.
-        // For example, when the service is set using a shell cmd, block until the
-        // IntelligencePerUserService is cached (or use a @TestingApi instead of shell cmd)
-        SystemClock.sleep(GENERIC_TIMEOUT_MS);
     }
 
     /**
@@ -71,13 +67,6 @@ final class Helper {
     public static void resetService() {
         Log.d(TAG, "Resetting back to default service");
         runShellCommand("cmd content_capture set temporary-service 0");
-    }
-
-    /**
-     * Sets {@link CtsContentCaptureService} as the service for the current user.
-     */
-    public static void enableService() {
-        setService(CtsContentCaptureService.SERVICE_NAME);
     }
 
     private Helper() {
