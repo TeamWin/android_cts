@@ -36,6 +36,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
+import java.util.stream.IntStream;
 
 @AppModeFull(reason = "No interaction with system server")
 public class MediaMuxerTest extends AndroidTestCase {
@@ -279,10 +282,202 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     /**
+     * Test: makes sure if audio and video muxing using MPEG4Writer works well when there are frame
+     * drops as in b/63590381 and b/64949961 while B Frames encoding is enabled.
+     */
+    public void testSimulateAudioBVideoFramesDropIssues() throws Exception {
+        int sourceId = R.raw.video_h264_main_b_frames;
+        String outputFile = File.createTempFile(
+            "MediaMuxerTest_testSimulateAudioBVideoFramesDropIssues", ".mp4").getAbsolutePath();
+        try {
+            simulateVideoFramesDropIssuesAndMux(sourceId, outputFile, 2 /* track index */,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            verifyAFewSamplesTimestamp(sourceId, outputFile);
+            verifySamplesMatch(sourceId, outputFile, 1000000 /* sample at 1 sec */);
+            verifySamplesMatch(sourceId, outputFile, 7000000 /* sample at 7 sec */);
+        } finally {
+            new File(outputFile).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure if video only muxing using MPEG4Writer works well when there are B Frames.
+     */
+    public void testAllTimestampsBVideoOnly() throws Exception {
+        int sourceId = R.raw.video_480x360_mp4_h264_bframes_495kbps_30fps_editlist;
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testAllTimestampsBVideoOnly",
+            ".mp4").getAbsolutePath();
+        try {
+            // No samples to drop in this case.
+            // No start offsets for any track.
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, null);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, null, null);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure muxing works well when video with B Frames are muxed using MPEG4Writer
+     * and a few frames drop.
+     */
+    public void testTimestampsBVideoOnlyFramesDropOnce() throws Exception {
+        int sourceId = R.raw.video_480x360_mp4_h264_bframes_495kbps_30fps_editlist;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsBVideoOnlyFramesDropOnce", ".mp4").getAbsolutePath();
+        try {
+            HashSet<Integer> samplesDropSet = new HashSet<Integer>();
+            // Drop frames from sample index 56 to 76, I frame at 56.
+            IntStream.rangeClosed(56, 76).forEach(samplesDropSet::add);
+            // No start offsets for any track.
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, samplesDropSet, null);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, samplesDropSet, null);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure if video muxing while framedrops occurs twice using MPEG4Writer
+     * works with B Frames.
+     */
+    public void testTimestampsBVideoOnlyFramesDropTwice() throws Exception {
+        int sourceId = R.raw.video_480x360_mp4_h264_bframes_495kbps_30fps_editlist;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsBVideoOnlyFramesDropTwice", ".mp4").getAbsolutePath();
+        try {
+            HashSet<Integer> samplesDropSet = new HashSet<Integer>();
+            // Drop frames with sample index 57 to 67, P frame at 57.
+            IntStream.rangeClosed(57, 67).forEach(samplesDropSet::add);
+            // Drop frames with sample index 173 to 200, B frame at 173.
+            IntStream.rangeClosed(173, 200).forEach(samplesDropSet::add);
+            // No start offsets for any track.
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, samplesDropSet, null);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, samplesDropSet, null);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing while framedrops once using MPEG4Writer
+     * works with B Frames.
+     */
+    public void testTimestampsAudioBVideoFramesDropOnce() throws Exception {
+        int sourceId = R.raw.video_h264_main_b_frames;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsAudioBVideoFramesDropOnce", ".mp4").getAbsolutePath();
+        try {
+            HashSet<Integer> samplesDropSet = new HashSet<Integer>();
+            // Drop frames from sample index 56 to 76, I frame at 56.
+            IntStream.rangeClosed(56, 76).forEach(samplesDropSet::add);
+            // No start offsets for any track.
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, samplesDropSet, null);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, samplesDropSet, null);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing while framedrops twice using MPEG4Writer
+     * works with B Frames.
+     */
+    public void testTimestampsAudioBVideoFramesDropTwice() throws Exception {
+        int sourceId = R.raw.video_h264_main_b_frames;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsAudioBVideoFramesDropTwice", ".mp4").getAbsolutePath();
+        try {
+            HashSet<Integer> samplesDropSet = new HashSet<Integer>();
+            // Drop frames with sample index 57 to 67, P frame at 57.
+            IntStream.rangeClosed(57, 67).forEach(samplesDropSet::add);
+            // Drop frames with sample index 173 to 200, B frame at 173.
+            IntStream.rangeClosed(173, 200).forEach(samplesDropSet::add);
+            // No start offsets for any track.
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, samplesDropSet, null);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, samplesDropSet, null);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
+     * when video frames start later than audio.
+     */
+    public void testTimestampsAudioBVideoStartOffsetVideo() throws Exception {
+        int sourceId = R.raw.video_h264_main_b_frames;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsAudioBVideoStartOffsetVideo", ".mp4").getAbsolutePath();
+        try {
+            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+            // Video starts at 400000us.
+            startOffsetUsVect.add(400000);
+            // Audio starts at 0us.
+            startOffsetUsVect.add(0);
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, null, startOffsetUsVect);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames when audio
+     * samples start later than video.
+     */
+    public void testTimestampsAudioBVideoStartOffsetAudio() throws Exception {
+        int sourceId = R.raw.video_h264_main_b_frames;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsAudioBVideoStartOffsetAudio", ".mp4").getAbsolutePath();
+        try {
+            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+            // Video starts at 0us.
+            startOffsetUsVect.add(0);
+            // Audio starts at 400000us.
+            startOffsetUsVect.add(400000);
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
+            verifyTimestampsWithSamplesDropSet(sourceId, outputFilePath, null, startOffsetUsVect);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Clones a media file and then compares against the source file to make
+     * sure they match.
+     */
+    private void cloneAndVerify(int srcMedia, String outputMediaFile,
+            int expectedTrackCount, int degrees, int fmt) throws IOException {
+        try {
+            cloneMediaUsingMuxer(srcMedia, outputMediaFile, expectedTrackCount,
+                    degrees, fmt);
+            if (fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 ||
+                    fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
+                verifyAttributesMatch(srcMedia, outputMediaFile, degrees);
+                verifyLocationInFile(outputMediaFile);
+            }
+            // Check the sample on 1s and 0.5s.
+            verifySamplesMatch(srcMedia, outputMediaFile, 1000000);
+            verifySamplesMatch(srcMedia, outputMediaFile, 500000);
+        } finally {
+            new File(outputMediaFile).delete();
+        }
+    }
+
+    /**
      * Using the MediaMuxer to clone a media file.
      */
     private void cloneMediaUsingMuxer(int srcMedia, String dstMediaPath,
-            int expectedTrackCount, int degrees, int fmt) throws IOException {
+            int expectedTrackCount, int degrees, int fmt)
+            throws IOException {
         // Set up MediaExtractor to read from the source.
         AssetFileDescriptor srcFd = mResources.openRawResourceFd(srcMedia);
         MediaExtractor extractor = new MediaExtractor();
@@ -378,28 +573,6 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     /**
-     * Clones a media file and then compares against the source file to make
-     * sure they match.
-     */
-    private void cloneAndVerify(int srcMedia, String outputMediaFile,
-            int expectedTrackCount, int degrees, int fmt) throws IOException {
-        try {
-            cloneMediaUsingMuxer(srcMedia, outputMediaFile, expectedTrackCount,
-                    degrees, fmt);
-            if (fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 ||
-                    fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
-                verifyAttributesMatch(srcMedia, outputMediaFile, degrees);
-                verifyLocationInFile(outputMediaFile);
-            }
-            // Check the sample on 1s and 0.5s.
-            verifySamplesMatch(srcMedia, outputMediaFile, 1000000);
-            verifySamplesMatch(srcMedia, outputMediaFile, 500000);
-        } finally {
-            new File(outputMediaFile).delete();
-        }
-    }
-
-    /**
      * Compares some attributes using MediaMetadataRetriever to make sure the
      * cloned media file matches the source file.
      */
@@ -445,6 +618,38 @@ public class MediaMuxerTest extends AndroidTestCase {
         retrieverSrc.release();
         retrieverTest.release();
         testFd.close();
+    }
+
+    private void verifyLocationInFile(String fileName) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(fileName);
+        String location = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION);
+        assertNotNull("No location information found in file " + fileName, location);
+
+
+        // parsing String location and recover the location information in floats
+        // Make sure the tolerance is very small - due to rounding errors.
+
+        // Get the position of the -/+ sign in location String, which indicates
+        // the beginning of the longitude.
+        int minusIndex = location.lastIndexOf('-');
+        int plusIndex = location.lastIndexOf('+');
+
+        assertTrue("+ or - is not found or found only at the beginning [" + location + "]",
+                (minusIndex > 0 || plusIndex > 0));
+        int index = Math.max(minusIndex, plusIndex);
+
+        float latitude = Float.parseFloat(location.substring(0, index - 1));
+        int lastIndex = location.lastIndexOf('/', index);
+        if (lastIndex == -1) {
+            lastIndex = location.length();
+        }
+        float longitude = Float.parseFloat(location.substring(index, lastIndex - 1));
+        assertTrue("Incorrect latitude: " + latitude + " [" + location + "]",
+                Math.abs(latitude - LATITUDE) <= TOLERANCE);
+        assertTrue("Incorrect longitude: " + longitude + " [" + location + "]",
+                Math.abs(longitude - LONGITUDE) <= TOLERANCE);
+        retriever.release();
     }
 
     /**
@@ -498,36 +703,458 @@ public class MediaMuxerTest extends AndroidTestCase {
         testFd.close();
     }
 
-    private void verifyLocationInFile(String fileName) {
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        retriever.setDataSource(fileName);
-        String location = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION);
-        assertNotNull("No location information found in file " + fileName, location);
+    /**
+     * Using MediaMuxer and MediaExtractor to mux a media file from another file while skipping
+     * some video frames as in the issues b/63590381 and b/64949961.
+     */
+    private void simulateVideoFramesDropIssuesAndMux(int srcMedia, String dstMediaPath,
+            int expectedTrackCount, int fmt) throws IOException {
+        // Set up MediaExtractor to read from the source.
+        AssetFileDescriptor srcFd = mResources.openRawResourceFd(srcMedia);
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(srcFd.getFileDescriptor(), srcFd.getStartOffset(),
+            srcFd.getLength());
 
+        int trackCount = extractor.getTrackCount();
+        assertEquals("wrong number of tracks", expectedTrackCount, trackCount);
 
-        // parsing String location and recover the location information in floats
-        // Make sure the tolerance is very small - due to rounding errors.
+        // Set up MediaMuxer for the destination.
+        MediaMuxer muxer;
+        muxer = new MediaMuxer(dstMediaPath, fmt);
 
-        // Get the position of the -/+ sign in location String, which indicates
-        // the beginning of the longitude.
-        int minusIndex = location.lastIndexOf('-');
-        int plusIndex = location.lastIndexOf('+');
+        // Set up the tracks.
+        HashMap<Integer, Integer> indexMap = new HashMap<Integer, Integer>(trackCount);
 
-        assertTrue("+ or - is not found or found only at the beginning [" + location + "]",
-                (minusIndex > 0 || plusIndex > 0));
-        int index = Math.max(minusIndex, plusIndex);
-
-        float latitude = Float.parseFloat(location.substring(0, index - 1));
-        int lastIndex = location.lastIndexOf('/', index);
-        if (lastIndex == -1) {
-            lastIndex = location.length();
+        for (int i = 0; i < trackCount; i++) {
+            extractor.selectTrack(i);
+            MediaFormat format = extractor.getTrackFormat(i);
+            int dstIndex = muxer.addTrack(format);
+            indexMap.put(i, dstIndex);
         }
-        float longitude = Float.parseFloat(location.substring(index, lastIndex - 1));
-        assertTrue("Incorrect latitude: " + latitude + " [" + location + "]",
-                Math.abs(latitude - LATITUDE) <= TOLERANCE);
-        assertTrue("Incorrect longitude: " + longitude + " [" + location + "]",
-                Math.abs(longitude - LONGITUDE) <= TOLERANCE);
-        retriever.release();
+
+        // Copy the samples from MediaExtractor to MediaMuxer.
+        boolean sawEOS = false;
+        int bufferSize = MAX_SAMPLE_SIZE;
+        int sampleCount = 0;
+        int offset = 0;
+        int videoSampleCount = 0;
+        // Counting frame index values starting from 1
+        final int muxAllTypeVideoFramesUntilIndex = 136; // I/P/B frames passed as it is until this
+        final int muxAllTypeVideoFramesFromIndex = 157; // I/P/B frames passed as it is from this
+        final int pFrameBeforeARandomBframeIndex = 137;
+        final int bFrameAfterPFrameIndex = pFrameBeforeARandomBframeIndex+1;
+        final int oneFrameDurationUs = 33333; // 30 fps input clip, one frame durationUs = 33333.
+
+        ByteBuffer dstBuf = ByteBuffer.allocate(bufferSize);
+        BufferInfo bufferInfo = new BufferInfo();
+
+        muxer.start();
+        while (!sawEOS) {
+            bufferInfo.offset = 0;
+            bufferInfo.size = extractor.readSampleData(dstBuf, offset);
+            if (bufferInfo.size < 0) {
+                if (VERBOSE) {
+                    Log.d(TAG, "saw input EOS.");
+                }
+                sawEOS = true;
+                bufferInfo.size = 0;
+            } else {
+                bufferInfo.presentationTimeUs = extractor.getSampleTime();
+                bufferInfo.flags = extractor.getSampleFlags();
+                int trackIndex = extractor.getSampleTrackIndex();
+                // Video track at index 0, skip some video frames while muxing.
+                if (trackIndex == 0) {
+                    ++videoSampleCount;
+                    if (VERBOSE) {
+                        Log.i(TAG, "videoSampleCount : " + videoSampleCount);
+                    }
+                    if (videoSampleCount <= muxAllTypeVideoFramesUntilIndex ||
+                            videoSampleCount == bFrameAfterPFrameIndex ||
+                            videoSampleCount >= muxAllTypeVideoFramesFromIndex) {
+                        // Write frame as it is.
+                        muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
+                    } else if (videoSampleCount == pFrameBeforeARandomBframeIndex) {
+                        // Adjust time stamp for this P frame to a few frames later, say 15
+                        bufferInfo.presentationTimeUs += oneFrameDurationUs * 15;
+                        muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
+                    }
+                    else {
+                        // Skip frames after bFrameAfterPFrameIndex
+                        // and before muxAllTypeVideoFramesFromIndex, 139 to 156.
+                        if (VERBOSE) {
+                            Log.i(TAG, "skipped this frame");
+                        }
+                    }
+                } else {
+                    // write audio data as it is continuously
+                    muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
+                }
+                extractor.advance();
+                sampleCount++;
+                if (VERBOSE) {
+                    Log.d(TAG, "Frame (" + sampleCount + ") " +
+                            "PresentationTimeUs:" + bufferInfo.presentationTimeUs +
+                            " Flags:" + bufferInfo.flags +
+                            " TrackIndex:" + trackIndex +
+                            " Size(bytes) " + bufferInfo.size );
+                }
+            }
+        }
+
+        muxer.stop();
+        muxer.release();
+        extractor.release();
+        srcFd.close();
+
+        return;
+    }
+
+    /* Uses two MediaExtractor's and checks whether timestamps of first few and another few
+     *  from last sync frame matches
+     */
+    private void verifyAFewSamplesTimestamp(int srcMediaId, String testMediaPath)
+            throws IOException {
+        final int numFramesTSCheck = 20; // Num frames to be checked for its timestamps
+
+        AssetFileDescriptor srcFd = mResources.openRawResourceFd(srcMediaId);
+        MediaExtractor extractorSrc = new MediaExtractor();
+        extractorSrc.setDataSource(srcFd.getFileDescriptor(),
+            srcFd.getStartOffset(), srcFd.getLength());
+        MediaExtractor extractorTest = new MediaExtractor();
+        extractorTest.setDataSource(testMediaPath);
+
+        int trackCount = extractorSrc.getTrackCount();
+        for (int i = 0; i < trackCount; i++) {
+            extractorSrc.selectTrack(i);
+            extractorTest.selectTrack(i);
+        }
+        // Check time stamps for numFramesTSCheck frames from start(0).
+        checkNumFramesTimestamp(0, numFramesTSCheck, extractorSrc, extractorTest);
+        // Check time stamps for numFramesTSCheck frames from 6000000 -
+        // sync frame after framedrops at index 172 of video track.
+        checkNumFramesTimestamp(6000000, numFramesTSCheck, extractorSrc, extractorTest);
+
+        extractorSrc.release();
+        extractorTest.release();
+        srcFd.close();
+    }
+
+    private void checkNumFramesTimestamp(long seekTimeUs, int numFrames,
+        MediaExtractor extractorSrc, MediaExtractor extractorTest) {
+        long srcSampleTimeUs = -1;
+        long testSampleTimeUs = -1;
+        extractorSrc.seekTo(seekTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        extractorTest.seekTo(seekTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        while (numFrames-- > 0 ) {
+            srcSampleTimeUs = extractorSrc.getSampleTime();
+            testSampleTimeUs = extractorTest.getSampleTime();
+            if(srcSampleTimeUs == -1 || testSampleTimeUs == -1){
+                fail("either of tracks reached end of stream");
+            }
+            if (srcSampleTimeUs != testSampleTimeUs ) {
+                if (VERBOSE) {
+                    Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
+                        "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                    Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+                }
+                fail("timestamps didn't match");
+            }
+            extractorSrc.advance();
+            extractorTest.advance();
+        }
+    }
+
+    /**
+     * Using MediaMuxer and MediaExtractor to mux a media file from another file while skipping
+     * 0 or more video frames and desired start offsets for each track.
+     * startOffsetUsVect : order of tracks is the same as in the input file
+     */
+    private void cloneMediaWithSamplesDropAndStartOffsets(int srcMedia, String dstMediaPath,
+            int fmt, HashSet<Integer> samplesDropSet, Vector<Integer> startOffsetUsVect)
+            throws IOException {
+        // Set up MediaExtractor to read from the source.
+        AssetFileDescriptor srcFd = mResources.openRawResourceFd(srcMedia);
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(srcFd.getFileDescriptor(), srcFd.getStartOffset(),
+            srcFd.getLength());
+
+        int trackCount = extractor.getTrackCount();
+
+        // Set up MediaMuxer for the destination.
+        MediaMuxer muxer;
+        muxer = new MediaMuxer(dstMediaPath, fmt);
+
+        // Set up the tracks.
+        HashMap<Integer, Integer> indexMap = new HashMap<Integer, Integer>(trackCount);
+
+        int videoTrackIndex = 100;
+        int videoStartOffsetUs = 0;
+        int audioTrackIndex = 100;
+        int audioStartOffsetUs = 0;
+        for (int i = 0; i < trackCount; i++) {
+            extractor.selectTrack(i);
+            MediaFormat format = extractor.getTrackFormat(i);
+            int dstIndex = muxer.addTrack(format);
+            indexMap.put(i, dstIndex);
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                videoTrackIndex = i;
+                // Make sure there's an entry for video track.
+                if (startOffsetUsVect != null && (videoTrackIndex < startOffsetUsVect.size())) {
+                    videoStartOffsetUs = startOffsetUsVect.get(videoTrackIndex);
+                }
+            }
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("audio/")) {
+                audioTrackIndex = i;
+                // Make sure there's an entry for audio track.
+                if (startOffsetUsVect != null && (audioTrackIndex < startOffsetUsVect.size())) {
+                    audioStartOffsetUs = startOffsetUsVect.get(audioTrackIndex);
+                }
+            }
+        }
+
+        // Copy the samples from MediaExtractor to MediaMuxer.
+        boolean sawEOS = false;
+        int bufferSize = MAX_SAMPLE_SIZE;
+        int sampleCount = 0;
+        int offset = 0;
+        int videoSampleCount = 0;
+
+        ByteBuffer dstBuf = ByteBuffer.allocate(bufferSize);
+        BufferInfo bufferInfo = new BufferInfo();
+
+        muxer.start();
+        while (!sawEOS) {
+            bufferInfo.offset = 0;
+            bufferInfo.size = extractor.readSampleData(dstBuf, offset);
+            if (bufferInfo.size < 0) {
+                if (VERBOSE) {
+                    Log.d(TAG, "saw input EOS.");
+                }
+                sawEOS = true;
+                bufferInfo.size = 0;
+            } else {
+                bufferInfo.presentationTimeUs = extractor.getSampleTime();
+                bufferInfo.flags = extractor.getSampleFlags();
+                int trackIndex = extractor.getSampleTrackIndex();
+                if (trackIndex == videoTrackIndex) {
+                    ++videoSampleCount;
+                    if (VERBOSE) {
+                        Log.i(TAG, "videoSampleCount : " + videoSampleCount);
+                    }
+                    if (samplesDropSet == null || (!samplesDropSet.contains(videoSampleCount))) {
+                        // Write video frame with start offset adjustment.
+                        bufferInfo.presentationTimeUs += videoStartOffsetUs;
+                        muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
+                    }
+                    else {
+                        if (VERBOSE) {
+                            Log.i(TAG, "skipped this frame");
+                        }
+                    }
+                } else {
+                    // write audio sample with start offset adjustment.
+                    bufferInfo.presentationTimeUs += audioStartOffsetUs;
+                    muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
+                }
+                extractor.advance();
+                sampleCount++;
+                if (VERBOSE) {
+                    Log.i(TAG, "Sample (" + sampleCount + ")" +
+                            " TrackIndex:" + trackIndex +
+                            " PresentationTimeUs:" + bufferInfo.presentationTimeUs +
+                            " Flags:" + bufferInfo.flags +
+                            " Size(bytes)" + bufferInfo.size );
+                }
+            }
+        }
+
+        muxer.stop();
+        muxer.release();
+        extractor.release();
+        srcFd.close();
+
+        return;
+    }
+
+    /*
+     * Uses MediaExtractors and checks whether timestamps of all samples except in samplesDropSet
+     *  and with start offsets adjustments for each track match.
+     */
+    private void verifyTimestampsWithSamplesDropSet(int srcMediaId, String testMediaPath,
+            HashSet<Integer> samplesDropSet, Vector<Integer> startOffsetUsVect) throws IOException {
+        AssetFileDescriptor srcFd = mResources.openRawResourceFd(srcMediaId);
+        MediaExtractor extractorSrc = new MediaExtractor();
+        extractorSrc.setDataSource(srcFd.getFileDescriptor(),
+            srcFd.getStartOffset(), srcFd.getLength());
+        MediaExtractor extractorTest = new MediaExtractor();
+        extractorTest.setDataSource(testMediaPath);
+
+        int videoTrackIndex = -1;
+        int videoStartOffsetUs = 0;
+        int trackCount = extractorSrc.getTrackCount();
+
+        // Select video track.
+        for (int i = 0; i < trackCount; i++) {
+            MediaFormat format = extractorSrc.getTrackFormat(i);
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                videoTrackIndex = i;
+                if (startOffsetUsVect != null && videoTrackIndex < startOffsetUsVect.size()) {
+                    videoStartOffsetUs = startOffsetUsVect.get(videoTrackIndex);
+                }
+                extractorSrc.selectTrack(videoTrackIndex);
+                extractorTest.selectTrack(videoTrackIndex);
+            }
+        }
+        if (videoTrackIndex != -1) {
+            checkVideoSamplesTimeStamps(extractorSrc, extractorTest, samplesDropSet,
+                videoStartOffsetUs);
+        }
+
+        extractorSrc.unselectTrack(videoTrackIndex);
+        extractorTest.unselectTrack(videoTrackIndex);
+
+        int audioTrackIndex = -1;
+        int audioSampleCount = 0;
+        int audioStartOffsetUs = 0;
+        //select audio track
+        for (int i = 0; i < trackCount; i++) {
+            MediaFormat format = extractorSrc.getTrackFormat(i);
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("audio/")) {
+                audioTrackIndex = i;
+                if (startOffsetUsVect != null && audioTrackIndex < startOffsetUsVect.size()) {
+                    audioStartOffsetUs = startOffsetUsVect.get(audioTrackIndex);
+                }
+                extractorSrc.selectTrack(audioTrackIndex);
+                extractorTest.selectTrack(audioTrackIndex);
+            }
+        }
+
+        if (audioTrackIndex != -1) {
+           // No audio track
+            checkAudioSamplesTimestamps(extractorSrc, extractorTest, audioStartOffsetUs);
+        }
+
+        extractorSrc.release();
+        extractorTest.release();
+        srcFd.close();
+    }
+
+    // Check timestamps of all video samples.
+    private void checkVideoSamplesTimeStamps(MediaExtractor extractorSrc,
+                MediaExtractor extractorTest, HashSet<Integer> samplesDropSet,
+                int videoStartOffsetUs) {
+        long srcSampleTimeUs = -1;
+        long testSampleTimeUs = -1;
+        boolean srcAdvance = false;
+        boolean testAdvance = false;
+        int videoSampleCount = 0;
+
+        extractorSrc.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        extractorTest.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+
+        do {
+            ++videoSampleCount;
+            srcSampleTimeUs = extractorSrc.getSampleTime();
+            testSampleTimeUs = extractorTest.getSampleTime();
+            if (VERBOSE) {
+                Log.d(TAG, "videoSampleCount:" + videoSampleCount);
+                Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
+                            "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+            }
+            if (samplesDropSet == null || !samplesDropSet.contains(videoSampleCount)) {
+                if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
+                    // TODO: Uncomment once MediaExtractor.advance() bug - b/121204004 is fixed.
+                    // or if that was not bug, then find another approach.
+                    // if (VERBOSE) {
+                    //     Log.d(TAG, "Fail:either of tracks reached end of stream");
+                    //     Log.d(TAG, "videoSampleCount:" + videoSampleCount);
+                    //     Log.d(TAG, "srcUs:" + srcSampleTimeUs + "testUs:" + testSampleTimeUs);
+                    // }
+                    // fail("either of tracks reached end of stream");
+                }
+                // Stts values within 0.1ms(100us) difference are fudged to save too many
+                // stts entries in MPEG4Writer.
+                else if (Math.abs(srcSampleTimeUs + videoStartOffsetUs - testSampleTimeUs) > 100) {
+                    if (VERBOSE) {
+                        Log.d(TAG, "Fail:video timestamps didn't match");
+                        Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
+                            "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                        Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+                        Log.d(TAG, "videoSampleCount:" + videoSampleCount);
+                    }
+                    fail("video timestamps didn't match");
+                }
+                testAdvance = extractorTest.advance();
+            }
+            srcAdvance = extractorSrc.advance();
+        } while(srcAdvance && testAdvance);
+        if (srcAdvance != testAdvance) {
+            if (VERBOSE) {
+                Log.d(TAG, "videoSampleCount:" + videoSampleCount);
+            }
+            fail("either video track has not reached its last sample");
+        }
+    }
+
+    private void checkAudioSamplesTimestamps(MediaExtractor extractorSrc,
+                MediaExtractor extractorTest, int audioStartOffsetUs) {
+        long srcSampleTimeUs = -1;
+        long testSampleTimeUs = -1;
+        boolean srcAdvance = false;
+        boolean testAdvance = false;
+        int audioSampleCount = 0;
+
+        extractorSrc.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        extractorTest.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+
+        // Check timestamps of all audio samples.
+        do {
+            ++audioSampleCount;
+            srcSampleTimeUs = extractorSrc.getSampleTime();
+            testSampleTimeUs = extractorTest.getSampleTime();
+            if(VERBOSE) {
+                Log.v(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
+                            "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+            }
+
+            if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
+                // TODO: Uncomment once MediaExtractor.advance() bug - b/121204004 is fixed.
+                // or if that was not bug, then find another approach.
+                // if (VERBOSE) {
+                //     Log.d(TAG, "Fail:either of tracks reached end of stream");
+                //     Log.d(TAG, "audioSampleCount:" + audioSampleCount);
+                //     Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+                // }
+                // fail("either of tracks reached end of stream");
+            }
+            // First audio sample would have zero timestamp and its start offset is implemented
+            // by assigning the first audio sample's duration as the offset. Second sample onwards
+            // would play after the offset.  But video offset is achieved by edit list entry for
+            // video tracks with BFrames. Need to revert the conditional check for first
+            // audio sample once we implement empty edit list entry for audio.
+            else if ((audioSampleCount > 1 &&
+                (srcSampleTimeUs + audioStartOffsetUs) != testSampleTimeUs) ||
+                (audioSampleCount == 1 && srcSampleTimeUs != testSampleTimeUs)) {
+                    if (VERBOSE) {
+                        Log.d(TAG, "Fail:audio timestamps didn't match");
+                        Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
+                            "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                        Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+                        Log.d(TAG, "audioSampleCount:" + audioSampleCount);
+                    }
+                    fail("audio timestamps didn't match");
+                }
+            testAdvance = extractorTest.advance();
+            srcAdvance = extractorSrc.advance();
+        } while(srcAdvance && testAdvance);
+        if (srcAdvance != testAdvance) {
+            if (VERBOSE) {
+                Log.d(TAG, "audioSampleCount:" + audioSampleCount);
+            }
+            fail("either audio track has not reached its last sample");
+        }
     }
 }
 

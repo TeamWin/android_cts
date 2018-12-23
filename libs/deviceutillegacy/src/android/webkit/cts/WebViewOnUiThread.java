@@ -281,10 +281,29 @@ public class WebViewOnUiThread {
     }
 
     public void requestFocus() {
+        new PollingCheck(LOAD_TIMEOUT) {
+            @Override
+            protected boolean check() {
+                requestFocusOnUiThread();
+                return hasFocus();
+            }
+        }.run();
+    }
+
+    private void requestFocusOnUiThread() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mWebView.requestFocus();
+            }
+        });
+    }
+
+    private boolean hasFocus() {
+        return getValue(new ValueGetter<Boolean>() {
+            @Override
+            public Boolean capture() {
+                return mWebView.hasFocus();
             }
         });
     }

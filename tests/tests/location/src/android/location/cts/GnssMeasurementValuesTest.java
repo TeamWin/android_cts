@@ -43,7 +43,7 @@ import java.util.Set;
 public class GnssMeasurementValuesTest extends GnssTestCase {
 
     private static final String TAG = "GnssMeasValuesTest";
-    private static final int LOCATION_TO_COLLECT_COUNT = 5;
+    private static final int LOCATION_TO_COLLECT_COUNT = 20;
     private static final int YEAR_2017 = 2017;
 
     private TestGnssMeasurementListener mMeasurementListener;
@@ -147,6 +147,8 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
                 }
             }
         }
+        TestMeasurementUtil.assertGnssClockHasConsistentFullBiasNanos(softAssert, events);
+
         softAssert.assertOrWarnTrue(isMeasurementTestStrict(),
                 "GNSS Measurements PRRs with Carrier Phase "
                         + "level uncertainties.  If failed, retry near window or outdoors?",

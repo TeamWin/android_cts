@@ -677,8 +677,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         if (mLeanback || mWatch) {
             clickDontAskAgainButton();
         } else {
-            clickDontAskAgainCheckbox();
-            clickDenyButton();
+            clickDenyAndDontAskAgainButton();
         }
     }
 }

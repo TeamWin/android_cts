@@ -146,6 +146,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -331,6 +333,7 @@ public abstract class ActivityManagerTestBase {
         private T mTestActivity;
         boolean mFinishAfterClose;
         private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
+        private static final int WAIT_SLICE = 50;
 
         void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
@@ -360,6 +363,23 @@ public abstract class ActivityManagerTestBase {
         void runOnMainSyncAndWait(Runnable runnable) {
             InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        }
+
+        void runOnMainAndAssertWithTimeout(@NonNull BooleanSupplier condition, long timeoutMs,
+                String message) {
+            final AtomicBoolean result = new AtomicBoolean();
+            final long expiredTime = System.currentTimeMillis() + timeoutMs;
+            while (!result.get()) {
+                if (System.currentTimeMillis() >= expiredTime) {
+                    fail(message);
+                }
+                runOnMainSyncAndWait(() -> {
+                    if (condition.getAsBoolean()) {
+                        result.set(true);
+                    }
+                });
+                SystemClock.sleep(WAIT_SLICE);
+            }
         }
 
         T getActivity() {

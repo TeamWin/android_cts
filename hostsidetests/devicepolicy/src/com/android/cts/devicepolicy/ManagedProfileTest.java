@@ -412,6 +412,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
                 MANAGED_PROFILE_PKG + ".ManagedProfileTest", mProfileUserId);
 
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
+                    "testAddCrossProfileIntentFilter_all", mProfileUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
+                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                .setInt(1)
+                .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
+                .build());
+
         // Set up filters from primary to managed profile
         String command = "am start -W --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
                 + "/.PrimaryUserFilterSetterActivity";
@@ -833,6 +843,32 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     contactsTestSet.checkIfCanFilterEnterpriseContacts(false);
                     contactsTestSet.checkIfCanFilterSelfContacts();
                     contactsTestSet.checkIfNoEnterpriseDirectoryFound();
+                    assertMetricsLogged(getDevice(), () -> {
+                        contactsTestSet.setCallerIdEnabled(true);
+                        contactsTestSet.setCallerIdEnabled(false);
+                    }, new DevicePolicyEventWrapper
+                                .Builder(EventId.SET_CROSS_PROFILE_CALLER_ID_DISABLED_VALUE)
+                                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                                .setBoolean(false)
+                                .build(),
+                        new DevicePolicyEventWrapper
+                                .Builder(EventId.SET_CROSS_PROFILE_CALLER_ID_DISABLED_VALUE)
+                                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                                .setBoolean(true)
+                                .build());
+                    assertMetricsLogged(getDevice(), () -> {
+                        contactsTestSet.setContactsSearchEnabled(true);
+                        contactsTestSet.setContactsSearchEnabled(false);
+                    }, new DevicePolicyEventWrapper
+                                .Builder(EventId.SET_CROSS_PROFILE_CONTACTS_SEARCH_DISABLED_VALUE)
+                                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                                .setBoolean(false)
+                                .build(),
+                        new DevicePolicyEventWrapper
+                                .Builder(EventId.SET_CROSS_PROFILE_CONTACTS_SEARCH_DISABLED_VALUE)
+                                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                                .setBoolean(true)
+                                .build());
                     return null;
                 } finally {
                     // reset policies
@@ -853,6 +889,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testDefaultOrganizationNameIsNull", mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 mProfileUserId);
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".OrganizationInfoTest",
+                    "testSetOrganizationColor", mProfileUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_COLOR_VALUE)
+                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                .build());
     }
 
     public void testPasswordMinimumRestrictions() throws Exception {
@@ -875,8 +918,19 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                "testSetBluetoothContactSharingDisabled_setterAndGetter", mProfileUserId);
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testSetBluetoothContactSharingDisabled_setterAndGetter", mProfileUserId);
+        }, new DevicePolicyEventWrapper
+                    .Builder(EventId.SET_BLUETOOTH_CONTACT_SHARING_DISABLED_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .setBoolean(false)
+                    .build(),
+            new DevicePolicyEventWrapper
+                    .Builder(EventId.SET_BLUETOOTH_CONTACT_SHARING_DISABLED_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .setBoolean(true)
+                    .build());
     }
 
     public void testCannotSetProfileOwnerAgain() throws Exception {
@@ -969,6 +1023,39 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
                     ".CrossProfileWidgetPrimaryUserTest",
                     "testHostReceivesWidgetUpdates_false", mParentUserId);
+        } finally {
+            changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG, "remove-cross-profile-widget",
+                    mProfileUserId);
+            getDevice().uninstallPackage(WIDGET_PROVIDER_PKG);
+        }
+    }
+
+    public void testCrossProfileWidgetsLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            installAppAsUser(WIDGET_PROVIDER_APK, mProfileUserId);
+            installAppAsUser(WIDGET_PROVIDER_APK, mParentUserId);
+            getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
+                    + " --package " + WIDGET_PROVIDER_PKG);
+            setIdleWhitelist(WIDGET_PROVIDER_PKG, true);
+            startWidgetHostService();
+
+            assertMetricsLogged(getDevice(), () -> {
+                changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
+                        "add-cross-profile-widget", mProfileUserId);
+                changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
+                        "remove-cross-profile-widget", mProfileUserId);
+            }, new DevicePolicyEventWrapper
+                        .Builder(EventId.ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE)
+                        .setAdminPackageName(MANAGED_PROFILE_PKG)
+                        .build(),
+                new DevicePolicyEventWrapper
+                        .Builder(EventId.REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE)
+                        .setAdminPackageName(MANAGED_PROFILE_PKG)
+                        .build());
         } finally {
             changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG, "remove-cross-profile-widget",
                     mProfileUserId);
@@ -1348,8 +1435,18 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
-                "testCrossProfileCalendarPackage", mProfileUserId);
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testCrossProfileCalendarPackage", mProfileUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_CALENDAR_PACKAGE_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .setStrings(MANAGED_PROFILE_PKG)
+                    .build(),
+            new DevicePolicyEventWrapper
+                    .Builder(EventId.REMOVE_CROSS_PROFILE_CALENDAR_PACKAGE_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .setStrings(MANAGED_PROFILE_PKG)
+                    .build());
     }
 
     public void testCrossProfileCalendar() throws Exception {
@@ -1470,6 +1567,19 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     "1234" /* newCredential */, null /* oldCredential */, mProfileUserId);
         }, new DevicePolicyEventWrapper.Builder(EventId.SEPARATE_PROFILE_CHALLENGE_CHANGED_VALUE)
                 .setBoolean(true)
+                .build());
+    }
+
+    public void testSetProfileNameLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".DevicePolicyLoggingTest",
+                    "testSetProfileNameLogged", mProfileUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_PROFILE_NAME_VALUE)
+                .setAdminPackageName(MANAGED_PROFILE_PKG)
                 .build());
     }
 

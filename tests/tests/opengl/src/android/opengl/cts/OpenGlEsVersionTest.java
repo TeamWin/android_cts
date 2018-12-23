@@ -263,6 +263,50 @@ public class OpenGlEsVersionTest {
         }
     }
 
+    @CddTest(requirement="7.1.4.5/H-1-1")
+    @Test
+    public void testRequiredEglExtensionsForHdrCapableDisplay() {
+        // See CDD section 7.1.4
+        // This test covers the EGL portion of the CDD requirement. The VK portion of the
+        // requirement is covered elsewhere.
+        final String requiredEglList[] = {
+            "EGL_EXT_gl_colorsapce_bt2020_pq",
+            "EGL_EXT_surface_SMPTE2086_metadata",
+            "EGL_EXT_surface_CTA861_3_metadata",
+        };
+
+        // This requirement only applies if device is handheld and claims to be HDR capable.
+        boolean isHdrCapable = mActivity.getResources().getConfiguration().isScreenHdr();
+        if (!isHdrCapable || !isHandheld())
+            return;
+
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+
+        if (egl.eglInitialize(display, null)) {
+            try {
+                String eglExtensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
+                for (int i = 0; i < requiredEglList.length; ++i) {
+                    assertTrue("EGL extension required by CDD section 7.1.4.5 missing: " +
+                        requiredEglList[i], hasExtension(eglExtensions, requiredEglList[i]));
+                }
+            } finally {
+                egl.eglTerminate(display);
+            }
+        } else {
+            Log.e(TAG, "Couldn't initialize EGL.");
+        }
+    }
+
+    private boolean isHandheld() {
+        // handheld nature is not exposed to package manager, for now
+        // we check for touchscreen and NOT watch and NOT tv
+        PackageManager pm = mActivity.getPackageManager();
+        return pm.hasSystemFeature(pm.FEATURE_TOUCHSCREEN)
+                && !pm.hasSystemFeature(pm.FEATURE_WATCH)
+                && !pm.hasSystemFeature(pm.FEATURE_TELEVISION);
+    }
+
     private static boolean hasExtension(String extensions, String name) {
         return OpenGlEsVersionCtsActivity.hasExtension(extensions, name);
     }

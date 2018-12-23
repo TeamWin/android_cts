@@ -335,11 +335,8 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
                 (StorageManager) mActivity.getSystemService(Context.STORAGE_SERVICE);
 
         // Request access from DocumentsUI
-        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         final StorageVolume volume = storageManager.getStorageVolume(file);
-        // TODO(b/118898214): clean up this flow to not rely on private APIs
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, DocumentsContract.buildDocumentUri(
-                "com.android.externalstorage.documents", "primary:" + directoryName));
+        final Intent intent = volume.createOpenDocumentTreeIntent();
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         // Granting the access

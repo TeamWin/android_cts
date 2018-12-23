@@ -61,6 +61,7 @@ import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 
@@ -159,8 +160,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching a single instance home activity on virtual display that supports system
      * decorations.
      */
-    @Test
-    public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
+    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
+    private void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession session = new HomeActivitySession(SINGLE_HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
                 // Create new virtual display with system decoration support.
@@ -176,8 +177,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Tests launching a home activity on virtual display that supports system decorations.
      */
-    @Test
-    public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
+    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
+    private void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
                 // Create new virtual display with system decoration support.
@@ -197,8 +198,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests home activity that target before Q won't be started on virtual display that supports
      * system decorations.
      */
-    @Test
-    public void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
+    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
+    private void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession
                      = new HomeActivitySession(SDK_27_HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -2205,12 +2206,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
-     * Test that the IME should be shown in default display when target display does not support
-     * system decoration.
+     * Test that the IME should be shown in default display and verify committed texts can deliver
+     * to target display which does not support system decoration.
      */
     @Test
-    public void testImeShownInDefaultDisplayWhenNoSystemDecoration() throws Exception {
-        final long TIMEOUT_SOFT_INPUT = TimeUnit.SECONDS.toMillis(5);
+    public void testImeShowAndCommitTextsInDefaultDisplayWhenNoSysDecor() throws Exception {
+        final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
         try (final VirtualDisplaySession virtualDisplaySession  = new VirtualDisplaySession();
              final TestActivitySession<ImeTestActivity>
@@ -2234,14 +2235,22 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Launch Ime test activity in virtual display.
             imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                     newDisplay.mId);
-            // Make the activity to show soft input.
+            // Make the activity to show soft input on the default display.
             final ImeEventStream stream = mockImeSession.openEventStream();
+            final EditText editText = imeTestActivitySession.getActivity().mEditText;
             imeTestActivitySession.runOnMainSyncAndWait(
                     imeTestActivitySession.getActivity()::showSoftInput);
-            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                    TIMEOUT_SOFT_INPUT);
+            waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
+                    editorMatcher("onStartInput", editText.getPrivateImeOptions()),
+                    event -> "showSoftInput".equals(event.getEventName()));
 
-            mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+            // Commit text & make sure the input texts should be delivered to focused EditText on
+            // virtual display.
+            final String commitText = "test commit";
+            expectCommand(stream, mockImeSession.callCommitText(commitText, 1), TIMEOUT);
+            imeTestActivitySession.runOnMainAndAssertWithTimeout(
+                    () -> TextUtils.equals(commitText, editText.getText()), TIMEOUT,
+                    "The input text should be delivered");
         }
     }
 

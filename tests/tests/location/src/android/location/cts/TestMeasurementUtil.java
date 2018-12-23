@@ -16,10 +16,9 @@
 
 package android.location.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
+import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
@@ -27,11 +26,16 @@ import android.os.Build;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for GnssMeasurement Tests.
@@ -166,6 +170,46 @@ public final class TestMeasurementUtil {
                     gpsTimeInNs >= GPS_TIME_YEAR_2016_IN_NSEC);
         }
 
+    }
+
+    /**
+     * Asserts consistent FullBiasNanos of GnssClock at the same time epoch.
+     *
+     * <p>FullBiasNanos denotes the receiver clock bias calculated by the GNSS chipset.
+     * FullBiasNanos fields in GnssMeasurementEvents of the same time epoch should have the same
+     * value.
+     *
+     * @param softAssert custom SoftAssert
+     * @param events     GnssMeasurementEvents. Each event includes one GnssClock with a
+     *                   fullBiasNanos.
+     */
+    public static void assertGnssClockHasConsistentFullBiasNanos(SoftAssert softAssert,
+            List<GnssMeasurementsEvent> events) {
+        Map<Long, List<Long>> timeToFullBiasList = new HashMap<>();
+        for (GnssMeasurementsEvent event : events) {
+            long timeNanos = event.getClock().getTimeNanos();
+            long fullBiasNanos = event.getClock().getFullBiasNanos();
+
+            timeToFullBiasList.putIfAbsent(timeNanos, new ArrayList<>());
+            List<Long> fullBiasNanosList = timeToFullBiasList.get(timeNanos);
+            fullBiasNanosList.add(fullBiasNanos);
+        }
+
+        for (Map.Entry<Long, List<Long>> entry : timeToFullBiasList.entrySet()) {
+            long timeNanos = entry.getKey();
+            List<Long> fullBiasNanosList = entry.getValue();
+            if (fullBiasNanosList.size() < 2) {
+                continue;
+            }
+            long fullBiasNanos = fullBiasNanosList.get(0);
+            for (int i = 1; i < fullBiasNanosList.size(); i++) {
+                softAssert.assertTrue("FullBiasNanos are the same at the same timeNanos",
+                        timeNanos,
+                        "fullBiasNanosList.get(i) - fullBiasNanosList.get(0) == 0",
+                        String.valueOf(fullBiasNanosList.get(i) - fullBiasNanos),
+                        fullBiasNanosList.get(i) - fullBiasNanos == 0);
+            }
+        }
     }
 
     /**

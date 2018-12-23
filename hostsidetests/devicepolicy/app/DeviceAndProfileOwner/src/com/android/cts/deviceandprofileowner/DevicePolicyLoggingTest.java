@@ -27,20 +27,29 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANT
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.provider.Settings.Secure.DEFAULT_INPUT_METHOD;
 import static android.provider.Settings.Secure.SKIP_FIRST_USE_HINTS;
+import static java.util.stream.Collectors.toList;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ContentResolver;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.support.test.InstrumentationRegistry;
+import java.util.List;
 
 /**
- * Tests for DevicePolicyEvent metrics logged in {@link DevicePolicyManager}.
+ * Invocations of {@link android.app.admin.DevicePolicyManager} methods which are either not CTS
+ * tested or the CTS tests call too many other methods. Used to verify that the relevant metrics
+ * are logged. Note that the metrics verification is done on the host-side.
  */
 public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
 
     public static final String PACKAGE_NAME = "com.android.cts.permissionapp";
+    public static final String PARAM_APP_TO_ENABLE = "app_to_enable";
 
     public void testPasswordMethodsLogged() {
         mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
@@ -126,5 +135,39 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
                 READ_CONTACTS, PERMISSION_GRANT_STATE_DENIED);
         mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME,
                 READ_CONTACTS, PERMISSION_GRANT_STATE_DEFAULT);
+    }
+
+    public void testSetAutoTimeRequired() {
+        final boolean initialValue = mDevicePolicyManager.getAutoTimeRequired();
+        mDevicePolicyManager.setAutoTimeRequired(ADMIN_RECEIVER_COMPONENT, true);
+        mDevicePolicyManager.setAutoTimeRequired(ADMIN_RECEIVER_COMPONENT, false);
+        mDevicePolicyManager.setAutoTimeRequired(ADMIN_RECEIVER_COMPONENT, initialValue);
+    }
+
+    public void testEnableSystemAppLogged() {
+        final String systemPackageToEnable =
+                InstrumentationRegistry.getArguments().getString(PARAM_APP_TO_ENABLE);
+        mDevicePolicyManager.enableSystemApp(ADMIN_RECEIVER_COMPONENT, systemPackageToEnable);
+    }
+
+    public void testEnableSystemAppWithIntentLogged() {
+        final String systemPackageToEnable =
+                InstrumentationRegistry.getArguments().getString(PARAM_APP_TO_ENABLE);
+        final Intent intent =
+                mContext.getPackageManager().getLaunchIntentForPackage(systemPackageToEnable);
+        mDevicePolicyManager.enableSystemApp(ADMIN_RECEIVER_COMPONENT, intent);
+    }
+
+    public void testSetUninstallBlockedLogged() {
+        mDevicePolicyManager.setUninstallBlocked(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME, true);
+        mDevicePolicyManager.setUninstallBlocked(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME, false);
+    }
+
+    public void testDisallowAdjustVolumeMutedLogged() {
+        final boolean initialValue =
+                mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT);
+        mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, false);
+        mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, true);
+        mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, initialValue);
     }
 }

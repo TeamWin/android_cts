@@ -50,55 +50,133 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public static final String SERVICE_NAME = MY_PACKAGE + "/."
             + CtsContentCaptureService.class.getSimpleName();
 
-    private static final CountDownLatch sInstanceLatch = new CountDownLatch(1);
+    private static ServiceWatcher sServiceWatcher;
 
-    private static CtsContentCaptureService sInstance;
-
+    // TODO(b/119638958): reuse with allSessions
     /** Used by {@link #getOnlyFinishedSession()}. */
     private static ContentCaptureSessionId sFirstSessionId;
 
-    // TODO(b/119638958): add method to clear static state / call it from @Before
     private static final ArrayList<Throwable> sExceptions = new ArrayList<>();
 
-    public static CtsContentCaptureService getInstance() throws InterruptedException {
-        await(sInstanceLatch, "Service not started");
-        return sInstance;
-    }
+    private final CountDownLatch mConnectedLatch = new CountDownLatch(1);
+    private final CountDownLatch mDisconnectedLatch = new CountDownLatch(1);
 
+    /**
+     * List of all sessions started - never reset.
+     */
+    private final ArrayList<ContentCaptureSessionId> mAllSessions = new ArrayList<>();
+
+    /**
+     * Map of all sessions started but not finished yet - sessions are removed as they're finished.
+     */
     private final ArrayMap<ContentCaptureSessionId, Session> mOpenSessions = new ArrayMap<>();
+
+    /**
+     * Map of all sessions finished.
+     */
     private final ArrayMap<ContentCaptureSessionId, Session> mFinishedSessions = new ArrayMap<>();
+
+    /**
+     * Map of latches for sessions that started but haven't finished yet.
+     */
     private final ArrayMap<ContentCaptureSessionId, CountDownLatch> mUnfinishedSessionLatches =
             new ArrayMap<>();
+
+    @NonNull
+    public static ServiceWatcher setServiceWatcher() {
+        if (sServiceWatcher != null) {
+            throw new IllegalStateException("There Can Be Only One!");
+        }
+        sServiceWatcher = new ServiceWatcher();
+        return sServiceWatcher;
+    }
+
 
     public static void resetStaticState() {
         sFirstSessionId = null;
         sExceptions.clear();
         // TODO(b/119638958): should probably set sInstance to null as well, but first we would need
         // to make sure each test unbinds the service.
+
+        // TODO(b/119638958): each test should use a different service instance, but we need
+        // to provide onConnected() / onDisconnected() methods first and then change the infra so
+        // we can wait for those
+
+        if (sServiceWatcher != null) {
+            Log.wtf(TAG, "resetStaticState(): should not have sServiceWatcher");
+            sServiceWatcher = null;
+        }
     }
 
     @Override
     public void onCreate() {
-        Log.i(TAG, "onCreate(): sInstance=" + sInstance);
+        Log.i(TAG, "onCreate(): sServiceWatcher=" + sServiceWatcher);
         super.onCreate();
 
-        if (sInstance == null) {
-            sInstance = this;
-            sInstanceLatch.countDown();
-        } else {
-            Log.e(TAG, "onCreate(): already created:" + sInstance);
-            sExceptions.add(new IllegalStateException("onCreate() again"));
+        if (sServiceWatcher == null) {
+            addException("onCreate() without a watcher");
+            return;
         }
+
+        if (sServiceWatcher.mService != null) {
+            addException("onCreate(): already created: %s", sServiceWatcher);
+            return;
+        }
+
+        sServiceWatcher.mService = this;
+        sServiceWatcher.mCreated.countDown();
     }
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "onDestroy(): sInstance=" + sInstance);
+        Log.i(TAG, "onDestroy(): sServiceWatcher=" + sServiceWatcher);
         super.onDestroy();
 
-        if (this == sInstance) {
-            sInstance = null;
+        if (sServiceWatcher == null) {
+            addException("onDestroy() without a watcher");
+            return;
         }
+        if (sServiceWatcher.mService == null) {
+            addException("onDestroy(): no service on %s", sServiceWatcher);
+            return;
+        }
+        sServiceWatcher.mDestroyed.countDown();
+        sServiceWatcher.mService = null;
+        sServiceWatcher = null;
+    }
+
+    @Override
+    public void onConnected() {
+        Log.i(TAG, "onConnected(): sServiceWatcher=" + sServiceWatcher);
+
+        if (mConnectedLatch.getCount() == 0) {
+            addException("already connected: %s", mConnectedLatch);
+        }
+        mConnectedLatch.countDown();
+    }
+
+    @Override
+    public void onDisconnected() {
+        Log.i(TAG, "onDisconnected(): sServiceWatcher=" + sServiceWatcher);
+
+        if (mDisconnectedLatch.getCount() == 0) {
+            addException("already disconnected: %s", mConnectedLatch);
+        }
+        mDisconnectedLatch.countDown();
+    }
+
+    /**
+     * Waits until the system calls {@link #onConnected()}.
+     */
+    public void waitUntilConnected() throws InterruptedException {
+        await(mConnectedLatch, "not connected");
+    }
+
+    /**
+     * Waits until the system calls {@link #onDisconnected()}.
+     */
+    public void waitUntilDisconnected() throws InterruptedException {
+        await(mDisconnectedLatch, "not disconnected");
     }
 
     @Override
@@ -106,6 +184,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             ContentCaptureSessionId sessionId) {
         Log.i(TAG, "onCreateContentCaptureSession(ctx=" + context + ", id=" + sessionId
                 + ", firstId=" + sFirstSessionId + ")");
+        mAllSessions.add(sessionId);
         if (sFirstSessionId == null) {
             sFirstSessionId = sessionId;
         }
@@ -189,14 +268,24 @@ public class CtsContentCaptureService extends ContentCaptureService {
         return getFinishedSession(sFirstSessionId);
     }
 
+    /**
+     * Gets all sessions that have been created so far.
+     */
+    @NonNull
+    public List<ContentCaptureSessionId> getAllSessionIds() {
+        return Collections.unmodifiableList(mAllSessions);
+    }
+
     @Override
     protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         super.dump(fd, pw, args);
 
-        pw.print("sInstance: "); pw.println(sInstance);
-        pw.print("sInstanceLatch: "); pw.println(sInstanceLatch);
+        pw.print("sServiceWatcher: "); pw.println(sServiceWatcher);
         pw.print("sFirstSessionId: "); pw.println(sFirstSessionId);
         pw.print("sExceptions: "); pw.println(sExceptions);
+        pw.print("mConnectedLatch: "); pw.println(mConnectedLatch);
+        pw.print("mDisconnectedLatch: "); pw.println(mDisconnectedLatch);
+        pw.print("mAllSessions: "); pw.println(mAllSessions);
         pw.print("mOpenSessions: "); pw.println(mOpenSessions);
         pw.print("mFinishedSessions: "); pw.println(mFinishedSessions);
         pw.print("mUnfinishedSessionLatches: "); pw.println(mUnfinishedSessionLatches);
@@ -220,6 +309,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private void throwIllegalSessionStateException(@NonNull String fmt, @Nullable Object...args) {
         throw new IllegalStateException(String.format(fmt, args)
+                + ".\nAll=" + mAllSessions
                 + ".\nOpen=" + mOpenSessions
                 + ".\nLatches=" + mUnfinishedSessionLatches
                 + ".\nFinished=" + mFinishedSessions);
@@ -244,6 +334,12 @@ public class CtsContentCaptureService extends ContentCaptureService {
             Log.e(TAG, "Exception handling service callback: " + t);
             sExceptions.add(t);
         }
+    }
+
+    private static void addException(@NonNull String fmt, @Nullable Object...args) {
+        final String msg = String.format(fmt, args);
+        Log.e(TAG, msg);
+        sExceptions.add(new IllegalStateException(msg));
     }
 
     public final class Session {
@@ -272,6 +368,35 @@ public class CtsContentCaptureService extends ContentCaptureService {
         public String toString() {
             return "[id=" + id + ", context=" + context + ", requests=" + mRequests.size()
                     + ", finished=" + finished + "]";
+        }
+    }
+
+    public static final class ServiceWatcher {
+
+        private final CountDownLatch mCreated = new CountDownLatch(1);
+        private final CountDownLatch mDestroyed = new CountDownLatch(1);
+
+        private CtsContentCaptureService mService;
+
+        @NonNull
+        public CtsContentCaptureService waitOnCreate() throws InterruptedException {
+            await(mCreated, "not created");
+
+            if (mService == null) {
+                throw new IllegalStateException("not created");
+            }
+
+            return mService;
+        }
+
+        public void waitOnDestroy() throws InterruptedException {
+            await(mDestroyed, "not destroyed");
+        }
+
+        @Override
+        public String toString() {
+            return "mService: " + mService + " created: " + (mCreated.getCount() == 0)
+                    + " destroyed: " + (mDestroyed.getCount() == 0);
         }
     }
 }

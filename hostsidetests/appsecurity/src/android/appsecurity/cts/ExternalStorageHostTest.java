@@ -235,6 +235,17 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             for (int user : mUsers) {
                 runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testObbGifts", user);
             }
+
+            Assume.assumeTrue(hasIsolatedStorage());
+            for (int user : mUsers) {
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testRemoveObbGifts", user);
+            }
+
+            for (int user : mUsers) {
+                updateAppOp(WRITE_PKG, user, "android:request_install_packages", false);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", user);
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testNoObbGifts", user);
+            }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
