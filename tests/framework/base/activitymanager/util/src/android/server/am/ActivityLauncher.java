@@ -22,6 +22,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 import static android.server.am.Components.TEST_ACTIVITY;
 
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -35,7 +36,7 @@ import android.util.Log;
 
 /** Utility class which contains common code for launching activities. */
 public class ActivityLauncher {
-    private static final String TAG = ActivityLauncher.class.getSimpleName();
+    public static final String TAG = ActivityLauncher.class.getSimpleName();
 
     /** Key for boolean extra, indicates whether it should launch an activity. */
     public static final String KEY_LAUNCH_ACTIVITY = "launch_activity";
@@ -203,5 +204,16 @@ public class ActivityLauncher {
                 throw e;
             }
         }
+    }
+
+    public static void checkActivityStartOnDisplay(Context context, int displayId,
+            ComponentName componentName) {
+        final ActivityManager activityManager =
+                (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        final Intent launchIntent = new Intent(Intent.ACTION_VIEW).setComponent(componentName);
+
+        Log.i(TAG, "isActivityStartAllowedOnDisplay="
+                + activityManager.isActivityStartAllowedOnDisplay(context, displayId,
+                launchIntent));
     }
 }

@@ -35,9 +35,12 @@ import static android.server.am.Components.BOTTOM_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.HOME_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
-import static android.server.am.Components.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
 import static android.server.am.Components.LAUNCH_TEST_ON_DESTROY_ACTIVITY;
+import static android.server.am.Components.LaunchBroadcastReceiver.ACTION_TEST_ACTIVITY_START;
+import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_COMPONENT_NAME;
+import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_TARGET_DISPLAY;
+import static android.server.am.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
@@ -53,6 +56,10 @@ import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
 import static android.server.am.app27.Components.SDK_27_HOME_ACTIVITY;
 import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
+import static android.server.am.second.Components.EMBEDDING_ACTIVITY;
+import static android.server.am.second.Components.EmbeddingActivity.ACTION_EMBEDDING_TEST_ACTIVITY_START;
+import static android.server.am.second.Components.EmbeddingActivity.EXTRA_EMBEDDING_COMPONENT_NAME;
+import static android.server.am.second.Components.EmbeddingActivity.EXTRA_EMBEDDING_TARGET_DISPLAY;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
@@ -76,6 +83,7 @@ import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
@@ -686,6 +694,262 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     }}
             );
         }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for simulated display. It is owned by system and is public, so should be accessible.
+     */
+    @Test
+    public void testCanAccessSystemOwnedDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(TEST_ACTIVITY);
+
+            assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    newDisplay.mId, intent));
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a public virtual display and an activity that doesn't support embedding from shell.
+     */
+    @Test
+    public void testCanAccessPublicVirtualDisplayWithInternalPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                            newDisplay.mId, intent)), "android.permission.INTERNAL_SYSTEM_WINDOW");
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a private virtual display and an activity that doesn't support embedding from shell.
+     */
+    @Test
+    public void testCanAccessPrivateVirtualDisplayWithInternalPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                            newDisplay.mId, intent)), "android.permission.INTERNAL_SYSTEM_WINDOW");
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a public virtual display, an activity that supports embedding but the launching entity
+     * does not have required permission to embed an activity from other app.
+     */
+    @Test
+    public void testCantAccessPublicVirtualDisplayNoEmbeddingPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(SECOND_ACTIVITY);
+
+            assertFalse(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    newDisplay.mId, intent));
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a public virtual display and an activity that does not support embedding.
+     */
+    @Test
+    public void testCantAccessPublicVirtualDisplayActivityEmbeddingNotAllowed() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertFalse(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                            newDisplay.mId, intent)), "android.permission.ACTIVITY_EMBEDDING");
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a public virtual display and an activity that supports embedding.
+     */
+    @Test
+    public void testCanAccessPublicVirtualDisplayActivityEmbeddingAllowed() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                            newDisplay.mId, intent)), "android.permission.ACTIVITY_EMBEDDING");
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a private virtual display.
+     */
+    @Test
+    public void testCantAccessPrivateVirtualDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+
+            final Context targetContext = InstrumentationRegistry.getTargetContext();
+            final ActivityManager activityManager =
+                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(SECOND_ACTIVITY);
+
+            assertFalse(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    newDisplay.mId, intent));
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a private virtual display to check the start of its own activity.
+     */
+    @Test
+    public void testCanAccessPrivateVirtualDisplayByOwner() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+
+            // Check the embedding call
+            final LogSeparator logSeparator = separateLogs();
+            mContext.sendBroadcast(new Intent(ACTION_TEST_ACTIVITY_START)
+                    .setPackage(LAUNCH_BROADCAST_RECEIVER.getPackageName())
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    .putExtra(EXTRA_COMPONENT_NAME, TEST_ACTIVITY)
+                    .putExtra(EXTRA_TARGET_DISPLAY, newDisplay.mId));
+
+            assertActivityStartCheckResult(logSeparator, true);
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a private virtual display by UID present on that display and target activity that allows
+     * embedding.
+     */
+    @Test
+    public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingAllowed()
+            throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+            // Launch a test activity into the target display
+            launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
+
+            // Check the embedding call
+            final LogSeparator logSeparator = separateLogs();
+            mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_ACTIVITY)
+                    .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
+
+            assertActivityStartCheckResult(logSeparator, true);
+        }
+    }
+
+    /**
+     * Tests
+     * {@link android.app.ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     * for a private virtual display by UID present on that display and target activity that does
+     * not allow embedding.
+     */
+    @Test
+    public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingNotAllowed()
+            throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+            // Launch a test activity into the target display
+            launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
+
+            // Check the embedding call
+            final LogSeparator logSeparator = separateLogs();
+            mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_NO_EMBEDDING_ACTIVITY)
+                    .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
+
+            assertActivityStartCheckResult(logSeparator, false);
+        }
+    }
+
+    private void assertActivityStartCheckResult(LogSeparator logSeparator,
+            boolean value) throws Exception {
+        final String component = ActivityLauncher.TAG;
+        final Pattern pattern =
+                Pattern.compile("(.+): isActivityStartAllowedOnDisplay=(true|false)");
+        for (int retry = 1; retry <= 5; retry++) {
+            String[] logs = getDeviceLogsForComponents(logSeparator, component);
+            for (String line : logs) {
+                Matcher m = pattern.matcher(line);
+                if (m.matches()) {
+                    boolean result = Boolean.parseBoolean(m.group(2));
+                    assertEquals("Activity start check must match", value, result);
+                    return;
+                }
+            }
+            logAlways("***Waiting for activity start check for " + component
+                    + " ... retry=" + retry);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+            }
+        }
+        fail("Expected activity start check for " + component + " not found");
     }
 
     /**

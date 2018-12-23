@@ -16,7 +16,13 @@
 
 package android.server.am;
 
+import static android.server.am.Components.LaunchBroadcastReceiver.ACTION_TEST_ACTIVITY_START;
+import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_COMPONENT_NAME;
+import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_TARGET_DISPLAY;
+import static android.server.am.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
+
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,12 +34,24 @@ public class LaunchBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        try {
-            final Bundle extras = intent.getExtras();
-            ActivityLauncher.launchActivityFromExtras(context, extras,
-                    CommandSession.handleForward(extras));
-        } catch (SecurityException e) {
-            Log.e(TAG, "SecurityException launching activity");
+        final Bundle extras = intent.getExtras();
+        Log.i(TAG, "onReceive: extras=" + extras);
+        if (extras == null) {
+            Log.e(TAG, "No extras received");
+            return;
+        }
+
+        if (intent.getAction().equals(LAUNCH_BROADCAST_ACTION)) {
+            try {
+                ActivityLauncher.launchActivityFromExtras(context, extras,
+                        CommandSession.handleForward(extras));
+            } catch (SecurityException e) {
+                Log.e(TAG, "SecurityException launching activity");
+            }
+        } else if (intent.getAction().equals(ACTION_TEST_ACTIVITY_START)) {
+            final ComponentName componentName = extras.getParcelable(EXTRA_COMPONENT_NAME);
+            final int displayId = extras.getInt(EXTRA_TARGET_DISPLAY);
+            ActivityLauncher.checkActivityStartOnDisplay(context, displayId, componentName);
         }
     }
 }
