@@ -516,7 +516,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * primary display.
      */
     @Test
-    @FlakyTest(bugId = 77469851)
     public void testConsequentLaunchActivity() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
