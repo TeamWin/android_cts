@@ -323,6 +323,7 @@
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.server.am.LAUNCH_BROADCAST_ACTION"/>
+                <action android:name="android.server.am.ACTION_TEST_ACTIVITY_START"/>
             </intent-filter>
         </receiver>
 

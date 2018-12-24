@@ -144,8 +144,16 @@ public class Components extends ComponentsBase {
 
     public static final ComponentName LAUNCH_BROADCAST_RECEIVER =
             component("LaunchBroadcastReceiver");
-    public static final String LAUNCH_BROADCAST_ACTION =
-            getPackageName() + ".LAUNCH_BROADCAST_ACTION";
+
+    public static class LaunchBroadcastReceiver {
+        public static final String LAUNCH_BROADCAST_ACTION =
+                getPackageName() + ".LAUNCH_BROADCAST_ACTION";
+
+        public static final String ACTION_TEST_ACTIVITY_START =
+                getPackageName() + ".ACTION_TEST_ACTIVITY_START";
+        public static final String EXTRA_COMPONENT_NAME = "component_name";
+        public static final String EXTRA_TARGET_DISPLAY = "target_display";
+    }
 
     /**
      * Action and extra key constants for {@link #TEST_ACTIVITY}.
