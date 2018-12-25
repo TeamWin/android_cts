@@ -43,8 +43,10 @@ import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_TARGET_
 import static android.server.am.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
+import static android.server.am.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.SINGLE_HOME_ACTIVITY;
+import static android.server.am.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
 import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY;
 import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2;
 import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3;
@@ -163,88 +165,106 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
-     * Tests launching a home activity on virtual display.
+     * Tests launching a home activity on virtual display without system decoration support.
      */
     @Test
-    public void testLaunchHomeActivityOnSecondaryDisplay() throws Exception {
-        try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
-            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-                final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+    public void testLaunchHomeActivityOnSecondaryDisplayWithoutDecorations() throws Exception {
+        try (final HomeActivitySession homeSession =
+                     new HomeActivitySession(SECONDARY_HOME_ACTIVITY);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display without system decoration support.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-                assertEquals("No stacks on newly launched virtual display", 0,
-                        newDisplay.mStacks.size());
-            }
+            // Secondary home activity can't be launched on the display without system decoration
+            // support.
+            assertEquals("No stacks on newly launched virtual display", 0,
+                    newDisplay.mStacks.size());
         }
     }
 
     /**
-     * Tests launching a single instance home activity on virtual display that supports system
-     * decorations.
+     * Tests launching a single instance home activity on virtual display with system decoration
+     * support.
      */
-    @Ignore("TODO (b/118206886): Will add it back once launcher's patch is merged into master.")
     @Test
     public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
-        try (final HomeActivitySession session = new HomeActivitySession(SINGLE_HOME_ACTIVITY)) {
-            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-                // Create new virtual display with system decoration support.
-                final ActivityDisplay newDisplay
-                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+        try (final HomeActivitySession homeSession = new HomeActivitySession(SINGLE_HOME_ACTIVITY);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display with system decoration support.
+            final ActivityDisplay newDisplay
+                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
 
-                assertEquals("No stacks on newly launched virtual display", 0,
-                        newDisplay.mStacks.size());
-            }
+            // If default home doesn't support multi-instance, default secondary home activity
+            // should be automatically launched on the new display.
+            waitAndAssertTopResumedActivity(getDefaultSecondaryHomeComponent(), newDisplay.mId,
+                    "Activity launched on secondary display must be focused and on top");
+            assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
+                    mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
         }
     }
 
     /**
-     * Tests launching a home activity on virtual display that supports system decorations.
+     * Tests launching a single instance home activity with SECONDARY_HOME on virtual display with
+     * system decoration support.
      */
-    @Ignore("TODO (b/118206886): Will add it back once launcher's patch is merged into master.")
+    @Test
+    public void testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations() throws Exception {
+        try (final HomeActivitySession homeSession =
+                     new HomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display with system decoration support.
+            final ActivityDisplay newDisplay
+                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+
+            // If provided secondary home doesn't support multi-instance, default secondary home
+            // activity should be automatically launched on the new display.
+            waitAndAssertTopResumedActivity(getDefaultSecondaryHomeComponent(), newDisplay.mId,
+                    "Activity launched on secondary display must be focused and on top");
+            assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
+                    mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+        }
+    }
+
+    /**
+     * Tests launching a multi-instance home activity on virtual display with system decoration
+     * support.
+     */
     @Test
     public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
-        try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
-            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-                // Create new virtual display with system decoration support.
-                final ActivityDisplay newDisplay
-                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+        try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display with system decoration support.
+            final ActivityDisplay newDisplay
+                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
 
-                // Home activity should be automatically launched on the new display.
-                waitAndAssertTopResumedActivity(HOME_ACTIVITY, newDisplay.mId,
-                        "Activity launched on secondary display must be focused and on top");
-                assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                        mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
-            }
+            // If default home doesn't have SECONDARY_HOME category, default secondary home
+            // activity should be automatically launched on the new display.
+            waitAndAssertTopResumedActivity(getDefaultSecondaryHomeComponent(), newDisplay.mId,
+                    "Activity launched on secondary display must be focused and on top");
+            assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
+                    mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
         }
     }
 
     /**
-     * Tests home activity that target before Q won't be started on virtual display that supports
-     * system decorations.
+     * Tests launching a multi-instance home activity with SECONDARY_HOME on virtual display with
+     * system decoration support.
      */
-    @Ignore("TODO (b/118206886): Will add it back once launcher's patch is merged into master.")
     @Test
-    public void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
-        try (final HomeActivitySession homeSession
-                     = new HomeActivitySession(SDK_27_HOME_ACTIVITY)) {
-            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-                // Create new virtual display with system decoration support.
-                final ActivityDisplay newDisplay
-                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+    public void testLaunchSecondaryHomeActivityOnDisplayWithDecorations() throws Exception {
+        try (final HomeActivitySession homeSession =
+                     new HomeActivitySession(SECONDARY_HOME_ACTIVITY);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display with system decoration support.
+            final ActivityDisplay newDisplay
+                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
 
-                // Launching an activity on virtual display. There should only have one stack on the
-                // display, i.e. home stack should not be created.
-                getLaunchActivityBuilder()
-                        .setUseInstrumentation()
-                        .setWithShellPermission(true)
-                        .setNewTask(true)
-                        .setTargetActivity(TEST_ACTIVITY)
-                        .setDisplayId(newDisplay.mId)
-                        .execute();
-                waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                        "Activity launched on secondary display must be focused and on top");
-                assertEquals("There must have exactly one stack on virtual display.", 1,
-                        mAmWmState.getAmState().getDisplay(newDisplay.mId).mStacks.size());
-            }
+            // Provided secondary home activity should be automatically launched on the new
+            // display.
+            waitAndAssertTopResumedActivity(SECONDARY_HOME_ACTIVITY, newDisplay.mId,
+                    "Activity launched on secondary display must be focused and on top");
+            assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
+                    mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
         }
     }
 
