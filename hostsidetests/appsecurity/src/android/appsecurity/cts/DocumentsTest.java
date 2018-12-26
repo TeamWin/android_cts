@@ -66,6 +66,10 @@ public class DocumentsTest extends DocumentsTestCase {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContent");
     }
 
+    public void testGetContentWithQueryContent() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContentWithQueryContent");
+    }
+
     public void testTransferDocument() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTransferDocument");
     }
