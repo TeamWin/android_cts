@@ -563,12 +563,16 @@ public class ActivityAndWindowManagersState {
     }
 
     public void assertFrontStack(String msg, int windowingMode, int activityType) {
+        assertFrontStackOnDisplay(msg, windowingMode, activityType, DEFAULT_DISPLAY);
+    }
+
+    void assertFrontStackOnDisplay(String msg, int windowingMode, int activityType, int displayId) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
             assertEquals(msg, windowingMode,
-                    mAmState.getFrontStackWindowingMode(DEFAULT_DISPLAY));
+                    mAmState.getFrontStackWindowingMode(displayId));
         }
         if (activityType != ACTIVITY_TYPE_UNDEFINED) {
-            assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY));
+            assertEquals(msg, activityType, mAmState.getFrontStackActivityType(displayId));
         }
     }
 

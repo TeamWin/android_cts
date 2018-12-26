@@ -28,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 import android.graphics.Rect;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
+import android.view.Display;
 
 import org.junit.Test;
 
@@ -35,7 +36,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerFreeformStackTests
  */
-public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
+public class ActivityManagerFreeformStackTests extends ActivityManagerDisplayTestBase {
 
     private static final int TEST_TASK_OFFSET = 20;
     private static final int TEST_TASK_OFFSET_2 = 100;
@@ -49,25 +50,34 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testFreeformWindowManagementSupport() throws Exception {
+        try (VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            int displayId = Display.DEFAULT_DISPLAY;
+            if (supportsMultiDisplay()) {
+                final ActivityManagerState.ActivityDisplay display = virtualDisplaySession
+                        .setSimulateDisplay(true)
+                        .setSimulationDisplaySize(1920 /* width */, 1080 /* height */)
+                        .createDisplay();
+                displayId = display.mId;
+            }
+            launchActivityOnDisplay(FREEFORM_ACTIVITY, WINDOWING_MODE_FREEFORM, displayId);
 
-        launchActivity(FREEFORM_ACTIVITY, WINDOWING_MODE_FREEFORM);
+            mAmWmState.computeState(FREEFORM_ACTIVITY, TEST_ACTIVITY);
 
-        mAmWmState.computeState(FREEFORM_ACTIVITY, TEST_ACTIVITY);
+            if (!supportsFreeform()) {
+                mAmWmState.assertDoesNotContainStack("Must not contain freeform stack.",
+                        WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
+                return;
+            }
 
-        if (!supportsFreeform()) {
-            mAmWmState.assertDoesNotContainStack("Must not contain freeform stack.",
-                    WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
-            return;
+            mAmWmState.assertFrontStackOnDisplay("Freeform stack must be the front stack.",
+                    WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD, displayId);
+            mAmWmState.assertVisibility(FREEFORM_ACTIVITY, true);
+            mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+            mAmWmState.assertFocusedActivity(
+                    TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
+            assertEquals(new Rect(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
+                    mAmWmState.getAmState().getTaskByActivity(TEST_ACTIVITY).getBounds());
         }
-
-        mAmWmState.assertFrontStack("Freeform stack must be the front stack.",
-                WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(FREEFORM_ACTIVITY, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
-        mAmWmState.assertFocusedActivity(
-                TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
-        assertEquals(new Rect(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
-                mAmWmState.getAmState().getTaskByActivity(TEST_ACTIVITY).getBounds());
     }
 
     @Test
