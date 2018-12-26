@@ -47,4 +47,9 @@ public final class DeviceTestConstants {
     public static final String TEST_SWITCH_PREVIOUS_INPUT = "switchToPreviousInputMethod";
     public static final String TEST_INPUT_UNBINDS_ON_IME_STOPPED = "testInputUnbindsOnImeStopped";
     public static final String TEST_INPUT_UNBINDS_ON_APP_STOPPED = "testInputUnbindsOnAppStopped";
+    public static final String TEST_SHELL_COMMAND = "testShellCommand";
+    public static final String TEST_SHELL_COMMAND_IME = "testShellCommandIme";
+    public static final String TEST_SHELL_COMMAND_IME_LIST = "testShellCommandImeList";
+    public static final String TEST_SHELL_COMMAND_DUMP = "testShellCommandDump";
+    public static final String TEST_SHELL_COMMAND_HELP = "testShellCommandHelp";
 }
