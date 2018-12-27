@@ -375,10 +375,10 @@ public class KeyGeneratorTest extends AndroidTestCase {
                         try {
                             keyGenerator.init(spec, rng);
                             fail();
-                        } catch (InvalidAlgorithmParameterException expected) {}
-                        assertEquals(0, rng.getOutputSizeBytes());
-                    }
-                    if ((i >= 64) && ((i % 8 ) == 0)) {
+                        } catch (InvalidAlgorithmParameterException expected) {
+                            assertEquals(0, rng.getOutputSizeBytes());
+                        }
+                    } else if ((i >= 64) && ((i % 8 ) == 0)) {
                         keyGenerator.init(spec, rng);
                         SecretKey key = keyGenerator.generateKey();
                         assertEquals(i, TestUtils.getKeyInfo(key).getKeySize());
@@ -392,7 +392,8 @@ public class KeyGeneratorTest extends AndroidTestCase {
                     }
                 } catch (Throwable e) {
                     throw new RuntimeException(
-                            "Failed for " + algorithm + " with key size " + i, e);
+                            "Failed for " + algorithm + " with key size " + i
+                            + ". Use Strongbox: " + useStrongbox, e);
                 }
             }
         }
