@@ -37,6 +37,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.Reader;
+import java.io.StreamTokenizer;
 
 public class MediaExtractorTest extends AndroidTestCase {
     private static final String TAG = "MediaExtractorTest";
@@ -251,5 +255,46 @@ public class MediaExtractorTest extends AndroidTestCase {
             assertTrue("Presentation set " + i + " was not found in the stream",
                     presentationsMatched[i]);
         }
+    }
+
+    /*
+     * Makes sure if PTS(order) of a video file with BFrames matches the expected values in
+     * the corresponding text file with just PTS values.
+     */
+    public void testVideoPresentationTimeStampsMatch() throws Exception {
+        setDataSource(R.raw.binary_counter_320x240_30fps_600frames);
+        // Select the only video track present in the file.
+        final int trackCount = mExtractor.getTrackCount();
+        for (int i = 0; i < trackCount; i++) {
+            mExtractor.selectTrack(i);
+        }
+
+        Reader txtRdr = new BufferedReader(new InputStreamReader(mResources.openRawResource(
+                R.raw.timestamps_binary_counter_320x240_30fps_600frames)));
+        StreamTokenizer strTok = new StreamTokenizer(txtRdr);
+        strTok.parseNumbers();
+
+        boolean srcAdvance = false;
+        long srcSampleTimeUs = -1;
+        long testSampleTimeUs = -1;
+
+        strTok.nextToken();
+        do {
+            srcSampleTimeUs = mExtractor.getSampleTime();
+            testSampleTimeUs = (long) strTok.nval;
+
+            // Ignore round-off error if any.
+            if (Math.abs(srcSampleTimeUs - testSampleTimeUs) > 1) {
+                Log.d(TAG, "srcSampleTimeUs:" + srcSampleTimeUs + " testSampleTimeUs:" +
+                        testSampleTimeUs);
+                fail("video presentation timestamp not equal");
+            }
+
+            srcAdvance = mExtractor.advance();
+            // TODO: no need to reset strTok.nval to -1 once MediaExtractor.advance() bug -
+            //       b/121204004 is fixed
+            strTok.nval = -1;
+            strTok.nextToken();
+        } while (srcAdvance);
     }
 }
