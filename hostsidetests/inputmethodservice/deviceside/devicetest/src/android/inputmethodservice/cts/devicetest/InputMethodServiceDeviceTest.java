@@ -34,6 +34,11 @@ import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_AR
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_COMMAND;
 import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingFrom;
 
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.common.EditTextAppConstants;
@@ -277,6 +282,64 @@ public class InputMethodServiceDeviceTest {
                         .filter(isNewerThan(startActivityTime))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_UNBIND_INPUT))),
                 TIMEOUT, "CtsInputMethod1.onUnBindInput is called");
+    }
+
+    private static void assertShellCommandThrowsException(String[] args) {
+        final DirectShellCommand.Result result = DirectShellCommand.runSync(
+                Context.INPUT_METHOD_SERVICE, args, TIMEOUT);
+        assertNotNull(result);
+        assertNotEquals(0, result.getCode());
+        assertNotNull(result.getException());
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{}, null, receiver)}
+     * returns {@link SecurityException}.
+     */
+    @Test
+    public void testShellCommand() {
+        assertShellCommandThrowsException(new String[]{});
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime"}, null, receiver)}
+     * returns {@link SecurityException}.
+     */
+    @Test
+    public void testShellCommandIme()  {
+        assertShellCommandThrowsException(new String[]{"ime"});
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
+     * receiver)} returns {@link SecurityException}.
+     */
+    @Test
+    public void testShellCommandImeList() throws Throwable  {
+        assertShellCommandThrowsException(new String[]{"ime", "list"});
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"dump"}, null, receiver)}
+     * returns {@link SecurityException}.
+     */
+    @Test
+    public void testShellCommandDump() {
+        assertShellCommandThrowsException(new String[]{"dump"});
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"help"}, null, receiver)}
+     * returns {@link SecurityException}.
+     */
+    @Test
+    public void testShellCommandHelp() {
+        assertShellCommandThrowsException(new String[]{"help"});
     }
 
     /**
