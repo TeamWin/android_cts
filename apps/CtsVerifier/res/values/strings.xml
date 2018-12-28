@@ -1983,6 +1983,7 @@ You should be prompted to select credentials; choose the ones you just installed
         2. Click on the play button.\n
         3. Verify that the captured audio is played.\n
         4. Click on the close button.\n
+        If this device does not support audio recording, please skip this test and mark it passing.\n
     </string>
     <string name="provisioning_byod_dismiss_result_dialog">Close</string>
     <string name="provisioning_byod_play">Play</string>
