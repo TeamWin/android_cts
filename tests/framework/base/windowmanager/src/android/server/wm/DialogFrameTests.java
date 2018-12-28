@@ -46,6 +46,7 @@ import android.support.test.rule.ActivityTestRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.Before;
 
 import java.util.List;
 
@@ -65,6 +66,11 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     public final ActivityTestRule<DialogFrameTestActivity> mDialogTestActivity =
             new ActivityTestRule<>(DialogFrameTestActivity.class, false /* initialTOuchMode */,
                     false /* launchActivity */);
+
+    @Before
+    public void setUp() {
+        mSize = getSize();
+    }
 
     @Override
     ComponentName activityName() {
@@ -116,6 +122,7 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     }
 
     private static final int explicitDimension = 200;
+    private int mSize = explicitDimension;
 
     // The default gravity for dialogs should center them.
     @Test
@@ -123,10 +130,10 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
         doParentChildTest(TEST_EXPLICIT_SIZE, (parent, dialog) -> {
             Rect contentFrame = parent.getContentFrame();
             Rect expectedFrame = new Rect(
-                    contentFrame.left + (contentFrame.width() - explicitDimension) / 2,
-                    contentFrame.top + (contentFrame.height() - explicitDimension) / 2,
-                    contentFrame.left + (contentFrame.width() + explicitDimension) / 2,
-                    contentFrame.top + (contentFrame.height() + explicitDimension) / 2);
+                    contentFrame.left + (contentFrame.width() - mSize) / 2,
+                    contentFrame.top + (contentFrame.height() - mSize) / 2,
+                    contentFrame.left + (contentFrame.width() + mSize) / 2,
+                    contentFrame.top + (contentFrame.height() + mSize) / 2);
             assertEquals(expectedFrame, dialog.getFrame());
         });
     }
@@ -138,8 +145,8 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
             Rect expectedFrame = new Rect(
                     contentFrame.left,
                     contentFrame.top,
-                    contentFrame.left + explicitDimension,
-                    contentFrame.top + explicitDimension);
+                    contentFrame.left + mSize,
+                    contentFrame.top + mSize);
             assertEquals(expectedFrame, dialog.getFrame());
         });
     }
@@ -149,8 +156,8 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
         doParentChildTest(TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY, (parent, dialog) -> {
             Rect contentFrame = parent.getContentFrame();
             Rect expectedFrame = new Rect(
-                    contentFrame.left + contentFrame.width() - explicitDimension,
-                    contentFrame.top + contentFrame.height() - explicitDimension,
+                    contentFrame.left + contentFrame.width() - mSize,
+                    contentFrame.top + contentFrame.height() - mSize,
                     contentFrame.left + contentFrame.width(),
                     contentFrame.top + contentFrame.height());
             assertEquals(expectedFrame, dialog.getFrame());
@@ -235,8 +242,8 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
             Rect expectedFrame = new Rect(
                     (int) (horizontalMargin * frame.width() + frame.left),
                     (int) (verticalMargin * frame.height() + frame.top),
-                    (int) (horizontalMargin * frame.width() + frame.left) + explicitDimension,
-                    (int) (verticalMargin * frame.height() + frame.top) + explicitDimension);
+                    (int) (horizontalMargin * frame.width() + frame.left) + mSize,
+                    (int) (verticalMargin * frame.height() + frame.top) + mSize);
             assertEquals(expectedFrame, dialog.getFrame());
         });
     }
@@ -249,5 +256,11 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
                 // space in between for DimLayers, etc...
                 assertThat(wmState.getZOrder(dialog), greaterThan(wmState.getZOrder(parent)))
         );
+    }
+
+    private int getSize() {
+        float density =
+                InstrumentationRegistry.getContext().getResources().getDisplayMetrics().density;
+        return (int)(200 * density);
     }
 }
