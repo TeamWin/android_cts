@@ -23,7 +23,9 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.RemoteException;
@@ -43,7 +45,9 @@ public class SimpleService extends Service {
                 throws RemoteException {
             switch (code) {
                 case FIRST_CALL_TRANSACTION:
-                    Process.killProcess(Process.myPid());
+                    new Handler(Looper.getMainLooper()).post( () -> {
+                         Process.killProcess(Process.myPid());
+                     });
                     return true;
             }
             return super.onTransact(code, data, reply, flags);
