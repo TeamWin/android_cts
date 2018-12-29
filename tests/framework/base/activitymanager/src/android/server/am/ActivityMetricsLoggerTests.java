@@ -215,6 +215,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      */
     @Test
     @Presubmit
+    @FlakyTest(bugId = 122118854)
     public void testAppWarmLaunchSetsWaitResultDelayData() {
         runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -252,6 +253,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      */
     @Test
     @Presubmit
+    @FlakyTest(bugId = 122118854)
     public void testAppHotLaunchSetsWaitResultDelayData() {
         runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
