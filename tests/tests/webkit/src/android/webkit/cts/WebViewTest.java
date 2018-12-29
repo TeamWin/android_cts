@@ -101,6 +101,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.Semaphore;
@@ -769,15 +771,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertGoBackOrForwardBySteps(false, 1);
     }
 
-    @UiThreadTest
     public void testAddJavascriptInterface() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
 
-        WebSettings settings = mWebView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        mOnUiThread.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
 
         final class DummyJavaScriptInterface {
             private boolean mWasProvideResultCalled;
@@ -810,7 +810,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
 
         final DummyJavaScriptInterface obj = new DummyJavaScriptInterface();
-        mWebView.addJavascriptInterface(obj, "dummy");
+        mOnUiThread.addJavascriptInterface(obj, "dummy");
         assertFalse(obj.wasProvideResultCalled());
 
         startWebServer(false);
@@ -820,87 +820,75 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // Verify that only methods annotated with @JavascriptInterface are exposed
         // on the JavaScript interface object.
-        mOnUiThread.evaluateJavascript("typeof dummy.provideResult",
-                new ValueCallback<String>() {
-                    @Override
-                    public void onReceiveValue(String result) {
-                        assertEquals("\"function\"", result);
-                    }
-                });
-        mOnUiThread.evaluateJavascript("typeof dummy.wasProvideResultCalled",
-                new ValueCallback<String>() {
-                    @Override
-                    public void onReceiveValue(String result) {
-                        assertEquals("\"undefined\"", result);
-                    }
-                });
-        mOnUiThread.evaluateJavascript("typeof dummy.getClass",
-                new ValueCallback<String>() {
-                    @Override
-                    public void onReceiveValue(String result) {
-                        assertEquals("\"undefined\"", result);
-                    }
-                });
+        final BlockingQueue<String> queue = new ArrayBlockingQueue<>(3);
+        mOnUiThread.evaluateJavascript("typeof dummy.provideResult", result -> {
+            queue.add(result);
+        });
+        mOnUiThread.evaluateJavascript("typeof dummy.wasProvideResultCalled", result -> {
+            queue.add(result);
+        });
+        mOnUiThread.evaluateJavascript("typeof dummy.getClass", result -> {
+            queue.add(result);
+        });
+        assertEquals("\"function\"", WebkitUtils.waitForNextQueueElement(queue));
+        assertEquals("\"undefined\"", WebkitUtils.waitForNextQueueElement(queue));
+        assertEquals("\"undefined\"", WebkitUtils.waitForNextQueueElement(queue));
     }
 
-    @UiThreadTest
     public void testAddJavascriptInterfaceNullObject() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
 
-        WebSettings settings = mWebView.getSettings();
-        settings.setJavaScriptEnabled(true);
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
         String setTitleToPropertyTypeHtml = "<html><head></head>" +
                 "<body onload=\"document.title = typeof window.injectedObject;\"></body></html>";
 
         // Test that the property is initially undefined.
         mOnUiThread.loadDataAndWaitForCompletion(setTitleToPropertyTypeHtml,
                 "text/html", null);
-        assertEquals("undefined", mWebView.getTitle());
+        assertEquals("undefined", mOnUiThread.getTitle());
 
         // Test that adding a null object has no effect.
-        mWebView.addJavascriptInterface(null, "injectedObject");
+        mOnUiThread.addJavascriptInterface(null, "injectedObject");
         mOnUiThread.loadDataAndWaitForCompletion(setTitleToPropertyTypeHtml,
                 "text/html", null);
-        assertEquals("undefined", mWebView.getTitle());
+        assertEquals("undefined", mOnUiThread.getTitle());
 
         // Test that adding an object gives an object type.
         final Object obj = new Object();
-        mWebView.addJavascriptInterface(obj, "injectedObject");
+        mOnUiThread.addJavascriptInterface(obj, "injectedObject");
         mOnUiThread.loadDataAndWaitForCompletion(setTitleToPropertyTypeHtml,
                 "text/html", null);
-        assertEquals("object", mWebView.getTitle());
+        assertEquals("object", mOnUiThread.getTitle());
 
         // Test that trying to replace with a null object has no effect.
-        mWebView.addJavascriptInterface(null, "injectedObject");
+        mOnUiThread.addJavascriptInterface(null, "injectedObject");
         mOnUiThread.loadDataAndWaitForCompletion(setTitleToPropertyTypeHtml,
                 "text/html", null);
-        assertEquals("object", mWebView.getTitle());
+        assertEquals("object", mOnUiThread.getTitle());
     }
 
-    @UiThreadTest
     public void testRemoveJavascriptInterface() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
 
-        WebSettings settings = mWebView.getSettings();
-        settings.setJavaScriptEnabled(true);
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
         String setTitleToPropertyTypeHtml = "<html><head></head>" +
                 "<body onload=\"document.title = typeof window.injectedObject;\"></body></html>";
 
         // Test that adding an object gives an object type.
-        mWebView.addJavascriptInterface(new Object(), "injectedObject");
+        mOnUiThread.addJavascriptInterface(new Object(), "injectedObject");
         mOnUiThread.loadDataAndWaitForCompletion(setTitleToPropertyTypeHtml,
                 "text/html", null);
-        assertEquals("object", mWebView.getTitle());
+        assertEquals("object", mOnUiThread.getTitle());
 
         // Test that reloading the page after removing the object leaves the property undefined.
-        mWebView.removeJavascriptInterface("injectedObject");
+        mOnUiThread.removeJavascriptInterface("injectedObject");
         mOnUiThread.loadDataAndWaitForCompletion(setTitleToPropertyTypeHtml,
                 "text/html", null);
-        assertEquals("undefined", mWebView.getTitle());
+        assertEquals("undefined", mOnUiThread.getTitle());
     }
 
     public void testUseRemovedJavascriptInterface() throws Throwable {
