@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.telephonyprovider.cts;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
