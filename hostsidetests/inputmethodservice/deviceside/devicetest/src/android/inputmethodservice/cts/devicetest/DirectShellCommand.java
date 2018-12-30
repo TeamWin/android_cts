@@ -152,7 +152,7 @@ class DirectShellCommand {
     }
 
     private static ParcelFileDescriptor createEmptyInput() throws IOException {
-        final ParcelFileDescriptor pipeFds[] = ParcelFileDescriptor.createReliablePipe();
+        final ParcelFileDescriptor[] pipeFds = ParcelFileDescriptor.createReliablePipe();
         pipeFds[1].close();
         return pipeFds[0];
     }
@@ -167,11 +167,11 @@ class DirectShellCommand {
                 FileDescriptor.class, FileDescriptor.class, FileDescriptor.class,
                 String[].class, shellCallbackClass, ResultReceiver.class);
         shellCommand.setAccessible(true);
-        final ParcelFileDescriptor pipeFds[] = ParcelFileDescriptor.createReliablePipe();
+        final ParcelFileDescriptor[] pipeFds = ParcelFileDescriptor.createReliablePipe();
         final MyResultReceiver resultReceiver = new MyResultReceiver(pipeFds[0]);
         try (ParcelFileDescriptor emptyInput = createEmptyInput();
              ParcelFileDescriptor out = pipeFds[1];
-             ParcelFileDescriptor err = out.dup()){
+             ParcelFileDescriptor err = out.dup()) {
             shellCommand.invoke(service, emptyInput.getFileDescriptor(),
                     out.getFileDescriptor(), err.getFileDescriptor(), args, null, resultReceiver);
         }

@@ -36,7 +36,6 @@ import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingF
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.inputmethodservice.cts.DeviceEvent;

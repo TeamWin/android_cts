@@ -74,7 +74,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     public EditText launchTestActivity(String marker) {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
-        TestActivity.startSyncAndWait(activity-> {
+        TestActivity.startSync(activity-> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 
