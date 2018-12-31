@@ -16,13 +16,17 @@
 
 package android.inputmethodservice.cts.hostside;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
+import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +46,15 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
                 .setDisableHiddenApiCheck(false)
                 .setTestClassName(testInfo.testClass)
                 .setTestMethodName(testInfo.testMethod));
+    }
+
+    /**
+     * Set up test case.
+     */
+    @Before
+    public void setUp() throws Exception {
+        // Skip whole tests when DUT has no android.software.input_methods feature.
+        assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
     }
 
     /**
