@@ -35,7 +35,10 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 
+import org.junit.Test;
+
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -55,14 +58,36 @@ final class TestHelper {
     private final UiDevice mUiDevice;
 
     /**
-     * Construct a helper object of specified test method.
+     * @return {@link Method} that has {@link Test} annotation in the call stack.
      *
-     * @param testClass a {@link Class} of test.
-     * @param testMethod a name of test method.
+     * <p>Note: This can be removed once we switch to JUnit5, where org.junit.jupiter.api.TestInfo
+     * is supported in the framework level.</p>
      */
-    TestHelper(Class<?> testClass, String testMethod) {
+    private static Method getTestMethod() {
+        for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+            try {
+                final Class<?> clazz = Class.forName(stackTraceElement.getClassName());
+                final Method method = clazz.getDeclaredMethod(stackTraceElement.getMethodName());
+                final Test annotation = method.getAnnotation(Test.class);
+                if (annotation != null) {
+                    return method;
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException e) {
+            }
+        }
+        throw new IllegalStateException(
+                "Method that has @Test annotation is not found in the call stack.");
+    }
+
+    /**
+     * Construct a helper object of specified test method.
+     */
+    TestHelper() {
+        final Method testMethod = getTestMethod();
+        final Class<?> testClass = testMethod.getDeclaringClass();
         final Context testContext = InstrumentationRegistry.getContext();
-        mTestInfo = new TestInfo(testContext.getPackageName(), testClass.getName(), testMethod);
+        mTestInfo = new TestInfo(testContext.getPackageName(), testClass.getName(),
+                testMethod.getName());
         mResolver = testContext.getContentResolver();
         mTargetContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());

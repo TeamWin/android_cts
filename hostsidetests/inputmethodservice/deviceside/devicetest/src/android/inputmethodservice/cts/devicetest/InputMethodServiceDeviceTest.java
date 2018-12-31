@@ -43,7 +43,6 @@ import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventTyp
 import android.inputmethodservice.cts.common.EditTextAppConstants;
 import android.inputmethodservice.cts.common.Ime1Constants;
 import android.inputmethodservice.cts.common.Ime2Constants;
-import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
@@ -70,7 +69,7 @@ public class InputMethodServiceDeviceTest {
     /** Test to check CtsInputMethod1 receives onCreate and onStartInput. */
     @Test
     public void testCreateIme1() throws Throwable {
-        final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_CREATE_IME1);
+        final TestHelper helper = new TestHelper();
 
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
@@ -89,8 +88,7 @@ public class InputMethodServiceDeviceTest {
     /** Test to check IME is switched from CtsInputMethod1 to CtsInputMethod2. */
     @Test
     public void testSwitchIme1ToIme2() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
+        final TestHelper helper = new TestHelper();
 
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
@@ -137,8 +135,7 @@ public class InputMethodServiceDeviceTest {
      */
     @Test
     public void testSwitchInputMethod() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -168,8 +165,7 @@ public class InputMethodServiceDeviceTest {
      */
     @Test
     public void testSwitchToNextInputMethod() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -195,8 +191,7 @@ public class InputMethodServiceDeviceTest {
      */
     @Test
     public void switchToPreviousInputMethod() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -222,8 +217,7 @@ public class InputMethodServiceDeviceTest {
      */
     @Test
     public void testInputUnbindsOnImeStopped() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -259,8 +253,7 @@ public class InputMethodServiceDeviceTest {
      */
     @Test
     public void testInputUnbindsOnAppStopped() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
