@@ -65,6 +65,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         // Skip whole tests when DUT has no android.software.input_methods feature.
         assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
         cleanUpTestImes();
+        installPackage(DeviceTestConstants.APK, "-r");
         shell(ShellCommandUtils.deleteContent(EventTableConstants.CONTENT_URI));
     }
 

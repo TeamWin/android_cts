@@ -55,6 +55,7 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         // Skip whole tests when DUT has no android.software.input_methods feature.
         assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
+        installPackage(DeviceTestConstants.APK, "-r");
     }
 
     /**
