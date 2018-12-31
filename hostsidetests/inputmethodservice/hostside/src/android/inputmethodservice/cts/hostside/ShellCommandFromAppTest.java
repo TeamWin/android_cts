@@ -17,6 +17,7 @@
 package android.inputmethodservice.cts.hostside;
 
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
+import android.inputmethodservice.cts.common.test.TestInfo;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -31,17 +32,26 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
     /**
+     * Run device test with disabling hidden API check.
+     *
+     * @param testInfo test to be executed.
+     */
+    private void runDeviceTestMethodWithoutHiddenApiCheck(TestInfo testInfo) throws Exception {
+        runDeviceTests(new DeviceTestRunOptions(testInfo.testPackage)
+                .setDevice(getDevice())
+                .setDisableHiddenApiCheck(false)
+                .setTestClassName(testInfo.testClass)
+                .setTestMethodName(testInfo.testMethod));
+    }
+
+    /**
      * Make sure
      * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{}, null, receiver)}
      * returns {@link SecurityException}.
      */
     @Test
     public void testShellCommand() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND));
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND);
     }
 
     /**
@@ -51,11 +61,7 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testShellCommandIme() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_IME));
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_IME);
     }
 
     /**
@@ -65,11 +71,7 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testShellCommandImeList() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_IME_LIST));
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_IME_LIST);
     }
 
     /**
@@ -79,11 +81,7 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testShellCommandDump() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_DUMP));
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_DUMP);
     }
 
     /**
@@ -93,10 +91,6 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testShellCommandHelp() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_HELP));
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_HELP);
     }
 }

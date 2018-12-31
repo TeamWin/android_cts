@@ -31,25 +31,35 @@ public final class DeviceTestConstants {
     /** APK file name. */
     public static final String APK = "CtsInputMethodServiceDeviceTests.apk";
 
-    /** Device test activity name. */
-    public static final String TEST_ACTIVITY_CLASS =
-            "android.inputmethodservice.cts.devicetest.InputMethodServiceTestActivity";
-
     /**
      * Device test class name and methods name.
      */
-    public static final String TEST_CLASS =
+    private static final String TEST_CLASS =
             "android.inputmethodservice.cts.devicetest.InputMethodServiceDeviceTest";
-    public static final String TEST_CREATE_IME1 = "testCreateIme1";
-    public static final String TEST_SWITCH_IME1_TO_IME2 = "testSwitchIme1ToIme2";
-    public static final String TEST_SWITCH_INPUTMETHOD = "testSwitchInputMethod";
-    public static final String TEST_SWITCH_NEXT_INPUT = "testSwitchToNextInputMethod";
-    public static final String TEST_SWITCH_PREVIOUS_INPUT = "switchToPreviousInputMethod";
-    public static final String TEST_INPUT_UNBINDS_ON_IME_STOPPED = "testInputUnbindsOnImeStopped";
-    public static final String TEST_INPUT_UNBINDS_ON_APP_STOPPED = "testInputUnbindsOnAppStopped";
-    public static final String TEST_SHELL_COMMAND = "testShellCommand";
-    public static final String TEST_SHELL_COMMAND_IME = "testShellCommandIme";
-    public static final String TEST_SHELL_COMMAND_IME_LIST = "testShellCommandImeList";
-    public static final String TEST_SHELL_COMMAND_DUMP = "testShellCommandDump";
-    public static final String TEST_SHELL_COMMAND_HELP = "testShellCommandHelp";
+
+    public static final TestInfo TEST_CREATE_IME1 =
+            new TestInfo(PACKAGE, TEST_CLASS, "testCreateIme1");
+    public static final TestInfo TEST_SWITCH_IME1_TO_IME2 =
+            new TestInfo(PACKAGE, TEST_CLASS, "testSwitchIme1ToIme2");
+    public static final TestInfo TEST_SWITCH_INPUTMETHOD =
+            new TestInfo(PACKAGE, TEST_CLASS, "testSwitchInputMethod");
+    public static final TestInfo TEST_SWITCH_NEXT_INPUT =
+            new TestInfo(PACKAGE, TEST_CLASS, "testSwitchToNextInputMethod");
+    public static final TestInfo TEST_SWITCH_PREVIOUS_INPUT =
+            new TestInfo(PACKAGE, TEST_CLASS, "switchToPreviousInputMethod");
+    public static final TestInfo TEST_INPUT_UNBINDS_ON_IME_STOPPED =
+            new TestInfo(PACKAGE, TEST_CLASS, "testInputUnbindsOnImeStopped");
+    public static final TestInfo TEST_INPUT_UNBINDS_ON_APP_STOPPED =
+            new TestInfo(PACKAGE, TEST_CLASS, "testInputUnbindsOnAppStopped");
+
+    public static final TestInfo TEST_SHELL_COMMAND =
+            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommand");
+    public static final TestInfo TEST_SHELL_COMMAND_IME =
+            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandIme");
+    public static final TestInfo TEST_SHELL_COMMAND_IME_LIST =
+            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandImeList");
+    public static final TestInfo TEST_SHELL_COMMAND_DUMP =
+            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandDump");
+    public static final TestInfo TEST_SHELL_COMMAND_HELP =
+            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandHelp");
 }
