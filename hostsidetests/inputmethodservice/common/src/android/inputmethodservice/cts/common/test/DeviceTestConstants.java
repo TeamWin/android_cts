@@ -32,34 +32,40 @@ public final class DeviceTestConstants {
     public static final String APK = "CtsInputMethodServiceDeviceTests.apk";
 
     /**
-     * Device test class name and methods name.
+     * Device test class: InputMethodServiceDeviceTest.
      */
-    private static final String TEST_CLASS =
+    private static final String SERVICE_TEST =
             "android.inputmethodservice.cts.devicetest.InputMethodServiceDeviceTest";
 
     public static final TestInfo TEST_CREATE_IME1 =
-            new TestInfo(PACKAGE, TEST_CLASS, "testCreateIme1");
+            new TestInfo(PACKAGE, SERVICE_TEST, "testCreateIme1");
     public static final TestInfo TEST_SWITCH_IME1_TO_IME2 =
-            new TestInfo(PACKAGE, TEST_CLASS, "testSwitchIme1ToIme2");
+            new TestInfo(PACKAGE, SERVICE_TEST, "testSwitchIme1ToIme2");
     public static final TestInfo TEST_SWITCH_INPUTMETHOD =
-            new TestInfo(PACKAGE, TEST_CLASS, "testSwitchInputMethod");
+            new TestInfo(PACKAGE, SERVICE_TEST, "testSwitchInputMethod");
     public static final TestInfo TEST_SWITCH_NEXT_INPUT =
-            new TestInfo(PACKAGE, TEST_CLASS, "testSwitchToNextInputMethod");
+            new TestInfo(PACKAGE, SERVICE_TEST, "testSwitchToNextInputMethod");
     public static final TestInfo TEST_SWITCH_PREVIOUS_INPUT =
-            new TestInfo(PACKAGE, TEST_CLASS, "switchToPreviousInputMethod");
+            new TestInfo(PACKAGE, SERVICE_TEST, "switchToPreviousInputMethod");
     public static final TestInfo TEST_INPUT_UNBINDS_ON_IME_STOPPED =
-            new TestInfo(PACKAGE, TEST_CLASS, "testInputUnbindsOnImeStopped");
+            new TestInfo(PACKAGE, SERVICE_TEST, "testInputUnbindsOnImeStopped");
     public static final TestInfo TEST_INPUT_UNBINDS_ON_APP_STOPPED =
-            new TestInfo(PACKAGE, TEST_CLASS, "testInputUnbindsOnAppStopped");
+            new TestInfo(PACKAGE, SERVICE_TEST, "testInputUnbindsOnAppStopped");
+
+    /**
+     * Device test class: ShellCommandDeviceTest.
+     */
+    private static final String SHELL_TEST =
+            "android.inputmethodservice.cts.devicetest.ShellCommandDeviceTest";
 
     public static final TestInfo TEST_SHELL_COMMAND =
-            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommand");
+            new TestInfo(PACKAGE, SHELL_TEST, "testShellCommand");
     public static final TestInfo TEST_SHELL_COMMAND_IME =
-            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandIme");
+            new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandIme");
     public static final TestInfo TEST_SHELL_COMMAND_IME_LIST =
-            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandImeList");
+            new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandImeList");
     public static final TestInfo TEST_SHELL_COMMAND_DUMP =
-            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandDump");
+            new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandDump");
     public static final TestInfo TEST_SHELL_COMMAND_HELP =
-            new TestInfo(PACKAGE, TEST_CLASS, "testShellCommandHelp");
+            new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandHelp");
 }
