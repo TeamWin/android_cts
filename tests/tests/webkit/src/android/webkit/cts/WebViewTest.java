@@ -676,7 +676,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // handle loading a new URL. We set a WebViewClient as
         // WebViewClient.shouldOverrideUrlLoading() returns false, so
         // the WebView will load the new URL.
-        mOnUiThread.setWebViewClient(new WaitForLoadedClient(mOnUiThread));
+        mWebView.setWebViewClient(new WaitForLoadedClient(mOnUiThread));
         mOnUiThread.loadUrlAndWaitForCompletion(redirectUrl);
 
         assertEquals(finalUrl, mWebView.getUrl());
@@ -1328,7 +1328,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             @Override
             public void run() {
                 mWebView.getSettings().setJavaScriptEnabled(true);
-                mOnUiThread.setWebChromeClient(webChromeClient);
+                mWebView.setWebChromeClient(webChromeClient);
                 mOnUiThread.loadDataAndWaitForCompletion(
                         "<html><head></head><body onload=\"" +
                         "document.title = " +
@@ -1397,18 +1397,18 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("http://www.foo.com",
                 HTML_HEADER + "<title>Hello World%21</title><body>bar</body></html>",
                 "text/html", "UTF-8", null);
-        assertEquals("Hello World%21", mOnUiThread.getTitle());
+        assertEquals("Hello World%21", mWebView.getTitle());
 
         // Check that when a data: base URL is used, we treat the String to load as a data: URL
         // and run load steps such as decoding URL entities (i.e., contrary to the test case
         // above.)
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("data:foo",
                 HTML_HEADER + "<title>Hello World%21</title></html>", "text/html", "UTF-8", null);
-        assertEquals("Hello World!", mOnUiThread.getTitle());
+        assertEquals("Hello World!", mWebView.getTitle());
 
         // Check the method is null input safe.
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(null, null, null, null, null);
-        assertEquals("about:blank", mOnUiThread.getUrl());
+        assertEquals("about:blank", mWebView.getUrl());
     }
 
     private void deleteIfExists(File file) throws IOException {
@@ -1940,11 +1940,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             }
         }
         final ImageLoaded imageLoaded = new ImageLoaded();
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mOnUiThread.getSettings().setJavaScriptEnabled(true);
-            }
-        });
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mOnUiThread.addJavascriptInterface(imageLoaded, "imageLoaded");
         AssetManager assets = getActivity().getAssets();
         Bitmap bitmap = BitmapFactory.decodeStream(assets.open(TestHtmlConstants.LARGE_IMG_URL));

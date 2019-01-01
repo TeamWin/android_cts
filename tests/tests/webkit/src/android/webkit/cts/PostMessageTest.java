@@ -21,7 +21,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
 import android.webkit.WebMessage;
 import android.webkit.WebMessagePort;
 import android.webkit.WebView;

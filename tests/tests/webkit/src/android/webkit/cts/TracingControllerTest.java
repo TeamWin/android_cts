@@ -17,7 +17,6 @@
 package android.webkit.cts;
 
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
 import android.webkit.TracingConfig;
 import android.webkit.TracingController;
 import android.webkit.WebView;

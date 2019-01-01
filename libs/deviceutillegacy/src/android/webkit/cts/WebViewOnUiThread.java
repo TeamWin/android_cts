@@ -16,14 +16,11 @@
 
 package android.webkit.cts;
 
-import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.TestThread;
-
 import android.graphics.Bitmap;
 import android.graphics.Picture;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Bundle;
+import android.net.http.SslCertificate;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
@@ -34,25 +31,26 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.webkit.DownloadListener;
 import android.webkit.CookieManager;
+import android.webkit.DownloadListener;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
 import android.webkit.WebMessage;
 import android.webkit.WebMessagePort;
 import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.webkit.WebView.HitTestResult;
 import android.webkit.WebView.PictureListener;
 import android.webkit.WebView.VisualStateCallback;
-import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import junit.framework.Assert;
 
-import java.io.File;
-import java.util.concurrent.Callable;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Many tests need to run WebView code in the UI thread. This class
@@ -702,6 +700,9 @@ public class WebViewOnUiThread {
         });
     }
 
+    /**
+     * Post a visual state listener callback for mWebView on the UI thread.
+     */
     public void postVisualStateCallback(final long requestId, final VisualStateCallback callback) {
         runOnUiThread(new Runnable() {
             @Override
@@ -826,6 +827,15 @@ public class WebViewOnUiThread {
         });
     }
 
+    public SslCertificate getCertificate() {
+        return getValue(new ValueGetter<SslCertificate>() {
+            @Override
+            public SslCertificate capture() {
+                return mWebView.getCertificate();
+            }
+        });
+    }
+
     public WebView createWebView() {
         return getValue(new ValueGetter<WebView>() {
             @Override
@@ -890,8 +900,7 @@ public class WebViewOnUiThread {
 
     /**
      * Helper for running code on the UI thread where an exception is
-     * a test failure. If this is already the UI thread then it runs
-     * the code immediately.
+     * a test failure. It is an error to call this on the UI thread.
      *
      * @see InstrumentationTestCase#runTestOnUiThread(Runnable)
      * @see ActivityTestRule#runOnUiThread(Runnable)
@@ -900,7 +909,7 @@ public class WebViewOnUiThread {
     public void runOnUiThread(Runnable r) {
         try {
             if (isUiThread()) {
-                r.run();
+                throw new IllegalStateException("This cannot be called from the UI thread.");
             } else {
                 if (mActivityTestRule != null) {
                     mActivityTestRule.runOnUiThread(r);
@@ -960,6 +969,9 @@ public class WebViewOnUiThread {
     /**
      * Makes a WebView call, waits for completion and then resets the
      * load state in preparation for the next load call.
+     *
+     * <p>This method may be called on the UI thread.
+     *
      * @param call The call to make on the UI thread prior to waiting.
      */
     private void callAndWait(Runnable call) {
@@ -968,7 +980,11 @@ public class WebViewOnUiThread {
                 + "without calling waitForLoadCompletion after the load",
                 !isLoaded());
         clearLoad(); // clear any extraneous signals from a previous load.
-        runOnUiThread(call);
+        if (isUiThread()) {
+            call.run();
+        } else {
+            runOnUiThread(call);
+        }
         waitForLoadCompletion();
     }
 
