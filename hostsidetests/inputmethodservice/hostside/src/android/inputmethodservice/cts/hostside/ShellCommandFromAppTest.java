@@ -16,12 +16,19 @@
 
 package android.inputmethodservice.cts.hostside;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
+import android.inputmethodservice.cts.common.test.ShellCommandUtils;
+import android.inputmethodservice.cts.common.test.TestInfo;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,72 +38,145 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
     /**
-     * Make sure
-     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{}, null, receiver)}
-     * returns {@link SecurityException}.
+     * Run device test with disabling hidden API check.
+     *
+     * @param testInfo test to be executed.
+     * @param instant {@code true} when {@code testInfo} needs to be installed as an instant app.
      */
-    @Test
-    public void testShellCommand() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
+    private void runDeviceTestMethodWithoutHiddenApiCheck(TestInfo testInfo, boolean instant)
+            throws Exception {
+        if (instant) {
+            installPackage(DeviceTestConstants.APK, "-r", "--instant");
+        } else {
+            installPackage(DeviceTestConstants.APK, "-r");
+        }
+        runDeviceTests(new DeviceTestRunOptions(testInfo.testPackage)
                 .setDevice(getDevice())
                 .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND));
+                .setTestClassName(testInfo.testClass)
+                .setTestMethodName(testInfo.testMethod));
+    }
+
+    /**
+     * Set up test case.
+     */
+    @Before
+    public void setUp() throws Exception {
+        // Skip whole tests when DUT has no android.software.input_methods feature.
+        assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{}, null, receiver)}
+     * returns {@link SecurityException} for full (non-instant) apps.
+     */
+    @AppModeFull
+    @Test
+    public void testShellCommandFull() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND, false);
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{}, null, receiver)}
+     * returns {@link SecurityException} for instant apps.
+     */
+    @AppModeInstant
+    @Test
+    public void testShellCommandInstant() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND, true);
     }
 
     /**
      * Make sure
      * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime"}, null, receiver)}
-     * returns {@link SecurityException}.
+     * returns {@link SecurityException} for full (non-instant) apps.
      */
+    @AppModeFull
     @Test
-    public void testShellCommandIme() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_IME));
+    public void testShellCommandImeFull() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_IME, false);
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime"}, null, receiver)}
+     * returns {@link SecurityException} for instant apps.
+     */
+    @AppModeInstant
+    @Test
+    public void testShellCommandImeInstant() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_IME, true);
     }
 
     /**
      * Make sure
      * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
-     * receiver)} returns {@link SecurityException}.
+     * receiver)} returns {@link SecurityException} for full (non-instant) apps.
      */
+    @AppModeFull
     @Test
-    public void testShellCommandImeList() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_IME_LIST));
+    public void testShellCommandImeListFull() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_IME_LIST,
+                false);
     }
 
     /**
      * Make sure
      * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
-     * receiver)} returns {@link SecurityException}.
+     * receiver)} returns {@link SecurityException} for instant apps.
      */
+    @AppModeInstant
     @Test
-    public void testShellCommandDump() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_DUMP));
+    public void testShellCommandImeListInstant() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_IME_LIST,
+                true);
     }
 
     /**
      * Make sure
      * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
-     * receiver)} returns {@link SecurityException}.
+     * receiver)} returns {@link SecurityException} for full (non-instant) apps.
      */
+    @AppModeFull
     @Test
-    public void testShellCommandHelp() throws Exception {
-        runDeviceTests(new DeviceTestRunOptions(DeviceTestConstants.PACKAGE)
-                .setDevice(getDevice())
-                .setDisableHiddenApiCheck(false)
-                .setTestClassName(DeviceTestConstants.TEST_CLASS)
-                .setTestMethodName(DeviceTestConstants.TEST_SHELL_COMMAND_HELP));
+    public void testShellCommandDumpFull() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_DUMP,
+                false);
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
+     * receiver)} returns {@link SecurityException} for instant apps.
+     */
+    @AppModeInstant
+    @Test
+    public void testShellCommandDumpInstant() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_DUMP, true);
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
+     * receiver)} returns {@link SecurityException} for full (non-instant) apps.
+     */
+    @AppModeFull
+    @Test
+    public void testShellCommandHelpFull() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_HELP,
+                false);
+    }
+
+    /**
+     * Make sure
+     * {@code IInputMethodManager#shellCommand(in, out, err, new String[]{"ime", "list"}, null,
+     * receiver)} returns {@link SecurityException} for instant apps.
+     */
+    @AppModeInstant
+    @Test
+    public void testShellCommandHelpInstant() throws Exception {
+        runDeviceTestMethodWithoutHiddenApiCheck(DeviceTestConstants.TEST_SHELL_COMMAND_HELP, true);
     }
 }
