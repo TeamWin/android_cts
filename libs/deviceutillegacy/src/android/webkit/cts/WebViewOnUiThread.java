@@ -46,10 +46,13 @@ import android.webkit.WebViewClient;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 import junit.framework.Assert;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * Many tests need to run WebView code in the UI thread. This class
@@ -605,6 +608,19 @@ public class WebViewOnUiThread {
         return WebkitUtils.onMainThreadSync(() -> {
             return mWebView.capturePicture();
         });
+    }
+
+    /**
+     * Execute javascript, returning a Future for the result.
+     */
+    public Future<String> evaluateJavascript(final String script) {
+        SettableFuture<String> future = SettableFuture.create();
+        WebkitUtils.onMainThread(() -> {
+            mWebView.evaluateJavascript(script, (String result) -> {
+                future.set(result);
+            });
+        });
+        return future;
     }
 
     public void evaluateJavascript(final String script, final ValueCallback<String> result) {
