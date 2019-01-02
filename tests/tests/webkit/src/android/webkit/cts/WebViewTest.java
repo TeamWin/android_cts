@@ -2868,23 +2868,17 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     }
 
     private void printDocumentStart(final PrintDocumentAdapter adapter) {
-        mOnUiThread.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                adapter.onStart();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            adapter.onStart();
         });
     }
 
     private void printDocumentLayout(final PrintDocumentAdapter adapter,
             final PrintAttributes oldAttributes, final PrintAttributes newAttributes,
             final LayoutResultCallback layoutResultCallback) {
-        mOnUiThread.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                adapter.onLayout(oldAttributes, newAttributes, new CancellationSignal(),
-                        layoutResultCallback, null);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            adapter.onLayout(oldAttributes, newAttributes, new CancellationSignal(),
+                    layoutResultCallback, null);
         });
     }
 
