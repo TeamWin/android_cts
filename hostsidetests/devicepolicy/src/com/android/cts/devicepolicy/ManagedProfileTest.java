@@ -1438,12 +1438,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testCrossProfileCalendarPackage", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_CALENDAR_PACKAGE_VALUE)
-                    .setAdminPackageName(MANAGED_PROFILE_PKG)
-                    .setStrings(MANAGED_PROFILE_PKG)
-                    .build(),
-            new DevicePolicyEventWrapper
-                    .Builder(EventId.REMOVE_CROSS_PROFILE_CALENDAR_PACKAGE_VALUE)
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE)
                     .setAdminPackageName(MANAGED_PROFILE_PKG)
                     .setStrings(MANAGED_PROFILE_PKG)
                     .build());
@@ -1454,6 +1449,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         runCrossProfileCalendarTestsWhenWhitelistedAndEnabled();
+        runCrossProfileCalendarTestsWhenAllPackagesWhitelisted();
         runCrossProfileCalendarTestsWhenDisabled();
         runCrossProfileCalendarTestsWhenNotWhitelisted();
     }
@@ -1492,7 +1488,50 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         } finally {
             // Cleanup.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
-                    "testRemoveManagedProfilePackageFromWhitelist", mProfileUserId);
+                    "testCleanupWhitelist", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testCleanupTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testDisableCrossProfileCalendarSettings", mProfileUserId);
+        }
+    }
+
+    private void runCrossProfileCalendarTestsWhenAllPackagesWhitelisted() throws Exception {
+        try {
+            // Setup. Allow all packages to access cross-profile calendar APIs by setting
+            // the whitelist to null, enable cross-profile calendar in settings,
+            // and insert test data into calendar provider.
+            // All setups should be done in managed profile.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testWhitelistAllPackages", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testAddTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testEnableCrossProfileCalendarSettings", mProfileUserId);
+
+            // Testing.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkCalendarsWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkEventsWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkInstancesWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkInstancesByDayWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_canAccessWorkInstancesSearch1", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_canAccessWorkInstancesSearch2", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_canAccessWorkInstancesSearchByDay", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getExceptionWhenQueryNonWhitelistedColumns", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testViewEventCrossProfile_intentReceivedWhenWhitelisted", mParentUserId);
+        } finally {
+            // Cleanup.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testCleanupWhitelist", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testCleanupTestCalendarDataForWorkProfile", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
@@ -1523,7 +1562,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         } finally {
             // Cleanup.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
-                    "testRemoveManagedProfilePackageFromWhitelist", mProfileUserId);
+                    "testCleanupWhitelist", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testCleanupTestCalendarDataForWorkProfile", mProfileUserId);
         }

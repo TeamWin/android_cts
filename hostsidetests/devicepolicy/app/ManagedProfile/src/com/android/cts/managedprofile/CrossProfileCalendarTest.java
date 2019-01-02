@@ -41,7 +41,12 @@ import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Time;
+import android.util.ArraySet;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -132,15 +137,15 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
                 ADMIN_RECEIVER_COMPONENT);
         assertThat(whitelist).isEmpty();
 
-        mDevicePolicyManager.addCrossProfileCalendarPackage(
-                ADMIN_RECEIVER_COMPONENT, MANAGED_PROFILE_PKG);
+        mDevicePolicyManager.setCrossProfileCalendarPackages(
+                ADMIN_RECEIVER_COMPONENT, new ArraySet<String>(Arrays.asList(MANAGED_PROFILE_PKG)));
         whitelist = mDevicePolicyManager.getCrossProfileCalendarPackages(
                 ADMIN_RECEIVER_COMPONENT);
         assertThat(whitelist.size()).isEqualTo(1);
         assertThat(whitelist.contains(MANAGED_PROFILE_PKG)).isTrue();
 
-        assertThat(mDevicePolicyManager.removeCrossProfileCalendarPackage(
-                ADMIN_RECEIVER_COMPONENT, MANAGED_PROFILE_PKG)).isTrue();
+        mDevicePolicyManager.setCrossProfileCalendarPackages(
+                ADMIN_RECEIVER_COMPONENT, Collections.emptySet());
         whitelist = mDevicePolicyManager.getCrossProfileCalendarPackages(
                 ADMIN_RECEIVER_COMPONENT);
         assertThat(whitelist).isEmpty();
@@ -392,15 +397,22 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
     // Utils method, not a actual test. Ran from ManagedProfileTest.java to set up for actual tests.
     public void testWhitelistManagedProfilePackage() {
         requireRunningOnManagedProfile();
-        mDevicePolicyManager.addCrossProfileCalendarPackage(
-                ADMIN_RECEIVER_COMPONENT, MANAGED_PROFILE_PKG);
+        mDevicePolicyManager.setCrossProfileCalendarPackages(
+                ADMIN_RECEIVER_COMPONENT, new ArraySet<String>(Arrays.asList(MANAGED_PROFILE_PKG)));
     }
 
     // Utils method, not a actual test. Ran from ManagedProfileTest.java to set up for actual tests.
-    public void testRemoveManagedProfilePackageFromWhitelist() {
+    public void testWhitelistAllPackages() {
         requireRunningOnManagedProfile();
-        assertThat(mDevicePolicyManager.removeCrossProfileCalendarPackage(
-                ADMIN_RECEIVER_COMPONENT, MANAGED_PROFILE_PKG)).isTrue();
+        mDevicePolicyManager.setCrossProfileCalendarPackages(
+                ADMIN_RECEIVER_COMPONENT, null);
+    }
+
+    // Utils method, not a actual test. Ran from ManagedProfileTest.java to set up for actual tests.
+    public void testCleanupWhitelist() {
+        requireRunningOnManagedProfile();
+        mDevicePolicyManager.setCrossProfileCalendarPackages(
+                ADMIN_RECEIVER_COMPONENT, Collections.emptySet());
     }
 
     // Utils method, not a actual test. Ran from ManagedProfileTest.java to set up for actual tests.
