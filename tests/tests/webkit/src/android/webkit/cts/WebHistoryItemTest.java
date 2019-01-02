@@ -58,7 +58,7 @@ public class WebHistoryItemTest extends ActivityInstrumentationTestCase2<WebView
         mWebServer = new CtsTestServer(getActivity());
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
         }
     }
 
@@ -81,14 +81,11 @@ public class WebHistoryItemTest extends ActivityInstrumentationTestCase2<WebView
         }
         final WaitForIconClient waitForIconClient = new WaitForIconClient(mOnUiThread);
         mOnUiThread.setWebChromeClient(waitForIconClient);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // getInstance must run on the UI thread
-                mIconDb = WebIconDatabase.getInstance();
-                String dbPath = getActivity().getFilesDir().toString() + "/icons";
-                mIconDb.open(dbPath);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            // getInstance must run on the UI thread
+            mIconDb = WebIconDatabase.getInstance();
+            String dbPath = getActivity().getFilesDir().toString() + "/icons";
+            mIconDb.open(dbPath);
         });
 
         WebBackForwardList list = mOnUiThread.copyBackForwardList();

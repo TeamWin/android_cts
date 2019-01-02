@@ -294,8 +294,7 @@ public class EmojiTest {
         WebViewOnUiThread webViewOnUiThread;
 
         CaptureWebView() {
-            webViewOnUiThread = new WebViewOnUiThread(mActivityRule,
-                    mActivityRule.getActivity().getWebView());
+            webViewOnUiThread = new WebViewOnUiThread(mActivityRule.getActivity().getWebView());
             // Offscreen pre-raster ensures that visibile region of the WebView is not used to
             // determine which tiles to render, and instead the full WebView size is treated
             // as the visible region.

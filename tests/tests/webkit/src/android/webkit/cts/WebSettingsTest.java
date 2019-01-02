@@ -83,7 +83,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
             mSettings = mOnUiThread.getSettings();
         }
         mContext = getInstrumentation().getTargetContext();
@@ -218,14 +218,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // getInstance must run on the UI thread
-                WebIconDatabase iconDb = WebIconDatabase.getInstance();
-                String dbPath = getActivity().getFilesDir().toString() + "/icons";
-                iconDb.open(dbPath);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            // getInstance must run on the UI thread
+            WebIconDatabase iconDb = WebIconDatabase.getInstance();
+            String dbPath = getActivity().getFilesDir().toString() + "/icons";
+            iconDb.open(dbPath);
         });
         getInstrumentation().waitForIdleSync();
         Thread.sleep(100); // Wait for open to be received on the icon db thread.
@@ -632,12 +629,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
         assertTrue(mSettings.supportZoom());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mSettings.setSupportZoom(false);
-            }
-        });
+        mSettings.setSupportZoom(false);
         assertFalse(mSettings.supportZoom());
     }
 
@@ -647,12 +639,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
         assertFalse(mSettings.getBuiltInZoomControls());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mSettings.setBuiltInZoomControls(true);
-            }
-        });
+        mSettings.setBuiltInZoomControls(true);
         assertTrue(mSettings.getBuiltInZoomControls());
     }
 

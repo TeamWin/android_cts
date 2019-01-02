@@ -114,7 +114,7 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview == null) return;
-        mOnUiThread = new WebViewOnUiThread(this, webview);
+        mOnUiThread = new WebViewOnUiThread(webview);
         singleThreadExecutor = Executors.newSingleThreadExecutor(getCustomThreadFactory());
     }
 
@@ -169,11 +169,8 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
         }
         final TracingReceiver tracingReceiver = new TracingReceiver();
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                runTracingTestWithCallbacks(tracingReceiver, singleThreadExecutor);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            runTracingTestWithCallbacks(tracingReceiver, singleThreadExecutor);
         });
         PollingCheck.check("Tracing did not complete", POLLING_TIMEOUT, tracingReceiver.getCompleteCallable());
         assertTrue(tracingReceiver.getNbChunks() > 0);

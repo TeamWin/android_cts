@@ -39,7 +39,7 @@ public class WebBackForwardListTest extends ActivityInstrumentationTestCase2<Web
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
         }
     }
 

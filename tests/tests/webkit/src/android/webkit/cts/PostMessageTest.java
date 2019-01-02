@@ -53,7 +53,7 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         final WebViewCtsActivity activity = getActivity();
         mWebView = activity.getWebView();
         if (mWebView != null) {
-            mOnUiThread = new WebViewOnUiThread(this, mWebView);
+            mOnUiThread = new WebViewOnUiThread(mWebView);
             mOnUiThread.getSettings().setJavaScriptEnabled(true);
         }
     }
@@ -179,19 +179,16 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
         final int messageCount = 3;
         final BlockingQueue<String> queue = new ArrayBlockingQueue<>(messageCount);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < messageCount; i++) {
-                    channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE + i));
-                }
-                channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
-                    @Override
-                    public void onMessage(WebMessagePort port, WebMessage message) {
-                        queue.add(message.getData());
-                    }
-                });
+        WebkitUtils.onMainThreadSync(() -> {
+            for (int i = 0; i < messageCount; i++) {
+                channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE + i));
             }
+            channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
+                @Override
+                public void onMessage(WebMessagePort port, WebMessage message) {
+                    queue.add(message.getData());
+                }
+            });
         });
 
         // Wait for all the responses to arrive.
@@ -218,19 +215,16 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         final WebMessagePort[] channel = mOnUiThread.createWebMessageChannel();
         WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
         mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    channel[0].close();
-                    channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
-                } catch (IllegalStateException ex) {
-                    // expect to receive an exception
-                    return;
-                }
-                Assert.fail("A closed port cannot be used to transfer messages");
+        WebkitUtils.onMainThreadSync(() -> {
+            try {
+                channel[0].close();
+                channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
+            } catch (IllegalStateException ex) {
+                // expect to receive an exception
+                return;
             }
-         });
+            Assert.fail("A closed port cannot be used to transfer messages");
+        });
     }
 
     // Sends a new message channel from JS to Java.
@@ -266,16 +260,13 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         final WebMessagePort[] channel = mOnUiThread.createWebMessageChannel();
         WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
         mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
-                    @Override
-                    public void onMessage(WebMessagePort port, WebMessage message) {
-                        message.getPorts()[0].postMessage(new WebMessage(hello));
-                    }
-                });
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
+                @Override
+                public void onMessage(WebMessagePort port, WebMessage message) {
+                    message.getPorts()[0].postMessage(new WebMessage(hello));
+                }
+            });
         });
         waitForTitle(hello);
     }
@@ -302,18 +293,15 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         messageHandlerThread.start();
         final Handler messageHandler = new Handler(messageHandlerThread.getLooper());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
-                channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
-                    @Override
-                    public void onMessage(WebMessagePort port, WebMessage message) {
-                        messageHandlerThreadFuture.set(
-                                messageHandlerThread.getLooper().isCurrentThread());
-                    }
-                }, messageHandler);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
+            channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
+                @Override
+                public void onMessage(WebMessagePort port, WebMessage message) {
+                    messageHandlerThreadFuture.set(
+                            messageHandlerThread.getLooper().isCurrentThread());
+                }
+            }, messageHandler);
         });
         // Wait for all the responses to arrive and assert correct thread.
         assertTrue(WebkitUtils.waitForFuture(messageHandlerThreadFuture));
@@ -336,17 +324,14 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         final int messageCount = 1;
         final SettableFuture<Boolean> messageMainLooperFuture = SettableFuture.create();
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
-                channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
-                    @Override
-                    public void onMessage(WebMessagePort port, WebMessage message) {
-                        messageMainLooperFuture.set(Looper.getMainLooper().isCurrentThread());
-                    }
-                });
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
+            channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
+                @Override
+                public void onMessage(WebMessagePort port, WebMessage message) {
+                    messageMainLooperFuture.set(Looper.getMainLooper().isCurrentThread());
+                }
+            });
         });
         // Wait for all the responses to arrive and assert correct thread.
         assertTrue(WebkitUtils.waitForFuture(messageMainLooperFuture));

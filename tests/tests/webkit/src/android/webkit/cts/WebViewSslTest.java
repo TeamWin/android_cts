@@ -450,7 +450,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
                 f.delete();
             }
 
-            mOnUiThread = new WebViewOnUiThread(this, mWebView);
+            mOnUiThread = new WebViewOnUiThread(mWebView);
         }
     }
 

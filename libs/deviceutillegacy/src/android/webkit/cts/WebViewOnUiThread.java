@@ -87,16 +87,6 @@ public class WebViewOnUiThread {
     private int mProgress;
 
     /**
-     * The test that this class is being used in. Used for runTestOnUiThread.
-     */
-    private InstrumentationTestCase mTest;
-
-    /**
-     * The test rule that this class is being used in. Used for runTestOnUiThread.
-     */
-    private ActivityTestRule mActivityTestRule;
-
-    /**
      * The WebView that calls will be made on.
      */
     private WebView mWebView;
@@ -114,38 +104,11 @@ public class WebViewOnUiThread {
      * @deprecated Use {@link WebViewOnUiThread#WebViewOnUiThread(ActivityTestRule, WebView)}
      */
     @Deprecated
-    public WebViewOnUiThread(InstrumentationTestCase test, WebView webView) {
-        mTest = test;
+    public WebViewOnUiThread(WebView webView) {
         mWebView = webView;
         final WebViewClient webViewClient = new WaitForLoadedClient(this);
         final WebChromeClient webChromeClient = new WaitForProgressClient(this);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setWebViewClient(webViewClient);
-                mWebView.setWebChromeClient(webChromeClient);
-                mWebView.setPictureListener(new WaitForNewPicture());
-            }
-        });
-    }
-
-    /**
-     * Initializes the webView with a WebViewClient, WebChromeClient,
-     * and PictureListener to prepare for loadUrlAndWaitForCompletion.
-     *
-     * A new WebViewOnUiThread should be called during setUp so as to
-     * reinitialize between calls.
-     *
-     * @param activityTestRule The test rule in which this is being run.
-     * @param webView The webView that the methods should call.
-     * @see #loadDataAndWaitForCompletion(String, String, String)
-     */
-    public WebViewOnUiThread(ActivityTestRule activityTestRule, WebView webView) {
-        mActivityTestRule = activityTestRule;
-        mWebView = webView;
-        final WebViewClient webViewClient = new WaitForLoadedClient(this);
-        final WebChromeClient webChromeClient = new WaitForProgressClient(this);
-        runOnUiThread(() -> {
+        WebkitUtils.onMainThreadSync(() -> {
             mWebView.setWebViewClient(webViewClient);
             mWebView.setWebChromeClient(webChromeClient);
             mWebView.setPictureListener(new WaitForNewPicture());
@@ -157,16 +120,12 @@ public class WebViewOnUiThread {
      * the tests.
      */
     public void cleanUp() {
-        clearHistory();
-        clearCache(true);
-        setPictureListener(null);
-        setWebChromeClient(null);
-        setWebViewClient(null);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.destroy();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.clearHistory();
+            mWebView.clearCache(true);
+            mWebView.setWebChromeClient(null);
+            mWebView.setWebViewClient(null);
+            mWebView.destroy();
         });
     }
 
@@ -907,20 +866,7 @@ public class WebViewOnUiThread {
      * @param r The code to run in the UI thread
      */
     public void runOnUiThread(Runnable r) {
-        try {
-            if (isUiThread()) {
-                throw new IllegalStateException("This cannot be called from the UI thread.");
-            } else {
-                if (mActivityTestRule != null) {
-                    mActivityTestRule.runOnUiThread(r);
-                } else {
-                    mTest.runTestOnUiThread(r);
-                }
-            }
-        } catch (Throwable t) {
-            Assert.fail("Unexpected error while running on UI thread: "
-                    + t.getMessage());
-        }
+        WebkitUtils.onMainThreadSync(r);
     }
 
     /**
