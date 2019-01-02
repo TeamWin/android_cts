@@ -349,9 +349,8 @@ public class Camera2SurfaceViewTestCase {
     protected static <T> void waitForResultValue(SimpleCaptureCallback listener,
             CaptureResult.Key<T> resultKey,
             T expectedValue, int numResultsWait) {
-        List<T> expectedValues = new ArrayList<T>();
-        expectedValues.add(expectedValue);
-        waitForAnyResultValue(listener, resultKey, expectedValues, numResultsWait);
+        CameraTestUtils.waitForResultValue(listener, resultKey, expectedValue,
+                numResultsWait, WAIT_FOR_RESULT_TIMEOUT_MS);
     }
 
     /**
@@ -373,31 +372,8 @@ public class Camera2SurfaceViewTestCase {
     protected static <T> void waitForAnyResultValue(SimpleCaptureCallback listener,
             CaptureResult.Key<T> resultKey,
             List<T> expectedValues, int numResultsWait) {
-        if (numResultsWait < 0 || listener == null || expectedValues == null) {
-            throw new IllegalArgumentException(
-                    "Input must be non-negative number and listener/expectedValues "
-                    + "must be non-null");
-        }
-
-        int i = 0;
-        CaptureResult result;
-        do {
-            result = listener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
-            T value = result.get(resultKey);
-            for ( T expectedValue : expectedValues) {
-                if (VERBOSE) {
-                    Log.v(TAG, "Current result value for key " + resultKey.getName() + " is: "
-                            + value.toString());
-                }
-                if (value.equals(expectedValue)) {
-                    return;
-                }
-            }
-        } while (i++ < numResultsWait);
-
-        throw new TimeoutRuntimeException(
-                "Unable to get the expected result value " + expectedValues + " for key " +
-                        resultKey.getName() + " after waiting for " + numResultsWait + " results");
+        CameraTestUtils.waitForAnyResultValue(listener, resultKey, expectedValues, numResultsWait,
+                WAIT_FOR_RESULT_TIMEOUT_MS);
     }
 
     /**
@@ -481,17 +457,8 @@ public class Camera2SurfaceViewTestCase {
      */
     protected static CaptureResult waitForNumResults(SimpleCaptureCallback resultListener,
             int numResultsWait) {
-        if (numResultsWait < 0 || resultListener == null) {
-            throw new IllegalArgumentException(
-                    "Input must be positive number and listener must be non-null");
-        }
-
-        CaptureResult result = null;
-        for (int i = 0; i < numResultsWait; i++) {
-            result = resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
-        }
-
-        return result;
+        return CameraTestUtils.waitForNumResults(resultListener, numResultsWait,
+                WAIT_FOR_RESULT_TIMEOUT_MS);
     }
 
     /**
@@ -511,7 +478,6 @@ public class Camera2SurfaceViewTestCase {
         waitForNumResults(resultListener, maxLatency);
     }
 
-
     /**
      * Wait for AE to be stabilized before capture: CONVERGED or FLASH_REQUIRED.
      *
@@ -528,17 +494,8 @@ public class Camera2SurfaceViewTestCase {
      */
     protected void waitForAeStable(SimpleCaptureCallback resultListener,
             int numResultWaitForUnknownLatency) {
-        waitForSettingsApplied(resultListener, numResultWaitForUnknownLatency);
-
-        if (!mStaticInfo.isHardwareLevelAtLeastLimited()) {
-            // No-op for metadata
-            return;
-        }
-        List<Integer> expectedAeStates = new ArrayList<Integer>();
-        expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_CONVERGED));
-        expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED));
-        waitForAnyResultValue(resultListener, CaptureResult.CONTROL_AE_STATE, expectedAeStates,
-                NUM_RESULTS_WAIT_TIMEOUT);
+        CameraTestUtils.waitForAeStable(resultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY,
+                mStaticInfo, WAIT_FOR_RESULT_TIMEOUT_MS, NUM_RESULTS_WAIT_TIMEOUT);
     }
 
     /**
@@ -567,8 +524,8 @@ public class Camera2SurfaceViewTestCase {
 
         List<Integer> expectedAeStates = new ArrayList<Integer>();
         expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_LOCKED));
-        waitForAnyResultValue(resultListener, CaptureResult.CONTROL_AE_STATE, expectedAeStates,
-                NUM_RESULTS_WAIT_TIMEOUT);
+        CameraTestUtils.waitForAnyResultValue(resultListener, CaptureResult.CONTROL_AE_STATE,
+                expectedAeStates, WAIT_FOR_RESULT_TIMEOUT_MS, NUM_RESULTS_WAIT_TIMEOUT);
     }
 
     /**
@@ -602,11 +559,7 @@ public class Camera2SurfaceViewTestCase {
      * Close the pending images then close current active {@link ImageReader} objects.
      */
     protected void closeImageReaders(ImageReader[] readers) {
-        if ((readers != null) && (readers.length > 0)) {
-            for (ImageReader reader : readers) {
-                CameraTestUtils.closeImageReader(reader);
-            }
-        }
+        CameraTestUtils.closeImageReaders(readers);
     }
 
     /**
@@ -913,37 +866,6 @@ public class Camera2SurfaceViewTestCase {
     }
 
     protected Range<Integer> getSuitableFpsRangeForDuration(String cameraId, long frameDuration) {
-        // Add 0.05 here so Fps like 29.99 evaluated to 30
-        int minBurstFps = (int) Math.floor(1e9 / frameDuration + 0.05f);
-        boolean foundConstantMaxYUVRange = false;
-        boolean foundYUVStreamingRange = false;
-        boolean isExternalCamera = mStaticInfo.isExternalCamera();
-
-        // Find suitable target FPS range - as high as possible that covers the max YUV rate
-        // Also verify that there's a good preview rate as well
-        List<Range<Integer> > fpsRanges = Arrays.asList(
-                mStaticInfo.getAeAvailableTargetFpsRangesChecked());
-        Range<Integer> targetRange = null;
-        for (Range<Integer> fpsRange : fpsRanges) {
-            if (fpsRange.getLower() == minBurstFps && fpsRange.getUpper() == minBurstFps) {
-                foundConstantMaxYUVRange = true;
-                targetRange = fpsRange;
-            } else if (isExternalCamera && fpsRange.getUpper() == minBurstFps) {
-                targetRange = fpsRange;
-            }
-            if (fpsRange.getLower() <= 15 && fpsRange.getUpper() == minBurstFps) {
-                foundYUVStreamingRange = true;
-            }
-
-        }
-
-        if (!isExternalCamera) {
-            assertTrue(String.format("Cam %s: Target FPS range of (%d, %d) must be supported",
-                    cameraId, minBurstFps, minBurstFps), foundConstantMaxYUVRange);
-        }
-        assertTrue(String.format(
-                "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
-                cameraId, minBurstFps), foundYUVStreamingRange);
-        return targetRange;
+        return CameraTestUtils.getSuitableFpsRangeForDuration(cameraId, frameDuration, mStaticInfo);
     }
 }
