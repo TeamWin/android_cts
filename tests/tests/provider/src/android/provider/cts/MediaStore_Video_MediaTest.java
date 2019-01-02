@@ -147,55 +147,6 @@ public class MediaStore_Video_MediaTest {
             assertTrue(realDateAdded >= dateAdded);
             assertEquals(dateModified, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
             c.close();
-
-            // update
-            values.clear();
-            values.put(Media.ALBUM, "cts1");
-            values.put(Media.ARTIST, "cts team1");
-            values.put(Media.CATEGORY, "test1");
-            dateTaken = System.currentTimeMillis();
-            values.put(Media.DATE_TAKEN, dateTaken);
-            values.put(Media.DESCRIPTION, "This is another video");
-            values.put(Media.DURATION, 8481);
-            values.put(Media.LANGUAGE, "cn");
-            values.put(Media.IS_PRIVATE, 0);
-            values.put(Media.MINI_THUMB_MAGIC, 2);
-            values.put(Media.RESOLUTION, "320x240");
-            values.put(Media.TAGS, "cts1, test1");
-            values.put(Media.DATA, externalVideoPath2);
-            values.put(Media.DISPLAY_NAME, "testvideo1");
-            values.put(Media.MIME_TYPE, "video/3gpp");
-            values.put(Media.SIZE, 86854);
-            values.put(Media.TITLE, "testvideo1");
-            dateModified = System.currentTimeMillis();
-            values.put(Media.DATE_MODIFIED, dateModified);
-            assertEquals(1, mContentResolver.update(uri, values, null, null));
-
-            c = mContentResolver.query(uri, null, null, null, null);
-            assertEquals(1, c.getCount());
-            c.moveToFirst();
-            assertEquals(id, c.getLong(c.getColumnIndex(Media._ID)));
-            assertEquals("cts1", c.getString(c.getColumnIndex(Media.ALBUM)));
-            assertEquals("cts team1", c.getString(c.getColumnIndex(Media.ARTIST)));
-            assertEquals("test1", c.getString(c.getColumnIndex(Media.CATEGORY)));
-            assertEquals(dateTaken, c.getLong(c.getColumnIndex(Media.DATE_TAKEN)));
-            assertEquals(8481, c.getInt(c.getColumnIndex(Media.DURATION)));
-            assertEquals("This is another video",
-                    c.getString(c.getColumnIndex(Media.DESCRIPTION)));
-            assertEquals("cn", c.getString(c.getColumnIndex(Media.LANGUAGE)));
-            assertEquals(0, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
-            assertEquals(2, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
-            assertEquals("320x240", c.getString(c.getColumnIndex(Media.RESOLUTION)));
-            assertEquals("cts1, test1", c.getString(c.getColumnIndex(Media.TAGS)));
-            assertEquals(externalVideoPath2,
-                    c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testvideo1", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
-            assertEquals("video/3gpp", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
-            assertEquals("testvideo1", c.getString(c.getColumnIndex(Media.TITLE)));
-            assertEquals(86854, c.getInt(c.getColumnIndex(Media.SIZE)));
-            assertEquals(realDateAdded, c.getLong(c.getColumnIndex(Media.DATE_ADDED)));
-            assertEquals(dateModified, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
-            c.close();
         } finally {
             // delete
             assertEquals(1, mContentResolver.delete(uri, null, null));
