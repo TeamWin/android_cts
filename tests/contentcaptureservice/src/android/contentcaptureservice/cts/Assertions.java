@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
+import android.net.Uri;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -99,6 +100,15 @@ final class Assertions {
                 .that(session.context.getTaskId()).isEqualTo(0);
         assertWithMessage("context for session %s should not have flags", session)
                 .that(session.context.getFlags()).isEqualTo(0);
+    }
+
+    /**
+     * Asserts the invariants of a child session.
+     */
+    public static void assertChildSessionContext(@NonNull Session session,
+            @NonNull String expectedUri) {
+        assertChildSessionContext(session);
+        assertThat(session.context.getUri()).isEqualTo(Uri.parse(expectedUri));
     }
 
     /**
@@ -268,7 +278,30 @@ final class Assertions {
                 .isEqualTo(expectedText);
     }
 
+    /**
+     * Asserts the order a session was created or destroyed.
+     */
+    public static void assertLifecycleOrder(int expectedOrder, @NonNull Session session,
+            @NonNull LifecycleOrder type) {
+        switch(type) {
+            case CREATION:
+                assertWithMessage("Wrong order of creation for session %s", session)
+                    .that(session.creationOrder).isEqualTo(expectedOrder);
+                break;
+            case DESTRUCTION:
+                assertWithMessage("Wrong order of destruction for session %s", session)
+                    .that(session.destructionOrder).isEqualTo(expectedOrder);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid type: " + type);
+        }
+    }
+
     private Assertions() {
         throw new UnsupportedOperationException("contain static methods only");
+    }
+
+    public enum LifecycleOrder {
+        CREATION, DESTRUCTION
     }
 }

@@ -16,7 +16,6 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
-import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -50,7 +49,6 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
     @Test
     public void testSimpleSessionLifecycle() throws Exception {
         final CtsContentCaptureService service = enableService();
-
         final ActivityWatcher watcher = startWatcher();
 
         final BlankActivity activity = launchActivity();
@@ -60,12 +58,12 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         watcher.waitFor(DESTROYED);
 
         final Session session = service.getOnlyFinishedSession();
-        Log.v(TAG, "session id: " + session.id);
+        Log.v(mTag, "session id: " + session.id);
 
         assertRightActivity(session, session.id, activity);
 
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
+        Log.v(mTag, "events: " + events);
         assertThat(events).isEmpty();
     }
 

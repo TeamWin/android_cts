@@ -82,6 +82,11 @@ public class CtsContentCaptureService extends ContentCaptureService {
     private final ArrayMap<ContentCaptureSessionId, CountDownLatch> mUnfinishedSessionLatches =
             new ArrayMap<>();
 
+    /**
+     * Counter of onCreate() / onDestroy() events.
+     */
+    private int mLifecycleEventsCounter;
+
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
         if (sServiceWatcher != null) {
@@ -205,7 +210,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
         Log.i(TAG, "onDestroyContentCaptureSession(" + sessionId + ")");
         safeRun(() -> {
             final Session session = getExistingSession(sessionId);
-            session.finished = true;
+            session.finish();
             mOpenSessions.remove(sessionId);
             if (mFinishedSessions.containsKey(sessionId)) {
                 throw new IllegalStateException("Already destroyed " + sessionId);
@@ -289,6 +294,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
         pw.print("mOpenSessions: "); pw.println(mOpenSessions);
         pw.print("mFinishedSessions: "); pw.println(mFinishedSessions);
         pw.print("mUnfinishedSessionLatches: "); pw.println(mUnfinishedSessionLatches);
+        pw.print("mLifecycleEventsCounter: "); pw.println(mLifecycleEventsCounter);
     }
 
     @NonNull
@@ -345,12 +351,22 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public final class Session {
         public final ContentCaptureSessionId id;
         public final ContentCaptureContext context;
+        public final int creationOrder;
         private final List<ContentCaptureEventsRequest> mRequests = new ArrayList<>();
         public boolean finished;
+        public int destructionOrder;
 
         private Session(ContentCaptureSessionId id, ContentCaptureContext context) {
             this.id = id;
             this.context = context;
+            creationOrder = ++mLifecycleEventsCounter;
+            Log.d(TAG, "create(" + id  + "): order=" + creationOrder);
+        }
+
+        private void finish() {
+            finished = true;
+            destructionOrder = ++mLifecycleEventsCounter;
+            Log.d(TAG, "finish(" + id  + "): order=" + destructionOrder);
         }
 
         // TODO(b/119638958): currently we're only interested on all events, but eventually we

@@ -28,6 +28,7 @@ public class LoginActivity extends AbstractRootViewActivity {
 
     @Override
     protected void setContentViewOnCreate(Bundle savedInstanceState) {
+
         setContentView(R.layout.login_activity);
 
         mUsernameLabel = findViewById(R.id.username_label);

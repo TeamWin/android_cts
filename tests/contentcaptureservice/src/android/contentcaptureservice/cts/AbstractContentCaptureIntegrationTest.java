@@ -63,6 +63,9 @@ public abstract class AbstractContentCaptureIntegrationTest
     private final ContentCaptureLoggingTestRule mLoggingRule =
             new ContentCaptureLoggingTestRule(TAG);
 
+
+    protected final String mTag = getClass().getSimpleName();
+
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
             .add(() -> {
