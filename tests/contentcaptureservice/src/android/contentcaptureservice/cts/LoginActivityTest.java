@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -361,6 +362,30 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
     }
 
+    @Test
+    public void testSimpleLifecycle_flagSecure() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getWindow()
+                .addFlags(WindowManager.LayoutParams.FLAG_SECURE));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        final ContentCaptureSessionId sessionId = session.id;
+        Log.v(TAG, "session id: " + sessionId);
+
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        assertThat(events).isEmpty();
+    }
+
     // TODO(b/119638528): add moar test cases for different sessions:
     // - session1 on rootView, session2 on children
     // - session1 on rootView, session2 on child1, session3 on child2
@@ -371,6 +396,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
     // - removing views
     // - pausing / resuming activity
     // - changing text
-    // - FLAG_SECURE
+    // - secure flag with child sessions
     // - making sure events are flushed when activity pause / resume
 }
