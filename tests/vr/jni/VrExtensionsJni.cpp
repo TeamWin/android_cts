@@ -475,8 +475,7 @@ static void testLinearMagnification(JNIEnv* env, uint32_t flags, uint32_t* middl
         glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
     } else {
         GLenum internal_format = use_srgb_format ? GL_SRGB8_ALPHA8_EXT : GL_RGBA8_OES;
-        GLenum format = use_srgb_format ? GL_SRGB_ALPHA_EXT : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, kTextureWidth, 1, 0, format,
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, kTextureWidth, 1, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, kTextureData);
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -555,8 +554,7 @@ static void testFramebufferBlending(JNIEnv* env, uint32_t flags, uint32_t* final
         glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
     } else {
         GLenum internal_format = use_srgb_format ? GL_SRGB8_ALPHA8_EXT : GL_RGBA8_OES;
-        GLenum format = use_srgb_format ? GL_SRGB_ALPHA_EXT : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 1, 1, 0, format,
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 1, 1, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, nullptr);
     }
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
