@@ -713,6 +713,50 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         assertFillEventForFieldsClassification(defaultUserDataEvent, fieldId, "cat", 1.0F);
     }
 
+    @Test
+    public void testHit_mergeUserData_manyDetectableFields() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId").build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field1 = mActivity.getCell(1, 1);
+        final AutofillId fieldId1 = field1.getAutofillId();
+        final EditText field2 = mActivity.getCell(1, 2);
+        final AutofillId fieldId2 = field2.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId1, fieldId2)
+                .setUserData(new UserData.Builder("id2", "FOOLY", "otherId")
+                        .add("EMPTY", "myId")
+                        .build())
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field1);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "fully"); // u1:  20%, u2: 60%
+        mActivity.setText(1, 2, "empty"); // u1: 100%, u2: 20%
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0),
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId1, new String[] { "otherId", "myId" },
+                                new float[] { 0.6F, 0.2F }),
+                        new FieldClassificationResult(fieldId2, new String[] { "myId", "otherId" },
+                                new float[] { 1.0F, 0.2F }),
+                });
+    }
+
     /*
      * TODO(b/73648631): other scenarios:
      *
