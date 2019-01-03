@@ -163,6 +163,11 @@
         <option name="push" value="CVE-2018-9490->/data/local/tmp/CVE-2018-9490" />
         <option name="push" value="CVE-2018-9515->/data/local/tmp/CVE-2018-9515" />
 
+        <!--__________________-->
+        <!-- Bulletin 2019-03 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="Bug-115739809->/data/local/tmp/Bug-115739809" />
+
         <option name="append-bitness" value="true" />
     </target_preparer>
     <!-- Support for 64-bit software codecs has been deprecated from o-mr1-sts-release    -->
