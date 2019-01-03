@@ -422,6 +422,16 @@
                   android:exported="true"
                   android:theme="@android:style/Theme.NoDisplay"/>
 
+        <activity android:name=".SingleTaskInstanceDisplayActivity"
+                  android:exported="true" />
+
+        <activity android:name=".SingleTaskInstanceDisplayActivity2"
+                  android:exported="true" />
+
+        <activity android:name=".SingleTaskInstanceDisplayActivity3"
+                  android:exported="true"
+                  android:launchMode="singleInstance" />
+
         <!-- Disable home activities by default or it may disturb other tests by
              showing ResolverActivity when start home activity -->
         <activity-alias android:name=".HomeActivity"
