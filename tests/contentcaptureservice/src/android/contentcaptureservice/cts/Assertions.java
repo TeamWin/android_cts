@@ -34,6 +34,9 @@ import android.view.contentcapture.ViewNode;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Helper for common assertions.
  */
@@ -175,6 +178,41 @@ final class Assertions {
     }
 
     /**
+     * Asserts that the events received by the service optionally contains the
+     * {@code TYPE_VIEW_DISAPPEARED} events, as they might have not been generated if the views
+     * disappeared after the activity stopped.
+     *
+     * @param events events received by the service.
+     * @param minimumSize size of events received if activity stopped before views disappeared
+     * @param expectedIds ids of views that might have disappeared.
+     */
+    // TODO(b/122315042): remove this method if we could make it deterministic
+    public static void assertViewsOptionallyDisappeared(@NonNull List<ContentCaptureEvent> events,
+            int minimumSize, @NonNull AutofillId... expectedIds) {
+        final int actualSize = events.size();
+        final int optionalSize = expectedIds.length;
+        if (actualSize == minimumSize) {
+            // Activity stopped before TYPE_VIEW_DISAPPEARED were sent.
+            return;
+        }
+
+        assertThat(events).hasSize(minimumSize + optionalSize);
+        final ArrayList<AutofillId> actualIds = new ArrayList<>(optionalSize);
+        final StringBuilder errors = new StringBuilder();
+        for (int i = 0; i < optionalSize; i++) {
+            final int index = minimumSize + i;
+            final ContentCaptureEvent event = events.get(index);
+            if (event.getType() != TYPE_VIEW_DISAPPEARED) {
+                errors.append("Invalid event at index ").append(index).append(": ").append(event)
+                        .append('\n');
+                continue;
+            }
+            actualIds.add(event.getId());
+        }
+        assertThat(actualIds).containsExactly((Object[]) expectedIds);
+    }
+
+    /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent
      */
     public static void assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
@@ -221,9 +259,11 @@ final class Assertions {
      * Asserts the contents of a {@link #TYPE_VIEW_TEXT_CHANGED} event.
      */
     public static void assertViewTextChanged(@NonNull ContentCaptureEvent event,
-            @NonNull String expectedText, @NonNull AutofillId expectedId) {
+            @NonNull AutofillId expectedId, @NonNull String expectedText) {
         assertWithMessage("wrong event: %s", event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_TEXT_CHANGED);
+        assertWithMessage("Wrong id on %s", event).that(event.getId())
+                .isEqualTo(expectedId);
         assertWithMessage("Wrong text on %s", event).that(event.getText().toString())
                 .isEqualTo(expectedText);
     }
