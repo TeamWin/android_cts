@@ -137,7 +137,6 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
         final WebView childWebView = mOnUiThread.createWebView();
 
-        WebViewOnUiThread childWebViewOnUiThread = new WebViewOnUiThread(this, childWebView);
         mOnUiThread.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(
@@ -153,26 +152,28 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
                 return true;
             }
         });
-        {
-          final int childCallCount = childWebViewClient.getShouldOverrideUrlLoadingCallCount();
-          mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.BLANK_TAG_URL));
+        final int childCallCount = childWebViewClient.getShouldOverrideUrlLoadingCallCount();
+        mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.BLANK_TAG_URL));
 
-          new PollingCheck(TEST_TIMEOUT) {
-              @Override
-              protected boolean check() {
-                  return childWebViewClient.hasOnPageFinishedCalled();
-              }
-          }.run();
-          new PollingCheck(TEST_TIMEOUT) {
-              @Override
-              protected boolean check() {
-                  return childWebViewClient.getShouldOverrideUrlLoadingCallCount() > childCallCount;
-              }
-          }.run();
-          assertEquals(mWebServer.getAssetUrl(TestHtmlConstants.PAGE_WITH_LINK_URL),
-                  childWebViewClient.getLastShouldOverrideUrl());
-        }
+        new PollingCheck(TEST_TIMEOUT) {
+            @Override
+            protected boolean check() {
+                return childWebViewClient.hasOnPageFinishedCalled();
+            }
+        }.run();
+        new PollingCheck(TEST_TIMEOUT) {
+          @Override
+          protected boolean check() {
+            return childWebViewClient.getShouldOverrideUrlLoadingCallCount() > childCallCount;
+          }
+        }.run();
+        assertEquals(mWebServer.getAssetUrl(TestHtmlConstants.PAGE_WITH_LINK_URL),
+                childWebViewClient.getLastShouldOverrideUrl());
 
+        // Now test a navigation within the page
+        //TODO(hush) Enable this portion when b/12804986 is fixed.
+        /*
+        WebViewOnUiThread childWebViewOnUiThread = new WebViewOnUiThread(this, childWebView);
         final int childCallCount = childWebViewClient.getShouldOverrideUrlLoadingCallCount();
         final int mainCallCount = mainWebViewClient.getShouldOverrideUrlLoadingCallCount();
         clickOnLinkUsingJs("link", childWebViewOnUiThread);
@@ -183,8 +184,8 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             }
         }.run();
         assertEquals(mainCallCount, mainWebViewClient.getShouldOverrideUrlLoadingCallCount());
-        assertEquals(
-            TestHtmlConstants.URL_IN_PAGE_WITH_LINK, childWebViewClient.getLastShouldOverrideUrl());
+        assertEquals(TEST_URL, childWebViewClient.getLastShouldOverrideUrl());
+        */
     }
 
     private void clickOnLinkUsingJs(final String linkId, WebViewOnUiThread webViewOnUiThread) {
