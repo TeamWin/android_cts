@@ -102,22 +102,6 @@ public class MediaStore_Audio_PlaylistsTest {
             assertEquals(dateModified, c.getLong(c.getColumnIndex(Playlists.DATE_MODIFIED)));
             assertTrue(c.getLong(c.getColumnIndex(Playlists._ID)) > 0);
             c.close();
-
-            // update
-            values.clear();
-            values.put(Playlists.NAME, "xxx");
-            dateModified = System.currentTimeMillis();
-            values.put(Playlists.DATE_MODIFIED, dateModified);
-            assertEquals(1, mContentResolver.update(uri, values, null, null));
-            c = mContentResolver.query(uri, null, null, null, null);
-            c.moveToFirst();
-            assertEquals("xxx", c.getString(c.getColumnIndex(Playlists.NAME)));
-            assertEquals(externalPlaylistPath,
-                    c.getString(c.getColumnIndex(Playlists.DATA)));
-
-            assertEquals(realDateAdded, c.getLong(c.getColumnIndex(Playlists.DATE_ADDED)));
-            assertEquals(dateModified, c.getLong(c.getColumnIndex(Playlists.DATE_MODIFIED)));
-            c.close();
         } finally {
             assertEquals(1, mContentResolver.delete(uri, null, null));
         }

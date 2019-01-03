@@ -199,7 +199,7 @@ public class MediaStoreAudioTestHelper {
 
 
 
-        public static final long DATE_MODIFIED = System.currentTimeMillis();
+        public static final long DATE_MODIFIED = System.currentTimeMillis() / 1000;
 
         @Override
         public ContentValues getContentValues(boolean isInternal) {

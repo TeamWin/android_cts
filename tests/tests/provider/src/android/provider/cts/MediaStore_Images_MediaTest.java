@@ -292,45 +292,6 @@ public class MediaStore_Images_MediaTest {
             assertTrue(Math.abs(dateModified - c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)))
                        < 5);
             c.close();
-
-            // update
-            values.clear();
-            values.put(Media.ORIENTATION, 90);
-            values.put(Media.PICASA_ID, 10);
-            dateTaken = System.currentTimeMillis();
-            values.put(Media.DATE_TAKEN, dateTaken);
-            values.put(Media.DESCRIPTION, "This is another image");
-            values.put(Media.IS_PRIVATE, 0);
-            values.put(Media.MINI_THUMB_MAGIC, 2);
-            values.put(Media.DATA, externalPath2);
-            values.put(Media.DISPLAY_NAME, "testimage1");
-            values.put(Media.MIME_TYPE, "image/jpeg");
-            values.put(Media.SIZE, 86854);
-            values.put(Media.TITLE, "testimage1");
-            dateModified = System.currentTimeMillis() / 1000;
-            values.put(Media.DATE_MODIFIED, dateModified);
-            assertEquals(1, mContentResolver.update(uri, values, null, null));
-
-            c = mContentResolver.query(uri, null, null, null, null);
-            assertEquals(1, c.getCount());
-            c.moveToFirst();
-            assertEquals(id, c.getLong(c.getColumnIndex(Media._ID)));
-            assertEquals(90, c.getInt(c.getColumnIndex(Media.ORIENTATION)));
-            assertEquals(10, c.getInt(c.getColumnIndex(Media.PICASA_ID)));
-            assertEquals(dateTaken, c.getLong(c.getColumnIndex(Media.DATE_TAKEN)));
-            assertEquals("This is another image",
-                    c.getString(c.getColumnIndex(Media.DESCRIPTION)));
-            assertEquals(0, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
-            assertEquals(2, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
-            assertEquals(externalPath2,
-                    c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testimage1", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
-            assertEquals("image/jpeg", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
-            assertEquals("testimage1", c.getString(c.getColumnIndex(Media.TITLE)));
-            assertEquals(86854, c.getInt(c.getColumnIndex(Media.SIZE)));
-            assertEquals(realDateAdded, c.getLong(c.getColumnIndex(Media.DATE_ADDED)));
-            assertEquals(dateModified, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
-            c.close();
         } finally {
             // delete
             assertEquals(1, mContentResolver.delete(uri, null, null));

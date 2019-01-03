@@ -157,45 +157,6 @@ public class MediaStore_DownloadsTest {
     }
 
     @Test
-    public void testUpdateDownload() throws Exception {
-        final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
-                Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
-        final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
-        params.setDownloadUri(downloadUri);
-
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
-        assertNotNull(pendingUri);
-        mAddedUris.add(pendingUri);
-        final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
-            try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
-                 OutputStream out = session.openOutputStream()) {
-                android.os.FileUtils.copy(in, out);
-            }
-            publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
-        }
-
-        final String newDisplayName = "cts" + System.nanoTime();
-        final ContentValues updateValues = new ContentValues();
-        updateValues.put(Downloads.DISPLAY_NAME, newDisplayName);
-        assertEquals(1, mContentResolver.update(publishUri, updateValues, null, null));
-
-        try (Cursor cursor = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
-                null, "_display_name LIKE ?1", new String[] { newDisplayName }, null)) {
-            assertEquals(1, cursor.getCount());
-            cursor.moveToNext();
-            assertEquals("video/3gp",
-                    cursor.getString(cursor.getColumnIndex(Downloads.MIME_TYPE)));
-            assertEquals(downloadUri.toString(),
-                    cursor.getString(cursor.getColumnIndex(Downloads.DOWNLOAD_URI)));
-        }
-    }
-
-    @Test
     public void testDeleteDownload() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final MediaStore.PendingParams params = new MediaStore.PendingParams(
@@ -261,13 +222,6 @@ public class MediaStore_DownloadsTest {
         } finally {
             IoUtils.closeQuietly(session);
         }
-        mCountDownLatch.await(NOTIFY_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-
-        mCountDownLatch = new CountDownLatch(1);
-        final String newDisplayName = "cts" + System.nanoTime();
-        final ContentValues updateValues = new ContentValues();
-        updateValues.put(Downloads.DISPLAY_NAME, newDisplayName);
-        assertEquals(1, mContentResolver.update(publishUri, updateValues, null, null));
         mCountDownLatch.await(NOTIFY_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
         mCountDownLatch = new CountDownLatch(1);

@@ -33,6 +33,7 @@ import android.database.Cursor;
 import android.media.MediaScanner;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
@@ -173,6 +174,7 @@ public class MediaStoreTest {
         }
         outside = ProviderTestUtils.stageMedia(R.raw.volantis,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        SystemClock.sleep(500);
 
         {
             final HashSet<Long> visible = getVisibleIds(
@@ -193,6 +195,7 @@ public class MediaStoreTest {
         // Delete only contributed items
         MediaStore.deleteContributedMedia(getContext(), getContext().getPackageName(),
                 android.os.Process.myUserHandle());
+        SystemClock.sleep(500);
         {
             final HashSet<Long> visible = getVisibleIds(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -206,7 +209,7 @@ public class MediaStoreTest {
 
             assertMostlyEquals(beforePackage + stageSize, afterPackage, SIZE_DELTA);
             assertMostlyEquals(beforeTotal + stageSize, afterTotal, SIZE_DELTA);
-            assertMostlyEquals(beforeContributed, afterContributed, SIZE_DELTA);
+            assertMostlyEquals(0, afterContributed, SIZE_DELTA);
         }
     }
 
@@ -216,6 +219,7 @@ public class MediaStoreTest {
 
         final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        SystemClock.sleep(500);
 
         final String expected = Arrays
                 .toString(HexEncoding.decode("dd41258ce8d306163f3b727603cb064be81973db"));
@@ -228,9 +232,10 @@ public class MediaStoreTest {
         }
 
         // Make sure that editing image results in a different hash
-        try (OutputStream out = resolver.openOutputStream(uri)) {
+        try (OutputStream out = resolver.openOutputStream(uri, "wa")) {
             out.write(42);
         }
+        SystemClock.sleep(500);
         try (Cursor c = resolver.query(uri, new String[] { MediaColumns.HASH }, null, null)) {
             assertTrue(c.moveToFirst());
             assertNotEquals(expected, Arrays.toString(c.getBlob(0)));
