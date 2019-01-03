@@ -23,6 +23,8 @@ import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
@@ -30,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
@@ -241,5 +244,32 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 "finishInOtherStack");
         LifecycleVerifier.assertEmptySequence(CallbackTrackingActivity.class, getLifecycleLog(),
                 "finishInOtherStack");
+    }
+
+    @Test
+    public void testPreQTopProcessResumedActivityInFreeform() throws Exception {
+        // Resume app switches, so the activities that we are going to launch won't be deferred
+        // since Home activity was started in #setUp().
+        ActivityManager.getService().resumeAppSwitches();
+
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
+        final Bundle bundle = launchOptions.toBundle();
+
+        // Launch an activity that targeted SDK 27.
+        Intent intent = new Intent().setComponent(SDK_27_TEST_ACTIVITY)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(intent, bundle);
+        waitAndAssertActivityState(SDK_27_TEST_ACTIVITY, STATE_RESUMED,
+                "Activity must be resumed.");
+
+        // Launch another activity in the same process.
+        intent = new Intent().setComponent(SDK_27_LAUNCHING_ACTIVITY)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(intent, bundle);
+        waitAndAssertActivityState(SDK_27_TEST_ACTIVITY, STATE_PAUSED,
+                "Activity must be paused since another activity started.");
+        waitAndAssertActivityState(SDK_27_LAUNCHING_ACTIVITY, STATE_RESUMED,
+                "Activity must be resumed.");
     }
 }

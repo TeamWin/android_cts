@@ -250,6 +250,21 @@ public class ActivityManagerState {
         return mResumedActivitiesInStacks.size();
     }
 
+    int getResumedActivitiesCountInPackage(String packageName) {
+        final String componentPrefix = packageName + "/";
+        int count = 0;
+        for (int i = mDisplays.size() - 1; i >= 0; --i) {
+            final ArrayList<ActivityStack> mStacks = mDisplays.get(i).getStacks();
+            for (int j = mStacks.size() - 1; j >= 0; --j) {
+                final String resumedActivity = mStacks.get(j).mResumedActivity;
+                if (resumedActivity != null && resumedActivity.startsWith(componentPrefix)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
     String getResumedActivityOnDisplay(int displayId) {
         return getDisplay(displayId).mResumedActivity;
     }

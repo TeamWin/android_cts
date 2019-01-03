@@ -58,6 +58,9 @@ import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
 import static android.server.am.app27.Components.SDK_27_HOME_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
 import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.server.am.second.Components.EMBEDDING_ACTIVITY;
 import static android.server.am.second.Components.EmbeddingActivity.ACTION_EMBEDDING_TEST_ACTIVITY_START;
@@ -2650,6 +2653,41 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3",
                     getDisplayState(DEFAULT_DISPLAY).containsActivity(
                             SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3));
+        }
+    }
+
+    @Test
+    public void testPreQTopProcessResumedActivity() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SDK_27_TEST_ACTIVITY).setNewTask(true)
+                    .setDisplayId(newDisplay.mId).execute();
+            waitAndAssertTopResumedActivity(SDK_27_TEST_ACTIVITY, newDisplay.mId,
+                    "Activity launched on secondary display must be resumed and focused");
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SDK_27_LAUNCHING_ACTIVITY).setNewTask(true)
+                    .setDisplayId(DEFAULT_DISPLAY).execute();
+            waitAndAssertTopResumedActivity(SDK_27_LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on default display must be resumed and focused");
+
+            assertEquals("There must be only one resumed activity in the package.", 1,
+                    mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                            SDK_27_LAUNCHING_ACTIVITY.getPackageName()));
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY).setNewTask(true)
+                    .setDisplayId(DEFAULT_DISPLAY).execute();
+            waitAndAssertTopResumedActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on default display must be resumed and focused");
+            assertTrue("Activity that was on secondary display must be resumed",
+                    mAmWmState.getAmState().hasActivityState(SDK_27_TEST_ACTIVITY, STATE_RESUMED));
+            assertEquals("There must be only two resumed activities in the package.", 2,
+                    mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                            SDK_27_TEST_ACTIVITY.getPackageName()));
         }
     }
 

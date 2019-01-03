@@ -25,6 +25,15 @@
                   android:exported="true"
         />
 
+        <activity android:name="android.server.am.TestActivity"
+                  android:exported="true"
+        />
+
+        <activity android:name="android.server.am.app27.SeparateProcessActivity"
+                  android:process="android.server.am.app27.separate_process"
+                  android:exported="true"
+        />
+
         <activity android:name="android.server.am.app27.HomeActivity"
                         android:enabled="false"
                         android:exported="true">
