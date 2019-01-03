@@ -869,6 +869,16 @@ public class LinkifyTest extends AndroidTestCase {
                 domain.length(), email);
     }
 
+    public void testAddLinks_unsupportedCharacters() {
+        String url = "moc.diordna.com";
+        assertAddLinksWithWebUrlSucceeds(url + " should be linkified", url);
+
+        assertAddLinksWithWebUrlFails("u202C character should not be linkified", "\u202C" + url);
+        assertAddLinksWithWebUrlFails("u202D character should not be linkified", url + "\u202D");
+        assertAddLinksWithWebUrlFails(
+                "u202E character should not be linkified", url + "moc\u202E.diordna.com");
+    }
+
     // Utility functions
     private static void assertAddLinksWithWebUrlSucceeds(String msg, String url) {
         assertAddLinksSucceeds(msg, url, Linkify.WEB_URLS);
