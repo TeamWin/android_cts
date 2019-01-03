@@ -574,7 +574,7 @@ static void testFramebufferBlending(JNIEnv* env, uint32_t flags, uint32_t* final
     uint32_t cleared_color = 0;
     glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &cleared_color);
     LOGV("  Cleared Color: %8.8X", cleared_color);
-    ASSERT_EQ(cleared_color, kBlendDestColor);
+    ASSERT_NEAR_RGBA(cleared_color, kBlendDestColor, 1);
     // Draw the texture.
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
