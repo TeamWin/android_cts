@@ -17,7 +17,6 @@
 package android.hardware.cts;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -41,17 +40,11 @@ import android.os.ConditionVariable;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.InstrumentationRegistry;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.SurfaceHolder;
-
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -133,10 +126,6 @@ public class CameraTest extends Assert {
     private final ConditionVariable mFocusDone = new ConditionVariable();
     private final ConditionVariable mSnapshotDone = new ConditionVariable();
 
-    private static final String REPORT_LOG_NAME = "CtsCamera1TestCases";
-    private DeviceReportLog mReportLog;
-    private Instrumentation mInstrumentation;
-
     Camera mCamera;
     boolean mIsExternalCamera;
 
@@ -146,7 +135,6 @@ public class CameraTest extends Assert {
 
     @Before
     public void setUp() throws Exception {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
     @After
@@ -594,146 +582,6 @@ public class CameraTest extends Assert {
         waitForPreviewDone();
         terminateMessageLooper();
         assertEquals(PREVIEW_CALLBACK_RECEIVED, mPreviewCallbackResult);
-    }
-
-    @UiThreadTest
-    @Test
-    public void testPerformance() throws Exception {
-        final int NUM_TEST_LOOPS = 10;
-
-        int nCameras = Camera.getNumberOfCameras();
-        double[] avgCameraTakePictureTimes = new double[nCameras];
-
-        for (int id = 0; id < nCameras; id++) {
-            String streamName = "test_camera_takePicture";
-            mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-            mReportLog.addValue("camera_id", id, ResultType.NEUTRAL, ResultUnit.NONE);
-            double[] cameraOpenTimes = new double[NUM_TEST_LOOPS];
-            double[] startPreviewTimes = new double[NUM_TEST_LOOPS];
-            double[] stopPreviewTimes = new double[NUM_TEST_LOOPS];
-            double[] cameraCloseTimes = new double[NUM_TEST_LOOPS];
-            double[] cameraTakePictureTimes = new double[NUM_TEST_LOOPS];
-            double[] cameraAutoFocusTimes = new double[NUM_TEST_LOOPS];
-            boolean afSupported = false;
-            long openTimeMs, startPreviewTimeMs, stopPreviewTimeMs, closeTimeMs, takePictureTimeMs,
-                 autofocusTimeMs;
-
-            for (int i = 0; i < NUM_TEST_LOOPS; i++) {
-                SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
-                openTimeMs = SystemClock.elapsedRealtime();
-                initializeMessageLooper(id);
-                cameraOpenTimes[i] = SystemClock.elapsedRealtime() - openTimeMs;
-
-                Parameters parameters = mCamera.getParameters();
-                if (i == 0) {
-                    for (String focusMode: parameters.getSupportedFocusModes()) {
-                        if (Parameters.FOCUS_MODE_AUTO.equals(focusMode)) {
-                            afSupported = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (afSupported) {
-                    parameters.setFocusMode(Parameters.FOCUS_MODE_AUTO);
-                    mCamera.setParameters(parameters);
-                }
-
-                mCamera.setPreviewDisplay(holder);
-                startPreviewTimeMs = SystemClock.elapsedRealtime();
-                blockingStartPreview();
-                startPreviewTimes[i] = SystemClock.elapsedRealtime() - startPreviewTimeMs;
-
-                if (afSupported) {
-                    autofocusTimeMs = SystemClock.elapsedRealtime();
-                    mCamera.autoFocus(mAutoFocusCallback);
-                    waitForFocusDone();
-                    cameraAutoFocusTimes[i] = SystemClock.elapsedRealtime() - autofocusTimeMs;
-                }
-
-                //Let preview run for a while
-                Thread.sleep(1000);
-
-                takePictureTimeMs = SystemClock.elapsedRealtime();
-                mCamera.takePicture(/*shutterCallback*/ null, /*rawPictureCallback*/ null,
-                        mJpegPictureCallback);
-                waitForSnapshotDone();
-                cameraTakePictureTimes[i] = SystemClock.elapsedRealtime() - takePictureTimeMs;
-
-                //Resume preview after image capture
-                blockingStartPreview();
-
-                stopPreviewTimeMs = SystemClock.elapsedRealtime();
-                mCamera.stopPreview();
-                closeTimeMs = SystemClock.elapsedRealtime();
-                stopPreviewTimes[i] = closeTimeMs - stopPreviewTimeMs;
-
-                terminateMessageLooper();
-                cameraCloseTimes[i] = SystemClock.elapsedRealtime() - closeTimeMs;
-            }
-
-            if (VERBOSE) {
-                Log.v(TAG, "Camera " + id + " device open times(ms): "
-                        + Arrays.toString(cameraOpenTimes)
-                        + ". Average(ms): " + Stat.getAverage(cameraOpenTimes)
-                        + ". Min(ms): " + Stat.getMin(cameraOpenTimes)
-                        + ". Max(ms): " + Stat.getMax(cameraOpenTimes));
-                Log.v(TAG, "Camera " + id + " start preview times(ms): "
-                        + Arrays.toString(startPreviewTimes)
-                        + ". Average(ms): " + Stat.getAverage(startPreviewTimes)
-                        + ". Min(ms): " + Stat.getMin(startPreviewTimes)
-                        + ". Max(ms): " + Stat.getMax(startPreviewTimes));
-                if (afSupported) {
-                    Log.v(TAG, "Camera " + id + " autofocus times(ms): "
-                            + Arrays.toString(cameraAutoFocusTimes)
-                            + ". Average(ms): " + Stat.getAverage(cameraAutoFocusTimes)
-                            + ". Min(ms): " + Stat.getMin(cameraAutoFocusTimes)
-                            + ". Max(ms): " + Stat.getMax(cameraAutoFocusTimes));
-                }
-                Log.v(TAG, "Camera " + id + " stop preview times(ms): "
-                        + Arrays.toString(stopPreviewTimes)
-                        + ". Average(ms): " + Stat.getAverage(stopPreviewTimes)
-                        + ". Min(ms): " + Stat.getMin(stopPreviewTimes)
-                        + ". Max(ms): " + Stat.getMax(stopPreviewTimes));
-                Log.v(TAG, "Camera " + id + " device close times(ms): "
-                        + Arrays.toString(cameraCloseTimes)
-                        + ". Average(ms): " + Stat.getAverage(cameraCloseTimes)
-                        + ". Min(ms): " + Stat.getMin(cameraCloseTimes)
-                        + ". Max(ms): " + Stat.getMax(cameraCloseTimes));
-                Log.v(TAG, "Camera " + id + " camera takepicture times(ms): "
-                        + Arrays.toString(cameraTakePictureTimes)
-                        + ". Average(ms): " + Stat.getAverage(cameraTakePictureTimes)
-                        + ". Min(ms): " + Stat.getMin(cameraTakePictureTimes)
-                        + ". Max(ms): " + Stat.getMax(cameraTakePictureTimes));
-            }
-
-            avgCameraTakePictureTimes[id] = Stat.getAverage(cameraTakePictureTimes);
-            mReportLog.addValues("camera_open_time", cameraOpenTimes, ResultType.LOWER_BETTER,
-                    ResultUnit.MS);
-            mReportLog.addValues("camera_start_preview_time", startPreviewTimes,
-                    ResultType.LOWER_BETTER, ResultUnit.MS);
-            if (afSupported) {
-                mReportLog.addValues("camera_autofocus_time", cameraAutoFocusTimes,
-                        ResultType.LOWER_BETTER, ResultUnit.MS);
-            }
-            mReportLog.addValues("camera_stop_preview", stopPreviewTimes,
-                    ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.addValues("camera_close_time", cameraCloseTimes,
-                    ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.addValues("camera_takepicture_time", cameraTakePictureTimes,
-                    ResultType.LOWER_BETTER, ResultUnit.MS);
-
-            mReportLog.submit(mInstrumentation);
-        }
-
-        if (nCameras != 0) {
-            String streamName = "test_camera_takepicture_average";
-            mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-            mReportLog.setSummary("camera_takepicture_average_time_for_all_cameras",
-                    Stat.getAverage(avgCameraTakePictureTimes), ResultType.LOWER_BETTER,
-                    ResultUnit.MS);
-            mReportLog.submit(mInstrumentation);
-        }
     }
 
     @UiThreadTest

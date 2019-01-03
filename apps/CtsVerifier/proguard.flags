@@ -18,6 +18,15 @@
     public <methods>;
 }
 
+# ensure we keep public camera test methods, these are needed at runtime
+-keepclassmembers class * extends android.hardware.camera2.cts.testcases.Camera2AndroidTestCase {
+    public <methods>;
+}
+
+-keepclassmembers class * extends android.hardware.cts.CameraTestCase {
+    public <methods>;
+}
+
 -keepclasseswithmembers class * extends com.android.cts.verifier.location.LocationModeTestActivity
 
 # keep mockito methods

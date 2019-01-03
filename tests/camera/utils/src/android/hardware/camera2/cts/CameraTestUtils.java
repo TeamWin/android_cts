@@ -26,6 +26,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
@@ -204,6 +205,17 @@ public class CameraTestUtils extends Assert {
     public static void closeImageReader(ImageReader reader) {
         if (reader != null) {
             reader.close();
+        }
+    }
+
+    /**
+     * Close the pending images then close current active {@link ImageReader} objects.
+     */
+    public static void closeImageReaders(ImageReader[] readers) {
+        if ((readers != null) && (readers.length > 0)) {
+            for (ImageReader reader : readers) {
+                CameraTestUtils.closeImageReader(reader);
+            }
         }
     }
 
@@ -2504,7 +2516,7 @@ public class CameraTestUtils extends Assert {
         }
     }
 
-    /*
+    /**
      * Query whether a particular stream combination is supported.
      */
     public static boolean checkSessionConfigurationWithSurfaces(CameraDevice camera,
@@ -2519,7 +2531,7 @@ public class CameraTestUtils extends Assert {
                 operatingMode, expectedResult);
     }
 
-    /*
+    /**
      * Query whether a particular stream combination is supported.
      */
     public static boolean checkSessionConfiguration(CameraDevice camera, Handler handler,
@@ -2546,5 +2558,189 @@ public class CameraTestUtils extends Assert {
         }
 
         return !(expectedResult ^ ret);
+    }
+
+    /**
+     * Wait for numResultWait frames
+     *
+     * @param resultListener The capture listener to get capture result back.
+     * @param numResultsWait Number of frame to wait
+     * @param timeout Wait timeout in ms.
+     *
+     * @return the last result, or {@code null} if there was none
+     */
+    public static CaptureResult waitForNumResults(SimpleCaptureCallback resultListener,
+            int numResultsWait, int timeout) {
+        if (numResultsWait < 0 || resultListener == null) {
+            throw new IllegalArgumentException(
+                    "Input must be positive number and listener must be non-null");
+        }
+
+        CaptureResult result = null;
+        for (int i = 0; i < numResultsWait; i++) {
+            result = resultListener.getCaptureResult(timeout);
+        }
+
+        return result;
+    }
+
+    /**
+     * Wait for any expected result key values available in a certain number of results.
+     *
+     * <p>
+     * Check the result immediately if numFramesWait is 0.
+     * </p>
+     *
+     * @param listener The capture listener to get capture result.
+     * @param resultKey The capture result key associated with the result value.
+     * @param expectedValues The list of result value need to be waited for,
+     * return immediately if the list is empty.
+     * @param numResultsWait Number of frame to wait before times out.
+     * @param timeout result wait time out in ms.
+     * @throws TimeoutRuntimeException If more than numResultsWait results are.
+     * seen before the result matching myRequest arrives, or each individual wait
+     * for result times out after 'timeout' ms.
+     */
+    public static <T> void waitForAnyResultValue(SimpleCaptureCallback listener,
+            CaptureResult.Key<T> resultKey, List<T> expectedValues, int numResultsWait,
+            int timeout) {
+        if (numResultsWait < 0 || listener == null || expectedValues == null) {
+            throw new IllegalArgumentException(
+                    "Input must be non-negative number and listener/expectedValues "
+                    + "must be non-null");
+        }
+
+        int i = 0;
+        CaptureResult result;
+        do {
+            result = listener.getCaptureResult(timeout);
+            T value = result.get(resultKey);
+            for ( T expectedValue : expectedValues) {
+                if (VERBOSE) {
+                    Log.v(TAG, "Current result value for key " + resultKey.getName() + " is: "
+                            + value.toString());
+                }
+                if (value.equals(expectedValue)) {
+                    return;
+                }
+            }
+        } while (i++ < numResultsWait);
+
+        throw new TimeoutRuntimeException(
+                "Unable to get the expected result value " + expectedValues + " for key " +
+                        resultKey.getName() + " after waiting for " + numResultsWait + " results");
+    }
+
+    /**
+     * Wait for expected result key value available in a certain number of results.
+     *
+     * <p>
+     * Check the result immediately if numFramesWait is 0.
+     * </p>
+     *
+     * @param listener The capture listener to get capture result
+     * @param resultKey The capture result key associated with the result value
+     * @param expectedValue The result value need to be waited for
+     * @param numResultsWait Number of frame to wait before times out
+     * @param timeout Wait time out.
+     * @throws TimeoutRuntimeException If more than numResultsWait results are
+     * seen before the result matching myRequest arrives, or each individual wait
+     * for result times out after 'timeout' ms.
+     */
+    public static <T> void waitForResultValue(SimpleCaptureCallback listener,
+            CaptureResult.Key<T> resultKey, T expectedValue, int numResultsWait, int timeout) {
+        List<T> expectedValues = new ArrayList<T>();
+        expectedValues.add(expectedValue);
+        waitForAnyResultValue(listener, resultKey, expectedValues, numResultsWait, timeout);
+    }
+
+    /**
+     * Wait for AE to be stabilized before capture: CONVERGED or FLASH_REQUIRED.
+     *
+     * <p>Waits for {@code android.sync.maxLatency} number of results first, to make sure
+     * that the result is synchronized (or {@code numResultWaitForUnknownLatency} if the latency
+     * is unknown.</p>
+     *
+     * <p>This is a no-op for {@code LEGACY} devices since they don't report
+     * the {@code aeState} result.</p>
+     *
+     * @param resultListener The capture listener to get capture result back.
+     * @param numResultWaitForUnknownLatency Number of frame to wait if camera device latency is
+     *                                       unknown.
+     * @param staticInfo corresponding camera device static metadata.
+     * @param settingsTimeout wait timeout for settings application in ms.
+     * @param resultTimeout wait timeout for result in ms.
+     * @param numResultsWait Number of frame to wait before times out.
+     */
+    public static void waitForAeStable(SimpleCaptureCallback resultListener,
+            int numResultWaitForUnknownLatency, StaticMetadata staticInfo,
+            int settingsTimeout, int numResultWait) {
+        waitForSettingsApplied(resultListener, numResultWaitForUnknownLatency, staticInfo,
+                settingsTimeout);
+
+        if (!staticInfo.isHardwareLevelAtLeastLimited()) {
+            // No-op for metadata
+            return;
+        }
+        List<Integer> expectedAeStates = new ArrayList<Integer>();
+        expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_CONVERGED));
+        expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED));
+        waitForAnyResultValue(resultListener, CaptureResult.CONTROL_AE_STATE, expectedAeStates,
+                numResultWait, settingsTimeout);
+    }
+
+    /**
+     * Wait for enough results for settings to be applied
+     *
+     * @param resultListener The capture listener to get capture result back.
+     * @param numResultWaitForUnknownLatency Number of frame to wait if camera device latency is
+     *                                       unknown.
+     * @param staticInfo corresponding camera device static metadata.
+     * @param timeout wait timeout in ms.
+     */
+    public static void waitForSettingsApplied(SimpleCaptureCallback resultListener,
+            int numResultWaitForUnknownLatency, StaticMetadata staticInfo, int timeout) {
+        int maxLatency = staticInfo.getSyncMaxLatency();
+        if (maxLatency == CameraMetadata.SYNC_MAX_LATENCY_UNKNOWN) {
+            maxLatency = numResultWaitForUnknownLatency;
+        }
+        // Wait for settings to take effect
+        waitForNumResults(resultListener, maxLatency, timeout);
+    }
+
+    public static Range<Integer> getSuitableFpsRangeForDuration(String cameraId,
+            long frameDuration, StaticMetadata staticInfo) {
+        // Add 0.05 here so Fps like 29.99 evaluated to 30
+        int minBurstFps = (int) Math.floor(1e9 / frameDuration + 0.05f);
+        boolean foundConstantMaxYUVRange = false;
+        boolean foundYUVStreamingRange = false;
+        boolean isExternalCamera = staticInfo.isExternalCamera();
+
+        // Find suitable target FPS range - as high as possible that covers the max YUV rate
+        // Also verify that there's a good preview rate as well
+        List<Range<Integer> > fpsRanges = Arrays.asList(
+                staticInfo.getAeAvailableTargetFpsRangesChecked());
+        Range<Integer> targetRange = null;
+        for (Range<Integer> fpsRange : fpsRanges) {
+            if (fpsRange.getLower() == minBurstFps && fpsRange.getUpper() == minBurstFps) {
+                foundConstantMaxYUVRange = true;
+                targetRange = fpsRange;
+            } else if (isExternalCamera && fpsRange.getUpper() == minBurstFps) {
+                targetRange = fpsRange;
+            }
+            if (fpsRange.getLower() <= 15 && fpsRange.getUpper() == minBurstFps) {
+                foundYUVStreamingRange = true;
+            }
+
+        }
+
+        if (!isExternalCamera) {
+            assertTrue(String.format("Cam %s: Target FPS range of (%d, %d) must be supported",
+                    cameraId, minBurstFps, minBurstFps), foundConstantMaxYUVRange);
+        }
+        assertTrue(String.format(
+                "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
+                cameraId, minBurstFps), foundYUVStreamingRange);
+        return targetRange;
     }
 }

@@ -111,7 +111,8 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
     @CddTest(requirement="9.7")
     public void testConfigStackProtectorStrong() throws Exception {
         assertTrue("Linux kernel must have Stack Protector enabled: " +
-                "CONFIG_CC_STACKPROTECTOR_STRONG=y",
+                "CONFIG_STACKPROTECTOR_STRONG=y or CONFIG_CC_STACKPROTECTOR_STRONG=y",
+                configSet.contains("CONFIG_STACKPROTECTOR_STRONG=y") ||
                 configSet.contains("CONFIG_CC_STACKPROTECTOR_STRONG=y"));
     }
 
