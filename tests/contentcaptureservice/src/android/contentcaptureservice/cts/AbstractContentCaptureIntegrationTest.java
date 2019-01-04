@@ -52,6 +52,8 @@ import org.junit.runner.RunWith;
 public abstract class AbstractContentCaptureIntegrationTest
         <A extends AbstractContentCaptureActivity> {
 
+    private static final String TAG = AbstractContentCaptureIntegrationTest.class.getSimpleName();
+
     protected static final Context sContext = InstrumentationRegistry.getTargetContext();
 
     protected ActivitiesWatcher mActivitiesWatcher;
@@ -63,8 +65,6 @@ public abstract class AbstractContentCaptureIntegrationTest
     private final ContentCaptureLoggingTestRule mLoggingRule =
             new ContentCaptureLoggingTestRule(TAG);
 
-
-    protected final String mTag = getClass().getSimpleName();
 
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)

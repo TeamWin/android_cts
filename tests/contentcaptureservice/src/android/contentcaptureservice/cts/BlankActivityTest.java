@@ -34,6 +34,8 @@ import java.util.List;
 
 public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<BlankActivity> {
 
+    private static final String TAG = BlankActivityTest.class.getSimpleName();
+
     private static final ActivityTestRule<BlankActivity> sActivityRule = new ActivityTestRule<>(
             BlankActivity.class, false, false);
 
@@ -58,12 +60,12 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         watcher.waitFor(DESTROYED);
 
         final Session session = service.getOnlyFinishedSession();
-        Log.v(mTag, "session id: " + session.id);
+        Log.v(TAG, "session id: " + session.id);
 
         assertRightActivity(session, session.id, activity);
 
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(mTag, "events: " + events);
+        Log.v(TAG, "events: " + events);
         assertThat(events).isEmpty();
     }
 
