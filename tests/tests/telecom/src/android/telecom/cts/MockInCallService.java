@@ -39,7 +39,7 @@ public class MockInCallService extends InCallService {
     private Map<Call, MockVideoCallCallback> mVideoCallCallbacks =
             new ArrayMap<Call, MockVideoCallCallback>();
 
-    private static final Object sLock = new Object();
+    protected static final Object sLock = new Object();
     private static boolean mIsServiceBound = false;
 
     public static abstract class InCallServiceCallbacks {
