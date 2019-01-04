@@ -26,6 +26,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.Size;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,14 +44,23 @@ public class ThumbnailUtilsTest {
             new Size(5000, 5000),
     };
 
+    private File mDir;
+
+    @Before
+    public void setUp() {
+        mDir = InstrumentationRegistry.getTargetContext().getExternalCacheDir();
+        mDir.mkdirs();
+        deleteContents(mDir);
+    }
+
     @After
     public void tearDown() {
-        deleteContents(new File(System.getProperty("java.io.tmpdir")));
+        deleteContents(mDir);
     }
 
     @Test
     public void testCreateAudioThumbnail() throws Exception {
-        final File file = stageFile(R.raw.testmp3, File.createTempFile("cts", ".mp3"));
+        final File file = stageFile(R.raw.testmp3, new File(mDir, "cts.mp3"));
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createAudioThumbnail(file, size, null));
         }
@@ -58,12 +68,8 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateAudioThumbnail_SeparateFile() throws Exception {
-        final File dir = File.createTempFile("cts", null);
-        dir.delete();
-        dir.mkdirs();
-
-        final File file = stageFile(R.raw.monotestmp3, new File(dir, "audio.mp3"));
-        stageFile(R.raw.volantis, new File(dir, "AlbumArt.jpg"));
+        final File file = stageFile(R.raw.monotestmp3, new File(mDir, "audio.mp3"));
+        stageFile(R.raw.volantis, new File(mDir, "AlbumArt.jpg"));
 
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createAudioThumbnail(file, size, null));
@@ -72,7 +78,7 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateAudioThumbnail_None() throws Exception {
-        final File file = stageFile(R.raw.monotestmp3, File.createTempFile("cts", ".mp3"));
+        final File file = stageFile(R.raw.monotestmp3, new File(mDir, "cts.mp3"));
         try {
             ThumbnailUtils.createAudioThumbnail(file, TEST_SIZES[0], null);
             fail("Somehow made a thumbnail out of nothing?");
@@ -82,7 +88,7 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateImageThumbnail() throws Exception {
-        final File file = stageFile(R.raw.volantis, File.createTempFile("cts", ".jpg"));
+        final File file = stageFile(R.raw.volantis, new File(mDir, "cts.jpg"));
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createImageThumbnail(file, size, null));
         }
@@ -92,7 +98,7 @@ public class ThumbnailUtilsTest {
     public void testCreateVideoThumbnail() throws Exception {
         final File file = stageFile(
                 R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz,
-                File.createTempFile("cts", ".mp4"));
+                new File(mDir, "cts.mp4"));
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createVideoThumbnail(file, size, null));
         }
