@@ -19,9 +19,9 @@
     android:versionCode="2"
     android:versionName="2">
   <application>
-      <meta-data android:name="android.signedconfig"
+      <meta-data android:name="android.settings.global"
                  android:value="@string/signed_config_v2"/>
-      <meta-data android:name="android.signedconfig.signature"
+      <meta-data android:name="android.settings.global.signature"
                  android:value="@string/signed_config_signature_v2"/>
   </application>
 </manifest>
