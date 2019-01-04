@@ -194,6 +194,9 @@ public class UiAutomationTest {
             uiAutomation.waitForIdle(
                     QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
 
+            // Wait for Activity draw finish
+            getInstrumentation().waitForIdleSync();
+
             // Find the application window.
             final int windowId = findAppWindowId(uiAutomation.getWindows());
             assertTrue(windowId >= 0);
