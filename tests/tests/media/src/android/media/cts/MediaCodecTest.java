@@ -19,6 +19,7 @@ package android.media.cts;
 import android.media.cts.R;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
+import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
@@ -37,10 +38,12 @@ import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PersistableBundle;
+import android.support.test.filters.MediumTest;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.util.Range;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -1806,6 +1809,130 @@ public class MediaCodecTest extends AndroidTestCase {
             crypto.release();
             drm.closeSession(sessionId);
         }
+    }
+
+    /**
+     * PCM encoding configuration test.
+     *
+     * If not specified in configure(), PCM encoding if it exists must be 16 bit.
+     * If specified float in configure(), PCM encoding if it exists must be 16 bit, or float.
+     */
+    @MediumTest
+    public void testPCMEncoding() throws Exception {
+        final MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
+            final boolean isEncoder = codecInfo.isEncoder();
+            final String name = codecInfo.getName();
+
+            for (String type : codecInfo.getSupportedTypes()) {
+                final MediaCodecInfo.CodecCapabilities ccaps =
+                        codecInfo.getCapabilitiesForType(type);
+                final MediaCodecInfo.AudioCapabilities acaps =
+                        ccaps.getAudioCapabilities();
+                if (acaps == null) {
+                    break; // not an audio codec
+                }
+
+                // Deduce the minimum channel count (though prefer stereo over mono).
+                final int channelCount = Math.min(acaps.getMaxInputChannelCount(), 2);
+
+                // Deduce the minimum sample rate.
+                final int[] sampleRates = acaps.getSupportedSampleRates();
+                final Range<Integer>[] sampleRateRanges = acaps.getSupportedSampleRateRanges();
+                assertNotNull("supported sample rate ranges must be non-null", sampleRateRanges);
+                final int sampleRate = sampleRateRanges[0].getLower();
+
+                // If sample rate array exists (it may not),
+                // the minimum value must be equal with the minimum from the sample rate range.
+                if (sampleRates != null) {
+                    assertEquals("sample rate range and array should have equal minimum",
+                            sampleRate, sampleRates[0]);
+                    Log.d(TAG, "codec: " + name + " type: " + type
+                            + " has both sampleRate array and ranges");
+                } else {
+                    Log.d(TAG, "codec: " + name + " type: " + type
+                            + " returns null getSupportedSampleRates()");
+                }
+
+                // We create one format here for both tests below.
+                final MediaFormat format = MediaFormat.createAudioFormat(
+                    type, sampleRate, channelCount);
+
+                // Bitrate field is mandatory for encoders (except FLAC).
+                if (isEncoder) {
+                    final int bitRate = acaps.getBitrateRange().getLower();
+                    format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
+                }
+
+                // First test: An audio codec must be createable from a format
+                // with the minimum sample rate and channel count.
+                // The PCM encoding must be null (doesn't exist) or 16 bit.
+                {
+                    // Check encoding of codec.
+                    final Integer actualEncoding = encodingOfAudioCodec(name, format, isEncoder);
+                    if (actualEncoding != null) {
+                        assertEquals("returned audio encoding must be 16 bit for codec: "
+                                + name + " type: " + type + " encoding: " + actualEncoding,
+                                AudioFormat.ENCODING_PCM_16BIT, actualEncoding.intValue());
+                    }
+                }
+
+                // Second test: An audio codec configured with PCM encoding float must return
+                // either an encoding of null (doesn't exist), 16 bit, or float.
+                {
+                    // Reuse the original format, and add float specifier.
+                    format.setInteger(
+                            MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
+
+                    // Check encoding of codec.
+                    // The KEY_PCM_ENCODING key is advisory, so should not cause configuration
+                    // failure.  The actual PCM encoding is returned from
+                    // the input format (encoder) or output format (decoder).
+                    final Integer actualEncoding = encodingOfAudioCodec(name, format, isEncoder);
+                    if (actualEncoding != null) {
+                        assertTrue(
+                                "returned audio encoding must be 16 bit or float for codec: "
+                                + name + " type: " + type + " encoding: " + actualEncoding,
+                                actualEncoding == AudioFormat.ENCODING_PCM_16BIT
+                                || actualEncoding == AudioFormat.ENCODING_PCM_FLOAT);
+                        if (actualEncoding == AudioFormat.ENCODING_PCM_FLOAT) {
+                            Log.d(TAG, "codec: " + name + " type: " + type + " supports float");
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the PCM encoding of an audio codec, or null if codec doesn't exist,
+     * or not an audio codec, or PCM encoding key doesn't exist.
+     */
+    private Integer encodingOfAudioCodec(String name, MediaFormat format, boolean encode)
+            throws IOException {
+        final int flagEncoder = encode ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0;
+        final MediaCodec codec = MediaCodec.createByCodecName(name);
+        Integer actualEncoding = null;
+
+        try {
+            codec.configure(format, null /* surface */, null /* crypto */, flagEncoder);
+
+            // Check input/output format - this must exist.
+            final MediaFormat actualFormat =
+                    encode ? codec.getInputFormat() : codec.getOutputFormat();
+            assertNotNull("cannot get format for " + name, actualFormat);
+
+            // Check actual encoding - this may or may not exist
+            try {
+                actualEncoding = actualFormat.getInteger(MediaFormat.KEY_PCM_ENCODING);
+            } catch (Exception e) {
+                ; // trying to get a non-existent key throws exception
+            }
+        } finally {
+            codec.release();
+        }
+        return actualEncoding;
     }
 
     abstract class ByteBufferStream {
