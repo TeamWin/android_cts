@@ -22,6 +22,9 @@ import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorDirectChannel;
 import android.hardware.SensorManager;
+import android.os.Build;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 /**
  * Checks if Hifi sensors  or VR High performance mode sensors
@@ -61,7 +64,10 @@ public class SensorSupportTest extends SensorTestCase {
     }
 
     public void testSupportsAccelerometerUncalibrated() {
-        checkSupportsSensor(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED);
+        // Uncalibrated accelerometer was not required before Android O
+        if (PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.O) {
+            checkSupportsSensor(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED);
+        }
     }
 
     public void testSupportsGyroscope() {
