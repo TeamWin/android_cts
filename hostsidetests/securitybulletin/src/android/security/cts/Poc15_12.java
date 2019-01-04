@@ -27,6 +27,6 @@ public class Poc15_12 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2015-6626", getDevice(), 60);
         String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Media buffer information leak[\\s\\n\\S]*", logcat);
+        assertNotMatchesMultiLine("Media buffer information leak", logcat);
     }
 }

@@ -27,7 +27,7 @@ public class Poc17_02 extends SecurityTestCase {
       AdbUtils.runCommandLine("logcat -c", getDevice());
       AdbUtils.runPoc("CVE-2017-0426", getDevice(), 60);
       String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-      assertNotMatches("[\\s\\n\\S]*Bugreports file in wrong path[\\s\\n\\S]*", logcatOut);
+      assertNotMatchesMultiLine("Bugreports file in wrong path", logcatOut);
   }
 
   /**

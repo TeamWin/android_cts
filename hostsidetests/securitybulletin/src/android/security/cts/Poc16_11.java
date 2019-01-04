@@ -28,7 +28,7 @@ public class Poc16_11 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPoc("CVE-2012-6702", getDevice(), 60);
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*fail: encountered same random values![\\s\\n\\S]*", logcat);
+        assertNotMatchesMultiLine("fail: encountered same random values!", logcat);
     }
 
     /**
