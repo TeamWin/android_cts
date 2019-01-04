@@ -1513,4 +1513,31 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testAreAppOverlaysAllowed() {
         assertTrue(mNotificationManager.areAppOverlaysAllowed());
     }
+
+    public void testNotificationIcon() {
+        int id = 6000;
+
+        Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(android.R.id.icon)
+                        .setWhen(System.currentTimeMillis())
+                        .setFullScreenIntent(getPendingIntent(), true)
+                        .setContentText("This notification has a resource icon")
+                        .setContentIntent(getPendingIntent())
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(Icon.createWithResource(mContext, android.R.id.icon))
+                        .setWhen(System.currentTimeMillis())
+                        .setFullScreenIntent(getPendingIntent(), true)
+                        .setContentText("This notification has an Icon icon")
+                        .setContentIntent(getPendingIntent())
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        StatusBarNotification n = findPostedNotification(id);
+        assertNotNull(n);
+    }
 }
