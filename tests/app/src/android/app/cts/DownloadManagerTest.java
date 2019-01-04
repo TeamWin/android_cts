@@ -45,6 +45,7 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
@@ -452,7 +453,7 @@ public class DownloadManagerTest {
      * updates to this entry in DownlaodProvider are reflected in MediaProvider as well.
      */
     @Test
-    public void testDownloadManager_mediaStoreUpdates() throws Exception {
+    public void testDownloadManagerUpdates() throws Exception {
         final File dataDir = mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
         dataDir.mkdir();
         final File downloadFile = new File(dataDir, "colors.txt");
@@ -496,6 +497,48 @@ public class DownloadManagerTest {
                 mediaStoreUri, null, null, null)) {
             assertEquals(0, cursor.getCount());
         }
+    }
+
+    @Test
+    public void testDownloadManager_mediaStoreUpdates() throws Exception {
+        final File dataDir = mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        dataDir.mkdir();
+        final File downloadFile = new File(dataDir, "colors.txt");
+        downloadFile.createNewFile();
+        final String fileContents = "RED;GREEN;BLUE";
+        try (final PrintWriter pw = new PrintWriter(downloadFile)) {
+            pw.print(fileContents);
+        }
+
+        // Insert into DownloadProvider and verify it's added to MediaProvider as well
+        final String testTitle = "Test_title";
+        final long downloadId = mDownloadManager.addCompletedDownload(testTitle, "Test desc", true,
+                "text/plain", downloadFile.getPath(), fileContents.getBytes().length, true);
+        assertTrue(downloadId >= 0);
+        final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
+        try (Cursor cursor = mContext.getContentResolver().query(downloadUri,
+                new String[] { DownloadManager.COLUMN_TITLE }, null, null)) {
+            cursor.moveToNext();
+            assertEquals(testTitle, cursor.getString(0));
+        }
+
+        final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
+        final String newTitle = "New_title";
+        updateUri(mediaStoreUri, "_display_name", newTitle);
+        try (Cursor cursor = mContext.getContentResolver().query(downloadUri,
+                new String[] { DownloadManager.COLUMN_TITLE }, null, null)) {
+            cursor.moveToNext();
+            assertEquals(newTitle, cursor.getString(0));
+        }
+
+        assertRemoveDownload(downloadId, 0);
+    }
+
+    private void updateUri(Uri uri, String column, String value) throws Exception {
+        final String cmd = String.format("content update --uri %s --bind %s:s:%s",
+                uri, column, value);
+        final String res = runShellCommand(cmd).trim();
+        assertTrue(res, TextUtils.isEmpty(res));
     }
 
     private static byte[] hash(InputStream in) throws Exception {
