@@ -146,7 +146,7 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
         if (webview != null) {
             // Set up a WebView with JavaScript and Geolocation enabled
             final String GEO_DIR = "geo_test";
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
             mOnUiThread.getSettings().setJavaScriptEnabled(true);
             mOnUiThread.getSettings().setGeolocationEnabled(true);
             mOnUiThread.getSettings().setGeolocationDatabasePath(

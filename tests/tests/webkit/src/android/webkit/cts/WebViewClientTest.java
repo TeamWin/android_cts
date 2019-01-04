@@ -76,7 +76,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
                 }
             }.run();
 
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
         }
     }
 
@@ -149,7 +149,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
         final WebView childWebView = mOnUiThread.createWebView();
 
-        WebViewOnUiThread childWebViewOnUiThread = new WebViewOnUiThread(this, childWebView);
+        WebViewOnUiThread childWebViewOnUiThread = new WebViewOnUiThread(childWebView);
         mOnUiThread.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(

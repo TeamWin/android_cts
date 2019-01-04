@@ -129,7 +129,7 @@ public class ServiceWorkerClientTest extends ActivityInstrumentationTestCase2<We
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview == null) return;
-        mOnUiThread = new WebViewOnUiThread(this, webview);
+        mOnUiThread = new WebViewOnUiThread(webview);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
 
         mJavascriptStatusReceiver = new JavascriptStatusReceiver();
