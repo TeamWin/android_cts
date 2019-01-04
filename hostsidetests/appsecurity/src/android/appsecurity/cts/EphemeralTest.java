@@ -141,7 +141,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), NORMAL_PKG, TEST_CLASS, "testQuery");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), NORMAL_PKG, TEST_CLASS, "testQuery");
     }
 
     @Test
@@ -149,7 +149,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), NORMAL_PKG, TEST_CLASS, "testStartNormal");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), NORMAL_PKG, TEST_CLASS, "testStartNormal");
     }
 
     @Test
@@ -157,7 +157,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), NORMAL_PKG, TEST_CLASS, "testStartEphemeral");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), NORMAL_PKG, TEST_CLASS,
+                "testStartEphemeral");
     }
 
     @Test
@@ -165,7 +166,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testQuery");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testQuery");
     }
 
     @Test
@@ -173,7 +174,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartNormal");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartNormal");
     }
 
     // each connection to an exposed component needs to run in its own test to
@@ -184,70 +186,80 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed01");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed01");
     }
     @Test
     public void testEphemeralStartExposed02() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed02");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed02");
     }
     @Test
     public void testEphemeralStartExposed03() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed03");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed03");
     }
     @Test
     public void testEphemeralStartExposed04() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed04");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed04");
     }
     @Test
     public void testEphemeralStartExposed05() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed05");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed05");
     }
     @Test
     public void testEphemeralStartExposed06() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed06");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed06");
     }
     @Test
     public void testEphemeralStartExposed07() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed07");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed07");
     }
     @Test
     public void testEphemeralStartExposed08() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed08");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed08");
     }
     @Test
     public void testEphemeralStartExposed09() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed09");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed09");
     }
     @Test
     public void testEphemeralStartExposed10() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed10");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed10");
     }
 
     @Test
@@ -255,7 +267,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartEphemeral");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartEphemeral");
     }
 
     @Test
@@ -264,7 +277,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
             return;
         }
         installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller01");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testGetInstaller01");
     }
     @Test
     public void testEphemeralGetInstaller02() throws Exception {
@@ -273,7 +287,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         }
         installApp(NORMAL_APK, "com.android.cts.normalapp");
         installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller02");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testGetInstaller02");
     }
     @Test
     public void testEphemeralGetInstaller03() throws Exception {
@@ -281,7 +296,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
             return;
         }
         installApp(NORMAL_APK, "com.android.cts.normalapp");
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller03");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testGetInstaller03");
     }
 
     @Test
@@ -292,7 +308,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         for (Map<String, String> testArgs : EXPECTED_EXPOSED_INTENTS) {
             final boolean exposed = isIntentExposed(testArgs);
             if (exposed) {
-                Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testExposedActivity", testArgs);
+                Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                        "testExposedActivity", testArgs);
             } else {
                 CLog.w("Skip intent; " + dumpArgs(testArgs));
             }
@@ -304,7 +321,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testBuildSerialUnknown");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testBuildSerialUnknown");
     }
 
     @Test
@@ -312,7 +330,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testPackageInfo");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testPackageInfo");
     }
 
     @Test
@@ -320,7 +339,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testActivityInfo");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testActivityInfo");
     }
 
     @Test
@@ -328,7 +348,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS,
+                "testWebViewLoads");
     }
 
     @Test
@@ -336,7 +357,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGranted");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testInstallPermissionNotGranted");
     }
 
     @Test
@@ -344,7 +366,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testInstallPermissionGranted");
     }
 
     /** Test for android.permission.INSTANT_APP_FOREGROUND_SERVICE */
@@ -356,7 +379,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         // Make sure the test package does not have INSTANT_APP_FOREGROUND_SERVICE
         getDevice().executeShellCommand("cmd package revoke " + EPHEMERAL_1_PKG
                 + " android.permission.INSTANT_APP_FOREGROUND_SERVICE");
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testStartForegroundService");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartForegroundService");
     }
 
     /** Test for android.permission.RECORD_AUDIO */
@@ -365,7 +389,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testRecordAudioPermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testRecordAudioPermission");
     }
 
     /** Test for android.permission.CAMERA */
@@ -374,7 +399,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testCameraPermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testCameraPermission");
     }
 
     /** Test for android.permission.READ_PHONE_NUMBERS */
@@ -383,7 +409,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testReadPhoneNumbersPermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testReadPhoneNumbersPermission");
     }
 
     /** Test for android.permission.ACCESS_COARSE_LOCATION */
@@ -392,7 +419,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testAccessCoarseLocationPermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testAccessCoarseLocationPermission");
     }
 
     /** Test for android.permission.NETWORK */
@@ -401,7 +429,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testInternetPermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testInternetPermission");
     }
 
     /** Test for android.permission.VIBRATE */
@@ -410,7 +439,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testVibratePermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testVibratePermission");
     }
 
     /** Test for android.permission.WAKE_LOCK */
@@ -419,7 +449,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testWakeLockPermission");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testWakeLockPermission");
     }
 
     /** Test for search manager */
@@ -428,7 +459,8 @@ public class EphemeralTest extends BaseAppSecurityTest {
         if (mIsUnsupportedDevice) {
             return;
         }
-        Utils.runDeviceTests(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS, "testGetSearchableInfo");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testGetSearchableInfo");
     }
 
     /** Test for upgrade from instant --> full */
@@ -438,14 +470,15 @@ public class EphemeralTest extends BaseAppSecurityTest {
             return;
         }
         installEphemeralApp(UPGRADED_APK);
-        Utils.runDeviceTests(getDevice(), UPGRADED_PKG, TEST_CLASS,
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), UPGRADED_PKG, TEST_CLASS,
                 "testInstantApplicationWritePreferences");
-        Utils.runDeviceTests(getDevice(), UPGRADED_PKG, TEST_CLASS,
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), UPGRADED_PKG, TEST_CLASS,
                 "testInstantApplicationWriteFile");
         installFullApp(UPGRADED_APK);
-        Utils.runDeviceTests(getDevice(), UPGRADED_PKG, TEST_CLASS,
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), UPGRADED_PKG, TEST_CLASS,
                 "testFullApplicationReadPreferences");
-        Utils.runDeviceTests(getDevice(), UPGRADED_PKG, TEST_CLASS, "testFullApplicationReadFile");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), UPGRADED_PKG, TEST_CLASS,
+                "testFullApplicationReadFile");
     }
 
     private static final HashMap<String, String> makeArgs(
