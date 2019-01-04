@@ -499,7 +499,7 @@ public class NotificationTest extends AndroidTestCase {
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
         Notification.Action.Builder builder =
                 new Notification.Action.Builder(null /* icon */, "title", pendingIntent)
-                .setSemanticAction(Notification.Action.SEMANTIC_ACTION_CONTEXTUAL_SUGGESTION);
+                .setContextual(true);
         try {
             builder.build();
             fail("Creating a semantic Action with a null icon should cause a NullPointerException");
@@ -511,7 +511,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testAction_builder_contextualAction_nullIntent() {
         Notification.Action.Builder builder =
                 new Notification.Action.Builder(0 /* icon */, "title", null /* intent */)
-                .setSemanticAction(Notification.Action.SEMANTIC_ACTION_CONTEXTUAL_SUGGESTION);
+                .setContextual(true);
         try {
             builder.build();
             fail("Creating a semantic Action with a null PendingIntent should cause a "
