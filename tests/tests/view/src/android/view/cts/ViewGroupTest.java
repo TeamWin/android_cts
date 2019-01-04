@@ -23,6 +23,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -38,6 +40,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
+import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -64,8 +67,10 @@ import android.view.PointerIcon;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.View.MeasureSpec;
+import android.view.View.OnApplyWindowInsetsListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -84,6 +89,7 @@ import androidx.annotation.NonNull;
 import com.android.compatibility.common.util.CTSResult;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -764,18 +770,6 @@ public class ViewGroupTest implements CTSResult {
         assertSame(mMockViewGroup, mMockViewGroup.findFocus());
     }
 
-    @UiThreadTest
-    @Test
-    public void testFitSystemWindows() {
-        Rect rect = new Rect(1, 1, 100, 100);
-        assertFalse(mMockViewGroup.fitSystemWindows(rect));
-
-        mMockViewGroup = new MockViewGroup(mContext, null, 0);
-        MockView mv = new MockView(mContext);
-        mMockViewGroup.addView(mv);
-        assertTrue(mMockViewGroup.fitSystemWindows(rect));
-    }
-
     static class MockView extends ViewGroup {
 
         public int mWidthMeasureSpec;
@@ -787,11 +781,6 @@ public class ViewGroupTest implements CTSResult {
 
         @Override
         public void onLayout(boolean changed, int l, int t, int r, int b) {
-        }
-
-        @Override
-        public boolean fitSystemWindows(Rect insets) {
-            return true;
         }
 
         @Override
@@ -2811,6 +2800,92 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.suppressLayout(false);
 
         assertTrue(mMockViewGroup.isRequestLayoutCalled);
+    }
+
+    @UiThreadTest
+    @Ignore("Turn on once ViewRootImpl.USE_NEW_INSETS is switched to true")
+    @Test
+    public void testDispatchInsets_affectsChildren() {
+        View v1 = new View(mContext);
+        mMockViewGroup.addView(v1);
+
+        mMockViewGroup.setOnApplyWindowInsetsListener((v, insets) -> insets.inset(0, 0, 0, 10));
+
+        OnApplyWindowInsetsListener listenerMock = mock(OnApplyWindowInsetsListener.class);
+        v1.setOnApplyWindowInsetsListener(listenerMock);
+
+        WindowInsets insets = new WindowInsets.Builder().setSystemWindowInsets(
+                Insets.of(10, 10, 10, 10)).build();
+        mMockViewGroup.dispatchApplyWindowInsets(insets);
+        verify(listenerMock).onApplyWindowInsets(any(),
+                eq(new WindowInsets.Builder()
+                        .setSystemWindowInsets(Insets.of(10, 10, 10, 0)).build()));
+    }
+
+    @UiThreadTest
+    @Ignore("Turn on once ViewRootImpl.USE_NEW_INSETS is switched to true")
+    @Test
+    public void testDispatchInsets_doesntAffectSiblings() {
+        View v1 = new View(mContext);
+        View v2 = new View(mContext);
+        mMockViewGroup.addView(v1);
+        mMockViewGroup.addView(v2);
+
+        v1.setOnApplyWindowInsetsListener((v, insets) -> insets.inset(0, 0, 0, 10));
+
+        OnApplyWindowInsetsListener listenerMock = mock(OnApplyWindowInsetsListener.class);
+        v2.setOnApplyWindowInsetsListener(listenerMock);
+
+        WindowInsets insets = new WindowInsets.Builder().setSystemWindowInsets(
+                Insets.of(10, 10, 10, 10)).build();
+        mMockViewGroup.dispatchApplyWindowInsets(insets);
+        verify(listenerMock).onApplyWindowInsets(any(),
+                eq(new WindowInsets.Builder()
+                        .setSystemWindowInsets(Insets.of(10, 10, 10, 10)).build()));
+    }
+
+    @UiThreadTest
+    @Ignore("Turn on once ViewRootImpl.USE_NEW_INSETS is switched to true")
+    @Test
+    public void testDispatchInsets_doesntAffectParentSiblings() {
+        ViewGroup v1 = new MockViewGroup(mContext);
+        View v11 = new View(mContext);
+        View v2 = new View(mContext);
+        mMockViewGroup.addView(v1);
+        v1.addView(v11);
+        mMockViewGroup.addView(v2);
+
+        v11.setOnApplyWindowInsetsListener((v, insets) -> insets.inset(0, 0, 0, 10));
+
+        OnApplyWindowInsetsListener listenerMock = mock(OnApplyWindowInsetsListener.class);
+        v2.setOnApplyWindowInsetsListener(listenerMock);
+
+        WindowInsets insets = new WindowInsets.Builder().setSystemWindowInsets(
+                Insets.of(10, 10, 10, 10)).build();
+        mMockViewGroup.dispatchApplyWindowInsets(insets);
+        verify(listenerMock).onApplyWindowInsets(any(),
+                eq(new WindowInsets.Builder()
+                        .setSystemWindowInsets(Insets.of(10, 10, 10, 10)).build()));
+    }
+
+    @UiThreadTest
+    @Ignore("Turn on once ViewRootImpl.USE_NEW_INSETS is switched to true")
+    @Test
+    public void testDispatchInsets_consumeDoesntStopDispatch() {
+        View v1 = new View(mContext);
+        mMockViewGroup.addView(v1);
+
+        mMockViewGroup.setOnApplyWindowInsetsListener(
+                (v, insets) -> insets.consumeSystemWindowInsets());
+
+        OnApplyWindowInsetsListener listenerMock = mock(OnApplyWindowInsetsListener.class);
+        v1.setOnApplyWindowInsetsListener(listenerMock);
+
+        WindowInsets insets = new WindowInsets.Builder().setSystemWindowInsets(
+                Insets.of(10, 10, 10, 10)).build();
+        mMockViewGroup.dispatchApplyWindowInsets(insets);
+        verify(listenerMock).onApplyWindowInsets(any(),
+                eq(new WindowInsets.Builder().build()));
     }
 
     static class MockTextView extends TextView {
