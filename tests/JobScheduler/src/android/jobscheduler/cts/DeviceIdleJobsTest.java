@@ -191,23 +191,29 @@ public class DeviceIdleJobsTest {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
 
         enterFakeUnpluggedState();
-        setTestPackageStandbyBucket(Bucket.NEVER);
-        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
-        sendScheduleJobBroadcast(false);
-        assertFalse("New job started in NEVER standby", awaitJobStart(3_000));
-        resetFakeUnpluggedState();
+        try {
+            setTestPackageStandbyBucket(Bucket.NEVER);
+            Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+            sendScheduleJobBroadcast(false);
+            assertFalse("New job started in NEVER standby", awaitJobStart(3_000));
+        } finally {
+            resetFakeUnpluggedState();
+        }
     }
 
     @Test
     public void testUidActiveBypassesStandby() throws Exception {
         enterFakeUnpluggedState();
-        setTestPackageStandbyBucket(Bucket.NEVER);
-        tempWhitelistTestApp(6_000);
-        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
-        sendScheduleJobBroadcast(false);
-        assertTrue("New job in uid-active app failed to start in NEVER standby",
-                awaitJobStart(4_000));
-        resetFakeUnpluggedState();
+        try {
+            setTestPackageStandbyBucket(Bucket.NEVER);
+            tempWhitelistTestApp(6_000);
+            Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+            sendScheduleJobBroadcast(false);
+            assertTrue("New job in uid-active app failed to start in NEVER standby",
+                    awaitJobStart(4_000));
+        } finally {
+            resetFakeUnpluggedState();
+        }
     }
 
     @After
