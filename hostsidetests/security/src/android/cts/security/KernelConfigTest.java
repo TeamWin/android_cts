@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.lang.String;
 import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -196,5 +197,62 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",
                     configSet.contains("CONFIG_PAGE_TABLE_ISOLATION=y"));
         }
+    }
+
+    /**
+     * Test that the kernel enables static usermodehelper and sets
+     * the path to a whitelisted path.
+     *
+     * @throws Exception
+     */
+    @CddTest(requirement="9.7")
+    public void testConfigDisableUsermodehelper() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 29) {
+            return;
+        }
+
+        final String ENABLE_CONFIG = "CONFIG_STATIC_USERMODEHELPER=y";
+        final String PATH_CONFIG = "CONFIG_STATIC_USERMODEHELPER_PATH=";
+
+        final Set<String> ALLOWED_PATH_PREFIXES = new HashSet<String>();
+        ALLOWED_PATH_PREFIXES.add("/vendor/");
+        ALLOWED_PATH_PREFIXES.add("/system/");
+
+        assertTrue("Linux kernel must enable static usermodehelper: " + ENABLE_CONFIG,
+            configSet.contains(ENABLE_CONFIG));
+
+        String configPath = null;
+
+        for (String option : configSet) {
+            if (option.startsWith(PATH_CONFIG)) {
+                configPath = option;
+            }
+        }
+
+        int index = configPath.indexOf('=');
+        String path = configPath.substring(index+1);
+
+        assertTrue("Linux kernel must specify an absolute path for static usermodehelper path",
+            configPath.contains("..") == false);
+
+        boolean pathIsWhitelisted = false;
+
+        for (String allowedPath : ALLOWED_PATH_PREFIXES) {
+            if (path.startsWith(allowedPath)) {
+                pathIsWhitelisted = true;
+                break;
+            }
+        }
+
+        // Specifying no path, which disables usermodehelper, is also
+        // valid.
+        pathIsWhitelisted |= path.isEmpty();
+
+        String whitelistedPathPrefixExample = "'" +
+            String.join("', '", ALLOWED_PATH_PREFIXES) + "'";
+
+        assertTrue("Linux kernel must specify a whitelisted static usermodehelper path, "
+                   + "and it must be empty or start with one of the following "
+                   + "prefixes: " + whitelistedPathPrefixExample, pathIsWhitelisted);
     }
 }
