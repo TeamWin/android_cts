@@ -151,30 +151,6 @@ public class MediaScannerTest extends AndroidTestCase {
         c.moveToFirst();
         assertEquals(localizedTitle, c.getString(0));
 
-        // Update localizable audio file to have unlocalizable title
-        final ContentValues values = new ContentValues();
-        final String newTitle = "New Title";
-        values.put("title", newTitle);
-        res.update(media2Uri, values, null, null);
-
-        // Ensure title comes back correctly
-        c = res.query(media2Uri, new String[] { "title" }, null, null, null);
-        assertEquals(1, c.getCount());
-        c.moveToFirst();
-        assertEquals(newTitle, c.getString(0));
-
-        // Update audio file to have localizable title once again
-        final String newLocalizableTitle =
-            "android.resource://android.media.cts/string/test_localizable_title";
-        values.put("title", newLocalizableTitle);
-        res.update(media2Uri, values, null, null);
-
-        // Ensure title comes back localized
-        c = res.query(media2Uri, new String[] { "title" }, null, null, null);
-        assertEquals(1, c.getCount());
-        c.moveToFirst();
-        assertEquals(localizedTitle, c.getString(0));
-
         mMediaScannerConnection.disconnect();
         c.close();
     }

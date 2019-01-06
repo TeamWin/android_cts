@@ -155,6 +155,13 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_TARGET_DISPLAY = "target_display";
     }
 
+    public static final ComponentName SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY =
+            component("SingleTaskInstanceDisplayActivity");
+    public static final ComponentName SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2 =
+            component("SingleTaskInstanceDisplayActivity2");
+    public static final ComponentName SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3 =
+            component("SingleTaskInstanceDisplayActivity3");
+
     /**
      * Action and extra key constants for {@link #TEST_ACTIVITY}.
      *

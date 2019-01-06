@@ -179,7 +179,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 f.delete();
             }
 
-            mOnUiThread = new WebViewOnUiThread(this, mWebView);
+            mOnUiThread = new WebViewOnUiThread(mWebView);
         }
     }
 
@@ -676,7 +676,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // handle loading a new URL. We set a WebViewClient as
         // WebViewClient.shouldOverrideUrlLoading() returns false, so
         // the WebView will load the new URL.
-        mOnUiThread.setWebViewClient(new WaitForLoadedClient(mOnUiThread));
+        mWebView.setWebViewClient(new WaitForLoadedClient(mOnUiThread));
         mOnUiThread.loadUrlAndWaitForCompletion(redirectUrl);
 
         assertEquals(finalUrl, mWebView.getUrl());
@@ -1027,7 +1027,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final DummyJavaScriptInterface obj = new DummyJavaScriptInterface();
 
         final WebView childWebView = mOnUiThread.createWebView();
-        WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(this, childWebView);
+        WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(childWebView);
         childOnUiThread.getSettings().setJavaScriptEnabled(true);
         childOnUiThread.addJavascriptInterface(obj, "dummy");
 
@@ -1087,11 +1087,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final AtomicReference<Picture> pictureRef = new AtomicReference<Picture>();
         for (int i = 0; i < MAX_ON_NEW_PICTURE_ITERATIONS; i++) {
             final int oldCallCount = listener.callCount;
-            runTestOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    pictureRef.set(mWebView.capturePicture());
-                }
+            WebkitUtils.onMainThreadSync(() -> {
+                pictureRef.set(mWebView.capturePicture());
             });
             if (isPictureFilledWithColor(pictureRef.get(), color))
                 break;
@@ -1119,11 +1116,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // The default background color is white.
         Picture oldPicture = waitForPictureToHaveColor(Color.WHITE, listener);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setBackgroundColor(Color.CYAN);
-            }
+        WebkitUtils.onMainThread(() -> {
+            mWebView.setBackgroundColor(Color.CYAN);
         });
         mOnUiThread.reloadAndWaitForCompletion();
         waitForPictureToHaveColor(Color.CYAN, listener);
@@ -1324,18 +1318,15 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         startWebServer(false);
         final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
         final String crossOriginUrl = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.getSettings().setJavaScriptEnabled(true);
-                mOnUiThread.setWebChromeClient(webChromeClient);
-                mOnUiThread.loadDataAndWaitForCompletion(
-                        "<html><head></head><body onload=\"" +
-                        "document.title = " +
-                        "document.getElementById('frame').contentWindow.location.href;" +
-                        "\"><iframe id=\"frame\" src=\"" + crossOriginUrl + "\"></body></html>",
-                        "text/html", null);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.getSettings().setJavaScriptEnabled(true);
+            mWebView.setWebChromeClient(webChromeClient);
+            mOnUiThread.loadDataAndWaitForCompletion(
+                    "<html><head></head><body onload=\"" +
+                    "document.title = " +
+                    "document.getElementById('frame').contentWindow.location.href;" +
+                    "\"><iframe id=\"frame\" src=\"" + crossOriginUrl + "\"></body></html>",
+                    "text/html", null);
         });
         assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
     }
@@ -1397,18 +1388,18 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("http://www.foo.com",
                 HTML_HEADER + "<title>Hello World%21</title><body>bar</body></html>",
                 "text/html", "UTF-8", null);
-        assertEquals("Hello World%21", mOnUiThread.getTitle());
+        assertEquals("Hello World%21", mWebView.getTitle());
 
         // Check that when a data: base URL is used, we treat the String to load as a data: URL
         // and run load steps such as decoding URL entities (i.e., contrary to the test case
         // above.)
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("data:foo",
                 HTML_HEADER + "<title>Hello World%21</title></html>", "text/html", "UTF-8", null);
-        assertEquals("Hello World!", mOnUiThread.getTitle());
+        assertEquals("Hello World!", mWebView.getTitle());
 
         // Check the method is null input safe.
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(null, null, null, null, null);
-        assertEquals("about:blank", mOnUiThread.getUrl());
+        assertEquals("about:blank", mWebView.getUrl());
     }
 
     private void deleteIfExists(File file) throws IOException {
@@ -1649,16 +1640,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final DocumentHasImageCheckHandler handler =
             new DocumentHasImageCheckHandler(mWebView.getHandler().getLooper());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mOnUiThread.loadDataAndWaitForCompletion("<html><body><img src=\""
-                        + imgUrl + "\"/></body></html>", "text/html", null);
-                Message response = new Message();
-                response.setTarget(handler);
-                assertFalse(handler.hasCalledHandleMessage());
-                mWebView.documentHasImages(response);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mOnUiThread.loadDataAndWaitForCompletion("<html><body><img src=\""
+                    + imgUrl + "\"/></body></html>", "text/html", null);
+            Message response = new Message();
+            response.setTarget(handler);
+            assertFalse(handler.hasCalledHandleMessage());
+            mWebView.documentHasImages(response);
         });
         new PollingCheck() {
             @Override
@@ -1940,11 +1928,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             }
         }
         final ImageLoaded imageLoaded = new ImageLoaded();
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mOnUiThread.getSettings().setJavaScriptEnabled(true);
-            }
-        });
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mOnUiThread.addJavascriptInterface(imageLoaded, "imageLoaded");
         AssetManager assets = getActivity().getAssets();
         Bitmap bitmap = BitmapFactory.decodeStream(assets.open(TestHtmlConstants.LARGE_IMG_URL));
@@ -2446,15 +2430,12 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 "<body onload=\"monitor.update();\"></body></html>";
 
         // Test that JavaScript is executed even with timers paused.
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.getSettings().setJavaScriptEnabled(true);
-                mWebView.addJavascriptInterface(monitor, "monitor");
-                mWebView.pauseTimers();
-                mOnUiThread.loadDataAndWaitForCompletion(updateMonitorHtml,
-                        "text/html", null);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.getSettings().setJavaScriptEnabled(true);
+            mWebView.addJavascriptInterface(monitor, "monitor");
+            mWebView.pauseTimers();
+            mOnUiThread.loadDataAndWaitForCompletion(updateMonitorHtml,
+                    "text/html", null);
         });
         assertTrue(monitor.waitForUpdate());
 
@@ -2887,23 +2868,17 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     }
 
     private void printDocumentStart(final PrintDocumentAdapter adapter) {
-        mOnUiThread.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                adapter.onStart();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            adapter.onStart();
         });
     }
 
     private void printDocumentLayout(final PrintDocumentAdapter adapter,
             final PrintAttributes oldAttributes, final PrintAttributes newAttributes,
             final LayoutResultCallback layoutResultCallback) {
-        mOnUiThread.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                adapter.onLayout(oldAttributes, newAttributes, new CancellationSignal(),
-                        layoutResultCallback, null);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            adapter.onLayout(oldAttributes, newAttributes, new CancellationSignal(),
+                    layoutResultCallback, null);
         });
     }
 

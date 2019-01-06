@@ -216,9 +216,36 @@ final class AutoFillServiceTestCase {
 
         /**
          * Gets how many times a test should be retried.
+         *
+         * @return {@code 1} by default, unless overridden by subclasses or by a global settings
+         * named {@code CLASS_NAME + #getNumberRetries} or
+         * {@code CtsAutoFillServiceTestCases#getNumberRetries} (the former having a higher
+         * priority).
          */
         protected int getNumberRetries() {
+            final String localProp = getClass().getName() + "#getNumberRetries";
+            final Integer localValue = getNumberRetries(localProp);
+            if (localValue != null) return localValue.intValue();
+
+            final String globalProp = "CtsAutoFillServiceTestCases#getNumberRetries";
+            final Integer globalValue = getNumberRetries(globalProp);
+            if (globalValue != null) return globalValue.intValue();
+
             return 1;
+        }
+
+        private Integer getNumberRetries(String prop) {
+            final String value = Settings.Global.getString(sContext.getContentResolver(), prop);
+            if (value != null) {
+                Log.i(TAG, "getNumberRetries(): overriding to " + value + " because of '" + prop
+                        + "' global setting");
+                try {
+                    return Integer.parseInt(value);
+                } catch (Exception e) {
+                    Log.w(TAG, "error parsing property '" + prop + "'='" + value + "'", e);
+                }
+            }
+            return null;
         }
 
         /**

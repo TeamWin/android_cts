@@ -16,43 +16,40 @@
 
 package android.webkit.cts;
 
-import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.TestThread;
-
 import android.graphics.Bitmap;
 import android.graphics.Picture;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Bundle;
+import android.net.http.SslCertificate;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
 import android.print.PrintDocumentAdapter;
 import android.support.test.rule.ActivityTestRule;
-import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.webkit.DownloadListener;
 import android.webkit.CookieManager;
+import android.webkit.DownloadListener;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
 import android.webkit.WebMessage;
 import android.webkit.WebMessagePort;
 import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.webkit.WebView.HitTestResult;
 import android.webkit.WebView.PictureListener;
 import android.webkit.WebView.VisualStateCallback;
-import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import junit.framework.Assert;
 
-import java.io.File;
-import java.util.concurrent.Callable;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Many tests need to run WebView code in the UI thread. This class
@@ -89,16 +86,6 @@ public class WebViewOnUiThread {
     private int mProgress;
 
     /**
-     * The test that this class is being used in. Used for runTestOnUiThread.
-     */
-    private InstrumentationTestCase mTest;
-
-    /**
-     * The test rule that this class is being used in. Used for runTestOnUiThread.
-     */
-    private ActivityTestRule mActivityTestRule;
-
-    /**
      * The WebView that calls will be made on.
      */
     private WebView mWebView;
@@ -116,38 +103,11 @@ public class WebViewOnUiThread {
      * @deprecated Use {@link WebViewOnUiThread#WebViewOnUiThread(ActivityTestRule, WebView)}
      */
     @Deprecated
-    public WebViewOnUiThread(InstrumentationTestCase test, WebView webView) {
-        mTest = test;
+    public WebViewOnUiThread(WebView webView) {
         mWebView = webView;
         final WebViewClient webViewClient = new WaitForLoadedClient(this);
         final WebChromeClient webChromeClient = new WaitForProgressClient(this);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setWebViewClient(webViewClient);
-                mWebView.setWebChromeClient(webChromeClient);
-                mWebView.setPictureListener(new WaitForNewPicture());
-            }
-        });
-    }
-
-    /**
-     * Initializes the webView with a WebViewClient, WebChromeClient,
-     * and PictureListener to prepare for loadUrlAndWaitForCompletion.
-     *
-     * A new WebViewOnUiThread should be called during setUp so as to
-     * reinitialize between calls.
-     *
-     * @param activityTestRule The test rule in which this is being run.
-     * @param webView The webView that the methods should call.
-     * @see #loadDataAndWaitForCompletion(String, String, String)
-     */
-    public WebViewOnUiThread(ActivityTestRule activityTestRule, WebView webView) {
-        mActivityTestRule = activityTestRule;
-        mWebView = webView;
-        final WebViewClient webViewClient = new WaitForLoadedClient(this);
-        final WebChromeClient webChromeClient = new WaitForProgressClient(this);
-        runOnUiThread(() -> {
+        WebkitUtils.onMainThreadSync(() -> {
             mWebView.setWebViewClient(webViewClient);
             mWebView.setWebChromeClient(webChromeClient);
             mWebView.setPictureListener(new WaitForNewPicture());
@@ -159,16 +119,12 @@ public class WebViewOnUiThread {
      * the tests.
      */
     public void cleanUp() {
-        clearHistory();
-        clearCache(true);
-        setPictureListener(null);
-        setWebChromeClient(null);
-        setWebViewClient(null);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.destroy();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.clearHistory();
+            mWebView.clearCache(true);
+            mWebView.setWebChromeClient(null);
+            mWebView.setWebViewClient(null);
+            mWebView.destroy();
         });
     }
 
@@ -209,74 +165,50 @@ public class WebViewOnUiThread {
     }
 
     public void setWebViewClient(final WebViewClient webViewClient) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setWebViewClient(webViewClient);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setWebViewClient(webViewClient);
         });
     }
 
     public void setWebChromeClient(final WebChromeClient webChromeClient) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setWebChromeClient(webChromeClient);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setWebChromeClient(webChromeClient);
         });
     }
 
     public void setPictureListener(final PictureListener pictureListener) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setPictureListener(pictureListener);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setPictureListener(pictureListener);
         });
     }
 
     public void setNetworkAvailable(final boolean available) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setNetworkAvailable(available);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setNetworkAvailable(available);
         });
     }
 
     public void setDownloadListener(final DownloadListener listener) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setDownloadListener(listener);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setDownloadListener(listener);
         });
     }
 
     public void setBackgroundColor(final int color) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setBackgroundColor(color);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setBackgroundColor(color);
         });
     }
 
     public void clearCache(final boolean includeDiskFiles) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.clearCache(includeDiskFiles);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.clearCache(includeDiskFiles);
         });
     }
 
     public void clearHistory() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.clearHistory();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.clearHistory();
         });
     }
 
@@ -291,191 +223,128 @@ public class WebViewOnUiThread {
     }
 
     private void requestFocusOnUiThread() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.requestFocus();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.requestFocus();
         });
     }
 
     private boolean hasFocus() {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.hasFocus();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.hasFocus();
         });
     }
 
     public boolean canZoomIn() {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.canZoomIn();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.canZoomIn();
         });
     }
 
     public boolean canZoomOut() {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.canZoomOut();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.canZoomOut();
         });
     }
 
     public boolean zoomIn() {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.zoomIn();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.zoomIn();
         });
     }
 
     public boolean zoomOut() {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.zoomOut();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.zoomOut();
         });
     }
 
     public void zoomBy(final float zoomFactor) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.zoomBy(zoomFactor);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.zoomBy(zoomFactor);
         });
     }
 
     public void setFindListener(final WebView.FindListener listener) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.setFindListener(listener);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.setFindListener(listener);
         });
     }
 
     public void removeJavascriptInterface(final String interfaceName) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.removeJavascriptInterface(interfaceName);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.removeJavascriptInterface(interfaceName);
         });
     }
 
     public WebMessagePort[] createWebMessageChannel() {
-        return getValue(new ValueGetter<WebMessagePort[]>() {
-            @Override
-            public WebMessagePort[] capture() {
-                return mWebView.createWebMessageChannel();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.createWebMessageChannel();
         });
     }
 
     public void postWebMessage(final WebMessage message, final Uri targetOrigin) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.postWebMessage(message, targetOrigin);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.postWebMessage(message, targetOrigin);
         });
     }
 
     public void addJavascriptInterface(final Object object, final String name) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.addJavascriptInterface(object, name);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.addJavascriptInterface(object, name);
         });
     }
 
     public void flingScroll(final int vx, final int vy) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.flingScroll(vx, vy);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.flingScroll(vx, vy);
         });
     }
 
     public void requestFocusNodeHref(final Message hrefMsg) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.requestFocusNodeHref(hrefMsg);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.requestFocusNodeHref(hrefMsg);
         });
     }
 
     public void requestImageRef(final Message msg) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.requestImageRef(msg);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.requestImageRef(msg);
         });
     }
 
     public void setInitialScale(final int scaleInPercent) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+        WebkitUtils.onMainThreadSync(() -> {
                 mWebView.setInitialScale(scaleInPercent);
-            }
         });
     }
 
     public void clearSslPreferences() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.clearSslPreferences();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.clearSslPreferences();
         });
     }
 
     public void clearClientCertPreferences(final Runnable onCleared) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                WebView.clearClientCertPreferences(onCleared);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            WebView.clearClientCertPreferences(onCleared);
         });
     }
 
     public void resumeTimers() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.resumeTimers();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.resumeTimers();
         });
     }
 
     public void findNext(final boolean forward) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.findNext(forward);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.findNext(forward);
         });
     }
 
     public void clearMatches() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.clearMatches();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.clearMatches();
         });
     }
 
@@ -512,20 +381,14 @@ public class WebViewOnUiThread {
     }
 
     public void loadUrl(final String url) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.loadUrl(url);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.loadUrl(url);
         });
     }
 
     public void stopLoading() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.stopLoading();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.stopLoading();
         });
     }
 
@@ -580,11 +443,8 @@ public class WebViewOnUiThread {
      * by telling WebView not to resubmit it.
      */
     public void reload() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.reload();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.reload();
         });
     }
 
@@ -613,305 +473,201 @@ public class WebViewOnUiThread {
     }
 
     public String getTitle() {
-        return getValue(new ValueGetter<String>() {
-            @Override
-            public String capture() {
-                return mWebView.getTitle();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getTitle();
         });
     }
 
     public WebSettings getSettings() {
-        return getValue(new ValueGetter<WebSettings>() {
-            @Override
-            public WebSettings capture() {
-                return mWebView.getSettings();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getSettings();
         });
     }
 
     public WebBackForwardList copyBackForwardList() {
-        return getValue(new ValueGetter<WebBackForwardList>() {
-            @Override
-            public WebBackForwardList capture() {
-                return mWebView.copyBackForwardList();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.copyBackForwardList();
         });
     }
 
     public Bitmap getFavicon() {
-        return getValue(new ValueGetter<Bitmap>() {
-            @Override
-            public Bitmap capture() {
-                return mWebView.getFavicon();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getFavicon();
         });
     }
 
     public String getUrl() {
-        return getValue(new ValueGetter<String>() {
-            @Override
-            public String capture() {
-                return mWebView.getUrl();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getUrl();
         });
     }
 
     public int getProgress() {
-        return getValue(new ValueGetter<Integer>() {
-            @Override
-            public Integer capture() {
-                return mWebView.getProgress();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getProgress();
         });
     }
 
     public int getHeight() {
-        return getValue(new ValueGetter<Integer>() {
-            @Override
-            public Integer capture() {
-                return mWebView.getHeight();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getHeight();
         });
     }
 
     public int getContentHeight() {
-        return getValue(new ValueGetter<Integer>() {
-            @Override
-            public Integer capture() {
-                return mWebView.getContentHeight();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getContentHeight();
         });
     }
 
     public boolean pageUp(final boolean top) {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.pageUp(top);
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.pageUp(top);
         });
     }
 
     public boolean pageDown(final boolean bottom) {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.pageDown(bottom);
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.pageDown(bottom);
         });
     }
 
+    /**
+     * Post a visual state listener callback for mWebView on the UI thread.
+     */
     public void postVisualStateCallback(final long requestId, final VisualStateCallback callback) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.postVisualStateCallback(requestId, callback);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.postVisualStateCallback(requestId, callback);
         });
     }
 
     public int[] getLocationOnScreen() {
         final int[] location = new int[2];
-        return getValue(new ValueGetter<int[]>() {
-            @Override
-            public int[] capture() {
-                mWebView.getLocationOnScreen(location);
-                return location;
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            mWebView.getLocationOnScreen(location);
+            return location;
         });
     }
 
     public float getScale() {
-        return getValue(new ValueGetter<Float>() {
-            @Override
-            public Float capture() {
-                return mWebView.getScale();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getScale();
         });
     }
 
     public boolean requestFocus(final int direction,
             final Rect previouslyFocusedRect) {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.requestFocus(direction, previouslyFocusedRect);
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.requestFocus(direction, previouslyFocusedRect);
         });
     }
 
     public HitTestResult getHitTestResult() {
-        return getValue(new ValueGetter<HitTestResult>() {
-            @Override
-            public HitTestResult capture() {
-                return mWebView.getHitTestResult();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getHitTestResult();
         });
     }
 
     public int getScrollX() {
-        return getValue(new ValueGetter<Integer>() {
-            @Override
-            public Integer capture() {
-                return mWebView.getScrollX();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getScrollX();
         });
     }
 
     public int getScrollY() {
-        return getValue(new ValueGetter<Integer>() {
-            @Override
-            public Integer capture() {
-                return mWebView.getScrollY();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getScrollY();
         });
     }
 
     public final DisplayMetrics getDisplayMetrics() {
-        return getValue(new ValueGetter<DisplayMetrics>() {
-            @Override
-            public DisplayMetrics capture() {
-                return mWebView.getContext().getResources().getDisplayMetrics();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getContext().getResources().getDisplayMetrics();
         });
     }
 
     public boolean requestChildRectangleOnScreen(final View child,
             final Rect rect,
             final boolean immediate) {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return mWebView.requestChildRectangleOnScreen(child, rect,
-                        immediate);
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.requestChildRectangleOnScreen(child, rect,
+                    immediate);
         });
     }
 
     public int findAll(final String find) {
-        return getValue(new ValueGetter<Integer>() {
-            @Override
-            public Integer capture() {
-                return mWebView.findAll(find);
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.findAll(find);
         });
     }
 
     public Picture capturePicture() {
-        return getValue(new ValueGetter<Picture>() {
-            @Override
-            public Picture capture() {
-                return mWebView.capturePicture();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.capturePicture();
         });
     }
 
     public void evaluateJavascript(final String script, final ValueCallback<String> result) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.evaluateJavascript(script, result);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.evaluateJavascript(script, result);
         });
     }
 
     public void saveWebArchive(final String basename, final boolean autoname,
                                final ValueCallback<String> callback) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.saveWebArchive(basename, autoname, callback);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mWebView.saveWebArchive(basename, autoname, callback);
+        });
+    }
+
+    public SslCertificate getCertificate() {
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.getCertificate();
         });
     }
 
     public WebView createWebView() {
-        return getValue(new ValueGetter<WebView>() {
-            @Override
-            public WebView capture() {
-                return new WebView(mWebView.getContext());
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return new WebView(mWebView.getContext());
         });
     }
 
     public PrintDocumentAdapter createPrintDocumentAdapter() {
-        return getValue(new ValueGetter<PrintDocumentAdapter>() {
-            @Override
-            public PrintDocumentAdapter capture() {
-                return mWebView.createPrintDocumentAdapter();
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return mWebView.createPrintDocumentAdapter();
         });
     }
 
     public void setLayoutHeightToMatchParent() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ViewParent parent = mWebView.getParent();
-                if (parent instanceof ViewGroup) {
-                    ((ViewGroup) parent).getLayoutParams().height =
-                        ViewGroup.LayoutParams.MATCH_PARENT;
-                }
-                mWebView.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
-                mWebView.requestLayout();
+        WebkitUtils.onMainThreadSync(() -> {
+            ViewParent parent = mWebView.getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).getLayoutParams().height =
+                    ViewGroup.LayoutParams.MATCH_PARENT;
             }
+            mWebView.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
+            mWebView.requestLayout();
         });
     }
 
     public void setLayoutToMatchParent() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                setMatchParent((View) mWebView.getParent());
-                setMatchParent(mWebView);
-                mWebView.requestLayout();
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            setMatchParent((View) mWebView.getParent());
+            setMatchParent(mWebView);
+            mWebView.requestLayout();
         });
     }
 
     public void setAcceptThirdPartyCookies(final boolean accept) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                CookieManager.getInstance().setAcceptThirdPartyCookies(mWebView, accept);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            CookieManager.getInstance().setAcceptThirdPartyCookies(mWebView, accept);
         });
     }
 
     public boolean acceptThirdPartyCookies() {
-        return getValue(new ValueGetter<Boolean>() {
-            @Override
-            public Boolean capture() {
-                return CookieManager.getInstance().acceptThirdPartyCookies(mWebView);
-            }
+        return WebkitUtils.onMainThreadSync(() -> {
+            return CookieManager.getInstance().acceptThirdPartyCookies(mWebView);
         });
-    }
-
-    /**
-     * Helper for running code on the UI thread where an exception is
-     * a test failure. If this is already the UI thread then it runs
-     * the code immediately.
-     *
-     * @see InstrumentationTestCase#runTestOnUiThread(Runnable)
-     * @see ActivityTestRule#runOnUiThread(Runnable)
-     * @param r The code to run in the UI thread
-     */
-    public void runOnUiThread(Runnable r) {
-        try {
-            if (isUiThread()) {
-                r.run();
-            } else {
-                if (mActivityTestRule != null) {
-                    mActivityTestRule.runOnUiThread(r);
-                } else {
-                    mTest.runTestOnUiThread(r);
-                }
-            }
-        } catch (Throwable t) {
-            Assert.fail("Unexpected error while running on UI thread: "
-                    + t.getMessage());
-        }
     }
 
     /**
@@ -920,26 +676,6 @@ public class WebViewOnUiThread {
      */
     public WebView getWebView() {
         return mWebView;
-    }
-
-    private<T> T getValue(ValueGetter<T> getter) {
-        runOnUiThread(getter);
-        return getter.getValue();
-    }
-
-    private abstract class ValueGetter<T> implements Runnable {
-        private T mValue;
-
-        @Override
-        public void run() {
-            mValue = capture();
-        }
-
-        protected abstract T capture();
-
-        public T getValue() {
-           return mValue;
-        }
     }
 
     /**
@@ -960,6 +696,9 @@ public class WebViewOnUiThread {
     /**
      * Makes a WebView call, waits for completion and then resets the
      * load state in preparation for the next load call.
+     *
+     * <p>This method may be called on the UI thread.
+     *
      * @param call The call to make on the UI thread prior to waiting.
      */
     private void callAndWait(Runnable call) {
@@ -968,7 +707,11 @@ public class WebViewOnUiThread {
                 + "without calling waitForLoadCompletion after the load",
                 !isLoaded());
         clearLoad(); // clear any extraneous signals from a previous load.
-        runOnUiThread(call);
+        if (isUiThread()) {
+            call.run();
+        } else {
+            WebkitUtils.onMainThread(call);
+        }
         waitForLoadCompletion();
     }
 

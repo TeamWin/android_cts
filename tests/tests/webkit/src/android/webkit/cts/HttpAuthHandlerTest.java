@@ -46,7 +46,7 @@ public class HttpAuthHandlerTest extends ActivityInstrumentationTestCase2<WebVie
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
         }
     }
 

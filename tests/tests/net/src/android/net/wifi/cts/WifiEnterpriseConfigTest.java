@@ -18,12 +18,13 @@ package android.net.wifi.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiEnterpriseConfig.Eap;
 import android.net.wifi.WifiEnterpriseConfig.Phase2;
 import android.net.wifi.WifiManager;
 import android.test.AndroidTestCase;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.ByteArrayInputStream;
 import java.security.KeyFactory;
@@ -33,7 +34,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 public class WifiEnterpriseConfigTest extends AndroidTestCase {
-    private  WifiManager mWifiManager;
+    private WifiManager mWifiManager;
 
     private static final String SSID = "\"TestSSID\"";
     private static final String IDENTITY = "identity";
@@ -687,7 +688,7 @@ public class WifiEnterpriseConfigTest extends AndroidTestCase {
         mWifiManager = (WifiManager) mContext
                 .getSystemService(Context.WIFI_SERVICE);
         assertNotNull(mWifiManager);
-        mWifiManager.setWifiEnabled(true);
+        SystemUtil.runShellCommand("svc wifi enable");
         Thread.sleep(ENABLE_DELAY);
         if (hasWifi()) {
             assertTrue(mWifiManager.isWifiEnabled());
@@ -772,33 +773,6 @@ public class WifiEnterpriseConfigTest extends AndroidTestCase {
         assertTrue(config.getAltSubjectMatch().equals(ALT_SUBJECT_MATCH));
         config.setDomainSuffixMatch(DOM_SUBJECT_MATCH);
         assertTrue(config.getDomainSuffixMatch().equals(DOM_SUBJECT_MATCH));
-    }
-
-    public void testAddEapNetwork() {
-        if (!hasWifi()) {
-            return;
-        }
-
-        WifiConfiguration config = new WifiConfiguration();
-        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
-        enterpriseConfig.setEapMethod(Eap.PWD);
-        enterpriseConfig.setIdentity(IDENTITY);
-        enterpriseConfig.setPassword(PASSWORD);
-        config.SSID = SSID;
-        config.enterpriseConfig = enterpriseConfig;
-
-        int netId = mWifiManager.addNetwork(config);
-        assertTrue(doesSsidExist(SSID));
-        mWifiManager.removeNetwork(netId);
-        assertFalse(doesSsidExist(SSID));
-    }
-
-    private boolean doesSsidExist(String ssid) {
-        for (final WifiConfiguration w : mWifiManager.getConfiguredNetworks()) {
-            if (w.SSID.equals(ssid))
-                return true;
-        }
-        return false;
     }
 
     public void testEnterpriseConfigDoesNotPrintPassword() {

@@ -100,7 +100,7 @@ public class WebViewDeviceSideStartupTest
         // Now create WebView and test that setting the cookie beforehand really worked.
         mActivity.createAndAttachWebView();
         WebView webView = mActivity.getWebView();
-        WebViewOnUiThread onUiThread = new WebViewOnUiThread(this, mActivity.getWebView());
+        WebViewOnUiThread onUiThread = new WebViewOnUiThread(mActivity.getWebView());
         webView.setWebViewClient(new WaitForLoadedClient(onUiThread) {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
@@ -211,7 +211,7 @@ public class WebViewDeviceSideStartupTest
         // WebView is available, so try to call some WebView APIs to ensure they don't cause
         // strictmode violations
 
-        WebViewOnUiThread onUiThread = new WebViewOnUiThread(this, mActivity.getWebView());
+        WebViewOnUiThread onUiThread = new WebViewOnUiThread(mActivity.getWebView());
         onUiThread.loadUrlAndWaitForCompletion("about:blank");
         onUiThread.loadUrlAndWaitForCompletion("");
     }

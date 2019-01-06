@@ -42,7 +42,7 @@ public class ServiceWorkerWebSettingsTest extends
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
             mSettings = ServiceWorkerController.getInstance().getServiceWorkerWebSettings();
         }
     }

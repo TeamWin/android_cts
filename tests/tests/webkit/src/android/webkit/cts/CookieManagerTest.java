@@ -51,7 +51,7 @@ public class CookieManagerTest extends
         super.setUp();
         mWebView = getActivity().getWebView();
         if (mWebView != null) {
-            mOnUiThread = new WebViewOnUiThread(this, mWebView);
+            mOnUiThread = new WebViewOnUiThread(mWebView);
 
             mCookieManager = CookieManager.getInstance();
             assertNotNull(mCookieManager);
@@ -412,39 +412,15 @@ public class CookieManagerTest extends
     }
 
     private void removeAllCookiesOnUiThread(final ValueCallback<Boolean> callback) {
-        runTestOnUiThreadAndCatch(new Runnable() {
-            @Override
-            public void run() {
-                mCookieManager.removeAllCookies(callback);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mCookieManager.removeAllCookies(callback);
         });
     }
 
     private void removeSessionCookiesOnUiThread(final ValueCallback<Boolean> callback) {
-        runTestOnUiThreadAndCatch(new Runnable() {
-            @Override
-            public void run() {
-                mCookieManager.removeSessionCookies(callback);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            mCookieManager.removeSessionCookies(callback);
         });
-    }
-
-    private void setCookieOnUiThread(final String url, final String cookie,
-            final ValueCallback<Boolean> callback) {
-        runTestOnUiThreadAndCatch(new Runnable() {
-            @Override
-            public void run() {
-                mCookieManager.setCookie(url, cookie, callback);
-            }
-        });
-    }
-
-    private void runTestOnUiThreadAndCatch(Runnable runnable) {
-        try {
-            runTestOnUiThread(runnable);
-        } catch (Throwable t) {
-            fail("Unexpected error while running on UI thread: " + t.getMessage());
-        }
     }
 
     /**

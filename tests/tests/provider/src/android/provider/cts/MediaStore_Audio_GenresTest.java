@@ -90,15 +90,6 @@ public class MediaStore_Audio_GenresTest {
             assertEquals("POP", c.getString(c.getColumnIndex(Genres.NAME)));
             assertTrue(c.getLong(c.getColumnIndex(Genres._ID)) > 0);
             c.close();
-
-            // update
-            values.clear();
-            values.put(Genres.NAME, "ROCK");
-            assertEquals(1, mContentResolver.update(uri, values, null, null));
-            c = mContentResolver.query(uri, null, null, null, null);
-            c.moveToFirst();
-            assertEquals("ROCK", c.getString(c.getColumnIndex(Genres.NAME)));
-            c.close();
         } finally {
             assertEquals(1, mContentResolver.delete(uri, null, null));
         }
