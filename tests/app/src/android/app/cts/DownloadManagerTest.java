@@ -17,6 +17,7 @@ package android.app.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -26,6 +27,8 @@ import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
 import android.app.DownloadManager.Request;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -36,8 +39,10 @@ import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateUtils;
@@ -56,10 +61,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -404,6 +413,113 @@ public class DownloadManagerTest {
         final String rawFilePath = getRawFilePath(downloadUri);
         final String rawFileContents = readFromRawFile(rawFilePath);
         assertEquals(fileContents, rawFileContents);
+        assertRemoveDownload(id, 0);
+    }
+
+    /**
+     * Download a file using DownloadManager and verify that the file has been added
+     * to MediaStore as well.
+     */
+    @Test
+    public void testDownloadManager_mediaStoreEntry() throws Exception {
+        final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
+        try {
+            mContext.registerReceiver(receiver,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+
+            final String fileName = "noiseandchirps.mp3";
+            final Request request = new Request(getAssetUrl(fileName));
+            final File downloadLocation = new File(mContext.getExternalFilesDir(null),
+                    fileName);
+            request.setDestinationUri(Uri.fromFile(downloadLocation));
+            final long downloadId = mDownloadManager.enqueue(request);
+            receiver.waitForDownloadComplete(SHORT_TIMEOUT, downloadId);
+            assertSuccessfulDownload(downloadId, downloadLocation);
+            final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
+            final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
+            final ContentResolver contentResolver = mContext.getContentResolver();
+            assertArrayEquals(hash(contentResolver.openInputStream(downloadUri)),
+                    hash(contentResolver.openInputStream(mediaStoreUri)));
+
+            assertRemoveDownload(downloadId, 0);
+        } finally {
+            mContext.unregisterReceiver(receiver);
+        }
+    }
+
+    /**
+     * Add a file to DownloadProvider using DownloadManager.addCompletedDownload and verify
+     * updates to this entry in DownlaodProvider are reflected in MediaProvider as well.
+     */
+    @Test
+    public void testDownloadManager_mediaStoreUpdates() throws Exception {
+        final File dataDir = mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        dataDir.mkdir();
+        final File downloadFile = new File(dataDir, "colors.txt");
+        downloadFile.createNewFile();
+        final String fileContents = "RED;GREEN;BLUE";
+        try (final PrintWriter pw = new PrintWriter(downloadFile)) {
+            pw.print(fileContents);
+        }
+
+        // Insert into DownloadProvider and verify it's added to MediaProvider as well
+        final String testTitle = "Test title";
+        final long downloadId = mDownloadManager.addCompletedDownload(testTitle, "Test desc", true,
+                "text/plain", downloadFile.getPath(), fileContents.getBytes().length, true);
+        assertTrue(downloadId >= 0);
+        final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
+        final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
+        assertArrayEquals(hash(new FileInputStream(downloadFile)),
+                hash(mContext.getContentResolver().openInputStream(mediaStoreUri)));
+        try (Cursor cursor = mContext.getContentResolver().query(mediaStoreUri,
+                new String[] { MediaStore.DownloadColumns.DISPLAY_NAME }, null, null)) {
+            cursor.moveToNext();
+            assertEquals(testTitle, cursor.getString(0));
+        }
+
+        // Update title in DownloadProvider and verify the change took effect in MediaProvider
+        // as well.
+        final String newTitle = "New title";
+        final ContentValues updateValues = new ContentValues();
+        updateValues.put(DownloadManager.COLUMN_TITLE, newTitle);
+        assertEquals(1, mContext.getContentResolver().update(
+                downloadUri, updateValues, null, null));
+        try (Cursor cursor = mContext.getContentResolver().query(mediaStoreUri,
+                new String[] { MediaStore.DownloadColumns.DISPLAY_NAME }, null, null)) {
+            cursor.moveToNext();
+            assertEquals(newTitle, cursor.getString(0));
+        }
+
+        // Delete entry in DownloadProvider and verify it's deleted from MediaProvider as well.
+        assertRemoveDownload(downloadId, 0);
+        try (Cursor cursor = mContext.getContentResolver().query(
+                mediaStoreUri, null, null, null)) {
+            assertEquals(0, cursor.getCount());
+        }
+    }
+
+    private static byte[] hash(InputStream in) throws Exception {
+        try (DigestInputStream digestIn = new DigestInputStream(in,
+                MessageDigest.getInstance("SHA-1"));
+                OutputStream out = new FileOutputStream(new File("/dev/null"))) {
+            FileUtils.copy(digestIn, out);
+            return digestIn.getMessageDigest().digest();
+        } finally {
+            FileUtils.closeQuietly(in);
+        }
+    }
+
+    private Uri getMediaStoreUri(Uri downloadUri) throws Exception {
+        final String res = runShellCommand(
+                "content query --uri " + downloadUri + " --projection mediastore_uri").trim();
+        final String str = "mediastore_uri=";
+        final int i = res.indexOf(str);
+        if (i >= 0) {
+            return Uri.parse(res.substring(i + str.length()));
+        } else {
+            throw new FileNotFoundException("Failed to find mediastore_uri for "
+                    + downloadUri + "; found " + res);
+        }
     }
 
     private static String getRawFilePath(Uri uri) throws Exception {
