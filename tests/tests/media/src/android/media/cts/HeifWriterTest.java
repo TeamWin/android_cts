@@ -21,6 +21,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -67,6 +69,8 @@ public class HeifWriterTest extends AndroidTestCase {
     private static final String TAG = HeifWriterTest.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final boolean DUMP_YUV_INPUT = false;
+    private static final int GRID_WIDTH = 512;
+    private static final int GRID_HEIGHT = 512;
 
     private static byte[][] TEST_YUV_COLORS = {
             {(byte) 255, (byte) 0, (byte) 0},
@@ -211,6 +215,35 @@ public class HeifWriterTest extends AndroidTestCase {
                     IMAGE_FILENAMES[i]).getAbsolutePath();
             doTestForVariousNumberImages(builder.setInputPath(inputPath));
         }
+    }
+
+    /**
+     * This test is to ensure that if the device advertises support for {@link
+     * MediaFormat#MIMETYPE_IMAGE_ANDROID_HEIC} (which encodes full-frame image
+     * with tiling), it must also support {@link MediaFormat#MIMETYPE_VIDEO_HEVC}
+     * at a specific tile size (512x512) with bitrate control mode {@link
+     * MediaCodecInfo.EncoderCapabilities#BITRATE_MODE_CQ}, so that a fallback
+     * could be implemented for image resolutions that's not supported by the
+     * {@link MediaFormat#MIMETYPE_IMAGE_ANDROID_HEIC} encoder.
+     */
+    public void testHeicFallbackAvailable() throws Throwable {
+        if (!MediaUtils.hasEncoder(MediaFormat.MIMETYPE_IMAGE_ANDROID_HEIC)) {
+            MediaUtils.skipTest("HEIC full-frame image encoder is not supported on this device");
+            return;
+        }
+
+        MediaCodec encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        assertNotNull("HEIC full-frame image encoder without HEVC fallback");
+
+        MediaCodecInfo.CodecCapabilities caps =
+                encoder.getCodecInfo().getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        assertTrue("HEVC fallback doesn't support tile size " + GRID_WIDTH + "x" + GRID_HEIGHT,
+                caps.getVideoCapabilities().isSizeSupported(GRID_WIDTH, GRID_HEIGHT));
+
+        MediaCodecInfo.EncoderCapabilities encoderCaps = caps.getEncoderCapabilities();
+        assertTrue("HEVC fallback doesn't support CQ mode",
+                encoderCaps.isBitrateModeSupported(
+                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ));
     }
 
     private static boolean canEncodeHeic() {
