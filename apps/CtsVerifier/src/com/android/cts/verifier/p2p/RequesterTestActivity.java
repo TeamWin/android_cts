@@ -142,7 +142,7 @@ public abstract class RequesterTestActivity  extends PassFailButtons.Activity
          * the target device list on the dialog.
          * After the user selection, the specified test will be executed.
          */
-        if (sTargetAddr == null) {
+        if (sTargetAddr == null && !isNoPeerDiscoveryOnResume()) {
             searchTarget();
             return;
         }
@@ -216,6 +216,13 @@ public abstract class RequesterTestActivity  extends PassFailButtons.Activity
      * For requester test which do not need to select a peer first.
      */
     protected boolean isSearchOnlyOnResume() {
+        return false;
+    }
+
+    /** Do peer discovery or not
+     *  For requester test which do not need to discover peer first.
+     */
+    protected boolean isNoPeerDiscoveryOnResume() {
         return false;
     }
 
