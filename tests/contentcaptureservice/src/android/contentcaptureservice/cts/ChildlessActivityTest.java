@@ -167,7 +167,7 @@ public class ChildlessActivityTest
         // in the layout - right now it's generating events for 2 intermediate parents
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
-        assertThat(events).hasSize(5);
+        assertThat(events.size()).isAtLeast(5);
 
         // Assert just the relevant events
         final AutofillId rootId = activity.getRootView().getAutofillId();

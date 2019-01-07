@@ -22,6 +22,7 @@ import static android.contentcaptureservice.cts.Assertions.assertRightRelationsh
 import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
+import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -101,7 +102,8 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final AutofillId rootId = activity.getRootView().getAutofillId();
 
-        assertThat(events).hasSize(7);
+        final int minEvents = 7;
+        assertThat(events.size()).isAtLeast(minEvents);
         assertViewAppeared(events.get(0), sessionId, activity.mUsernameLabel, rootId);
         assertViewAppeared(events.get(1), sessionId, activity.mUsername, rootId);
         assertViewAppeared(events.get(2), sessionId, activity.mPasswordLabel, rootId);
@@ -116,6 +118,13 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 grandpa1.getAutofillId());
         assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
+
+        assertViewsOptionallyDisappeared(events, minEvents,
+                rootId,
+                grandpa1.getAutofillId(), grandpa2.getAutofillId(), decorView.getAutofillId(),
+                activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
+                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
+        );
     }
 
     @Test
@@ -184,12 +193,19 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         // TODO(b/119638958): ideally it should be empty - right now it's generating events for 2
         // intermediate parents (android:action_mode_bar_stub and android:content), we should try to
         // create an activity without them
-        assertThat(mainEvents).hasSize(2);
+        final int minMainEvents = 2;
+        assertThat(mainEvents.size()).isAtLeast(minMainEvents);
         final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
         assertViewAppeared(mainEvents.get(0), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(mainEvents.get(1), grandpa2, decorView.getAutofillId());
+        assertViewsOptionallyDisappeared(mainEvents, minMainEvents,
+                grandpa1.getAutofillId(), grandpa2.getAutofillId()
+                // decorView.getAutofillId(), // TODO(b/122315042): figure out why it's not
+                // generated
+        );
+
 
         /*
          *  Asserts child session
@@ -207,13 +223,19 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final List<ContentCaptureEvent> childEvents = childSession.getEvents();
         Log.v(TAG, "events for child session: " + childEvents);
         final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertThat(childEvents).hasSize(5);
+        final int minChildEvents = 5;
+        assertThat(childEvents.size()).isAtLeast(minChildEvents);
         assertViewAppeared(childEvents.get(0), childSessionId, activity.mUsernameLabel, rootId);
         assertViewAppeared(childEvents.get(1), childSessionId, activity.mUsername, rootId);
         assertViewAppeared(childEvents.get(2), childSessionId, activity.mPasswordLabel, rootId);
         assertViewAppeared(childEvents.get(3), childSessionId, activity.mPassword, rootId);
         assertViewAppeared(childEvents.get(4), childSessionId, activity.getRootView(),
                 grandpa1.getAutofillId());
+        assertViewsOptionallyDisappeared(childEvents, minChildEvents,
+                rootId,
+                activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
+                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
+        );
     }
 
     @Test
@@ -228,8 +250,10 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
-        activity.syncRunOnUiThread(() -> activity.mUsername.setText("USER"));
-        activity.syncRunOnUiThread(() -> activity.mPassword.setText("PASS"));
+        activity.syncRunOnUiThread(() -> {
+            activity.mUsername.setText("USER");
+            activity.mPassword.setText("PASS");
+        });
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -244,7 +268,9 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final AutofillId rootId = activity.getRootView().getAutofillId();
 
-        assertThat(events).hasSize(9);
+        final int minEvents = 9;
+        assertThat(events.size()).isAtLeast(minEvents);
+
         assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
         assertViewAppeared(events.get(1), activity.mUsername, rootId, "user");
         assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
@@ -258,8 +284,17 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
 
-        assertViewTextChanged(events.get(7), "USER", activity.mUsername.getAutofillId());
-        assertViewTextChanged(events.get(8), "PASS", activity.mPassword.getAutofillId());
+        assertViewTextChanged(events.get(7), activity.mUsername.getAutofillId(), "USER");
+        assertViewTextChanged(events.get(8), activity.mPassword.getAutofillId(), "PASS");
+
+        assertViewsOptionallyDisappeared(events, minEvents,
+                rootId,
+                grandpa1.getAutofillId(), grandpa2.getAutofillId(),
+                // decorView.getAutofillId(), // TODO(b/122315042): figure out why it's not
+                // generated
+                activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
+                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
+        );
     }
 
     @Test
@@ -297,7 +332,9 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final AutofillId rootId = activity.getRootView().getAutofillId();
 
-        assertThat(events).hasSize(10);
+        final int minEvents = 10;
+        assertThat(events.size()).isAtLeast(minEvents);
+
         assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
         assertViewAppeared(events.get(1), activity.mUsername, rootId, "");
         assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
@@ -311,9 +348,19 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
 
-        assertViewTextChanged(events.get(7), "ab", activity.mUsername.getAutofillId());
-        assertViewTextChanged(events.get(8), "de", activity.mPassword.getAutofillId());
-        assertViewTextChanged(events.get(9), "abc", activity.mUsername.getAutofillId());
+        assertViewTextChanged(events.get(7), activity.mUsername.getAutofillId(), "ab");
+        assertViewTextChanged(events.get(8), activity.mPassword.getAutofillId(), "de");
+        assertViewTextChanged(events.get(9), activity.mUsername.getAutofillId(), "abc");
+
+        assertViewsOptionallyDisappeared(events, minEvents,
+                rootId,
+                grandpa1.getAutofillId(), grandpa2.getAutofillId(),
+                // decorView.getAutofillId(), // TODO(b/122315042): figure out why it's not
+                // generated
+                activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
+                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
+        );
+
     }
 
     // TODO(b/119638958): add moar test cases for different sessions:
