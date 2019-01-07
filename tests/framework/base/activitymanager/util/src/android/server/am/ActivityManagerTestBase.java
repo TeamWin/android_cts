@@ -171,6 +171,7 @@ public abstract class ActivityManagerTestBase {
     private static final String SECOND_TEST_PACKAGE = "android.server.am.second";
     private static final String THIRD_TEST_PACKAGE = "android.server.am.third";
     private static final List<String> TEST_PACKAGES;
+
     static {
         final List<String> testPackages = new ArrayList<>(3);
         testPackages.add(TEST_PACKAGE);
@@ -210,7 +211,7 @@ public abstract class ActivityManagerTestBase {
 
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
-     *         {@param keyValuePairs} must be a list of arguments defining each key/value extra.
+     * {@param keyValuePairs} must be a list of arguments defining each key/value extra.
      */
     // TODO: Make this more generic, for instance accepting flags or extras of other types.
     protected static String getAmStartCmd(final ComponentName activityName,
@@ -267,6 +268,10 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
+
+    public ActivityAndWindowManagersState getAmWmState() {
+        return mAmWmState;
+    }
 
     protected BroadcastActionTrigger mBroadcastActionTrigger = new BroadcastActionTrigger();
 
@@ -561,7 +566,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
-     * Launches {@param  activityName} into split-screen primary windowing mode and also makes
+     * Launches {@param activityName} into split-screen primary windowing mode and also makes
      * the recents activity visible to the side of it.
      * NOTE: Recents view may be combined with home screen on some devices, so using this to wait
      * for Recents only makes sense when {@link ActivityManagerState#isHomeRecentsComponent()} is
@@ -595,9 +600,10 @@ public abstract class ActivityManagerTestBase {
 
     /**
      * Moves the device into split-screen with the specified task into the primary stack.
-     * @param taskId        The id of the task to move into the primary stack.
-     * @param showRecents   Whether to show the recents activity (or a placeholder activity in
-     *                      place of the Recents activity if home is the recents component)
+     *
+     * @param taskId      The id of the task to move into the primary stack.
+     * @param showRecents Whether to show the recents activity (or a placeholder activity in
+     *                    place of the Recents activity if home is the recents component)
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showRecents) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
@@ -744,7 +750,7 @@ public abstract class ActivityManagerTestBase {
         assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName, state));
     }
 
-    protected void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
+    public void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
             String message) {
         mAmWmState.waitForValidState(activityName);
         mAmWmState.waitForActivityState(activityName, STATE_RESUMED);
@@ -765,7 +771,7 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
         mAmWmState.assertVisibility(activityName, true /* visible */);
     }
-
+    
     // TODO: Switch to using a feature flag, when available.
     protected static boolean isUiModeLockedToVrHeadset() {
         final String output = runCommandAndPrintOutput("dumpsys uimode");
@@ -1079,10 +1085,10 @@ public abstract class ActivityManagerTestBase {
      * rotation, because there is no requirement that an Android device that supports both
      * orientations needs to support user rotation mode.
      *
-     * @param session the rotation session used to set user rotation
+     * @param session   the rotation session used to set user rotation
      * @param displayId the display ID to check rotation against
      * @return {@code true} if test device respects settings of locked user rotation mode;
-     *      {@code false} if not.
+     * {@code false} if not.
      */
     protected boolean supportsLockedUserRotation(RotationSession session, int displayId)
             throws Exception {
@@ -1136,6 +1142,7 @@ public abstract class ActivityManagerTestBase {
     /**
      * Inserts a log separator so we can always find the starting point from where to evaluate
      * following logs.
+     *
      * @return Unique log separator.
      */
     protected LogSeparator separateLogs() {
@@ -1573,6 +1580,7 @@ public abstract class ActivityManagerTestBase {
         private enum LauncherType {
             INSTRUMENTATION, LAUNCHING_ACTIVITY, BROADCAST_RECEIVER
         }
+
         private LauncherType mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
 
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {

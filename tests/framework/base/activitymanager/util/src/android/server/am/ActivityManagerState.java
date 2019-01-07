@@ -392,6 +392,24 @@ public class ActivityManagerState {
         return false;
     }
 
+    public boolean containsNoneOf(Iterable<ComponentName> activityNames) {
+        for (ComponentName activityName : activityNames) {
+            String fullName = getActivityName(activityName);
+
+            for (ActivityStack stack : mStacks) {
+                for (ActivityTask task : stack.mTasks) {
+                    for (Activity activity : task.mActivities) {
+                        if (activity.name.equals(fullName)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
     boolean containsActivityInWindowingMode(ComponentName activityName, int windowingMode) {
         final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
