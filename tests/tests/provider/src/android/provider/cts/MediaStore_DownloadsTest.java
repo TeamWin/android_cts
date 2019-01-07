@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -286,7 +287,9 @@ public class MediaStore_DownloadsTest {
                     latch.countDown();
                 });
 
-        latch.await(SCAN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        if (!latch.await(SCAN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+            fail("Timed out waiting for scanFile: " + file.getAbsolutePath());
+        }
         assertNotNull("Failed to scan " + file.getAbsolutePath(), mediaStoreUris[0]);
         return mediaStoreUris[0];
     }

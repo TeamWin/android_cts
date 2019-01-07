@@ -112,6 +112,8 @@ public class ApiComplianceChecker extends AbstractApiChecker {
         if (((apiModifiers & Modifier.ABSTRACT) == 0) &&
                 // but the reflected class is
                 ((reflectionModifiers & Modifier.ABSTRACT) != 0) &&
+                // interfaces are implicitly abstract (JLS 9.1.1.1)
+                classDescription.getClassType() != JDiffClassDescription.JDiffType.INTERFACE &&
                 // and it isn't an enum
                 !classDescription.isEnumType()) {
             // that is a problem
@@ -491,8 +493,6 @@ public class ApiComplianceChecker extends AbstractApiChecker {
      * Checks to ensure that the modifiers value for two methods are compatible.
      *
      * Allowable differences are:
-     *   - synchronized is allowed to be removed from an apiMethod
-     *     that has it
      *   - the native modified is ignored
      *
      * @param classDescription a description of a class in an API.
@@ -505,16 +505,8 @@ public class ApiComplianceChecker extends AbstractApiChecker {
             JDiffClassDescription.JDiffMethod apiMethod,
             Method reflectedMethod) {
 
-        // If the apiMethod isn't synchronized
-        if (((apiMethod.mModifier & Modifier.SYNCHRONIZED) == 0) &&
-                // but the reflected method is
-                ((reflectedMethod.getModifiers() & Modifier.SYNCHRONIZED) != 0)) {
-            // that is a problem
-            return "description is synchronize but class is not";
-        }
-
         // Mask off NATIVE since it is a don't care.  Also mask off
-        // SYNCHRONIZED since we've already handled that check.
+        // SYNCHRONIZED since it is not considered API significant (b/112626813)
         int ignoredMods = (Modifier.NATIVE | Modifier.SYNCHRONIZED | Modifier.STRICT);
         int reflectionModifiers = reflectedMethod.getModifiers() & ~ignoredMods;
         int apiModifiers = apiMethod.mModifier & ~ignoredMods;
