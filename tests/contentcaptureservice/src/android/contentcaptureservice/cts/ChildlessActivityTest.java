@@ -555,6 +555,179 @@ public class ChildlessActivityTest
         assertLifecycleOrder(10, mainTestSession,  DESTRUCTION);
     }
 
+    @Test
+    public void testNestedSessions_simplestScenario() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final ChildlessActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureSession mainSession = activity.getRootView().getContentCaptureSession();
+        final ContentCaptureSessionId mainSessionId = mainSession.getContentCaptureSessionId();
+        Log.v(TAG, "main session id: " + mainSessionId);
+
+        // Create child session
+        final ContentCaptureContext childContext = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://child")).build();
+        final ContentCaptureSession childSession = mainSession
+                .createContentCaptureSession(childContext);
+        final ContentCaptureSessionId childSessionId = childSession.getContentCaptureSessionId();
+        Log.v(TAG, "child session id: " + childSessionId);
+
+        // Create grand child session
+        final ContentCaptureContext grandChild = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://grandChild")).build();
+        final ContentCaptureSession grandChildSession = childSession
+                .createContentCaptureSession(grandChild);
+        final ContentCaptureSessionId grandChildSessionId = grandChildSession
+                .getContentCaptureSessionId();
+        Log.v(TAG, "child session id: " + grandChildSessionId);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final List<ContentCaptureSessionId> receivedIds = service.getAllSessionIds();
+        assertThat(receivedIds).containsExactly(
+                mainSessionId,
+                childSessionId,
+                grandChildSessionId)
+            .inOrder();
+
+        // Assert sessions
+        final Session mainTestSession = service.getFinishedSession(mainSessionId);
+        assertMainSessionContext(mainTestSession, activity);
+        assertThat(mainTestSession.getEvents()).isEmpty();
+
+        final Session childTestSession = service.getFinishedSession(childSessionId);
+        assertChildSessionContext(childTestSession, "http://child");
+        assertThat(childTestSession.getEvents()).isEmpty();
+
+        final Session grandChildTestSession = service.getFinishedSession(grandChildSessionId);
+        assertChildSessionContext(grandChildTestSession, "http://grandChild");
+        assertThat(grandChildTestSession.getEvents()).isEmpty();
+
+        // Assert lifecycle methods were called in the right order
+        assertLifecycleOrder(1, mainTestSession, CREATION);
+        assertLifecycleOrder(2, childTestSession, CREATION);
+        assertLifecycleOrder(3, grandChildTestSession, CREATION);
+        assertLifecycleOrder(4, grandChildTestSession, DESTRUCTION);
+        assertLifecycleOrder(5, childTestSession, DESTRUCTION);
+        assertLifecycleOrder(6, mainTestSession,  DESTRUCTION);
+    }
+
+    /**
+     * Tests scenario where new sessions are added from each other session, but they're not nested
+     * neither have views attached to them.
+     *
+     * <p>This test actions are exactly the same as
+     * {@link #testDinamicallyManageChildlessSiblingSessions()}, except for session nesting (and
+     * order of lifecycle events).
+     */
+    @Test
+    public void testDinamicallyManageChildlessNestedSessions() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final ChildlessActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureSession mainSession = activity.getRootView().getContentCaptureSession();
+        final ContentCaptureSessionId mainSessionId = mainSession.getContentCaptureSessionId();
+        Log.v(TAG, "main session id: " + mainSessionId);
+
+        // Create 1st session
+        final ContentCaptureContext context1 = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://session1")).build();
+        final ContentCaptureSession childSession1 = mainSession
+                .createContentCaptureSession(context1);
+        final ContentCaptureSessionId childSessionId1 = childSession1.getContentCaptureSessionId();
+        Log.v(TAG, "child session id 1: " + childSessionId1);
+
+        // Create 2nd session
+        final ContentCaptureContext context2 = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://session2")).build();
+        final ContentCaptureSession childSession2 = childSession1
+                .createContentCaptureSession(context2);
+        final ContentCaptureSessionId childSessionId2 = childSession2.getContentCaptureSessionId();
+        Log.v(TAG, "child session id 2: " + childSessionId2);
+
+        // Close 1st session before opening 3rd
+        childSession1.close();
+
+        // Create 3nd session...
+        final ContentCaptureContext context3 = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://session3")).build();
+        final ContentCaptureSession childSession3 = mainSession
+                .createContentCaptureSession(context3);
+        final ContentCaptureSessionId childSessionId3 = childSession3.getContentCaptureSessionId();
+        Log.v(TAG, "child session id 3: " + childSessionId3);
+
+        // ...and close it right away
+        childSession3.close();
+
+        // Create 4nd session
+        final ContentCaptureContext context4 = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://session4")).build();
+        final ContentCaptureSession childSession4 = mainSession
+                .createContentCaptureSession(context4);
+        final ContentCaptureSessionId childSessionId4 = childSession4.getContentCaptureSessionId();
+        Log.v(TAG, "child session id 4: " + childSessionId4);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final List<ContentCaptureSessionId> receivedIds = service.getAllSessionIds();
+        assertThat(receivedIds).containsExactly(
+                mainSessionId,
+                childSessionId1,
+                childSessionId2,
+                childSessionId3,
+                childSessionId4)
+            .inOrder();
+
+        // Assert main sessions info
+        final Session mainTestSession = service.getFinishedSession(mainSessionId);
+        assertMainSessionContext(mainTestSession, activity);
+        assertThat(mainTestSession.getEvents()).isEmpty();
+
+        final Session childTestSession1 = service.getFinishedSession(childSessionId1);
+        assertChildSessionContext(childTestSession1, "http://session1");
+        assertThat(childTestSession1.getEvents()).isEmpty();
+
+        final Session childTestSession2 = service.getFinishedSession(childSessionId2);
+        assertChildSessionContext(childTestSession2, "http://session2");
+        assertThat(childTestSession2.getEvents()).isEmpty();
+
+        final Session childTestSession3 = service.getFinishedSession(childSessionId3);
+        assertChildSessionContext(childTestSession3, "http://session3");
+        assertThat(childTestSession3.getEvents()).isEmpty();
+
+        final Session childTestSession4 = service.getFinishedSession(childSessionId4);
+        assertChildSessionContext(childTestSession4, "http://session4");
+        assertThat(childTestSession4.getEvents()).isEmpty();
+
+        // Assert lifecycle methods were called in the right order
+        assertLifecycleOrder(1, mainTestSession,   CREATION);
+        assertLifecycleOrder(2, childTestSession1, CREATION);
+        assertLifecycleOrder(3, childTestSession2, CREATION);
+        assertLifecycleOrder(4, childTestSession1, DESTRUCTION);
+        assertLifecycleOrder(5, childTestSession2, DESTRUCTION);
+        assertLifecycleOrder(6, childTestSession3, CREATION);
+        assertLifecycleOrder(7, childTestSession3, DESTRUCTION);
+        assertLifecycleOrder(8, childTestSession4, CREATION);
+        assertLifecycleOrder(9, childTestSession4, DESTRUCTION);
+        assertLifecycleOrder(10, mainTestSession,  DESTRUCTION);
+    }
+
+    /* TODO(b/119638528): add more scenarios for nested sessions, such as:
+     * - add views to the children sessions
+     * - s1 -> s2 -> s3 and main -> s4; close(s1) then generate events on view from s3
+     * - s1 -> s2 -> s3 and main -> s4; close(s2) then generate events on view from s3
+     * - s1 -> s2 and s3->s4 -> s4
+     * - etc
+     */
+
     private TextView newImportantChild(@NonNull Context context, @NonNull String text) {
         final TextView child = new TextView(context);
         child.setText(text);
