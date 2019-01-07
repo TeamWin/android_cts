@@ -32,7 +32,9 @@ import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+
 import androidx.annotation.Nullable;
+
 import android.util.SparseArray;
 
 import com.android.server.am.nano.ActivityDisplayProto;
@@ -364,7 +366,7 @@ public class ActivityManagerState {
         return new ArrayList<>(mDisplays);
     }
 
-    List<ActivityStack> getStacks() {
+    public List<ActivityStack> getStacks() {
         return new ArrayList<>(mStacks);
     }
 
@@ -602,7 +604,7 @@ public class ActivityManagerState {
         return mPendingActivities.contains(getActivityName(activityName));
     }
 
-    static class ActivityDisplay extends ActivityContainer {
+    public static class ActivityDisplay extends ActivityContainer {
 
         int mId;
         ArrayList<ActivityStack> mStacks = new ArrayList<>();
@@ -643,9 +645,13 @@ public class ActivityManagerState {
             }
             return false;
         }
+        
+        public ArrayList<ActivityStack> getStacks() {
+            return mStacks;
+        }
     }
 
-    static class ActivityStack extends ActivityContainer {
+    public static class ActivityStack extends ActivityContainer {
 
         int mDisplayId;
         int mStackId;
@@ -690,7 +696,7 @@ public class ActivityManagerState {
             return null;
         }
 
-        List<ActivityTask> getTasks() {
+        public List<ActivityTask> getTasks() {
             return new ArrayList<>(mTasks);
         }
 
@@ -701,6 +707,14 @@ public class ActivityManagerState {
                 }
             }
             return null;
+        }
+
+        public int getStackId() {
+            return mStackId;
+        }
+
+        public String getResumedActivity() {
+            return mResumedActivity;
         }
     }
 
@@ -740,6 +754,10 @@ public class ActivityManagerState {
         public int getTaskId() {
             return mTaskId;
         }
+
+        public ArrayList<Activity> getActivities() {
+            return mActivities;
+        }
     }
 
     public static class Activity extends ActivityContainer {
@@ -761,6 +779,14 @@ public class ActivityManagerState {
                 procId = proto.procId;
             }
             translucent = proto.translucent;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getState() {
+            return state;
         }
     }
 
