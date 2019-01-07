@@ -137,7 +137,7 @@ public class MagnifierTest {
         final int sourceToMagnifierVerticalOffset = -100;
         final float cornerRadius = 20.0f;
         final float elevation = 15.0f;
-        final boolean forcePositionWithinBounds = false;
+        final boolean enableClipping = false;
         final Drawable overlay = new ColorDrawable(Color.BLUE);
 
         final Magnifier.Builder builder = new Magnifier.Builder(mView)
@@ -149,7 +149,7 @@ public class MagnifierTest {
                 .setZoom(zoom)
                 .setElevation(elevation)
                 .setOverlay(overlay)
-                .setForcePositionWithinWindowSystemInsetsBounds(forcePositionWithinBounds);
+                .setClippingEnabled(enableClipping);
         final Magnifier magnifier = builder.build();
 
         assertEquals(magnifierWidth, magnifier.getWidth());
@@ -163,8 +163,7 @@ public class MagnifierTest {
                 magnifier.getDefaultVerticalSourceToMagnifierOffset());
         assertEquals(cornerRadius, magnifier.getCornerRadius(), 0f);
         assertEquals(elevation, magnifier.getElevation(), 0f);
-        assertEquals(forcePositionWithinBounds,
-                magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+        assertEquals(enableClipping, magnifier.isClippingEnabled());
         assertEquals(overlay, magnifier.getOverlay());
     }
 
@@ -237,9 +236,8 @@ public class MagnifierTest {
         final float dialogCornerRadius = ta.getDimension(0, 0);
         ta.recycle();
         assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
-        final boolean forcePositionWithinBounds = true;
-        assertEquals(forcePositionWithinBounds,
-                magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+        final boolean isClippingEnabled = true;
+        assertEquals(isClippingEnabled, magnifier.isClippingEnabled());
         final int overlayColor = a.getColor(
                 com.android.internal.R.styleable.Magnifier_magnifierColorOverlay,
                 Color.TRANSPARENT);
@@ -271,9 +269,8 @@ public class MagnifierTest {
         final float dialogCornerRadius = resources.getDimension(
                 com.android.internal.R.dimen.default_magnifier_corner_radius);
         assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
-        final boolean forcePositionWithinBounds = true;
-        assertEquals(forcePositionWithinBounds,
-                magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+        final boolean isClippingEnabled = true;
+        assertEquals(isClippingEnabled, magnifier.isClippingEnabled());
         final int overlayColor = resources.getColor(
                 com.android.internal.R.color.default_magnifier_color_overlay, null);
         assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
@@ -457,7 +454,7 @@ public class MagnifierTest {
     public void testWindowPosition_isNotClamped_whenClampingFlagIsOff_topLeft() throws Throwable {
         prepareFourQuadrantsScenario();
         mMagnifier = new Magnifier.Builder(mLayout)
-                .setForcePositionWithinWindowSystemInsetsBounds(false)
+                .setClippingEnabled(false)
                 .build();
 
         // Magnify the center of the activity in a magnifier outside bounds.
@@ -478,7 +475,7 @@ public class MagnifierTest {
             throws Throwable {
         prepareFourQuadrantsScenario();
         mMagnifier = new Magnifier.Builder(mLayout)
-                .setForcePositionWithinWindowSystemInsetsBounds(false)
+                .setClippingEnabled(false)
                 .setSize(40, 40)
                 .build();
 
