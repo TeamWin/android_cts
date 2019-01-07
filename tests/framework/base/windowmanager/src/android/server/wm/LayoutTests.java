@@ -45,6 +45,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 /**
@@ -165,7 +166,7 @@ public class LayoutTests {
     }
 
     @Test
-    public void testChangingFocusableFlag() throws InterruptedException {
+    public void testChangingFocusableFlag() throws Exception {
         mActivity = mActivityRule.getActivity();
         assertNotNull(mActivity);
 
@@ -182,14 +183,13 @@ public class LayoutTests {
         // The window must have focus.
         assertTrue("Child window must have focus.", mChildWindowHasFocus);
 
-        // Send a key event to the system.
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
-        synchronized (this) {
-            wait(TIMEOUT_RECEIVE_KEY);
-        }
-
-        // The window must get the key event.
-        assertTrue("Child window must get key event.", mChildWindowGotKeyEvent);
+        // Ensure the window can receive keys.
+        PollingCheck.check("Child window must get key event.", TIMEOUT_RECEIVE_KEY, () -> {
+            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
+            synchronized (this) {
+                return mChildWindowGotKeyEvent;
+            }
+        });
     }
 
     private void addNotFocusableWindow() {
@@ -201,8 +201,9 @@ public class LayoutTests {
             }
 
             public boolean onKeyDown(int keyCode, KeyEvent event) {
-                mChildWindowGotKeyEvent = true;
-                stopWaiting();
+                synchronized (LayoutTests.this) {
+                    mChildWindowGotKeyEvent = true;
+                }
                 return super.onKeyDown(keyCode, event);
             }
         };
