@@ -78,8 +78,7 @@ public interface LaunchSequence {
 
     /**
      * Extract all the information that has been built up in this {@link LaunchSequence} object, so
-     * that
-     * {@link LaunchRunner} can run the described sequence of intents.
+     * that {@link LaunchRunner} can run the described sequence of intents.
      */
     LaunchSequenceExecutionInfo fold();
 

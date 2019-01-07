@@ -85,6 +85,11 @@ public class IntentGenerationTests extends IntentTestBase {
     //20 minute timeout.
     @Test(timeout = 1_200_000)
     public void generate() throws Exception {
+        mLaunchRunner.runAndWrite(mTargetContext, "forResult", CASES.forResultCases());
+        mLaunchRunner.runAndWrite(mTargetContext, "newTask", CASES.newTaskCases());
+        mLaunchRunner.runAndWrite(mTargetContext, "newDocumentCases", CASES.newDocumentCases());
+        mLaunchRunner.runAndWrite(mTargetContext, "resetTaskIfNeeded", CASES.resetTaskIfNeeded());
+        mLaunchRunner.runAndWrite(mTargetContext, "clearCases", CASES.clearCases());
     }
 
     @Override
