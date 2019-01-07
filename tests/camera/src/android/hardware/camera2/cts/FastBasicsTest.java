@@ -91,7 +91,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
         SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
 
         prepareStillCaptureAndStartPreview(previewRequest, stillCaptureRequest,
-                previewSize, stillSize, resultListener, imageListener);
+                previewSize, stillSize, resultListener, imageListener, false /*isHeic*/);
 
         CaptureResult result = resultListener.getCaptureResult(WAIT_FOR_FRAMES_TIMEOUT_MS);
 

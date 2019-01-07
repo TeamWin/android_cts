@@ -254,8 +254,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
-            List<ImageReader> rawTargets, List<OutputConfiguration> outputConfigs,
-            int numBuffers, boolean substituteY8, MandatoryStreamInformation overrideStreamInfo,
+            List<ImageReader> rawTargets, List<ImageReader> heicTargets,
+            List<OutputConfiguration> outputConfigs,
+            int numBuffers, boolean substituteY8, boolean substituteHeic,
+            MandatoryStreamInformation overrideStreamInfo,
             List<String> overridePhysicalCameraIds, List<Size> overridePhysicalCameraSizes) {
 
         ImageDropperListener imageDropperListener = new ImageDropperListener();
@@ -267,6 +269,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             int format = streamInfo.getFormat();
             if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
                 format = ImageFormat.Y8;
+            } else if (substituteHeic && (format == ImageFormat.JPEG)) {
+                format = ImageFormat.HEIC;
             }
             Surface newSurface;
             Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
@@ -345,6 +349,18 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         }
                         break;
                     }
+                    case ImageFormat.HEIC: {
+                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                targetSize.getHeight(), format, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        heicTargets.add(target);
+                        break;
+                    }
                     default:
                         fail("Unknown output format " + format);
                 }
@@ -366,13 +382,36 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
         }
 
+        // Check whether substituting JPEG format with HEIC format
+        boolean substituteHeic = false;
+        if (mStaticInfo.isHeicSupported()) {
+            List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
+            for (MandatoryStreamInformation streamInfo : streamsInfo) {
+                if (streamInfo.getFormat() == ImageFormat.JPEG) {
+                    substituteHeic = true;
+                    break;
+                }
+            }
+        }
+
         // Test camera output combination
         Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
                 " on camera: " + cameraId);
-        testMandatoryStreamCombination(cameraId, combination, /*substituteY8*/false);
+        testMandatoryStreamCombination(cameraId, combination, /*substituteY8*/false,
+                /*substituteHeic*/false);
 
         if (substituteY8) {
-            testMandatoryStreamCombination(cameraId, combination, substituteY8);
+            Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
+                    " on camera: " + cameraId + " with Y8");
+            testMandatoryStreamCombination(cameraId, combination, /*substituteY8*/true,
+                    /*substituteHeic*/false);
+        }
+
+        if (substituteHeic) {
+            Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
+                    " on camera: " + cameraId + " with HEIC");
+            testMandatoryStreamCombination(cameraId, combination,
+                    /*substituteY8*/false, /*substituteHeic*/true);
         }
 
         // Test substituting YUV_888/RAW with physical streams for logical camera
@@ -383,7 +422,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             testMultiCameraOutputCombination(cameraId, combination, /*substituteY8*/false);
 
             if (substituteY8) {
-                testMultiCameraOutputCombination(cameraId, combination, substituteY8);
+                testMultiCameraOutputCombination(cameraId, combination, /*substituteY8*/true);
             }
         }
     }
@@ -441,10 +480,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
             List<ImageReader> y8Targets = new ArrayList<ImageReader>();
             List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+            List<ImageReader> heicTargets = new ArrayList<ImageReader>();
 
             setupConfigurationTargets(streamsInfo, privTargets, jpegTargets, yuvTargets,
-                    y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, substituteY8,
-                    streamInfo, physicalCamerasForSize, physicalCameraSizes);
+                    y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT,
+                    substituteY8, /*substituteHeic*/false, streamInfo, physicalCamerasForSize,
+                    physicalCameraSizes);
 
             boolean haveSession = false;
             try {
@@ -516,7 +557,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     private void testMandatoryStreamCombination(String cameraId,
-            MandatoryStreamCombination combination, boolean substituteY8) throws Exception {
+            MandatoryStreamCombination combination,
+            boolean substituteY8, boolean substituteHeic) throws Exception {
 
         // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
         final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
@@ -529,9 +571,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
         List<ImageReader> y8Targets = new ArrayList<ImageReader>();
         List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+        List<ImageReader> heicTargets = new ArrayList<ImageReader>();
 
         setupConfigurationTargets(combination.getStreamsInformation(), privTargets, jpegTargets,
-                yuvTargets, y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, substituteY8,
+                yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT,
+                substituteY8, substituteHeic,
                 null /*overrideStreamInfo*/, null /*overridePhysicalCameraIds*/,
                 null /* overridePhysicalCameraSizes) */);
 
@@ -600,6 +644,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (ImageReader target : rawTargets) {
             target.close();
         }
+        for (ImageReader target : heicTargets) {
+            target.close();
+        }
     }
 
     /**
@@ -635,26 +682,42 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void testMandatoryReprocessableStreamCombination(String cameraId,
             MandatoryStreamCombination combination) {
         // Test reprocess stream combination
-        testMandatoryReprocessableStreamCombination(cameraId, combination, /*substituteY8*/false);
+        testMandatoryReprocessableStreamCombination(cameraId, combination,
+                /*substituteY8*/false, /*substituteHeic*/false);
 
         // Test substituting YUV_888 format with Y8 format in reprocess stream combination.
         if (mStaticInfo.isMonochromeWithY8()) {
             List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
-            boolean hasY8 = false;
+            boolean substituteY8 = false;
             for (MandatoryStreamInformation streamInfo : streamsInfo) {
                 if (streamInfo.getFormat() == ImageFormat.YUV_420_888) {
-                    hasY8 = true;
-                    break;
+                    substituteY8 = true;
                 }
             }
-            if (hasY8) {
-                testMandatoryReprocessableStreamCombination(cameraId, combination, hasY8);
+            if (substituteY8) {
+                testMandatoryReprocessableStreamCombination(cameraId, combination,
+                        /*substituteY8*/true, /*substituteHeic*/false);
+            }
+        }
+
+        if (mStaticInfo.isHeicSupported()) {
+            List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
+            boolean substituteHeic = false;
+            for (MandatoryStreamInformation streamInfo : streamsInfo) {
+                if (streamInfo.getFormat() == ImageFormat.JPEG) {
+                    substituteHeic = true;
+                }
+            }
+            if (substituteHeic) {
+                testMandatoryReprocessableStreamCombination(cameraId, combination,
+                        /*substituteY8*/false, /*substituteHeic*/true);
             }
         }
     }
 
     private void testMandatoryReprocessableStreamCombination(String cameraId,
-            MandatoryStreamCombination combination, boolean substituteY8) {
+            MandatoryStreamCombination combination, boolean substituteY8,
+            boolean substituteHeic) {
 
         final int TIMEOUT_FOR_RESULT_MS = 3000;
         final int NUM_REPROCESS_CAPTURES_PER_CONFIG = 3;
@@ -664,6 +727,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> yuvTargets = new ArrayList<>();
         List<ImageReader> y8Targets = new ArrayList<>();
         List<ImageReader> rawTargets = new ArrayList<>();
+        List<ImageReader> heicTargets = new ArrayList<>();
         ArrayList<Surface> outputSurfaces = new ArrayList<>();
         List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
         ImageReader inputReader = null;
@@ -685,13 +749,17 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             inputFormat = ImageFormat.Y8;
         }
 
+        Log.i(TAG, "testMandatoryReprocessableStreamCombination: " +
+                combination.getDescription() + ", substituteY8 = " + substituteY8 +
+                ", substituteHeic = " + substituteHeic);
         try {
             // The second stream information entry is the ZSL stream, which is configured
             // separately.
             setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()), privTargets,
-                    jpegTargets, yuvTargets, y8Targets, rawTargets, outputConfigs,
-                    NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,  null /*overrideStreamInfo*/,
-                    null /*overridePhysicalCameraIds*/, null /* overridePhysicalCameraSizes) */);
+                    jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs,
+                    NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,  substituteHeic,
+                    null /*overrideStreamInfo*/, null /*overridePhysicalCameraIds*/,
+                    null /* overridePhysicalCameraSizes) */);
 
             outputSurfaces.ensureCapacity(outputConfigs.size());
             for (OutputConfiguration config : outputConfigs) {
@@ -709,7 +777,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             final boolean useY8 = inputIsY8 || y8Targets.size() > 0;
             final int totalNumReprocessCaptures =  NUM_REPROCESS_CAPTURES_PER_CONFIG * (
                     ((inputIsYuv || inputIsY8) ? 1 : 0) +
-                    jpegTargets.size() + (useYuv ? yuvTargets.size() : y8Targets.size()));
+                    (substituteHeic ? heicTargets.size() : jpegTargets.size()) +
+                    (useYuv ? yuvTargets.size() : y8Targets.size()));
 
             // It needs 1 input buffer for each reprocess capture + the number of buffers
             // that will be used as outputs.
@@ -747,6 +816,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
 
             for (ImageReader reader : jpegTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+
+            for (ImageReader reader : heicTargets) {
                 reprocessOutputs.add(reader.getSurface());
             }
 
@@ -800,6 +873,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
 
             for (ImageReader target : rawTargets) {
+                target.close();
+            }
+
+            for (ImageReader target : heicTargets) {
                 target.close();
             }
 
@@ -1916,6 +1993,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         static final int YUV  = ImageFormat.YUV_420_888;
         static final int RAW  = ImageFormat.RAW_SENSOR;
         static final int Y8   = ImageFormat.Y8;
+        static final int HEIC = ImageFormat.HEIC;
 
         // Max resolution indices
         static final int PREVIEW = 0;
@@ -1933,6 +2011,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     StaticMetadata.StreamDirection.Output);
             Size[] jpegSizes = sm.getJpegOutputSizesChecked();
             Size[] rawSizes = sm.getRawOutputSizesChecked();
+            Size[] heicSizes = sm.getHeicOutputSizesChecked();
 
             Size maxPreviewSize = getMaxPreviewSize(context, cameraId);
 
@@ -1975,6 +2054,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     maxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
                     maxY8Sizes[VGA] = vgaSize;
                 }
+
+                if (sm.isHeicSupported()) {
+                    maxHeicSizes[PREVIEW] = getMaxSize(heicSizes, maxPreviewSize);
+                    maxHeicSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    maxHeicSizes[MAXIMUM] = CameraTestUtils.getMaxSize(heicSizes);
+                    maxHeicSizes[VGA] = vgaSize;
+                }
             }
 
             Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
@@ -1992,6 +2078,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         public final Size[] maxJpegSizes = new Size[RESOLUTION_COUNT];
         public final Size[] maxYuvSizes = new Size[RESOLUTION_COUNT];
         public final Size[] maxY8Sizes = new Size[RESOLUTION_COUNT];
+        public final Size[] maxHeicSizes = new Size[RESOLUTION_COUNT];
         public final Size maxRawSize;
         // TODO: support non maximum reprocess input.
         public final Size maxInputPrivSize;
@@ -2119,9 +2206,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
             List<ImageReader> y8Targets = new ArrayList<ImageReader>();
             List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+            List<ImageReader> heicTargets = new ArrayList<ImageReader>();
 
             setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                    y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, i,
+                    y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT, i,
                     physicalCamerasForSize, physicalCameraSizes);
 
             boolean haveSession = false;
@@ -2196,7 +2284,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void setupConfigurationTargets(int[] configs, MaxStreamSizes maxSizes,
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
-            List<ImageReader> rawTargets, List<OutputConfiguration> outputConfigs, int numBuffers,
+            List<ImageReader> rawTargets, List<ImageReader> heicTargets,
+            List<OutputConfiguration> outputConfigs, int numBuffers,
             int overrideStreamIndex, List<String> overridePhysicalCameraIds,
             List<Size> overridePhysicalCameraSizes) {
 
@@ -2239,6 +2328,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         }
                         outputConfigs.add(config);
                         jpegTargets.add(target);
+                        break;
+                    }
+                    case HEIC: {
+                        Size targetSize = (numConfigs == 1) ? maxSizes.maxHeicSizes[sizeLimit] :
+                                overridePhysicalCameraSizes.get(j);
+                        ImageReader target = ImageReader.newInstance(
+                            targetSize.getWidth(), targetSize.getHeight(), HEIC, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        heicTargets.add(target);
                         break;
                     }
                     case YUV: {

@@ -43,6 +43,11 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
                 testY8Native(mDebugFileNameBase));
     }
 
+    public void testHeic() {
+        assertTrue("testHeic fail, see log for details",
+                testHeicNative(mDebugFileNameBase));
+    }
+
     public void testImageReaderCloseAcquiredImages() {
         assertTrue("testImageReaderClose fail, see log for details",
                 testImageReaderCloseAcquiredImagesNative());
@@ -50,5 +55,6 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
 
     private static native boolean testJpegNative(String filePath);
     private static native boolean testY8Native(String filePath);
+    private static native boolean testHeicNative(String filePath);
     private static native boolean testImageReaderCloseAcquiredImagesNative();
 }

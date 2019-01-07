@@ -204,6 +204,17 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testHeic() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "Testing heic capture for Camera " + id);
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.HEIC, /*repeating*/false);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
 
     public void testRepeatingJpeg() throws Exception {
         for (String id : mCameraIds) {
@@ -237,6 +248,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 openDevice(id);
 
                 bufferFormatTestByCamera(ImageFormat.RAW_PRIVATE, /*repeating*/true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    public void testRepeatingHeic() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "Testing repeating heic capture for Camera " + id);
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.HEIC, /*repeating*/true);
             } finally {
                 closeDevice(id);
             }

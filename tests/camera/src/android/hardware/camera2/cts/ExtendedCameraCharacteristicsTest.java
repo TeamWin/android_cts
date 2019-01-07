@@ -187,6 +187,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             boolean isMonochromeWithY8 = arrayContains(actualCapabilities, MONOCHROME)
                     && arrayContains(outputFormats, ImageFormat.Y8);
+            boolean supportHeic = arrayContains(outputFormats, ImageFormat.HEIC);
 
             assertArrayContains(
                     String.format("No valid YUV_420_888 preview formats found for: ID %s",
@@ -202,6 +203,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             Size[] yuvSizes = config.getOutputSizes(ImageFormat.YUV_420_888);
             Size[] y8Sizes = config.getOutputSizes(ImageFormat.Y8);
             Size[] jpegSizes = config.getOutputSizes(ImageFormat.JPEG);
+            Size[] heicSizes = config.getOutputSizes(ImageFormat.HEIC);
             Size[] privateSizes = config.getOutputSizes(ImageFormat.PRIVATE);
 
             CameraTestUtils.assertArrayNotEmpty(yuvSizes,
@@ -224,6 +226,12 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         "Required FULLHD size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes,
                         new Size[] {FULLHD, FULLHD_ALT});
+                if (supportHeic) {
+                    assertArrayContainsAnyOf(String.format(
+                            "Required FULLHD size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mIds[counter]), heicSizes,
+                            new Size[] {FULLHD, FULLHD_ALT});
+                }
             }
 
             if (activeArraySize.getWidth() >= HD.getWidth() &&
@@ -231,6 +239,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 assertArrayContains(String.format(
                         "Required HD size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes, HD);
+                if (supportHeic) {
+                    assertArrayContains(String.format(
+                            "Required HD size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mIds[counter]), heicSizes, HD);
+                }
             }
 
             if (activeArraySize.getWidth() >= VGA.getWidth() &&
@@ -238,6 +251,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 assertArrayContains(String.format(
                         "Required VGA size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes, VGA);
+                if (supportHeic) {
+                    assertArrayContains(String.format(
+                            "Required VGA size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mIds[counter]), heicSizes, VGA);
+                }
             }
 
             if (activeArraySize.getWidth() >= QVGA.getWidth() &&
@@ -245,6 +263,12 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 assertArrayContains(String.format(
                         "Required QVGA size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes, QVGA);
+                if (supportHeic) {
+                    assertArrayContains(String.format(
+                            "Required QVGA size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mIds[counter]), heicSizes, QVGA);
+                }
+
             }
 
             ArrayList<Size> jpegSizesList = new ArrayList<>(Arrays.asList(jpegSizes));

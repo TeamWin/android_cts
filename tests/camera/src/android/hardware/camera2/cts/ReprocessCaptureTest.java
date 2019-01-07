@@ -116,6 +116,24 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     }
 
     /**
+     * Test YUV_420_888 -> HEIC with maximal supported sizes
+     */
+    @Test
+    public void testBasicYuvToHeicReprocessing() throws Exception {
+        for (String id : mCameraIds) {
+            if (!isYuvReprocessSupported(id)) {
+                continue;
+            }
+            if (!mAllStaticInfo.get(id).isHeicSupported()) {
+                continue;
+            }
+
+            // YUV_420_888 -> HEIC must be supported.
+            testBasicReprocessing(id, ImageFormat.YUV_420_888, ImageFormat.HEIC);
+        }
+    }
+
+    /**
      * Test OPAQUE -> YUV_420_888 with maximal supported sizes
      */
     @Test
@@ -142,6 +160,24 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
 
             // OPAQUE -> JPEG must be supported.
             testBasicReprocessing(id, ImageFormat.PRIVATE, ImageFormat.JPEG);
+        }
+    }
+
+    /**
+     * Test OPAQUE -> HEIC with maximal supported sizes
+     */
+    @Test
+    public void testBasicOpaqueToHeicReprocessing() throws Exception {
+        for (String id : mCameraIds) {
+            if (!isOpaqueReprocessSupported(id)) {
+                continue;
+            }
+            if (!mAllStaticInfo.get(id).isHeicSupported()) {
+                continue;
+            }
+
+            // OPAQUE -> HEIC must be supported.
+            testBasicReprocessing(id, ImageFormat.PRIVATE, ImageFormat.HEIC);
         }
     }
 
@@ -978,7 +1014,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                 Image image = getReprocessOutputImageReaderListener().getImage(CAPTURE_TIMEOUT_MS);
                 verifyJpegKeys(image, reprocessResults[i], reprocessOutputSize,
                         testThumbnailSizes[i], EXIF_TEST_DATA[i], mStaticInfo, mCollector,
-                        mDebugFileNameBase);
+                        mDebugFileNameBase, ImageFormat.JPEG);
                 image.close();
 
             }
@@ -1390,6 +1426,9 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
         switch(image.getFormat()) {
             case ImageFormat.JPEG:
                 filename += ".jpg";
+                break;
+            case ImageFormat.HEIC:
+                filename += ".heic";
                 break;
             case ImageFormat.NV16:
             case ImageFormat.NV21:
