@@ -42,6 +42,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     CtsMockInputMethodLib \
     metrics-helper-lib
 
+LOCAL_ASSET_DIR := $(LOCAL_PATH)/intent_tests
+
 LOCAL_CTS_TEST_PACKAGE := android.server
 
 # Tag this module as a cts test artifact
