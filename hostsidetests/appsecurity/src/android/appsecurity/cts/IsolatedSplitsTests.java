@@ -17,6 +17,7 @@ package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
@@ -58,12 +59,12 @@ public class IsolatedSplitsTests extends DeviceTestCase implements IBuildReceive
 
     public void testInstallBase() throws Exception {
         new InstallMultiple().addApk(APK_BASE).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadDefault");
     }
 
     public void testInstallBaseAndConfigSplit() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_BASE_pl).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadPolishLocale");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadPolishLocale");
     }
 
     public void testInstallMissingDependency() throws Exception {
@@ -72,52 +73,52 @@ public class IsolatedSplitsTests extends DeviceTestCase implements IBuildReceive
 
     public void testInstallOneFeatureSplit() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureADefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureAReceivers");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureADefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureAReceivers");
     }
 
     public void testInstallOneFeatureSplitAndConfigSplits() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_BASE_pl)
                 .addApk(APK_FEATURE_A_pl).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadPolishLocale");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureAPolishLocale");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadPolishLocale");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureAPolishLocale");
     }
 
     public void testInstallDependentFeatureSplits() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureADefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureBDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureAAndBReceivers");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureADefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureBDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureAAndBReceivers");
     }
 
     public void testInstallDependentFeatureSplitsAndConfigSplits() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B)
                 .addApk(APK_BASE_pl).addApk(APK_FEATURE_A_pl).addApk(APK_FEATURE_B_pl).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadPolishLocale");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureAPolishLocale");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureBPolishLocale");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadPolishLocale");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureAPolishLocale");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureBPolishLocale");
     }
 
     public void testInstallAllFeatureSplits() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B)
                 .addApk(APK_FEATURE_C).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureADefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureBDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureCDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureAAndBAndCReceivers");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureADefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureBDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureCDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureAAndBAndCReceivers");
     }
 
     public void testInstallAllFeatureSplitsAndConfigSplits() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B)
                 .addApk(APK_FEATURE_C).addApk(APK_BASE_pl).addApk(APK_FEATURE_A_pl)
                 .addApk(APK_FEATURE_C_pl).run();
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureADefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureBDefault");
-        Utils.runDeviceTests(getDevice(), PKG, TEST_CLASS, "shouldLoadFeatureCDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureADefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureBDefault");
+        runDeviceTestsAsCurrentUser(PKG, TEST_CLASS, "shouldLoadFeatureCDefault");
     }
 
     @Override
@@ -129,5 +130,11 @@ public class IsolatedSplitsTests extends DeviceTestCase implements IBuildReceive
         public InstallMultiple() {
             super(getDevice(), mBuildInfo, null);
         }
+    }
+
+    private void runDeviceTestsAsCurrentUser(
+            String packageName, String testClassName, String testMethodName)
+                throws DeviceNotAvailableException {
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
     }
 }

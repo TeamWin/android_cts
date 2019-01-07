@@ -71,7 +71,7 @@ public class MajorVersionTest extends DeviceTestCase implements IAbiReceiver, IB
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000000000ffff), false, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         getDevice().uninstallPackage(PKG);
     }
 
@@ -79,7 +79,7 @@ public class MajorVersionTest extends DeviceTestCase implements IAbiReceiver, IB
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000ff00000000), false, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         getDevice().uninstallPackage(PKG);
     }
 
@@ -87,19 +87,19 @@ public class MajorVersionTest extends DeviceTestCase implements IAbiReceiver, IB
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000000000ffff), false, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_00000000ffffffff), true, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000ff00000000), true, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000ffffffffff), true, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         getDevice().uninstallPackage(PKG);
     }
 
@@ -107,29 +107,29 @@ public class MajorVersionTest extends DeviceTestCase implements IAbiReceiver, IB
         assertNull(getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000ffffffffff), false, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         assertEquals("INSTALL_FAILED_VERSION_DOWNGRADE", getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_00000000ffffffff), true, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         assertEquals("INSTALL_FAILED_VERSION_DOWNGRADE", getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000ff00000000), true, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         assertEquals("INSTALL_FAILED_VERSION_DOWNGRADE", getDevice().installPackage(
                 mBuildHelper.getTestFile(APK_000000000000ffff), true, false));
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
-        runVersionDeviceTests("testCheckVersion");
+        runDeviceTestsAsCurrentUser("testCheckVersion");
         getDevice().uninstallPackage(PKG);
     }
 
-    private void runVersionDeviceTests(String testMethodName)
+    private void runDeviceTestsAsCurrentUser(String testMethodName)
             throws DeviceNotAvailableException {
-        runDeviceTests(PKG, PKG + ".VersionTest", testMethodName);
+        runDeviceTestsAsCurrentUser(PKG, PKG + ".VersionTest", testMethodName);
     }
 
-    private void runDeviceTests(String packageName, String testClassName, String testMethodName)
+    private void runDeviceTestsAsCurrentUser(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
     }
 }

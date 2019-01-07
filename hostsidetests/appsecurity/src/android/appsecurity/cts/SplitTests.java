@@ -127,7 +127,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testSingleBase(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testSingleBase");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testSingleBase");
     }
 
     @AppModeInstant
@@ -143,7 +143,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testDensitySingle(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_mdpi)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testDensitySingle");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testDensitySingle");
     }
 
     @AppModeInstant
@@ -159,7 +159,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testDensityAll(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_mdpi).addApk(APK_hdpi).addApk(APK_xhdpi)
                 .addApk(APK_xxhdpi).addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testDensityAll");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testDensityAll");
     }
 
     /**
@@ -183,12 +183,12 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testDensityBest(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_mdpi)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testDensityBest1");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testDensityBest1");
 
         // Now splice in an additional split which offers better resources
         new InstallMultiple().inheritFrom(PKG).addApk(APK_xxhdpi)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testDensityBest2");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testDensityBest2");
     }
 
     /**
@@ -212,7 +212,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testApi(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_v7)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testApi");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testApi");
     }
 
     @AppModeInstant
@@ -228,7 +228,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testLocale(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_de).addApk(APK_fr)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testLocale");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testLocale");
     }
 
     /**
@@ -256,7 +256,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
 
         new InstallMultiple().addApk(APK).addApk(apk)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testNative");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testNative");
     }
 
     /**
@@ -288,7 +288,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
 
         new InstallMultiple().useNaturalAbi().addApk(APK).addApk(apk)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testNative");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testNative");
     }
 
     /**
@@ -343,7 +343,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
             inst.useNaturalAbi();
         }
         inst.run();
-        runDeviceTests(PKG, CLASS, "testNative");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testNative");
     }
 
     @AppModeInstant
@@ -451,7 +451,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testDiffRevision(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_DIFF_REVISION_v7)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testRevision0_12");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testRevision0_12");
     }
 
     @AppModeInstant
@@ -467,10 +467,10 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testDiffRevisionInheritBase(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_v7)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testRevision0_0");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testRevision0_0");
         new InstallMultiple().inheritFrom(PKG).addApk(APK_DIFF_REVISION_v7)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testRevision0_12");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testRevision0_12");
     }
 
     @AppModeInstant
@@ -486,10 +486,10 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testDiffRevisionInheritSplit(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_v7)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testRevision0_0");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testRevision0_0");
         new InstallMultiple().inheritFrom(PKG).addApk(APK_DIFF_REVISION)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testRevision12_0");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testRevision12_0");
     }
 
     @AppModeInstant
@@ -522,7 +522,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testFeatureBase(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_FEATURE)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testFeatureBase");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testFeatureBase");
     }
 
     @AppModeInstant
@@ -538,7 +538,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testFeatureApiInstant(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK).addApk(APK_FEATURE).addApk(APK_FEATURE_v7)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testFeatureApi");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testFeatureApi");
     }
 
     @AppModeFull
@@ -571,10 +571,10 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
 
         if (instant) {
             // Poke the full app so it can see the instant app.
-            runDeviceTests(PKG_NO_RESTART, CLASS_NO_RESTART, "testPokeFullApp");
+            runDeviceTestsAsCurrentUser(PKG_NO_RESTART, CLASS_NO_RESTART, "testPokeFullApp");
         }
 
-        runDeviceTests(PKG, CLASS, "testBaseInstalled");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testBaseInstalled");
 
         new InstallMultiple()
                 .addArg(instant ? "--instant" : "")
@@ -582,7 +582,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
                 .inheritFrom(PKG_NO_RESTART)
                 .addApk(APK_NO_RESTART_FEATURE)
                 .run();
-        runDeviceTests(PKG, CLASS, "testFeatureInstalled");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testFeatureInstalled");
     }
 
     /**
@@ -604,10 +604,10 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     private void testClearCodeCache(boolean instant) throws Exception {
         new InstallMultiple().addApk(APK)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testCodeCacheWrite");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testCodeCacheWrite");
         new InstallMultiple().addArg("-r").addApk(APK_DIFF_VERSION)
                 .addArg(instant ? "--instant" : "").run();
-        runDeviceTests(PKG, CLASS, "testCodeCacheRead");
+        runDeviceTestsAsCurrentUser(PKG, CLASS, "testCodeCacheRead");
     }
 
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
@@ -616,8 +616,9 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
         }
     }
 
-    public void runDeviceTests(String packageName, String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    public void runDeviceTestsAsCurrentUser(
+            String packageName, String testClassName, String testMethodName)
+                    throws DeviceNotAvailableException {
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
     }
 }

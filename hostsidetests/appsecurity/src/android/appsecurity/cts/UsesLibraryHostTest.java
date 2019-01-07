@@ -69,21 +69,22 @@ public class UsesLibraryHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testUsesLibrary() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        runDeviceTests(PKG, ".UsesLibraryTest", "testUsesLibrary");
+        runDeviceTestsAsCurrentUser(PKG, ".UsesLibraryTest", "testUsesLibrary");
     }
 
     public void testMissingLibrary() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        runDeviceTests(PKG, ".UsesLibraryTest", "testMissingLibrary");
+        runDeviceTestsAsCurrentUser(PKG, ".UsesLibraryTest", "testMissingLibrary");
     }
 
     public void testDuplicateLibrary() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        runDeviceTests(PKG, ".UsesLibraryTest", "testDuplicateLibrary");
+        runDeviceTestsAsCurrentUser(PKG, ".UsesLibraryTest", "testDuplicateLibrary");
     }
 
-    private void runDeviceTests(String packageName, String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    private void runDeviceTestsAsCurrentUser(
+            String packageName, String testClassName, String testMethodName)
+                    throws DeviceNotAvailableException {
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
     }
 }
