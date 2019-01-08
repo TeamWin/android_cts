@@ -18,6 +18,7 @@ package com.android.cts.verifier.wifiaware;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.wifi.aware.AttachCallback;
 import android.net.wifi.aware.DiscoverySessionCallback;
 import android.net.wifi.aware.IdentityChangedListener;
@@ -123,17 +124,18 @@ public class CallbackUtils {
      */
     public static class NetworkCb extends ConnectivityManager.NetworkCallback {
         private CountDownLatch mBlocker = new CountDownLatch(1);
-        private boolean mNetworkAvailable = false;
+        private NetworkCapabilities mNetworkCapabilities = null;
 
         @Override
-        public void onAvailable(Network network) {
-            mNetworkAvailable = true;
+        public void onUnavailable() {
+            mNetworkCapabilities = null;
             mBlocker.countDown();
         }
 
         @Override
-        public void onUnavailable() {
-            mNetworkAvailable = false;
+        public void onCapabilitiesChanged(Network network,
+                NetworkCapabilities networkCapabilities) {
+            mNetworkCapabilities = networkCapabilities;
             mBlocker.countDown();
         }
 
@@ -142,11 +144,11 @@ public class CallbackUtils {
          *
          * @return true if Available, false otherwise (Unavailable or timeout).
          */
-        public boolean waitForNetwork() throws InterruptedException {
+        public NetworkCapabilities waitForNetwork() throws InterruptedException {
             if (mBlocker.await(CALLBACK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
-                return mNetworkAvailable;
+                return mNetworkCapabilities;
             }
-            return false;
+            return null;
         }
     }
 

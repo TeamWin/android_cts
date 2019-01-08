@@ -1643,6 +1643,7 @@
     <string name="aware_status_network_requested">Network requested ...</string>
     <string name="aware_status_network_success">Network formed ...</string>
     <string name="aware_status_network_failed">Network request failure - timed out!</string>
+    <string name="aware_status_network_failed_leak">Failure: Network request success - but leaked information!</string>
     <string name="aware_status_sleeping_wait_for_responder">Pausing to let Responder time to set up ...</string>
     <string name="aware_status_ranging_peer_failure">Ranging to PeerHandle failure: %1$d failures of %2$d attempts!</string>
     <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d failures of %2$d attempts!</string>
@@ -3455,7 +3456,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_remove_user">Disallow remove user</string>
     <string name="device_owner_disallow_remove_user_info">
         Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
-        \'Set restriction\' button to set the user restriction. 
+        \'Set restriction\' button to set the user restriction.
         Then press \'Go\' to open \'Multiple users\' setting. \n\n
 
         Mark this test as passed if:\n\n
