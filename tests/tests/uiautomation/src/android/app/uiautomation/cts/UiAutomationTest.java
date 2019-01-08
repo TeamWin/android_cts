@@ -62,7 +62,6 @@ public class UiAutomationTest extends InstrumentationTestCase {
         grantWriteSecureSettingsPermission(uiAutomation);
     }
 
-    @Presubmit
     public void testWindowContentFrameStats() throws Exception {
         Activity activity = null;
         try {
