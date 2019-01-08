@@ -280,6 +280,30 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    public void testOffHostCardEmulationFeatures() {
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(mContext);
+        if (nfcAdapter != null) {
+            List<String> offHostSE = nfcAdapter.getSupportedOffHostSecureElements();
+            if (mPackageManager.hasSystemFeature(
+                    PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_UICC)) {
+                assertTrue(offHostSE.contains("SIM"));
+            } else {
+                assertFalse(offHostSE.contains("SIM"));
+            }
+
+            if (mPackageManager.hasSystemFeature(
+                    PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_ESE)) {
+                assertTrue(offHostSE.contains("eSE"));
+            } else {
+                assertFalse(offHostSE.contains("eSE"));
+            }
+        } else {
+            assertNotAvailable(PackageManager.FEATURE_NFC);
+            assertNotAvailable(PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_UICC);
+            assertNotAvailable(PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_ESE);
+        }
+    }
+
     public void testNfcFeatures() {
         if (NfcAdapter.getDefaultAdapter(mContext) != null) {
             // Watches MAY support all FEATURE_NFC features when an NfcAdapter is available, but
