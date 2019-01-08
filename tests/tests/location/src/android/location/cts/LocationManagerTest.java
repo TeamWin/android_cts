@@ -360,13 +360,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
         } catch (IllegalArgumentException e) {
             // expected
         }
-
-        try {
-            mManager.clearTestProviderLocation(UNKNOWN_PROVIDER_NAME);
-            fail("Should throw IllegalArgumentException if provider is unknown!");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
     }
 
     /**
@@ -943,13 +936,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
 
         try {
-            mManager.clearTestProviderEnabled(UNKNOWN_PROVIDER_NAME);
-            fail("Should throw IllegalArgumentException if provider is unknown!");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-
-        try {
             mManager.setTestProviderEnabled(UNKNOWN_PROVIDER_NAME, false);
             fail("Should throw IllegalArgumentException if provider is unknown!");
         } catch (IllegalArgumentException e) {
@@ -1045,17 +1031,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         mManager.registerGnssStatusCallback(callback, new Handler(handlerThread.getLooper()));
         mManager.unregisterGnssStatusCallback(callback);
-    }
-
-    @AppModeFull(reason = "Requires use of extra LocationManager commands")
-    public void testSendExtraCommand() {
-        // this test assumes TEST_MOCK_PROVIDER_NAME was created in setUp.
-        assertNotNull(mManager.getProvider(TEST_MOCK_PROVIDER_NAME));
-        // Unknown command
-        assertFalse(mManager.sendExtraCommand(TEST_MOCK_PROVIDER_NAME, "unknown", new Bundle()));
-
-        assertNull(mManager.getProvider(UNKNOWN_PROVIDER_NAME));
-        assertFalse(mManager.sendExtraCommand(UNKNOWN_PROVIDER_NAME, "unknown", new Bundle()));
     }
 
     /**
