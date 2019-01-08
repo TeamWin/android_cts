@@ -22,7 +22,9 @@ import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorDirectChannel;
 import android.hardware.SensorManager;
+import android.os.Build;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.CddTest;
 
 /**
@@ -64,8 +66,10 @@ public class SensorSupportTest extends SensorTestCase {
     }
 
     @CddTest(requirement="7.9.2/C-1-19,C-1-20")
-    public void testSupportsAccelerometerUncalibrated() {
-        checkSupportsSensor(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED);
+    public void testSupportsAccelerometerUncalibrated() { 
+        if (PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.O) {
+            checkSupportsSensor(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED);
+        }
     }
 
     @CddTest(requirement="7.9.2/C-1-19,C-1-20")
