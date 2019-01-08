@@ -915,6 +915,17 @@ public class LinkifyTest {
                 domain.length(), email);
     }
 
+    @Test
+    public void testAddLinks_unsupportedCharacters() {
+        String url = "moc.diordna.com";
+        verifyAddLinksWithWebUrlSucceeds(url + " should be linkified", url);
+
+        verifyAddLinksWithWebUrlFails("u202C character should not be linkified", "\u202C" + url);
+        verifyAddLinksWithWebUrlFails("u202D character should not be linkified", url + "\u202D");
+        verifyAddLinksWithWebUrlFails(
+                "u202E character should not be linkified", url + "moc\u202E.diordna.com");
+    }
+
     // Utility functions
     private static void verifyAddLinksWithWebUrlSucceeds(String msg, String url) {
         verifyAddLinksSucceeds(msg, url, Linkify.WEB_URLS);
