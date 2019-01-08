@@ -1035,9 +1035,9 @@ public class CameraTestUtils extends Assert {
 
         ByteBuffer buffer = null;
         // JPEG doesn't have pixelstride and rowstride, treat it as 1D buffer.
-        // Same goes for DEPTH_POINT_CLOUD
+        // Same goes for DEPTH_POINT_CLOUD and DEPTH_JPEG
         if (format == ImageFormat.JPEG || format == ImageFormat.DEPTH_POINT_CLOUD ||
-                format == ImageFormat.RAW_PRIVATE) {
+                format == ImageFormat.RAW_PRIVATE || format == ImageFormat.DEPTH_JPEG) {
             buffer = planes[0].getBuffer();
             assertNotNull("Fail to get jpeg or depth ByteBuffer", buffer);
             data = new byte[buffer.remaining()];
@@ -1120,6 +1120,7 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.RAW_PRIVATE:
             case ImageFormat.DEPTH16:
             case ImageFormat.DEPTH_POINT_CLOUD:
+            case ImageFormat.DEPTH_JPEG:
             case ImageFormat.Y8:
                 assertEquals("JPEG/RAW/depth/Y8 Images should have one plane", 1, planes.length);
                 break;
@@ -1525,6 +1526,9 @@ public class CameraTestUtils extends Assert {
         assertTrue("Invalid image data", data != null && data.length > 0);
 
         switch (format) {
+            // Clients must be able to process and handle depth jpeg images like any other
+            // regular jpeg.
+            case ImageFormat.DEPTH_JPEG:
             case ImageFormat.JPEG:
                 validateJpegData(data, width, height, filePath);
                 break;

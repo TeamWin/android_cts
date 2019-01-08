@@ -29,6 +29,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.util.Size;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
@@ -428,6 +429,14 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
                 reader = null;
             }
         }
+    }
+
+    protected boolean checkImageReaderSessionConfiguration() throws Exception {
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        outputConfigs.add(new OutputConfiguration(mReaderSurface));
+
+        return checkSessionConfiguration(mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
+                SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true);
     }
 
     protected CaptureRequest prepareCaptureRequest() throws Exception {
