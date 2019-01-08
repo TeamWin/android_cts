@@ -32,7 +32,6 @@ public class CtsAngleCommon {
     static final String PROPERTY_DISABLE_OPENGL_PRELOADING = "ro.zygote.disable_gl_preload";
     static final String PROPERTY_GFX_DRIVER = "ro.gfx.driver.0";
     static final String PROPERTY_TEMP_RULES_FILE = "debug.angle.rules";
-    static final String PROPERTY_ENABLE_RULES_FILE = "debug.angle.enable";
 
     // Rules File
     static final String DEVICE_TEMP_RULES_FILE_DIRECTORY = "/data/local/tmp";
@@ -86,7 +85,6 @@ public class CtsAngleCommon {
         device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
         device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
         CtsAngleCommon.setProperty(device, CtsAngleCommon.PROPERTY_TEMP_RULES_FILE, "\"\"");
-        CtsAngleCommon.setProperty(device, CtsAngleCommon.PROPERTY_ENABLE_RULES_FILE, "0");
     }
 
     static boolean isAngleLoadable(ITestDevice device) throws Exception {
