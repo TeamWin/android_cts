@@ -20,7 +20,6 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 
 import android.platform.test.annotations.RequiresDevice;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -75,7 +74,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
     private static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
 
-    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
+    protected static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
     private static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
@@ -83,13 +82,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DELEGATION_PERMISSION_GRANT = "delegation-permission-grant";
     private static final String DELEGATION_PACKAGE_ACCESS = "delegation-package-access";
     private static final String DELEGATION_ENABLE_SYSTEM_APP = "delegation-enable-system-app";
+    private static final String DELEGATION_CERT_SELECTION = "delegation-cert-selection";
 
-    private static final String TEST_APP_APK = "CtsSimpleApp.apk";
+    protected static final String TEST_APP_APK = "CtsSimpleApp.apk";
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
-    private static final String TEST_APP_LOCATION = "/data/local/tmp/";
+    protected static final String TEST_APP_LOCATION = "/data/local/tmp/";
 
-    private static final String PACKAGE_INSTALLER_PKG = "com.android.cts.packageinstaller";
-    private static final String PACKAGE_INSTALLER_APK = "CtsPackageInstallerApp.apk";
+    protected static final String PACKAGE_INSTALLER_PKG = "com.android.cts.packageinstaller";
+    protected static final String PACKAGE_INSTALLER_APK = "CtsPackageInstallerApp.apk";
 
     private static final String ACCOUNT_MANAGEMENT_PKG
             = "com.android.cts.devicepolicy.accountmanagement";
@@ -282,19 +282,65 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    /**
+     * Returns a list of delegation tests that are applicable to both device owner and profile
+     * owners. DO or PO specific tests should be added in the overridden method in subclass.
+     */
+    protected List<String> getDelegationTests() {
+        return new ArrayList<>(Arrays.asList(
+                ".AppRestrictionsDelegateTest",
+                ".CertInstallDelegateTest",
+                ".BlockUninstallDelegateTest",
+                ".PermissionGrantDelegateTest",
+                ".PackageAccessDelegateTest",
+                ".EnableSystemAppDelegateTest"));
+    }
+
+    /**
+     * Returns a list of delegation scopes that are applicable to both device owner and profile
+     * owners. DO or PO specific scopes should be added in the overridden method in subclass.
+     */
+    protected List<String> getDelegationScopes() {
+        return new ArrayList<>(Arrays.asList(
+                DELEGATION_APP_RESTRICTIONS,
+                DELEGATION_CERT_INSTALL,
+                DELEGATION_BLOCK_UNINSTALL,
+                DELEGATION_PERMISSION_GRANT,
+                DELEGATION_PACKAGE_ACCESS,
+                DELEGATION_ENABLE_SYSTEM_APP,
+                // CERT_SELECTION scope is in the list so it still participates GeneralDelegateTest.
+                // But its main functionality test is driven by testDelegationCertSelection() and
+                // hence missing from getDelegationTests() on purpose.
+                DELEGATION_CERT_SELECTION
+                ));
+    }
+
+    /**
+     * General instructions to add a new delegation test:
+     * 1. Test primary delegation functionalitiy
+     *    Implment the delegate's positive/negate functionaility tests in a new test class
+     *    in CtsDelegateApp.apk. Main entry point are {@code testCanAccessApis} and
+     *    {@code testCannotAccessApis}. Once implemented, add the delegation scope and the test
+     *    class name to {@link #getDelegationScopes}, {@link #getDelegationTests} to make the test
+     *    run on DO/PO/PO on primary user.  If the test should only run on a subset of these
+     *    combinations, add them to the subclass's {@link #getDelegationScopes} and
+     *    {@link #getDelegationTests} intead.
+     *    <p>Alternatively, create a separate hostside method to drive the test, similar to
+     *    {@link MixedDeviceOwnerTest#testDelegationPackageInstallation()} and
+     *    {@link #testDelegationCertSelection}. This is preferred if the delegated functionalities
+     *    already exist in another app.
+     * 2. Test access control of DO-only delegation
+     *    Add the delegation scope to
+     *    {@code DelegationTest#testDeviceOwnerOnlyDelegationsOnlyPossibleToBeSetByDeviceOwner} to
+     *    test that only DO can delegate this scope.
+     * 3. Test behaviour of exclusive delegation
+     *    Add the delegation scope to {@code DelegationTest#testExclusiveDelegations} to test that
+     *    the scope can only be delegatd to one app at a time.
+     */
     public void testDelegation() throws Exception {
         if (!mHasFeature) {
             return;
         }
-
-        final String delegationTests[] = {
-            ".AppRestrictionsDelegateTest",
-            ".CertInstallDelegateTest",
-            ".BlockUninstallDelegateTest",
-            ".PermissionGrantDelegateTest",
-            ".PackageAccessDelegateTest",
-            ".EnableSystemAppDelegateTest"
-        };
 
         // Set a device lockscreen password (precondition for installing private key pairs).
         changeUserCredential("1234", null, mPrimaryUserId);
@@ -305,18 +351,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
 
         try {
+            final List<String> delegationTests = getDelegationTests();
             // APIs are not accessible by default.
             executeDelegationTests(delegationTests, false /* negative result */);
 
             // Granting the appropriate delegation scopes makes APIs accessible.
-            setDelegatedScopes(DELEGATE_APP_PKG, Arrays.asList(
-                    DELEGATION_APP_RESTRICTIONS,
-                    DELEGATION_CERT_INSTALL,
-                    DELEGATION_BLOCK_UNINSTALL,
-                    DELEGATION_PERMISSION_GRANT,
-                    DELEGATION_PACKAGE_ACCESS,
-                    DELEGATION_ENABLE_SYSTEM_APP));
-            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest", mUserId);
+            final List<String> scopes = getDelegationScopes();
+            setDelegatedScopes(DELEGATE_APP_PKG, scopes);
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest", null, mUserId,
+                    ImmutableMap.of("scopes", String.join(",", scopes)));
             executeDelegationTests(delegationTests, true /* positive result */);
 
             // APIs are not accessible after revoking delegations.
@@ -331,6 +374,23 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             changeUserCredential(null, "1234", mPrimaryUserId);
             // Remove any remaining delegations.
             setDelegatedScopes(DELEGATE_APP_PKG, null);
+        }
+    }
+
+    public void testDelegationCertSelection() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        changeUserCredential("1234", null, mUserId);
+
+        try {
+            installAppAsUser(CERT_INSTALLER_APK, mUserId);
+            setDelegatedScopes(CERT_INSTALLER_PKG, Arrays.asList(
+                    DELEGATION_CERT_INSTALL, DELEGATION_CERT_SELECTION));
+            runDeviceTestsAsUser(CERT_INSTALLER_PKG, ".CertSelectionDelegateTest", mUserId);
+            // Uninstall of test packages happen in tearDown.
+        } finally {
+            changeUserCredential(null, "1234", mUserId);
         }
     }
 
@@ -866,8 +926,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final String PACKAGE_VERIFIER_ENABLE_SETTING = "package_verifier_enable";
         final String SECURE_SETTING_CATEGORY = "secure";
         final String GLOBAL_SETTING_CATEGORY = "global";
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        final File apk = buildHelper.getTestFile(TEST_APP_APK);
+        final File apk = mBuildHelper.getTestFile(TEST_APP_APK);
         String packageVerifierEnableSetting = null;
         String packageVerifierUserConsentSetting = null;
         try {
@@ -1677,7 +1736,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ".AppRestrictionsDelegateTest", testName, mUserId);
     }
 
-    private void executeDelegationTests(String[] delegationTests, boolean positive)
+    private void executeDelegationTests(List<String> delegationTests, boolean positive)
             throws Exception {
         for (String delegationTestClass : delegationTests) {
             runDeviceTestsAsUser(DELEGATE_APP_PKG, delegationTestClass,
@@ -1702,7 +1761,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         changePolicyOrFail("set-app-restrictions-manager", packageNameExtra, mUserId);
     }
 
-    private void setDelegatedScopes(String packageName, List<String> scopes)
+    protected void setDelegatedScopes(String packageName, List<String> scopes)
             throws DeviceNotAvailableException {
         final String packageNameExtra = "--es extra-package-name " + packageName;
         String scopesExtra = "";

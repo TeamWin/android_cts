@@ -116,7 +116,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected IBuildInfo mCtsBuild;
-
+    protected CompatibilityBuildHelper mBuildHelper;
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
 
@@ -154,6 +154,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mFixedPackages = getDevice().getInstalledPackageNames();
+        mBuildHelper = new CompatibilityBuildHelper(mCtsBuild);
 
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(

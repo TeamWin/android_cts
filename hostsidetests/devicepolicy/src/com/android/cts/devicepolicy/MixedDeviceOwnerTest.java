@@ -16,11 +16,18 @@
 
 package com.android.cts.devicepolicy;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Set of tests for device owner use cases that also apply to profile owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
 public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
+
+    private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
+    private static final String DELEGATION_PACKAGE_INSTALLATION = "delegation-package-installation";
 
     @Override
     protected void setUp() throws Exception {
@@ -58,5 +65,36 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 runDeviceTestsAsUser("com.android.cts.certinstaller",
                         ".DelegatedDeviceIdAttestationTest",
                         "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId));
+    }
+
+    protected List<String> getDelegationTests() {
+        List<String> result = super.getDelegationTests();
+        result.add(".NetworkLoggingDelegateTest");
+        return result;
+    }
+
+    protected List<String> getDelegationScopes() {
+        List<String> result = super.getDelegationScopes();
+        result.add(DELEGATION_NETWORK_LOGGING);
+        // PackageInstallation delegation is missing from this since it's explicitly tested below.
+        return result;
+    }
+
+    public void testDelegationPackageInstallation() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        final File apk = mBuildHelper.getTestFile(TEST_APP_APK);
+        try {
+            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
+
+            installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
+            setDelegatedScopes(PACKAGE_INSTALLER_PKG, Arrays.asList(DELEGATION_PACKAGE_INSTALLATION));
+            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".SilentPackageInstallTest", mUserId);
+            // Uninstall of test packages happen in tearDown.
+        } finally {
+            String command = "rm " + TEST_APP_LOCATION + apk.getName();
+            getDevice().executeShellCommand(command);
+        }
     }
 }

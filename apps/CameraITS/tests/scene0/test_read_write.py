@@ -42,6 +42,7 @@ def main():
         print 'sensor s range:', sens_range
 
         # determine if exposure test range is within sensor reported range
+        assert sensor_exp_range[0] != 0
         exp_range = []
         if sensor_exp_range[0] < TEST_EXP_RANGE[0]:
             exp_range.append(TEST_EXP_RANGE[0])

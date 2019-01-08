@@ -37,6 +37,7 @@ def main():
         sens_step = (sens_range[1] - sens_range[0]) / NUM_STEPS
         sens_list = range(sens_range[0], sens_range[1], sens_step)
         e = min(props['android.sensor.info.exposureTimeRange'])
+        assert e != 0
         reqs = [its.objects.manual_capture_request(s, e) for s in sens_list]
         _, fmt = its.objects.get_fastest_manual_capture_settings(props)
 

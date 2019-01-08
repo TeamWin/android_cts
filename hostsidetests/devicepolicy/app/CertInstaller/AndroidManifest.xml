@@ -31,6 +31,17 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+        <activity
+            android:name="android.app.Activity"
+            android:exported="true">
+        </activity>
+        <receiver
+            android:name=".CertSelectionDelegateTest$CertSelectionReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <intent-filter>
+                <action android:name="android.app.action.CHOOSE_PRIVATE_KEY_ALIAS"/>
+            </intent-filter>
+        </receiver>
     </application>
 
     <instrumentation
