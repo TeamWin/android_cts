@@ -20,6 +20,7 @@ import static android.contentcaptureservice.cts.Helper.await;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.ComponentName;
 import android.service.contentcapture.ContentCaptureEventsRequest;
 import android.service.contentcapture.ContentCaptureService;
 import android.util.ArrayMap;
@@ -49,6 +50,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     public static final String SERVICE_NAME = MY_PACKAGE + "/."
             + CtsContentCaptureService.class.getSimpleName();
+    public static final ComponentName CONTENT_CAPTURE_SERVICE_COMPONENT_NAME =
+            new ComponentName(MY_PACKAGE, CtsContentCaptureService.class.getName());
 
     private static ServiceWatcher sServiceWatcher;
 
