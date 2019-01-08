@@ -53,13 +53,15 @@
         <activity
             android:name="android.server.am.AspectRatioTests$MinAspectRatioActivity"
             android:label="MinAspectRatioActivity"
-            android:minAspectRatio="5.0"
+            android:minWidth="1dp"
+            android:minAspectRatio="3.0"
             android:resizeableActivity="false" />
 
         <activity
             android:name="android.server.am.AspectRatioTests$MinAspectRatioResizeableActivity"
             android:label="MinAspectRatioResizeableActivity"
-            android:minAspectRatio="5.0"
+            android:minWidth="1dp"
+            android:minAspectRatio="3.0"
             android:resizeableActivity="true" />
 
         <activity
