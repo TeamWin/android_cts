@@ -77,6 +77,52 @@ public final class ShellCommandUtils {
     }
 
     /**
+     * Command to uninstall {@code packageName} only for {@code userId}.
+     *
+     * @param packageName package name of the package to be uninstalled.
+     * @param userId user ID to specify the user.
+     */
+    public static String uninstallPackage(String packageName, int userId) {
+        return "pm uninstall --user " + userId + " " + packageName;
+    }
+
+    /**
+     * Command to get the last user ID that is specified to
+     * InputMethodManagerService.Lifecycle#onSwitchUser().
+     *
+     * @return the command to be passed to shell command.
+     */
+    public static String getLastSwitchUserId() {
+        return "cmd input_method get-last-switch-user-id";
+    }
+
+    /**
+     * Command to create a new profile user.
+     *
+     * @param parentUserId parent user to whom the new profile user should belong
+     * @param userName name of the new profile user.
+     * @return the command to be passed to shell command.
+     */
+    public static String createManagedProfileUser(int parentUserId, String userName) {
+        return "pm create-user --profileOf " + parentUserId + " --managed " + userName;
+    }
+
+    /** Command to turn on the display (if it's sleeping). */
+    public static String wakeUp() {
+        return "input keyevent KEYCODE_WAKEUP";
+    }
+
+    /** Command to dismiss Keyguard (if it's shown) */
+    public static String dismissKeyguard() {
+        return "wm dismiss-keyguard";
+    }
+
+    /** Command to close system dialogs (if shown) */
+    public static String closeSystemDialog() {
+        return "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS";
+    }
+
+    /**
      * Command to send broadcast {@code Intent}.
      *
      * @param action action of intent.
