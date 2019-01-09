@@ -16,6 +16,7 @@
 <configuration description="Config for CTS Carrier APIs test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="telecom" />
+    <option name="config-descriptor:metadata" key="token" value="UICC_SIM_CARD" />
     <option name="not-shardable" value="true" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.TokenRequirement">
         <option name="token" value="sim-card-with-certs" />
