@@ -4106,21 +4106,15 @@ public class TextViewTest {
     }
 
     @UiThreadTest
-    @Test(expected = NullPointerException.class)
-    public void testCursorDrawable_cannotBeSetToNull() {
+    @Test
+    public void testCursorDrawable_canBeSetToNull() {
         new TextView(mActivity).setTextCursorDrawable(null);
     }
 
     @UiThreadTest
-    @Test(expected = IllegalArgumentException.class)
-    public void testCursorDrawable_cannotBeSetToZeroResId() {
+    @Test
+    public void testCursorDrawable_canBeSetToZeroResId() {
         new TextView(mActivity).setTextCursorDrawable(0);
-    }
-
-    @UiThreadTest
-    @Test(expected = IllegalArgumentException.class)
-    public void testCursorDrawable_cannotBeSetToNegativeResId() {
-        new TextView(mActivity).setTextCursorDrawable(-1);
     }
 
     @UiThreadTest
@@ -4180,12 +4174,6 @@ public class TextViewTest {
     }
 
     @UiThreadTest
-    @Test(expected = IllegalArgumentException.class)
-    public void testSelectHandleDrawable_cannotBeSetToNegativeResId() {
-        new TextView(mActivity).setTextSelectHandle(-1);
-    }
-
-    @UiThreadTest
     @Test(expected = NullPointerException.class)
     public void testSelectHandleDrawableLeft_cannotBeSetToNull() {
         new TextView(mActivity).setTextSelectHandleLeft(null);
@@ -4198,12 +4186,6 @@ public class TextViewTest {
     }
 
     @UiThreadTest
-    @Test(expected = IllegalArgumentException.class)
-    public void testSelectHandleDrawableLeft_cannotBeSetToNegativeResId() {
-        new TextView(mActivity).setTextSelectHandle(-1);
-    }
-
-    @UiThreadTest
     @Test(expected = NullPointerException.class)
     public void testSelectHandleDrawableRight_cannotBeSetToNull() {
         new TextView(mActivity).setTextSelectHandleRight(null);
@@ -4213,12 +4195,6 @@ public class TextViewTest {
     @Test(expected = IllegalArgumentException.class)
     public void testSelectHandleDrawableRight_cannotBeSetToZeroResId() {
         new TextView(mActivity).setTextSelectHandleRight(0);
-    }
-
-    @UiThreadTest
-    @Test(expected = IllegalArgumentException.class)
-    public void testSelectHandleDrawableRight_cannotBeSetToNegativeResId() {
-        new TextView(mActivity).setTextSelectHandleRight(-1);
     }
 
     @Test
