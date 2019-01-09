@@ -24,9 +24,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := testmpeg2dec
 LOCAL_SRC_FILES := ../../../../../external/libmpeg2/test/decoder/main.c
-LOCAL_MULTILIB := both
+LOCAL_MULTILIB := 32
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 LOCAL_C_INCLUDES := external/libmpeg2/common
 LOCAL_C_INCLUDES += external/libmpeg2/decoder
 LOCAL_SHARED_LIBRARIES := liblog
