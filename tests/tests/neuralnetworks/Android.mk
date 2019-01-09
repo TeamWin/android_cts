@@ -69,3 +69,5 @@ LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_CTS_EXECUTABLE)
+
+include $(nnapi_cts_dir)/benchmark/Android.mk
