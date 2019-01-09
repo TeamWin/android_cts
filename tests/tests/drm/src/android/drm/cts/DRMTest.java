@@ -131,6 +131,10 @@ public class DRMTest extends AndroidTestCase {
         }
     }
 
+    public void testSupportsHttps() throws Exception {
+        mDrmManagerClient.getConstraints("https://www.foo.com", DrmStore.Action.DEFAULT);
+    }
+
     public void testCanHandle() throws Exception {
         for (Config config : mConfigs) {
             assertTrue("Failed on plugin: " + config.getPluginName(),
