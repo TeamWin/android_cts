@@ -19,17 +19,15 @@ package android.server.am;
 import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_CANCELLED;
 import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_ERROR;
 import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_SUCCEEDED;
-import static android.server.am.Components.KeyguardDismissLoggerCallback.KEYGUARD_DISMISS_LOG_TAG;
-import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 
 import static org.junit.Assert.fail;
 
 import android.app.KeyguardManager;
+import android.content.ComponentName;
 import android.os.SystemClock;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class KeyguardTestBase extends ActivityManagerTestBase {
 
@@ -41,29 +39,23 @@ class KeyguardTestBase extends ActivityManagerTestBase {
         mKeyguardManager = mContext.getSystemService(KeyguardManager.class);
     }
 
-    void assertOnDismissSucceededInLogcat(LogSeparator logSeparator) {
-        assertInLogcat(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_SUCCEEDED, logSeparator);
+    static void assertOnDismissSucceeded(ComponentName testingComponentName) {
+        assertDismissCallback(testingComponentName, ENTRY_ON_DISMISS_SUCCEEDED);
     }
 
-    void assertOnDismissCancelledInLogcat(LogSeparator logSeparator) {
-        assertInLogcat(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_CANCELLED, logSeparator);
+    static void assertOnDismissCancelled(ComponentName testingComponentName) {
+        assertDismissCallback(testingComponentName, ENTRY_ON_DISMISS_CANCELLED);
     }
 
-    void assertOnDismissErrorInLogcat(LogSeparator logSeparator) {
-        assertInLogcat(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_ERROR, logSeparator);
+    static void assertOnDismissError(ComponentName testingComponentName) {
+        assertDismissCallback(testingComponentName, ENTRY_ON_DISMISS_ERROR);
     }
 
-    private void assertInLogcat(String logTag, String entry, LogSeparator logSeparator) {
-        final Pattern pattern = Pattern.compile("(.+)" + entry);
+    private static void assertDismissCallback(ComponentName testingComponentName, String entry) {
         for (int retry = 1; retry <= 5; retry++) {
-            final String[] lines = getDeviceLogsForComponents(logSeparator, logTag);
-            for (int i = lines.length - 1; i >= 0; i--) {
-                final String line = lines[i].trim();
-                log(line);
-                Matcher matcher = pattern.matcher(line);
-                if (matcher.matches()) {
-                    return;
-                }
+            if (TestJournalContainer.get(testingComponentName).extras
+                    .getBoolean(entry)) {
+                return;
             }
             logAlways("Waiting for " + entry + "... retry=" + retry);
             SystemClock.sleep(500);

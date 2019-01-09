@@ -23,20 +23,24 @@ import static android.server.am.Components.KeyguardDismissLoggerCallback.KEYGUAR
 
 import android.app.KeyguardManager;
 import android.app.KeyguardManager.KeyguardDismissCallback;
+import android.content.ComponentName;
 import android.content.Context;
 import android.util.Log;
 
 class KeyguardDismissLoggerCallback extends KeyguardDismissCallback {
 
     private final Context mContext;
+    private final ComponentName mOwnerName;
 
-    KeyguardDismissLoggerCallback(Context context) {
+    KeyguardDismissLoggerCallback(Context context, ComponentName name) {
         mContext = context;
+        mOwnerName = name;
     }
 
     @Override
     public void onDismissError() {
         Log.i(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_ERROR);
+        putCallbackResult(ENTRY_ON_DISMISS_ERROR);
     }
 
     @Override
@@ -48,11 +52,18 @@ class KeyguardDismissLoggerCallback extends KeyguardDismissCallback {
                     "dismiss succeeded was called but device is still locked.");
         } else {
             Log.i(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_SUCCEEDED);
+            putCallbackResult(ENTRY_ON_DISMISS_SUCCEEDED);
         }
     }
 
     @Override
     public void onDismissCancelled() {
         Log.i(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_CANCELLED);
+        putCallbackResult(ENTRY_ON_DISMISS_CANCELLED);
+    }
+
+    private void putCallbackResult(String callbackName) {
+        TestJournalProvider.putExtras(mContext, mOwnerName,
+                extras -> extras.putBoolean(callbackName, true));
     }
 }

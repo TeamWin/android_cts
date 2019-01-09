@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
+
 import android.app.KeyguardManager;
 import android.os.Bundle;
 
@@ -24,7 +26,8 @@ public class TurnScreenOnAttrDismissKeyguardActivity extends AbstractLifecycleLo
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        ((KeyguardManager) getSystemService(KEYGUARD_SERVICE))
-                .requestDismissKeyguard(this, new KeyguardDismissLoggerCallback(this));
+        getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
+                new KeyguardDismissLoggerCallback(this,
+                        TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY));
     }
 }

@@ -16,8 +16,9 @@
 
 package android.server.am;
 
-import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
+import static android.server.am.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
+import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -57,9 +58,10 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        final Configuration config = getResources().getConfiguration();
-        dumpDisplaySize(config);
-        dumpConfiguration(config);
+        final Configuration configuration = getResources().getConfiguration();
+        dumpConfiguration(configuration);
+        dumpAssetSeqNumber(configuration);
+        dumpConfigInfo();
     }
 
     @Override
@@ -71,7 +73,16 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        dumpDisplaySize(newConfig);
         dumpConfiguration(newConfig);
+        dumpAssetSeqNumber(newConfig);
+        dumpConfigInfo();
+    }
+
+    private void dumpAssetSeqNumber(Configuration newConfig) {
+        withTestJournalClient(client -> {
+            final Bundle extras = new Bundle();
+            extras.putInt(EXTRA_CONFIG_ASSETS_SEQ, newConfig.assetsSeq);
+            client.putExtras(extras);
+        });
     }
 }

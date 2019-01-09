@@ -54,6 +54,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.server.am.CommandSession.ActivityCallback;
 import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
@@ -150,11 +151,11 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
-        final LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
-                TEST_ACTIVITY, logSeparator);
-        assertEquals(1, lifecycleCounts.mMultiWindowModeChangedCount);
+                TEST_ACTIVITY);
+        assertEquals(1, lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
     }
 
     @Test
@@ -164,25 +165,26 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         // Move to docked stack.
-        LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         setActivityTaskWindowingMode(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
-                TEST_ACTIVITY, logSeparator);
+        ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(TEST_ACTIVITY);
         assertEquals("mMultiWindowModeChangedCount",
-                1, lifecycleCounts.mMultiWindowModeChangedCount);
-        assertEquals("mUserLeaveHintCount", 0, lifecycleCounts.mUserLeaveHintCount);
+                1, lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        assertEquals("mUserLeaveHintCount",
+                0, lifecycleCounts.getCount(ActivityCallback.ON_USER_LEAVE_HINT));
 
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Move activity back to fullscreen stack.
-        logSeparator = separateLogs();
+        separateTestJournal();
         setActivityTaskWindowingMode(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        lifecycleCounts = waitForOnMultiWindowModeChanged(TEST_ACTIVITY, logSeparator);
+        lifecycleCounts = waitForOnMultiWindowModeChanged(TEST_ACTIVITY);
         assertEquals("mMultiWindowModeChangedCount",
-                1, lifecycleCounts.mMultiWindowModeChangedCount);
-        assertEquals("mUserLeaveHintCount", 0, lifecycleCounts.mUserLeaveHintCount);
+                1, lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        assertEquals("mUserLeaveHintCount",
+                0, lifecycleCounts.getCount(ActivityCallback.ON_USER_LEAVE_HINT));
     }
 
     @Test
@@ -582,7 +584,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         final Rect initialDockBounds = mAmWmState.getWmState().getStandardStackByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) .getBounds();
 
-        final LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
 
         Rect newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
         resizeDockedStack(
@@ -595,8 +597,8 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         resizeDockedStack(
                 newBounds.width(), newBounds.height(), newBounds.width(), newBounds.height());
         mAmWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
-        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
-        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */, logSeparator);
+        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
+        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */);
     }
 
     private Rect computeNewDockBounds(

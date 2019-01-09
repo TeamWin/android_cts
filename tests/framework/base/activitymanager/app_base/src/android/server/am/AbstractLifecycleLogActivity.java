@@ -16,14 +16,13 @@
 
 package android.server.am;
 
+import static android.server.am.Components.TestActivity.EXTRA_CONFIGURATION;
+
 import android.content.res.Configuration;
-import android.graphics.Point;
 import android.os.Bundle;
 import android.server.am.CommandSession.BasicTestActivity;
-import android.util.DisplayMetrics;
+import android.server.am.CommandSession.ConfigInfo;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 public abstract class AbstractLifecycleLogActivity extends BasicTestActivity {
 
@@ -94,28 +93,21 @@ public abstract class AbstractLifecycleLogActivity extends BasicTestActivity {
 
     protected void dumpConfiguration(Configuration config) {
         Log.i(getTag(), "Configuration: " + config);
+        withTestJournalClient(client -> {
+            final Bundle extras = new Bundle();
+            extras.putParcelable(EXTRA_CONFIGURATION, config);
+            client.putExtras(extras);
+        });
     }
 
-    protected void dumpDisplaySize(Configuration config) {
-        // Dump the display size as seen by this Activity.
-        final WindowManager wm = getSystemService(WindowManager.class);
-        final Display display = wm.getDefaultDisplay();
-        final Point point = new Point();
-        display.getSize(point);
-        final DisplayMetrics metrics = getResources().getDisplayMetrics();
-
-        final String line = "config"
-                + " size=" + buildCoordString(config.screenWidthDp, config.screenHeightDp)
-                + " displaySize=" + buildCoordString(point.x, point.y)
-                + " metricsSize=" + buildCoordString(metrics.widthPixels, metrics.heightPixels)
-                + " smallestScreenWidth=" + config.smallestScreenWidthDp
-                + " densityDpi=" + config.densityDpi
-                + " orientation=" + config.orientation;
-
-        Log.i(getTag(), line);
-    }
-
-    protected static String buildCoordString(int x, int y) {
-        return "(" + x + "," + y + ")";
+    protected void dumpConfigInfo() {
+        // Here dumps when idle because the {@link ConfigInfo} includes some information (display
+        // related) got from the attached decor view (after resume). Also if there are several
+        // incoming lifecycle callbacks in a short time, it prefers to dump in a stable state.
+        runWhenIdle(() -> withTestJournalClient(client -> {
+            final ConfigInfo configInfo = getConfigInfo();
+            Log.i(getTag(), configInfo.toString());
+            client.setLastConfigInfo(configInfo);
+        }));
     }
 }

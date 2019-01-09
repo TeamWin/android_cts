@@ -100,8 +100,10 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.ActivityManagerState.ActivityStack;
+import android.server.am.CommandSession.ActivityCallback;
 import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.SizeInfo;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowState;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
@@ -127,8 +129,6 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Build/Install/Run:
@@ -257,18 +257,16 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             // Launch activity on new secondary display.
-            final LogSeparator logSeparator = separateLogs();
-            SystemUtil.runWithShellPermissionIdentity(
-                    () -> getLaunchActivityBuilder().setUseInstrumentation()
-                            .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
-                            .setMultipleTask(true).setActivityType(activityType)
-                            .setDisplayId(newDisplay.mId).execute());
+            separateTestJournal();
+            getLaunchActivityBuilder().setUseInstrumentation().setWithShellPermission(true)
+                    .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                    .setMultipleTask(true).setActivityType(activityType)
+                    .setDisplayId(newDisplay.mId).execute();
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on secondary display must be focused and on top");
 
             // Check that activity config corresponds to display config.
-            final ReportedSizes reportedSizes = getLastReportedSizesForActivity(TEST_ACTIVITY,
-                    logSeparator);
+            final SizeInfo reportedSizes = getLastReportedSizesForActivity(TEST_ACTIVITY);
             assertEquals("Activity launched on secondary display must have proper configuration",
                     CUSTOM_DENSITY_DPI, reportedSizes.densityDpi);
 
@@ -462,7 +460,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Create new virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
 
             // Try to launch an activity and check it security exception was triggered.
             getLaunchActivityBuilder()
@@ -472,7 +470,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .setTargetActivity(TEST_ACTIVITY)
                     .execute();
 
-            assertSecurityException("ActivityLauncher", logSeparator);
+            assertSecurityExceptionFromActivityLauncher();
 
             mAmWmState.computeState(TEST_ACTIVITY);
             assertFalse("Restricted activity must not be launched",
@@ -656,7 +654,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
                     "Activity launched on secondary display must be resumed");
 
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
 
             // Launch second activity from app on secondary display specifying same display id.
             getLaunchActivityBuilder()
@@ -664,7 +662,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .setDisplayId(newDisplay.mId)
                     .execute();
 
-            assertSecurityException("ActivityLauncher", logSeparator);
+            assertSecurityExceptionFromActivityLauncher();
         }
     }
 
@@ -866,14 +864,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .createDisplay();
 
             // Check the embedding call
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             mContext.sendBroadcast(new Intent(ACTION_TEST_ACTIVITY_START)
                     .setPackage(LAUNCH_BROADCAST_RECEIVER.getPackageName())
                     .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                     .putExtra(EXTRA_COMPONENT_NAME, TEST_ACTIVITY)
                     .putExtra(EXTRA_TARGET_DISPLAY, newDisplay.mId));
 
-            assertActivityStartCheckResult(logSeparator, true);
+            assertActivityStartCheckResult(true);
         }
     }
 
@@ -893,13 +891,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
 
             // Check the embedding call
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
                     .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                     .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_ACTIVITY)
                     .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
 
-            assertActivityStartCheckResult(logSeparator, true);
+            assertActivityStartCheckResult(true);
         }
     }
 
@@ -919,39 +917,31 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
 
             // Check the embedding call
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
                     .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                     .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_NO_EMBEDDING_ACTIVITY)
                     .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
 
-            assertActivityStartCheckResult(logSeparator, false);
+            assertActivityStartCheckResult(false);
         }
     }
 
-    private void assertActivityStartCheckResult(LogSeparator logSeparator,
-            boolean value) throws Exception {
+    private void assertActivityStartCheckResult(boolean expected) {
         final String component = ActivityLauncher.TAG;
-        final Pattern pattern =
-                Pattern.compile("(.+): isActivityStartAllowedOnDisplay=(true|false)");
         for (int retry = 1; retry <= 5; retry++) {
-            String[] logs = getDeviceLogsForComponents(logSeparator, component);
-            for (String line : logs) {
-                Matcher m = pattern.matcher(line);
-                if (m.matches()) {
-                    boolean result = Boolean.parseBoolean(m.group(2));
-                    assertEquals("Activity start check must match", value, result);
-                    return;
-                }
+            final Bundle extras = TestJournalContainer.get(component).extras;
+            if (extras.containsKey(ActivityLauncher.KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY)) {
+                assertEquals("Activity start check must match", expected, extras
+                        .getBoolean(ActivityLauncher.KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY));
+                return;
             }
+
             logAlways("***Waiting for activity start check for " + component
                     + " ... retry=" + retry);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-            }
+            SystemClock.sleep(500);
         }
-        fail("Expected activity start check for " + component + " not found");
+        fail("Expected activity start check from " + component + " not found");
     }
 
     /**
@@ -1088,7 +1078,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     private void tryCreatingAndRemovingDisplayWithActivity(boolean splitScreen, int windowingMode)
             throws Exception {
-        LogSeparator logSeparator;
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession
@@ -1107,12 +1096,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
             mAmWmState.assertFocusedStack("Top stack must be on secondary display", frontStackId);
 
+            separateTestJournal();
             // Destroy virtual display.
-            logSeparator = separateLogs();
         }
 
         mAmWmState.computeState(true);
-        assertActivityLifecycle(RESIZEABLE_ACTIVITY, false /* relaunched */, logSeparator);
+        assertActivityLifecycle(RESIZEABLE_ACTIVITY, false /* relaunched */);
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(RESIZEABLE_ACTIVITY)
                 .setWindowingMode(windowingMode)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
@@ -1431,7 +1420,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Top activity must be the newly launched one");
 
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
 
             // Launch other activity with different uid and check security exception is triggered.
             getLaunchActivityBuilder()
@@ -1441,7 +1430,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .setTargetActivity(THIRD_ACTIVITY)
                     .execute();
 
-            assertSecurityException("ActivityLauncher", logSeparator);
+            assertSecurityExceptionFromActivityLauncher();
 
             mAmWmState.waitForValidState(TEST_ACTIVITY);
             mAmWmState.assertFocusedActivity("Top activity must be the first one launched",
@@ -1449,24 +1438,17 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-    private void assertSecurityException(String component, LogSeparator logSeparator)
-            throws Exception {
-        final Pattern pattern = Pattern.compile(".*SecurityException launching activity.*");
+    private void assertSecurityExceptionFromActivityLauncher() {
+        final String component = ActivityLauncher.TAG;
         for (int retry = 1; retry <= 5; retry++) {
-            String[] logs = getDeviceLogsForComponents(logSeparator, component);
-            for (String line : logs) {
-                Matcher m = pattern.matcher(line);
-                if (m.matches()) {
-                    return;
-                }
+            if (ActivityLauncher.hasCaughtSecurityException()) {
+                return;
             }
-            logAlways("***Waiting for SecurityException for " + component + " ... retry=" + retry);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-            }
+
+            logAlways("***Waiting for SecurityException from " + component + " ... retry=" + retry);
+            SystemClock.sleep(500);
         }
-        fail("Expected exception for " + component + " not found");
+        fail("Expected exception from " + component + " not found");
     }
 
     /**
@@ -1493,7 +1475,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {
-        LogSeparator logSeparator;
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new private virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
@@ -1508,8 +1489,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Launched activity must be on top");
 
+            separateTestJournal();
             // Destroy the display and check if activities are removed from system.
-            logSeparator = separateLogs();
         }
 
         mAmWmState.waitForWithAmState(
@@ -1532,8 +1513,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         assertFalse("Activity windows from removed display must be destroyed",
                 mAmWmState.getWmState().containsWindow(getWindowName(RESIZEABLE_ACTIVITY)));
         // Check activity logs.
-        assertActivityDestroyed(TEST_ACTIVITY, logSeparator);
-        assertActivityDestroyed(RESIZEABLE_ACTIVITY, logSeparator);
+        assertActivityDestroyed(TEST_ACTIVITY);
+        assertActivityDestroyed(RESIZEABLE_ACTIVITY);
     }
 
     /**
@@ -1547,10 +1528,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch activities on new secondary display.
-            SystemUtil.runWithShellPermissionIdentity(
-                    () -> getLaunchActivityBuilder().setUseInstrumentation()
-                            .setTargetActivity(LAUNCH_TEST_ON_DESTROY_ACTIVITY).setNewTask(true)
-                            .setMultipleTask(true).setDisplayId(newDisplay.mId).execute());
+            getLaunchActivityBuilder().setUseInstrumentation().setWithShellPermission(true)
+                    .setTargetActivity(LAUNCH_TEST_ON_DESTROY_ACTIVITY).setNewTask(true)
+                    .setMultipleTask(true).setDisplayId(newDisplay.mId).execute();
 
             waitAndAssertTopResumedActivity(LAUNCH_TEST_ON_DESTROY_ACTIVITY, newDisplay.mId,
                     "Launched activity must be on top");
@@ -1574,22 +1554,21 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch a resizeable activity on new secondary display.
-            final LogSeparator initialLogSeparator = separateLogs();
+            separateTestJournal();
             launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Launched activity must be on top");
 
             // Grab reported sizes and compute new with slight size change.
-            final ReportedSizes initialSize = getLastReportedSizesForActivity(
-                    RESIZEABLE_ACTIVITY, initialLogSeparator);
+            final SizeInfo initialSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
             // Resize the display
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             virtualDisplaySession.resizeDisplay();
 
             mAmWmState.waitForWithAmState(amState -> {
                 try {
-                    return readConfigChangeNumber(RESIZEABLE_ACTIVITY, logSeparator) == 1
+                    return readConfigChangeNumber(RESIZEABLE_ACTIVITY) == 1
                             && amState.hasActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
                 } catch (Exception e) {
                     logE("Error waiting for valid state: " + e.getMessage());
@@ -1605,10 +1584,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Check if activity in virtual display was resized properly.
             assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
-                    1 /* numConfigChange */, logSeparator);
+                    1 /* numConfigChange */);
 
-            final ReportedSizes updatedSize = getLastReportedSizesForActivity(
-                    RESIZEABLE_ACTIVITY, logSeparator);
+            final SizeInfo updatedSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
             assertTrue(updatedSize.widthDp <= initialSize.widthDp);
             assertTrue(updatedSize.heightDp <= initialSize.heightDp);
             assertTrue(updatedSize.displayWidth == initialSize.displayWidth / 2);
@@ -1617,9 +1595,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /** Read the number of configuration changes sent to activity from logs. */
-    private int readConfigChangeNumber(ComponentName activityName, LogSeparator logSeparator)
+    private int readConfigChangeNumber(ComponentName activityName)
             throws Exception {
-        return (new ActivityLifecycleCounts(activityName, logSeparator)).mConfigurationChangedCount;
+        return (new ActivityLifecycleCounts(activityName))
+                .getCount(ActivityCallback.ON_CONFIGURATION_CHANGED);
     }
 
     /**
@@ -1834,10 +1813,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
-            SystemUtil.runWithShellPermissionIdentity(
-                    () -> getLaunchActivityBuilder().setUseInstrumentation()
-                            .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
-                            .setDisplayId(newDisplay.mId).execute());
+            getLaunchActivityBuilder().setUseInstrumentation().setWithShellPermission(true)
+                    .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                    .setDisplayId(newDisplay.mId).execute();
             assertNotEquals("Top focus stack should not be on default display",
                     stackId, mAmWmState.getAmState().getFocusedStackId());
 
@@ -1987,25 +1965,25 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertFocusedAppOnDisplay("App on default display must still be focused",
                     RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY);
 
-            final LogSeparator logSeparator = separateLogs();
-
+            separateTestJournal();
             displayStateSession.turnScreenOff();
 
             // Wait for the fullscreen stack to start sleeping, and then make sure the
             // test activity is still resumed.
             int retry = 0;
-            ActivityLifecycleCounts lifecycleCounts;
+            int stopCount = 0;
             do {
-                lifecycleCounts = new ActivityLifecycleCounts(RESIZEABLE_ACTIVITY, logSeparator);
-                if (lifecycleCounts.mStopCount == 1) {
+                stopCount = (new ActivityLifecycleCounts(RESIZEABLE_ACTIVITY))
+                        .getCount(ActivityCallback.ON_STOP);
+                if (stopCount == 1) {
                     break;
                 }
                 logAlways("***testExternalDisplayActivityTurnPrimaryOff... retry=" + retry);
                 SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
             } while (retry++ < 5);
 
-            if (lifecycleCounts.mStopCount != 1) {
-                fail(RESIZEABLE_ACTIVITY + " has received " + lifecycleCounts.mStopCount
+            if (stopCount != 1) {
+                fail(RESIZEABLE_ACTIVITY + " has received " + stopCount
                         + " onStop() calls, expecting 1");
             }
             // For this test we create this virtual display with flag showContentWhenLocked, so it
@@ -2410,7 +2388,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testTaskSurfaceSizeAfterReparentDisplay() throws Exception {
-        final LogSeparator logSeparator;
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display and launch an activity on it.
             final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
@@ -2421,12 +2398,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     "Top activity must be the newly launched one");
             assertTopTaskSameSurfaceSizeWithDisplay(newDisplay.mId);
 
-            logSeparator = separateLogs();
+            separateTestJournal();
             // Destroy the display.
         }
 
         // Activity must be reparented to default display and relaunched.
-        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
+        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                 "Top activity must be reparented to default display");
 

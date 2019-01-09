@@ -31,7 +31,7 @@ public class LaunchBroadcastReceiver extends BroadcastReceiver {
         try {
             ActivityLauncher.launchActivityFromExtras(context, intent.getExtras());
         } catch (SecurityException e) {
-            Log.e(TAG, "SecurityException launching activity");
+            ActivityLauncher.handleSecurityException(context, e);
         }
     }
 }

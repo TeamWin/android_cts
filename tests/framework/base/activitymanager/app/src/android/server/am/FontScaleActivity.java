@@ -15,6 +15,9 @@
  */
 package android.server.am;
 
+import static android.server.am.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
+import static android.server.am.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
+
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.os.Bundle;
@@ -53,6 +56,8 @@ public class FontScaleActivity extends AbstractLifecycleLogActivity {
                 }
 
                 Log.i(getTag(), "fontPixelSize=" + fontPixelSize);
+                TestJournalProvider.putExtras(this,
+                        bundle -> bundle.putInt(EXTRA_FONT_PIXEL_SIZE, fontPixelSize));
             } finally {
                 ta.recycle();
             }
@@ -64,5 +69,7 @@ public class FontScaleActivity extends AbstractLifecycleLogActivity {
     protected void dumpActivityDpi() {
         final int fontActivityDpi = getResources().getDisplayMetrics().densityDpi;
         Log.i(getTag(), "fontActivityDpi=" + fontActivityDpi);
+        TestJournalProvider.putExtras(this,
+                bundle -> bundle.putInt(EXTRA_FONT_ACTIVITY_DPI, fontActivityDpi));
     }
 }
