@@ -16,8 +16,6 @@
 
 package com.android.cts.documentclient;
 
-import static org.junit.Assert.assertNotEquals;
-
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -71,6 +69,13 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         // Now scroll around to find our item
         new UiScrollable(rootsList).scrollIntoView(new UiSelector().text(label));
+    }
+
+    private UiObject findSearchViewTextField() {
+        final UiSelector selector = new UiSelector().resourceId(
+                "com.android.documentsui:id/option_menu_search").childSelector(
+                new UiSelector().resourceId("com.android.documentsui:id/search_src_text"));
+        return mDevice.findObject(selector);
     }
 
     private UiObject findRoot(String label) throws UiObjectNotFoundException {
@@ -352,6 +357,25 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         findActionIcon("CtsLocal").click();
         Result result = mActivity.getResult();
         assertEquals("ReSuLt", result.data.getAction());
+    }
+
+    public void testGetContentWithQueryContent() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        final String queryString = "FILE2";
+        intent.putExtra(Intent.EXTRA_CONTENT_QUERY, queryString);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        mDevice.waitForIdle();
+
+        assertTrue(findDocument(queryString).exists());
+
+        UiObject textField = findSearchViewTextField();
+        assertTrue(textField.exists());
+        assertEquals(queryString, textField.getText());
     }
 
     public void testTransferDocument() throws Exception {
