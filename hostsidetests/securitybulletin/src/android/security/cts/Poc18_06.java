@@ -35,4 +35,14 @@ public class Poc18_06 extends SecurityTestCase {
       assertNotMatchesMultiLine("Broadcast completed", result);
     }
   }
+
+  /**
+   * CVE-2018-5892
+   */
+  @SecurityTest(minPatchLevel = "2018-06")
+  public void testPocCVE_2018_5892() throws Exception {
+    String result = AdbUtils.runCommandLine(
+        "pm list package com.emoji.keyboard.touchpal", getDevice());
+    assertFalse(result.contains("com.emoji.keyboard.touchpal"));
+  }
 }
