@@ -622,4 +622,17 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         timeReceiver.close();
         assertTrue(timeReceiver.mTimeUsed != 0);
     }
+
+    /**
+     * This test is to verify that devices are patched with the fix in b/119327603 for b/115384617.
+     */
+    public void testIsAppForegroundRemoved() throws ClassNotFoundException {
+       try {
+           Class.forName("android.app.IActivityManager").getDeclaredMethod(
+                   "isAppForeground", int.class);
+           fail("IActivityManager.isAppForeground() API should not be available.");
+       } catch (NoSuchMethodException e) {
+           // Patched devices should throw this exception since isAppForeground is removed.
+       }
+    }
 }
