@@ -918,6 +918,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2017_17773);
     }
 
+    @SecurityTest(minPatchLevel = "2018-04")
+    public void testStagefright_cve_2017_18074() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_18074);
+    }
+
     @SecurityTest(minPatchLevel = "2017-12")
     public void testBug_65186291() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_65186291_framelen);
