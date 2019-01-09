@@ -24,9 +24,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := testhevcdec
 LOCAL_SRC_FILES := ../../../../../external/libhevc/test/decoder/main.c
-LOCAL_MULTILIB := both
+LOCAL_MULTILIB := 32
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 LOCAL_C_INCLUDES := external/libhevc/common
 LOCAL_C_INCLUDES += external/libhevc/decoder
 LOCAL_SHARED_LIBRARIES := liblog
