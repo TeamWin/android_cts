@@ -25,7 +25,9 @@ import android.inputmethodservice.cts.common.Ime1Constants;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
+import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSubtype;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,4 +68,35 @@ public class InputMethodManagerDeviceTest {
                 imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID)));
     }
 
+    /**
+     * Make sure
+     * {@link InputMethodManager#getEnabledInputMethodSubtypeList(InputMethodInfo, boolean)} for
+     * {@link Ime1Constants#IME_ID} returns the implicitly enabled subtype.
+     */
+    @Test
+    public void testIme1ImplicitlyEnabledSubtypeExists() throws Throwable {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
+        pollingCheck(() -> imm.getInputMethodList().stream()
+                        .filter(imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID))
+                        .flatMap(imi -> imm.getEnabledInputMethodSubtypeList(imi, true).stream())
+                        .anyMatch(InputMethodSubtype::overridesImplicitlyEnabledSubtype),
+                TIMEOUT, "Implicitly enabled Subtype must exist for IME1.");
+    }
+
+    /**
+     * Make sure
+     * {@link InputMethodManager#getEnabledInputMethodSubtypeList(InputMethodInfo, boolean)} for
+     * {@link Ime1Constants#IME_ID} does not return the implicitly enabled subtype.
+     */
+    @Test
+    public void testIme1ImplicitlyEnabledSubtypeNotExist() throws Throwable {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
+        Thread.sleep(EXPECTED_TIMEOUT);
+        assertFalse(imm.getInputMethodList().stream()
+                .filter(imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID))
+                .flatMap(imi -> imm.getEnabledInputMethodSubtypeList(imi, true).stream())
+                .anyMatch(InputMethodSubtype::overridesImplicitlyEnabledSubtype));
+    }
 }
