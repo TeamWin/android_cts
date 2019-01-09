@@ -258,6 +258,41 @@ final class Assertions {
     }
 
     /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event for a virtual node.
+     */
+    public static void assertVirtualViewAppeared(@NonNull List<ContentCaptureEvent> events,
+            int index, @NonNull ContentCaptureSession session, @NonNull AutofillId parentId,
+            int childId, @Nullable String expectedText) {
+        final ContentCaptureEvent event = getEvent(events, index);
+        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
+            .isEqualTo(TYPE_VIEW_APPEARED);
+        final ViewNode node = event.getViewNode();
+        assertThat(node).isNotNull();
+        assertWithMessage("invalid time on %s (index %s)", event, index).that(event.getEventTime())
+            .isAtLeast(MY_EPOCH);
+        final AutofillId expectedId = session.newAutofillId(parentId, childId);
+        assertWithMessage("wrong autofill id on %s (index %s)", event, index)
+            .that(node.getAutofillId()).isEqualTo(expectedId);
+        if (expectedText != null) {
+            assertWithMessage("wrong text on %s(index %s) ", event, index)
+                .that(node.getText().toString()).isEqualTo(expectedText);
+        } else {
+            assertWithMessage("%s (index %s) should not have text", node, index)
+                .that(node.getText()).isNull();
+        }
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event for a virtual node.
+     */
+    public static void assertVirtualViewDisappeared(@NonNull List<ContentCaptureEvent> events,
+            int index, @NonNull AutofillId parentId, @NonNull ContentCaptureSession session,
+            int childId) {
+        final AutofillId expectedId = session.newAutofillId(parentId, childId);
+        assertViewDisappeared(events, index, expectedId);
+    }
+
+    /**
      * Asserts a view has the given session id.
      */
     public static void assertSessionId(@NonNull ContentCaptureSessionId expectedSessionId,
