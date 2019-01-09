@@ -361,6 +361,14 @@ public class Color_ColorLongTest {
     }
 
     @Test
+    public void testConvertToBT709() {
+        int sRgb = Color.argb(1.0f, 0.5f, 0.5f, 0.5f);
+        long bt709 = Color.convert(sRgb, ColorSpace.get(Named.BT709));
+
+        assertEquals(ColorSpace.get(Named.BT709), Color.colorSpace(bt709));
+    }
+
+    @Test
     public void testConvertColorInt() {
         long color = convert(0xffff8000, ColorSpace.get(Named.ADOBE_RGB));
 
