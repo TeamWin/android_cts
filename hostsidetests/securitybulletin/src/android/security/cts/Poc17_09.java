@@ -63,4 +63,12 @@ public class Poc17_09 extends SecurityTestCase {
       AdbUtils.runPocNoOutput("Bug-38195738", getDevice(), 60);
     }
   }
+
+  /**
+   *CVE-2017-11041
+   */
+  @SecurityTest(minPatchLevel = "2017-09")
+  public void testPocCVE_2017_11041() throws Exception {
+    AdbUtils.runPocAssertNoCrashes("CVE-2017-11041", getDevice(), "mediaserver");
+  }
 }
