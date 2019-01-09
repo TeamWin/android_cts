@@ -21,6 +21,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.app.Notification.EXTRA_TITLE;
 import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
+import static android.location.Criteria.ACCURACY_FINE;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_DELAY_MILLIS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_INTERVAL_MILLIS;
 
@@ -32,6 +33,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.app.UiAutomation;
 import android.content.ComponentName;
@@ -40,7 +44,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ResolveInfo;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
@@ -64,6 +74,7 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Tests the {@code LocationAccessCheck} in permission controller.
@@ -78,6 +89,7 @@ public class LocationAccessCheckTest {
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
     private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
+    private static final long LOCATION_ACCESS_TIMEOUT_MILLIS = 15000;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation = InstrumentationRegistry.getInstrumentation()
@@ -240,13 +252,19 @@ public class LocationAccessCheckTest {
     private StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
         NotificationListenerService notificationService = NotificationListener.getInstance();
 
+        long start = System.currentTimeMillis();
         while (true) {
             runLocationCheck();
 
-            StatusBarNotification notification;
-            try {
-                notification = eventually(this::getPermissionControllerNotification, 300);
-            } catch (NullPointerException e) {
+            StatusBarNotification notification = getPermissionControllerNotification();
+            if (notification == null) {
+                // Sometimes getting a location takes some time, hence not getting a notification
+                // can be caused by not having gotten a location yet
+                if (System.currentTimeMillis() - start < LOCATION_ACCESS_TIMEOUT_MILLIS) {
+                    Thread.sleep(200);
+                    continue;
+                }
+
                 return null;
             }
 
@@ -278,6 +296,39 @@ public class LocationAccessCheckTest {
      */
     private void grantPermissionToTestApp(@NonNull String permission) {
         sUiAutomation.grantRuntimePermission(TEST_APP_PKG, permission);
+    }
+
+    @BeforeClass
+    public static void assumeCanGetFineLocation() {
+        Criteria crit = new Criteria();
+        crit.setAccuracy(ACCURACY_FINE);
+
+        CountDownLatch locationCounter = new CountDownLatch(1);
+        sContext.getSystemService(LocationManager.class).requestSingleUpdate(crit,
+                new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                locationCounter.countDown();
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+            }
+        }, Looper.getMainLooper());
+
+
+        try {
+            assumeTrue(locationCounter.await(LOCATION_ACCESS_TIMEOUT_MILLIS, MILLISECONDS));
+        } catch (InterruptedException ignored) {
+        }
     }
 
     /**
