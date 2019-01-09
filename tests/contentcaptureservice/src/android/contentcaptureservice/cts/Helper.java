@@ -33,7 +33,7 @@ final class Helper {
 
     public static final String TAG = "ContentCaptureTest";
 
-    public static final long GENERIC_TIMEOUT_MS = 2000;
+    public static final long GENERIC_TIMEOUT_MS = 10_000;
 
     public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
 

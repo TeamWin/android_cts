@@ -89,6 +89,11 @@ public class Color_ColorLongTest {
         colorSpace(0xffffffffffffffffL);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidColorSpace2() {
+        colorSpace((long) ColorSpace.Named.values().length);
+    }
+
     @Test
     public void testIsSrgb() {
         ColorSpace p3 = ColorSpace.get(Named.DISPLAY_P3);

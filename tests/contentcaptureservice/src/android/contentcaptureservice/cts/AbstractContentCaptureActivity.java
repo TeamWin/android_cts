@@ -23,8 +23,10 @@ import android.view.contentcapture.ContentCaptureManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class for all activities.
@@ -87,10 +89,30 @@ abstract class AbstractContentCaptureActivity extends Activity {
     }
 
     /**
-     * Run an action in the UI thread, and blocks caller until the action is finished.
+     * Runs an action in the UI thread, and blocks caller until the action is finished.
      */
     public final void syncRunOnUiThread(@NonNull Runnable action) {
         syncRunOnUiThread(action, Helper.GENERIC_TIMEOUT_MS);
+    }
+
+    /**
+     * Calls an action in the UI thread, and blocks caller until the action is finished.
+     */
+    public final <T> T syncCallOnUiThread(@NonNull Callable<T> action) throws Exception {
+        final AtomicReference<T> result = new AtomicReference<>();
+        final AtomicReference<Exception> exception  = new AtomicReference<>();
+        syncRunOnUiThread(() -> {
+            try {
+                result.set(action.call());
+            } catch (Exception e) {
+                exception.set(e);
+            }
+        });
+        final Exception e = exception.get();
+        if (e != null) {
+            throw e;
+        }
+        return result.get();
     }
 
     /**

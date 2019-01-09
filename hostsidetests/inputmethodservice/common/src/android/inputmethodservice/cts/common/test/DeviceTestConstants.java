@@ -68,4 +68,15 @@ public final class DeviceTestConstants {
             new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandDump");
     public static final TestInfo TEST_SHELL_COMMAND_HELP =
             new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandHelp");
+
+    /**
+     * Device test class: ShellCommandDeviceTest.
+     */
+    private static final String MANAGER_TEST =
+            "android.inputmethodservice.cts.devicetest.InputMethodManagerDeviceTest";
+
+    public static final TestInfo TEST_IME1_IN_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme1InInputMethodList");
+    public static final TestInfo TEST_IME1_NOT_IN_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme1NotInInputMethodList");
 }

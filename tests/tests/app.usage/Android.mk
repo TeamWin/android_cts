@@ -29,6 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     compatibility-device-util \
     ctstestrunner \
+    cts-amwm-util \
     junit \
     ub-uiautomator
 
