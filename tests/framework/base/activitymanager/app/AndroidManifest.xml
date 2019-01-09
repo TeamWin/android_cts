@@ -379,6 +379,20 @@
                   android:showWhenLocked="true"
                   android:exported="true" />
 
+        <activity android:name=".InheritShowWhenLockedAddActivity"
+            android:exported="true" />
+
+        <activity android:name=".InheritShowWhenLockedAttrActivity"
+                  android:inheritShowWhenLocked="true"
+                  android:exported="true" />
+
+        <activity android:name=".InheritShowWhenLockedRemoveActivity"
+                  android:inheritShowWhenLocked="true"
+                  android:exported="true" />
+
+        <activity android:name=".NoInheritShowWhenLockedAttrActivity"
+                  android:exported="true" />
+
         <activity android:name=".ToastActivity"
                   android:exported="true"/>
 

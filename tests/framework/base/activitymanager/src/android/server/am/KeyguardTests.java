@@ -23,8 +23,12 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
+import static android.server.am.Components.INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY;
+import static android.server.am.Components.INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
+import static android.server.am.Components.INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY;
 import static android.server.am.Components.KEYGUARD_LOCK_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.Components.NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
@@ -207,6 +211,101 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertKeyguardShowingAndOccluded();
             mAmWmState.assertDoesNotContainStack("Activity must be full screen.",
                     WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        }
+    }
+
+    /**
+     * Tests whether an activity that has called setInheritShowWhenLocked(true) above a
+     * SHOW_WHEN_LOCKED activity is visible if Keyguard is locked.
+     */
+    @Test
+    public void testInheritShowWhenLockedAdd() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+
+            launchActivity(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY);
+            mAmWmState.computeState(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY, true);
+
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.computeState(true);
+            mAmWmState.assertKeyguardShowingAndOccluded();
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY, true);
+        }
+    }
+
+    /**
+     * Tests whether an activity that has the manifest attribute inheritShowWhenLocked but then
+     * calls setInheritShowWhenLocked(false) above a SHOW_WHEN_LOCKED activity is invisible if
+     * Keyguard is locked.
+     */
+    @Test
+    public void testInheritShowWhenLockedRemove() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+
+            launchActivity(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
+            mAmWmState.computeState(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY, true);
+
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.computeState(true);
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            assertTrue(mKeyguardManager.isKeyguardLocked());
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY, false);
+        }
+    }
+
+    /**
+     * Tests whether an activity that has the manifest attribute inheritShowWhenLocked above a
+     * SHOW_WHEN_LOCKED activity is visible if Keyguard is locked.
+     * */
+    @Test
+    public void testInheritShowWhenLockedAttr() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+
+            launchActivity(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.computeState(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.computeState(true);
+            mAmWmState.assertKeyguardShowingAndOccluded();
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+        }
+    }
+
+    /**
+     * Tests whether an activity that doesn't have the manifest attribute inheritShowWhenLocked
+     * above a SHOW_WHEN_LOCKED activity is invisible if Keyguard is locked.
+     * */
+    @Test
+    public void testNoInheritShowWhenLocked() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+
+            launchActivity(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.computeState(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.computeState(true);
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            assertTrue(mKeyguardManager.isKeyguardLocked());
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            mAmWmState.assertVisibility(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
         }
     }
 
