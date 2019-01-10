@@ -711,8 +711,8 @@ public class ChildlessActivityTest
         assertLifecycleOrder(1, mainTestSession,   CREATION);
         assertLifecycleOrder(2, childTestSession1, CREATION);
         assertLifecycleOrder(3, childTestSession2, CREATION);
-        assertLifecycleOrder(4, childTestSession1, DESTRUCTION);
-        assertLifecycleOrder(5, childTestSession2, DESTRUCTION);
+        assertLifecycleOrder(4, childTestSession2, DESTRUCTION);
+        assertLifecycleOrder(5, childTestSession1, DESTRUCTION);
         assertLifecycleOrder(6, childTestSession3, CREATION);
         assertLifecycleOrder(7, childTestSession3, DESTRUCTION);
         assertLifecycleOrder(8, childTestSession4, CREATION);
