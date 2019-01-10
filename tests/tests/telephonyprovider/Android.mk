@@ -27,7 +27,8 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
-    android-support-test
+    android-support-test \
+    truth-prebuilt
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
