@@ -156,6 +156,16 @@
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".augmented.CtsAugmentedAutofillService"
+            android:label="CtsAugmentedAutofillService"
+            android:permission="android.permission.BIND_AUGMENTED_AUTOFILL_SERVICE" >
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+        </service>
+
     </application>
 
     <instrumentation

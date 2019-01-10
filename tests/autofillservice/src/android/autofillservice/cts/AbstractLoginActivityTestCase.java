@@ -24,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Base class for test cases using {@link LoginActivity}.
  */
-abstract class AbstractLoginActivityTestCase
+public abstract class AbstractLoginActivityTestCase
         extends AutoFillServiceTestCase.AutoActivityLaunch<LoginActivity> {
 
     protected LoginActivity mActivity;

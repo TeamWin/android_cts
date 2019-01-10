@@ -259,7 +259,7 @@ public class InstrumentedAutoFillService extends AutofillService {
      * was replied with a {@code null} response) - if a text needs to block until the service
      * receives a callback, it should use {@link Replier#getNextFillRequest()} instead.
      */
-    static void waitUntilConnected() throws Exception {
+    public static void waitUntilConnected() throws Exception {
         waitConnectionState(CONNECTION_TIMEOUT, true);
     }
 
@@ -269,7 +269,7 @@ public class InstrumentedAutoFillService extends AutofillService {
      * <p>This method is useful on tests that explicitly verifies the connection, but should be
      * avoided in other tests, as it adds extra time to the test execution.
      */
-    static void waitUntilDisconnected() throws Exception {
+    public static void waitUntilDisconnected() throws Exception {
         waitConnectionState(IDLE_UNBIND_TIMEOUT, false);
     }
 
@@ -297,7 +297,7 @@ public class InstrumentedAutoFillService extends AutofillService {
      * {@link AutofillService#onFillRequest(android.service.autofill.FillRequest,
      * CancellationSignal, FillCallback)} that can be asserted at the end of a test case.
      */
-    static final class FillRequest {
+    public static final class FillRequest {
         final AssistStructure structure;
         final List<FillContext> contexts;
         final Bundle data;
@@ -327,7 +327,7 @@ public class InstrumentedAutoFillService extends AutofillService {
      * {@link AutofillService#onSaveRequest(android.service.autofill.SaveRequest, SaveCallback)}
      * that can be asserted at the end of a test case.
      */
-    static final class SaveRequest {
+    public static final class SaveRequest {
         public final List<FillContext> contexts;
         public final AssistStructure structure;
         public final Bundle data;
@@ -359,7 +359,7 @@ public class InstrumentedAutoFillService extends AutofillService {
      * CancellationSignal, FillCallback)}
      * on behalf of a unit test method.
      */
-    static final class Replier {
+    public static final class Replier {
 
         private final BlockingQueue<CannedFillResponse> mResponses = new LinkedBlockingQueue<>();
         private final BlockingQueue<FillRequest> mFillRequests = new LinkedBlockingQueue<>();
@@ -388,7 +388,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         /**
          * Gets the exceptions thrown asynchronously, if any.
          */
-        @Nullable List<Throwable> getExceptions() {
+        @Nullable
+        public List<Throwable> getExceptions() {
             return mExceptions;
         }
 
@@ -405,7 +406,7 @@ public class InstrumentedAutoFillService extends AutofillService {
          * Sets the expectation for the next {@code onFillRequest} as {@link FillResponse} with just
          * one {@link Dataset}.
          */
-        Replier addResponse(CannedDataset dataset) {
+        public Replier addResponse(CannedDataset dataset) {
             return addResponse(new CannedFillResponse.Builder()
                     .addDataset(dataset)
                     .build());
@@ -414,7 +415,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         /**
          * Sets the expectation for the next {@code onFillRequest}.
          */
-        Replier addResponse(CannedFillResponse response) {
+        public Replier addResponse(CannedFillResponse response) {
             if (response == null) {
                 throw new IllegalArgumentException("Cannot be null - use NO_RESPONSE instead");
             }
@@ -426,17 +427,15 @@ public class InstrumentedAutoFillService extends AutofillService {
          * Sets the {@link IntentSender} that is passed to
          * {@link SaveCallback#onSuccess(IntentSender)}.
          */
-        Replier setOnSave(IntentSender intentSender) {
+        public Replier setOnSave(IntentSender intentSender) {
             mOnSaveIntentSender = intentSender;
             return this;
         }
 
         /**
          * Gets the next fill request, in the order received.
-         *
-         * <p>Typically called at the end of a test case, to assert the initial request.
          */
-        FillRequest getNextFillRequest() {
+        public FillRequest getNextFillRequest() {
             FillRequest request;
             try {
                 request = mFillRequests.poll(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
@@ -457,7 +456,7 @@ public class InstrumentedAutoFillService extends AutofillService {
          * <p>Should only be called in cases where it's not expected to be called, as it will
          * sleep for a few ms.
          */
-        void assertOnFillRequestNotCalled() {
+        public void assertOnFillRequestNotCalled() {
             SystemClock.sleep(FILL_TIMEOUT.getMaxValue());
             assertThat(mFillRequests).isEmpty();
         }
@@ -468,7 +467,7 @@ public class InstrumentedAutoFillService extends AutofillService {
          * received by the service were properly {@link #getNextFillRequest() handled} by the test
          * case.
          */
-        void assertNoUnhandledFillRequests() {
+        public void assertNoUnhandledFillRequests() {
             if (mFillRequests.isEmpty()) return; // Good job, test case!
 
             if (!mReportUnhandledFillRequest) {
@@ -486,7 +485,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         /**
          * Gets the current number of unhandled requests.
          */
-        int getNumberUnhandledFillRequests() {
+        public int getNumberUnhandledFillRequests() {
             return mFillRequests.size();
         }
 
@@ -495,7 +494,7 @@ public class InstrumentedAutoFillService extends AutofillService {
          *
          * <p>Typically called at the end of a test case, to assert the initial request.
          */
-        SaveRequest getNextSaveRequest() {
+        public SaveRequest getNextSaveRequest() {
             SaveRequest request;
             try {
                 request = mSaveRequests.poll(SAVE_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
@@ -515,7 +514,7 @@ public class InstrumentedAutoFillService extends AutofillService {
          * save requests} received by the service were properly
          * {@link #getNextFillRequest() handled} by the test case.
          */
-        void assertNoUnhandledSaveRequests() {
+        public void assertNoUnhandledSaveRequests() {
             if (mSaveRequests.isEmpty()) return; // Good job, test case!
 
             if (!mReportUnhandledSaveRequest) {
@@ -533,7 +532,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         /**
          * Resets its internal state.
          */
-        void reset() {
+        public void reset() {
             mResponses.clear();
             mFillRequests.clear();
             mSaveRequests.clear();
