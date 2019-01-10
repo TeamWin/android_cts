@@ -95,7 +95,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
-        // TODO(b/119638958): ideally it should be 5 so it reflects just the views defined
+        // TODO(b/119638528): ideally it should be 5 so it reflects just the views defined
         // in the layout - right now it's generating events for 2 intermediate parents
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
@@ -104,20 +104,20 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final int minEvents = 7;
         assertThat(events.size()).isAtLeast(minEvents);
-        assertViewAppeared(events.get(0), sessionId, activity.mUsernameLabel, rootId);
-        assertViewAppeared(events.get(1), sessionId, activity.mUsername, rootId);
-        assertViewAppeared(events.get(2), sessionId, activity.mPasswordLabel, rootId);
-        assertViewAppeared(events.get(3), sessionId, activity.mPassword, rootId);
+        assertViewAppeared(events, 0, sessionId, activity.mUsernameLabel, rootId);
+        assertViewAppeared(events, 1, sessionId, activity.mUsername, rootId);
+        assertViewAppeared(events, 2, sessionId, activity.mPasswordLabel, rootId);
+        assertViewAppeared(events, 3, sessionId, activity.mPassword, rootId);
 
-        // TODO(b/119638958): get rid of those intermediated parents
+        // TODO(b/119638528): get rid of those intermediated parents
         final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
 
-        assertViewAppeared(events.get(4), sessionId, activity.getRootView(),
+        assertViewAppeared(events, 4, sessionId, activity.getRootView(),
                 grandpa1.getAutofillId());
-        assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 6, grandpa2, decorView.getAutofillId());
 
         assertViewsOptionallyDisappeared(events, minEvents,
                 rootId,
@@ -191,7 +191,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final List<ContentCaptureEvent> mainEvents = mainSession.getEvents();
         Log.v(TAG, "events for main session: " + mainEvents);
 
-        // TODO(b/119638958): ideally it should be empty - right now it's generating events for 2
+        // TODO(b/119638528): ideally it should be empty - right now it's generating events for 2
         // intermediate parents (android:action_mode_bar_stub and android:content), we should try to
         // create an activity without them
         final int minMainEvents = 2;
@@ -199,8 +199,8 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
-        assertViewAppeared(mainEvents.get(0), grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(mainEvents.get(1), grandpa2, decorView.getAutofillId());
+        assertViewAppeared(mainEvents, 0, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(mainEvents, 1, grandpa2, decorView.getAutofillId());
         assertViewsOptionallyDisappeared(mainEvents, minMainEvents,
                 grandpa1.getAutofillId(), grandpa2.getAutofillId()
                 // decorView.getAutofillId(), // TODO(b/122315042): figure out why it's not
@@ -225,11 +225,11 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final AutofillId rootId = activity.getRootView().getAutofillId();
         final int minChildEvents = 5;
         assertThat(childEvents.size()).isAtLeast(minChildEvents);
-        assertViewAppeared(childEvents.get(0), childSessionId, activity.mUsernameLabel, rootId);
-        assertViewAppeared(childEvents.get(1), childSessionId, activity.mUsername, rootId);
-        assertViewAppeared(childEvents.get(2), childSessionId, activity.mPasswordLabel, rootId);
-        assertViewAppeared(childEvents.get(3), childSessionId, activity.mPassword, rootId);
-        assertViewAppeared(childEvents.get(4), childSessionId, activity.getRootView(),
+        assertViewAppeared(childEvents, 0, childSessionId, activity.mUsernameLabel, rootId);
+        assertViewAppeared(childEvents, 1, childSessionId, activity.mUsername, rootId);
+        assertViewAppeared(childEvents, 2, childSessionId, activity.mPasswordLabel, rootId);
+        assertViewAppeared(childEvents, 3, childSessionId, activity.mPassword, rootId);
+        assertViewAppeared(childEvents, 4, childSessionId, activity.getRootView(),
                 grandpa1.getAutofillId());
         assertViewsOptionallyDisappeared(childEvents, minChildEvents,
                 rootId,
@@ -270,21 +270,21 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final int minEvents = 9;
         assertThat(events.size()).isAtLeast(minEvents);
 
-        assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
-        assertViewAppeared(events.get(1), activity.mUsername, rootId, "user");
-        assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
-        assertViewAppeared(events.get(3), activity.mPassword, rootId, "");
-        // TODO(b/119638958): get rid of those intermediated parents
+        assertViewAppeared(events, 0, activity.mUsernameLabel, rootId);
+        assertViewAppeared(events, 1, activity.mUsername, rootId, "user");
+        assertViewAppeared(events, 2, activity.mPasswordLabel, rootId);
+        assertViewAppeared(events, 3, activity.mPassword, rootId, "");
+        // TODO(b/119638528): get rid of those intermediated parents
         final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
 
-        assertViewAppeared(events.get(4), activity.getRootView(), grandpa1.getAutofillId());
-        assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, activity.getRootView(), grandpa1.getAutofillId());
+        assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 6, grandpa2, decorView.getAutofillId());
 
-        assertViewTextChanged(events.get(7), activity.mUsername.getAutofillId(), "USER");
-        assertViewTextChanged(events.get(8), activity.mPassword.getAutofillId(), "PASS");
+        assertViewTextChanged(events, 7, activity.mUsername.getAutofillId(), "USER");
+        assertViewTextChanged(events, 8, activity.mPassword.getAutofillId(), "PASS");
 
         assertViewsOptionallyDisappeared(events, minEvents,
                 rootId,
@@ -333,22 +333,22 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final int minEvents = 10;
         assertThat(events.size()).isAtLeast(minEvents);
 
-        assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
-        assertViewAppeared(events.get(1), activity.mUsername, rootId, "");
-        assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
-        assertViewAppeared(events.get(3), activity.mPassword, rootId, "");
-        // TODO(b/119638958): get rid of those intermediated parents
+        assertViewAppeared(events, 0, activity.mUsernameLabel, rootId);
+        assertViewAppeared(events, 1, activity.mUsername, rootId, "");
+        assertViewAppeared(events, 2, activity.mPasswordLabel, rootId);
+        assertViewAppeared(events, 3, activity.mPassword, rootId, "");
+        // TODO(b/119638528): get rid of those intermediated parents
         final View grandpa1 = (View) activity.getRootView().getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = (View) grandpa2.getParent();
 
-        assertViewAppeared(events.get(4), activity.getRootView(), grandpa1.getAutofillId());
-        assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, activity.getRootView(), grandpa1.getAutofillId());
+        assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 6, grandpa2, decorView.getAutofillId());
 
-        assertViewTextChanged(events.get(7), activity.mUsername.getAutofillId(), "ab");
-        assertViewTextChanged(events.get(8), activity.mPassword.getAutofillId(), "de");
-        assertViewTextChanged(events.get(9), activity.mUsername.getAutofillId(), "abc");
+        assertViewTextChanged(events, 7, activity.mUsername.getAutofillId(), "ab");
+        assertViewTextChanged(events, 8, activity.mPassword.getAutofillId(), "de");
+        assertViewTextChanged(events, 9, activity.mUsername.getAutofillId(), "abc");
 
         assertViewsOptionallyDisappeared(events, minEvents,
                 rootId,
@@ -361,12 +361,12 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
     }
 
-    // TODO(b/119638958): add moar test cases for different sessions:
+    // TODO(b/119638528): add moar test cases for different sessions:
     // - session1 on rootView, session2 on children
     // - session1 on rootView, session2 on child1, session3 on child2
     // - combination above where the CTS test explicitly finishes a session
 
-    // TODO(b/119638958): add moar test cases for different scenarios, like:
+    // TODO(b/119638528): add moar test cases for different scenarios, like:
     // - dynamically adding /
     // - removing views
     // - pausing / resuming activity

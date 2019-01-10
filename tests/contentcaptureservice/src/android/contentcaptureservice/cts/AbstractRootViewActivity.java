@@ -15,8 +15,6 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.Helper.TAG;
-
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,6 +26,8 @@ import androidx.annotation.NonNull;
  * Base class for classes that have a {@code root_view} root view.
  */
 abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
+
+    private static final String TAG = AbstractRootViewActivity.class.getSimpleName();
 
     private static DoubleVisitor<AbstractContentCaptureActivity, LinearLayout> sRootViewVisitor;
 

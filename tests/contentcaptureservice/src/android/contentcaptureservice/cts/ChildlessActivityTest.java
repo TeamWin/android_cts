@@ -173,7 +173,7 @@ public class ChildlessActivityTest
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
-        // TODO(b/119638958): ideally it should be 3 so it reflects just the views defined
+        // TODO(b/119638528): ideally it should be 3 so it reflects just the views defined
         // in the layout - right now it's generating events for 2 intermediate parents
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
@@ -181,10 +181,10 @@ public class ChildlessActivityTest
 
         // Assert just the relevant events
         final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(events.get(0), sessionId, child, rootId);
-        assertViewWithUnknownParentAppeared(events.get(1), sessionId, activity.getRootView());
+        assertViewAppeared(events, 0, sessionId, child, rootId);
+        assertViewWithUnknownParentAppeared(events, 1, sessionId, activity.getRootView());
         // Ignore events 2 and 3 (intermediate parents appeared)
-        assertViewDisappeared(events.get(4), child.getAutofillId());
+        assertViewDisappeared(events, 4, child.getAutofillId());
     }
 
     @Test
@@ -217,7 +217,7 @@ public class ChildlessActivityTest
 
         // Assert just the relevant events
         final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(events.get(0), sessionId, child, rootId);
+        assertViewAppeared(events, 0, sessionId, child, rootId);
     }
 
     @Test
@@ -257,15 +257,14 @@ public class ChildlessActivityTest
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
         assertThat(mainEvents.size()).isAtLeast(3);
-        assertViewWithUnknownParentAppeared(mainEvents.get(0), mainSessionId,
-                activity.getRootView());
+        assertViewWithUnknownParentAppeared(mainEvents, 0, mainSessionId, activity.getRootView());
 
         final Session childTestSession = service.getFinishedSession(childSessionId);
         assertChildSessionContext(childTestSession, "http://child");
         final List<ContentCaptureEvent> childEvents = childTestSession.getEvents();
         final int minEvents = 1;
         assertThat(mainEvents.size()).isAtLeast(minEvents);
-        assertViewAppeared(childEvents.get(0), childSessionId, child,
+        assertViewAppeared(childEvents, 0, childSessionId, child,
                 activity.getRootView().getAutofillId());
         assertViewsOptionallyDisappeared(childEvents, minEvents, child.getAutofillId());
     }
@@ -424,7 +423,7 @@ public class ChildlessActivityTest
         final List<ContentCaptureEvent> childEvents = childTestSession.getEvents();
         assertThat(childEvents.size()).isAtLeast(1);
         final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(childEvents.get(0), child, rootId);
+        assertViewAppeared(childEvents, 0, child, rootId);
 
         // Assert lifecycle methods were called in the right order
         assertLifecycleOrder(1, mainTestSession,  CREATION);
@@ -518,25 +517,25 @@ public class ChildlessActivityTest
         Log.v(TAG, "events1: " + events1);
         assertThat(events1.size()).isAtLeast(1);
         final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(events1.get(0), s1c1, rootId);
+        assertViewAppeared(events1, 0, s1c1, rootId);
 
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
         final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
         assertChildSessionContext(childTestSession2, "http://session2");
         Log.v(TAG, "events2: " + events2);
         assertThat(events2.size()).isAtLeast(2);
-        assertViewAppeared(events2.get(0), s2c1, rootId);
-        assertViewAppeared(events2.get(1), s2c2, rootId);
+        assertViewAppeared(events2, 0, s2c1, rootId);
+        assertViewAppeared(events2, 1, s2c2, rootId);
 
         final Session childTestSession3 = service.getFinishedSession(childSessionId3);
         assertChildSessionContext(childTestSession3, "http://session3");
         List<ContentCaptureEvent> events3 = childTestSession3.getEvents();
         Log.v(TAG, "events3: " + events3);
         assertThat(events3.size()).isAtLeast(4);
-        assertViewAppeared(events3.get(0), s3c1, rootId);
-        assertViewAppeared(events3.get(1), s3c2, rootId);
-        assertViewDisappeared(events3.get(2), s3c1.getAutofillId());
-        assertViewAppeared(events3.get(3), s3c3, rootId);
+        assertViewAppeared(events3, 0, s3c1, rootId);
+        assertViewAppeared(events3, 1, s3c2, rootId);
+        assertViewDisappeared(events3, 2, s3c1.getAutofillId());
+        assertViewAppeared(events3, 3, s3c3, rootId);
 
         final Session childTestSession4 = service.getFinishedSession(childSessionId4);
         assertChildSessionContext(childTestSession4, "http://session4");
