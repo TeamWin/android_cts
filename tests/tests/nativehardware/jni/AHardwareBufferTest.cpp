@@ -24,12 +24,16 @@
 #include <string>
 
 #include <android/hardware_buffer.h>
+#include <android/log.h>
 #include <gtest/gtest.h>
 
 //#define LOG_NDEBUG 0
 
 #define BAD_VALUE -EINVAL
 #define NO_ERROR 0
+
+#define LOG_TAG "AHBTest"
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 namespace {
 
@@ -201,6 +205,23 @@ TEST(AHardwareBufferTest, AllocateSucceeds) {
     AHardwareBuffer_release(buffer);
 }
 
+// Test that allocate can create YUV AHardwareBuffers correctly.
+TEST(AHardwareBufferTest, YuvAllocateSucceeds) {
+    AHardwareBuffer* buffer = NULL;
+    AHardwareBuffer_Desc desc = {};
+
+    desc.width = 16;
+    desc.height = 16;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    desc.format = AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420;
+    int res = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, res);
+    EXPECT_EQ(desc, GetDescription(buffer));
+    AHardwareBuffer_release(buffer);
+    buffer = NULL;
+}
+
 TEST(AHardwareBufferTest, DescribeSucceeds) {
     AHardwareBuffer* buffer = NULL;
     AHardwareBuffer_Desc desc = {};
@@ -316,6 +337,94 @@ TEST(AHardwareBufferTest, LockAndUnlockSucceed) {
     EXPECT_TRUE(bufferData != NULL);
     int32_t fence = -1;
     err = AHardwareBuffer_unlock(buffer, &fence);
+
+    AHardwareBuffer_release(buffer);
+}
+
+TEST(AHardwareBufferTest, PlanarLockAndUnlockYuvSucceed) {
+    AHardwareBuffer* buffer = NULL;
+    AHardwareBuffer_Desc desc = {};
+
+    desc.width = 16;
+    desc.height = 32;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    desc.format = AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420;
+
+    // Test that an invalid buffer fails.
+    int err = AHardwareBuffer_lock(NULL, 0, -1, NULL, NULL);
+    EXPECT_EQ(BAD_VALUE, err);
+    err = 0;
+
+    // Allocate the buffer.
+    err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, err);
+
+    // Lock its planes
+    AHardwareBuffer_Planes planes;
+    err = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1, NULL,
+        &planes);
+
+    // Make sure everything looks right
+    EXPECT_EQ(NO_ERROR, err);
+    EXPECT_EQ(3U, planes.planeCount);
+
+    EXPECT_TRUE(planes.planes[0].data != NULL);
+    EXPECT_EQ(1U, planes.planes[0].pixelStride);
+    EXPECT_TRUE(planes.planes[0].rowStride >= 16);
+
+    EXPECT_TRUE(planes.planes[1].data != NULL);
+    EXPECT_EQ(2U, planes.planes[1].pixelStride);
+    EXPECT_TRUE(planes.planes[1].rowStride >= 8);
+
+    EXPECT_TRUE(planes.planes[2].data != NULL);
+    EXPECT_EQ(2U, planes.planes[2].pixelStride);
+    EXPECT_TRUE(planes.planes[2].rowStride >= 8);
+
+    // Unlock
+    int32_t fence = -1;
+    err = AHardwareBuffer_unlock(buffer, &fence);
+    EXPECT_EQ(NO_ERROR, err);
+
+    AHardwareBuffer_release(buffer);
+}
+
+TEST(AHardwareBufferTest, PlanarLockAndUnlockRgbaSucceed) {
+    AHardwareBuffer* buffer = NULL;
+    AHardwareBuffer_Desc desc = {};
+
+    desc.width = 16;
+    desc.height = 32;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+
+    // Test that an invalid buffer fails.
+    int err = AHardwareBuffer_lock(NULL, 0, -1, NULL, NULL);
+    EXPECT_EQ(BAD_VALUE, err);
+    err = 0;
+
+    // Allocate the buffer.
+    err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, err);
+
+    // Lock its planes
+    AHardwareBuffer_Planes planes;
+    err = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1, NULL,
+        &planes);
+
+    // Make sure everything looks right
+    EXPECT_EQ(NO_ERROR, err);
+    EXPECT_EQ(1U, planes.planeCount);
+
+    EXPECT_TRUE(planes.planes[0].data != NULL);
+    EXPECT_EQ(4U, planes.planes[0].pixelStride);
+    EXPECT_TRUE(planes.planes[0].rowStride >= 64);
+
+    // Unlock
+    int32_t fence = -1;
+    err = AHardwareBuffer_unlock(buffer, &fence);
+    EXPECT_EQ(NO_ERROR, err);
 
     AHardwareBuffer_release(buffer);
 }
