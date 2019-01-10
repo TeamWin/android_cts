@@ -204,6 +204,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.getSimPreciseCarrierId();
         mTelephonyManager.getSimPreciseCarrierIdName();
         mTelephonyManager.getCarrierIdFromSimMccMnc();
+        mTelephonyManager.isDataRoamingEnabled();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getSimSerialNumber());
         mTelephonyManager.getSimOperator();
