@@ -48,6 +48,15 @@ public class MultiUserTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
     private static final long USER_SWITCH_POLLING_INTERVAL = TimeUnit.MILLISECONDS.toMillis(100);
 
+    /**
+     * A sleep time after calling {@link com.android.tradefed.device.ITestDevice#switchUser(int)}
+     * to see if the flakiness comes from race condition in UserManagerService#removeUser() or not.
+     *
+     * <p>TODO(Bug 122609784): Remove this once we figure out what is the root cause of flakiness.
+     * </p>
+     */
+    private static final long WAIT_AFTER_USER_SWITCH = TimeUnit.SECONDS.toMillis(10);
+
     private ArrayList<Integer> mOriginalUsers;
 
     /**
@@ -70,6 +79,10 @@ public class MultiUserTest extends BaseHostJUnit4Test {
     @After
     public void tearDown() throws Exception {
         getDevice().switchUser(getDevice().getPrimaryUserId());
+        // We suspect that the optimization made for Bug 38143512 was a bit unstable.  Let's see
+        // if adding a sleep improves the stability or not.
+        Thread.sleep(WAIT_AFTER_USER_SWITCH);
+
         final ArrayList<Integer> newUsers = getDevice().listUsers();
         for (int userId : newUsers) {
             if (!mOriginalUsers.contains(userId)) {
@@ -136,9 +149,6 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1NotExistInApiResult(secondaryUserId);  // because it's no longer the current user
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);  // ditto
-
-        getDevice().stopUser(secondaryUserId);
-        getDevice().removeUser(secondaryUserId);
     }
 
     /**
@@ -200,14 +210,6 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
-
-        switchUser(primaryUserId);
-
-        getDevice().stopUser(secondaryUserId);
-        getDevice().removeUser(secondaryUserId);
-
-        getDevice().stopUser(profileUserId);
-        getDevice().removeUser(profileUserId);
     }
 
     private String shell(String command) {
