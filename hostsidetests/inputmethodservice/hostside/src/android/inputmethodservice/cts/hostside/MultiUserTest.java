@@ -132,23 +132,23 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         installPackageAsUser(Ime1Constants.APK, true, secondaryUserId, "-r");
 
         assertIme1NotExistInApiResult(primaryUserId);
-        assertIme1NotExistInApiResult(secondaryUserId);  // because not the current user yet
+        assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);  // ditto
+        assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
 
         switchUser(secondaryUserId);
 
         assertIme1NotExistInApiResult(primaryUserId);
-        assertIme1ExistsInApiResult(secondaryUserId);    // now it's visible
+        assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);    // ditto
+        assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
 
         switchUser(primaryUserId);
 
         assertIme1NotExistInApiResult(primaryUserId);
-        assertIme1NotExistInApiResult(secondaryUserId);  // because it's no longer the current user
+        assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);  // ditto
+        assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);
     }
 
     /**
@@ -204,11 +204,11 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
         switchUser(secondaryUserId);
 
-        assertIme1NotExistInApiResult(primaryUserId);
-        assertIme1NotExistInApiResult(profileUserId);
+        assertIme1ExistsInApiResult(primaryUserId);
+        assertIme1ExistsInApiResult(profileUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(profileUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
     }
 
