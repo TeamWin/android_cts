@@ -142,11 +142,11 @@ public class MagnifierTest {
 
         final Magnifier.Builder builder = new Magnifier.Builder(mView)
                 .setSize(magnifierWidth, magnifierHeight)
-                .setZoom(zoom)
+                .setInitialZoom(zoom)
                 .setDefaultSourceToMagnifierOffset(sourceToMagnifierHorizontalOffset,
                         sourceToMagnifierVerticalOffset)
                 .setCornerRadius(cornerRadius)
-                .setZoom(zoom)
+                .setInitialZoom(zoom)
                 .setElevation(elevation)
                 .setOverlay(overlay)
                 .setClippingEnabled(enableClipping);
@@ -184,12 +184,12 @@ public class MagnifierTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuilder_throwsException_whenZoomIsZero() {
-        new Magnifier.Builder(mView).setZoom(0f);
+        new Magnifier.Builder(mView).setInitialZoom(0f);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuilder_throwsException_whenZoomIsNegative() {
-        new Magnifier.Builder(mView).setZoom(-1f);
+        new Magnifier.Builder(mView).setInitialZoom(-1f);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -568,7 +568,7 @@ public class MagnifierTest {
                 .findViewById(R.id.horizontal_scroll_container);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
-                .setZoom(20f) /* 5x5 source size */
+                .setInitialZoom(20f) /* 5x5 source size */
                 .setSourceBounds(
                         Magnifier.SOURCE_BOUND_MAX_VISIBLE,
                         Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
@@ -610,7 +610,7 @@ public class MagnifierTest {
                 .findViewById(R.id.vertical_scroll_container);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
-                .setZoom(10f) /* 10x10 source size */
+                .setInitialZoom(10f) /* 10x10 source size */
                 .setSourceBounds(
                         Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
                         Magnifier.SOURCE_BOUND_MAX_VISIBLE,
@@ -649,7 +649,7 @@ public class MagnifierTest {
         final View view = mActivity.findViewById(R.id.magnifier_centered_view);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
-                .setZoom(10f) /* 10x10 source size */
+                .setInitialZoom(10f) /* 10x10 source size */
                 .setSourceBounds(
                         Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
                         Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
@@ -687,7 +687,7 @@ public class MagnifierTest {
         final View view = mActivity.findViewById(R.id.magnifier_centered_view);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
-                .setZoom(5f) /* 20x20 source size */
+                .setInitialZoom(5f) /* 20x20 source size */
                 .setSourceBounds(
                         Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
                         Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
@@ -749,7 +749,7 @@ public class MagnifierTest {
         final View view = mActivity.findViewById(R.id.magnifier_centered_view);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
-                .setZoom(5f) /* 20x20 source size */
+                .setInitialZoom(5f) /* 20x20 source size */
                 .setSourceBounds(
                         Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
                         Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
@@ -794,7 +794,7 @@ public class MagnifierTest {
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(2 * view.getWidth() + systemInsets.right,
                         2 * view.getHeight() + systemInsets.bottom)
-                .setZoom(1f) /* source double the size of the view + right/bottom insets */
+                .setInitialZoom(1f) /* source double the size of the view + right/bottom insets */
                 .setSourceBounds(/* invalid bounds */
                         Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
                         Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
@@ -855,7 +855,7 @@ public class MagnifierTest {
         final int height = 270;
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(width, height)
-                .setZoom(1.0f);
+                .setInitialZoom(1.0f);
         mMagnifier = builder.build();
         final float newZoom = 1.5f;
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, () -> {
@@ -934,7 +934,7 @@ public class MagnifierTest {
     public void testOverlay_isNotVisible_whenSetToNull() throws Throwable {
         final Magnifier.Builder builder = new Magnifier.Builder(mView)
                 .setSize(50, 50)
-                .setZoom(10f) /* 5x5 source size */
+                .setInitialZoom(10f) /* 5x5 source size */
                 .setOverlay(null);
         runOnUiThreadAndWaitForCompletion(() -> mMagnifier = builder.build());
 
