@@ -159,12 +159,12 @@ public class WindowFocusTests {
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final Display secondaryDisplay = displaySession.createDisplay(getTargetContext());
-            final SecondaryActivity secondaryActivity
-                    = startActivity(SecondaryActivity.class, secondaryDisplay.getDisplayId());
+            final int secondaryDisplayId =
+                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final SecondaryActivity secondaryActivity =
+                    startActivity(SecondaryActivity.class, secondaryDisplayId);
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
-            sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3,
-                    secondaryDisplay.getDisplayId());
+            sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
 
             final boolean perDisplayFocusEnabled = getTargetContext().getResources().getBoolean(
                     com.android.internal.R.bool.config_perDisplayFocusEnabled);
@@ -177,7 +177,7 @@ public class WindowFocusTests {
 
             // Press display-unspecified keys and a display-specified key but not release them.
             sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
-            sendKey(ACTION_DOWN, KEYCODE_6, secondaryDisplay.getDisplayId());
+            sendKey(ACTION_DOWN, KEYCODE_6, secondaryDisplayId);
             sendKey(ACTION_DOWN, KEYCODE_7, INVALID_DISPLAY);
             secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_5, 0 /* flags */);
             secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_6, 0 /* flags */);
@@ -198,6 +198,33 @@ public class WindowFocusTests {
 
             // Assert primary activity become top focused after tapping on default display.
             sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_8, INVALID_DISPLAY);
+        }
+    }
+
+    /**
+     * Test if a display targeted by a key event can be moved to top in a single-focus system.
+     */
+    @Test
+    public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
+        if (getTargetContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_perDisplayFocusEnabled)) {
+            return;
+        }
+
+        final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
+                DEFAULT_DISPLAY);
+
+        try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int secondaryDisplayId =
+                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final SecondaryActivity secondaryActivity =
+                    startActivity(SecondaryActivity.class, secondaryDisplayId);
+
+            sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_0, DEFAULT_DISPLAY);
+            sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, INVALID_DISPLAY);
+
+            sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, secondaryDisplayId);
+            sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, INVALID_DISPLAY);
         }
     }
 
@@ -232,9 +259,10 @@ public class WindowFocusTests {
         primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final Display secondaryDisplay = displaySession.createDisplay(getTargetContext());
-            final SecondaryActivity secondaryActivity
-                    = startActivity(SecondaryActivity.class, secondaryDisplay.getDisplayId());
+            final int secondaryDisplayId =
+                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final SecondaryActivity secondaryActivity =
+                    startActivity(SecondaryActivity.class, secondaryDisplayId);
 
             // Assert primary activity lost pointer capture when it is not top focused.
             primaryActivity.waitAndAssertPointerCaptureState(false /* hasCapture */);
@@ -260,9 +288,9 @@ public class WindowFocusTests {
 
         final SecondaryActivity secondaryActivity;
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final Display secondaryDisplay = displaySession.createDisplay(getTargetContext());
-            secondaryActivity
-                    = startActivity(SecondaryActivity.class, secondaryDisplay.getDisplayId());
+            final int secondaryDisplayId =
+                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            secondaryActivity = startActivity(SecondaryActivity.class, secondaryDisplayId);
         }
         // Secondary display disconnected.
 
