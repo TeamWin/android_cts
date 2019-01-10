@@ -37,7 +37,6 @@ import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.util.Pair;
 
-import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
@@ -200,11 +199,10 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
     }
 
     private void clickOnLinkUsingJs(final String linkId, WebViewOnUiThread webViewOnUiThread) {
-        EvaluateJsResultPollingCheck jsResult = new EvaluateJsResultPollingCheck("null");
-        webViewOnUiThread.evaluateJavascript(
-                "document.getElementById('" + linkId + "').click();" +
-                "console.log('element with id [" + linkId + "] clicked');", jsResult);
-        jsResult.run();
+        assertEquals("null", WebkitUtils.waitForFuture(
+                webViewOnUiThread.evaluateJavascript(
+                        "document.getElementById('" + linkId + "').click();" +
+                        "console.log('element with id [" + linkId + "] clicked');")));
     }
 
     public void testLoadPage() throws Exception {
@@ -574,28 +572,23 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             String mainUrl = server.setResponse(mainPath, mainPage, null);
             mOnUiThread.loadUrlAndWaitForCompletion(mainUrl, null);
 
-            EvaluateJsResultPollingCheck jsResult;
-
             // Test a nonexistent page
             client.interceptResponse = new WebResourceResponse("text/html", "UTF-8", null);
-            jsResult = new EvaluateJsResultPollingCheck("\"[404][Not Found]\"");
-            mOnUiThread.evaluateJavascript(js, jsResult);
-            jsResult.run();
+            assertEquals("\"[404][Not Found]\"", WebkitUtils.waitForFuture(
+                    mOnUiThread.evaluateJavascript(js)));
 
             // Test an empty page
             client.interceptResponse = new WebResourceResponse("text/html", "UTF-8",
                 new ByteArrayInputStream(new byte[0]));
-            jsResult = new EvaluateJsResultPollingCheck("\"[200][OK]\"");
-            mOnUiThread.evaluateJavascript(js, jsResult);
-            jsResult.run();
+            assertEquals("\"[200][OK]\"", WebkitUtils.waitForFuture(
+                    mOnUiThread.evaluateJavascript(js)));
 
             // Test a nonempty page with unusual response code/text
             client.interceptResponse =
                 new WebResourceResponse("text/html", "UTF-8", 123, "unusual", null,
                     new ByteArrayInputStream("nonempty page".getBytes(StandardCharsets.UTF_8)));
-            jsResult = new EvaluateJsResultPollingCheck("\"[123][unusual]\"");
-            mOnUiThread.evaluateJavascript(js, jsResult);
-            jsResult.run();
+            assertEquals("\"[123][unusual]\"", WebkitUtils.waitForFuture(
+                    mOnUiThread.evaluateJavascript(js)));
         } finally {
             server.shutdown();
         }

@@ -114,45 +114,21 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     @Override
-    public void onCreate() {
-        Log.i(TAG, "onCreate(): sServiceWatcher=" + sServiceWatcher);
-        super.onCreate();
+    public void onConnected() {
+        Log.i(TAG, "onConnected(): sServiceWatcher=" + sServiceWatcher);
 
         if (sServiceWatcher == null) {
-            addException("onCreate() without a watcher");
+            addException("onConnected() without a watcher");
             return;
         }
 
         if (sServiceWatcher.mService != null) {
-            addException("onCreate(): already created: %s", sServiceWatcher);
+            addException("onConnected(): already created: %s", sServiceWatcher);
             return;
         }
 
         sServiceWatcher.mService = this;
         sServiceWatcher.mCreated.countDown();
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.i(TAG, "onDestroy(): sServiceWatcher=" + sServiceWatcher);
-        super.onDestroy();
-
-        if (sServiceWatcher == null) {
-            addException("onDestroy() without a watcher");
-            return;
-        }
-        if (sServiceWatcher.mService == null) {
-            addException("onDestroy(): no service on %s", sServiceWatcher);
-            return;
-        }
-        sServiceWatcher.mDestroyed.countDown();
-        sServiceWatcher.mService = null;
-        sServiceWatcher = null;
-    }
-
-    @Override
-    public void onConnected() {
-        Log.i(TAG, "onConnected(): sServiceWatcher=" + sServiceWatcher);
 
         if (mConnectedLatch.getCount() == 0) {
             addException("already connected: %s", mConnectedLatch);
@@ -168,6 +144,18 @@ public class CtsContentCaptureService extends ContentCaptureService {
             addException("already disconnected: %s", mConnectedLatch);
         }
         mDisconnectedLatch.countDown();
+
+        if (sServiceWatcher == null) {
+            addException("onDisconnected() without a watcher");
+            return;
+        }
+        if (sServiceWatcher.mService == null) {
+            addException("onDisconnected(): no service on %s", sServiceWatcher);
+            return;
+        }
+        sServiceWatcher.mDestroyed.countDown();
+        sServiceWatcher.mService = null;
+        sServiceWatcher = null;
     }
 
     /**

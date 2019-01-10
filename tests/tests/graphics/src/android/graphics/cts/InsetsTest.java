@@ -66,4 +66,32 @@ public class InsetsTest {
         Insets insets2 = Insets.of(10, 20, 30, 40);
         assertEquals(insets1, insets2);
     }
+
+    @Test
+    public void testAdd() {
+        Insets insets1 = Insets.of(10, 20, 30, 40);
+        Insets insets2 = Insets.of(50, 60, 70, 80);
+        assertEquals(Insets.add(insets1, insets2), Insets.of(60, 80, 100, 120));
+    }
+
+    @Test
+    public void testSubtract() {
+        Insets insets1 = Insets.of(10, 20, 30, 40);
+        Insets insets2 = Insets.of(50, 70, 90, 110);
+        assertEquals(Insets.subtract(insets2, insets1), Insets.of(40, 50, 60, 70));
+    }
+
+    @Test
+    public void testMin() {
+        Insets insets1 = Insets.of(1, 10, 100, 1000);
+        Insets insets2 = Insets.of(1000, 100, 10, 1);
+        assertEquals(Insets.min(insets2, insets1), Insets.of(1, 10, 10, 1));
+    }
+
+    @Test
+    public void testMax() {
+        Insets insets1 = Insets.of(1, 10, 100, 1000);
+        Insets insets2 = Insets.of(1000, 100, 10, 1);
+        assertEquals(Insets.max(insets2, insets1), Insets.of(1000, 100, 100, 1000));
+    }
 }

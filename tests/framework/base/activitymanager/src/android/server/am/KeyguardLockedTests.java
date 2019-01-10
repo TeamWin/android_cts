@@ -144,7 +144,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     public void testDismissKeyguardActivity_method() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
@@ -154,7 +154,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             mAmWmState.computeState(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            assertOnDismissSucceededInLogcat(logSeparator);
+            assertOnDismissSucceeded(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         }
     }
 
@@ -162,13 +162,13 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     public void testDismissKeyguardActivity_method_cancelled() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             pressBackButton();
-            assertOnDismissCancelledInLogcat(logSeparator);
+            assertOnDismissCancelled(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             mAmWmState.computeState(true);
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, false);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);

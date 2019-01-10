@@ -43,7 +43,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     private static final float MAX_ASPECT_RATIO = 1.0f;
 
     // The min. aspect ratio the test activities are using.
-    private static final float MIN_ASPECT_RATIO = 5.0f;
+    private static final float MIN_ASPECT_RATIO = 3.0f;
 
     // Test target activity that has maxAspectRatio="true" and resizeableActivity="false".
     public static class MaxAspectRatioActivity extends Activity {

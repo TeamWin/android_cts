@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.Components.TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY;
+
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.os.Bundle;
@@ -28,6 +30,6 @@ public class TurnScreenOnDismissKeyguardActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
-                new KeyguardDismissLoggerCallback(this));
+                new KeyguardDismissLoggerCallback(this, TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY));
     }
 }

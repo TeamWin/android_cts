@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
+
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.os.Bundle;
@@ -26,6 +28,6 @@ public class DismissKeyguardMethodActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSystemService(KeyguardManager.class).requestDismissKeyguard(this,
-                new KeyguardDismissLoggerCallback(this));
+                new KeyguardDismissLoggerCallback(this, DISMISS_KEYGUARD_METHOD_ACTIVITY));
     }
 }

@@ -25,7 +25,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
@@ -57,6 +56,7 @@ import static android.server.am.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY_WITH_SAME_AFFINITY;
 import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
+import static android.server.am.Components.TestActivity.EXTRA_CONFIGURATION;
 import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressWindowButton;
@@ -72,6 +72,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.graphics.Rect;
 import android.os.Handler;
@@ -80,6 +81,9 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
+import android.server.am.CommandSession.ActivityCallback;
+import android.server.am.CommandSession.SizeInfo;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
@@ -94,8 +98,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -845,19 +847,19 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
-        LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
-        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
-        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
 
         // Trigger it to go back to fullscreen and ensure that only triggered one configuration
         // change as well
-        logSeparator = separateLogs();
+        separateTestJournal();
         launchActivity(PIP_ACTIVITY);
-        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
-        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
     }
 
     /** Helper class to save, set, and restore transition_animation_scale preferences. */
@@ -904,7 +906,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             assertPinnedStackExists();
 
             // Relaunch the PiP activity back into fullscreen
-            LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             launchActivity(PIP_ACTIVITY);
             // Wait until the PiP activity is reparented into the fullscreen stack (happens after
             // the transition has finished)
@@ -913,12 +915,13 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
             // configuration change (since none was sent)
             final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
-                    PIP_ACTIVITY, logSeparator);
-            assertEquals("onConfigurationChanged", 0, lifecycleCounts.mConfigurationChangedCount);
+                    PIP_ACTIVITY);
+            assertEquals("onConfigurationChanged", 0,
+                    lifecycleCounts.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED));
             assertEquals("onPictureInPictureModeChanged", 1,
-                    lifecycleCounts.mPictureInPictureModeChangedCount);
+                    lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED));
             assertEquals("onMultiWindowModeChanged", 1,
-                    lifecycleCounts.mMultiWindowModeChangedCount);
+                    lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
         }
     }
 
@@ -935,25 +938,27 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Dismiss it
-        LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
 
         // Confirm that we get stop before the multi-window and picture-in-picture mode change
         // callbacks
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY,
-                logSeparator);
-        assertEquals("onStop", 1, lifecycleCounts.mStopCount);
+        final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(PIP_ACTIVITY);
+        assertEquals("onStop", 1, lifecycles.getCount(ActivityCallback.ON_STOP));
         assertEquals("onPictureInPictureModeChanged", 1,
-                lifecycleCounts.mPictureInPictureModeChangedCount);
-        assertEquals("onMultiWindowModeChanged", 1, lifecycleCounts.mMultiWindowModeChangedCount);
-        final int lastStopLine = lifecycleCounts.mLastStopLineIndex;
-        final int lastPipLine = lifecycleCounts.mLastPictureInPictureModeChangedLineIndex;
-        final int lastMwLine = lifecycleCounts.mLastMultiWindowModeChangedLineIndex;
+                lifecycles.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED));
+        assertEquals("onMultiWindowModeChanged", 1,
+                lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        final int lastStopIndex = lifecycles.getLastIndex(ActivityCallback.ON_STOP);
+        final int lastPipIndex = lifecycles.getLastIndex(
+                ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED);
+        final int lastMwIndex = lifecycles.getLastIndex(
+                ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED);
         assertThat("onStop should be before onPictureInPictureModeChanged",
-                lastStopLine, lessThan(lastPipLine));
+                lastStopIndex, lessThan(lastPipIndex));
         assertThat("onPictureInPictureModeChanged should be before onMultiWindowModeChanged",
-                lastPipLine, lessThan(lastMwLine));
+                lastPipIndex, lessThan(lastMwIndex));
     }
 
     @Test
@@ -1045,17 +1050,16 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Finish the task overlay activity while animating and ensure that the PiP activity never
         // got resumed.
-        LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mAtm.resizeStack(stackId, new Rect(20, 20, 500, 500), true /* animate */));
         mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) ->
                         !amState.containsActivity(TRANSLUCENT_TEST_ACTIVITY),
                 "Waiting for test activity to finish...");
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY,
-                logSeparator);
-        assertEquals("onResume", 0, lifecycleCounts.mResumeCount);
-        assertEquals("onPause", 0, lifecycleCounts.mPauseCount);
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
+        assertEquals("onResume", 0, lifecycleCounts.getCount(ActivityCallback.ON_RESUME));
+        assertEquals("onPause", 0, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
     }
 
     @Test
@@ -1182,23 +1186,21 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());
 
-        LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         launchActivity(TEST_ACTIVITY);
         final int defaultWindowingMode = mAmWmState.getAmState()
                 .getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
-        final ReportedSizes initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY,
-                logSeparator);
-        final Rect initialAppBounds = readAppBounds(TEST_ACTIVITY, logSeparator);
+        final SizeInfo initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY);
+        final Rect initialAppBounds = getAppBounds(TEST_ACTIVITY);
         assertNotNull("Must report display dimensions", initialSizes);
         assertNotNull("Must report app bounds", initialAppBounds);
 
-        logSeparator = separateLogs();
+        separateTestJournal();
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
-        final ReportedSizes pinnedSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
-                logSeparator);
-        final Rect pinnedAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
+        final SizeInfo pinnedSizes = getLastReportedSizesForActivity(PIP_ACTIVITY);
+        final Rect pinnedAppBounds = getAppBounds(PIP_ACTIVITY);
         assertNotEquals("Reported display size when pinned must be different from default",
                 initialSizes, pinnedSizes);
         final Size initialAppSize = new Size(initialAppBounds.width(), initialAppBounds.height());
@@ -1206,11 +1208,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertNotEquals("Reported app size when pinned must be different from default",
                 initialAppSize, pinnedAppSize);
 
-        logSeparator = separateLogs();
+        separateTestJournal();
         launchActivity(PIP_ACTIVITY, defaultWindowingMode);
-        final ReportedSizes finalSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
-                logSeparator);
-        final Rect finalAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
+        final SizeInfo finalSizes = getLastReportedSizesForActivity(PIP_ACTIVITY);
+        final Rect finalAppBounds = getAppBounds(PIP_ACTIVITY);
         final Size finalAppSize = new Size(finalAppBounds.width(), finalAppBounds.height());
         assertEquals("Must report default size after exiting PiP", initialSizes, finalSizes);
         assertEquals("Must report default app size after exiting PiP", initialAppSize,
@@ -1325,22 +1326,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 offsetBoundsOut.right, offsetBoundsOut.bottom);
     }
 
-    private static final Pattern sAppBoundsPattern = Pattern.compile(
-            "(.+)mAppBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)(.*)");
-
-    /** Read app bounds in last applied configuration from logs. */
-    private Rect readAppBounds(ComponentName activityName, LogSeparator logSeparator) {
-        final String[] lines = getDeviceLogsForComponents(logSeparator, getLogTag(activityName));
-        for (int i = lines.length - 1; i >= 0; i--) {
-            final String line = lines[i].trim();
-            final Matcher matcher = sAppBoundsPattern.matcher(line);
-            if (matcher.matches()) {
-                final int left = Integer.parseInt(matcher.group(2));
-                final int top = Integer.parseInt(matcher.group(3));
-                final int right = Integer.parseInt(matcher.group(4));
-                final int bottom = Integer.parseInt(matcher.group(5));
-                return new Rect(left, top, right - left, bottom - top);
-            }
+    /** Get app bounds in last applied configuration. */
+    private Rect getAppBounds(ComponentName activityName) {
+        final Configuration config = TestJournalContainer.get(activityName).extras
+                .getParcelable(EXTRA_CONFIGURATION);
+        if (config != null) {
+            return config.windowConfiguration.getAppBounds();
         }
         return null;
     }
@@ -1426,24 +1417,25 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the activity received exactly one of each of the callbacks when entering and
      * exiting picture-in-picture.
      */
-    private void assertValidPictureInPictureCallbackOrder(
-            ComponentName activityName, LogSeparator logSeparator) {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
-                logSeparator);
+    private void assertValidPictureInPictureCallbackOrder(ComponentName activityName) {
+        final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(activityName);
 
         assertEquals(getActivityName(activityName) + " onConfigurationChanged()",
-                1, lifecycleCounts.mConfigurationChangedCount);
+                1, lifecycles.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED));
         assertEquals(getActivityName(activityName) + " onPictureInPictureModeChanged()",
-                1, lifecycleCounts.mPictureInPictureModeChangedCount);
+                1, lifecycles.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED));
         assertEquals(getActivityName(activityName) + " onMultiWindowModeChanged",
-                1, lifecycleCounts.mMultiWindowModeChangedCount);
-        int lastPipLine = lifecycleCounts.mLastPictureInPictureModeChangedLineIndex;
-        int lastMwLine = lifecycleCounts.mLastMultiWindowModeChangedLineIndex;
-        int lastConfigLine = lifecycleCounts.mLastConfigurationChangedLineIndex;
+                1, lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        final int lastPipIndex = lifecycles
+                .getLastIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED);
+        final int lastMwIndex = lifecycles
+                .getLastIndex(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED);
+        final int lastConfigIndex = lifecycles
+                .getLastIndex(ActivityCallback.ON_CONFIGURATION_CHANGED);
         assertThat("onPictureInPictureModeChanged should be before onMultiWindowModeChanged",
-                lastPipLine, lessThan(lastMwLine));
+                lastPipIndex, lessThan(lastMwIndex));
         assertThat("onMultiWindowModeChanged should be before onConfigurationChanged",
-                lastMwLine, lessThan(lastConfigLine));
+                lastMwIndex, lessThan(lastConfigIndex));
     }
 
     /**
@@ -1491,14 +1483,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     /**
      * Waits until the expected picture-in-picture callbacks have been made.
      */
-    private void waitForValidPictureInPictureCallbacks(ComponentName activityName,
-            LogSeparator logSeparator) {
+    private void waitForValidPictureInPictureCallbacks(ComponentName activityName) {
         mAmWmState.waitFor((amState, wmState) -> {
-            final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
-                    activityName, logSeparator);
-            return lifecycleCounts.mConfigurationChangedCount == 1 &&
-                    lifecycleCounts.mPictureInPictureModeChangedCount == 1 &&
-                    lifecycleCounts.mMultiWindowModeChangedCount == 1;
+            final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(activityName);
+            return lifecycles.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED) == 1
+                    && lifecycles.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED) == 1
+                    && lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED) == 1;
         }, "Waiting for picture-in-picture activity callbacks...");
     }
 

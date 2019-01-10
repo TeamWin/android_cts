@@ -113,21 +113,29 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
         installPackageAsUser(Ime1Constants.APK, true, secondaryUserId, "-r");
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(secondaryUserId);  // because not the current user yet
+        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);  // ditto
 
         switchUser(secondaryUserId);
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1ExistsInApiResult(secondaryUserId);    // now it's visible
+        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(secondaryUserId);    // ditto
 
         switchUser(primaryUserId);
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(secondaryUserId);  // because it's no longer the current user
+        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);  // ditto
 
         getDevice().stopUser(secondaryUserId);
         getDevice().removeUser(secondaryUserId);
@@ -171,18 +179,27 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(profileUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
         installPackageAsUser(Ime1Constants.APK, true, primaryUserId, "-r");
 
         assertIme1ExistsInApiResult(primaryUserId);
         assertIme1ExistsInApiResult(profileUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeExists(profileUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
         switchUser(secondaryUserId);
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(profileUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
         switchUser(primaryUserId);
 
@@ -273,6 +290,14 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
     private void assertIme1NotExistInApiResult(int userId) throws Exception  {
         runTestAsUser(DeviceTestConstants.TEST_IME1_NOT_IN_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme1ImplicitlyEnabledSubtypeExists(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME1_IMPLICITLY_ENABLED_SUBTYPE_EXISTS, userId);
+    }
+
+    private void assertIme1ImplicitlyEnabledSubtypeNotExist(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME1_IMPLICITLY_ENABLED_SUBTYPE_NOT_EXIST, userId);
     }
 
     private void runTestAsUser(TestInfo testInfo, int userId) throws Exception {

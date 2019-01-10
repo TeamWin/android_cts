@@ -120,6 +120,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             setShowWhenLocked(true);
         }
 
+        boolean enteringPip = false;
         // Enter picture in picture with the given aspect ratio if provided
         if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
             if (getIntent().hasExtra(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR)
@@ -130,12 +131,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                     builder.setAspectRatio(getAspectRatio(getIntent(),
                             EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR,
                             EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR));
-                    enterPictureInPictureMode(builder.build());
+                    enteringPip = enterPictureInPictureMode(builder.build());
                 } catch (Exception e) {
                     // This call can fail intentionally if the aspect ratio is too extreme
                 }
             } else {
-                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+                enteringPip = enterPictureInPictureMode(
+                        new PictureInPictureParams.Builder().build());
             }
         }
 
@@ -179,10 +181,14 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_FINISH);
         registerReceiver(mReceiver, filter);
 
-        // Dump applied display metrics.
-        Configuration config = getResources().getConfiguration();
-        dumpDisplaySize(config);
-        dumpConfiguration(config);
+        // Don't dump configuration when entering PIP to avoid the verifier getting the intermediate
+        // state. In this case it is expected that the verifier will check the changed configuration
+        // after onConfigurationChanged.
+        if (!enteringPip) {
+            // Dump applied display metrics.
+            dumpConfiguration(getResources().getConfiguration());
+            dumpConfigInfo();
+        }
     }
 
     @Override
@@ -249,8 +255,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        dumpDisplaySize(newConfig);
         dumpConfiguration(newConfig);
+        dumpConfigInfo();
     }
 
     /**

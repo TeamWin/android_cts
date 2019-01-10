@@ -17,12 +17,14 @@
 package android.server.am;
 
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
-import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.Components.FONT_SCALE_ACTIVITY;
 import static android.server.am.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
 import static android.server.am.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
+import static android.server.am.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
+import static android.server.am.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.Surface.ROTATION_0;
@@ -37,8 +39,11 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.am.CommandSession.SizeInfo;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
 
@@ -48,8 +53,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Build/Install/Run:
@@ -136,10 +139,10 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
 
-            final ReportedSizes[] sizes = new ReportedSizes[cutoutRotations.length];
+            final SizeInfo[] sizes = new SizeInfo[cutoutRotations.length];
             for (int i = 0; i < cutoutRotations.length; i++) {
+                separateTestJournal();
                 final int rotation = cutoutRotations[i];
-                final LogSeparator logSeparator = separateLogs();
                 rotationSession.set(rotation);
                 final int newDeviceRotation = getDeviceRotation(displayId);
                 if (rotation != newDeviceRotation) {
@@ -149,7 +152,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
                 }
 
                 // Record configuration changes on rotations between opposite orientations
-                sizes[i] = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY, logSeparator);
+                sizes[i] = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
                 if (i == 0) {
                     configSame0_180 = sizes[i] == null;
                 } else if (i == 2) {
@@ -186,11 +189,10 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             }
 
             for (int rotation = 0; rotation < 4; rotation += rotationStep) {
-                final LogSeparator logSeparator = separateLogs();
+                separateTestJournal();
                 rotationSession.set(rotation);
                 mAmWmState.computeState(activityName);
-                assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
-                        logSeparator);
+                assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange);
             }
         }
     }
@@ -208,24 +210,22 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             ComponentName activityName, boolean relaunch) throws Exception {
         try (final FontScaleSession fontScaleSession = new FontScaleSession()) {
             fontScaleSession.set(1.0f);
-            LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             launchActivity(activityName);
             mAmWmState.computeState(activityName);
 
-            final int densityDpi = getActivityDensityDpi(activityName, logSeparator);
+            final int densityDpi = getActivityDensityDpi(activityName);
 
             for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
-                logSeparator = separateLogs();
+                separateTestJournal();
                 fontScaleSession.set(fontScale);
                 mAmWmState.computeState(activityName);
-                assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
-                        logSeparator);
+                assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1);
 
                 // Verify that the display metrics are updated, and therefore the text size is also
                 // updated accordingly.
                 assertExpectedFontPixelSize(activityName,
-                        scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi),
-                        logSeparator);
+                        scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi));
             }
         }
     }
@@ -236,19 +236,19 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
      */
     @Test
     public void testUpdateApplicationInfo() throws Exception {
-        final LogSeparator firstLogSeparator = separateLogs();
+        separateTestJournal();
 
         // Launch an activity that prints applied config.
         launchActivity(TEST_ACTIVITY);
-        final int assetSeq = readAssetSeqNumber(TEST_ACTIVITY, firstLogSeparator);
+        final int assetSeq = getAssetSeqNumber(TEST_ACTIVITY);
 
-        final LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         // Update package info.
         updateApplicationInfo(Arrays.asList(TEST_ACTIVITY.getPackageName()));
         mAmWmState.waitForWithAmState((amState) -> {
             // Wait for activity to be resumed and asset seq number to be updated.
             try {
-                return readAssetSeqNumber(TEST_ACTIVITY, logSeparator) == assetSeq + 1
+                return getAssetSeqNumber(TEST_ACTIVITY) == assetSeq + 1
                         && amState.hasActivityState(TEST_ACTIVITY, STATE_RESUMED);
             } catch (Exception e) {
                 logE("Error waiting for valid state: " + e.getMessage());
@@ -258,31 +258,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
         // Check if activity is relaunched and asset seq is updated.
         assertRelaunchOrConfigChanged(TEST_ACTIVITY, 1 /* numRelaunch */,
-                0 /* numConfigChange */, logSeparator);
-        final int newAssetSeq = readAssetSeqNumber(TEST_ACTIVITY, logSeparator);
+                0 /* numConfigChange */);
+        final int newAssetSeq = getAssetSeqNumber(TEST_ACTIVITY);
         assertEquals("Asset sequence number must be incremented.", assetSeq + 1, newAssetSeq);
     }
 
-    private static final Pattern sConfigurationPattern = Pattern.compile(
-            "(.+): Configuration: \\{(.*) as.(\\d+)(.*)\\}");
-
-    /** Read asset sequence number in last applied configuration from logs. */
-    private int readAssetSeqNumber(ComponentName activityName, LogSeparator logSeparator)
-            throws Exception {
-        final String[] lines = getDeviceLogsForComponents(logSeparator, getLogTag(activityName));
-        for (int i = lines.length - 1; i >= 0; i--) {
-            final String line = lines[i].trim();
-            final Matcher matcher = sConfigurationPattern.matcher(line);
-            if (matcher.matches()) {
-                final String assetSeqNumber = matcher.group(3);
-                try {
-                    return Integer.valueOf(assetSeqNumber);
-                } catch (NumberFormatException e) {
-                    // Ignore, asset seq number is not printed when not set.
-                }
-            }
-        }
-        return 0;
+    private static int getAssetSeqNumber(ComponentName activityName) {
+        return TestJournalContainer.get(activityName).extras.getInt(EXTRA_CONFIG_ASSETS_SEQ);
     }
 
     // Calculate the scaled pixel size just like the device is supposed to.
@@ -292,38 +274,24 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         return (int) ((f >= 0) ? (f + 0.5f) : (f - 0.5f));
     }
 
-    private static Pattern sDeviceDensityPattern = Pattern.compile("^(.+): fontActivityDpi=(.+)$");
-
-    private int getActivityDensityDpi(ComponentName activityName, LogSeparator logSeparator)
+    private static int getActivityDensityDpi(ComponentName activityName)
             throws Exception {
-        final String[] lines = getDeviceLogsForComponents(logSeparator, getLogTag(activityName));
-        for (int i = lines.length - 1; i >= 0; i--) {
-            final String line = lines[i].trim();
-            final Matcher matcher = sDeviceDensityPattern.matcher(line);
-            if (matcher.matches()) {
-                return Integer.parseInt(matcher.group(2));
-            }
+        final Bundle extras = TestJournalContainer.get(activityName).extras;
+        if (!extras.containsKey(EXTRA_FONT_ACTIVITY_DPI)) {
+            fail("No fontActivityDpi reported from activity " + activityName);
+            return -1;
         }
-        fail("No fontActivityDpi reported from activity " + activityName);
-        return -1;
+        return extras.getInt(EXTRA_FONT_ACTIVITY_DPI);
     }
 
-    private static final Pattern sFontSizePattern = Pattern.compile("^(.+): fontPixelSize=(.+)$");
-
-    /** Read the font size in the last log line. */
-    private void assertExpectedFontPixelSize(ComponentName activityName, int fontPixelSize,
-            LogSeparator logSeparator) throws Exception {
-        final String[] lines = getDeviceLogsForComponents(logSeparator, getLogTag(activityName));
-        for (int i = lines.length - 1; i >= 0; i--) {
-            final String line = lines[i].trim();
-            final Matcher matcher = sFontSizePattern.matcher(line);
-            if (matcher.matches()) {
-                assertEquals("Expected font pixel size does not match", fontPixelSize,
-                        Integer.parseInt(matcher.group(2)));
-                return;
-            }
+    private void assertExpectedFontPixelSize(ComponentName activityName, int fontPixelSize)
+            throws Exception {
+        final Bundle extras = TestJournalContainer.get(activityName).extras;
+        if (!extras.containsKey(EXTRA_FONT_PIXEL_SIZE)) {
+            fail("No fontPixelSize reported from activity " + activityName);
         }
-        fail("No fontPixelSize reported from activity " + activityName);
+        assertEquals("Expected font pixel size does not match", fontPixelSize,
+                extras.getInt(EXTRA_FONT_PIXEL_SIZE));
     }
 
     private void updateApplicationInfo(List<String> packages) {

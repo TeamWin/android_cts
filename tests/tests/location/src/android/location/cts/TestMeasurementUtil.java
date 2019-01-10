@@ -173,11 +173,11 @@ public final class TestMeasurementUtil {
     }
 
     /**
-     * Asserts consistent FullBiasNanos of GnssClock at the same time epoch.
+     * Asserts the same FullBiasNanos of multiple GnssMeasurementEvents at the same time epoch.
      *
-     * <p>FullBiasNanos denotes the receiver clock bias calculated by the GNSS chipset.
-     * FullBiasNanos fields in GnssMeasurementEvents of the same time epoch should have the same
-     * value.
+     * <p>FullBiasNanos denotes the receiver clock bias calculated by the GNSS chipset. If multiple
+     * GnssMeasurementEvents are tagged with the same time epoch, their FullBiasNanos should be the
+     * same.
      *
      * @param softAssert custom SoftAssert
      * @param events     GnssMeasurementEvents. Each event includes one GnssClock with a

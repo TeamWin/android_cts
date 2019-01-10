@@ -78,12 +78,9 @@ import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
 import android.widget.LinearLayout;
 
-import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
-
-import junit.framework.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -104,7 +101,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
@@ -240,7 +239,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
 
-        Assert.fail("WebView should have thrown exception when creating with a device " +
+        fail("WebView should have thrown exception when creating with a device " +
                 "protected storage context");
     }
 
@@ -263,7 +262,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
 
-        Assert.fail("WebView should have thrown exception when creating with a device " +
+        fail("WebView should have thrown exception when creating with a device " +
                 "protected storage context");
     }
 
@@ -351,132 +350,66 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // can zoom in or out although zoom support is disabled in web settings
         assertTrue(mOnUiThread.zoomIn());
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale > previousScale);
+        currScale = webViewClient.expectZoomIn(currScale);
 
         assertTrue(mOnUiThread.zoomOut());
-        previousScale = currScale;
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale < previousScale);
+        currScale = webViewClient.expectZoomOut(currScale);
 
         mOnUiThread.zoomBy(1.25f); // zoom in
-        previousScale = currScale;
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale > previousScale);
+        currScale = webViewClient.expectZoomBy(currScale, 1.25f);
 
         mOnUiThread.zoomBy(0.8f); // zoom out
-        previousScale = currScale;
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale < previousScale);
+        currScale = webViewClient.expectZoomBy(currScale, 0.8f);
 
         // enable zoom support
         settings.setSupportZoom(true);
         assertTrue(settings.supportZoom());
-        previousScale = mOnUiThread.getScale();
 
-        assertTrue(mOnUiThread.zoomIn());
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale > previousScale);
-
-        // zoom in until it reaches maximum scale
+        // Zoom in until maximum scale, in default increments.
         while (mOnUiThread.zoomIn()) {
-            previousScale = currScale;
-            webViewClient.waitForScaleChanged();
-            currScale = mOnUiThread.getScale();
-            assertTrue(currScale > previousScale);
+            currScale = webViewClient.expectZoomIn(currScale);
         }
 
-        previousScale = currScale;
-        // can not zoom in further
         assertFalse(mOnUiThread.zoomIn());
+        assertNoScaleChange(webViewClient, currScale);
 
-        // We sleep to assert to the best of our ability
-        // that a scale change does *not* happen.
-        Thread.sleep(500);
-        currScale = mOnUiThread.getScale();
-        assertEquals(currScale, previousScale, PAGE_SCALE_EPSILON);
-
-        assertTrue(mOnUiThread.zoomOut());
-        previousScale = currScale;
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale < previousScale);
-
-        // zoom out until it reaches minimum scale
+        // Zoom out until minimum scale, in default increments.
         while (mOnUiThread.zoomOut()) {
-            previousScale = currScale;
-            webViewClient.waitForScaleChanged();
-            currScale = mOnUiThread.getScale();
-            assertTrue(currScale < previousScale);
+            currScale = webViewClient.expectZoomOut(currScale);
         }
 
-        previousScale = currScale;
         assertFalse(mOnUiThread.zoomOut());
+        assertNoScaleChange(webViewClient, currScale);
 
-        // We sleep to assert to the best of our ability
-        // that a scale change does *not* happen.
-        Thread.sleep(500);
-        currScale = mOnUiThread.getScale();
-        assertEquals(currScale, previousScale, PAGE_SCALE_EPSILON);
-
-        mOnUiThread.zoomBy(1.25f);
-        previousScale = currScale;
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale > previousScale);
-
-        // zoom in until it reaches maximum scale
+        // Zoom in until maximum scale, in specified increments designed so that the last zoom will
+        // be less than expected.
         while (mOnUiThread.canZoomIn()) {
-            previousScale = currScale;
-            mOnUiThread.zoomBy(1.25f);
-            webViewClient.waitForScaleChanged();
-            currScale = mOnUiThread.getScale();
-            assertTrue(currScale > previousScale);
+            mOnUiThread.zoomBy(1.7f);
+            currScale = webViewClient.expectZoomBy(currScale, 1.7f);
         }
 
-        previousScale = currScale;
+        // At this point, zooming in should do nothing.
+        mOnUiThread.zoomBy(1.7f);
+        assertNoScaleChange(webViewClient, currScale);
 
-        // We sleep to assert to the best of our ability
-        // that a scale change does *not* happen.
-        Thread.sleep(500);
-        currScale = mOnUiThread.getScale();
-        assertEquals(currScale, previousScale, PAGE_SCALE_EPSILON);
-
-        mOnUiThread.zoomBy(0.8f);
-        previousScale = currScale;
-        webViewClient.waitForScaleChanged();
-
-        currScale = mOnUiThread.getScale();
-        assertTrue(currScale < previousScale);
-
-        // zoom out until it reaches minimum scale
+        // Zoom out until minimum scale, in specified increments designed so that the last zoom will
+        // be less than requested.
         while (mOnUiThread.canZoomOut()) {
-            previousScale = currScale;
-            mOnUiThread.zoomBy(0.8f);
-            webViewClient.waitForScaleChanged();
-            currScale = mOnUiThread.getScale();
-            assertTrue(currScale < previousScale);
+            mOnUiThread.zoomBy(0.7f);
+            currScale = webViewClient.expectZoomBy(currScale, 0.7f);
         }
 
-        previousScale = currScale;
+        // At this point, zooming out should do nothing.
+        mOnUiThread.zoomBy(0.7f);
+        assertNoScaleChange(webViewClient, currScale);
+    }
 
+    private void assertNoScaleChange(ScaleChangedWebViewClient webViewClient, float currScale) throws InterruptedException {
         // We sleep to assert to the best of our ability
         // that a scale change does *not* happen.
         Thread.sleep(500);
-        currScale = mOnUiThread.getScale();
-        assertEquals(currScale, previousScale, PAGE_SCALE_EPSILON);
+        assertFalse(webViewClient.onScaleChangedCalled());
+        assertEquals(currScale, mOnUiThread.getScale());
     }
 
     @UiThreadTest
@@ -791,7 +724,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                         continue;
                     }
                     if (!mWasProvideResultCalled) {
-                        Assert.fail("Unexpected timeout");
+                        fail("Unexpected timeout");
                     }
                 }
                 return mResult;
@@ -967,17 +900,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         assertFalse(mJsInterfaceWasCalled.get());
 
-        final SettableFuture<String> javascriptResultFuture = SettableFuture.create();
-        mOnUiThread.evaluateJavascript(
-                "try {dummy.call(); 'fail'; } catch (exception) { 'pass'; } ",
-                new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String result) {
-                            javascriptResultFuture.set(result);
-                        }
-                    });
-
-        assertEquals("\"pass\"", WebkitUtils.waitForFuture(javascriptResultFuture));
+        assertEquals("\"pass\"", WebkitUtils.waitForFuture(
+                mOnUiThread.evaluateJavascript(
+                        "try {dummy.call(); 'fail'; } catch (exception) { 'pass'; } ")));
         assertTrue(mJsInterfaceWasCalled.get());
     }
 
@@ -994,19 +919,16 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.addJavascriptInterface(obj, "dummy");
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        EvaluateJsResultPollingCheck jsResult;
-        jsResult = new EvaluateJsResultPollingCheck("42");
-        mOnUiThread.evaluateJavascript("dummy.custom_property = 42", jsResult);
-        jsResult.run();
-        jsResult = new EvaluateJsResultPollingCheck("true");
-        mOnUiThread.evaluateJavascript("'custom_property' in dummy", jsResult);
-        jsResult.run();
+        assertEquals("42", WebkitUtils.waitForFuture(
+                mOnUiThread.evaluateJavascript("dummy.custom_property = 42")));
+
+        assertEquals("true", WebkitUtils.waitForFuture(
+                mOnUiThread.evaluateJavascript("'custom_property' in dummy")));
 
         mOnUiThread.reloadAndWaitForCompletion();
 
-        jsResult = new EvaluateJsResultPollingCheck("false");
-        mOnUiThread.evaluateJavascript("'custom_property' in dummy", jsResult);
-        jsResult.run();
+        assertEquals("false", WebkitUtils.waitForFuture(
+                mOnUiThread.evaluateJavascript("'custom_property' in dummy")));
     }
 
     public void testJavascriptInterfaceForClientPopup() throws Exception {
@@ -1031,8 +953,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         childOnUiThread.getSettings().setJavaScriptEnabled(true);
         childOnUiThread.addJavascriptInterface(obj, "dummy");
 
-        final boolean[] hadOnCreateWindow = new boolean[1];
-        hadOnCreateWindow[0] = false;
+        final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
         mOnUiThread.setWebChromeClient(new WebViewOnUiThread.WaitForProgressClient(mOnUiThread) {
             @Override
             public boolean onCreateWindow(
@@ -1043,7 +964,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
                 transport.setWebView(childWebView);
                 resultMsg.sendToTarget();
-                hadOnCreateWindow[0] = true;
+                onCreateWindowFuture.set(null);
                 return true;
             }
         });
@@ -1051,22 +972,16 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         startWebServer(false);
         mOnUiThread.loadUrlAndWaitForCompletion(mWebServer.
                 getAssetUrl(TestHtmlConstants.POPUP_URL));
-        new PollingCheck(TEST_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return hadOnCreateWindow[0];
-            }
-        }.run();
+        WebkitUtils.waitForFuture(onCreateWindowFuture);
 
         childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
-        EvaluateJsResultPollingCheck jsResult;
-        jsResult = new EvaluateJsResultPollingCheck("true");
-        childOnUiThread.evaluateJavascript("'dummy' in window", jsResult);
-        jsResult.run();
+
+        assertEquals("true", WebkitUtils.waitForFuture(
+                childOnUiThread.evaluateJavascript("'dummy' in window")));
+
         // Verify that the injected object is functional.
-        jsResult = new EvaluateJsResultPollingCheck("42");
-        childOnUiThread.evaluateJavascript("dummy.test()", jsResult);
-        jsResult.run();
+        assertEquals("42", WebkitUtils.waitForFuture(
+                childOnUiThread.evaluateJavascript("dummy.test()")));
     }
 
     private final class TestPictureListener implements PictureListener {
@@ -1490,8 +1405,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
     }
 
-    private static class WaitForFindResultsListener extends FutureTask<Integer>
+    private static class WaitForFindResultsListener
             implements WebView.FindListener {
+        private final SettableFuture<Integer> mFuture;
         private final WebViewOnUiThread mWebViewOnUiThread;
         private final int mMatchesWanted;
         private final String mStringWanted;
@@ -1499,14 +1415,15 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         public WaitForFindResultsListener(
                 WebViewOnUiThread wv, String wanted, int matches, boolean retry) {
-            super(new Runnable() {
-                @Override
-                public void run() { }
-            }, null);
+            mFuture = SettableFuture.create();
             mWebViewOnUiThread = wv;
             mMatchesWanted = matches;
             mStringWanted = wanted;
             mRetry = retry;
+        }
+
+        public Future<Integer> future() {
+            return mFuture;
         }
 
         @Override
@@ -1518,7 +1435,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                     mWebViewOnUiThread.findAll(mStringWanted);
                 }
                 else {
-                    set(numberOfMatches);
+                    mFuture.set(numberOfMatches);
                 }
             }
         }
@@ -1543,7 +1460,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         WaitForFindResultsListener l = new WaitForFindResultsListener(mOnUiThread, "find", 2, true);
         mOnUiThread.setFindListener(l);
         mOnUiThread.findAll("find");
-        assertEquals(2, l.get(MIN_FIND_WAIT_MS, TimeUnit.MILLISECONDS).intValue());
+        assertEquals(2, (int)WebkitUtils.waitForFuture(l.future()));
     }
 
     public void testFindNext() throws Throwable {
@@ -1565,7 +1482,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // highlight all the strings found and wait for all the matches to be found
         mOnUiThread.findAll("all");
-        l.get(MIN_FIND_WAIT_MS, TimeUnit.MILLISECONDS);
+        WebkitUtils.waitForFuture(l.future());
         mOnUiThread.setFindListener(null);
 
         int previousScrollY = mOnUiThread.getScrollY();
@@ -1613,23 +1530,17 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
         final class DocumentHasImageCheckHandler extends Handler {
-            private boolean mReceived;
-            private int mMsgArg1;
+            private SettableFuture<Integer> mFuture;
             public DocumentHasImageCheckHandler(Looper looper) {
                 super(looper);
+                mFuture = SettableFuture.create();
             }
             @Override
             public void handleMessage(Message msg) {
-                synchronized(this) {
-                    mReceived = true;
-                    mMsgArg1 = msg.arg1;
-                }
+                mFuture.set(msg.arg1);
             }
-            public synchronized boolean hasCalledHandleMessage() {
-                return mReceived;
-            }
-            public synchronized int getMsgArg1() {
-                return mMsgArg1;
+            public Future<Integer> future() {
+                return mFuture;
             }
         }
 
@@ -1645,16 +1556,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                     + imgUrl + "\"/></body></html>", "text/html", null);
             Message response = new Message();
             response.setTarget(handler);
-            assertFalse(handler.hasCalledHandleMessage());
+            assertFalse(handler.future().isDone());
             mWebView.documentHasImages(response);
         });
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return handler.hasCalledHandleMessage();
-            }
-        }.run();
-        assertEquals(1, handler.getMsgArg1());
+        assertEquals(1, (int)WebkitUtils.waitForFuture(handler.future()));
     }
 
     private static void waitForFlingDone(WebViewOnUiThread webview) {
@@ -1920,11 +1825,15 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
         final class ImageLoaded {
-            public boolean mImageLoaded;
+            public SettableFuture<Void> mImageLoaded = SettableFuture.create();
 
             @JavascriptInterface
             public void loaded() {
-                mImageLoaded = true;
+                mImageLoaded.set(null);
+            }
+
+            public Future<Void> future() {
+                return mImageLoaded;
             }
         }
         final ImageLoaded imageLoaded = new ImageLoaded();
@@ -1950,12 +1859,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 + "</head><body><img id=\"imgElement\" src=\"" + imgUrl
                 + "\" width=\"" + imgWidth + "\" height=\"" + imgHeight
                 + "\" onLoad=\"imgLoad()\"/></body></html>", "text/html", null);
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return imageLoaded.mImageLoaded;
-            }
-        }.run();
+        WebkitUtils.waitForFuture(imageLoaded.future());
         getInstrumentation().waitForIdleSync();
 
         final HrefCheckHandler handler = new HrefCheckHandler(mWebView.getHandler().getLooper());
@@ -2223,7 +2127,31 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         pollingCheckForCanZoomIn();
 
         assertTrue(mOnUiThread.zoomIn());
-        webViewClient.waitForScaleChanged();
+        webViewClient.waitForNextScaleChange();
+    }
+
+    public void testScaleChangeCallbackMatchesGetScale() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        // wrap_parent layout causes extra onScaleChanged ecallbacks, so set to match_parent to
+        // suppress them.
+        mOnUiThread.setLayoutHeightToMatchParent();
+        final ScaleChangedWebViewClient webViewClient = new ScaleChangedWebViewClient();
+        mOnUiThread.setWebViewClient(webViewClient);
+        startWebServer(false);
+
+        assertFalse(webViewClient.onScaleChangedCalled());
+        String url1 = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        mOnUiThread.loadUrlAndWaitForCompletion(url1);
+        pollingCheckForCanZoomIn();
+
+        assertFalse(webViewClient.onScaleChangedCalled());
+        assertTrue(mOnUiThread.zoomIn());
+        ScaleChangedState state = webViewClient.waitForNextScaleChange();
+        assertEquals(
+                "Expected onScaleChanged arg 2 (new scale) to equal view.getScale()",
+                state.mNewScale, mOnUiThread.getScale());
     }
 
     public void testRequestChildRectangleOnScreen() throws Throwable {
@@ -2360,40 +2288,24 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        final class MockWebChromeClient extends WaitForProgressClient {
-            private boolean mOnProgressChanged = false;
 
-            public MockWebChromeClient() {
-                super(mOnUiThread);
-            }
-
+        final SettableFuture<Void> future = SettableFuture.create();
+        mOnUiThread.setWebChromeClient(new WaitForProgressClient(mOnUiThread) {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 super.onProgressChanged(view, newProgress);
-                mOnProgressChanged = true;
+                future.set(null);
             }
-            public boolean onProgressChangedCalled() {
-                return mOnProgressChanged;
-            }
-        }
-
-        final MockWebChromeClient webChromeClient = new MockWebChromeClient();
-
-        mOnUiThread.setWebChromeClient(webChromeClient);
+        });
         getInstrumentation().waitForIdleSync();
-        assertFalse(webChromeClient.onProgressChangedCalled());
+        assertFalse(future.isDone());
 
         startWebServer(false);
         final String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         getInstrumentation().waitForIdleSync();
 
-        new PollingCheck(TEST_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return webChromeClient.onProgressChangedCalled();
-            }
-        }.run();
+        WebkitUtils.waitForFuture(future);
     }
 
     public void testPauseResumeTimers() throws Throwable {
@@ -2485,13 +2397,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        EvaluateJsResultPollingCheck jsResult = new EvaluateJsResultPollingCheck("2");
-        mOnUiThread.evaluateJavascript("1+1", jsResult);
-        jsResult.run();
+        assertEquals("2", WebkitUtils.waitForFuture(
+                mOnUiThread.evaluateJavascript("1+1")));
 
-        jsResult = new EvaluateJsResultPollingCheck("9");
-        mOnUiThread.evaluateJavascript("1+1; 4+5", jsResult);
-        jsResult.run();
+        assertEquals("9", WebkitUtils.waitForFuture(
+                mOnUiThread.evaluateJavascript("1+1; 4+5")));
 
         final String EXPECTED_TITLE = "test";
         mOnUiThread.evaluateJavascript("document.title='" + EXPECTED_TITLE + "';", null);
@@ -2522,12 +2432,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final File file = activity.getFileStreamPath(PRINTER_TEST_FILE);
         final ParcelFileDescriptor descriptor = ParcelFileDescriptor.open(file,
                 ParcelFileDescriptor.parseMode("w"));
-        final FutureTask<Boolean> result =
-                new FutureTask<Boolean>(new Callable<Boolean>() {
-                            public Boolean call() {
-                                return true;
-                            }
-                        });
+        final SettableFuture<Void> result = SettableFuture.create();
         printDocumentLayout(adapter, null, attributes,
                 new LayoutResultCallback() {
                     // Called on UI thread
@@ -2538,7 +2443,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                     }
                 });
         try {
-            result.get(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+            WebkitUtils.waitForFuture(result);
             assertTrue(file.length() > 0);
             FileInputStream in = new FileInputStream(file);
             byte[] b = new byte[PDF_PREAMBLE.length()];
@@ -2574,12 +2479,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final File file = activity.getFileStreamPath(PRINTER_TEST_FILE);
         final ParcelFileDescriptor descriptor = ParcelFileDescriptor.open(file,
                 ParcelFileDescriptor.parseMode("w"));
-        final FutureTask<Boolean> result =
-                new FutureTask<Boolean>(new Callable<Boolean>() {
-                            public Boolean call() {
-                                return true;
-                            }
-                        });
+        final SettableFuture<Void> result = SettableFuture.create();
         printDocumentLayout(adapter, null, attributes,
                 new LayoutResultCallback() {
                     // Called on UI thread
@@ -2592,7 +2492,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                     }
                 });
         try {
-            result.get(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+            WebkitUtils.waitForFuture(result);
             assertTrue(file.length() > 0);
             PdfRenderer renderer = new PdfRenderer(
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY));
@@ -2851,7 +2751,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
     private void savePrintedPage(final PrintDocumentAdapter adapter,
             final ParcelFileDescriptor descriptor, final PageRange[] pageRanges,
-            final FutureTask<Boolean> result) {
+            final SettableFuture<Void> result) {
         adapter.onWrite(pageRanges, descriptor,
                 new CancellationSignal(),
                 new WriteResultCallback() {
@@ -2859,9 +2759,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                     public void onWriteFinished(PageRange[] pages) {
                         try {
                             descriptor.close();
-                            result.run();
+                            result.set(null);
                         } catch (IOException ex) {
-                            fail("Failed file operation: " + ex.toString());
+                            result.setException(ex);
                         }
                     }
                 });
@@ -3010,34 +2910,91 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }.run();
     }
 
+    static class ScaleChangedState {
+        public float mOldScale;
+        public float mNewScale;
+        public boolean mCanZoomIn;
+        public boolean mCanZoomOut;
+
+        ScaleChangedState(WebView view, float oldScale, float newScale) {
+            mOldScale = oldScale;
+            mNewScale = newScale;
+            mCanZoomIn = view.canZoomIn();
+            mCanZoomOut = view.canZoomOut();
+        }
+    }
+
     final class ScaleChangedWebViewClient extends WaitForLoadedClient {
-        private boolean mOnScaleChangedCalled = false;
+        private BlockingQueue<ScaleChangedState> mCallQueue;
+
         public ScaleChangedWebViewClient() {
             super(mOnUiThread);
+            mCallQueue = new LinkedBlockingQueue<>();
         }
 
         @Override
         public void onScaleChanged(WebView view, float oldScale, float newScale) {
             super.onScaleChanged(view, oldScale, newScale);
-            synchronized (this) {
-                mOnScaleChangedCalled = true;
-            }
+            mCallQueue.add(new ScaleChangedState(view, oldScale, newScale));
         }
 
-        public void waitForScaleChanged() {
-            new PollingCheck(TEST_TIMEOUT) {
-                 @Override
-                 protected boolean check() {
-                     return onScaleChangedCalled();
-                 }
-            }.run();
-            synchronized (this) {
-                mOnScaleChangedCalled = false;
+        public float expectZoomBy(float currentScale, float scaleAmount) {
+            assertTrue(scaleAmount != 1.0f);
+
+            float nextScale = currentScale * scaleAmount;
+            ScaleChangedState state = waitForNextScaleChange();
+            assertEquals(currentScale, state.mOldScale);
+
+            // Check that we zoomed in the expected direction wrt. the current scale.
+            if (scaleAmount > 1.0f) {
+                assertTrue(
+                        "Expected new scale > current scale when zooming in",
+                        state.mNewScale > currentScale);
+            } else {
+                assertTrue(
+                        "Expected new scale < current scale when zooming out",
+                        state.mNewScale < currentScale);
             }
+
+            // If we hit the zoom limit, then the new scale should be between the old scale
+            // and the expected new scale. Otherwise it should equal the expected new scale.
+            if (Math.abs(nextScale - state.mNewScale) > PAGE_SCALE_EPSILON) {
+                if (scaleAmount > 1.0f) {
+                    assertFalse(state.mCanZoomIn);
+                    assertTrue(
+                            "Expected new scale <= requested scale when zooming in past limit",
+                            state.mNewScale <= nextScale);
+                } else {
+                    assertFalse(state.mCanZoomOut);
+                    assertTrue(
+                            "Expected new scale >= requested scale when zooming out past limit",
+                            state.mNewScale >= nextScale);
+                }
+            }
+
+            return state.mNewScale;
         }
 
-        public synchronized boolean onScaleChangedCalled() {
-            return mOnScaleChangedCalled;
+        public float expectZoomOut(float currentScale) {
+            ScaleChangedState state = waitForNextScaleChange();
+            assertEquals(currentScale, state.mOldScale);
+            assertTrue(state.mNewScale < currentScale);
+            return state.mNewScale;
+        }
+
+        public float expectZoomIn(float currentScale) {
+            ScaleChangedState state = waitForNextScaleChange();
+            assertEquals(currentScale, state.mOldScale);
+            assertTrue(state.mNewScale > currentScale);
+            return state.mNewScale;
+        }
+
+        public ScaleChangedState waitForNextScaleChange() {
+            return WebkitUtils.waitForNextQueueElement(mCallQueue);
+        }
+
+        public boolean onScaleChangedCalled() {
+            return mCallQueue.size() > 0;
         }
     }
 
@@ -3055,7 +3012,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         try {
             new URL(WebView.getSafeBrowsingPrivacyPolicyUrl().toString());
         } catch (MalformedURLException e) {
-            Assert.fail("The privacy policy URL should be a well-formed URL");
+            fail("The privacy policy URL should be a well-formed URL");
         }
     }
 

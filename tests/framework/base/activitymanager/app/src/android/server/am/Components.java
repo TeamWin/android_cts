@@ -174,6 +174,8 @@ public class Components extends ComponentsBase {
                 "android.server.am.TestActivity.finish_self";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
         public static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
+        public static final String EXTRA_CONFIGURATION = "configuration";
+        public static final String EXTRA_CONFIG_ASSETS_SEQ = "config_assets_seq";
     }
 
     /**
@@ -218,6 +220,13 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_FINISH_BROADCAST = "finish";
         public static final String EXTRA_MOVE_BROADCAST_TO_BACK = "moveToBack";
         public static final String EXTRA_BROADCAST_ORIENTATION = "orientation";
+        public static final String EXTRA_CUTOUT_EXISTS = "cutoutExists";
+    }
+
+    /** Extra key constants for {@link android.server.am.FontScaleActivity}. */
+    public static class FontScaleActivity {
+        public static final String EXTRA_FONT_PIXEL_SIZE = "fontPixelSize";
+        public static final String EXTRA_FONT_ACTIVITY_DPI = "fontActivityDpi";
     }
 
     /**

@@ -52,6 +52,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -1943,6 +1945,7 @@ public class MediaCodecTest extends AndroidTestCase {
         private ByteBufferStream mBufferInputStream;
         private InputStream mInputStream;
         private MediaCodec mCodec;
+        public boolean mIsFloat;
         BufferInfo mInfo = new BufferInfo();
         boolean mSawOutputEOS;
         boolean mSawInputEOS;
@@ -1970,6 +1973,18 @@ public class MediaCodecTest extends AndroidTestCase {
                 mCodec = MediaCodec.createDecoderByType(mime);
             }
             mCodec.configure(format,null, null, encode ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+
+            // check if float
+            final MediaFormat actualFormat =
+                    encode ? mCodec.getInputFormat() : mCodec.getOutputFormat();
+            Integer actualEncoding = null;
+            try {
+                actualEncoding = actualFormat.getInteger(MediaFormat.KEY_PCM_ENCODING);
+            } catch (Exception e) {
+                ; // trying to get a non-existent key throws exception
+            }
+            mIsFloat = actualEncoding != null && actualEncoding == AudioFormat.ENCODING_PCM_FLOAT;
+
             mCodec.start();
         }
 
@@ -2012,11 +2027,11 @@ public class MediaCodecTest extends AndroidTestCase {
                         ByteBuffer in = null;
                         do {
                             in = mBufferInputStream.read();
-                        } while (in != null && in.limit() == 0);
+                        } while (in != null && in.limit() - in.position() == 0);
                         if (in == null) {
                             mSawInputEOS = true;
                         } else {
-                            int n = in.limit();
+                            final int n = in.limit() - in.position();
                             numRead += n;
                             buf.put(in);
                         }
@@ -2129,6 +2144,54 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     };
 
+    class PcmAudioBufferStream extends ByteBufferStream {
+
+        public int mCount;         // either 0 or 1 if the buffer has been delivered
+        public ByteBuffer mBuffer; // the audio buffer (furnished duplicated, read only).
+
+        public PcmAudioBufferStream(
+            int samples, int sampleRate, double frequency, double sweep, boolean useFloat) {
+            final int sampleSize = useFloat ? 4 : 2;
+            final int sizeInBytes = samples * sampleSize;
+            mBuffer = ByteBuffer.allocate(sizeInBytes);
+            mBuffer.order(java.nio.ByteOrder.nativeOrder());
+            if (useFloat) {
+                FloatBuffer fb = mBuffer.asFloatBuffer();
+                float[] fa = AudioHelper.createSoundDataInFloatArray(
+                    samples, sampleRate, frequency, sweep);
+                for (int i = 0; i < fa.length; ++i) {
+                    // quantize to a Q.23 integer so that identity is preserved
+                    fa[i] = (float)((int)(fa[i] * ((1 << 23) - 1))) / (1 << 23);
+                }
+                fb.put(fa);
+            } else {
+                ShortBuffer sb = mBuffer.asShortBuffer();
+                sb.put(AudioHelper.createSoundDataInShortArray(
+                    samples, sampleRate, frequency, sweep));
+            }
+            mBuffer.limit(sizeInBytes);
+        }
+
+        // duplicating constructor
+        public PcmAudioBufferStream(PcmAudioBufferStream other) {
+            mCount = 0;
+            mBuffer = other.mBuffer; // ok to copy, furnished read-only
+        }
+
+        public int sizeInBytes() {
+            return mBuffer.capacity();
+        }
+
+        @Override
+        public ByteBuffer read() throws IOException {
+            if (mCount < 1 /* only one buffer */) {
+                ++mCount;
+                return mBuffer.asReadOnlyBuffer();
+            }
+            return null;
+        }
+    }
+
     private int compareStreams(InputStream test, InputStream reference) {
         Log.i(TAG, "compareStreams");
         BufferedInputStream buffered_test = new BufferedInputStream(test);
@@ -2156,36 +2219,55 @@ public class MediaCodecTest extends AndroidTestCase {
         return numread;
     }
 
+    @SmallTest
     public void testFlacIdentity() throws Exception {
-        Resources res = mContext.getResources();
-        InputStream pcmStream1 = res.openRawResource(R.raw.sinesweepraw);
+        final int FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
+        final int SAMPLES = FRAMES * AUDIO_CHANNEL_COUNT;
 
-        MediaFormat encodeFormat = new MediaFormat();
-        encodeFormat.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
-        encodeFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
-        encodeFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
-        encodeFormat.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
+        final MediaFormat format = new MediaFormat();
+        format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
+        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, AUDIO_SAMPLE_RATE);
+        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, AUDIO_CHANNEL_COUNT);
 
-        MediaFormat decodeFormat = new MediaFormat();
-        decodeFormat.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
-        decodeFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
-        decodeFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
+        // this key is only needed for encode, ignored for decode
+        format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
 
-        MediaCodecStream rawToAmr = new MediaCodecStream(pcmStream1, encodeFormat, true);
-        MediaCodecStream amrToRaw = new MediaCodecStream(rawToAmr, decodeFormat, false);
+        for (int i = 0; i < 2; ++i) {
+            final boolean useFloat = (i == 1);
+            final PcmAudioBufferStream audioStream = new PcmAudioBufferStream(
+                    SAMPLES, AUDIO_SAMPLE_RATE, 1000 /* frequency */, 100 /* sweep */, useFloat);
 
-        AssetFileDescriptor masterFd = res.openRawResourceFd(R.raw.sinesweepraw);
-        long masterLength = masterFd.getLength();
-        Log.i(TAG, "source length: " + masterLength);
-        masterFd.close();
+            if (useFloat) {
+                format.setInteger(
+                    MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
+            }
 
-        InputStream pcmStream2 = res.openRawResource(R.raw.sinesweepraw);
+            final MediaCodecStream rawToFlac = new MediaCodecStream(
+                    new ByteBufferInputStream(audioStream), format, true /* encode */);
+            final MediaCodecStream flacToRaw = new MediaCodecStream(
+                    rawToFlac, format, false /* encode */);
 
-        assertEquals("not identical after compression",
-                masterLength,
-                compareStreams(new ByteBufferInputStream(amrToRaw), pcmStream2));
-        pcmStream1.close();
-        pcmStream2.close();
+            if (useFloat) {
+                if (!rawToFlac.mIsFloat) {
+                    Log.d(TAG, "No floating point FLAC encoder");
+                }
+                if (!flacToRaw.mIsFloat) {
+                    Log.d(TAG, "No floating point FLAC decoder");
+                }
+                if (!rawToFlac.mIsFloat || !flacToRaw.mIsFloat) {
+                    break;
+                }
+                // TODO: should these be errors?
+            }
+
+            // Note: the existence of signed zero (as well as NAN) may make byte
+            // comparisons invalid for floating point output. In our case, since the
+            // floats come through integer to float conversion, it does not matter.
+            assertEquals("not identical after compression",
+                audioStream.sizeInBytes(),
+                compareStreams(new ByteBufferInputStream(flacToRaw),
+                        new ByteBufferInputStream(new PcmAudioBufferStream(audioStream))));
+        }
     }
 
     public void testAsyncRelease() throws Exception {

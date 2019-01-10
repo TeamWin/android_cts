@@ -24,12 +24,12 @@ public class ResizeableActivity extends AbstractLifecycleLogActivity {
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.resizeable_activity);
-        dumpDisplaySize(getResources().getConfiguration());
+        dumpConfigInfo();
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        dumpDisplaySize(newConfig);
+        dumpConfigInfo();
     }
 }

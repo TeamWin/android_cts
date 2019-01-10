@@ -79,4 +79,8 @@ public final class DeviceTestConstants {
             new TestInfo(PACKAGE, MANAGER_TEST, "testIme1InInputMethodList");
     public static final TestInfo TEST_IME1_NOT_IN_INPUT_METHOD_LIST =
             new TestInfo(PACKAGE, MANAGER_TEST, "testIme1NotInInputMethodList");
+    public static final TestInfo TEST_IME1_IMPLICITLY_ENABLED_SUBTYPE_EXISTS =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme1ImplicitlyEnabledSubtypeExists");
+    public static final TestInfo TEST_IME1_IMPLICITLY_ENABLED_SUBTYPE_NOT_EXIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme1ImplicitlyEnabledSubtypeNotExist");
 }

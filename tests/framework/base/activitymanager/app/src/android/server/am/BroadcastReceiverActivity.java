@@ -16,8 +16,10 @@
 
 package android.server.am;
 
+import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_CUTOUT_EXISTS;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
@@ -63,7 +65,10 @@ public class BroadcastReceiverActivity extends Activity {
         view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         view.setOnApplyWindowInsetsListener((v, insets) -> {
-            Log.i(getClass().getSimpleName(), "cutout=" + (insets.getDisplayCutout() != null));
+            final boolean cutoutExists = (insets.getDisplayCutout() != null);
+            Log.i(TAG, "cutout=" + cutoutExists);
+            TestJournalProvider.putExtras(BroadcastReceiverActivity.this,
+                    bundle -> bundle.putBoolean(EXTRA_CUTOUT_EXISTS, cutoutExists));
             return insets;
         });
         setContentView(view);
@@ -99,7 +104,8 @@ public class BroadcastReceiverActivity extends Activity {
             }
             if (extras.getBoolean(EXTRA_DISMISS_KEYGUARD_METHOD)) {
                 getSystemService(KeyguardManager.class).requestDismissKeyguard(
-                        BroadcastReceiverActivity.this, new KeyguardDismissLoggerCallback(context));
+                        BroadcastReceiverActivity.this,
+                        new KeyguardDismissLoggerCallback(context, BROADCAST_RECEIVER_ACTIVITY));
             }
 
             ActivityLauncher.launchActivityFromExtras(BroadcastReceiverActivity.this, extras);

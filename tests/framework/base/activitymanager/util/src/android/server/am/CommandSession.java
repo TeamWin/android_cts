@@ -33,6 +33,7 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.server.am.TestJournalProvider.TestJournalClient;
 import android.support.test.InstrumentationRegistry;
 import android.util.ArrayMap;
 import android.util.DisplayMetrics;
@@ -43,6 +44,7 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * A mechanism for communication between the started activity and its caller in different package or
@@ -607,9 +609,12 @@ public final class CommandSession {
         private static CommandStorage sCommandStorage;
         private ActivitySessionHost mReceiver;
 
+        protected TestJournalClient mTestJournalClient;
+
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            mTestJournalClient = TestJournalClient.create(this /* context */, getComponentName());
 
             final String hostId = getIntent().getStringExtra(KEY_HOST_ID);
             final String clientId = getIntent().getStringExtra(KEY_CLIENT_ID);
@@ -630,6 +635,9 @@ public final class CommandSession {
                     sCommandStorage.clear(getHostId());
                 }
                 mReceiver.destory();
+            }
+            if (mTestJournalClient != null) {
+                mTestJournalClient.close();
             }
         }
 
@@ -849,6 +857,12 @@ public final class CommandSession {
             onCallback(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED);
         }
 
+        @Override
+        public void onMovedToDisplay(int displayId, Configuration config) {
+            super.onMovedToDisplay(displayId, config);
+            onCallback(ActivityCallback.ON_MOVED_TO_DISPLAY);
+        }
+
         private void onCallback(ActivityCallback callback) {
             if (mPrintCallbackLog) {
                 Log.i(getTag(), callback + " @ "
@@ -857,6 +871,15 @@ public final class CommandSession {
             final String hostId = getHostId();
             if (hostId != null) {
                 sCallbackStorage.add(hostId, callback);
+            }
+            if (mTestJournalClient != null) {
+                mTestJournalClient.addCallback(callback);
+            }
+        }
+
+        protected void withTestJournalClient(Consumer<TestJournalClient> client) {
+            if (mTestJournalClient != null) {
+                client.accept(mTestJournalClient);
             }
         }
 
@@ -867,8 +890,8 @@ public final class CommandSession {
         /** Get configuration and display info. It should be called only after resumed. */
         protected ConfigInfo getConfigInfo() {
             final View view = getWindow().getDecorView();
-            if (view == null || !view.isAttachedToWindow()) {
-                throw new IllegalStateException("Decor view has not attached");
+            if (!view.isAttachedToWindow()) {
+                Log.w(getTag(), "Decor view has not attached");
             }
             return new ConfigInfo(view);
         }
@@ -887,7 +910,8 @@ public final class CommandSession {
         ON_NEW_INTENT,
         ON_CONFIGURATION_CHANGED,
         ON_MULTI_WINDOW_MODE_CHANGED,
-        ON_PICTURE_IN_PICTURE_MODE_CHANGED;
+        ON_PICTURE_IN_PICTURE_MODE_CHANGED,
+        ON_MOVED_TO_DISPLAY;
 
         private static final ActivityCallback[] sValues = ActivityCallback.values();
         public static final int SIZE = sValues.length;
@@ -916,7 +940,7 @@ public final class CommandSession {
     }
 
     public static class ConfigInfo implements Parcelable {
-        public int displayId;
+        public int displayId = Display.INVALID_DISPLAY;
         public int rotation;
         public SizeInfo sizeInfo;
 
@@ -929,15 +953,17 @@ public final class CommandSession {
             final Configuration config = res.getConfiguration();
             final Display display = view.getDisplay();
 
-            displayId = display.getDisplayId();
-            rotation = display.getRotation();
+            if (display != null) {
+                displayId = display.getDisplayId();
+                rotation = display.getRotation();
+            }
             sizeInfo = new SizeInfo(display, metrics, config);
         }
 
         @Override
         public String toString() {
             return "ConfigInfo: {displayId=" + displayId + " rotation=" + rotation
-                    + " sizeInfo=" + sizeInfo + "}";
+                    + " " + sizeInfo + "}";
         }
 
         @Override
@@ -988,13 +1014,15 @@ public final class CommandSession {
         }
 
         public SizeInfo(Display display, DisplayMetrics metrics, Configuration config) {
-            final Point displaySize = new Point();
-            display.getSize(displaySize);
+            if (display != null) {
+                final Point displaySize = new Point();
+                display.getSize(displaySize);
+                displayWidth = displaySize.x;
+                displayHeight = displaySize.y;
+            }
 
             widthDp = config.screenWidthDp;
             heightDp = config.screenHeightDp;
-            displayWidth = displaySize.x;
-            displayHeight = displaySize.y;
             metricsWidth = metrics.widthPixels;
             metricsHeight = metrics.heightPixels;
             smallestWidthDp = config.smallestScreenWidthDp;

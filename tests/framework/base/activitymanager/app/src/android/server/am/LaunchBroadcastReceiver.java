@@ -46,7 +46,7 @@ public class LaunchBroadcastReceiver extends BroadcastReceiver {
                 ActivityLauncher.launchActivityFromExtras(context, extras,
                         CommandSession.handleForward(extras));
             } catch (SecurityException e) {
-                Log.e(TAG, "SecurityException launching activity");
+                ActivityLauncher.handleSecurityException(context, e);
             }
         } else if (intent.getAction().equals(ACTION_TEST_ACTIVITY_START)) {
             final ComponentName componentName = extras.getParcelable(EXTRA_COMPONENT_NAME);

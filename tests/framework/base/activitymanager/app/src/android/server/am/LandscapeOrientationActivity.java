@@ -23,13 +23,12 @@ public class LandscapeOrientationActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        final Configuration config = getResources().getConfiguration();
-        dumpDisplaySize(config);
+        dumpConfigInfo();
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        dumpDisplaySize(newConfig);
+        dumpConfigInfo();
     }
 }

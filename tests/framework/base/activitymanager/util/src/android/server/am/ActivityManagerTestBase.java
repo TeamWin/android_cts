@@ -59,6 +59,7 @@ import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_CUTOUT_EXISTS;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
@@ -111,8 +112,11 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.CommandSession.ActivityCallback;
 import android.server.am.CommandSession.ActivitySession;
+import android.server.am.CommandSession.ConfigInfo;
 import android.server.am.CommandSession.LaunchInjector;
 import android.server.am.CommandSession.LaunchProxy;
+import android.server.am.CommandSession.SizeInfo;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.settings.SettingsSession;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
@@ -150,8 +154,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -743,7 +745,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
-            String message) throws Exception {
+            String message) {
         mAmWmState.waitForValidState(activityName);
         mAmWmState.waitForActivityState(activityName, STATE_RESUMED);
         final String activityClassName = getActivityName(activityName);
@@ -1107,6 +1109,11 @@ public abstract class ActivityManagerTestBase {
         return INVALID_DEVICE_ROTATION;
     }
 
+    /** Empties the test journal so the following events won't be mixed-up with previous records. */
+    protected void separateTestJournal() {
+        TestJournalContainer.start();
+    }
+
     protected static String runCommandAndPrintOutput(String command) {
         final String output = executeShellCommand(command);
         log(output);
@@ -1223,327 +1230,214 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    private static class ActivityLifecycleCountsValidator extends RetryValidator {
-        private final ComponentName mActivityName;
-        private final LogSeparator mLogSeparator;
-        private final int mCreateCount;
-        private final int mStartCount;
-        private final int mResumeCount;
-        private final int mPauseCount;
-        private final int mStopCount;
-        private final int mDestroyCount;
+    static class CountSpec<T> {
+        static final int DONT_CARE = Integer.MIN_VALUE;
+        static final int EQUALS = 1;
+        static final int GREATER_THAN = 2;
+        static final int LESS_THAN = 3;
 
-        ActivityLifecycleCountsValidator(ComponentName activityName, LogSeparator logSeparator,
-                int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
-                int destroyCount) {
-            mActivityName = activityName;
-            mLogSeparator = logSeparator;
-            mCreateCount = createCount;
-            mStartCount = startCount;
-            mResumeCount = resumeCount;
-            mPauseCount = pauseCount;
-            mStopCount = stopCount;
-            mDestroyCount = destroyCount;
+        final T mEvent;
+        final int mRule;
+        final int mCount;
+        final String mMessage;
+
+        CountSpec(T event, int rule, int count, String message) {
+            mEvent = event;
+            mRule = count == DONT_CARE ? DONT_CARE : rule;
+            mCount = count;
+            if (message != null) {
+                mMessage = message;
+            } else {
+                switch (rule) {
+                    case EQUALS:
+                        mMessage = event + " + must equal to " + count;
+                        break;
+                    case GREATER_THAN:
+                        mMessage = event + " + must be greater than " + count;
+                        break;
+                    case LESS_THAN:
+                        mMessage = event + " + must be less than " + count;
+                        break;
+                    default:
+                        mMessage = "Don't care";
+                }
+            }
         }
 
-        @Override
-        @Nullable
-        protected String validate() {
-            final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
-                    mActivityName, mLogSeparator);
-            if (lifecycleCounts.mCreateCount == mCreateCount
-                    && lifecycleCounts.mStartCount == mStartCount
-                    && lifecycleCounts.mResumeCount == mResumeCount
-                    && lifecycleCounts.mPauseCount == mPauseCount
-                    && lifecycleCounts.mStopCount == mStopCount
-                    && lifecycleCounts.mDestroyCount == mDestroyCount) {
-                return null;
+        /** @return {@code true} if the given value is satisfied the condition. */
+        boolean validate(int value) {
+            switch (mRule) {
+                case DONT_CARE:
+                    return true;
+                case EQUALS:
+                    return value == mCount;
+                case GREATER_THAN:
+                    return value > mCount;
+                case LESS_THAN:
+                    return value < mCount;
+                default:
             }
-            final String expected = IntStream.of(mCreateCount, mStopCount, mResumeCount,
-                    mPauseCount, mStopCount, mDestroyCount)
-                    .mapToObj(Integer::toString)
-                    .collect(Collectors.joining("/"));
-            return getActivityName(mActivityName) + " lifecycle count mismatched:"
-                    + " expected=" + expected
-                    + " actual=" + lifecycleCounts.counters();
+            throw new RuntimeException("Unknown CountSpec rule");
         }
     }
 
-    void assertActivityLifecycle(ComponentName activityName, boolean relaunched,
-            LogSeparator logSeparator) {
+    static <T> CountSpec<T> countSpec(T event, int rule, int count, String message) {
+        return new CountSpec<>(event, rule, count, message);
+    }
+
+    static <T> CountSpec<T> countSpec(T event, int rule, int count) {
+        return new CountSpec<>(event, rule, count, null /* message */);
+    }
+
+    static void assertLifecycleCounts(ComponentName activityName, String message,
+            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
+            int destroyCount, int configChangeCount) {
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                message,
+                countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, createCount),
+                countSpec(ActivityCallback.ON_START, CountSpec.EQUALS, startCount),
+                countSpec(ActivityCallback.ON_RESUME, CountSpec.EQUALS, resumeCount),
+                countSpec(ActivityCallback.ON_PAUSE, CountSpec.EQUALS, pauseCount),
+                countSpec(ActivityCallback.ON_STOP, CountSpec.EQUALS, stopCount),
+                countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, destroyCount),
+                countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS,
+                        configChangeCount));
+    }
+
+    static void assertLifecycleCounts(ComponentName activityName,
+            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
+            int destroyCount, int configChangeCount) {
+        assertLifecycleCounts(activityName, "Assert lifecycle of " + getLogTag(activityName),
+                createCount, startCount, resumeCount, pauseCount, stopCount,
+                destroyCount, configChangeCount);
+    }
+
+    static void assertSingleLaunch(ComponentName activityName) {
+        assertLifecycleCounts(activityName,
+                "***Waiting for activity create, start, and resume",
+                1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
+                0 /* pauseCount */, 0 /* stopCount */, 0 /* destroyCount */,
+                CountSpec.DONT_CARE /* configChangeCount */);
+    }
+
+    static void assertSingleLaunchAndStop(ComponentName activityName) {
+        assertLifecycleCounts(activityName,
+                "***Waiting for activity create, start, resume, pause, and stop",
+                1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
+                1 /* pauseCount */, 1 /* stopCount */, 0 /* destroyCount */,
+                CountSpec.DONT_CARE /* configChangeCount */);
+    }
+
+    static void assertSingleStartAndStop(ComponentName activityName) {
+        assertLifecycleCounts(activityName,
+                "***Waiting for activity start, resume, pause, and stop",
+                0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
+                1 /* pauseCount */, 1 /* stopCount */, 0 /* destroyCount */,
+                CountSpec.DONT_CARE /* configChangeCount */);
+    }
+
+    static void assertSingleStart(ComponentName activityName) {
+        assertLifecycleCounts(activityName,
+                "***Waiting for activity start and resume",
+                0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
+                0 /* pauseCount */, 0 /* stopCount */, 0 /* destroyCount */,
+                CountSpec.DONT_CARE /* configChangeCount */);
+    }
+
+    /** Assert the activity is either relaunched or received configuration changed. */
+    static void assertActivityLifecycle(ComponentName activityName, boolean relaunched) {
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
-                final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
-                final String logTag = getLogTag(activityName);
-                if (relaunched) {
-                    if (lifecycleCounts.mDestroyCount < 1) {
-                        return logTag + " must have been destroyed. mDestroyCount="
-                                + lifecycleCounts.mDestroyCount;
-                    }
-                    if (lifecycleCounts.mCreateCount < 1) {
-                        return logTag + " must have been (re)created. mCreateCount="
-                                + lifecycleCounts.mCreateCount;
-                    }
-                    return null;
-                }
-                if (lifecycleCounts.mDestroyCount > 0) {
-                    return logTag + " must *NOT* have been destroyed. mDestroyCount="
-                            + lifecycleCounts.mDestroyCount;
-                }
-                if (lifecycleCounts.mCreateCount > 0) {
-                    return logTag + " must *NOT* have been (re)created. mCreateCount="
-                            + lifecycleCounts.mCreateCount;
-                }
-                if (lifecycleCounts.mConfigurationChangedCount < 1) {
-                    return logTag + " must have received configuration changed. "
-                            + "mConfigurationChangedCount="
-                            + lifecycleCounts.mConfigurationChangedCount;
+                final String failedReason = checkActivityIsRelaunchedOrConfigurationChanged(
+                        getActivityName(activityName),
+                        TestJournalContainer.get(activityName).callbacks, relaunched);
+                if (failedReason != null) {
+                    return failedReason;
                 }
                 return null;
             }
         }.assertValidator("***Waiting for valid lifecycle state");
     }
 
-    protected void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
-            int numConfigChange, LogSeparator logSeparator) {
-        new RetryValidator() {
-
-            @Nullable
-            @Override
-            protected String validate() {
-                final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
-                final String logTag = getLogTag(activityName);
-                if (lifecycleCounts.mDestroyCount != numRelaunch) {
-                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
-                            + " time(s), expecting " + numRelaunch;
-                } else if (lifecycleCounts.mCreateCount != numRelaunch) {
-                    return logTag + " has been (re)created " + lifecycleCounts.mCreateCount
-                            + " time(s), expecting " + numRelaunch;
-                } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
-                    return logTag + " has received "
-                            + lifecycleCounts.mConfigurationChangedCount
-                            + " onConfigurationChanged() calls, expecting " + numConfigChange;
-                }
-                return null;
-            }
-        }.assertValidator("***Waiting for relaunch or config changed");
+    /** Assert the activity is either relaunched or received configuration changed. */
+    static List<ActivityCallback> assertActivityLifecycle(ActivitySession activitySession,
+            boolean relaunched) {
+        final String name = activitySession.getName();
+        final List<ActivityCallback> callbackHistory = activitySession.takeCallbackHistory();
+        String failedReason = checkActivityIsRelaunchedOrConfigurationChanged(
+                name, callbackHistory, relaunched);
+        if (failedReason != null) {
+            fail(failedReason);
+        }
+        return callbackHistory;
     }
 
-    protected void assertActivityDestroyed(ComponentName activityName, LogSeparator logSeparator) {
-        new RetryValidator() {
-
-            @Nullable
-            @Override
-            protected String validate() {
-                final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
-                final String logTag = getLogTag(activityName);
-                if (lifecycleCounts.mDestroyCount != 1) {
-                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
-                            + " time(s), expecting single destruction.";
-                }
-                if (lifecycleCounts.mCreateCount != 0) {
-                    return logTag + " has been (re)created " + lifecycleCounts.mCreateCount
-                            + " time(s), not expecting any.";
-                }
-                if (lifecycleCounts.mConfigurationChangedCount != 0) {
-                    return logTag + " has received " + lifecycleCounts.mConfigurationChangedCount
-                            + " onConfigurationChanged() calls, not expecting any.";
-                }
-                return null;
-            }
-        }.assertValidator("***Waiting for activity destroyed");
+    private static String checkActivityIsRelaunchedOrConfigurationChanged(String name,
+            List<ActivityCallback> callbackHistory, boolean relaunched) {
+        final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(callbackHistory);
+        if (relaunched) {
+            return lifecycles.validateCount(
+                    countSpec(ActivityCallback.ON_DESTROY, CountSpec.GREATER_THAN, 0,
+                            name + " must have been destroyed."),
+                    countSpec(ActivityCallback.ON_CREATE, CountSpec.GREATER_THAN, 0,
+                            name + " must have been (re)created."));
+        }
+        return lifecycles.validateCount(
+                countSpec(ActivityCallback.ON_DESTROY, CountSpec.LESS_THAN, 1,
+                        name + " must *NOT* have been destroyed."),
+                countSpec(ActivityCallback.ON_CREATE, CountSpec.LESS_THAN, 1,
+                        name + " must *NOT* have been (re)created."),
+                countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.GREATER_THAN, 0,
+                                name + " must have received configuration changed."));
     }
 
-    void assertLifecycleCounts(ComponentName activityName, LogSeparator logSeparator,
-            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
-            int destroyCount, int configurationChangeCount) {
-        new RetryValidator() {
-            @Override
-            protected String validate() {
-                final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(activityName, logSeparator);
-                final String logTag = getLogTag(activityName);
-                if (createCount != lifecycleCounts.mCreateCount) {
-                    return logTag + " has been created " + lifecycleCounts.mCreateCount
-                            + " time(s), expecting " + createCount;
-                }
-                if (startCount != lifecycleCounts.mStartCount) {
-                    return logTag + " has been started " + lifecycleCounts.mStartCount
-                            + " time(s), expecting " + startCount;
-                }
-                if (resumeCount != lifecycleCounts.mResumeCount) {
-                    return logTag + " has been resumed " + lifecycleCounts.mResumeCount
-                            + " time(s), expecting " + resumeCount;
-                }
-                if (pauseCount != lifecycleCounts.mPauseCount) {
-                    return logTag + " has been paused " + lifecycleCounts.mPauseCount
-                            + " time(s), expecting " + pauseCount;
-                }
-                if (stopCount != lifecycleCounts.mStopCount) {
-                    return logTag + " has been stopped " + lifecycleCounts.mStopCount
-                            + " time(s), expecting " + stopCount;
-                }
-                if (destroyCount != lifecycleCounts.mDestroyCount) {
-                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
-                            + " time(s), expecting " + destroyCount;
-                }
-                if (configurationChangeCount != lifecycleCounts.mConfigurationChangedCount) {
-                    return logTag + " has received config changes "
-                            + lifecycleCounts.mConfigurationChangedCount
-                            + " time(s), expecting " + configurationChangeCount;
-                }
-                return null;
-            }
-        }.assertValidator("***Waiting for activity lifecycle counts");
+    static void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
+            int numConfigChange) {
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                "***Waiting for relaunch or config changed",
+                countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, numRelaunch),
+                countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, numRelaunch),
+                countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS,
+                        numConfigChange));
     }
 
-    void assertSingleLaunch(ComponentName activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
-                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
-                0 /* destroyCount */)
-                .assertValidator("***Waiting for activity create, start, and resume");
+    static void assertActivityDestroyed(ComponentName activityName) {
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                "***Waiting for activity destroyed",
+                countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, 1),
+                countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, 0),
+                countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS, 0));
     }
 
-    void assertSingleLaunchAndStop(ComponentName activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
-                1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
-                0 /* destroyCount */)
-                .assertValidator("***Waiting for activity create, start, resume, pause, and stop");
-    }
-
-    void assertSingleStartAndStop(ComponentName activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
-                1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
-                0 /* destroyCount */)
-                .assertValidator("***Waiting for activity start, resume, pause, and stop");
-    }
-
-    void assertSingleStart(ComponentName activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
-                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
-                0 /* destroyCount */)
-                .assertValidator("***Waiting for activity start and resume");
-    }
-
-    // TODO: Now that our test are device side, we can convert these to a more direct communication
-    // channel vs. depending on logs.
-    private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
-    private static final Pattern sStartPattern = Pattern.compile("(.+): onStart");
-    private static final Pattern sResumePattern = Pattern.compile("(.+): onResume");
-    private static final Pattern sPausePattern = Pattern.compile("(.+): onPause");
-    private static final Pattern sConfigurationChangedPattern =
-            Pattern.compile("(.+): onConfigurationChanged");
-    private static final Pattern sMovedToDisplayPattern =
-            Pattern.compile("(.+): onMovedToDisplay");
-    private static final Pattern sStopPattern = Pattern.compile("(.+): onStop");
-    private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
-    private static final Pattern sMultiWindowModeChangedPattern =
-            Pattern.compile("(.+): onMultiWindowModeChanged");
-    private static final Pattern sPictureInPictureModeChangedPattern =
-            Pattern.compile("(.+): onPictureInPictureModeChanged");
-    private static final Pattern sUserLeaveHintPattern = Pattern.compile("(.+): onUserLeaveHint");
-    private static final Pattern sNewConfigPattern = Pattern.compile(
-            "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)"
-            + " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)"
-            + " orientation=(\\d+)");
-    private static final Pattern sDisplayCutoutPattern = Pattern.compile(
-            "(.+): cutout=(true|false)");
-    private static final Pattern sDisplayStatePattern =
-            Pattern.compile("Display Power: state=(.+)");
     private static final Pattern sCurrentUiModePattern = Pattern.compile("mCurUiMode=0x(\\d+)");
     private static final Pattern sUiModeLockedPattern =
             Pattern.compile("mUiModeLocked=(true|false)");
 
-    static class ReportedSizes {
-        int widthDp;
-        int heightDp;
-        int displayWidth;
-        int displayHeight;
-        int metricsWidth;
-        int metricsHeight;
-        int smallestWidthDp;
-        int densityDpi;
-        int orientation;
-
-        @Override
-        public String toString() {
-            return "ReportedSizes: {widthDp=" + widthDp + " heightDp=" + heightDp
-                    + " displayWidth=" + displayWidth + " displayHeight=" + displayHeight
-                    + " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight
-                    + " smallestWidthDp=" + smallestWidthDp + " densityDpi=" + densityDpi
-                    + " orientation=" + orientation + "}";
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if ( this == obj ) return true;
-            if ( !(obj instanceof ReportedSizes) ) return false;
-            ReportedSizes that = (ReportedSizes) obj;
-            return widthDp == that.widthDp
-                    && heightDp == that.heightDp
-                    && displayWidth == that.displayWidth
-                    && displayHeight == that.displayHeight
-                    && metricsWidth == that.metricsWidth
-                    && metricsHeight == that.metricsHeight
-                    && smallestWidthDp == that.smallestWidthDp
-                    && densityDpi == that.densityDpi
-                    && orientation == that.orientation;
-        }
-    }
-
     @Nullable
-    ReportedSizes getLastReportedSizesForActivity(
-            ComponentName activityName, LogSeparator logSeparator) {
-        final String logTag = getLogTag(activityName);
-        for (int retry = 1; retry <= 5; retry++ ) {
-            final ReportedSizes result = readLastReportedSizes(logSeparator, logTag);
-            if (result != null) {
-                return result;
+    SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
+        for (int retry = 1; retry <= 5; retry++) {
+            final ConfigInfo result = TestJournalContainer.get(activityName).lastConfigInfo;
+            if (result != null && result.sizeInfo != null) {
+                return result.sizeInfo;
             }
             logAlways("***Waiting for sizes to be reported... retry=" + retry);
             SystemClock.sleep(1000);
         }
-        logE("***Waiting for activity size failed: activityName=" + logTag);
-        return null;
-    }
-
-    private ReportedSizes readLastReportedSizes(LogSeparator logSeparator, String logTag) {
-        final String[] lines = getDeviceLogsForComponents(logSeparator, logTag);
-        for (int i = lines.length - 1; i >= 0; i--) {
-            final String line = lines[i].trim();
-            final Matcher matcher = sNewConfigPattern.matcher(line);
-            if (matcher.matches()) {
-                ReportedSizes details = new ReportedSizes();
-                details.widthDp = Integer.parseInt(matcher.group(2));
-                details.heightDp = Integer.parseInt(matcher.group(3));
-                details.displayWidth = Integer.parseInt(matcher.group(4));
-                details.displayHeight = Integer.parseInt(matcher.group(5));
-                details.metricsWidth = Integer.parseInt(matcher.group(6));
-                details.metricsHeight = Integer.parseInt(matcher.group(7));
-                details.smallestWidthDp = Integer.parseInt(matcher.group(8));
-                details.densityDpi = Integer.parseInt(matcher.group(9));
-                details.orientation = Integer.parseInt(matcher.group(10));
-                return details;
-            }
-        }
+        logE("***Waiting for activity size failed: activityName=" + getActivityName(activityName));
         return null;
     }
 
     /** Check if a device has display cutout. */
     boolean hasDisplayCutout() {
         // Launch an activity to report cutout state
-        final LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
 
         // Read the logs to check if cutout is present
-        final Boolean displayCutoutPresent =
-                getCutoutStateForActivity(BROADCAST_RECEIVER_ACTIVITY, logSeparator);
+        final Boolean displayCutoutPresent = getCutoutStateForActivity(BROADCAST_RECEIVER_ACTIVITY);
         assertNotNull("The activity should report cutout state", displayCutoutPresent);
 
         // Finish activity
@@ -1560,13 +1454,12 @@ public abstract class ActivityManagerTestBase {
      * after timeout.
      */
     @Nullable
-    private Boolean getCutoutStateForActivity(ComponentName activityName,
-            LogSeparator logSeparator) {
+    private Boolean getCutoutStateForActivity(ComponentName activityName) {
         final String logTag = getLogTag(activityName);
-        for (int retry = 1; retry <= 5; retry++ ) {
-            final Boolean result = readLastReportedCutoutState(logSeparator, logTag);
-            if (result != null) {
-                return result;
+        for (int retry = 1; retry <= 5; retry++) {
+            final Bundle extras = TestJournalContainer.get(activityName).extras;
+            if (extras.containsKey(EXTRA_CUTOUT_EXISTS)) {
+                return extras.getBoolean(EXTRA_CUTOUT_EXISTS);
             }
             logAlways("***Waiting for cutout state to be reported... retry=" + retry);
             SystemClock.sleep(1000);
@@ -1575,27 +1468,13 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
-    /** Read display cutout state from device logs. */
-    private Boolean readLastReportedCutoutState(LogSeparator logSeparator, String logTag) {
-        final String[] lines = getDeviceLogsForComponents(logSeparator, logTag);
-        for (int i = lines.length - 1; i >= 0; i--) {
-            final String line = lines[i].trim();
-            final Matcher matcher = sDisplayCutoutPattern.matcher(line);
-            if (matcher.matches()) {
-                return "true".equals(matcher.group(2));
-            }
-        }
-        return null;
-    }
-
     /** Waits for at least one onMultiWindowModeChanged event. */
-    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName,
-            LogSeparator logSeparator) {
+    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName) {
         int retry = 1;
         ActivityLifecycleCounts result;
         do {
-            result = new ActivityLifecycleCounts(activityName, logSeparator);
-            if (result.mMultiWindowModeChangedCount >= 1) {
+            result = new ActivityLifecycleCounts(activityName);
+            if (result.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED) >= 1) {
                 return result;
             }
             logAlways("***waitForOnMultiWindowModeChanged... retry=" + retry);
@@ -1604,146 +1483,57 @@ public abstract class ActivityManagerTestBase {
         return result;
     }
 
-    // TODO: Now that our test are device side, we can convert these to a more direct communication
-    // channel vs. depending on logs.
     static class ActivityLifecycleCounts {
-        int mCreateCount;
-        int mStartCount;
-        int mResumeCount;
-        int mConfigurationChangedCount;
-        int mLastConfigurationChangedLineIndex;
-        int mMovedToDisplayCount;
-        int mMultiWindowModeChangedCount;
-        int mLastMultiWindowModeChangedLineIndex;
-        int mPictureInPictureModeChangedCount;
-        int mLastPictureInPictureModeChangedLineIndex;
-        int mUserLeaveHintCount;
-        int mPauseCount;
-        int mStopCount;
-        int mLastStopLineIndex;
-        int mDestroyCount;
+        final int[] mCounts = new int[ActivityCallback.SIZE];
+        final int[] mLastIndexes = new int[ActivityCallback.SIZE];
+        final List<ActivityCallback> mCallbackHistory;
 
-        ActivityLifecycleCounts(ComponentName componentName, LogSeparator logSeparator) {
-            int lineIndex = 0;
-            waitForIdle();
-            for (String line : getDeviceLogsForComponents(logSeparator, getLogTag(componentName))) {
-                line = line.trim();
-                lineIndex++;
+        ActivityLifecycleCounts(ComponentName componentName) {
+            this(TestJournalContainer.get(componentName).callbacks);
+        }
 
-                Matcher matcher = sCreatePattern.matcher(line);
-                if (matcher.matches()) {
-                    mCreateCount++;
-                    continue;
-                }
-
-                matcher = sStartPattern.matcher(line);
-                if (matcher.matches()) {
-                    mStartCount++;
-                    continue;
-                }
-
-                matcher = sResumePattern.matcher(line);
-                if (matcher.matches()) {
-                    mResumeCount++;
-                    continue;
-                }
-
-                matcher = sConfigurationChangedPattern.matcher(line);
-                if (matcher.matches()) {
-                    mConfigurationChangedCount++;
-                    mLastConfigurationChangedLineIndex = lineIndex;
-                    continue;
-                }
-
-                matcher = sMovedToDisplayPattern.matcher(line);
-                if (matcher.matches()) {
-                    mMovedToDisplayCount++;
-                    continue;
-                }
-
-                matcher = sMultiWindowModeChangedPattern.matcher(line);
-                if (matcher.matches()) {
-                    mMultiWindowModeChangedCount++;
-                    mLastMultiWindowModeChangedLineIndex = lineIndex;
-                    continue;
-                }
-
-                matcher = sPictureInPictureModeChangedPattern.matcher(line);
-                if (matcher.matches()) {
-                    mPictureInPictureModeChangedCount++;
-                    mLastPictureInPictureModeChangedLineIndex = lineIndex;
-                    continue;
-                }
-
-                matcher = sUserLeaveHintPattern.matcher(line);
-                if (matcher.matches()) {
-                    mUserLeaveHintCount++;
-                    continue;
-                }
-
-                matcher = sPausePattern.matcher(line);
-                if (matcher.matches()) {
-                    mPauseCount++;
-                    continue;
-                }
-
-                matcher = sStopPattern.matcher(line);
-                if (matcher.matches()) {
-                    mStopCount++;
-                    mLastStopLineIndex = lineIndex;
-                    continue;
-                }
-
-                matcher = sDestroyPattern.matcher(line);
-                if (matcher.matches()) {
-                    mDestroyCount++;
-                    continue;
-                }
+        ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
+            mCallbackHistory = callbacks;
+            for (int i = 0; i < callbacks.size(); i++) {
+                final ActivityCallback callback = callbacks.get(i);
+                final int ordinal = callback.ordinal();
+                mCounts[ordinal]++;
+                mLastIndexes[ordinal] = i;
             }
         }
 
-        String counters() {
-            return IntStream.of(mCreateCount, mStartCount, mResumeCount, mPauseCount, mStopCount,
-                    mDestroyCount)
-                    .mapToObj(Integer::toString)
-                    .collect(Collectors.joining("/"));
+        int getCount(ActivityCallback callback) {
+            return mCounts[callback.ordinal()];
         }
-    }
 
-    /** Assert the activity is either relaunched or received configuration changed. */
-    List<ActivityCallback> assertActivityLifecycle(ActivitySession activitySession,
-            boolean relaunched) {
-        final String name = activitySession.getName();
-        final List<ActivityCallback> callbackHistory = activitySession.takeCallbackHistory();
-        final int[] lifecycleCounts = getActivityLifecycleCounts(callbackHistory);
-        if (relaunched) {
-            if (lifecycleCounts[ActivityCallback.ON_DESTROY.ordinal()] < 1) {
-                fail(name + " must have been destroyed. callbacks=" + callbackHistory);
-            }
-            if (lifecycleCounts[ActivityCallback.ON_CREATE.ordinal()] < 1) {
-                fail(name + " must have been (re)created. callbacks=" + callbackHistory);
-            }
-            return callbackHistory;
+        int getLastIndex(ActivityCallback callback) {
+            return mLastIndexes[callback.ordinal()];
         }
-        if (lifecycleCounts[ActivityCallback.ON_DESTROY.ordinal()] > 0) {
-            fail(name + " must *NOT* have been destroyed. callbacks=" + callbackHistory);
-        }
-        if (lifecycleCounts[ActivityCallback.ON_CREATE.ordinal()] > 0) {
-            fail(name + " must *NOT* have been (re)created. callbacks=" + callbackHistory);
-        }
-        if (lifecycleCounts[ActivityCallback.ON_CONFIGURATION_CHANGED.ordinal()] < 1) {
-            fail(name + " must have received configuration changed. callbacks=" + callbackHistory);
-        }
-        return callbackHistory;
-    }
 
-    /** @return A array contains the lifecycle count by the ordinal of {@link ActivityCallback}. */
-    int[] getActivityLifecycleCounts(List<ActivityCallback> lifecycleCallbacks) {
-        final int[] counts = new int[ActivityCallback.SIZE];
-        for (ActivityCallback callback : lifecycleCallbacks) {
-            counts[callback.ordinal()]++;
+        @SafeVarargs
+        final void assertCountWithRetry(String message, CountSpec<ActivityCallback>... countSpecs) {
+            new RetryValidator() {
+                @Override
+                protected String validate() {
+                    return validateCount(countSpecs);
+                }
+            }.assertValidator(message);
         }
-        return counts;
+
+        @SafeVarargs
+        final String validateCount(CountSpec<ActivityCallback>... countSpecs) {
+            ArrayList<String> failedReasons = null;
+            for (CountSpec<ActivityCallback> spec : countSpecs) {
+                final int realCount = mCounts[spec.mEvent.ordinal()];
+                if (!spec.validate(realCount)) {
+                    if (failedReasons == null) {
+                        failedReasons = new ArrayList<>();
+                    }
+                    failedReasons.add(spec.mMessage);
+                }
+            }
+            return failedReasons == null ? null : String.join("\n", failedReasons);
+        }
     }
 
     protected void stopTestPackage(final String packageName) {
