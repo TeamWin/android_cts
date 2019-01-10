@@ -362,7 +362,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
     }
 
     @Test
-    public void testSimpleLifecycle_flagSecure() throws Exception {
+    public void testDisabledByFlagSecure() throws Exception {
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
@@ -376,6 +376,68 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         watcher.waitFor(DESTROYED);
 
         final Session session = service.getOnlyFinishedSession();
+        assertThat((session.context.getFlags()
+                & ContentCaptureContext.FLAG_DISABLED_BY_FLAG_SECURE) != 0).isTrue();
+        final ContentCaptureSessionId sessionId = session.id;
+        Log.v(TAG, "session id: " + sessionId);
+
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        assertThat(events).isEmpty();
+    }
+
+    @Test
+    public void testDisabledByApp() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
+                .setContentCaptureEnabled(false));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.syncRunOnUiThread(() -> activity.mUsername.setText("D'OH"));
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        assertThat((session.context.getFlags()
+                & ContentCaptureContext.FLAG_DISABLED_BY_APP) != 0).isTrue();
+        final ContentCaptureSessionId sessionId = session.id;
+        Log.v(TAG, "session id: " + sessionId);
+
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        assertThat(events).isEmpty();
+    }
+
+    @Test
+    public void testDisabledFlagSecureAndByApp() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> {
+            activity.getContentCaptureManager().setContentCaptureEnabled(false);
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        });
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.syncRunOnUiThread(() -> activity.mUsername.setText("D'OH"));
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        assertThat((session.context.getFlags()
+                & ContentCaptureContext.FLAG_DISABLED_BY_APP) != 0).isTrue();
+        assertThat((session.context.getFlags()
+                & ContentCaptureContext.FLAG_DISABLED_BY_FLAG_SECURE) != 0).isTrue();
         final ContentCaptureSessionId sessionId = session.id;
         Log.v(TAG, "session id: " + sessionId);
 
