@@ -17,13 +17,18 @@
 package android.theme.app.modifiers;
 
 import android.theme.app.LayoutModifier;
+import android.view.View;
 
 /**
- * {@link LayoutModifier} that does nothing in {@link #prepare()}.
+ * {@link LayoutModifier} that does nothing.
  */
 abstract class AbstractLayoutModifier implements LayoutModifier {
 
     @Override
-    public void prepare() {
+    public void modifyViewBeforeAdd(View view) {
+    }
+
+    @Override
+    public void modifyViewAfterAdd(View view) {
     }
 }
