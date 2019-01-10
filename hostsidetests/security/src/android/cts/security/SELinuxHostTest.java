@@ -607,7 +607,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
-     * Tests that the file_contexts.bin file on the device contains
+     * Tests that the plat_file_contexts file on the device contains
      * the standard AOSP entries.
      *
      * @throws Exception
@@ -622,7 +622,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* retrieve the AOSP file_contexts file from jar */
         aospFcFile = copyResourceToTempFile("/plat_file_contexts");
 
-        /* run checkfc -c plat_file_contexts file_contexts.bin */
+        /* run checkfc -c plat_file_contexts plat_file_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 "-c", aospFcFile.getAbsolutePath(),
                 devicePlatFcFile.getAbsolutePath());
