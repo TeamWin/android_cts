@@ -668,8 +668,15 @@ public class RoutingTest extends AndroidTestCase {
             // The available output device is less than 2, we can't switch output device.
             return;
         }
-        for (int index = 0; index < deviceList.length; index++) {
-            assertTrue(mediaPlayer.setPreferredDevice(deviceList[index]));
+        Set<Integer> testedDeviceTypes = new HashSet<>();
+        for (AudioDeviceInfo device : deviceList) {
+            final int deviceType = device.getType();
+            if (testedDeviceTypes.contains(deviceType)) {
+                // b/122478352 setPreferredDevice can not differentiate devices with same type.
+                continue;
+            }
+            testedDeviceTypes.add(deviceType);
+            assertTrue(mediaPlayer.setPreferredDevice(device));
             boolean routingChanged = false;
             for (int i = 0; i < MAX_WAITING_ROUTING_CHANGED_COUNT; i++) {
                 // Create a new CountDownLatch in case it is triggered by previous routing change.
@@ -682,12 +689,12 @@ public class RoutingTest extends AndroidTestCase {
                 if (routedDevice == null) {
                     continue;
                 }
-                if (routedDevice.getId() == deviceList[index].getId()) {
+                if (routedDevice.getId() == device.getId()) {
                     routingChanged = true;
                     break;
                 }
             }
-            assertTrue("Switching to device" + deviceList[index].getType() + " failed",
+            assertTrue("Switching to device " + device.getType() + " failed",
                     routingChanged);
         }
 
