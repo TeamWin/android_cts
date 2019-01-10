@@ -1510,8 +1510,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testAreAppOverlaysAllowed() {
-        assertTrue(mNotificationManager.areAppOverlaysAllowed());
+    public void testAreBubblesAllowed() {
+        assertTrue(mNotificationManager.areBubblesAllowed());
     }
 
     public void testNotificationIcon() {
