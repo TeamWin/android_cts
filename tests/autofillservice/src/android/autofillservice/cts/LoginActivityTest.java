@@ -23,12 +23,14 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.Helper.allowOverlays;
 import static android.autofillservice.cts.Helper.assertHasFlags;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
+import static android.autofillservice.cts.Helper.disallowOverlays;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.isAutofillWindowFullScreen;
@@ -41,7 +43,6 @@ import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.autofillservice.cts.common.ShellHelper.sendKeyEvent;
 import static android.autofillservice.cts.common.ShellHelper.tap;
 import static android.content.Context.CLIPBOARD_SERVICE;
@@ -943,7 +944,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         final View[] overlay = new View[1];
         try {
             // Allow ourselves to add overlays
-            runShellCommand("appops set %s SYSTEM_ALERT_WINDOW allow", mPackageName);
+            allowOverlays();
 
             // Make sure the fill UI is shown.
             mUiBot.assertDatasets("The Dude");
@@ -1013,7 +1014,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         } finally {
             try {
                 // Make sure we can no longer add overlays
-                runShellCommand("appops set %s SYSTEM_ALERT_WINDOW ignore", mPackageName);
+                disallowOverlays();
                 // Make sure the overlay is removed
                 mActivity.runOnUiThread(() -> {
                     WindowManager windowManager = mContext.getSystemService(WindowManager.class);
