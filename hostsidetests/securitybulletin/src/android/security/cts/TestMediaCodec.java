@@ -68,6 +68,15 @@ public class TestMediaCodec extends SecurityTestCase {
     ***********************************************************/
 
     @SecurityTest
+    public void testPocBug_37561455() throws Exception {
+        String inputFiles[] = {"bug_37561455.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH
+                        + "bug_37561455.m2v --output /dev/null --num_frames -1",
+                getDevice(), null);
+    }
+
+    @SecurityTest
     public void testPocBug_63316255() throws Exception {
         String inputFiles[] = {"bug_63316255.m2v"};
         runMpeg2DecodeTest(inputFiles,
