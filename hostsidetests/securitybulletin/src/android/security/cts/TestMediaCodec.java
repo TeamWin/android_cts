@@ -36,6 +36,13 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest
+    public void testPocBug_64380403() throws Exception {
+        String inputFiles[] = {"bug_64380403.hevc"};
+        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
+                + "bug_64380403.hevc --num_frames -1 --num_cores 4",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add HEVC decoder tests for O
