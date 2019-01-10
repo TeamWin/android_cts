@@ -19,7 +19,8 @@
     package="android.telephonyprovider.cts"
     android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
