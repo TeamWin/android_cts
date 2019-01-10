@@ -70,6 +70,7 @@ public class TestUtils {
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
     public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID";
     public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID";
+    public static final String EXTRA_PHONE_NUMBER = "android.telecom.cts.extra.PHONE_NUMBER";
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE_2 =

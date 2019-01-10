@@ -24,6 +24,7 @@
         <option name="test-file-name" value="CallRedirectionServiceTestApp.apk" />
         <option name="test-file-name" value="CtsTelecomTestCases.apk" />
         <option name="test-file-name" value="ThirdPtyInCallServiceTestApp.apk" />
+        <option name="test-file-name" value="CallScreeningServiceTestApp.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telecom.cts" />
