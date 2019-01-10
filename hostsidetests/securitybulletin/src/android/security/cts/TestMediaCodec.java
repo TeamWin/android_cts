@@ -67,6 +67,13 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest
+    public void testPocBug_63316255() throws Exception {
+        String inputFiles[] = {"bug_63316255.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH + "bug_63316255.m2v --num_frames -1",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add MPEG2 decoder tests for O
