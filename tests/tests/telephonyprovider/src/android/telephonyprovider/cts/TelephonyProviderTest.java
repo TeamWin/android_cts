@@ -17,23 +17,9 @@
 package android.telephonyprovider.cts;
 
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.database.Cursor;
-import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.Telephony.Carriers;
-import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.test.InstrumentationTestCase;
-
-import java.lang.reflect.Field;
-
-import java.io.FileDescriptor;
-
-// To run the tests in this file w/o running all the cts tests:
-// make cts
-// cts-tradefed
-// run cts -c android.provider.cts.TelephonyProviderTest
 
 public class TelephonyProviderTest extends InstrumentationTestCase {
     private ContentResolver mContentResolver;
@@ -51,38 +37,6 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
         super.setUp();
         mContentResolver = getInstrumentation().getContext().getContentResolver();
     }
-
-    // Test that the TelephonyProvider doesn't allow clients to update _data column data and
-    // if they can, that they can't abuse the provider to open an arbitrary file.
-    // --- This test is commented out for now because the test needs to run as if it were
-    // the default SMS app. Until we have a way to do that in the test framework, the test will
-    // fail (i.e. the insert will appear to have succeeded when it really hasn't).
-//    public void testOpeningAnyFile() {
-//        Uri uri = Uri.parse("content://mms/100/part");
-//        try {
-//            ContentValues values2 = new ContentValues();
-//            values2.put("_data", "/dev/urandom");
-//            Uri uri2 = mContentResolver.insert(uri, values2);
-//            assertNull("The code was able to insert the _data column", uri2);
-//            if (uri2 == null) {
-//                return;
-//            }
-//            ContentValues values = new ContentValues();
-//            values.put("_data", "/dev/urandom");
-//            int rowCnt = mContentResolver.update(uri2, values, null, null);
-//            assertEquals("Was able to update the _data column", 0, rowCnt);
-//
-//            ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(uri2, "rw");
-//            pfd.getFileDescriptor();
-//            FileDescriptor fd = pfd.getFileDescriptor();
-//            Field fld = fd.getClass().getDeclaredField("descriptor");
-//            fld.setAccessible(true);
-//            int fint  = fld.getInt(fd);
-//            fail("The code was able to abuse the MmsProvider to open any file");
-//        } catch(Exception e){
-//            e.printStackTrace();
-//        }
-//    }
 
     // In JB MR1 access to the TelephonyProvider's Carriers table was clamped down and would
     // throw a SecurityException when queried. That was fixed in JB MR2. Verify that 3rd parties
