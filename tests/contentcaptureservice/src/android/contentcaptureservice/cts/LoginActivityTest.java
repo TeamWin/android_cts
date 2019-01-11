@@ -208,7 +208,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 // generated
         );
 
-
         /*
          *  Asserts child session
          */
