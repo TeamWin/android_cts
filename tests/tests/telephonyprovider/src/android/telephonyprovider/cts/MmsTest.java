@@ -26,8 +26,11 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,8 +41,19 @@ public class MmsTest {
     private ContentResolver mContentResolver;
 
     @Before
-    public void getContentResolver() {
+    public void setupTestEnvironment() {
+        cleanup();
         mContentResolver = getInstrumentation().getContext().getContentResolver();
+    }
+
+    @AfterClass
+    public static void cleanup() {
+        ContentResolver contentResolver =
+                InstrumentationRegistry.getInstrumentation().getContext().getContentResolver();
+
+        setDefaultSmsApp(true);
+        contentResolver.delete(Telephony.Mms.CONTENT_URI, null, null);
+        setDefaultSmsApp(false);
     }
 
     @Test
@@ -82,8 +96,6 @@ public class MmsTest {
         cursor.moveToNext();
         String actualSubject = cursor.getString(cursor.getColumnIndex(Telephony.Mms.SUBJECT));
         assertThat(actualSubject).isEqualTo(expectedSubject);
-
-        cleanupTestMms(uri);
     }
 
     @Test
@@ -103,6 +115,48 @@ public class MmsTest {
         Cursor cursor = mContentResolver.query(uri, null, null, null);
 
         assertThat(cursor.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    public void testMmsQuery_canViewSendReqMessageIfNotDefault() {
+        setDefaultSmsApp(true);
+
+        String expectedSubject = "testMmsInsert_withPermission";
+
+        Uri uri = insertTestMmsSendReqWithSubject(expectedSubject);
+
+        setDefaultSmsApp(false);
+
+        assertThatMmsInsertSucceeded(uri, expectedSubject);
+    }
+
+    @Test
+    public void testMmsQuery_cannotViewNotificationIndMessagesIfNotDefault() {
+        setDefaultSmsApp(true);
+
+        int messageType = PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND;
+        String expectedSubject = "testMmsQuery_cannotViewNotificationIndMessagesIfNotDefault";
+
+        Uri uri = insertTestMms(expectedSubject, messageType);
+
+        setDefaultSmsApp(false);
+
+        Cursor cursor = mContentResolver.query(uri, null, null, null);
+        assertThat(cursor.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    public void testMmsQuery_canViewNotificationIndMessagesIfDefault() {
+        setDefaultSmsApp(true);
+
+        int messageType = PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND;
+        String expectedSubject = "testMmsQuery_canViewNotificationIndMessagesIfDefault";
+
+        Uri uri = insertTestMms(expectedSubject, messageType);
+
+        assertThat(uri).isNotNull();
+
+        assertThatMmsInsertSucceeded(uri, expectedSubject);
     }
 
     /**
@@ -133,22 +187,32 @@ public class MmsTest {
                 subjectOfAttemptedInsert);
     }
 
+    private void assertThatMmsInsertSucceeded(@Nullable Uri uriReturnedFromInsert,
+            String subjectOfAttemptedInsert) {
+        assertThat(uriReturnedFromInsert).isNotNull();
+
+        Cursor cursor = mContentResolver.query(uriReturnedFromInsert, null, null, null);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+
+        cursor.moveToNext();
+        String actualSubject = cursor.getString(cursor.getColumnIndex(Telephony.Mms.SUBJECT));
+        assertThat(actualSubject).isEqualTo(subjectOfAttemptedInsert);
+    }
+
     /**
      * @return the URI returned from the insert operation
      */
     private Uri insertTestMmsSendReqWithSubject(String subject) {
+        return insertTestMms(subject, PduHeaders.MESSAGE_TYPE_SEND_REQ);
+    }
+
+    private Uri insertTestMms(String subject, int messageType) {
         Uri uri = Telephony.Mms.CONTENT_URI;
         ContentValues values = new ContentValues();
         values.put(Telephony.Mms.SUBJECT, subject);
-        values.put(Telephony.Mms.MESSAGE_TYPE, PduHeaders.MESSAGE_TYPE_SEND_REQ);
+        values.put(Telephony.Mms.MESSAGE_TYPE, messageType);
         return mContentResolver.insert(uri, values);
-    }
-
-    private void cleanupTestMms(@Nullable Uri uri) {
-        if (uri == null) {
-            return;
-        }
-        mContentResolver.delete(uri, null, null);
     }
 }
 
