@@ -36,6 +36,28 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest
+    public void testPocBug_73965867() throws Exception {
+        String inputFiles[] = {"bug_73965867.hevc"};
+        runHevcDecodeTest(inputFiles,
+                "-i " + TMP_FILE_PATH + "bug_73965867.hevc", getDevice(), null);
+    }
+
+    @SecurityTest
+    public void testPocBug_64380202() throws Exception {
+        String inputFiles[] = {"bug_64380202.hevc"};
+        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
+                + "bug_64380202.hevc --num_frames -1 --num_cores 4",
+                getDevice(), null);
+    }
+
+    @SecurityTest
+    public void testPocBug_64380403() throws Exception {
+        String inputFiles[] = {"bug_64380403.hevc"};
+        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
+                + "bug_64380403.hevc --num_frames -1 --num_cores 4",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add HEVC decoder tests for O
@@ -48,6 +70,14 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest
+    public void testPocBug_33621215() throws Exception {
+        String inputFiles[] = {"bug_33621215.h264"};
+        runAvcDecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH
+                        + "bug_33621215.h264 --output /dev/null",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add AVC decoder tests for O
@@ -60,6 +90,31 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest
+    public void testPocBug_34203195() throws Exception {
+        String inputFiles[] = {"bug_34203195.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH + "bug_34203195.m2v --num_cores 2 "
+                        + "--output /dev/null --num_frames -1",
+                getDevice(), null);
+    }
+
+    @SecurityTest
+    public void testPocBug_37561455() throws Exception {
+        String inputFiles[] = {"bug_37561455.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH
+                        + "bug_37561455.m2v --output /dev/null --num_frames -1",
+                getDevice(), null);
+    }
+
+    @SecurityTest
+    public void testPocBug_63316255() throws Exception {
+        String inputFiles[] = {"bug_63316255.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH + "bug_63316255.m2v --num_frames -1",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add MPEG2 decoder tests for O
