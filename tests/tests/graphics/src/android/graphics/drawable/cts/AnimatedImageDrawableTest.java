@@ -383,6 +383,9 @@ public class AnimatedImageDrawableTest {
                 drawable.start();
             });
 
+            cb.waitForStart();
+            cb.assertStarted(true);
+
             // The animation runs repeatCount + 1 total times.
             cb.waitForEnd(DURATION * repeatCount);
             cb.assertEnded(false);
