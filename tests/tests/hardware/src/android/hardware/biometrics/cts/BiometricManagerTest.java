@@ -49,7 +49,7 @@ public class BiometricManagerTest extends AndroidTestCase {
         } else {
             // No biometrics are enrolled. CTSVerifier should test the other error cases.
             assertTrue(mBiometricManager.canAuthenticate()
-                    == BiometricManager.BIOMETRIC_ERROR_NO_BIOMETRICS);
+                    == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED);
         }
     }
 }
