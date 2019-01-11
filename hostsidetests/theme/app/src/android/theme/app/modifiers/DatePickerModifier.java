@@ -26,9 +26,8 @@ import android.widget.DatePicker;
 public class DatePickerModifier extends AbstractLayoutModifier {
 
     @Override
-    public View modifyView(View view) {
+    public void modifyViewAfterAdd(View view) {
         DatePicker tp = (DatePicker) view;
         tp.updateDate(2011, 4, 20);
-        return view;
     }
 }
