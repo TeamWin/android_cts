@@ -24,6 +24,7 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -70,7 +71,6 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * `
      * <p>
      * Basic YUV420_888 format ImageWriter ImageReader test that checks the
      * images produced by camera can be passed correctly by ImageWriter.
@@ -97,7 +97,29 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
                     continue;
                 }
                 openDevice(id);
-                readerWriterFormatTestByCamera(ImageFormat.YUV_420_888);
+                readerWriterFormatTestByCamera(ImageFormat.YUV_420_888, false);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
+     * <p>
+     * Similar to testYuvImageWriterReaderOperation, but use the alternative
+     * factory method of ImageReader and ImageWriter.
+     * </p>
+     */
+    public void testYuvImageWriterReaderOperationAlt() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                readerWriterFormatTestByCamera(ImageFormat.YUV_420_888, true);
             } finally {
                 closeDevice(id);
             }
@@ -148,7 +170,8 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void readerWriterFormatTestByCamera(int format)  throws Exception {
+    private void readerWriterFormatTestByCamera(int format, boolean altFactoryMethod)
+            throws Exception {
         List<Size> sizes = getSortedSizesForFormat(mCamera.getId(), mCameraManager, format, null);
         Size maxSize = sizes.get(0);
         if (VERBOSE) {
@@ -157,14 +180,28 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
 
         // Create ImageReader for camera output.
         SimpleImageReaderListener listenerForCamera  = new SimpleImageReaderListener();
-        createDefaultImageReader(maxSize, format, MAX_NUM_IMAGES, listenerForCamera);
+        if (altFactoryMethod) {
+            createDefaultImageReader(maxSize, format, MAX_NUM_IMAGES,
+                    HardwareBuffer.USAGE_CPU_READ_OFTEN, listenerForCamera);
+        } else {
+            createDefaultImageReader(maxSize, format, MAX_NUM_IMAGES, listenerForCamera);
+        }
+
         if (VERBOSE) {
             Log.v(TAG, "Created camera output ImageReader");
         }
 
         // Create ImageReader for ImageWriter output
         SimpleImageReaderListener listenerForWriter  = new SimpleImageReaderListener();
-        mReaderForWriter = createImageReader(maxSize, format, MAX_NUM_IMAGES, listenerForWriter);
+        if (altFactoryMethod) {
+            mReaderForWriter = createImageReader(
+                    maxSize, format, MAX_NUM_IMAGES,
+                    HardwareBuffer.USAGE_CPU_READ_OFTEN, listenerForWriter);
+        } else {
+            mReaderForWriter = createImageReader(
+                    maxSize, format, MAX_NUM_IMAGES, listenerForWriter);
+        }
+
         if (VERBOSE) {
             Log.v(TAG, "Created ImageWriter output ImageReader");
         }
@@ -172,7 +209,11 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         // Create ImageWriter
         Surface surface = mReaderForWriter.getSurface();
         assertNotNull("Surface from ImageReader shouldn't be null", surface);
-        mWriter = ImageWriter.newInstance(surface, MAX_NUM_IMAGES);
+        if (altFactoryMethod) {
+            mWriter = ImageWriter.newInstance(surface, MAX_NUM_IMAGES, format);
+        } else {
+            mWriter = ImageWriter.newInstance(surface, MAX_NUM_IMAGES);
+        }
         SimpleImageWriterListener writerImageListener = new SimpleImageWriterListener(mWriter);
         mWriter.setOnImageReleasedListener(writerImageListener, mHandler);
 
