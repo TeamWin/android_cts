@@ -15,6 +15,7 @@
  */
 package android.os.cts.batterysaving;
 
+import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryReset;
 import static com.android.compatibility.common.util.BatteryUtils.turnOnScreen;
 import static com.android.compatibility.common.util.SystemUtil.runCommandAndPrintOnLogcat;
@@ -69,6 +70,7 @@ public class BatterySavingTestBase {
 
         @Override
         protected void onAfter(Statement base, Description description) throws Throwable {
+            enableBatterySaver(false);
             runDumpsysBatteryReset();
             turnOnScreen(true);
         }
