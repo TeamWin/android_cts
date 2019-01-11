@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import static android.media.cts.Utils.compareRemoteUserInfo;
+import static android.media.session.PlaybackState.STATE_PLAYING;
 
 import android.content.Intent;
 import android.media.AudioManager;
@@ -24,6 +25,7 @@ import android.media.VolumeProvider;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager.RemoteUserInfo;
+import android.media.session.PlaybackState;
 import android.media.session.PlaybackState.CustomAction;
 import android.net.Uri;
 import android.os.Bundle;
@@ -65,11 +67,52 @@ public class MediaControllerTest extends AndroidTestCase {
         assertEquals(getContext().getPackageName(), mController.getPackageName());
     }
 
+    public void testGetPlaybackState() {
+        final int testState = STATE_PLAYING;
+        final long testPosition = 100000L;
+        final float testSpeed = 1.0f;
+        final long testActions = PlaybackState.ACTION_PLAY | PlaybackState.ACTION_STOP
+                | PlaybackState.ACTION_SEEK_TO;
+        final long testActiveQueueItemId = 3377;
+        final long testBufferedPosition = 100246L;
+        final String testErrorMsg = "ErrorMsg";
+
+        final Bundle extras = new Bundle();
+        extras.putString(EXTRAS_KEY, EXTRAS_VALUE);
+
+        final double positionDelta = 500;
+
+        PlaybackState state = new PlaybackState.Builder()
+                .setState(testState, testPosition, testSpeed)
+                .setActions(testActions)
+                .setActiveQueueItemId(testActiveQueueItemId)
+                .setBufferedPosition(testBufferedPosition)
+                .setErrorMessage(testErrorMsg)
+                .setExtras(extras)
+                .build();
+
+        mSession.setPlaybackState(state);
+
+        // Note: No need to wait since the AIDL call is not oneway.
+        PlaybackState stateOut = mController.getPlaybackState();
+        assertNotNull(stateOut);
+        assertEquals(testState, stateOut.getState());
+        assertEquals(testPosition, stateOut.getPosition(), positionDelta);
+        assertEquals(testSpeed, stateOut.getPlaybackSpeed(), 0.0f);
+        assertEquals(testActions, stateOut.getActions());
+        assertEquals(testActiveQueueItemId, stateOut.getActiveQueueItemId());
+        assertEquals(testBufferedPosition, stateOut.getBufferedPosition());
+        assertEquals(testErrorMsg, stateOut.getErrorMessage().toString());
+        assertNotNull(stateOut.getExtras());
+        assertEquals(EXTRAS_VALUE, stateOut.getExtras().get(EXTRAS_KEY));
+    }
+
     public void testGetRatingType() {
         assertEquals("Default rating type of a session must be Rating.RATING_NONE",
                 Rating.RATING_NONE, mController.getRatingType());
 
         mSession.setRatingType(Rating.RATING_5_STARS);
+        // Note: No need to wait since the AIDL call is not oneway.
         assertEquals(Rating.RATING_5_STARS, mController.getRatingType());
     }
 
