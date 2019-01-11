@@ -17,19 +17,25 @@ package com.android.cts.signedconfig;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.util.Log;
-
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Objects;
 
-public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
 
     private static final String TEST_APP_PACKAGE_NAME = "android.cts.signedconfig.app";
     private static final String TEST_APP_PACKAGE2_NAME = "android.cts.signedconfig.app2";
@@ -49,10 +55,22 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
     private static final String SETTING_SIGNED_CONFIG_VERSION = "signed_config_version";
 
     private IBuildInfo mCtsBuild;
+    private ITestDevice mDevice;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         mCtsBuild = buildInfo;
+    }
+
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
     }
 
     private File getTestApk(String name) throws FileNotFoundException {
@@ -86,18 +104,16 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
         assertThat(v).isEqualTo(value);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         deleteConfig();
         waitForDevice();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         uninstallTestApps();
         deleteConfig();
-        super.tearDown();
     }
 
     private void waitForDevice(int seconds) throws Exception {
@@ -113,6 +129,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
         assertThat(getDevice().installPackage(getTestApk(apkName), false)).isNull();
     }
 
+    @Test
     public void testConfigAppliedOnInstall() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
@@ -120,6 +137,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
+    @Test
     public void testConfigUpgradedOnInstall() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
@@ -129,6 +147,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
+    @Test
     public void testConfigRemainsAfterUninstall() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
@@ -139,6 +158,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
+    @Test
     public void testConfigNotDowngraded() throws Exception {
         installPackage(TEST_APP_APK_NAME_V2);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
@@ -149,6 +169,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
+    @Test
     public void testConfigUpgradedOnInstallOtherPackage() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
@@ -158,6 +179,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
+    @Test
     public void testBadSignatureIgnored() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1_BAD_SIGNATURE);
         waitForDevice(5);
@@ -167,6 +189,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 .isEqualTo("null");
     }
 
+    @Test
     public void testBadBase64Config() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1_BAD_B64_CONFIG);
         waitForDevice(5);
@@ -176,6 +199,7 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
                 .isEqualTo("null");
     }
 
+    @Test
     public void testBadBase64Signature() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1_BAD_B64_SIGNATURE);
         waitForDevice(5);
@@ -184,5 +208,4 @@ public class SignedConfigHostTest extends DeviceTestCase implements IBuildReceiv
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION))
                 .isEqualTo("null");
     }
-
 }
