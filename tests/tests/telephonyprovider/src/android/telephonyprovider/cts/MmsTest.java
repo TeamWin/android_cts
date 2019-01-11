@@ -159,6 +159,16 @@ public class MmsTest {
         assertThatMmsInsertSucceeded(uri, expectedSubject);
     }
 
+    @Test
+    public void testMmsInsert_cannotInsertPartWithDataColumn() {
+        setDefaultSmsApp(true);
+        Uri uri = Uri.parse("content://mms/100/part");
+        ContentValues values = new ContentValues();
+        values.put("_data", "/dev/urandom");
+        Uri uri2 = mContentResolver.insert(uri, values);
+        assertThat(uri2).isNull();
+    }
+
     /**
      * Asserts that a URI returned from an MMS insert operation represents a failed insert.
      *
