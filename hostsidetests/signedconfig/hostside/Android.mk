@@ -32,6 +32,9 @@ LOCAL_JAVA_LIBRARIES := \
     guava \
     truth-prebuilt
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    hamcrest-library
+
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
