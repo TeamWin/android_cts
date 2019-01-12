@@ -371,17 +371,17 @@ public final class TestMeasurementUtil {
                 softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
                                 "= CONSTELLATION_BEIDOU",
                         timeInNs,
-                        "1 <= X <= 36",
+                        "1 <= X <= 63",
                         svidValue,
-                        svid >= 1 && svid <= 36);
+                        svid >= 1 && svid <= 63);
                 break;
             case GnssStatus.CONSTELLATION_GALILEO:
                 softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
                                 "= CONSTELLATION_GALILEO",
                         timeInNs,
-                        "1 <= X <= 37",
+                        "1 <= X <= 36",
                         String.valueOf(svid),
-                        svid >= 1 && svid <= 37);
+                        svid >= 1 && svid <= 36);
                 break;
             default:
                 // Explicit fail if did not receive valid constellation type.
