@@ -2223,50 +2223,49 @@ public class MediaCodecTest extends AndroidTestCase {
     public void testFlacIdentity() throws Exception {
         final int FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
         final int SAMPLES = FRAMES * AUDIO_CHANNEL_COUNT;
+        final int[] SAMPLE_RATES = {AUDIO_SAMPLE_RATE, 192000}; // ensure 192kHz supported.
 
-        final MediaFormat format = new MediaFormat();
-        format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
-        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, AUDIO_SAMPLE_RATE);
-        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, AUDIO_CHANNEL_COUNT);
+        for (int sampleRate : SAMPLE_RATES) {
+            final MediaFormat format = new MediaFormat();
+            format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
+            format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
+            format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, AUDIO_CHANNEL_COUNT);
 
-        // this key is only needed for encode, ignored for decode
-        format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
+            Log.d(TAG, "Trying sample rate: " + sampleRate
+                    + " channel count: " + AUDIO_CHANNEL_COUNT);
+            // this key is only needed for encode, ignored for decode
+            format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
 
-        for (int i = 0; i < 2; ++i) {
-            final boolean useFloat = (i == 1);
-            final PcmAudioBufferStream audioStream = new PcmAudioBufferStream(
+            for (int i = 0; i < 2; ++i) {
+                final boolean useFloat = (i == 1);
+                final PcmAudioBufferStream audioStream = new PcmAudioBufferStream(
                     SAMPLES, AUDIO_SAMPLE_RATE, 1000 /* frequency */, 100 /* sweep */, useFloat);
 
-            if (useFloat) {
-                format.setInteger(
-                    MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
-            }
+                if (useFloat) {
+                    format.setInteger(
+                        MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
+                }
 
-            final MediaCodecStream rawToFlac = new MediaCodecStream(
+                final MediaCodecStream rawToFlac = new MediaCodecStream(
                     new ByteBufferInputStream(audioStream), format, true /* encode */);
-            final MediaCodecStream flacToRaw = new MediaCodecStream(
+                final MediaCodecStream flacToRaw = new MediaCodecStream(
                     rawToFlac, format, false /* encode */);
 
-            if (useFloat) {
-                if (!rawToFlac.mIsFloat) {
-                    Log.d(TAG, "No floating point FLAC encoder");
+                if (useFloat) { // ensure float precision supported at the sample rate.
+                    assertTrue("No float FLAC encoder at " + sampleRate,
+                            rawToFlac.mIsFloat);
+                    assertTrue("No float FLAC decoder at " + sampleRate,
+                            flacToRaw.mIsFloat);
                 }
-                if (!flacToRaw.mIsFloat) {
-                    Log.d(TAG, "No floating point FLAC decoder");
-                }
-                if (!rawToFlac.mIsFloat || !flacToRaw.mIsFloat) {
-                    break;
-                }
-                // TODO: should these be errors?
-            }
 
-            // Note: the existence of signed zero (as well as NAN) may make byte
-            // comparisons invalid for floating point output. In our case, since the
-            // floats come through integer to float conversion, it does not matter.
-            assertEquals("not identical after compression",
-                audioStream.sizeInBytes(),
-                compareStreams(new ByteBufferInputStream(flacToRaw),
+                // Note: the existence of signed zero (as well as NAN) may make byte
+                // comparisons invalid for floating point output. In our case, since the
+                // floats come through integer to float conversion, it does not matter.
+                assertEquals("Audio data not identical after compression",
+                    audioStream.sizeInBytes(),
+                    compareStreams(new ByteBufferInputStream(flacToRaw),
                         new ByteBufferInputStream(new PcmAudioBufferStream(audioStream))));
+            }
         }
     }
 
