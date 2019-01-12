@@ -869,20 +869,57 @@ public class UsageStatsTest {
     }
 
     @Test
-    public void testObserveUsagePermission() {
+    public void testObserveUsagePermissionForRegisterObserver() {
+        final int observerId = 0;
+        final String[] packages = new String[] {"com.android.settings"};
+
         try {
-            mUsageStatsManager.registerAppUsageObserver(0, new String[] {"com.android.settings"},
+            mUsageStatsManager.registerAppUsageObserver(observerId, packages,
                     1, java.util.concurrent.TimeUnit.HOURS, null);
-            fail("Should throw SecurityException");
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
         } catch (SecurityException e) {
             // Exception expected
         }
 
         try {
-            mUsageStatsManager.registerUsageSessionObserver(0, new String[]{"com.android.settings"},
+            mUsageStatsManager.registerUsageSessionObserver(observerId, packages,
                     1, java.util.concurrent.TimeUnit.HOURS, 10,
                     java.util.concurrent.TimeUnit.SECONDS, null, null);
-            fail("Should throw SecurityException");
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
+        } catch (SecurityException e) {
+            // Exception expected
+        }
+
+        try {
+            mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
+                    1, java.util.concurrent.TimeUnit.HOURS, null);
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
+        } catch (SecurityException e) {
+            // Exception expected
+        }
+    }
+
+    @Test
+    public void testObserveUsagePermissionForUnregisterObserver() {
+        final int observerId = 0;
+
+        try {
+            mUsageStatsManager.unregisterAppUsageObserver(observerId);
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
+        } catch (SecurityException e) {
+            // Exception expected
+        }
+
+        try {
+            mUsageStatsManager.unregisterUsageSessionObserver(observerId);
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
+        } catch (SecurityException e) {
+            // Exception expected
+        }
+
+        try {
+            mUsageStatsManager.unregisterAppUsageLimitObserver(observerId);
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
         } catch (SecurityException e) {
             // Exception expected
         }
