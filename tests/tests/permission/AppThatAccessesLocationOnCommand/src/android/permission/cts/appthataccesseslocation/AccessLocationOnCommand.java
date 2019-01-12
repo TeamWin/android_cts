@@ -16,17 +16,45 @@
 
 package android.permission.cts.appthataccesseslocation;
 
-import static android.location.LocationManager.GPS_PROVIDER;
+import static android.location.Criteria.ACCURACY_FINE;
 
 import android.app.Service;
 import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 
 public class AccessLocationOnCommand extends Service {
-    private static final long DELAY_MILLIS = 100;
+    // Longer than the STATE_SETTLE_TIME in AppOpsManager
+    private static final long BACKGROUND_ACCESS_SETTLE_TIME = 11000;
+
+    private void getLocation() {
+        Criteria crit = new Criteria();
+        crit.setAccuracy(ACCURACY_FINE);
+
+        getSystemService(LocationManager.class).requestSingleUpdate(crit, new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+            }
+        }, null);
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -35,8 +63,6 @@ public class AccessLocationOnCommand extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        return (new Handler()).postDelayed(
-                () -> getSystemService(LocationManager.class).getLastKnownLocation(GPS_PROVIDER),
-                DELAY_MILLIS);
+        return (new Handler()).postDelayed(this::getLocation, BACKGROUND_ACCESS_SETTLE_TIME);
     }
 }
