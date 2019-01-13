@@ -395,6 +395,39 @@ public class DownloadManagerTest {
         }
     }
 
+    /**
+     * Test that a download marked as not visible in Downloads ui can be successfully downloaded.
+     */
+    @Test
+    public void testDownloadNotVisibleInUi() throws Exception {
+        File uriLocation = new File(mContext.getExternalFilesDir(null), "uriFile.bin");
+        if (uriLocation.exists()) {
+            assertTrue(uriLocation.delete());
+        }
+
+        final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
+        try {
+            IntentFilter intentFilter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+            mContext.registerReceiver(receiver, intentFilter);
+
+            final Request request = new Request(getGoodUrl());
+            request.setDestinationUri(Uri.fromFile(uriLocation))
+                    .setVisibleInDownloadsUi(false);
+            long uriId = mDownloadManager.enqueue(request);
+
+            int allDownloads = getTotalNumberDownloads();
+            assertEquals(1, allDownloads);
+
+            receiver.waitForDownloadComplete(SHORT_TIMEOUT, uriId);
+
+            assertSuccessfulDownload(uriId, uriLocation);
+
+            assertRemoveDownload(uriId, 0);
+        } finally {
+            mContext.unregisterReceiver(receiver);
+        }
+    }
+
     @Test
     public void testAddCompletedDownload() throws Exception {
         final String fileContents = "RED;GREEN;BLUE";

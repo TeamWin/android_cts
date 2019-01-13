@@ -1818,6 +1818,8 @@ public class MediaCodecTest extends AndroidTestCase {
      *
      * If not specified in configure(), PCM encoding if it exists must be 16 bit.
      * If specified float in configure(), PCM encoding if it exists must be 16 bit, or float.
+     *
+     * As of Q, any codec of type "audio/raw" must support PCM encoding float.
      */
     @MediumTest
     public void testPCMEncoding() throws Exception {
@@ -1900,7 +1902,13 @@ public class MediaCodecTest extends AndroidTestCase {
                         if (actualEncoding == AudioFormat.ENCODING_PCM_FLOAT) {
                             Log.d(TAG, "codec: " + name + " type: " + type + " supports float");
                         }
+                    }
 
+                    // As of Q, all codecs of type "audio/raw" must support float.
+                    if (type.equals("audio/raw")) {
+                        assertTrue(type + " must support float",
+                                actualEncoding != null &&
+                                actualEncoding.intValue() == AudioFormat.ENCODING_PCM_FLOAT);
                     }
                 }
             }

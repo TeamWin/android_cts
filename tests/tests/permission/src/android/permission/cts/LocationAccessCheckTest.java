@@ -91,12 +91,21 @@ public class LocationAccessCheckTest {
     private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
     private static final long LOCATION_ACCESS_TIMEOUT_MILLIS = 15000;
 
+    // Same as in AccessLocationOnCommand
+    private static final long BACKGROUND_ACCESS_SETTLE_TIME = 11000;
+
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation = InstrumentationRegistry.getInstrumentation()
             .getUiAutomation();
 
     private static final String PERMISSION_CONTROLLER_PKG = sContext.getPackageManager()
             .getPermissionControllerPackageName();
+
+    /**
+     * The result of {@link #assumeCanGetFineLocation()}, so we don't have to run it over and over
+     * again.
+     */
+    private static Boolean sCanAccessFineLocation = null;
 
     /**
      * Connected to {@value #TEST_APP_PKG} and make it access the location in the background
@@ -260,7 +269,8 @@ public class LocationAccessCheckTest {
             if (notification == null) {
                 // Sometimes getting a location takes some time, hence not getting a notification
                 // can be caused by not having gotten a location yet
-                if (System.currentTimeMillis() - start < LOCATION_ACCESS_TIMEOUT_MILLIS) {
+                if (System.currentTimeMillis() - start < LOCATION_ACCESS_TIMEOUT_MILLIS
+                        + BACKGROUND_ACCESS_SETTLE_TIME) {
                     Thread.sleep(200);
                     continue;
                 }
@@ -298,39 +308,6 @@ public class LocationAccessCheckTest {
         sUiAutomation.grantRuntimePermission(TEST_APP_PKG, permission);
     }
 
-    @BeforeClass
-    public static void assumeCanGetFineLocation() {
-        Criteria crit = new Criteria();
-        crit.setAccuracy(ACCURACY_FINE);
-
-        CountDownLatch locationCounter = new CountDownLatch(1);
-        sContext.getSystemService(LocationManager.class).requestSingleUpdate(crit,
-                new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                locationCounter.countDown();
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-            }
-        }, Looper.getMainLooper());
-
-
-        try {
-            assumeTrue(locationCounter.await(LOCATION_ACCESS_TIMEOUT_MILLIS, MILLISECONDS));
-        } catch (InterruptedException ignored) {
-        }
-    }
-
     /**
      * Register {@link NotificationListener}.
      */
@@ -361,6 +338,47 @@ public class LocationAccessCheckTest {
     @Before
     public void resetPermissionControllerBeforeEachTest() throws Throwable {
         resetPermissionController();
+    }
+
+    /**
+     * Make sure fine location can be accessed at all.
+     */
+    @Before
+    public void assumeCanGetFineLocation() {
+        if (sCanAccessFineLocation == null) {
+            Criteria crit = new Criteria();
+            crit.setAccuracy(ACCURACY_FINE);
+
+            CountDownLatch locationCounter = new CountDownLatch(1);
+            sContext.getSystemService(LocationManager.class).requestSingleUpdate(crit,
+                    new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            locationCounter.countDown();
+                        }
+
+                        @Override
+                        public void onStatusChanged(String provider, int status, Bundle extras) {
+                        }
+
+                        @Override
+                        public void onProviderEnabled(String provider) {
+                        }
+
+                        @Override
+                        public void onProviderDisabled(String provider) {
+                        }
+                    }, Looper.getMainLooper());
+
+
+            try {
+                sCanAccessFineLocation = locationCounter.await(LOCATION_ACCESS_TIMEOUT_MILLIS,
+                        MILLISECONDS);
+            } catch (InterruptedException ignored) {
+            }
+        }
+
+        assumeTrue(sCanAccessFineLocation);
     }
 
     /**

@@ -2846,6 +2846,11 @@
     <permission android:name="android.permission.MANAGE_APP_OPS_MODES"
         android:protectionLevel="signature|installer|verifier" />
 
+    <!-- @hide Permission that allows configuring appops.
+     <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.MANAGE_APPOPS"
+        android:protectionLevel="signature" />
+
     <!-- @SystemApi Allows an application to open windows that are for use by parts
          of the system user interface.
          <p>Not for use by third-party applications.
@@ -4257,6 +4262,16 @@
          @hide  <p>Not for use by third-party applications.</p> -->
     <permission android:name="android.permission.MANAGE_CONTENT_CAPTURE"
         android:protectionLevel="signature" />
+
+    <!-- @SystemApi Allows an application to manage the content suggestions service.
+         @hide  <p>Not for use by third-party applications.</p> -->
+    <permission android:name="android.permission.MANAGE_CONTENT_SUGGESTIONS"
+         android:protectionLevel="signature" />
+
+    <!-- @SystemApi Allows an application to manage the app predictions service.
+         @hide  <p>Not for use by third-party applications.</p> -->
+    <permission android:name="android.permission.MANAGE_APP_PREDICTIONS"
+         android:protectionLevel="signature" />
 
     <!-- Allows an app to set the theme overlay in /vendor/overlay
          being used.

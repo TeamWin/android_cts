@@ -30,7 +30,8 @@ import android.os.Handler;
 import android.os.IBinder;
 
 public class AccessLocationOnCommand extends Service {
-    private static final long DELAY_MILLIS = 100;
+    // Longer than the STATE_SETTLE_TIME in AppOpsManager
+    private static final long BACKGROUND_ACCESS_SETTLE_TIME = 11000;
 
     private void getLocation() {
         Criteria crit = new Criteria();
@@ -62,6 +63,6 @@ public class AccessLocationOnCommand extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        return (new Handler()).postDelayed(this::getLocation, DELAY_MILLIS);
+        return (new Handler()).postDelayed(this::getLocation, BACKGROUND_ACCESS_SETTLE_TIME);
     }
 }

@@ -22,8 +22,6 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertEquals;
-
 import android.app.Activity;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
@@ -39,7 +37,9 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -52,7 +52,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -63,6 +65,8 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 public class RoleManagerTest {
+
+    private static final String LOG_TAG = "RoleManagerTest";
 
     private static final long TIMEOUT_MILLIS = 15 * 1000;
 
@@ -129,8 +133,13 @@ public class RoleManagerTest {
         addRoleHolder(RoleManager.ROLE_DIALER, APP_PACKAGE_NAME);
         addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
         removeRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
-        assertEquals(AppOpsManager.MODE_ALLOWED,
-                AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS));
+        assertThat(AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS))
+                .isEqualTo(AppOpsManager.MODE_ALLOWED);
+    }
+
+    @Test
+    public void migratedRoleHoldersNotEmpty() throws Exception {
+        assertThat(getRoleHolders(RoleManager.ROLE_SMS)).isNotEmpty();
     }
 
     private void requestRole(@NonNull String roleName) {
@@ -144,7 +153,12 @@ public class RoleManagerTest {
             throws InterruptedException, IOException {
         wakeUpScreen();
         String buttonId = ok ? "android:id/button1" : "android:id/button2";
-        sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS).click();
+        UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
+        if (button == null) {
+            dumpWindowHierarchy();
+            throw new AssertionError("Cannot find button to click");
+        }
+        button.click();
         Pair<Integer, Intent> result = mActivityRule.getActivity().waitForActivityResult(
                 TIMEOUT_MILLIS);
         int expectedResult = expectResultOk ? Activity.RESULT_OK : Activity.RESULT_CANCELED;
@@ -157,6 +171,18 @@ public class RoleManagerTest {
 
     private void wakeUpScreen() throws IOException {
         runShellCommand(sInstrumentation, "input keyevent KEYCODE_WAKEUP");
+    }
+
+    private void dumpWindowHierarchy() throws InterruptedException, IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        sUiDevice.dumpWindowHierarchy(outputStream);
+        String windowHierarchy = outputStream.toString(StandardCharsets.UTF_8.name());
+
+        Log.w(LOG_TAG, "Window hierarchy:");
+        for (String line : windowHierarchy.split("\n")) {
+            Thread.sleep(10);
+            Log.w(LOG_TAG, line);
+        }
     }
 
     private void assertIsRoleHolder(@NonNull String roleName, @NonNull String packageName,

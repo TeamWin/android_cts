@@ -16,7 +16,6 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
-import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.setService;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;

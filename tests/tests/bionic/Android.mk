@@ -39,6 +39,8 @@ LOCAL_STATIC_LIBRARIES += \
     libLLVMCore \
     libLLVMSupport \
 
+LOCAL_SYSTEM_SHARED_LIBRARIES := libc.bootstrap libm.bootstrap libdl.bootstrap
+
 LOCAL_CXX_STL := libc++_static
 
 # Tag this module as a cts test artifact

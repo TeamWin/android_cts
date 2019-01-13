@@ -55,6 +55,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".CustomViewActivity"
+                  android:label="CustomView"
+                  android:taskAffinity=".CustomViewActivity"
+                  android:theme="@android:style/Theme.NoTitleBar">
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it makes easier to launch
+                     this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".CtsContentCaptureService"

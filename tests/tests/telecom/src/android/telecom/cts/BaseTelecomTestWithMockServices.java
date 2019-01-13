@@ -51,6 +51,7 @@ import android.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -650,8 +651,13 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         if (!VideoProfile.isAudioOnly(videoState)) {
             extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, videoState);
         }
-
-        mTelecomManager.placeCall(createTestNumber(), extras);
+        Uri number;
+        if (extras.containsKey(TestUtils.EXTRA_PHONE_NUMBER)) {
+            number = extras.getParcelable(TestUtils.EXTRA_PHONE_NUMBER);
+        } else {
+            number = createTestNumber();
+        }
+        mTelecomManager.placeCall(number, extras);
     }
 
     /**
@@ -661,6 +667,18 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
      */
     Uri createTestNumber() {
         return Uri.fromParts("tel", String.valueOf(++sCounter), null);
+    }
+
+    /**
+     * Creates a new random phone number in the range:
+     * 000-000-0000
+     * to
+     * 999-999-9999
+     * @return Randomized phone number.
+     */
+    Uri createRandomTestNumber() {
+        return Uri.fromParts("tel", String.format("%06d", new Random().nextInt(999999))
+                + String.format("%04d", new Random().nextInt(9999)), null);
     }
 
     public static Uri getTestNumber() {

@@ -128,29 +128,32 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
      */
-    public static ViewNode assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
-            @NonNull View expectedView) {
-        return assertViewWithUnknownParentAppeared(event, expectedView, /* expectedText= */ null);
+    public static ViewNode assertViewWithUnknownParentAppeared(
+            @NonNull List<ContentCaptureEvent> events, int index, @NonNull View expectedView) {
+        return assertViewWithUnknownParentAppeared(events, index, expectedView,
+                /* expectedText= */ null);
     }
 
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
      */
-    public static ViewNode assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
-            @NonNull View expectedView, @Nullable String expectedText) {
-        assertWithMessage("wrong event: %s", event).that(event.getType())
+    public static ViewNode assertViewWithUnknownParentAppeared(
+            @NonNull List<ContentCaptureEvent> events, int index, @NonNull View expectedView,
+            @Nullable String expectedText) {
+        final ContentCaptureEvent event = getEvent(events, index);
+        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_APPEARED);
         final ViewNode node = event.getViewNode();
         assertThat(node).isNotNull();
-        assertWithMessage("invalid time on %s", event).that(event.getEventTime())
+        assertWithMessage("invalid time on %s (%s)", event, index).that(event.getEventTime())
                 .isAtLeast(MY_EPOCH);
-        assertWithMessage("wrong class on %s", node).that(node.getClassName())
+        assertWithMessage("wrong class on %s (%s)", event, index).that(node.getClassName())
                 .isEqualTo(expectedView.getClass().getName());
-        assertWithMessage("wrong autofill id on %s", node).that(node.getAutofillId())
+        assertWithMessage("wrong autofill id on %s (%s)", event, index).that(node.getAutofillId())
                 .isEqualTo(expectedView.getAutofillId());
 
         if (expectedText != null) {
-            assertWithMessage("wrong text id on %s", node).that(node.getText().toString())
+            assertWithMessage("wrong text on %s (%s)", event, index).that(node.getText().toString())
                     .isEqualTo(expectedText);
         }
         // TODO(b/119638958): test more fields, like resource id
@@ -160,30 +163,30 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
      */
-    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
+    public static void assertViewAppeared(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull View expectedView, @Nullable AutofillId expectedParentId,
             @Nullable String expectedText) {
-        final ViewNode node = assertViewWithUnknownParentAppeared(event, expectedView,
+        final ViewNode node = assertViewWithUnknownParentAppeared(events, index, expectedView,
                 expectedText);
-        assertWithMessage("wrong parent autofill id on %s", node).that(node.getParentAutofillId())
-                .isEqualTo(expectedParentId);
+        assertWithMessage("wrong parent autofill id on %s (%s)", events.get(index), index)
+            .that(node.getParentAutofillId()).isEqualTo(expectedParentId);
     }
 
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
      */
-    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
+    public static void assertViewAppeared(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
-        assertViewAppeared(event, expectedView, expectedParentId, /* expectedText= */ null);
+        assertViewAppeared(events, index, expectedView, expectedParentId, /* expectedText= */ null);
     }
 
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
      */
-    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
+    public static void assertViewAppeared(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull ContentCaptureSessionId expectedSessionId,
             @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
-        assertViewAppeared(event, expectedView, expectedParentId);
+        assertViewAppeared(events, index, expectedView, expectedParentId);
         assertSessionId(expectedSessionId, expectedView);
     }
 
@@ -211,7 +214,7 @@ final class Assertions {
         final StringBuilder errors = new StringBuilder();
         for (int i = 0; i < optionalSize; i++) {
             final int index = minimumSize + i;
-            final ContentCaptureEvent event = events.get(index);
+            final ContentCaptureEvent event = getEvent(events, index);
             if (event.getType() != TYPE_VIEW_DISAPPEARED) {
                 errors.append("Invalid event at index ").append(index).append(": ").append(event)
                         .append('\n');
@@ -225,32 +228,68 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent
      */
-    public static void assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
-            @NonNull ContentCaptureSessionId expectedSessionId,
-            @NonNull View expectedView) {
-        assertViewWithUnknownParentAppeared(event, expectedView);
+    public static void assertViewWithUnknownParentAppeared(
+            @NonNull List<ContentCaptureEvent> events, int index,
+            @NonNull ContentCaptureSessionId expectedSessionId, @NonNull View expectedView) {
+        assertViewWithUnknownParentAppeared(events, index, expectedView);
         assertSessionId(expectedSessionId, expectedView);
     }
 
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event.
      */
-    public static void assertViewDisappeared(@NonNull ContentCaptureEvent event,
+    public static void assertViewDisappeared(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull AutofillId expectedId) {
-        assertWithMessage("wrong event: %s", event).that(event.getType())
+        final ContentCaptureEvent event = getEvent(events, index);
+        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_DISAPPEARED);
-        assertWithMessage("invalid time on %s", event).that(event.getEventTime())
+        assertWithMessage("invalid time on %s (index %s)", event, index).that(event.getEventTime())
             .isAtLeast(MY_EPOCH);
-        assertWithMessage("event %s should not have a ViewNode", event).that(event.getViewNode())
-                .isNull();
-        assertWithMessage("event %s should not have text", event).that(event.getText())
-            .isNull();
-        assertWithMessage("event %s should not have flags", event).that(event.getFlags())
-            .isEqualTo(0);
-        assertWithMessage("event %s should not have a ViewNode", event).that(event.getViewNode())
-            .isNull();
-        assertWithMessage("wrong autofillId on event %s", event).that(event.getId())
-            .isEqualTo(expectedId);
+        assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
+                .that(event.getViewNode()).isNull();
+        assertWithMessage("event %s (index %s) should not have text", event, index)
+            .that(event.getText()).isNull();
+        assertWithMessage("event %s (index %s) should not have flags", event, index)
+            .that(event.getFlags()).isEqualTo(0);
+        assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
+            .that(event.getViewNode()).isNull();
+        assertWithMessage("wrong autofillId on event %s (index %s)", event, index)
+            .that(event.getId()).isEqualTo(expectedId);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event for a virtual node.
+     */
+    public static void assertVirtualViewAppeared(@NonNull List<ContentCaptureEvent> events,
+            int index, @NonNull ContentCaptureSession session, @NonNull AutofillId parentId,
+            int childId, @Nullable String expectedText) {
+        final ContentCaptureEvent event = getEvent(events, index);
+        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
+            .isEqualTo(TYPE_VIEW_APPEARED);
+        final ViewNode node = event.getViewNode();
+        assertThat(node).isNotNull();
+        assertWithMessage("invalid time on %s (index %s)", event, index).that(event.getEventTime())
+            .isAtLeast(MY_EPOCH);
+        final AutofillId expectedId = session.newAutofillId(parentId, childId);
+        assertWithMessage("wrong autofill id on %s (index %s)", event, index)
+            .that(node.getAutofillId()).isEqualTo(expectedId);
+        if (expectedText != null) {
+            assertWithMessage("wrong text on %s(index %s) ", event, index)
+                .that(node.getText().toString()).isEqualTo(expectedText);
+        } else {
+            assertWithMessage("%s (index %s) should not have text", node, index)
+                .that(node.getText()).isNull();
+        }
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event for a virtual node.
+     */
+    public static void assertVirtualViewDisappeared(@NonNull List<ContentCaptureEvent> events,
+            int index, @NonNull AutofillId parentId, @NonNull ContentCaptureSession session,
+            int childId) {
+        final AutofillId expectedId = session.newAutofillId(parentId, childId);
+        assertViewDisappeared(events, index, expectedId);
     }
 
     /**
@@ -268,13 +307,14 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_TEXT_CHANGED} event.
      */
-    public static void assertViewTextChanged(@NonNull ContentCaptureEvent event,
+    public static void assertViewTextChanged(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull AutofillId expectedId, @NonNull String expectedText) {
-        assertWithMessage("wrong event: %s", event).that(event.getType())
+        final ContentCaptureEvent event = getEvent(events, index);
+        assertWithMessage("wrong event at index %s: %s", index, event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_TEXT_CHANGED);
-        assertWithMessage("Wrong id on %s", event).that(event.getId())
+        assertWithMessage("Wrong id on %s (%s)", event, index).that(event.getId())
                 .isEqualTo(expectedId);
-        assertWithMessage("Wrong text on %s", event).that(event.getText().toString())
+        assertWithMessage("Wrong text on %s (%s)", event, index).that(event.getText().toString())
                 .isEqualTo(expectedText);
     }
 
@@ -295,6 +335,19 @@ final class Assertions {
             default:
                 throw new IllegalArgumentException("Invalid type: " + type);
         }
+    }
+
+    /**
+     * Gets the event at the given index, failing with the user-friendly message if necessary...
+     */
+    @NonNull
+    public static ContentCaptureEvent getEvent(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertWithMessage("events is null").that(events).isNotNull();
+        final ContentCaptureEvent event = events.get(index);
+        assertWithMessage("no event at index %s (size %s): %s", index, events.size(), events)
+                .that(event).isNotNull();
+        return event;
     }
 
     private Assertions() {

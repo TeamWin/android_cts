@@ -16,6 +16,7 @@
 
 package android.theme.app.modifiers;
 
+import android.animation.ValueAnimator;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.ProgressBar;
@@ -23,10 +24,9 @@ import android.widget.ProgressBar;
 public class ProgressBarModifier extends AbstractLayoutModifier {
 
     @Override
-    public View modifyView(View view) {
+    public void modifyViewBeforeAdd(View view) {
         ProgressBar pb = (ProgressBar) view;
         pb.setInterpolator(new ZeroInterpolator());
-        return pb;
     }
 
     private static class ZeroInterpolator implements Interpolator {
