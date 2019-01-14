@@ -59,6 +59,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(null, channel.getGroup());
         assertTrue(channel.getLightColor() == 0);
         assertTrue(channel.canBubble());
+        assertFalse(channel.isImportanceLockedByOEM());
     }
 
     public void testWriteToParcel() {
@@ -167,5 +168,12 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
         channel.setAllowBubbles(true);
         assertEquals(true, channel.canBubble());
+    }
+
+    public void testIsImportanceLockedByOEM() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
+        channel.setImportanceLockedByOEM(true);
+        assertTrue(channel.isImportanceLockedByOEM());
     }
 }
