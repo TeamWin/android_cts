@@ -270,7 +270,7 @@ public class OpenGlEsVersionTest {
         // This test covers the EGL portion of the CDD requirement. The VK portion of the
         // requirement is covered elsewhere.
         final String requiredEglList[] = {
-            "EGL_EXT_gl_colorsapce_bt2020_pq",
+            "EGL_EXT_gl_colorspace_bt2020_pq",
             "EGL_EXT_surface_SMPTE2086_metadata",
             "EGL_EXT_surface_CTA861_3_metadata",
         };
