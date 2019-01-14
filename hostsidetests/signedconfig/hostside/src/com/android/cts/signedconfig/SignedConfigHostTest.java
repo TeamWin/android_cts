@@ -17,9 +17,6 @@ package com.android.cts.signedconfig;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.not;
-
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -29,7 +26,6 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,7 +108,6 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     public void setUp() throws Exception {
         deleteConfig();
         waitForDevice();
-        Assume.assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
     }
 
     @After
