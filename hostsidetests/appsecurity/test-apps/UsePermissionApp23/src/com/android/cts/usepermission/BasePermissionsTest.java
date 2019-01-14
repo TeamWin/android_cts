@@ -294,36 +294,47 @@ public abstract class BasePermissionsTest {
 
     protected void clickAllowButton() throws Exception {
         scrollToBottomIfWatch();
-        getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_allow_button")).click();
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.res(
+                "com.android.permissioncontroller:id/permission_allow_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void clickAllowAlwaysButton() throws Exception {
-        getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_allow_always_button")).click();
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.res(
+                "com.android.permissioncontroller:id/permission_allow_always_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void clickAllowForegroundButton() throws Exception {
-        getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_allow_foreground_only_button")).click();
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.res(
+                "com.android.permissioncontroller:id/permission_allow_foreground_only_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void clickDenyButton() throws Exception {
         scrollToBottomIfWatch();
-        getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_deny_button")).click();
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.res(
+                "com.android.permissioncontroller:id/permission_deny_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void clickDenyAndDontAskAgainButton() throws Exception {
-        getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button")).click();
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.res(
+                "com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void clickDontAskAgainButton() throws Exception {
         scrollToBottomIfWatch();
-        getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
-                .click();
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.res(
+                "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void grantPermission(String permission) throws Exception {
