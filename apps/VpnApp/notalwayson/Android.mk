@@ -26,8 +26,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../res
 
-LOCAL_SDK_VERSION := current
-LOCAL_MIN_SDK_VERSION := 22
+#LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
