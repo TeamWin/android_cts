@@ -114,6 +114,16 @@ public class AccessPermissionWithDiffSigTest extends AndroidTestCase {
         }
     }
 
+    private void assertContentUriAllowed(Uri uri) {
+        assertReadingContentUriAllowed(uri);
+        assertWritingContentUriAllowed(uri);
+    }
+
+    private void assertContentUriNotAllowed(Uri uri, String msg) {
+        assertReadingContentUriNotAllowed(uri, msg);
+        assertWritingContentUriNotAllowed(uri, msg);
+    }
+
     private void assertWritingContentUriNotAllowed(Uri uri, String msg) {
         final ContentResolver resolver = getContext().getContentResolver();
         try {
@@ -1194,6 +1204,26 @@ public class AccessPermissionWithDiffSigTest extends AndroidTestCase {
                 .appendPath("foo").appendPath("ba").build();
         assertReadingContentUriNotAllowed(test2, null);
         assertWritingContentUriNotAllowed(test2, null);
+    }
+
+    /**
+     * Test that shady {@link Uri} are blocked by {@code path-permission}.
+     */
+    public void testRestrictingProviderMatchingShadyPaths() {
+        assertContentUriAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting/"));
+        assertContentUriAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting//"));
+        assertContentUriAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting///"));
+        assertContentUriNotAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting/foo"), null);
+        assertContentUriNotAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting//foo"), null);
+        assertContentUriNotAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting///foo"), null);
+        assertContentUriNotAllowed(
+                Uri.parse("content://ctspermissionwithsignaturepathrestricting/foo//baz"), null);
     }
 
     /**
