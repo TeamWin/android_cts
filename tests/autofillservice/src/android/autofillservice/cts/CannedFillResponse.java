@@ -59,7 +59,7 @@ import java.util.regex.Pattern;
  *               .build());
  * </pre class="prettyprint">
  */
-final class CannedFillResponse {
+public final class CannedFillResponse {
 
     private final ResponseType mResponseType;
     private final List<CannedDataset> mDatasets;
@@ -125,27 +125,27 @@ final class CannedFillResponse {
      * Constant used to pass a {@code null} response to the
      * {@link FillCallback#onSuccess(FillResponse)} method.
      */
-    static final CannedFillResponse NO_RESPONSE =
+    public static final CannedFillResponse NO_RESPONSE =
             new Builder(ResponseType.NULL).build();
 
     /**
      * Constant used to emulate a timeout by not calling any method on {@link FillCallback}.
      */
-    static final CannedFillResponse DO_NOT_REPLY_RESPONSE =
+    public static final CannedFillResponse DO_NOT_REPLY_RESPONSE =
             new Builder(ResponseType.TIMEOUT).build();
 
 
     /**
      * Constant used to call {@link FillCallback#onFailure(CharSequence)} method.
      */
-    static final CannedFillResponse FAIL =
+    public static final CannedFillResponse FAIL =
             new Builder(ResponseType.FAILURE).build();
 
-    String getFailureMessage() {
+    public String getFailureMessage() {
         return mFailureMessage;
     }
 
-    ResponseType getResponseType() {
+    public ResponseType getResponseType() {
         return mResponseType;
     }
 
@@ -153,7 +153,7 @@ final class CannedFillResponse {
      * Creates a new response, replacing the dataset field ids by the real ids from the assist
      * structure.
      */
-    FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
+    public FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
         final FillResponse.Builder builder = new FillResponse.Builder()
                 .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
@@ -275,14 +275,14 @@ final class CannedFillResponse {
                 + "]";
     }
 
-    enum ResponseType {
+    public enum ResponseType {
         NORMAL,
         NULL,
         TIMEOUT,
         FAILURE
     }
 
-    static class Builder {
+    public static final class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
         private final ArrayList<Pair<Sanitizer, AutofillId[]>> mSanitizers = new ArrayList<>();
         private final ResponseType mResponseType;
@@ -527,7 +527,7 @@ final class CannedFillResponse {
      *               .build());
      * </pre class="prettyprint">
      */
-    static class CannedDataset {
+    public static class CannedDataset {
         private final Map<String, AutofillValue> mFieldValues;
         private final Map<AutofillId, AutofillValue> mFieldValuesById;
         private final Map<AutofillId, RemoteViews> mFieldPresentationsById;
@@ -611,7 +611,7 @@ final class CannedFillResponse {
                     + ", fieldFilters=" + mFieldFilters + "]";
         }
 
-        static class Builder {
+        public static class Builder {
             private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
             private final Map<AutofillId, AutofillValue> mFieldValuesById = new HashMap<>();
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
