@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Process;
 import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
@@ -80,10 +81,9 @@ public class ExtraAssistDataTest extends AssistTestBase {
 
         Log.i(TAG, "assist bundle is: " + Utils.toBundleString(mAssistBundle));
 
-        // tests that the assist content's structured data is the expected
+        // first tests that the assist content's structured data is the expected
         assertEquals("AssistContent structured data did not match data in onProvideAssistContent",
                 Utils.getStructuredJSON(), mAssistContent.getStructuredData());
-        // tests the assist data. EXTRA_ASSIST_CONTEXT is what's expected.
         Bundle extraExpectedBundle = Utils.getExtraAssistBundle();
         Bundle extraAssistBundle = mAssistBundle.getBundle(Intent.EXTRA_ASSIST_CONTEXT);
         for (String key : extraExpectedBundle.keySet()) {
@@ -92,6 +92,12 @@ public class ExtraAssistDataTest extends AssistTestBase {
             assertEquals("Extra assist context bundle values do not match for key: " + key,
                     extraExpectedBundle.get(key), extraAssistBundle.get(key));
         }
+
+        // then test the EXTRA_ASSIST_UID
+        int expectedUid = Utils.getExpectedUid(extraAssistBundle);
+        int actualUid = mAssistBundle.getInt(Intent.EXTRA_ASSIST_UID);
+        assertEquals("Wrong value for EXTRA_ASSIST_UID", expectedUid, actualUid);
+
     }
 
     private void waitForOnResume() throws Exception {
