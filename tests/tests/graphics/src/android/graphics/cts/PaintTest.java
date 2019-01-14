@@ -63,6 +63,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Locale;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -2070,14 +2072,14 @@ public class PaintTest {
         }
     }
 
-    @Test
-    public void testSetColorLong() {
+    private void testColorLongs(String methodName, BiConsumer<Paint, Long> setColor,
+                                Function<Paint, Integer> getColor) {
         // Pack SRGB colors into ColorLongs
         for (int color : new int[]{ Color.RED, Color.BLUE, Color.GREEN, Color.BLACK,
                 Color.WHITE, Color.TRANSPARENT }) {
             Paint p = new Paint();
-            p.setColor(Color.pack(color));
-            assertEquals(color, p.getColor());
+            setColor.accept(p, Color.pack(color));
+            assertEquals(color, getColor.apply(p).intValue());
         }
 
         // Arbitrary colors in various ColorSpaces
@@ -2095,7 +2097,7 @@ public class PaintTest {
 
                 long longColor = Color.convert(srgbColor, cs);
                 Paint p = new Paint();
-                p.setColor(longColor);
+                setColor.accept(p, longColor);
 
                 // These tolerances were chosen by trial and error. It is expected that
                 // some conversions do not round-trip perfectly.
@@ -2103,10 +2105,16 @@ public class PaintTest {
                 if (cs.equals(ColorSpace.get(ColorSpace.Named.SMPTE_C))) {
                     tolerance = 2;
                 }
-                ColorUtils.verifyColor("Paint#setColor mismatch for " + cs, srgbColor, p.getColor(),
-                        tolerance);
+                int color = getColor.apply(p);
+                ColorUtils.verifyColor("Paint#" + methodName + " mismatch for " + cs, srgbColor,
+                        color, tolerance);
             }
         }
+    }
+
+    @Test
+    public void testSetColorLong() {
+        testColorLongs("setColor", (p, c) -> p.setColor(c), (p) -> p.getColor());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -2125,5 +2133,31 @@ public class PaintTest {
     public void testSetColorUnknown() {
         Paint p = new Paint();
         p.setColor(-1L);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetShadowLayerXYZ() {
+        Paint p = new Paint();
+        p.setShadowLayer(10.0f, 1.0f, 1.0f,
+                Color.convert(Color.BLUE, ColorSpace.get(ColorSpace.Named.CIE_XYZ)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetShadowLayerLAB() {
+        Paint p = new Paint();
+        p.setShadowLayer(10.0f, 1.0f, 1.0f,
+                Color.convert(Color.BLUE, ColorSpace.get(ColorSpace.Named.CIE_LAB)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetShadowLayerUnknown() {
+        Paint p = new Paint();
+        p.setShadowLayer(10.0f, 1.0f, 1.0f, -1L);
+    }
+
+    @Test
+    public void testSetShadowLayerLong() {
+        testColorLongs("setShadowLayer", (p, c) -> p.setShadowLayer(10.0f, 1.0f, 1.0f, c),
+                (p) -> p.getShadowLayerColor());
     }
 }
