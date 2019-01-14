@@ -18,8 +18,6 @@ package android.content.res.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.cts.R;
 import android.content.cts.util.XmlUtils;
 import android.content.pm.ActivityInfo;
@@ -31,6 +29,8 @@ import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
@@ -70,6 +70,19 @@ public class TypedArrayTest extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         mTypedArray.recycle();
+    }
+
+    public void testSourceStyleResourceId() {
+        final TypedArray t = getContext().getTheme().obtainStyledAttributes(
+                R.style.StyleA, R.styleable.style1);
+
+        assertEquals(R.style.StyleA, t.getSourceStyleResourceId(R.styleable.style1_type1, 0));
+        assertEquals(R.style.StyleB, t.getSourceStyleResourceId(R.styleable.style1_type2, 0));
+        assertEquals(R.style.StyleC, t.getSourceStyleResourceId(R.styleable.style1_type3, 0));
+        assertEquals(R.style.StyleB, t.getSourceStyleResourceId(R.styleable.style1_type4, 0));
+        assertEquals(0, t.getSourceStyleResourceId(R.styleable.style1_type5, 0));
+
+        t.recycle();
     }
 
     public void testGetType() {
