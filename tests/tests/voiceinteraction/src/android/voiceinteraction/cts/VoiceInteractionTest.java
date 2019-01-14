@@ -43,6 +43,7 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
     private TestResultsReceiver mReceiver;
     private Bundle mResults;
     private final CountDownLatch mLatch = new CountDownLatch(1);
+    // TODO: convert test to JUnit4 so we can use @RequiredFeatureRule instead
     protected boolean mHasFeature;
     protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
@@ -53,13 +54,14 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        startTestActivity();
+
         mContext = getInstrumentation().getTargetContext();
         mHasFeature = mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
-        if (mHasFeature) {
-            mReceiver = new TestResultsReceiver();
-            mContext.registerReceiver(mReceiver, new IntentFilter(Utils.BROADCAST_INTENT));
-        }
+        if (!mHasFeature) return;
+
+        mReceiver = new TestResultsReceiver();
+        mContext.registerReceiver(mReceiver, new IntentFilter(Utils.BROADCAST_INTENT));
+        startTestActivity();
     }
 
     @Override
@@ -87,12 +89,13 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
     }
 
     public void testAll() throws Exception {
-        VoiceInteractionTestReceiver.waitSessionStarted(this, 5, TimeUnit.SECONDS);
-
         if (!mHasFeature) {
             Log.i(TAG, "The device doesn't support feature: " + FEATURE_VOICE_RECOGNIZERS);
             return;
         }
+
+        VoiceInteractionTestReceiver.waitSessionStarted(this, 5, TimeUnit.SECONDS);
+
         if (!mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             fail("Failed to receive broadcast in " + TIMEOUT_MS + "msec");
             return;
@@ -116,7 +119,7 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
     }
 
     private void verifySingleTestcaseResult(Utils.TestCaseType testCaseType, String result) {
-        Log.i(TAG, "Recevied testresult: " + result + " for " + testCaseType);
+        Log.i(TAG, "Received testresult: " + result + " for " + testCaseType);
         switch (testCaseType) {
           case ABORT_REQUEST_CANCEL_TEST:
               assertTrue(result.equals(Utils.ABORT_REQUEST_CANCEL_SUCCESS));
