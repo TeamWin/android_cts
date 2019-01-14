@@ -69,7 +69,7 @@ struct FieldSlot {
 JNIEXPORT jint JNICALL
 Java_android_content_cts_CursorWindowContentProvider_makeNativeCursorWindowFd(JNIEnv *env, jclass clazz,
 jint offset, jint size, jboolean isBlob) {
-    int fd = open("/dev/ashmem", O_RDWR);
+    int fd = open("/dev/ashmem", O_RDWR | O_CLOEXEC);
     ioctl(fd, ASHMEM_SET_NAME, "Fake CursorWindow");
 
     ioctl(fd, ASHMEM_SET_SIZE, 1024);
