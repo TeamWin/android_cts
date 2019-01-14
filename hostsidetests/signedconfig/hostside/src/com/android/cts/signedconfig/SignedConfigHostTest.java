@@ -17,6 +17,9 @@ package com.android.cts.signedconfig;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.not;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -26,6 +29,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,6 +54,8 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
             "CtsSignedConfigTestAppV1_badb64_signature.apk";
     private static final String TEST_APP_APK_NAME_V3_CONFIGV1 =
             "CtsSignedConfigTestAppV3_configv1.apk";
+    private static final String TEST_APP_APK_NAME_V1_DEBUG_KEY =
+            "CtsSignedConfigTestAppV1_debug_key.apk";
 
     private static final String SETTING_BLACKLIST_EXEMPTIONS = "hidden_api_blacklist_exemptions";
     private static final String SETTING_SIGNED_CONFIG_VERSION = "signed_config_version";
@@ -206,6 +212,26 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         // This test is really testing that the system server doesn't crash, but
         // this check should still do the trick.
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION))
+                .isEqualTo("null");
+    }
+
+    @Test
+    public void testDebugKeyValidOnDebugBuild() throws Exception {
+        Assume.assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+        installPackage(TEST_APP_APK_NAME_V1_DEBUG_KEY);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
+        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+                "LClass1;->method1(,LClass1;->field1:");
+    }
+
+    @Test
+    public void testDebugKeyNotValidOnUserBuild() throws Exception {
+        Assume.assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        installPackage(TEST_APP_APK_NAME_V1_DEBUG_KEY);
+        waitForDevice(5);
+        assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION))
+                .isEqualTo("null");
+        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS))
                 .isEqualTo("null");
     }
 }
