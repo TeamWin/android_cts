@@ -605,14 +605,14 @@ public class MediaMuxerTest extends AndroidTestCase {
                 MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
         String widthTest = retrieverTest.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-        assertEquals("Different height", widthSrc,
+        assertEquals("Different width", widthSrc,
                 widthTest);
 
         String durationSrc = retrieverSrc.extractMetadata(
-                MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                MediaMetadataRetriever.METADATA_KEY_DURATION);
         String durationTest = retrieverTest.extractMetadata(
-                MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-        assertEquals("Different height", durationSrc,
+                MediaMetadataRetriever.METADATA_KEY_DURATION);
+        assertEquals("Different duration", durationSrc,
                 durationTest);
 
         retrieverSrc.release();
