@@ -26,11 +26,9 @@ import android.app.VoiceInteractor.PickOptionRequest;
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.app.VoiceInteractor.Prompt;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.service.voice.VoiceInteractionService;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -134,10 +132,10 @@ public class TestApp extends Activity {
     }
 
     private void broadcastResults() {
-        Intent intent = new Intent(Utils.BROADCAST_INTENT);
-        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        intent.putExtras(mTotalInfo);
-        Log.i(TAG, "broadcasting: " + intent.toString() + ", Bundle = " + mTotalInfo.toString());
+        Intent intent = new Intent(Utils.BROADCAST_INTENT)
+            .addFlags(Intent.FLAG_RECEIVER_FOREGROUND | Intent.FLAG_RECEIVER_REGISTERED_ONLY)
+            .putExtras(mTotalInfo);
+        Log.i(TAG, "broadcasting: " + intent + ", Bundle = " + mTotalInfo);
         sendOrderedBroadcast(intent, null, new DoneReceiver(),
                              null, Activity.RESULT_OK, null, null);
     }

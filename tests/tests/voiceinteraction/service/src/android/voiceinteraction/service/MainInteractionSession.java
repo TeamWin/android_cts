@@ -17,15 +17,12 @@
 package android.voiceinteraction.service;
 
 import android.app.VoiceInteractor;
-import android.app.VoiceInteractor.Prompt;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.service.voice.VoiceInteractionSession;
-import android.service.voice.VoiceInteractionSession.ConfirmationRequest;
-import android.service.voice.VoiceInteractionSession.PickOptionRequest;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
