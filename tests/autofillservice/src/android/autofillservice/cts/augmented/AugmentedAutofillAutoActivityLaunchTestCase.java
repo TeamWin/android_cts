@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts.augmented;
 
+import static android.autofillservice.cts.Helper.allowOverlays;
+import static android.autofillservice.cts.Helper.disallowOverlays;
 import static android.provider.Settings.Global.AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS;
 
 import android.autofillservice.cts.AbstractAutoFillActivity;
@@ -24,7 +26,9 @@ import android.autofillservice.cts.common.SettingsHelper;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 // Must be public because of the @ClassRule
@@ -38,6 +42,16 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
 
     protected static AugmentedReplier sAugmentedReplier;
     protected AugmentedUiBot mAugmentedUiBot;
+
+    @BeforeClass
+    public static void allowAugmentedAutofillWindow() {
+        allowOverlays();
+    }
+
+    @AfterClass
+    public static void disallowAugmentedAutofillWindow() {
+        disallowOverlays();
+    }
 
     @Before
     public void setFixtures() {
