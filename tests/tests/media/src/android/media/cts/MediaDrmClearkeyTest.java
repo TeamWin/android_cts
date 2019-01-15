@@ -109,6 +109,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     private MediaDrm mDrm = null;
     private final Object mLock = new Object();
     private SurfaceHolder mSurfaceHolder;
+    private boolean mLostStateReceived;
 
     @Override
     protected void setUp() throws Exception {
@@ -285,6 +286,20 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                                 }
                             }
                         });
+                    mDrm.setOnSessionLostStateListener(new MediaDrm.OnSessionLostStateListener() {
+                            @Override
+                            public void onSessionLostState(MediaDrm md, byte[] sid) {
+                                if (md != mDrm) {
+                                    Log.e(TAG, "onSessionLostState callback: drm object mismatch");
+                                } else if (!Arrays.equals(mSessionId, sid)) {
+                                    Log.e(TAG, "onSessionLostState callback: sessionId mismatch: |" +
+                                            Arrays.toString(mSessionId) + "| vs |" + Arrays.toString(sid) + "|");
+                                } else {
+                                    mLostStateReceived = true;
+                                }
+                            }
+                        }, null);
+
                     mLock.notify();
                 }
                 Looper.loop();  // Blocks forever until Looper.quit() is called.
@@ -1160,6 +1175,96 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                 drm.closeSession(sessionId);
             }
             stopDrm(drm);
+        }
+    }
+
+    /**
+     * Test that the framework handles a device returning
+     * ::android::hardware::drm@1.2::Status::ERROR_DRM_RESOURCE_CONTENTION.
+     * Expected behavior: throws MediaDrm.SessionException with
+     * errorCode ERROR_RESOURCE_CONTENTION
+     */
+    public void testResourceContentionError() {
+
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = null;
+        boolean gotException = false;
+
+        try {
+            drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+            drm.setPropertyString("drmErrorTest", "resourceContention");
+            byte[] sessionId = drm.openSession();
+
+            try {
+                byte[] ignoredInitData = new byte[] { 1 };
+                drm.getKeyRequest(sessionId, ignoredInitData, "cenc", MediaDrm.KEY_TYPE_STREAMING, null);
+            } catch (MediaDrm.SessionException e) {
+                if (e.getErrorCode() != MediaDrm.SessionException.ERROR_RESOURCE_CONTENTION) {
+                    throw new Error("Incorrect error code, expected ERROR_RESOURCE_CONTENTION");
+                }
+                gotException = true;
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception ", e);
+        } finally {
+            if (drm != null) {
+                drm.close();
+            }
+        }
+        if (!gotException) {
+            throw new Error("Didn't receive expected MediaDrm.SessionException");
+        }
+    }
+
+    /**
+     * Test that the framework handles a device returning invoking
+     * the ::android::hardware::drm@1.2::sendSessionLostState callback
+     * Expected behavior: OnSessionLostState is called with
+     * the sessionId
+     */
+    public void testSessionLostStateError() {
+
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        boolean gotException = false;
+        mLostStateReceived = false;
+
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc",
+                CLEARKEY_SCHEME_UUID, MediaDrm.KEY_TYPE_STREAMING);
+
+        mDrm.setPropertyString("drmErrorTest", "lostState");
+        mSessionId = openSession(drm);
+
+        // simulates session lost state here, detected by closeSession
+
+        try {
+            try {
+                closeSession(drm, mSessionId);
+            } catch (MediaDrmStateException e) {
+                gotException = true; // expected for lost state
+            }
+            // wait up to 2 seconds for event
+            for (int i = 0; i < 20 && !mLostStateReceived; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            if (!mLostStateReceived) {
+                throw new Error("Callback for OnSessionLostStateListener not received");
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception ", e);
+        } finally {
+            stopDrm(drm);
+        }
+        if (!gotException) {
+            throw new Error("Didn't receive expected MediaDrmStateException");
         }
     }
 
