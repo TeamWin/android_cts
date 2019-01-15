@@ -149,14 +149,4 @@ public class Poc17_01 extends SecurityTestCase {
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
         assertMatches("[\\s\\n\\S]*No Integer overflow[\\s\\n\\S]*", logcat);
     }
-
-    /**
-     *  b/32659848
-     */
-    @SecurityTest(minPatchLevel = "2017-01")
-    public void testPoc32659848() throws Exception {
-        String command =
-            "echo 18014398509481980 > /sys/kernel/debug/tracing/buffer_size_kb";
-        AdbUtils.runCommandLine(command, getDevice());
-    }
 }
