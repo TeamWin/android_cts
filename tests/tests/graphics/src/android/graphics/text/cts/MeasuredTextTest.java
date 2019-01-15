@@ -17,10 +17,14 @@
 package android.graphics.text.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -28,6 +32,9 @@ import android.graphics.text.MeasuredText;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.PrecomputedText;
+import android.text.SpannableStringBuilder;
+import android.text.TextPaint;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -308,5 +315,110 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
                 .appendReplacementRun(sPaint, text.length() - 1, 1.0f).build();
+    }
+
+    public Bitmap makeBitmapFromSsb(String text, TextPaint paint, boolean isRtl) {
+        // drawTetRun is not aware of multiple style text.
+        final SpannableStringBuilder ssb = new SpannableStringBuilder(text);
+        final Bitmap ssbBitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Canvas ssbCanvas = new Canvas(ssbBitmap);
+        ssbCanvas.save();
+        ssbCanvas.translate(0, 0);
+        ssbCanvas.drawTextRun(ssb, 0, ssb.length(), 0, ssb.length(),
+                0.0f /* x */, 240.0f /* y */, isRtl, paint);
+        ssbCanvas.restore();
+        return ssbBitmap;
+    }
+
+    public Bitmap makeBitmapFromMtWithSamePaint(String text, TextPaint paint, boolean isRtl) {
+        // MeasuredText uses measured result if the given paint is equal to the applied one.
+        final MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
+                .appendStyleRun(paint, text.length(), isRtl)
+                .build();
+        final Bitmap mtBitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Canvas mtCanvas = new Canvas(mtBitmap);
+        mtCanvas.save();
+        mtCanvas.translate(0, 0);
+        mtCanvas.drawTextRun(mt, 0, text.length(), 0, text.length(),
+                0.0f /* x */, 240.0f /* y */, isRtl, paint);
+        mtCanvas.restore();
+        return mtBitmap;
+    }
+
+    public Bitmap makeBitmapFromMtWithDifferentPaint(String text, TextPaint paint, boolean isRtl) {
+        // If different paint is provided when drawing, MeasuredText discards the measured result
+        // and recompute immediately. Thus the final output must be the same with given one.
+        final MeasuredText mt2 = new MeasuredText.Builder(text.toCharArray())
+                .appendStyleRun(new Paint(), text.length(), isRtl)
+                .build();
+        final Bitmap mt2Bitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Canvas mt2Canvas = new Canvas(mt2Bitmap);
+        mt2Canvas.save();
+        mt2Canvas.translate(0, 0);
+        mt2Canvas.drawTextRun(mt2, 0, text.length(), 0, text.length(),
+                0.0f /* x */, 240.0f /* y */, isRtl, paint);
+        mt2Canvas.restore();
+        return mt2Bitmap;
+    }
+
+    public Bitmap makeBitmapFromPct(String text, TextPaint paint, boolean isRtl) {
+        final PrecomputedText pct = PrecomputedText.create(
+                text, new PrecomputedText.Params.Builder(paint).build());
+        final Bitmap pctBitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Canvas pctCanvas = new Canvas(pctBitmap);
+        pctCanvas.save();
+        pctCanvas.translate(0, 0);
+        pctCanvas.drawTextRun(pct, 0, text.length(), 0, text.length(),
+                0.0f /* x */, 240.0f /* y */, isRtl, paint);
+        pctCanvas.restore();
+        return pctBitmap;
+    }
+
+    @Test
+    public void testCanvasDrawTextRun_sameOutputTestForLatinText() {
+        final TextPaint paint = new TextPaint();
+        paint.setTextSize(30.0f);
+
+        final String text = "Hello, World";
+
+        final Bitmap blankBitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Bitmap ssbBitmap = makeBitmapFromSsb(text, paint, false);
+        assertFalse(blankBitmap.sameAs(ssbBitmap));
+
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromMtWithSamePaint(text, paint, false)));
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromMtWithDifferentPaint(text, paint, false)));
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromPct(text, paint, false)));
+    }
+
+    @Test
+    public void testCanvasDrawTextRun_sameOutputTestForCJKText() {
+        final TextPaint paint = new TextPaint();
+        paint.setTextSize(30.0f);
+
+        final String text = "\u3042\u3044\u3046\u3048\u304A";
+
+        final Bitmap blankBitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Bitmap ssbBitmap = makeBitmapFromSsb(text, paint, false);
+        assertFalse(blankBitmap.sameAs(ssbBitmap));
+
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromMtWithSamePaint(text, paint, false)));
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromMtWithDifferentPaint(text, paint, false)));
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromPct(text, paint, false)));
+    }
+
+    @Test
+    public void testCanvasDrawTextRun_sameOutputTestForRTLText() {
+        final TextPaint paint = new TextPaint();
+        paint.setTextSize(30.0f);
+
+        final String text = "\u05D0\u05D1\u05D2\u05D3\u05D4";
+
+        final Bitmap blankBitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+        final Bitmap ssbBitmap = makeBitmapFromSsb(text, paint, true);
+        assertFalse(blankBitmap.sameAs(ssbBitmap));
+
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromMtWithSamePaint(text, paint, true)));
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromMtWithDifferentPaint(text, paint, true)));
+        assertTrue(ssbBitmap.sameAs(makeBitmapFromPct(text, paint, true)));
     }
 }
