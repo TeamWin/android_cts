@@ -94,6 +94,8 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.motion.metaState = msg.body.motion.metaState;
             // int32_t buttonState
             outMsg->body.motion.buttonState = msg.body.motion.buttonState;
+            // MotionClassification classification
+            outMsg->body.motion.classification = msg.body.motion.classification;
             // int32_t edgeFlags
             outMsg->body.motion.edgeFlags = msg.body.motion.edgeFlags;
             // nsecs_t downTime
