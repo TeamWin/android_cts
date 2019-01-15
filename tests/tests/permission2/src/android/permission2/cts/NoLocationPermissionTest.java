@@ -374,24 +374,6 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
     }
 
     /**
-     * Verify that checking clearTestProviderLocation for network requires
-     * permissions.
-     * <p>
-     * Requires Permission:
-     * {@link android.Manifest.permission#ACCESS_MOCK_LOCATION}.
-     */
-    @SmallTest
-    public void testClearTestProviderLocation() {
-        try {
-            mLocationManager.clearTestProviderLocation(TEST_PROVIDER_NAME);
-            fail("LocationManager.clearTestProviderLocation did not throw SecurityException as"
-                    + " expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    /**
      * Verify that checking setTestProviderEnabled requires permissions.
      * <p>
      * Requires Permission:
