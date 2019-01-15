@@ -32,6 +32,9 @@ LOCAL_JAVA_LIBRARIES := \
     guava \
     truth-prebuilt
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    hamcrest-library
+
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
@@ -42,7 +45,8 @@ LOCAL_TARGET_REQUIRED_MODULES := \
     CtsSignedConfigTestAppV1_badsignature \
     CtsSignedConfigTestAppV1_badb64_config \
     CtsSignedConfigTestAppV1_badb64_signature \
-    CtsSignedConfigTestAppV3_configv1
+    CtsSignedConfigTestAppV3_configv1 \
+    CtsSignedConfigTestAppV1_debug_key
 
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)

@@ -54,3 +54,8 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsSignedConfigTestAppV3_configv1
 LOCAL_MANIFEST_FILE := version3_configv1_AndroidManifest.xml
 include $(LOCAL_PATH)/build_signedconfig_apk.mk
+
+include $(CLEAR_VARS)
+LOCAL_PACKAGE_NAME := CtsSignedConfigTestAppV1_debug_key
+LOCAL_MANIFEST_FILE := version1_debug_key_AndroidManifest.xml
+include $(LOCAL_PATH)/build_signedconfig_apk.mk
