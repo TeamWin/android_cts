@@ -84,6 +84,8 @@ public class Components extends ComponentsBase {
             component("ResumeWhilePausingActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ACTIVITY =
             component("ShowWhenLockedActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY =
+            component("ShowWhenLockedAttrImeActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY =
