@@ -28,6 +28,7 @@ import android.app.RemoteInput;
 import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -38,6 +39,8 @@ import androidx.annotation.Nullable;
 import android.os.StrictMode;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
+
+import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -56,6 +59,8 @@ public class NotificationTest extends AndroidTestCase {
     private static final String CONTENT_TEXT = "contentText";
     private static final String URI_STRING = "uriString";
     private static final String ACTION_TITLE = "actionTitle";
+    private static final String BUBBLE_TITLE = "bubbleTitle";
+    private static final int BUBBLE_HEIGHT = 300;
     private static final int TOLERANCE = 200;
     private static final long TIMEOUT = 4000;
     private static final NotificationChannel CHANNEL = new NotificationChannel("id", "name",
@@ -121,14 +126,14 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testWriteToParcel() {
-        PendingIntent overlayIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Notification.BubbleMetadata bubble = makeBubbleMetadata();
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeoutAfter(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
-                .setAppOverlayIntent(overlayIntent)
+                .setBubbleMetadata(bubble)
                 .setAllowSystemGeneratedContextualActions(ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS)
                 .build();
         mNotification.icon = 0;
@@ -186,7 +191,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.getChannelId(), result.getChannelId());
         assertEquals(mNotification.getSettingsText(), result.getSettingsText());
         assertEquals(mNotification.getGroupAlertBehavior(), result.getGroupAlertBehavior());
-        assertEquals(overlayIntent, result.getAppOverlayIntent());
+        assertNotNull(result.getBubbleMetadata());
         assertEquals(mNotification.getAllowSystemGeneratedContextualActions(),
                 result.getAllowSystemGeneratedContextualActions());
 
@@ -239,7 +244,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testBuilder() {
         final Intent intent = new Intent();
         final PendingIntent contentIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
-        PendingIntent overlayIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        Notification.BubbleMetadata bubble = makeBubbleMetadata();
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
@@ -250,7 +255,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setTimeoutAfter(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                .setAppOverlayIntent(overlayIntent)
+                .setBubbleMetadata(bubble)
                 .setAllowSystemGeneratedContextualActions(ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS)
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
@@ -263,7 +268,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(TIMEOUT, mNotification.getTimeoutAfter());
         assertEquals(SETTING_TEXT, mNotification.getSettingsText());
         assertEquals(Notification.GROUP_ALERT_SUMMARY, mNotification.getGroupAlertBehavior());
-        assertEquals(overlayIntent, mNotification.getAppOverlayIntent());
+        assertEquals(bubble, mNotification.getBubbleMetadata());
         assertEquals(ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS,
                 mNotification.getAllowSystemGeneratedContextualActions());
     }
@@ -572,6 +577,87 @@ public class NotificationTest extends AndroidTestCase {
         assertFalse(notification.getAllowSystemGeneratedContextualActions());
     }
 
+    public void testBubbleMetadataBuilder() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                .setDesiredHeight(BUBBLE_HEIGHT)
+                .setTitle(BUBBLE_TITLE)
+                .setIcon(icon)
+                .setIntent(bubbleIntent);
+
+        Notification.BubbleMetadata data = metadataBuilder.build();
+        assertEquals(BUBBLE_HEIGHT, data.getDesiredHeight());
+        assertEquals(BUBBLE_TITLE, data.getTitle());
+        assertEquals(icon, data.getIcon());
+        assertEquals(bubbleIntent, data.getIntent());
+    }
+
+    public void testBubbleMetadata_parcel() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata metadata =
+                new Notification.BubbleMetadata.Builder()
+                        .setDesiredHeight(BUBBLE_HEIGHT)
+                        .setTitle(BUBBLE_TITLE)
+                        .setIcon(icon)
+                        .setIntent(bubbleIntent)
+                        .build();
+
+        writeAndReadParcelable(metadata);
+        assertEquals(BUBBLE_TITLE, metadata.getTitle());
+        assertEquals(BUBBLE_HEIGHT, metadata.getDesiredHeight());
+        assertEquals(icon, metadata.getIcon());
+        assertEquals(bubbleIntent, metadata.getIntent());
+    }
+
+    public void testBubbleMetadataBuilder_throwForNoIntent() {
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                .setDesiredHeight(BUBBLE_HEIGHT)
+                .setTitle(BUBBLE_TITLE)
+                .setIcon(icon);
+        try {
+            metadataBuilder.build();
+            fail("Should have thrown IllegalStateException, no pending intent");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+    }
+
+    public void testBubbleMetadataBuilder_throwForNoTitle() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                .setDesiredHeight(BUBBLE_HEIGHT)
+                .setIcon(icon)
+                .setIntent(bubbleIntent);
+        try {
+            metadataBuilder.build();
+            fail("Should have thrown IllegalStateException, no title");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+    }
+
+    public void testBubbleMetadataBuilder_throwForNoIcon() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                .setDesiredHeight(BUBBLE_HEIGHT)
+                .setTitle(BUBBLE_TITLE)
+                .setIntent(bubbleIntent);
+        try {
+            metadataBuilder.build();
+            fail("Should have thrown IllegalStateException, no icon");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+    }
+
     private static RemoteInput newDataOnlyRemoteInput() {
         return new RemoteInput.Builder(DATA_RESULT_KEY)
             .setAllowFreeFormInput(false)
@@ -622,5 +708,15 @@ public class NotificationTest extends AndroidTestCase {
             transformation.accept(actionBuilder);
         }
         return actionBuilder.build();
+    }
+
+    private Notification.BubbleMetadata makeBubbleMetadata() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        return new Notification.BubbleMetadata.Builder()
+                        .setIntent(bubbleIntent)
+                        .setTitle(BUBBLE_TITLE)
+                        .setIcon(Icon.createWithResource(mContext, 1))
+                        .setDesiredHeight(BUBBLE_HEIGHT)
+                        .build();
     }
 }
