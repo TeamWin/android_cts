@@ -50,10 +50,10 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private static String WELCOME_TEMPLATE = "Welcome to the new activity, %s!";
     private static final long LOGIN_TIMEOUT_MS = 1000;
 
-    static final String ID_USERNAME_CONTAINER = "username_container";
-    static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
-    static final String BACKDOOR_USERNAME = "LemmeIn";
-    static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
+    public static final String ID_USERNAME_CONTAINER = "username_container";
+    public static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
+    public static final String BACKDOOR_USERNAME = "LemmeIn";
+    public static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
@@ -74,7 +74,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Gets the expected welcome message for a given username.
      */
-    static String getWelcomeMessage(String username) {
+    public static String getWelcomeMessage(String username) {
         return String.format(WELCOME_TEMPLATE,  username);
     }
 
@@ -157,7 +157,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Sets the expectation for an autofill request (for all fields), so it can be asserted through
      * {@link #assertAutoFilled()} later.
      */
-    void expectAutoFill(String username, String password) {
+    public void expectAutoFill(String username, String password) {
         mExpectation = new FillExpectation(username, password);
         mUsernameEditText.addTextChangedListener(mExpectation.ccUsernameWatcher);
         mPasswordEditText.addTextChangedListener(mExpectation.ccPasswordWatcher);
@@ -167,7 +167,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Sets the expectation for an autofill request (for username only), so it can be asserted
      * through {@link #assertAutoFilled()} later.
      */
-    void expectAutoFill(String username) {
+    public void expectAutoFill(String username) {
         mExpectation = new FillExpectation(username);
         mUsernameEditText.addTextChangedListener(mExpectation.ccUsernameWatcher);
     }
@@ -176,7 +176,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Sets the expectation for an autofill request (for password only), so it can be asserted
      * through {@link #assertAutoFilled()} later.
      */
-    void expectPasswordAutoFill(String password) {
+    public void expectPasswordAutoFill(String password) {
         mExpectation = new FillExpectation(null, password);
         mPasswordEditText.addTextChangedListener(mExpectation.ccPasswordWatcher);
     }
@@ -185,7 +185,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Asserts the activity was auto-filled with the values passed to
      * {@link #expectAutoFill(String, String)}.
      */
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         assertWithMessage("expectAutoFill() not called").that(mExpectation).isNotNull();
         if (mExpectation.ccUsernameWatcher != null) {
             mExpectation.ccUsernameWatcher.assertAutoFilled();
@@ -195,25 +195,25 @@ public class LoginActivity extends AbstractAutoFillActivity {
         }
     }
 
-    void forceAutofillOnUsername() {
+    public void forceAutofillOnUsername() {
         syncRunOnUiThread(() -> getAutofillManager().requestAutofill(mUsernameEditText));
     }
 
-    void forceAutofillOnPassword() {
+    public void forceAutofillOnPassword() {
         syncRunOnUiThread(() -> getAutofillManager().requestAutofill(mPasswordEditText));
     }
 
     /**
      * Visits the {@code username_label} in the UiThread.
      */
-    void onUsernameLabel(Visitor<TextView> v) {
+    public void onUsernameLabel(Visitor<TextView> v) {
         syncRunOnUiThread(() -> v.visit(mUsernameLabel));
     }
 
     /**
      * Visits the {@code username} in the UiThread.
      */
-    void onUsername(Visitor<EditText> v) {
+    public void onUsername(Visitor<EditText> v) {
         syncRunOnUiThread(() -> v.visit(mUsernameEditText));
     }
 
@@ -227,42 +227,42 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Gets the {@code username_label} view.
      */
-    TextView getUsernameLabel() {
+    public TextView getUsernameLabel() {
         return mUsernameLabel;
     }
 
     /**
      * Gets the {@code username} view.
      */
-    EditText getUsername() {
+    public EditText getUsername() {
         return mUsernameEditText;
     }
 
     /**
      * Visits the {@code password_label} in the UiThread.
      */
-    void onPasswordLabel(Visitor<TextView> v) {
+    public void onPasswordLabel(Visitor<TextView> v) {
         syncRunOnUiThread(() -> v.visit(mPasswordLabel));
     }
 
     /**
      * Visits the {@code password} in the UiThread.
      */
-    void onPassword(Visitor<EditText> v) {
+    public void onPassword(Visitor<EditText> v) {
         syncRunOnUiThread(() -> v.visit(mPasswordEditText));
     }
 
     /**
      * Gets the {@code password} view.
      */
-    EditText getPassword() {
+    public EditText getPassword() {
         return mPasswordEditText;
     }
 
     /**
      * Taps the login button in the UI thread.
      */
-    String tapLogin() throws Exception {
+    public String tapLogin() throws Exception {
         mLoginLatch = new CountDownLatch(1);
         syncRunOnUiThread(() -> mLoginButton.performClick());
         boolean called = mLoginLatch.await(LOGIN_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -274,7 +274,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Taps the save button in the UI thread.
      */
-    void tapSave() throws Exception {
+    public void tapSave() throws Exception {
         syncRunOnUiThread(() -> mSaveButton.performClick());
     }
 
@@ -288,7 +288,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Sets the window flags.
      */
-    void setFlags(int flags) {
+    public void setFlags(int flags) {
         Log.d(TAG, "setFlags():" + flags);
         syncRunOnUiThread(() -> getWindow().setFlags(flags, flags));
     }

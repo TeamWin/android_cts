@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 /**
   * Base class for all activities in this test suite
   */
-abstract class AbstractAutoFillActivity extends Activity {
+public abstract class AbstractAutoFillActivity extends Activity {
 
     private final CountDownLatch mDestroyedLatch = new CountDownLatch(1);
     private MyAutofillCallback mCallback;

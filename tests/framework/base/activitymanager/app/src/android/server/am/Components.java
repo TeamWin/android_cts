@@ -88,6 +88,14 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedAttrActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrRemoveAttrActivity");
+    public static final ComponentName INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY =
+            component("InheritShowWhenLockedAddActivity");
+    public static final ComponentName INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
+            component("InheritShowWhenLockedAttrActivity");
+    public static final ComponentName INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY =
+            component("InheritShowWhenLockedRemoveActivity");
+    public static final ComponentName NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
+            component("NoInheritShowWhenLockedAttrActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_DIALOG_ACTIVITY =
             component("ShowWhenLockedDialogActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY =

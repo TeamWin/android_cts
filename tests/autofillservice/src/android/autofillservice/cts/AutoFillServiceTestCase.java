@@ -65,7 +65,7 @@ import org.junit.runners.model.Statement;
  *   <li>Launching the activity used by the test.
  * </ul>
  */
-final class AutoFillServiceTestCase {
+public final class AutoFillServiceTestCase {
 
     /**
      * Base class for all test cases that use an {@link AutofillActivityTestRule} to
