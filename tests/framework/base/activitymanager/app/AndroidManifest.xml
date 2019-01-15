@@ -47,6 +47,10 @@
                 android:resizeableActivity="true"
                 android:exported="true"
         />
+        <activity-alias android:name=".AliasTestActivity"
+                  android:exported="true"
+                  android:targetActivity=".TestActivity"
+        />
         <activity android:name=".ResumeWhilePausingActivity"
                 android:allowEmbedded="true"
                 android:resumeWhilePausing="true"
