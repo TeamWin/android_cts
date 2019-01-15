@@ -17,14 +17,26 @@
 #pragma rs java_package_name(android.view.cts.surfacevalidator)
 #pragma rs reduce(countBlackishPixels) accumulator(countBlackishPixelsAccum) combiner(countBlackishPixelsCombiner)
 
-uchar THRESHOLD;
+uchar MIN_ALPHA;
+uchar MAX_ALPHA;
+uchar MIN_RED;
+uchar MAX_RED;
+uchar MIN_GREEN;
+uchar MAX_GREEN;
+uchar MIN_BLUE;
+uchar MAX_BLUE;
 int BOUNDS[4];
 
 static void countBlackishPixelsAccum(int *accum, uchar4 pixel, uint32_t x, uint32_t y) {
 
-    if (pixel.r < THRESHOLD
-            && pixel.g < THRESHOLD
-            && pixel.b < THRESHOLD
+    if (pixel.a <= MAX_ALPHA
+            && pixel.a >= MIN_ALPHA
+            && pixel.r <= MAX_RED
+            && pixel.r >= MIN_RED
+            && pixel.g <= MAX_GREEN
+            && pixel.g >= MIN_GREEN
+            && pixel.b <= MAX_BLUE
+            && pixel.b >= MIN_BLUE
             && x >= BOUNDS[0]
             && x < BOUNDS[2]
             && y >= BOUNDS[1]
