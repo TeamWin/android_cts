@@ -68,12 +68,14 @@ public class ListeningPortsTest extends AndroidTestCase {
         EXCEPTION_PATTERNS.add("127.0.0.1 10000");  // used by the cast receiver
         EXCEPTION_PATTERNS.add(":: 1002");          // used by remote control
         EXCEPTION_PATTERNS.add(":: 1020");          // used by remote control
+        EXCEPTION_PATTERNS.add("0.0.0.0:7275");     // used by supl 
         //no current patterns involve address, port and UID combinations
         //Example for when necessary: EXCEPTION_PATTERNS.add("0.0.0.0:5555 10000")
 
         // IPv6 exceptions
         // TODO: this is not standard notation for IPv6. Use [$addr]:$port instead as per RFC 3986.
         EXCEPTION_PATTERNS.add(":::5555");          // emulator port for adb
+        EXCEPTION_PATTERNS.add(":::7275");          // used by supl
     }
 
     @Override
