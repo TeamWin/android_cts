@@ -23,20 +23,26 @@ import android.media.cts.R;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.icu.util.ULocale;
+import android.media.AudioFormat;
 import android.media.AudioPresentation;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.PersistableBundle;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import java.io.Closeable;
+import java.io.InputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.Reader;
@@ -294,5 +300,193 @@ public class MediaExtractorTest extends AndroidTestCase {
             strTok.nval = -1;
             strTok.nextToken();
         } while (srcAdvance);
+    }
+
+    /* package */ static class ByteBufferDataSource extends MediaDataSource {
+        private final long mSize;
+        private TreeMap<Long, ByteBuffer> mMap = new TreeMap<Long, ByteBuffer>();
+
+        public ByteBufferDataSource(MediaCodecTest.ByteBufferStream bufferStream)
+                throws IOException {
+            long size = 0;
+            while (true) {
+                final ByteBuffer buffer = bufferStream.read();
+                if (buffer == null) break;
+                final int limit = buffer.limit();
+                if (limit == 0) continue;
+                size += limit;
+                mMap.put(size - 1, buffer); // key: last byte of validity for the buffer.
+            }
+            mSize = size;
+        }
+
+        @Override
+        public long getSize() {
+            return mSize;
+        }
+
+        @Override
+        public int readAt(long position, byte[] buffer, int offset, int size) {
+            Log.v(TAG, "reading at " + position + " offset " + offset + " size " + size);
+
+            // This chooses all buffers with key >= position (e.g. valid buffers)
+            final SortedMap<Long, ByteBuffer> map = mMap.tailMap(position);
+            int copied = 0;
+            for (Map.Entry<Long, ByteBuffer> e : map.entrySet()) {
+                // Get a read-only version of the byte buffer.
+                final ByteBuffer bb = e.getValue().asReadOnlyBuffer();
+                // Convert read position to an offset within that byte buffer, bboffs.
+                final long bboffs = position - e.getKey() + bb.limit() - 1;
+                if (bboffs >= bb.limit() || bboffs < 0) {
+                    break; // (negative position)?
+                }
+                bb.position((int)bboffs); // cast is safe as bb.limit is int.
+                final int tocopy = Math.min(size, bb.remaining());
+                if (tocopy == 0) {
+                    break; // (size == 0)?
+                }
+                bb.get(buffer, offset, tocopy);
+                copied += tocopy;
+                size -= tocopy;
+                offset += tocopy;
+                position += tocopy;
+                if (size == 0) {
+                    break; // finished copying.
+                }
+            }
+            if (copied == 0) {
+                copied = -1;  // signal end of file
+            }
+            return copied;
+        }
+
+        @Override
+        public void close() {
+            mMap = null;
+        }
+    }
+
+    /* package */ static class MediaExtractorStream
+                extends MediaCodecTest.ByteBufferStream implements Closeable {
+        public boolean mIsFloat;
+        public boolean mSawOutputEOS;
+        public MediaFormat mFormat;
+
+        private MediaExtractor mExtractor;
+
+        public MediaExtractorStream(
+                String mime,
+                MediaDataSource dataSource) throws Exception {
+            mExtractor = new MediaExtractor();
+            mExtractor.setDataSource(dataSource);
+            final int numTracks = mExtractor.getTrackCount();
+            // Single track?
+            // assertEquals("Number of tracks should be 1", 1, numTracks);
+            for (int i = 0; i < numTracks; ++i) {
+                final MediaFormat format = mExtractor.getTrackFormat(i);
+                final String actualMime = format.getString(MediaFormat.KEY_MIME);
+                if (mime.equals(actualMime)) {
+                    mExtractor.selectTrack(i);
+                    mFormat = format;
+                    break;
+                }
+            }
+            assertNotNull("MediaExtractor cannot find mime type " + mime, mFormat);
+            Integer actualEncoding = null;
+            try {
+                actualEncoding = mFormat.getInteger(MediaFormat.KEY_PCM_ENCODING);
+            } catch (Exception e) {
+                ; // trying to get a non-existent key throws exception
+            }
+            mIsFloat = actualEncoding != null && actualEncoding == AudioFormat.ENCODING_PCM_FLOAT;
+        }
+
+        public MediaExtractorStream(
+                String mime,
+                MediaCodecTest.ByteBufferStream inputStream) throws Exception {
+            this(mime, new ByteBufferDataSource(inputStream));
+        }
+
+        @Override
+        public ByteBuffer read() throws IOException {
+            if (mSawOutputEOS) {
+                return null;
+            }
+
+            // To preserve codec-like behavior, we create ByteBuffers
+            // equal to the media sample size.
+            final long size = mExtractor.getSampleSize();
+            if (size >= 0) {
+                final ByteBuffer inputBuffer = ByteBuffer.allocate((int)size);
+                final int red = mExtractor.readSampleData(inputBuffer, 0 /* offset */); // sic
+                if (red >= 0) {
+                    assertEquals("position must be zero", 0, inputBuffer.position());
+                    assertEquals("limit must be read bytes", red, inputBuffer.limit());
+                    mExtractor.advance();
+                    return inputBuffer;
+                }
+            }
+            mSawOutputEOS = true;
+            return null;
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (mExtractor != null) {
+                mExtractor.release();
+                mExtractor = null;
+            }
+            mFormat = null;
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            if (mExtractor != null) {
+                Log.w(TAG, "MediaExtractorStream wasn't closed");
+                mExtractor.release();
+            }
+            mFormat = null;
+        }
+    }
+
+    @SmallTest
+    public void testFlacIdentity() throws Exception {
+        final int PCM_FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
+        final int CHANNEL_COUNT = 2;
+        final int SAMPLES = PCM_FRAMES * CHANNEL_COUNT;
+        final int[] SAMPLE_RATES = {44100, 192000}; // ensure 192kHz supported.
+
+        for (int sampleRate : SAMPLE_RATES) {
+            final MediaFormat format = new MediaFormat();
+            format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
+            format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
+            format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, CHANNEL_COUNT);
+
+            Log.d(TAG, "Trying sample rate: " + sampleRate
+                    + " channel count: " + CHANNEL_COUNT);
+            format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
+
+            // TODO: Add float mode when MediaExtractor supports float configuration.
+            final MediaCodecTest.PcmAudioBufferStream audioStream =
+                    new MediaCodecTest.PcmAudioBufferStream(
+                            SAMPLES, sampleRate, 1000 /* frequency */, 100 /* sweep */,
+                          false /* useFloat */);
+
+            final MediaCodecTest.MediaCodecStream rawToFlac =
+                    new MediaCodecTest.MediaCodecStream(
+                            new MediaCodecTest.ByteBufferInputStream(audioStream),
+                            format, true /* encode */);
+            final MediaExtractorStream flacToRaw =
+                    new MediaExtractorStream("audio/raw", rawToFlac);
+
+            // Note: the existence of signed zero (as well as NAN) may make byte
+            // comparisons invalid for floating point output. In our case, since the
+            // floats come through integer to float conversion, it does not matter.
+            assertEquals("Audio data not identical after compression",
+                audioStream.sizeInBytes(),
+                MediaCodecTest.compareStreams(new MediaCodecTest.ByteBufferInputStream(flacToRaw),
+                    new MediaCodecTest.ByteBufferInputStream(
+                            new MediaCodecTest.PcmAudioBufferStream(audioStream))));
+        }
     }
 }

@@ -50,6 +50,7 @@ import android.view.Surface;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -2005,11 +2006,11 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
-    abstract class ByteBufferStream {
+    /* package */ static abstract class ByteBufferStream {
         public abstract ByteBuffer read() throws IOException;
     }
 
-    class MediaCodecStream extends ByteBufferStream {
+    /* package */ static class MediaCodecStream extends ByteBufferStream implements Closeable {
         private ByteBufferStream mBufferInputStream;
         private InputStream mInputStream;
         private MediaCodec mCodec;
@@ -2072,6 +2073,7 @@ public class MediaCodecTest extends AndroidTestCase {
             mBufferInputStream = input;
         }
 
+        @Override
         public ByteBuffer read() throws IOException {
 
             if (mSawOutputEOS) {
@@ -2162,6 +2164,7 @@ public class MediaCodecTest extends AndroidTestCase {
             return ByteBuffer.allocate(0);
         }
 
+        @Override
         public void close() throws IOException {
             try {
                 if (mInputStream != null) {
@@ -2188,7 +2191,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     };
 
-    class ByteBufferInputStream extends InputStream {
+    /* package */ static class ByteBufferInputStream extends InputStream {
         ByteBufferStream mInput;
         ByteBuffer mBuffer;
 
@@ -2212,7 +2215,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     };
 
-    class PcmAudioBufferStream extends ByteBufferStream {
+    /* package */ static class PcmAudioBufferStream extends ByteBufferStream {
 
         public int mCount;         // either 0 or 1 if the buffer has been delivered
         public ByteBuffer mBuffer; // the audio buffer (furnished duplicated, read only).
@@ -2260,7 +2263,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
-    private int compareStreams(InputStream test, InputStream reference) {
+    /* package */ static int compareStreams(InputStream test, InputStream reference) {
         Log.i(TAG, "compareStreams");
         BufferedInputStream buffered_test = new BufferedInputStream(test);
         BufferedInputStream buffered_reference = new BufferedInputStream(reference);
@@ -2289,8 +2292,8 @@ public class MediaCodecTest extends AndroidTestCase {
 
     @SmallTest
     public void testFlacIdentity() throws Exception {
-        final int FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
-        final int SAMPLES = FRAMES * AUDIO_CHANNEL_COUNT;
+        final int PCM_FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
+        final int SAMPLES = PCM_FRAMES * AUDIO_CHANNEL_COUNT;
         final int[] SAMPLE_RATES = {AUDIO_SAMPLE_RATE, 192000}; // ensure 192kHz supported.
 
         for (int sampleRate : SAMPLE_RATES) {
@@ -2307,7 +2310,7 @@ public class MediaCodecTest extends AndroidTestCase {
             for (int i = 0; i < 2; ++i) {
                 final boolean useFloat = (i == 1);
                 final PcmAudioBufferStream audioStream = new PcmAudioBufferStream(
-                    SAMPLES, AUDIO_SAMPLE_RATE, 1000 /* frequency */, 100 /* sweep */, useFloat);
+                    SAMPLES, sampleRate, 1000 /* frequency */, 100 /* sweep */, useFloat);
 
                 if (useFloat) {
                     format.setInteger(
