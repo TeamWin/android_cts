@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSessionId;
+import android.view.contentcapture.UserDataRemovalRequest;
 import android.view.contentcapture.ViewNode;
 
 import androidx.annotation.NonNull;
@@ -90,6 +91,11 @@ public class CtsContentCaptureService extends ContentCaptureService {
      * Counter of onCreate() / onDestroy() events.
      */
     private int mLifecycleEventsCounter;
+
+    /**
+     * Used for testing onUserDataRemovalRequest.
+     */
+    private UserDataRemovalRequest mRemovalRequest;
 
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
@@ -233,6 +239,19 @@ public class CtsContentCaptureService extends ContentCaptureService {
             final Session session = getExistingSession(sessionId);
             session.mRequests.add(request);
         });
+    }
+
+    @Override
+    public void onUserDataRemovalRequest(@NonNull UserDataRemovalRequest request) {
+        Log.i(TAG, "onUserDataRemovalRequest(" + request + ")");
+        mRemovalRequest = request;
+    }
+
+    /**
+     * Gets the cached UserDataRemovalRequest for testing.
+     */
+    public UserDataRemovalRequest getRemovalRequest() {
+        return mRemovalRequest;
     }
 
     /**
