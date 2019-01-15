@@ -15,6 +15,16 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertNoEvents;
+
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
+
+import androidx.annotation.NonNull;
+
 public class BlankActivity extends AbstractContentCaptureActivity {
 
+    @Override
+    public void assertDefaultEvents(@NonNull Session session) {
+        assertNoEvents(session, this);
+    }
 }

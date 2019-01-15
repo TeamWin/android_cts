@@ -15,12 +15,24 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertNoEvents;
+
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 
 public class ChildlessActivity extends AbstractRootViewActivity {
 
     @Override
     protected void setContentViewOnCreate(Bundle savedInstanceState) {
         setContentView(R.layout.childless_activity);
+    }
+
+    @Override
+    public void assertDefaultEvents(@NonNull Session session) {
+        // Should be empty because the root view is not important for content capture without a
+        // child that is important.
+        assertNoEvents(session, this);
     }
 }

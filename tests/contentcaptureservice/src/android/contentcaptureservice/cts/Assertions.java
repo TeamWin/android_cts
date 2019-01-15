@@ -16,6 +16,7 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.MY_EPOCH;
+import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED;
@@ -25,6 +26,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -188,6 +190,18 @@ final class Assertions {
             @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
         assertViewAppeared(events, index, expectedView, expectedParentId);
         assertSessionId(expectedSessionId, expectedView);
+    }
+
+    /**
+     * Asserts that a session for the given activity has no events.
+     */
+    public static void assertNoEvents(@NonNull Session session,
+            @NonNull AbstractContentCaptureActivity activity) {
+        assertRightActivity(session, session.id, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events on " + activity + ": " + events);
+        assertThat(events).isEmpty();
     }
 
     /**

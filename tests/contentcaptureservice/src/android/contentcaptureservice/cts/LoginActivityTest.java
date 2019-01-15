@@ -23,6 +23,7 @@ import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
+import static android.contentcaptureservice.cts.Helper.componentNamefor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -44,6 +45,7 @@ import android.view.contentcapture.ContentCaptureSessionId;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -83,52 +85,11 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         watcher.waitFor(DESTROYED);
 
         final Session session = service.getOnlyFinishedSession();
-        final ContentCaptureSessionId sessionId = session.id;
-        Log.v(TAG, "session id: " + sessionId);
+        Log.v(TAG, "session id: " + session.id);
 
-        assertRightActivity(session, sessionId, activity);
-
-        // Sanity check
-        assertSessionId(sessionId, activity.mUsernameLabel);
-        assertSessionId(sessionId, activity.mUsername);
-        assertSessionId(sessionId, activity.mPassword);
-        assertSessionId(sessionId, activity.mPasswordLabel);
-
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): ideally it should be 5 so it reflects just the views defined
-        // in the layout - right now it's generating events for 2 intermediate parents
-        // (android:action_mode_bar_stub and android:content), we should try to create an
-        // activity without them
-
-        final AutofillId rootId = activity.getRootView().getAutofillId();
-
-        final int minEvents = 7;
-        assertThat(events.size()).isAtLeast(minEvents);
-        assertViewAppeared(events, 0, sessionId, activity.mUsernameLabel, rootId);
-        assertViewAppeared(events, 1, sessionId, activity.mUsername, rootId);
-        assertViewAppeared(events, 2, sessionId, activity.mPasswordLabel, rootId);
-        assertViewAppeared(events, 3, sessionId, activity.mPassword, rootId);
-
-        // TODO(b/119638528): get rid of those intermediated parents
-        final View grandpa1 = (View) activity.getRootView().getParent();
-        final View grandpa2 = (View) grandpa1.getParent();
-        final View decorView = (View) grandpa2.getParent();
-
-        assertViewAppeared(events, 4, sessionId, activity.getRootView(),
-                grandpa1.getAutofillId());
-        assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events, 6, grandpa2, decorView.getAutofillId());
-
-        assertViewsOptionallyDisappeared(events, minEvents,
-                rootId,
-                grandpa1.getAutofillId(), grandpa2.getAutofillId(),
-                // decorView.getAutofillId(), // TODO(b/122315042): figure out why it's not
-                // generated
-                activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
-                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
-        );
+        activity.assertDefaultEvents(session);
     }
+
 
     @Test
     public void testSimpleLifecycle_rootViewSession() throws Exception {
@@ -237,6 +198,29 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
         );
     }
+
+    @Ignore("not implemented yet, pending on b/122595322")
+    @Test
+    public void testSimpleLifecycle_serviceDisabledActivity() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        // Disable activity
+        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
+        assertThat(sessionIds).isEmpty();
+
+        // TODO(b/122595322): should also test events after re-enabling it
+    }
+
+    // TODO(b/122595322): same tests for disabled by package, explicity whitelisted, etc...
 
     @Test
     public void testTextChanged() throws Exception {
@@ -383,6 +367,50 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final List<ContentCaptureEvent> events = session.getEvents();
         assertThat(events).isEmpty();
+    }
+
+    @Ignore("not implemented yet, pending on b/122595322")
+    @Test
+    public void testDisabledByFlagSecureAndService() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getWindow()
+                .addFlags(WindowManager.LayoutParams.FLAG_SECURE));
+
+        // Disable activity
+        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
+        assertThat(sessionIds).isEmpty();
+    }
+
+    @Ignore("not implemented yet, pending on b/122595322")
+    @Test
+    public void testDisabledByAppAndAndService() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
+                .setContentCaptureEnabled(false));
+
+        // Disable activity
+        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
+        assertThat(sessionIds).isEmpty();
     }
 
     // TODO(b/119638528): add moar test cases for different sessions:

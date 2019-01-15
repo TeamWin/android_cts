@@ -16,6 +16,7 @@
 package android.contentcaptureservice.cts;
 
 import android.app.Activity;
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureManager;
@@ -79,6 +80,12 @@ abstract class AbstractContentCaptureActivity extends Activity {
         Log.i(mTag, "onDestroy()");
         super.onDestroy();
     }
+
+    /**
+     * Asserts the events generated when this session was launched and finished,
+     * without any custom / dynamic operations in between.
+     */
+    public abstract void assertDefaultEvents(@NonNull Session session);
 
     /**
      * Gets the real task id associated with the activity, as {@link #getTaskId()} returns

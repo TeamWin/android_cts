@@ -76,17 +76,7 @@ public class CustomViewActivityTest extends
         final Session session = service.getOnlyFinishedSession();
         Log.v(TAG, "session id: " + session.id);
 
-        assertRightActivity(session, session.id, activity);
-
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent
-        assertThat(events.size()).isAtLeast(1);
-
-        // Assert just the relevant events
-        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
-
-        // TODO(b/122315042): assert views disappeared
+        activity.assertDefaultEvents(session);
     }
 
     /**

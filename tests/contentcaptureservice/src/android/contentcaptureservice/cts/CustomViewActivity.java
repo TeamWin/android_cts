@@ -15,12 +15,21 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewStructure;
+import android.view.contentcapture.ContentCaptureEvent;
 
 import androidx.annotation.NonNull;
+
+import java.util.List;
 
 public class CustomViewActivity extends AbstractContentCaptureActivity {
 
@@ -49,5 +58,20 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
             mCustomView.setContentCaptureDelegate(
                     (structure) -> sCustomViewDelegate.visit(mCustomView, structure));
         }
+    }
+
+    @Override
+    public void assertDefaultEvents(@NonNull Session session) {
+        assertRightActivity(session, session.id, this);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+        // TODO(b/119638528): check right number once we get rid of grandparent
+        assertThat(events.size()).isAtLeast(1);
+
+        // Assert just the relevant events
+        assertViewWithUnknownParentAppeared(events, 0, session.id, mCustomView);
+
+        // TODO(b/122315042): assert views disappeared
     }
 }
