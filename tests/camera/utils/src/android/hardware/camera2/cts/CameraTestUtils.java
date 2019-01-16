@@ -1648,9 +1648,9 @@ public class CameraTestUtils extends Assert {
     private static void validateRawPrivateData(byte[] rawData, int width, int height,
             long ts, String filePath) {
         if (VERBOSE) Log.v(TAG, "Validating private raw data");
-        // Expect each RAW pixel should occupy at least one byte and no more than 2.5 bytes
+        // Expect each RAW pixel should occupy at least one byte and no more than 30 bytes
         int expectedSizeMin = width * height;
-        int expectedSizeMax = width * height * 5 / 2;
+        int expectedSizeMax = width * height * 30;
 
         assertTrue("Opaque RAW size " + rawData.length + "out of normal bound [" +
                 expectedSizeMin + "," + expectedSizeMax + "]",
