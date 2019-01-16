@@ -119,6 +119,7 @@ public class ActivityLaunchUtils {
 
     public static void homeScreenOrBust(Context context, UiAutomation uiAutomation) {
         wakeUpOrBust(context, uiAutomation);
+        if (context.getPackageManager().isInstantApp()) return;
         if (isHomeScreenShowing(context, uiAutomation)) return;
         try {
             executeAndWaitOn(
