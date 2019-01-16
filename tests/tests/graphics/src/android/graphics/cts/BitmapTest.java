@@ -1009,6 +1009,63 @@ public class BitmapTest {
     }
 
     @Test
+    public void testSetColorSpace() {
+        // Use arbitrary colors and assign to various ColorSpaces.
+        for (ARGB color : new ARGB[]{ new ARGB(1.0f, .5f, .5f, .5f),
+                new ARGB(1.0f, .3f, .6f, .9f),
+                new ARGB(0.5f, .2f, .8f, .7f) }) {
+
+            int srgbColor = Color.argb(color.alpha, color.red, color.green, color.blue);
+            for (ColorSpace.Named e : ColorSpace.Named.values()) {
+                ColorSpace cs = ColorSpace.get(e);
+                if (cs.getModel() != ColorSpace.Model.RGB) {
+                    continue;
+                }
+                if (((ColorSpace.Rgb) cs).getTransferParameters() == null) {
+                    continue;
+                }
+
+                mBitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+                mBitmap.eraseColor(srgbColor);
+                mBitmap.setColorSpace(cs);
+
+                // This tolerance was chosen by trial and error. It is expected that
+                // some conversions do not round-trip perfectly.
+                int tolerance = 2;
+                long newColor = Color.pack(color.red, color.green, color.blue, color.alpha, cs);
+                ColorUtils.verifyColor("Mismatch after setting the colorSpace to " + cs.getName(),
+                        Color.toArgb(newColor), mBitmap.getPixel(5, 5), tolerance);
+            }
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testSetColorSpaceRecycled() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        mBitmap.recycle();
+        mBitmap.setColorSpace(ColorSpace.get(Named.DISPLAY_P3));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorSpaceNull() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        mBitmap.setColorSpace(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorSpaceXYZ() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        mBitmap.setColorSpace(ColorSpace.get(Named.CIE_XYZ));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorSpaceReducedRange() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.RGBA_F16, true,
+                ColorSpace.get(Named.EXTENDED_SRGB));
+        mBitmap.setColorSpace(ColorSpace.get(Named.DISPLAY_P3));
+    }
+
+    @Test
     public void testSetConfig() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
         int alloc = mBitmap.getAllocationByteCount();
