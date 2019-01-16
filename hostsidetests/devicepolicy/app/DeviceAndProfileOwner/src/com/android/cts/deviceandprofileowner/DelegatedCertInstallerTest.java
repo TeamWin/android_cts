@@ -20,7 +20,6 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -249,7 +248,6 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
                 mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT));
 
         // Exercise installKeyPair()
-        checkKeyguardPrecondition();
         installKeyPair(TEST_KEY, TEST_CERT, alias);
         assertResult("installKeyPair", true);
     }
@@ -313,19 +311,6 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
         assertThat(mDpm.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
                 DELEGATION_CERT_INSTALL)).isEmpty();
         assertThat(mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)).isNull();
-    }
-
-    /**
-     * installKeyPair() requires the system to have a lockscreen password, which should have been
-     * set by the host side test.
-     */
-    private void checkKeyguardPrecondition() throws InterruptedException {
-        KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
-        if (!km.isKeyguardSecure()) {
-            Thread.sleep(5000);
-          }
-          assertTrue("A lockscreen password is required before keypair can be installed",
-                          km.isKeyguardSecure());
     }
 
     private void installCaCert(byte[] cert) {
