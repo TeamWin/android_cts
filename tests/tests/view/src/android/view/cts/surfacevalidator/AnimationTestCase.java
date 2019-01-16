@@ -20,7 +20,7 @@ import android.content.Context;
 import android.view.View;
 import android.widget.FrameLayout;
 
-public class AnimationTestCase {
+public class AnimationTestCase implements ISurfaceValidatorTestCase {
     private final ViewFactory mViewFactory;
     private final FrameLayout.LayoutParams mLayoutParams;
     private final AnimationFactory mAnimationFactory;
@@ -39,7 +39,7 @@ public class AnimationTestCase {
         mPixelChecker = pixelChecker;
     }
 
-    PixelChecker getChecker() {
+    public PixelChecker getChecker() {
         return mPixelChecker;
     }
 

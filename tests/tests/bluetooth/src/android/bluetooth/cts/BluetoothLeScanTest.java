@@ -91,7 +91,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
             TestUtils.enableLocation(getContext());
         }
         InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                "android.bluetooth.cts", android.Manifest.permission.ACCESS_COARSE_LOCATION);
+                "android.bluetooth.cts", android.Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
     @Override

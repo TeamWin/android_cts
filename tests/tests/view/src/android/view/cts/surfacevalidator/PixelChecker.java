@@ -15,6 +15,20 @@
  */
 package android.view.cts.surfacevalidator;
 
-public interface PixelChecker {
-    boolean checkPixels(int blackishPixelCount, int width, int height);
+public abstract class PixelChecker {
+    private PixelColor mPixelColor;
+
+    public PixelChecker() {
+        mPixelColor = new PixelColor();
+    }
+
+    public PixelChecker(int color) {
+        mPixelColor = new PixelColor(color);
+    }
+
+    PixelColor getColor() {
+        return mPixelColor;
+    }
+
+    public abstract boolean checkPixels(int matchingPixelCount, int width, int height);
 }

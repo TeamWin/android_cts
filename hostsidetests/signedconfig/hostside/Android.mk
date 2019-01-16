@@ -45,7 +45,8 @@ LOCAL_TARGET_REQUIRED_MODULES := \
     CtsSignedConfigTestAppV1_badsignature \
     CtsSignedConfigTestAppV1_badb64_config \
     CtsSignedConfigTestAppV1_badb64_signature \
-    CtsSignedConfigTestAppV3_configv1
+    CtsSignedConfigTestAppV3_configv1 \
+    CtsSignedConfigTestAppV1_debug_key
 
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)

@@ -69,7 +69,7 @@ public final class AugmentedHelper {
      */
     public static void resetAugmentedService() {
         Log.d(TAG, "Resetting back to default service");
-        runShellCommand("cmd content_capture set temporary-service 0");
+        runShellCommand("cmd autofill set temporary-augmented-service 0");
     }
 
     public static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,

@@ -21,7 +21,6 @@ import static android.app.NotificationManager.IMPORTANCE_HIGH;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
@@ -59,7 +58,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
         assertEquals(null, channel.getGroup());
         assertTrue(channel.getLightColor() == 0);
-        assertTrue(channel.canOverlayApps());
+        assertTrue(channel.canBubble());
     }
 
     public void testWriteToParcel() {
@@ -155,18 +154,18 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals("banana", channel.getGroup());
     }
 
-    public void testAppOverlay() {
+    public void testBubble() {
         NotificationChannel channel =
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
-        channel.setAllowAppOverlay(true);
-        assertEquals("Only HIGH channels can have app overlays", false, channel.canOverlayApps());
+        channel.setAllowBubbles(true);
+        assertEquals("Only HIGH channels can have bubbles", false, channel.canBubble());
 
         channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
-        channel.setAllowAppOverlay(false);
-        assertEquals(false, channel.canOverlayApps());
+        channel.setAllowBubbles(false);
+        assertEquals(false, channel.canBubble());
 
         channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
-        channel.setAllowAppOverlay(true);
-        assertEquals(true, channel.canOverlayApps());
+        channel.setAllowBubbles(true);
+        assertEquals(true, channel.canBubble());
     }
 }

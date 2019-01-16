@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts.common;
 
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
@@ -74,5 +76,13 @@ public final class ShellHelper {
      */
     public static void sendKeyEvent(String keyCode) {
         runShellCommand("input keyevent " + keyCode);
+    }
+
+    /**
+     * Allows an app to draw overlaid windows.
+     */
+    public static void setOverlayPermissions(@NonNull String packageName, boolean allowed) {
+        final String action = allowed ? "allow" : "ignore";
+        runShellCommand("appops set %s SYSTEM_ALERT_WINDOW %s", packageName, action);
     }
 }

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/*
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
+package android.view.cts.surfacevalidator;
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.libcore.cts.simplemmodule"
-    android:targetSandboxVersion="2">
+import android.content.Context;
+import android.widget.FrameLayout;
 
-    <application android:usesCleartextTraffic="true">
-        <uses-library android:name="android.test.runner" />
-    </application>
+public interface ISurfaceValidatorTestCase {
+    PixelChecker getChecker();
 
-    <instrumentation
-        android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:label="CTS Libcore simple mmodule test cases"
-        android:targetPackage="android.libcore.cts.simplemmodule">
-    </instrumentation>
-</manifest>
+    void start(Context context, FrameLayout parent);
+
+    void end();
+}

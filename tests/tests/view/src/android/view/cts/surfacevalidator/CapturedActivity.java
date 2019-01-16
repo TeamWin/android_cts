@@ -31,6 +31,7 @@ import android.media.MediaPlayer;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
@@ -47,6 +48,11 @@ import android.view.View;
 import android.view.cts.R;
 import android.widget.FrameLayout;
 
+import org.junit.rules.TestName;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -160,7 +166,7 @@ public class CapturedActivity extends Activity {
         return mOnEmbedded ? 100000 : 10000;
     }
 
-    public TestResult runTest(AnimationTestCase animationTestCase) throws Throwable {
+    public TestResult runTest(ISurfaceValidatorTestCase animationTestCase) throws Throwable {
         TestResult testResult = new TestResult();
         if (mOnWatch) {
             /**
@@ -258,6 +264,61 @@ public class CapturedActivity extends Activity {
         Log.d(TAG, "Test finished, passFrames " + testResult.passFrames
                 + ", failFrames " + testResult.failFrames);
         return testResult;
+    }
+
+    private void saveFailureCaptures(SparseArray<Bitmap> failFrames, TestName name) {
+        if (failFrames.size() == 0) return;
+
+        String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + getClass().getSimpleName()
+                + "/" + name.getMethodName();
+        File testDirectory = new File(directoryName);
+        if (testDirectory.exists()) {
+            String[] children = testDirectory.list();
+            if (children == null) {
+                return;
+            }
+            for (String file : children) {
+                new File(testDirectory, file).delete();
+            }
+        } else {
+            testDirectory.mkdirs();
+        }
+
+        for (int i = 0; i < failFrames.size(); i++) {
+            int frameNr = failFrames.keyAt(i);
+            Bitmap bitmap = failFrames.valueAt(i);
+
+            String bitmapName =  "frame_" + frameNr + ".png";
+            Log.d(TAG, "Saving file : " + bitmapName + " in directory : " + directoryName);
+
+            File file = new File(directoryName, bitmapName);
+            try (FileOutputStream fileStream = new FileOutputStream(file)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
+                fileStream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void verifyTest(ISurfaceValidatorTestCase testCase, TestName name) throws Throwable {
+        CapturedActivity.TestResult result = runTest(testCase);
+        saveFailureCaptures(result.failures, name);
+
+        float failRatio = 1.0f * result.failFrames / (result.failFrames + result.passFrames);
+        assertTrue("Error: " + failRatio + " fail ratio - extremely high, is activity obstructed?",
+                failRatio < 0.95f);
+        assertTrue("Error: " + result.failFrames
+                        + " incorrect frames observed - incorrect positioning",
+                result.failFrames == 0);
+
+        float framesPerSecond = 1.0f * result.passFrames
+                / TimeUnit.MILLISECONDS.toSeconds(getCaptureDurationMs());
+        assertTrue("Error, only " + result.passFrames
+                        + " frames observed, virtual display only capturing at "
+                        + framesPerSecond + " frames per second",
+                result.passFrames > 100);
     }
 
     private class MediaProjectionCallback extends MediaProjection.Callback {

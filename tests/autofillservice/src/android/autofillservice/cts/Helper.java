@@ -35,6 +35,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.autofillservice.cts.common.OneTimeSettingsListener;
 import android.autofillservice.cts.common.SettingsHelper;
+import android.autofillservice.cts.common.ShellHelper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -1342,6 +1343,24 @@ public final class Helper {
         assertThat(string).hasLength(LARGE_STRING_SIZE);
         assertThat(string.charAt(0)).isEqualTo(LARGE_STRING_CHAR);
         assertThat(string.charAt(LARGE_STRING_SIZE - 1)).isEqualTo(LARGE_STRING_CHAR);
+    }
+
+    /**
+     * Allows the test to draw overlaid windows.
+     *
+     * <p>Should call {@link #disallowOverlays()} afterwards.
+     */
+    public static void allowOverlays() {
+        ShellHelper.setOverlayPermissions(MY_PACKAGE, true);
+    }
+
+    /**
+     * Disallow the test to draw overlaid windows.
+     *
+     * <p>Should call {@link #disallowOverlays()} afterwards.
+     */
+    public static void disallowOverlays() {
+        ShellHelper.setOverlayPermissions(MY_PACKAGE, false);
     }
 
     private Helper() {

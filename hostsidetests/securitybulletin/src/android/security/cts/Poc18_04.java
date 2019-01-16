@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/**
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.libcore.cts.coreplatformapi"
-    android:targetSandboxVersion="2">
+package android.security.cts;
 
-    <application android:usesCleartextTraffic="true">
-        <uses-library android:name="android.test.runner" />
-    </application>
+import android.platform.test.annotations.SecurityTest;
+import org.junit.runner.RunWith;
 
-    <instrumentation
-        android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:label="CTS Libcore core platform API test cases"
-        android:targetPackage="android.libcore.cts.coreplatformapi">
-    </instrumentation>
-</manifest>
+public class Poc18_04 extends SecurityTestCase {
+    /**
+     * b/69683251
+     * Does not require root but must be a hostside test to avoid
+     * a race condition
+     */
+    @SecurityTest(minPatchLevel = "2018-04")
+    public void testPocCVE_2017_13286() throws Exception {
+        LaunchSomeWhere.launchSomeWhere("CVE_2017_13286", getDevice());
+    }
+}

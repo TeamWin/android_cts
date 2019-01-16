@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission.cts;
+package android.permission2.cts;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -367,24 +367,6 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
         try {
             mLocationManager.setTestProviderLocation(TEST_PROVIDER_NAME, location);
             fail("LocationManager.setTestProviderLocation did not throw SecurityException as"
-                    + " expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    /**
-     * Verify that checking clearTestProviderLocation for network requires
-     * permissions.
-     * <p>
-     * Requires Permission:
-     * {@link android.Manifest.permission#ACCESS_MOCK_LOCATION}.
-     */
-    @SmallTest
-    public void testClearTestProviderLocation() {
-        try {
-            mLocationManager.clearTestProviderLocation(TEST_PROVIDER_NAME);
-            fail("LocationManager.clearTestProviderLocation did not throw SecurityException as"
                     + " expected");
         } catch (SecurityException e) {
             // expected

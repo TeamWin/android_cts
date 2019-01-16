@@ -580,12 +580,27 @@ public class BitmapTest {
         mBitmap.eraseColor(0);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testEraseColorLongOnRecycled() {
+        mBitmap.recycle();
+
+        mBitmap.eraseColor(Color.pack(0));
+    }
+
     @Test(expected=IllegalStateException.class)
     public void testEraseColorOnImmutable() {
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
 
         //abnormal case: bitmap is immutable
         mBitmap.eraseColor(0);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEraseColorLongOnImmutable() {
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
+
+        //abnormal case: bitmap is immutable
+        mBitmap.eraseColor(Color.pack(0));
     }
 
     @Test
@@ -595,6 +610,109 @@ public class BitmapTest {
         mBitmap.eraseColor(0xffff0000);
         assertEquals(0xffff0000, mBitmap.getPixel(10, 10));
         assertEquals(0xffff0000, mBitmap.getPixel(50, 50));
+    }
+
+    private static class ARGB {
+        public float alpha;
+        public float red;
+        public float green;
+        public float blue;
+        ARGB(float alpha, float red, float green, float blue) {
+            this.alpha = alpha;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+    };
+
+    @Test
+    public void testEraseColorLong() {
+        // normal case
+        for (Config config : new Config[]{Config.ARGB_8888, Config.RGB_565, Config.RGBA_F16}) {
+            mBitmap = Bitmap.createBitmap(100, 100, config);
+            // pack SRGB colors into ColorLongs.
+            for (int color : new int[]{ Color.RED, Color.BLUE, Color.GREEN, Color.BLACK,
+                    Color.WHITE, Color.TRANSPARENT }) {
+                if (config.equals(Config.RGB_565) && Float.compare(Color.alpha(color), 1.0f) != 0) {
+                    // 565 doesn't support alpha.
+                    continue;
+                }
+                mBitmap.eraseColor(Color.pack(color));
+                // The Bitmap is either SRGB or SRGBLinear (F16). getPixel(), which retrieves the
+                // color in SRGB, should match exactly.
+                ColorUtils.verifyColor("Config " + config + " mismatch at 10, 10 ",
+                        color, mBitmap.getPixel(10, 10), 0);
+                ColorUtils.verifyColor("Config " + config + " mismatch at 50, 50 ",
+                        color, mBitmap.getPixel(50, 50), 0);
+            }
+
+            // Use arbitrary colors in various ColorSpaces. getPixel() should approximately match
+            // the SRGB version of the color.
+            for (ARGB color : new ARGB[]{ new ARGB(1.0f, .5f, .5f, .5f),
+                                          new ARGB(1.0f, .3f, .6f, .9f),
+                                          new ARGB(0.5f, .2f, .8f, .7f) }) {
+                if (config.equals(Config.RGB_565) && Float.compare(color.alpha, 1.0f) != 0) {
+                    continue;
+                }
+                int srgbColor = Color.argb(color.alpha, color.red, color.green, color.blue);
+                for (ColorSpace.Named e : ColorSpace.Named.values()) {
+                    ColorSpace cs = ColorSpace.get(e);
+                    if (cs.getModel() != ColorSpace.Model.RGB) {
+                        continue;
+                    }
+                    if (((ColorSpace.Rgb) cs).getTransferParameters() == null) {
+                        continue;
+                    }
+                    long longColor = Color.convert(srgbColor, cs);
+                    mBitmap.eraseColor(longColor);
+                    // These tolerances were chosen by trial and error. It is expected that
+                    // some conversions do not round-trip perfectly.
+                    int tolerance = 1;
+                    if (config.equals(Config.RGB_565)) {
+                        tolerance = 4;
+                    } else if (cs.equals(ColorSpace.get(ColorSpace.Named.SMPTE_C))) {
+                        tolerance = 3;
+                    }
+
+                    ColorUtils.verifyColor("Config " + config + ", ColorSpace " + cs
+                            + ", mismatch at 10, 10 ", srgbColor, mBitmap.getPixel(10, 10),
+                            tolerance);
+                    ColorUtils.verifyColor("Config " + config + ", ColorSpace " + cs
+                            + ", mismatch at 50, 50 ", srgbColor, mBitmap.getPixel(50, 50),
+                            tolerance);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testEraseColorOnP3() {
+        // Use a ColorLong with a different ColorSpace than the Bitmap. getPixel() should
+        // approximately match the SRGB version of the color.
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888, true,
+                ColorSpace.get(ColorSpace.Named.DISPLAY_P3));
+        int srgbColor = Color.argb(.5f, .3f, .6f, .7f);
+        long acesColor = Color.convert(srgbColor, ColorSpace.get(ColorSpace.Named.ACES));
+        mBitmap.eraseColor(acesColor);
+        ColorUtils.verifyColor("Mismatch at 15, 15", srgbColor, mBitmap.getPixel(15, 15), 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEraseColorXYZ() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.eraseColor(Color.convert(Color.BLUE, ColorSpace.get(ColorSpace.Named.CIE_XYZ)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEraseColorLAB() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.eraseColor(Color.convert(Color.BLUE, ColorSpace.get(ColorSpace.Named.CIE_LAB)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEraseColorUnknown() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.eraseColor(-1L);
     }
 
     @Test(expected=IllegalStateException.class)
@@ -1492,6 +1610,12 @@ public class BitmapTest {
     public void testHardwareEraseColor() {
         Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
         bitmap.eraseColor(0);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareEraseColorLong() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.eraseColor(Color.pack(0));
     }
 
     @Test(expected = IllegalStateException.class)

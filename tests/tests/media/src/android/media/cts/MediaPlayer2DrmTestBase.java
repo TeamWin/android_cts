@@ -27,6 +27,7 @@ import android.media.UriDataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmInfo;
+import android.media.MediaPlayer2.DrmPreparationInfo;
 import android.media.VideoSize;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
@@ -354,15 +355,16 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
     private void preparePlayerAndDrm_V1_asyncDrmSetup(DataSourceDesc dsd) throws InterruptedException {
         final AtomicBoolean asyncSetupDrmError = new AtomicBoolean(false);
 
-        mPlayer.registerDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2, DrmInfo drmInfo) {
+            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2,
+                    DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo" + drmInfo);
                 if (dsd != dsd2) {
                     Log.e(TAG, "preparePlayerAndDrm_V1: onDrmInfo dsd mismatch");
                     asyncSetupDrmError.set(true);
                     mOnDrmInfoCalled.signal();
-                    return;
+                    return null;
                 }
 
                 // in the callback (async mode) so handling exceptions here
@@ -376,6 +378,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
                 mOnDrmInfoCalled.signal();
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo done!");
+                return null;
             }
         });
 
@@ -396,9 +399,9 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
     private void preparePlayerAndDrm_V2_syncDrmSetupPlusConfig(DataSourceDesc dsd)
             throws Exception {
         final AtomicBoolean drmConfigError = new AtomicBoolean(false);
-        mPlayer.setOnDrmConfigHelper(new MediaPlayer2.OnDrmConfigHelper() {
+        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc dsd2) {
+            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc dsd2, MediaDrm drmObj) {
                 if (dsd != dsd2) {
                     Log.e(TAG, "preparePlayerAndDrm_V2: onDrmConfig dsd mismatch");
                     drmConfigError.set(true);
@@ -409,15 +412,13 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 String securityLevelProperty = "securityLevel";
 
                 try {
-                    String level = mp.getDrmPropertyString(dsd2, securityLevelProperty);
+                    String level = drmObj.getPropertyString(securityLevelProperty);
                     Log.v(TAG, "preparePlayerAndDrm_V2: getDrmPropertyString: "
                             + securityLevelProperty + " -> " + level);
-                    mp.setDrmPropertyString(dsd2, securityLevelProperty, widevineSecurityLevel3);
-                    level = mp.getDrmPropertyString(dsd2, securityLevelProperty);
+                    drmObj.setPropertyString(securityLevelProperty, widevineSecurityLevel3);
+                    level = drmObj.getPropertyString(securityLevelProperty);
                     Log.v(TAG, "preparePlayerAndDrm_V2: getDrmPropertyString: "
                             + securityLevelProperty + " -> " + level);
-                } catch (MediaPlayer2.NoDrmSchemeException e) {
-                    Log.v(TAG, "preparePlayerAndDrm_V2: NoDrmSchemeException");
                 } catch (Exception e) {
                     Log.v(TAG, "preparePlayerAndDrm_V2: onDrmConfig EXCEPTION " + e);
                 }
@@ -448,9 +449,10 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             throws InterruptedException {
         final AtomicBoolean asyncSetupDrmError = new AtomicBoolean(false);
 
-        mPlayer.registerDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2, DrmInfo drmInfo) {
+            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2,
+                    DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo" + drmInfo);
 
                 // DRM preperation
@@ -462,7 +464,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                     mOnDrmInfoCalled.signal();
                     // we won't call prepareDrm anymore but need to get passed the wait
                     mOnDrmPreparedCalled.signal();
-                    return;
+                    return null;
                 }
 
                 // setting up with the first supported UUID
@@ -475,10 +477,12 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
                 mOnDrmInfoCalled.signal();
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo done!");
+                return null;
             }
 
             @Override
-            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd2, int status) {
+            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd2, int status,
+                    byte[] keySetId) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmPrepared status: " + status);
 
                 if (dsd != dsd2) {
@@ -680,11 +684,11 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
                     if (prepareDrm) {
                         final Monitor drmPrepared = new Monitor();
-                        mPlayer.registerDrmEventCallback(
+                        mPlayer.setDrmEventCallback(
                                 mExecutor, new MediaPlayer2.DrmEventCallback() {
                             @Override
-                            public void onDrmPrepared(
-                                    MediaPlayer2 mp, DataSourceDesc dsd2, int status) {
+                            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd2,
+                                    int status, byte[] keySetId) {
                                 if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS
                                         || dsd != dsd2) {
                                     prepareDrmFailed.set(true);
@@ -784,11 +788,11 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 Log.d(TAG, "setupDrmRestore: selected " + drmScheme);
 
                 final Monitor drmPrepared = new Monitor();
-                mPlayer.registerDrmEventCallback(
+                mPlayer.setDrmEventCallback(
                         mExecutor, new MediaPlayer2.DrmEventCallback() {
                     @Override
                     public void onDrmPrepared(
-                            MediaPlayer2 mp, DataSourceDesc dsd2, int status) {
+                            MediaPlayer2 mp, DataSourceDesc dsd2, int status, byte[] keySetId) {
                         if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS
                                 || dsd != dsd2) {
                             prepareDrmFailed.set(true);

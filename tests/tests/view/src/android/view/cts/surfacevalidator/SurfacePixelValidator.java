@@ -39,9 +39,6 @@ public class SurfacePixelValidator {
      */
     private static final int NUM_FIRST_FRAMES_SKIPPED = 8;
 
-    // If no channel is greater than this value, pixel will be considered 'blackish'.
-    private static final short PIXEL_CHANNEL_THRESHOLD = 4;
-
     private static final int MAX_CAPTURED_FAILURES = 5;
 
     private final int mWidth;
@@ -120,7 +117,7 @@ public class SurfacePixelValidator {
         mInPixelsAllocation = createBufferQueueAllocation();
         mScript.set_BOUNDS(new int[] {boundsToCheck.left, boundsToCheck.top,
                 boundsToCheck.right, boundsToCheck.bottom});
-        mScript.set_THRESHOLD(PIXEL_CHANNEL_THRESHOLD);
+        pixelChecker.getColor().addToPixelCounter(mScript);
 
         mInPixelsAllocation.setOnBufferAvailableListener(
                 allocation -> mWorkerHandler.post(mConsumeRunnable));

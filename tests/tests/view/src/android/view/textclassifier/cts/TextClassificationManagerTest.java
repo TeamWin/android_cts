@@ -30,6 +30,7 @@ import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.textclassifier.ConversationAction;
 import android.view.textclassifier.ConversationActions;
 import android.view.textclassifier.SelectionEvent;
 import android.view.textclassifier.TextClassification;
@@ -273,10 +274,10 @@ public class TextClassificationManagerTest {
 
     private static void assertValidResult(ConversationActions conversationActions) {
         assertNotNull(conversationActions);
-        List<ConversationActions.ConversationAction> conversationActionsList =
+        List<ConversationAction> conversationActionsList =
                 conversationActions.getConversationActions();
         assertNotNull(conversationActionsList);
-        for (ConversationActions.ConversationAction conversationAction : conversationActionsList) {
+        for (ConversationAction conversationAction : conversationActionsList) {
             assertThat(conversationAction.getAction()).isNotNull();
             assertThat(conversationAction.getType()).isNotNull();
             assertThat(conversationAction.getConfidenceScore()).isGreaterThan(0f);
