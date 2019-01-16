@@ -956,7 +956,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return; // skip
         }
 
-        int resid = R.raw.testvideo;
+        int resid = R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
             return;  // skip
         }
@@ -1053,7 +1053,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return; // skip
         }
 
-        int resid = R.raw.testvideo;
+        int resid = R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
             return;  // skip
         }
@@ -1160,7 +1160,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return; // skip
         }
 
-        int resid = R.raw.testvideo;
+        int resid = R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
             return;  // skip
         }
@@ -1184,22 +1184,22 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                 if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_START) {
                     if (dsd == dsd2) {
-                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_START dsd2");
+                        Log.i(LOG_TAG, "testClearNextDataSources: DATA_SOURCE_START dsd2");
                         onStart2Called.signal();
                     } else {
-                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_START other");
+                        Log.i(LOG_TAG, "testClearNextDataSources: DATA_SOURCE_START other");
                         onStartCalled.signal();
                     }
                 } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
                     if (dsd == dsd2) {
-                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_END dsd2");
+                        Log.i(LOG_TAG, "testClearNextDataSources: DATA_SOURCE_END dsd2");
                         onCompletion2Called.signal();
                     } else {
-                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_END other");
+                        Log.i(LOG_TAG, "testClearNextDataSources: DATA_SOURCE_END other");
                         mOnCompletionCalled.signal();
                     }
                 } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_LIST_END) {
-                    Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_LIST_END");
+                    Log.i(LOG_TAG, "testClearNextDataSources: DATA_SOURCE_LIST_END");
                     onListCompletionCalled.signal();
                 }
             }
@@ -2053,6 +2053,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         Thread.sleep(10000);
         assertTrue("MediaPlayer2 should still be playing",
                 mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
+        mPlayer.unregisterEventCallback(ecb);
         mPlayer.reset();
         assertEquals("wrong number of repetitions", 1, mOnCompletionCalled.getNumSignal());
         return 1;
