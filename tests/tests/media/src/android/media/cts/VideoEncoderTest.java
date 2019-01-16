@@ -55,6 +55,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+@MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VideoEncoderTest extends MediaPlayerTestBase {
     private static final int MAX_SAMPLE_SIZE = 256 * 1024;

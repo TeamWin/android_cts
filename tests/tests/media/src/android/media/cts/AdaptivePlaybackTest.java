@@ -47,6 +47,7 @@ import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.CRC32;
 
+@MediaHeavyPresubmitTest
 @AppModeFull
 public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     private static final String TAG = "AdaptivePlaybackTest";

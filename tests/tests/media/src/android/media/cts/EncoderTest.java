@@ -24,6 +24,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.platform.test.annotations.RequiresDevice;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -41,6 +43,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@SmallTest
+@RequiresDevice
 public class EncoderTest extends AndroidTestCase {
     private static final String TAG = "EncoderTest";
     private static final boolean VERBOSE = false;

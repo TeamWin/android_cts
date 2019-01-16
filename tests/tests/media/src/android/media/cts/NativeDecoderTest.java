@@ -32,6 +32,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
+import android.support.test.filters.SmallTest;
 import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
@@ -65,6 +67,8 @@ import org.apache.http.io.SessionOutputBuffer;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.CharArrayBuffer;
 
+@SmallTest
+@RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class NativeDecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";

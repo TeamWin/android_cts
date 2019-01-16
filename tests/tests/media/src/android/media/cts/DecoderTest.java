@@ -59,6 +59,7 @@ import java.util.regex.Pattern;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
+@MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
