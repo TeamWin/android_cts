@@ -675,6 +675,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(MediaRecorder.AudioSource.VOICE_RECOGNITION <= max);
         assertTrue(MediaRecorder.AudioSource.VOICE_UPLINK <= max);
         assertTrue(MediaRecorder.AudioSource.UNPROCESSED <= max);
+        assertTrue(MediaRecorder.AudioSource.VOICE_PERFORMANCE <= max);
     }
 
     public void testRecorderAudio() throws Exception {
