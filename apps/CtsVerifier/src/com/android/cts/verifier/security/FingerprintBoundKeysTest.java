@@ -66,7 +66,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     private static final byte[] SECRET_BYTE_ARRAY = new byte[] {1, 2, 3, 4, 5, 6};
     private static final int AUTHENTICATION_DURATION_SECONDS = 2;
     private static final int CONFIRM_CREDENTIALS_REQUEST_CODE = 1;
-    private static final int FINGERPRINT_PERMISSION_REQUEST_CODE = 0;
+    private static final int BIOMETRIC_REQUEST_PERMISSION_CODE = 0;
 
     protected boolean useStrongBox;
 
@@ -90,17 +90,17 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         setInfoResources(getTitleRes(), getDescriptionRes(), -1);
         getPassButton().setEnabled(false);
-        requestPermissions(new String[]{Manifest.permission.USE_FINGERPRINT},
-                FINGERPRINT_PERMISSION_REQUEST_CODE);
+        requestPermissions(new String[]{Manifest.permission.USE_BIOMETRIC},
+                BIOMETRIC_REQUEST_PERMISSION_CODE);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] state) {
-        if (requestCode == FINGERPRINT_PERMISSION_REQUEST_CODE && state[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == BIOMETRIC_REQUEST_PERMISSION_CODE && state[0] == PackageManager.PERMISSION_GRANTED) {
             useStrongBox = false;
             mFingerprintManager = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
-            mKeyguardManager = (KeyguardManager) getSystemService(KeyguardManager.class);
-            Button startTestButton = (Button) findViewById(R.id.sec_start_test_button);
+            mKeyguardManager = getSystemService(KeyguardManager.class);
+            Button startTestButton = findViewById(R.id.sec_start_test_button);
 
             if (!mKeyguardManager.isKeyguardSecure()) {
                 // Show a message that the user hasn't set up a lock screen.
@@ -108,12 +108,9 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                                 + "Go to 'Settings -> Security -> Screen lock' to set up a lock screen");
                 startTestButton.setEnabled(false);
                 return;
-            } else if (!mFingerprintManager.hasEnrolledFingerprints()) {
-                showToast("No fingerprints enrolled.\n"
-                                + "Go to 'Settings -> Security -> Fingerprint' to set up a fingerprint");
-                startTestButton.setEnabled(false);
-                return;
             }
+
+            onPermissionsGranted();
 
             startTestButton.setOnClickListener(new OnClickListener() {
                 @Override
@@ -121,6 +118,19 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                     startTest();
                 }
             });
+        }
+    }
+
+    /**
+     * Fingerprint-specific check before allowing test to be started
+     */
+    protected void onPermissionsGranted() {
+        mFingerprintManager = getSystemService(FingerprintManager.class);
+        if (!mFingerprintManager.hasEnrolledFingerprints()) {
+            showToast("No fingerprints enrolled.\n"
+                    + "Go to 'Settings -> Security -> Fingerprint' to set up a fingerprint");
+            Button startTestButton = findViewById(R.id.sec_start_test_button);
+            startTestButton.setEnabled(false);
         }
     }
 
