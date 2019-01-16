@@ -78,6 +78,7 @@ public class UiAutomationTest {
         grantWriteSecureSettingsPermission(uiAutomation);
     }
 
+    @AppModeFull
     @Test
     public void testAdoptAllShellPermissions() {
         final Context context = getInstrumentation().getContext();
@@ -137,6 +138,7 @@ public class UiAutomationTest {
         }
     }
 
+    @AppModeFull
     @Test
     public void testAdoptSomeShellPermissions() {
         final Context context = getInstrumentation().getContext();
