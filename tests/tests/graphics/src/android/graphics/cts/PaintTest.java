@@ -31,7 +31,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.BlendMode;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.ColorSpace;
 import android.graphics.MaskFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -55,6 +57,7 @@ import android.text.Hyphenator;
 import android.text.SpannedString;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.ColorUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -2065,5 +2068,62 @@ public class PaintTest {
             case OVERLAY: return BlendMode.OVERLAY;
             default: throw new IllegalArgumentException("Unknown PorterDuffmode: " + mode);
         }
+    }
+
+    @Test
+    public void testSetColorLong() {
+        // Pack SRGB colors into ColorLongs
+        for (int color : new int[]{ Color.RED, Color.BLUE, Color.GREEN, Color.BLACK,
+                Color.WHITE, Color.TRANSPARENT }) {
+            Paint p = new Paint();
+            p.setColor(Color.pack(color));
+            assertEquals(color, p.getColor());
+        }
+
+        // Arbitrary colors in various ColorSpaces
+        for (int srgbColor : new int[]{ Color.argb(1.0f, .5f, .5f, .5f),
+                                        Color.argb(1.0f, .3f, .6f, .9f),
+                                        Color.argb(0.5f, .2f, .8f, .7f) }) {
+            for (ColorSpace.Named e : ColorSpace.Named.values()) {
+                ColorSpace cs = ColorSpace.get(e);
+                if (cs.getModel() != ColorSpace.Model.RGB) {
+                    continue;
+                }
+                if (((ColorSpace.Rgb) cs).getTransferParameters() == null) {
+                    continue;
+                }
+
+                long longColor = Color.convert(srgbColor, cs);
+                Paint p = new Paint();
+                p.setColor(longColor);
+
+                // These tolerances were chosen by trial and error. It is expected that
+                // some conversions do not round-trip perfectly.
+                int tolerance = 0;
+                if (cs.equals(ColorSpace.get(ColorSpace.Named.SMPTE_C))) {
+                    tolerance = 2;
+                }
+                ColorUtils.verifyColor("Paint#setColor mismatch for " + cs, srgbColor, p.getColor(),
+                        tolerance);
+            }
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorXYZ() {
+        Paint p = new Paint();
+        p.setColor(Color.convert(Color.BLUE, ColorSpace.get(ColorSpace.Named.CIE_XYZ)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorLAB() {
+        Paint p = new Paint();
+        p.setColor(Color.convert(Color.BLUE, ColorSpace.get(ColorSpace.Named.CIE_LAB)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorUnknown() {
+        Paint p = new Paint();
+        p.setColor(-1L);
     }
 }
