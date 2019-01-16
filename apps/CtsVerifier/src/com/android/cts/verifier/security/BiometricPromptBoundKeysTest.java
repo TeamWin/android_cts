@@ -86,9 +86,9 @@ public class BiometricPromptBoundKeysTest extends FingerprintBoundKeysTest {
         if (result == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
             showToast("No biometric features, test passed.");
             getPassButton().setEnabled(true);
-        } else if (result == BiometricManager.BIOMETRIC_ERROR_UNAVAILABLE) {
+        } else if (result == BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE) {
             showToast("Biometric unavailable, something is wrong with your device");
-        } else if (result == BiometricManager.BIOMETRIC_ERROR_NO_BIOMETRICS) {
+        } else if (result == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
             showToast("Error: " + result + " Please ensure you have a biometric enrolled");
             Button startTestButton = findViewById(R.id.sec_start_test_button);
             startTestButton.setEnabled(false);
