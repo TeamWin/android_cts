@@ -38,6 +38,8 @@ import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.platform.test.annotations.RequiresDevice;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
@@ -66,6 +68,8 @@ import java.util.concurrent.TimeUnit;
  * test. For decoder test, hw and sw decoders are tested,
  * </p>
  */
+@SmallTest
+@RequiresDevice
 public class ImageReaderDecoderTest extends AndroidTestCase {
     private static final String TAG = "ImageReaderDecoderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

@@ -18,7 +18,7 @@
     package="android.jni.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <application>
+    <application android:extractNativeLibs="true">
         <uses-library android:name="android.test.runner" />
     </application>
 

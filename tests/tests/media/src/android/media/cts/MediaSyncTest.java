@@ -36,6 +36,8 @@ import android.media.SyncParams;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
+import android.support.test.filters.SmallTest;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
@@ -58,6 +60,8 @@ import java.util.LinkedList;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
+@SmallTest
+@RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSyncTest extends ActivityInstrumentationTestCase2<MediaStubActivity> {
     private static final String LOG_TAG = "MediaSyncTest";

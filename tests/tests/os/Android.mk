@@ -25,6 +25,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    android.hidl.manager-V1.0-java \
     android-support-test \
     compatibility-device-util \
     ctstestrunner \

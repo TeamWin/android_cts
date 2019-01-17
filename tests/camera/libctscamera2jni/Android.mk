@@ -47,7 +47,4 @@ LOCAL_SHARED_LIBRARIES := libandroid \
 LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_shared
 
-# Remove when libjpeg_static_ndk is XOM compatible.
-LOCAL_XOM := false
-
 include $(BUILD_SHARED_LIBRARY)

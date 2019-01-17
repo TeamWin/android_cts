@@ -343,7 +343,7 @@ public class ActivityAndWindowManagersState {
         assertNotNull(ws);
     }
 
-    void waitForWithAmState(Predicate<ActivityManagerState> waitCondition, String message) {
+    public void waitForWithAmState(Predicate<ActivityManagerState> waitCondition, String message) {
         waitFor((amState, wmState) -> waitCondition.test(amState), message);
     }
 

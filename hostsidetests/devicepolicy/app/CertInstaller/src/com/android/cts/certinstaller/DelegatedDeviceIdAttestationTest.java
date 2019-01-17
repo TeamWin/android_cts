@@ -31,7 +31,9 @@ public class DelegatedDeviceIdAttestationTest extends InstrumentationTestCase {
 
     // Test that a key generation request succeeds when device identifiers are requested.
     public void testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess() {
-        KeyGenerationUtils.generateKeyWithDeviceIdAttestationExpectingSuccess(mDpm, null);
+        if (mDpm.isDeviceIdAttestationSupported()) {
+            KeyGenerationUtils.generateKeyWithDeviceIdAttestationExpectingSuccess(mDpm, null);
+        }
     }
 
     // Test that a key generation request fails when device identifiers are requested.

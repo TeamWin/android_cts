@@ -16,7 +16,8 @@
 
 package android.view.inspector.cts;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -24,6 +25,12 @@ import android.view.inspector.IntFlagMapping;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Tests for {@link IntFlagMapping}
@@ -38,11 +45,11 @@ public final class IntFlagMappingTest {
                 .addFlag("TWO", 2)
                 .build();
 
-        assertArrayEquals(new String[0], mapping.namesOf(0));
-        assertArrayEquals(new String[] {"ONE"}, mapping.namesOf(1));
-        assertArrayEquals(new String[] {"TWO"}, mapping.namesOf(2));
-        assertArrayEquals(new String[] {"ONE", "TWO"}, mapping.namesOf(3));
-        assertArrayEquals(new String[0], mapping.namesOf(4));
+        assertEmpty(mapping.get(0));
+        assertEquals(setOf("ONE"), mapping.get(1));
+        assertEquals(setOf("TWO"), mapping.get(2));
+        assertEquals(setOf("ONE", "TWO"), mapping.get(3));
+        assertEmpty(mapping.get(4));
     }
 
     @Test
@@ -53,11 +60,11 @@ public final class IntFlagMappingTest {
                 .build();
 
 
-        assertArrayEquals(new String[0], mapping.namesOf(0));
-        assertArrayEquals(new String[] {"ONE"}, mapping.namesOf(1));
-        assertArrayEquals(new String[] {"TWO"}, mapping.namesOf(2));
-        assertArrayEquals(new String[0], mapping.namesOf(3));
-        assertArrayEquals(new String[0], mapping.namesOf(4));
+        assertEmpty(mapping.get(0));
+        assertEquals(setOf("ONE"), mapping.get(1));
+        assertEquals(setOf("TWO"), mapping.get(2));
+        assertEmpty(mapping.get(3));
+        assertEmpty(mapping.get(4));
     }
 
     @Test
@@ -69,13 +76,23 @@ public final class IntFlagMappingTest {
                 .build();
 
 
-        assertArrayEquals(new String[0], mapping.namesOf(0));
-        assertArrayEquals(new String[] {"ONE"}, mapping.namesOf(1));
-        assertArrayEquals(new String[] {"TWO"}, mapping.namesOf(2));
-        assertArrayEquals(new String[0], mapping.namesOf(3));
-        assertArrayEquals(new String[] {"FOUR"}, mapping.namesOf(4));
-        assertArrayEquals(new String[] {"ONE", "FOUR"}, mapping.namesOf(5));
-        assertArrayEquals(new String[] {"TWO", "FOUR"}, mapping.namesOf(6));
-        assertArrayEquals(new String[] {"FOUR"}, mapping.namesOf(7));
+        assertEmpty(mapping.get(0));
+        assertEquals(setOf("ONE"), mapping.get(1));
+        assertEquals(setOf("TWO"), mapping.get(2));
+        assertEmpty(mapping.get(3));
+        assertEquals(setOf("FOUR"), mapping.get(4));
+        assertEquals(setOf("ONE", "FOUR"), mapping.get(5));
+        assertEquals(setOf("TWO", "FOUR"), mapping.get(6));
+        assertEquals(setOf("FOUR"), mapping.get(7));
+    }
+
+    private static Set<String> setOf(String... values) {
+        final Set<String> set = new HashSet<>(values.length);
+        set.addAll(Arrays.asList(values));
+        return Collections.unmodifiableSet(set);
+    }
+
+    private static void assertEmpty(Collection collection) {
+        assertTrue(collection.isEmpty());
     }
 }
