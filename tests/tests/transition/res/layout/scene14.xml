@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2016 The Android Open Source Project
+<!-- Copyright (C) 2018 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,32 +14,16 @@
      limitations under the License.
 -->
 
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:transitionName="holder"
-    android:transitionGroup="false"
-    android:orientation="horizontal"
     android:id="@+id/holder">
-    <View
+    <ImageView
+        android:id="@+id/redSquare"
+        android:src="#F00"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:background="#F00"
-        android:id="@+id/redSquare"/>
-    <View
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:background="#0F0"
-        android:id="@+id/greenSquare"/>
-    <View
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:background="#00F"
-        android:id="@+id/blueSquare"/>
-    <View
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:background="#FF0"
-        android:id="@+id/yellowSquare"/>
-</LinearLayout>
+        android:visibility="gone"/>
+</RelativeLayout>
