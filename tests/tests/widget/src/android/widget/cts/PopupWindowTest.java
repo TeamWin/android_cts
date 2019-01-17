@@ -1428,7 +1428,8 @@ public class PopupWindowTest {
         final View anchor = mActivity.findViewById(R.id.anchor_middle);
         final LayoutParams anchorLayoutParams = anchor.getLayoutParams();
 
-        final int[] originalLocation = mPopupWindow.getContentView().getLocationOnScreen();
+        final int[] originalLocation = new int[2];
+        mPopupWindow.getContentView().getLocationOnScreen(originalLocation);
 
         final int deltaX = 30;
         final int deltaY = 20;
@@ -1562,8 +1563,10 @@ public class PopupWindowTest {
                 mPopupWindow.getContentView().findViewById(R.id.anchor_middle)));
         mInstrumentation.waitForIdleSync();
 
-        final int[] popupLocation = mPopupWindow.getContentView().getLocationOnScreen();
-        final int[] subPopupLocation = subPopup.getContentView().getLocationOnScreen();
+        final int[] popupLocation = new int[2];
+        mPopupWindow.getContentView().getLocationOnScreen(popupLocation);
+        final int[] subPopupLocation = new int[2];
+        subPopup.getContentView().getLocationOnScreen(subPopupLocation);
 
         final int deltaX = 20;
         final int deltaY = 30;
@@ -1579,11 +1582,13 @@ public class PopupWindowTest {
         // the anchor change), we need to wait until all traversals are done.
         mInstrumentation.waitForIdleSync();
 
-        final int[] newPopupLocation = mPopupWindow.getContentView().getLocationOnScreen();
+        final int[] newPopupLocation = new int[2];
+        mPopupWindow.getContentView().getLocationOnScreen(newPopupLocation);
         assertEquals(popupLocation[0] - deltaX, newPopupLocation[0]);
         assertEquals(popupLocation[1] - deltaY, newPopupLocation[1]);
 
-        final int[] newSubPopupLocation = subPopup.getContentView().getLocationOnScreen();
+        final int[] newSubPopupLocation = new int[2];
+        subPopup.getContentView().getLocationOnScreen(newSubPopupLocation);
         assertEquals(subPopupLocation[0] - deltaX, newSubPopupLocation[0]);
         assertEquals(subPopupLocation[1] - deltaY, newSubPopupLocation[1]);
     }
@@ -1598,7 +1603,8 @@ public class PopupWindowTest {
     }
 
     private void assertPopupLocation(int[] originalLocation, int deltaX, int deltaY) {
-        final int[] actualLocation = mPopupWindow.getContentView().getLocationOnScreen();
+        final int[] actualLocation = new int[2];
+        mPopupWindow.getContentView().getLocationOnScreen(actualLocation);
         assertEquals(originalLocation[0] - deltaX, actualLocation[0]);
         assertEquals(originalLocation[1] - deltaY, actualLocation[1]);
     }
