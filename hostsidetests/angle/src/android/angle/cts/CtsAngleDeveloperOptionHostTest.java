@@ -88,7 +88,6 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void setUp() throws Exception {
         CtsAngleCommon.clearSettings(getDevice());
 
-        CtsAngleCommon.stopPackage(getDevice(), CtsAngleCommon.ANGLE_PKG);
         CtsAngleCommon.stopPackage(getDevice(), CtsAngleCommon.ANGLE_DRIVER_TEST_PKG);
         CtsAngleCommon.stopPackage(getDevice(), CtsAngleCommon.ANGLE_DRIVER_TEST_SEC_PKG);
     }

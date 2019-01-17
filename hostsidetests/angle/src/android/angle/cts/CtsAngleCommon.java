@@ -28,6 +28,7 @@ public class CtsAngleCommon {
     static final String SETTINGS_GLOBAL_DRIVER_VALUES = "angle_gl_driver_selection_values";
 
     // System Properties
+    static final String PROPERTY_GFX_ANGLE_SUPPORTED = "ro.gfx.angle.supported";
     static final String PROPERTY_BUILD_TYPE = "ro.build.type";
     static final String PROPERTY_DISABLE_OPENGL_PRELOADING = "ro.zygote.disable_gl_preload";
     static final String PROPERTY_GFX_DRIVER = "ro.gfx.driver.0";
@@ -40,7 +41,6 @@ public class CtsAngleCommon {
     static final String DEVICE_TEMP_RULES_FILE_PATH = DEVICE_TEMP_RULES_FILE_DIRECTORY + "/" + DEVICE_TEMP_RULES_FILE_FILENAME;
 
     // ANGLE
-    static final String ANGLE_PKG = "com.google.android.angle";
     static final String ANGLE_DRIVER_TEST_PKG = "com.android.angleIntegrationTest.driverTest";
     static final String ANGLE_DRIVER_TEST_SEC_PKG = "com.android.angleIntegrationTest.driverTestSecondary";
     static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
@@ -90,12 +90,12 @@ public class CtsAngleCommon {
     }
 
     static boolean isAngleLoadable(ITestDevice device) throws Exception {
-        PackageInfo anglePkgInfo = device.getAppPackageInfo(ANGLE_PKG);
+        String angleSupported = device.getProperty(PROPERTY_GFX_ANGLE_SUPPORTED);
         String propDisablePreloading = device.getProperty(PROPERTY_DISABLE_OPENGL_PRELOADING);
         String propGfxDriver = device.getProperty(PROPERTY_GFX_DRIVER);
 
         // Make sure ANGLE exists on the device
-        if(anglePkgInfo == null) {
+        if((angleSupported == null) || (angleSupported.equals("false"))) {
             return false;
         }
 
