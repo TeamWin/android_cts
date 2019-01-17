@@ -85,7 +85,8 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
         } else {
             testArgs = null;
         }
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName, testArgs);
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName,
+                testArgs);
     }
 
     protected boolean isAppVisibleForUser(String packageName, int userId,
