@@ -553,6 +553,9 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
 
 std::shared_ptr<ITest> getLocalService() {
   // BpTest -> AIBinder -> test
+  //
+  // Warning: for testing purposes only. This parcels things within the same process for testing
+  // purposes. In normal usage, this should just return SharedRefBase::make<MyTest> directly.
   std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
   return BpTest::associate(test->asBinder());
 }
