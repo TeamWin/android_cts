@@ -174,12 +174,15 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertSessionId(childSessionId, activity.mPasswordLabel);
 
         // Get the sessions
-        final List<ContentCaptureSessionId> allSessionIds = service.getAllSessionIds();
-        assertThat(allSessionIds).containsExactly(mainSessionId, childSessionId);
         final Session mainSession = service.getFinishedSession(mainSessionId);
         final Session childSession = service.getFinishedSession(childSessionId);
+
         assertRightActivity(mainSession, mainSessionId, activity);
         assertRightRelationship(mainSession, childSession);
+
+        // Sanity check
+        final List<ContentCaptureSessionId> allSessionIds = service.getAllSessionIds();
+        assertThat(allSessionIds).containsExactly(mainSessionId, childSessionId);
 
         /*
          *  Asserts main session
