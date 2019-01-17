@@ -36,6 +36,7 @@
 #include <arpa/inet.h>
 #include <linux/ipc.h>
 #include <pthread.h>
+#include <sys/uio.h>
 
 /*
  * Returns true iff this device is vulnerable to CVE-2013-2094.
