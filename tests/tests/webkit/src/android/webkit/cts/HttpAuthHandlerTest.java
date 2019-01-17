@@ -19,7 +19,7 @@ package android.webkit.cts;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.HttpAuthHandler;
 import android.webkit.WebView;
-import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 

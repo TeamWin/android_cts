@@ -25,7 +25,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;

@@ -35,8 +35,8 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
-import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
 import com.android.compatibility.common.util.LocationUtils;
 import com.android.compatibility.common.util.NullWebViewUtils;
