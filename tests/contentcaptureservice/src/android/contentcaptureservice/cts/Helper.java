@@ -15,8 +15,10 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
+import android.content.ComponentName;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -67,6 +69,13 @@ final class Helper {
     public static void resetService() {
         Log.d(TAG, "Resetting back to default service");
         runShellCommand("cmd content_capture set temporary-service 0");
+    }
+
+    /**
+     * Gets the component name for a given class.
+     */
+    public static ComponentName componentNamefor(@NonNull Class<?> clazz) {
+        return new ComponentName(MY_PACKAGE, clazz.getName());
     }
 
     private Helper() {

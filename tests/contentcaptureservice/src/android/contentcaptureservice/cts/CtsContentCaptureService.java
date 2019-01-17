@@ -17,6 +17,7 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
+import static android.contentcaptureservice.cts.Helper.componentNamefor;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -51,7 +52,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public static final String SERVICE_NAME = MY_PACKAGE + "/."
             + CtsContentCaptureService.class.getSimpleName();
     public static final ComponentName CONTENT_CAPTURE_SERVICE_COMPONENT_NAME =
-            new ComponentName(MY_PACKAGE, CtsContentCaptureService.class.getName());
+            componentNamefor(CtsContentCaptureService.class);
 
     private static ServiceWatcher sServiceWatcher;
 
