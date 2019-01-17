@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+@MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
