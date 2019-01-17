@@ -26,6 +26,7 @@ public class CtsAngleCommon {
     static final String SETTINGS_GLOBAL_ALL_USE_ANGLE = "angle_gl_driver_all_angle";
     static final String SETTINGS_GLOBAL_DRIVER_PKGS = "angle_gl_driver_selection_pkgs";
     static final String SETTINGS_GLOBAL_DRIVER_VALUES = "angle_gl_driver_selection_values";
+    static final String SETTINGS_GLOBAL_WHITELIST = "angle_whitelist";
 
     // System Properties
     static final String PROPERTY_GFX_ANGLE_SUPPORTED = "ro.gfx.angle.supported";
@@ -84,6 +85,7 @@ public class CtsAngleCommon {
         device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_ALL_USE_ANGLE, "0");
         device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
         device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
+        device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_WHITELIST, "\"\"");
         CtsAngleCommon.setProperty(device, CtsAngleCommon.PROPERTY_TEMP_RULES_FILE, "\"\"");
     }
 
