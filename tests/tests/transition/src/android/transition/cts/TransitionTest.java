@@ -566,7 +566,7 @@ public class TransitionTest extends BaseTransitionTest {
         startTransition(R.layout.scene8);
 
         // scene 8 swaps the ids, but not the names. No transition should happen.
-        waitForEnd(0);
+        waitForEnd(1000);
 
         // now change the match order to prefer the id
         mTransition.setMatchOrder(new int[] {Transition.MATCH_ID, Transition.MATCH_NAME});
