@@ -624,7 +624,7 @@ public class ActivityManagerState {
 
     public static class ActivityDisplay extends ActivityContainer {
 
-        int mId;
+        public int mId;
         ArrayList<ActivityStack> mStacks = new ArrayList<>();
         int mFocusedStackId;
         String mResumedActivity;
@@ -671,7 +671,7 @@ public class ActivityManagerState {
 
     public static class ActivityStack extends ActivityContainer {
 
-        int mDisplayId;
+        public int mDisplayId;
         int mStackId;
         String mResumedActivity;
         ArrayList<ActivityTask> mTasks = new ArrayList<>();
@@ -818,7 +818,7 @@ public class ActivityManagerState {
             super(proto);
         }
 
-        Rect getBounds() {
+        public Rect getBounds() {
             return mBounds;
         }
 

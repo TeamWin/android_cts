@@ -171,13 +171,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         secondActivity.finish();
 
         // Wait and assert the lifecycle
-        mAmWmState.waitForWithAmState(
-                (state) -> !state.containsActivity(getComponentName(SecondActivity.class)),
-                "Waiting for activity to be removed");
-        mAmWmState.waitForWithWmState(
-                (state) -> !state.containsWindow(
-                        getWindowName(getComponentName(SecondActivity.class))),
-                "Waiting for activity window to be gone");
+        mAmWmState.waitForActivityRemoved(getComponentName(SecondActivity.class));
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity must be resumed after occluding finished");
 
@@ -188,10 +182,10 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                         getWindowName(getComponentName(SecondActivity.class))));
         LifecycleVerifier.assertRestartAndResumeSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertResumeToDestroySequence(SecondActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertSequence(ThirdActivity.class, getLifecycleLog(), new ArrayList<>(),
+        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(),
                 "finishInOtherStack");
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                new ArrayList<>(), "finishInOtherStack");
+        LifecycleVerifier.assertEmptySequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                "finishInOtherStack");
     }
 
     @Test
@@ -240,13 +234,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         transparentActivity.finish();
 
         // Wait and assert the lifecycle
-        mAmWmState.waitForWithAmState(
-                (state) -> !state.containsActivity(getComponentName(TranslucentActivity.class)),
-                "Waiting for activity to be removed");
-        mAmWmState.waitForWithWmState(
-                (state) -> !state.containsWindow(
-                        getWindowName(getComponentName(TranslucentActivity.class))),
-                "Waiting for activity window to be gone");
+        mAmWmState.waitForActivityRemoved(getComponentName(TranslucentActivity.class));
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity must be resumed after occluding finished");
 
@@ -261,9 +249,9 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 Arrays.asList(ON_RESUME), "finishTranslucentOnTop");
         LifecycleVerifier.assertResumeToDestroySequence(TranslucentActivity.class,
                 getLifecycleLog());
-        LifecycleVerifier.assertSequence(ThirdActivity.class, getLifecycleLog(), new ArrayList<>(),
+        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(),
                 "finishInOtherStack");
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                new ArrayList<>(), "finishInOtherStack");
+        LifecycleVerifier.assertEmptySequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                "finishInOtherStack");
     }
 }

@@ -25,6 +25,8 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_I
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 
 import android.annotation.Nullable;
 import android.app.Activity;
@@ -35,6 +37,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.server.am.ActivityManagerDisplayTestBase;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
 import android.support.test.InstrumentationRegistry;
@@ -49,7 +52,7 @@ import org.junit.Before;
 import java.util.List;
 
 /** Base class for device-side tests that verify correct activity lifecycle transitions. */
-public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
+public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestBase {
 
     static final String EXTRA_RECREATE = "recreate";
     static final String EXTRA_FINISH_IN_ON_RESUME = "finish_in_on_resume";
@@ -84,6 +87,14 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
             CallbackTrackingActivity.class, true /* initialTouchMode */,
             false /* launchActivity */);
 
+    final ActivityTestRule mTranslucentCallbackTrackingActivityTestRule = new ActivityTestRule(
+            TranslucentCallbackTrackingActivity.class, true /* initialTouchMode */,
+            false /* launchActivity */);
+
+    final ActivityTestRule mShowWhenLockedCallbackTrackingActivityTestRule = new ActivityTestRule(
+            ShowWhenLockedCallbackTrackingActivity.class, true /* initialTouchMode */,
+            false /* launchActivity */);
+
     final ActivityTestRule mSingleTopActivityTestRule = new ActivityTestRule(
             SingleTopActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
@@ -93,6 +104,10 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     final ActivityTestRule mPipActivityTestRule = new ActivityTestRule(
             PipActivity.class, true /* initialTouchMode */, false /* launchActivity */);
+
+    final ActivityTestRule mAlwaysFocusableActivityTestRule = new ActivityTestRule(
+            AlwaysFocusablePipActivity.class, true /* initialTouchMode */,
+            false /* launchActivity */);
 
     private final ActivityLifecycleMonitor mLifecycleMonitor = ActivityLifecycleMonitorRegistry
             .getInstance();
@@ -141,8 +156,22 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
      */
     final void waitForActivityTransitions(Class<? extends Activity> activityClass,
             List<ActivityCallback> expectedTransitions) {
+        log("Start waitForActivityTransitions");
+        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+    }
+
+    /**
+     * Blocking call that will wait for activities to perform the expected sequence of transitions.
+     * After waiting it asserts that the sequence matches the expected.
+     * @see LifecycleTracker#waitForActivityTransitions(Class, List)
+     */
+    final void waitAndAssertActivityTransitions(Class<? extends Activity> activityClass,
+            List<ActivityCallback> expectedTransitions, String message) {
         log("Start waitAndAssertActivityTransition");
         mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+
+        LifecycleVerifier.assertSequence(activityClass, getLifecycleLog(), expectedTransitions,
+                message);
     }
 
     LifecycleLog getLifecycleLog() {
@@ -225,8 +254,27 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
         }
 
         @Override
+        public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
+            mLifecycleLog.onActivityCallback(this,
+                    isTopResumedActivity ? ON_TOP_POSITION_GAINED : ON_TOP_POSITION_LOST);
+        }
+
+        @Override
         public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
             mLifecycleLog.onActivityCallback(this, ON_MULTI_WINDOW_MODE_CHANGED);
+        }
+    }
+
+    // Translucent callback tracking test activity
+    public static class TranslucentCallbackTrackingActivity extends CallbackTrackingActivity {
+    }
+
+    // Callback tracking activity that supports being shown on top of lock screen
+    public static class ShowWhenLockedCallbackTrackingActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setShowWhenLocked(true);
         }
     }
 
@@ -249,7 +297,7 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     }
 
     /** Test activity that is started for result and finishes itself in ON_RESUME. */
-    public static class ResultActivity extends Activity {
+    public static class ResultActivity extends CallbackTrackingActivity {
         @Override
         protected void onResume() {
             super.onResume();
@@ -293,6 +341,9 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
                 enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
             }
         }
+    }
+
+    public static class AlwaysFocusablePipActivity extends CallbackTrackingActivity {
     }
 
     static ComponentName getComponentName(Class<? extends Activity> activity) {

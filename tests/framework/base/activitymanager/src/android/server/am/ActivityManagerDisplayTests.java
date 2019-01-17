@@ -118,7 +118,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();
 
-        try (final DisplayMetricsSession displayMetricsSession = new DisplayMetricsSession();
+        try (final DisplayMetricsSession displayMetricsSession =
+                     new DisplayMetricsSession(DEFAULT_DISPLAY);
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             // Read initial sizes.
             final ReportedDisplayMetrics originalDisplayMetrics =
@@ -153,9 +154,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     private static class DisplayMetricsSession implements AutoCloseable {
 
         private final ReportedDisplayMetrics mInitialDisplayMetrics;
+        private final int mDisplayId;
 
-        DisplayMetricsSession() throws Exception {
-            mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics();
+        DisplayMetricsSession(int displayId) throws Exception {
+            mDisplayId = displayId;
+            mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
         }
 
         ReportedDisplayMetrics getInitialDisplayMetrics() {
@@ -163,7 +166,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         }
 
         ReportedDisplayMetrics getDisplayMetrics() throws Exception {
-            return ReportedDisplayMetrics.getDisplayMetrics();
+            return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
         }
 
         void overrideDisplayMetrics(final Size size, final int density) {

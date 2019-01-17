@@ -1193,7 +1193,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on secondary display must be on top");
 
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(DEFAULT_DISPLAY);
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
             tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
@@ -2095,7 +2095,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     }}
             );
 
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(DEFAULT_DISPLAY);
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
             tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
@@ -2155,7 +2155,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertFocusedAppOnDisplay("Activity on second display must be focused.",
                     VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
 
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(DEFAULT_DISPLAY);
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
             tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);

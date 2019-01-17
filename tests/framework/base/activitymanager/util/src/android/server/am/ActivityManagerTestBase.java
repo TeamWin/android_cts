@@ -532,6 +532,20 @@ public abstract class ActivityManagerTestBase {
         return stackIds;
     }
 
+    /** Returns the stack that contains the provided task. */
+    protected ActivityManagerState.ActivityStack getStackForTaskId(int taskId) {
+        mAmWmState.computeState(true);
+        final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
+        for (ActivityManagerState.ActivityStack stack : stacks) {
+            for (ActivityManagerState.ActivityTask task : stack.mTasks) {
+                if (task.mTaskId == taskId) {
+                    return stack;
+                }
+            }
+        }
+        return null;
+    }
+
     protected void launchHomeActivity() {
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
         mAmWmState.waitForHomeActivityVisible();
