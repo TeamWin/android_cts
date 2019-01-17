@@ -343,12 +343,13 @@ def get_cam_rotations(frames, facing, h):
         p0_filtered = p0[mask]
         num_features = len(p0_filtered)
         if num_features < MIN_FEATURE_PTS:
-            print "Not enough feature points in frame", i
+            print "Not enough feature points in frame %s" % str(i-1).zfill(3)
             print "Need at least %d features, got %d" % (
                     MIN_FEATURE_PTS, num_features)
             assert 0
         else:
-            print "Number of features in frame %d is %d" % (i, num_features)
+            print "Number of features in frame %s is %d" % (
+                    str(i-1).zfill(3), num_features)
         p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered,
                                              None, **LK_PARAMS)
         tform = procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
