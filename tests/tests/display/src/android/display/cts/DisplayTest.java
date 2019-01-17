@@ -192,7 +192,7 @@ public class DisplayTest {
         HdrCapabilities cap = display.getHdrCapabilities();
         int[] hdrTypes = cap.getSupportedHdrTypes();
         for (int type : hdrTypes) {
-            assertTrue(type >= 1 && type <= 3);
+            assertTrue(type >= 1 && type <= 4);
         }
         assertFalse(cap.getDesiredMaxLuminance() < -1.0f);
         assertFalse(cap.getDesiredMinLuminance() < -1.0f);
