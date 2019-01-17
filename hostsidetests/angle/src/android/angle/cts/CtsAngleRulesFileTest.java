@@ -66,9 +66,6 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         CtsAngleCommon.clearSettings(getDevice());
-
-        // Enable checking the rules file
-        CtsAngleCommon.setProperty(getDevice(), CtsAngleCommon.PROPERTY_ENABLE_RULES_FILE, "1");
     }
 
     @After
