@@ -35,6 +35,15 @@ using ::ndk::ScopedFileDescriptor;
 using ::ndk::SharedRefBase;
 using ::ndk::SpAIBinder;
 
+// AIDL tests which are independent of the service
+class NdkBinderTest_AidlLocal : public NdkBinderTest {};
+
+TEST_F(NdkBinderTest_AidlLocal, FromBinder) {
+  std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
+  SpAIBinder binder = test->asBinder();
+  EXPECT_EQ(test, ITest::fromBinder(binder));
+}
+
 struct Params {
   std::shared_ptr<ITest> iface;
   bool shouldBeRemote;
@@ -45,6 +54,8 @@ struct Params {
 #define iface GetParam().iface
 #define shouldBeRemote GetParam().shouldBeRemote
 
+// AIDL tests which run on each type of service (local C++, local Java, remote C++, remote Java,
+// etc..)
 class NdkBinderTest_Aidl : public NdkBinderTest,
                            public ::testing::WithParamInterface<Params> {};
 
