@@ -57,12 +57,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.StringBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -90,6 +92,8 @@ public class SmsManagerTest extends InstrumentationTestCase {
     public static final String SMS_DELIVER_DEFAULT_APP_ACTION = "CTS_SMS_DELIVERY_ACTION_DEFAULT_APP";
     public static final String LEGACY_SMS_APP = "android.telephony.cts.sms23";
     public static final String MODERN_SMS_APP = "android.telephony.cts.sms";
+    private static final String SMS_RETRIEVER_APP = "android.telephony.cts.smsretriever";
+    private static final String SMS_RETRIEVER_ACTION = "CTS_SMS_RETRIEVER_ACTION";
 
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
@@ -100,6 +104,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
     private SmsBroadcastReceiver mDataSmsReceiver;
     private SmsBroadcastReceiver mSmsDeliverReceiver;
     private SmsBroadcastReceiver mSmsReceivedReceiver;
+    private SmsBroadcastReceiver mSmsRetrieverReceiver;
     private PendingIntent mSentIntent;
     private PendingIntent mDeliveredIntent;
     private Intent mSendIntent;
@@ -180,6 +185,39 @@ public class SmsManagerTest extends InstrumentationTestCase {
             actualMessage += dividedMessages.get(i);
         }
         return longText.equals(actualMessage);
+    }
+
+    public void testSmsRetriever() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(mDestAddr));
+
+        String mccmnc = mTelephonyManager.getSimOperator();
+        setupBroadcastReceivers();
+        init();
+
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(
+                        SMS_RETRIEVER_APP, SMS_RETRIEVER_APP + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+
+        Bundle bundle = callbackResult.get(200, TimeUnit.SECONDS);
+        String token = bundle.getString("token");
+        assertThat(bundle.getString("class"), startsWith(SMS_RETRIEVER_APP));
+        assertNotNull(token);
+
+        String composedText = "testprefix1" + mText + token;
+        sendTextMessage(mDestAddr, composedText, null, null);
+
+        assertTrue("[RERUN] SMS retriever message not received. Check signal.",
+                mSmsRetrieverReceiver.waitForCalls(1, TIME_OUT));
     }
 
     public void testSendAndReceiveMessages() throws Exception {
@@ -488,6 +526,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         mDataSmsReceiver.reset();
         mSmsDeliverReceiver.reset();
         mSmsReceivedReceiver.reset();
+        mSmsRetrieverReceiver.reset();
         mReceivedDataSms = false;
         mSentIntent = PendingIntent.getBroadcast(mContext, 0, mSendIntent,
                 PendingIntent.FLAG_ONE_SHOT);
@@ -505,6 +544,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         IntentFilter smsDeliverIntentFilter = new IntentFilter(SMS_DELIVER_DEFAULT_APP_ACTION);
         IntentFilter smsReceivedIntentFilter =
                 new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        IntentFilter smsRetrieverIntentFilter = new IntentFilter(SMS_RETRIEVER_ACTION);
         dataSmsReceivedIntentFilter.addDataScheme("sms");
         dataSmsReceivedIntentFilter.addDataAuthority("localhost", "19989");
 
@@ -513,12 +553,14 @@ public class SmsManagerTest extends InstrumentationTestCase {
         mDataSmsReceiver = new SmsBroadcastReceiver(DATA_SMS_RECEIVED_ACTION);
         mSmsDeliverReceiver = new SmsBroadcastReceiver(SMS_DELIVER_DEFAULT_APP_ACTION);
         mSmsReceivedReceiver = new SmsBroadcastReceiver(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        mSmsRetrieverReceiver = new SmsBroadcastReceiver(SMS_RETRIEVER_ACTION);
 
         mContext.registerReceiver(mSendReceiver, sendIntentFilter);
         mContext.registerReceiver(mDeliveryReceiver, deliveryIntentFilter);
         mContext.registerReceiver(mDataSmsReceiver, dataSmsReceivedIntentFilter);
         mContext.registerReceiver(mSmsDeliverReceiver, smsDeliverIntentFilter);
         mContext.registerReceiver(mSmsReceivedReceiver, smsReceivedIntentFilter);
+        mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter);
     }
 
     /**
