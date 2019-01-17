@@ -37,7 +37,6 @@ import android.view.contentcapture.ViewNode;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,7 +63,7 @@ final class Assertions {
      */
     public static void assertMainSessionContext(@NonNull Session session,
             @NonNull AbstractContentCaptureActivity activity) {
-        assertMainSessionContext(session, activity, /* flags= */ 0);
+        assertMainSessionContext(session, activity, /* expectedFlags= */ 0);
     }
 
     /**
@@ -217,25 +216,13 @@ final class Assertions {
     public static void assertViewsOptionallyDisappeared(@NonNull List<ContentCaptureEvent> events,
             int minimumSize, @NonNull AutofillId... expectedIds) {
         final int actualSize = events.size();
-        final int optionalSize = expectedIds.length;
         if (actualSize == minimumSize) {
             // Activity stopped before TYPE_VIEW_DISAPPEARED were sent.
             return;
         }
-
-        assertThat(events).hasSize(minimumSize + optionalSize);
-        final ArrayList<AutofillId> actualIds = new ArrayList<>(optionalSize);
-        final StringBuilder errors = new StringBuilder();
-        for (int i = 0; i < optionalSize; i++) {
-            final int index = minimumSize + i;
-            final ContentCaptureEvent event = getEvent(events, index);
-            if (event.getType() != TYPE_VIEW_DISAPPEARED) {
-                errors.append("Invalid event at index ").append(index).append(": ").append(event)
-                        .append('\n');
-                continue;
-            }
-            actualIds.add(event.getId());
-        }
+        assertThat(events).hasSize(minimumSize + 1);
+        final ContentCaptureEvent batchDisappearEvent = events.get(minimumSize);
+        final List<AutofillId> actualIds = batchDisappearEvent.getIds();
         assertThat(actualIds).containsExactly((Object[]) expectedIds);
     }
 
@@ -250,10 +237,34 @@ final class Assertions {
     }
 
     /**
-     * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event.
+     * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event for a single view.
      */
     public static void assertViewDisappeared(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull AutofillId expectedId) {
+        final ContentCaptureEvent event = assertCommonViewDisappearedProperties(events, index);
+        assertWithMessage("wrong autofillId on event %s (index %s)", event, index)
+            .that(event.getId()).isEqualTo(expectedId);
+        assertWithMessage("event %s (index %s) should not have autofillIds", event, index)
+            .that(event.getIds()).isNull();
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event for multiple views.
+     */
+    public static void assertViewsDisappeared(@NonNull List<ContentCaptureEvent> events, int index,
+            @NonNull AutofillId... expectedIds) {
+        final ContentCaptureEvent event = assertCommonViewDisappearedProperties(events, index);
+        final List<AutofillId> ids = event.getIds();
+        assertWithMessage("no autofillIds on event %s (index %s)", event, index).that(ids)
+                .isNotNull();
+        assertWithMessage("wrong autofillId on event %s (index %s)", event, index)
+            .that(ids).containsExactly((Object[]) expectedIds).inOrder();
+        assertWithMessage("event %s (index %s) should not have autofillId", event, index)
+            .that(event.getId()).isNull();
+    }
+
+    private static ContentCaptureEvent assertCommonViewDisappearedProperties(
+            @NonNull List<ContentCaptureEvent> events, int index) {
         final ContentCaptureEvent event = getEvent(events, index);
         assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_DISAPPEARED);
@@ -267,8 +278,7 @@ final class Assertions {
             .that(event.getFlags()).isEqualTo(0);
         assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
             .that(event.getViewNode()).isNull();
-        assertWithMessage("wrong autofillId on event %s (index %s)", event, index)
-            .that(event.getId()).isEqualTo(expectedId);
+        return event;
     }
 
     /**
@@ -302,8 +312,21 @@ final class Assertions {
     public static void assertVirtualViewDisappeared(@NonNull List<ContentCaptureEvent> events,
             int index, @NonNull AutofillId parentId, @NonNull ContentCaptureSession session,
             int childId) {
-        final AutofillId expectedId = session.newAutofillId(parentId, childId);
-        assertViewDisappeared(events, index, expectedId);
+        assertViewDisappeared(events, index, session.newAutofillId(parentId, childId));
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_DISAPPEARED} event for many virtual nodes.
+     */
+    public static void assertVirtualViewsDisappeared(@NonNull List<ContentCaptureEvent> events,
+            int index, @NonNull AutofillId parentId, @NonNull ContentCaptureSession session,
+            int... childrenIds) {
+        final int size = childrenIds.length;
+        final AutofillId[] expectedIds = new AutofillId[size];
+        for (int i = 0; i < childrenIds.length; i++) {
+            expectedIds[i] = session.newAutofillId(parentId, childrenIds[i]);
+        }
+        assertViewsDisappeared(events, index, expectedIds);
     }
 
     /**

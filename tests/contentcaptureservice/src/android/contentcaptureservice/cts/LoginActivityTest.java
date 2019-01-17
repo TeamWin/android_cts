@@ -158,9 +158,9 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         // create an activity without them
         final int minMainEvents = 2;
         assertThat(mainEvents.size()).isAtLeast(minMainEvents);
-        final View grandpa1 = (View) activity.getRootView().getParent();
-        final View grandpa2 = (View) grandpa1.getParent();
-        final View decorView = (View) grandpa2.getParent();
+        final View grandpa1 = activity.getGrandParent();
+        final View grandpa2 = activity.getGrandGrandParent();
+        final View decorView = activity.getDecorView();
         assertViewAppeared(mainEvents, 0, grandpa1, grandpa2.getAutofillId());
         assertViewAppeared(mainEvents, 1, grandpa2, decorView.getAutofillId());
         assertViewsOptionallyDisappeared(mainEvents, minMainEvents,
@@ -259,9 +259,9 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events, 2, activity.mPasswordLabel, rootId);
         assertViewAppeared(events, 3, activity.mPassword, rootId, "");
         // TODO(b/119638528): get rid of those intermediated parents
-        final View grandpa1 = (View) activity.getRootView().getParent();
-        final View grandpa2 = (View) grandpa1.getParent();
-        final View decorView = (View) grandpa2.getParent();
+        final View grandpa1 = activity.getGrandParent();
+        final View grandpa2 = activity.getGrandGrandParent();
+        final View decorView = activity.getDecorView();
 
         assertViewAppeared(events, 4, activity.getRootView(), grandpa1.getAutofillId());
         assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
@@ -322,9 +322,9 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewAppeared(events, 2, activity.mPasswordLabel, rootId);
         assertViewAppeared(events, 3, activity.mPassword, rootId, "");
         // TODO(b/119638528): get rid of those intermediated parents
-        final View grandpa1 = (View) activity.getRootView().getParent();
-        final View grandpa2 = (View) grandpa1.getParent();
-        final View decorView = (View) grandpa2.getParent();
+        final View grandpa1 = activity.getGrandParent();
+        final View grandpa2 = activity.getGrandGrandParent();
+        final View decorView = activity.getDecorView();
 
         assertViewAppeared(events, 4, activity.getRootView(), grandpa1.getAutofillId());
         assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
@@ -336,13 +336,11 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         assertViewsOptionallyDisappeared(events, minEvents,
                 rootId,
-                grandpa1.getAutofillId(), grandpa2.getAutofillId(),
-                // decorView.getAutofillId(), // TODO(b/122315042): figure out why it's not
-                // generated
+                grandpa1.getAutofillId(),
+                grandpa2.getAutofillId(),
                 activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
                 activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
         );
-
     }
 
     @Test

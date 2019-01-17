@@ -38,6 +38,8 @@ import java.util.List;
 
 public class LoginActivity extends AbstractRootViewActivity {
 
+    private static final String TAG = LoginActivity.class.getSimpleName();
+
     TextView mUsernameLabel;
     EditText mUsername;
     TextView mPasswordLabel;
@@ -45,7 +47,6 @@ public class LoginActivity extends AbstractRootViewActivity {
 
     @Override
     protected void setContentViewOnCreate(Bundle savedInstanceState) {
-
         setContentView(R.layout.login_activity);
 
         mUsernameLabel = findViewById(R.id.username_label);
@@ -83,9 +84,9 @@ public class LoginActivity extends AbstractRootViewActivity {
         assertViewAppeared(events, 3, sessionId, activity.mPassword, rootId);
 
         // TODO(b/119638528): get rid of those intermediated parents
-        final View grandpa1 = (View) activity.getRootView().getParent();
-        final View grandpa2 = (View) grandpa1.getParent();
-        final View decorView = (View) grandpa2.getParent();
+        final View grandpa1 = activity.getGrandParent();
+        final View grandpa2 = activity.getGrandGrandParent();
+        final View decorView = activity.getDecorView();
 
         assertViewAppeared(events, 4, sessionId, activity.getRootView(),
                 grandpa1.getAutofillId());
@@ -100,5 +101,15 @@ public class LoginActivity extends AbstractRootViewActivity {
                 activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
                 activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
         );
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Log.d(TAG, "AutofillIds: " + "usernameLabel=" + mUsernameLabel.getAutofillId()
+                + ", username=" + mUsername.getAutofillId()
+                + ", passwordLabel=" + mPasswordLabel.getAutofillId()
+                + ", password=" + mPassword.getAutofillId());
     }
 }
