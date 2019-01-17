@@ -18,6 +18,7 @@ package android.server.am;
 
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
@@ -52,8 +53,8 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
-             final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             lockScreenSession.setLockCredential();
 
             // Create new usual virtual display.
@@ -88,8 +89,9 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
      */
     @Test
     public void testDismissKeyguard_secondaryDisplay() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
-             final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (final LockScreenSession lockScreenSession =
+                     new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             lockScreenSession.setLockCredential();
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true).
                     createDisplay();
@@ -111,8 +113,9 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
-             final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (final LockScreenSession lockScreenSession =
+                     new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             lockScreenSession.setLockCredential();
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true).
                     createDisplay();

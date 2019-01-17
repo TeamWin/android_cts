@@ -927,12 +927,22 @@ public abstract class ActivityManagerTestBase {
 
         private final boolean mIsLockDisabled;
         private boolean mLockCredentialSet;
+        private boolean mRemoveActivitiesOnClose;
+
+        public static final int FLAG_REMOVE_ACTIVITIES_ON_CLOSE = 1;
 
         public LockScreenSession() {
+            this(0 /* flags */);
+        }
+
+        public LockScreenSession(int flags) {
             mIsLockDisabled = isLockDisabled();
             mLockCredentialSet = false;
             // Enable lock screen (swipe) by default.
             setLockDisabled(false);
+            if ((flags & FLAG_REMOVE_ACTIVITIES_ON_CLOSE) != 0) {
+                mRemoveActivitiesOnClose = true;
+            }
         }
 
         public LockScreenSession setLockCredential() {
@@ -1003,6 +1013,10 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() {
+            if (mRemoveActivitiesOnClose) {
+                removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+            }
+
             setLockDisabled(mIsLockDisabled);
             if (mLockCredentialSet) {
                 removeLockCredential();
