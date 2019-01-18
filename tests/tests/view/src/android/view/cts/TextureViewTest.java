@@ -62,6 +62,7 @@ public class TextureViewTest {
     static final int EGL_GL_COLORSPACE_LINEAR_KHR = 0x308A;
     static final int EGL_GL_COLORSPACE_DISPLAY_P3_EXT = 0x3363;
     static final int EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT = 0x3362;
+    static final int EGL_GL_COLORSPACE_DISPLAY_P3_PASSTHROUGH_EXT = 0x3490;
     static final int EGL_GL_COLORSPACE_SCRGB_EXT = 0x3351;
     static final int EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT = 0x3350;
 
@@ -223,6 +224,20 @@ public class TextureViewTest {
     public void testGetBitmap_8888_P3() throws Throwable {
         testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
                 false, false, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    }
+
+    @Test
+    public void testGetBitmap_8888_PassthroughP3() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_PASSTHROUGH_EXT,
+                ColorSpace.get(ColorSpace.Named.DISPLAY_P3), false, true,
+                new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    }
+
+    @Test
+    public void testGetBitmap_FP16_PassthroughP3() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_PASSTHROUGH_EXT,
+                ColorSpace.get(ColorSpace.Named.DISPLAY_P3), true, true,
+                new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
     @Test
