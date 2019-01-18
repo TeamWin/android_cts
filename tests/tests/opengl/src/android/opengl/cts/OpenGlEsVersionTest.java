@@ -298,6 +298,63 @@ public class OpenGlEsVersionTest {
         }
     }
 
+    @CddTest(requirement="7.1.4.5/C-1-4")
+    @Test
+    public void testRequiredGLESVersion() {
+        // This requirement only applies if device claims to be wide color capable.
+        boolean isWideColorCapable =
+            mActivity.getResources().getConfiguration().isScreenWideColorGamut();
+        if (!isWideColorCapable)
+            return;
+
+        int reportedVersion = getVersionFromActivityManager(mActivity);
+        assertEquals("Reported OpenGL ES major version doesn't meet the requirement of" +
+            " CDD 7.1.4.5/C-1-4", 3, getMajorVersion(reportedVersion));
+        assertTrue("Reported OpenGL ES minor version doesn't meet the requirement of" +
+            " CDD 7.1.4.5/C-1-4", 1 == getMinorVersion(reportedVersion) ||
+                                  2 == getMinorVersion(reportedVersion));
+    }
+
+    @CddTest(requirement="7.1.4.5/C-1-5")
+    @Test
+    public void testRequiredEglExtensionsForWideColorDisplay() {
+        // See CDD section 7.1.4.5
+        // This test covers the EGL portion of the CDD requirement. The VK portion of the
+        // requirement is covered elsewhere.
+        final String requiredEglList[] = {
+            "EGL_KHR_no_config_context",
+            "EGL_EXT_pixel_format_float",
+            "EGL_KHR_gl_colorspace",
+            "EGL_EXT_gl_colorspace_scrgb",
+            "EGL_EXT_gl_colorspace_scrgb_linear",
+            "EGL_EXT_gl_colorspace_display_p3",
+            "EGL_EXT_gl_colorspace_display_p3_linear",
+            "EGL_EXT_gl_colorspace_display_p3_passthrough",
+        };
+
+        // This requirement only applies if device claims to be wide color capable.
+        boolean isWideColorCapable = mActivity.getResources().getConfiguration().isScreenWideColorGamut();
+        if (!isWideColorCapable)
+            return;
+
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+
+        if (egl.eglInitialize(display, null)) {
+            try {
+                String eglExtensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
+                for (int i = 0; i < requiredEglList.length; ++i) {
+                    assertTrue("EGL extension required by CDD section 7.1.4.5 missing: " +
+                        requiredEglList[i], hasExtension(eglExtensions, requiredEglList[i]));
+                }
+            } finally {
+                egl.eglTerminate(display);
+            }
+        } else {
+            Log.e(TAG, "Couldn't initialize EGL.");
+        }
+    }
+
     private boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
         // we check for touchscreen and NOT watch and NOT tv
