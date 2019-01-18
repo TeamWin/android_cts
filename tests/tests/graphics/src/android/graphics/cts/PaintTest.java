@@ -65,6 +65,7 @@ import org.junit.runner.RunWith;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -85,6 +86,42 @@ public class PaintTest {
 
         Paint p = new Paint();
         new Paint(p);
+    }
+
+    @Test
+    public void testDefaultColor() {
+        Supplier<Paint> set = () -> {
+            Paint result = new Paint();
+            result.setColor(Color.BLUE);
+            assertEquals(Color.BLUE, result.getColor());
+            result.setShadowLayer(10.0f, 1.0f, 1.0f, Color.RED);
+            assertEquals(Color.RED, result.getShadowLayerColor());
+
+            Paint def = new Paint();
+            result.set(def);
+            return result;
+        };
+        Supplier<Paint> reset = () -> {
+            Paint result = new Paint();
+            result.setColor(Color.GREEN);
+            assertEquals(Color.GREEN, result.getColor());
+            result.setShadowLayer(10.0f, 1.0f, 1.0f, Color.WHITE);
+            assertEquals(Color.WHITE, result.getShadowLayerColor());
+
+            result.reset();
+            return result;
+        };
+        for (Paint p : new Paint[]{ new Paint(),
+                                    new Paint(1),
+                                    new Paint(new Paint()),
+                                    set.get(),
+                                    reset.get()}) {
+            assertEquals(Color.BLACK, p.getColor());
+            assertEquals(Color.TRANSPARENT, p.getShadowLayerColor());
+
+            assertEquals(Color.BLACK, Color.toArgb(p.getColorLong()));
+            assertEquals(Color.TRANSPARENT, Color.toArgb(p.getShadowLayerColorLong()));
+        }
     }
 
     @Test
@@ -733,6 +770,46 @@ public class PaintTest {
         // set value should between 0 and 255, ensure return value is always in range
         p.setAlpha(-20);
         assertTrue(0 <= p.getAlpha() && p.getAlpha() <= 255);
+    }
+
+    @Test
+    public void testSetAlpha() {
+        for (ColorSpace.Named e : new ColorSpace.Named[] {
+                ColorSpace.Named.SRGB,
+                ColorSpace.Named.LINEAR_EXTENDED_SRGB,
+                ColorSpace.Named.DISPLAY_P3}) {
+            ColorSpace cs = ColorSpace.get(e);
+
+            // Arbitrary colors
+            final float red = .2f;
+            final float green = .7f;
+            final float blue = .9f;
+            final long desiredColor = Color.pack(red, green, blue, 1.0f, cs);
+
+            Paint p = new Paint();
+            p.setColor(desiredColor);
+            final long origColor = p.getColorLong();
+            assertEquals(desiredColor, origColor);
+
+            final float origRed = Color.red(origColor);
+            final float origGreen = Color.green(origColor);
+            final float origBlue = Color.blue(origColor);
+
+            // There is a slight difference in the packed color.
+            assertEquals(red, Color.red(origColor), 0.002f);
+            assertEquals(green, Color.green(origColor), 0.002f);
+            assertEquals(blue, Color.blue(origColor), 0.002f);
+
+            for (int alpha = 0; alpha <= 255; ++alpha) {
+                p.setAlpha(alpha);
+                assertEquals(alpha, p.getAlpha());
+
+                final long color = p.getColorLong();
+                assertEquals(origRed, Color.red(color), 0.0f);
+                assertEquals(origGreen, Color.green(color), 0.0f);
+                assertEquals(origBlue, Color.blue(color), 0.0f);
+            }
+        }
     }
 
     @Test
@@ -2073,13 +2150,17 @@ public class PaintTest {
     }
 
     private void testColorLongs(String methodName, BiConsumer<Paint, Long> setColor,
-                                Function<Paint, Integer> getColor) {
+                                Function<Paint, Integer> getColor,
+                                Function<Paint, Long> getColorLong) {
         // Pack SRGB colors into ColorLongs
         for (int color : new int[]{ Color.RED, Color.BLUE, Color.GREEN, Color.BLACK,
                 Color.WHITE, Color.TRANSPARENT }) {
-            Paint p = new Paint();
-            setColor.accept(p, Color.pack(color));
+            final Paint p = new Paint();
+            final long longColor = Color.pack(color);
+            setColor.accept(p, longColor);
+
             assertEquals(color, getColor.apply(p).intValue());
+            assertEquals(longColor, getColorLong.apply(p).longValue());
         }
 
         // Arbitrary colors in various ColorSpaces
@@ -2095,9 +2176,10 @@ public class PaintTest {
                     continue;
                 }
 
-                long longColor = Color.convert(srgbColor, cs);
+                final long longColor = Color.convert(srgbColor, cs);
                 Paint p = new Paint();
                 setColor.accept(p, longColor);
+                assertEquals(longColor, getColorLong.apply(p).longValue());
 
                 // These tolerances were chosen by trial and error. It is expected that
                 // some conversions do not round-trip perfectly.
@@ -2114,7 +2196,8 @@ public class PaintTest {
 
     @Test
     public void testSetColorLong() {
-        testColorLongs("setColor", (p, c) -> p.setColor(c), (p) -> p.getColor());
+        testColorLongs("setColor", (p, c) -> p.setColor(c), (p) -> p.getColor(),
+                (p) -> p.getColorLong());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -2135,6 +2218,12 @@ public class PaintTest {
         p.setColor(-1L);
     }
 
+    @Test
+    public void testSetShadowLayerLong() {
+        testColorLongs("setShadowLayer", (p, c) -> p.setShadowLayer(10.0f, 1.0f, 1.0f, c),
+                (p) -> p.getShadowLayerColor(), (p) -> p.getShadowLayerColorLong());
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testSetShadowLayerXYZ() {
         Paint p = new Paint();
@@ -2153,11 +2242,5 @@ public class PaintTest {
     public void testSetShadowLayerUnknown() {
         Paint p = new Paint();
         p.setShadowLayer(10.0f, 1.0f, 1.0f, -1L);
-    }
-
-    @Test
-    public void testSetShadowLayerLong() {
-        testColorLongs("setShadowLayer", (p, c) -> p.setShadowLayer(10.0f, 1.0f, 1.0f, c),
-                (p) -> p.getShadowLayerColor());
     }
 }
