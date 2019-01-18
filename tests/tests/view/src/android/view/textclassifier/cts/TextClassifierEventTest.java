@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Bundle;
 import android.os.Parcel;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.textclassifier.TextClassificationContext;
@@ -34,18 +33,108 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class TextClassifierEventTest {
+    private static final float TOLERANCE = 0.000001f;
 
     @Test
     public void testMinimumEvent() {
-        final TextClassifierEvent event = new TextClassifierEvent.Builder(
+        final TextClassifierEvent event = createMinimalTextClassifierEvent();
+
+        assertMinimalTextClassifierEvent(event);
+    }
+
+    @Test
+    public void testParcelUnparcel_minimumEvent() {
+        final TextClassifierEvent event = createMinimalTextClassifierEvent();
+
+        final Parcel parcel = Parcel.obtain();
+        event.writeToParcel(parcel, event.describeContents());
+        parcel.setDataPosition(0);
+        final TextClassifierEvent result = TextClassifierEvent.CREATOR.createFromParcel(parcel);
+
+        assertMinimalTextClassifierEvent(result);
+    }
+
+    @Test
+    public void testFullEvent() {
+        final long eventTime = System.currentTimeMillis();
+        final TextClassifierEvent event = createFullTextClassifierEvent(eventTime);
+
+        assertFullEvent(event, eventTime);
+    }
+
+    @Test
+    public void testParcelUnparcel_fullEvent() {
+        final long eventTime = System.currentTimeMillis();
+        final TextClassifierEvent event = createFullTextClassifierEvent(eventTime);
+
+        final Parcel parcel = Parcel.obtain();
+        event.writeToParcel(parcel, event.describeContents());
+        parcel.setDataPosition(0);
+        final TextClassifierEvent result = TextClassifierEvent.CREATOR.createFromParcel(parcel);
+
+        assertFullEvent(result, eventTime);
+    }
+
+    private TextClassifierEvent createFullTextClassifierEvent(long eventTime) {
+        final Bundle extra = new Bundle();
+        extra.putString("key", "value");
+        return new TextClassifierEvent.Builder(
+                TextClassifierEvent.CATEGORY_LINKIFY,
+                TextClassifierEvent.TYPE_LINK_CLICKED)
+                .setEventIndex(2)
+                .setEventTime(eventTime)
+                .setEntityTypes(TextClassifier.TYPE_ADDRESS)
+                .setRelativeWordStartIndex(1)
+                .setRelativeWordEndIndex(2)
+                .setRelativeSuggestedWordStartIndex(-1)
+                .setRelativeSuggestedWordEndIndex(3)
+                .setLanguage("en")
+                .setResultId("androidtc-en-v606-1234")
+                .setActionIndices(1, 2, 5)
+                .setExtras(extra)
+                .setEventContext(new TextClassificationContext.Builder(
+                        "pkg", TextClassifier.WIDGET_TYPE_TEXTVIEW)
+                        .setWidgetVersion(TextView.class.getName())
+                        .build())
+                .setScore(0.5f)
+                .setEntityTypes(TextClassifier.TYPE_ADDRESS, TextClassifier.TYPE_DATE)
+                .build();
+    }
+
+    private void assertFullEvent(TextClassifierEvent event, long expectedEventTime) {
+        assertThat(event.getEventCategory()).isEqualTo(TextClassifierEvent.CATEGORY_LINKIFY);
+        assertThat(event.getEventType()).isEqualTo(TextClassifierEvent.TYPE_LINK_CLICKED);
+        assertThat(event.getEventIndex()).isEqualTo(2);
+        assertThat(event.getEventTime()).isEqualTo(expectedEventTime);
+        assertThat(event.getEntityTypes()).asList()
+                .containsExactly(TextClassifier.TYPE_ADDRESS, TextClassifier.TYPE_DATE);
+        assertThat(event.getRelativeWordStartIndex()).isEqualTo(1);
+        assertThat(event.getRelativeWordEndIndex()).isEqualTo(2);
+        assertThat(event.getRelativeSuggestedWordStartIndex()).isEqualTo(-1);
+        assertThat(event.getRelativeSuggestedWordEndIndex()).isEqualTo(3);
+        assertThat(event.getLanguage()).isEqualTo("en");
+        assertThat(event.getResultId()).isEqualTo("androidtc-en-v606-1234");
+        assertThat(event.getActionIndices()).asList().containsExactly(1, 2, 5);
+        assertThat(event.getExtras().get("key")).isEqualTo("value");
+        assertThat(event.getEventContext().getPackageName()).isEqualTo("pkg");
+        assertThat(event.getEventContext().getWidgetType())
+                .isEqualTo(TextClassifier.WIDGET_TYPE_TEXTVIEW);
+        assertThat(event.getEventContext().getWidgetVersion()).isEqualTo(TextView.class.getName());
+        assertThat(event.getScore()).isWithin(TOLERANCE).of(0.5f);
+    }
+
+    private TextClassifierEvent createMinimalTextClassifierEvent() {
+        return new TextClassifierEvent.Builder(
                 TextClassifierEvent.CATEGORY_UNDEFINED, TextClassifierEvent.TYPE_UNDEFINED)
                 .build();
+    }
 
+    private void assertMinimalTextClassifierEvent(TextClassifierEvent event) {
         assertThat(event.getEventCategory()).isEqualTo(TextClassifierEvent.CATEGORY_UNDEFINED);
         assertThat(event.getEventType()).isEqualTo(TextClassifierEvent.TYPE_UNDEFINED);
         assertThat(event.getEventIndex()).isEqualTo(0);
         assertThat(event.getEventTime()).isEqualTo(0);
-        assertThat(event.getEntityType()).isNull();
+        assertThat(event.getEntityTypes()).isEmpty();
         assertThat(event.getRelativeWordStartIndex()).isEqualTo(0);
         assertThat(event.getRelativeWordEndIndex()).isEqualTo(0);
         assertThat(event.getRelativeSuggestedWordStartIndex()).isEqualTo(0);
@@ -53,102 +142,8 @@ public class TextClassifierEventTest {
         assertThat(event.getLanguage()).isNull();
         assertThat(event.getResultId()).isNull();
         assertThat(event.getActionIndices()).isEmpty();
-        assertThat(event.getExtras()).isEqualTo(Bundle.EMPTY);
+        assertThat(event.getExtras().size()).isEqualTo(0);
         assertThat(event.getEventContext()).isNull();
-    }
-
-    @Test
-    public void testFullEvent() {
-        final Bundle extra = new Bundle();
-        extra.putString("key", "value");
-        final long now = System.currentTimeMillis();
-        final String resultId = "androidtc-en-v606-1234";
-        final TextClassifierEvent event = new TextClassifierEvent.Builder(
-                TextClassifierEvent.CATEGORY_LINKIFY,
-                TextClassifierEvent.TYPE_LINK_CLICKED)
-                .setEventIndex(2)
-                .setEventTime(now)
-                .setEntityType(TextClassifier.TYPE_ADDRESS)
-                .setRelativeWordStartIndex(1)
-                .setRelativeWordEndIndex(2)
-                .setRelativeSuggestedWordStartIndex(-1)
-                .setRelativeSuggestedWordEndIndex(3)
-                .setLanguage("en")
-                .setResultId(resultId)
-                .setActionIndices(1, 2, 5)
-                .setExtras(extra)
-                .setEventContext(new TextClassificationContext.Builder(
-                        "pkg", TextClassifier.WIDGET_TYPE_TEXTVIEW)
-                        .setWidgetVersion(TextView.class.getName())
-                        .build())
-                .build();
-
-        assertThat(event.getEventCategory()).isEqualTo(TextClassifierEvent.CATEGORY_LINKIFY);
-        assertThat(event.getEventType()).isEqualTo(TextClassifierEvent.TYPE_LINK_CLICKED);
-        assertThat(event.getEventIndex()).isEqualTo(2);
-        assertThat(event.getEventTime()).isEqualTo(now);
-        assertThat(event.getEntityType()).isEqualTo(TextClassifier.TYPE_ADDRESS);
-        assertThat(event.getRelativeWordStartIndex()).isEqualTo(1);
-        assertThat(event.getRelativeWordEndIndex()).isEqualTo(2);
-        assertThat(event.getRelativeSuggestedWordStartIndex()).isEqualTo(-1);
-        assertThat(event.getRelativeSuggestedWordEndIndex()).isEqualTo(3);
-        assertThat(event.getLanguage()).isEqualTo("en");
-        assertThat(event.getResultId()).isEqualTo(resultId);
-        assertThat(event.getActionIndices()).asList().containsExactly(1, 2, 5);
-        assertThat(event.getExtras().get("key")).isEqualTo("value");
-        assertThat(event.getEventContext().getPackageName()).isEqualTo("pkg");
-        assertThat(event.getEventContext().getWidgetType())
-                .isEqualTo(TextClassifier.WIDGET_TYPE_TEXTVIEW);
-        assertThat(event.getEventContext().getWidgetVersion()).isEqualTo(TextView.class.getName());
-    }
-
-    @Test
-    public void testParcelUnparcel() {
-        final Bundle extra = new Bundle();
-        extra.putString("k", "v");
-        final TextClassifierEvent event = new TextClassifierEvent.Builder(
-                TextClassifierEvent.CATEGORY_SELECTION,
-                TextClassifierEvent.TYPE_SELECTION_MODIFIED)
-                .setEventIndex(1)
-                .setEventTime(1000)
-                .setEntityType(TextClassifier.TYPE_DATE)
-                .setRelativeWordStartIndex(4)
-                .setRelativeWordEndIndex(3)
-                .setRelativeSuggestedWordStartIndex(2)
-                .setRelativeSuggestedWordEndIndex(1)
-                .setLanguage("de")
-                .setResultId("id")
-                .setActionIndices(3)
-                .setExtras(extra)
-                .setEventContext(new TextClassificationContext.Builder(
-                        InstrumentationRegistry.getTargetContext().getPackageName(),
-                        TextClassifier.WIDGET_TYPE_UNSELECTABLE_TEXTVIEW)
-                        .setWidgetVersion("notification")
-                        .build())
-                .build();
-
-        final Parcel parcel = Parcel.obtain();
-        event.writeToParcel(parcel, event.describeContents());
-        parcel.setDataPosition(0);
-        final TextClassifierEvent result = TextClassifierEvent.CREATOR.createFromParcel(parcel);
-
-        assertThat(result.getEventCategory()).isEqualTo(TextClassifierEvent.CATEGORY_SELECTION);
-        assertThat(result.getEventType()).isEqualTo(TextClassifierEvent.TYPE_SELECTION_MODIFIED);
-        assertThat(result.getEventIndex()).isEqualTo(1);
-        assertThat(result.getEventTime()).isEqualTo(1000);
-        assertThat(result.getEntityType()).isEqualTo(TextClassifier.TYPE_DATE);
-        assertThat(result.getRelativeWordStartIndex()).isEqualTo(4);
-        assertThat(result.getRelativeWordEndIndex()).isEqualTo(3);
-        assertThat(result.getRelativeSuggestedWordStartIndex()).isEqualTo(2);
-        assertThat(result.getRelativeSuggestedWordEndIndex()).isEqualTo(1);
-        assertThat(result.getLanguage()).isEqualTo("de");
-        assertThat(result.getResultId()).isEqualTo("id");
-        assertThat(result.getActionIndices()).asList().containsExactly(3);
-        assertThat(result.getExtras().get("k")).isEqualTo("v");
-        assertThat(result.getEventContext().getPackageName())
-                .isEqualTo(InstrumentationRegistry.getTargetContext().getPackageName());
-        assertThat(result.getEventContext().getWidgetType())
-                .isEqualTo(TextClassifier.WIDGET_TYPE_UNSELECTABLE_TEXTVIEW);
-        assertThat(result.getEventContext().getWidgetVersion()).isEqualTo("notification");
+        assertThat(event.getEntityTypes()).isEmpty();
     }
 }
