@@ -2326,6 +2326,18 @@
                   android:label="@string/wifi_test_network_request_unavailable"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifi.NetworkSuggestionSsidTestActivity"
+                  android:label="@string/wifi_test_network_suggestion_ssid"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifi.NetworkSuggestionSsidBssidTestActivity"
+                  android:label="@string/wifi_test_network_suggestion_ssid_bssid"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifi.NetworkSuggestionSsidPostConnectTestActivity"
+                  android:label="@string/wifi_test_network_suggestion_ssid_post_connect"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
                 android:label="@string/p2p_go_neg_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" />

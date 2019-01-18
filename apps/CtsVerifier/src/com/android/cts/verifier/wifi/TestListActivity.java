@@ -74,6 +74,20 @@ public class TestListActivity extends PassFailButtons.TestListActivity {
                 NetworkRequestUnavailableNetworkSpecifierTestActivity.class.getName(),
                 new Intent(this, NetworkRequestUnavailableNetworkSpecifierTestActivity.class),
                 null));
+        adapter.add(TestListAdapter.TestListItem.newCategory(this,
+                R.string.wifi_test_network_suggestion));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.wifi_test_network_suggestion_ssid,
+                NetworkSuggestionSsidTestActivity.class.getName(),
+                new Intent(this, NetworkSuggestionSsidTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.wifi_test_network_suggestion_ssid_bssid,
+                NetworkSuggestionSsidBssidTestActivity.class.getName(),
+                new Intent(this, NetworkSuggestionSsidBssidTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.wifi_test_network_suggestion_ssid_post_connect,
+                NetworkSuggestionSsidPostConnectTestActivity.class.getName(),
+                new Intent(this, NetworkSuggestionSsidPostConnectTestActivity.class), null));
 
         adapter.registerDataSetObserver(new DataSetObserver() {
             @Override

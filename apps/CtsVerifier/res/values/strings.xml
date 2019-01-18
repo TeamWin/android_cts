@@ -1434,7 +1434,8 @@
     <!-- Strings for TestListActivity -->
     <string name="wifi_test">Wi-Fi Test</string>
     <string name="wifi_test_info">
-        The Wi-Fi tests requires an open (no security) access point along with the DUT.
+        The Wi-Fi tests requires an open (no security) access point in the environment along with the DUT.
+        The DUT should also not have any saved wifi networks that are visible in the environment.
     </string>
     <string name="wifi_location_not_enabled">Wi-Fi / Location Mode is not enabled</string>
     <string name="wifi_location_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
@@ -1449,6 +1450,8 @@
     <string name="wifi_status_initiating_scan">Initiating scan.</string>
     <string name="wifi_status_scan_failure">Unable to initiate scan.</string>
     <string name="wifi_status_open_network_not_found">Unable to find any open network in scan results.</string>
+    <string name="wifi_status_connected_to_other_network">Connected to some other network on the device. Please ensure that there is no saved networks on the device.</string>
+
     <string name="wifi_status_initiating_network_request">Initiating network request.</string>
     <string name="wifi_status_network_wait_for_available">Waiting for network connection. Please click the network in the dialog that pops up for approving the request.</string>
     <string name="wifi_status_network_available">"Connected to network."</string>
@@ -1457,6 +1460,18 @@
     <string name="wifi_status_network_wait_for_lost">Ensuring device does not disconnect from the network until the request is released.</string>
     <string name="wifi_status_network_lost">Disconnected from the network.</string>
     <string name="wifi_status_network_cb_timeout">Network callback timed out.</string>
+
+    <string name="wifi_status_suggestion_add">Adding suggestions to the device.</string>
+    <string name="wifi_status_suggestion_add_failure">Failed to add suggestions.</string>
+    <string name="wifi_status_suggestion_remove">Removing suggestions from the device.</string>
+    <string name="wifi_status_suggestion_remove_failure">Failed to remove suggestions.</string>
+    <string name="wifi_status_suggestion_wait_for_connect">Waiting for network connection. Please click \"Yes\" in the notification that pops up for approving the request.</string>
+    <string name="wifi_status_suggestion_connect">Connected to the network.</string>
+    <string name="wifi_status_suggestion_wait_for_post_connect_bcast">Waiting for post connection broadcast.</string>
+    <string name="wifi_status_suggestion_post_connect_bcast">Received post connection broadcast.</string>
+    <string name="wifi_status_suggestion_post_connect_bcast_failure">Failed to receive post connection broadcast.</string>
+    <string name="wifi_status_suggestion_wait_for_disconnect">Ensuring device does not disconnect from the network after removing suggestions.</string>
+    <string name="wifi_status_suggestion_disconnected">Disconnected from the network.</string>
 
     <string name="wifi_status_test_success">Test completed successfully!</string>
     <string name="wifi_status_test_failed">Test failed!</string>
@@ -1468,6 +1483,14 @@
     <string name="wifi_test_network_request_pattern_info">Tests whether the API can be used to a connect to network with a SSID and BSSID pattern specified in the request.</string>
     <string name="wifi_test_network_request_unavailable">Network Request with a specific network that is unavailable.</string>
     <string name="wifi_test_network_request_unavailable_info">Tests that the API fails to connect when an unavailable network is specified in the request.</string>
+
+    <string name="wifi_test_network_suggestion">Network Suggestion tests</string>
+    <string name="wifi_test_network_suggestion_ssid">Network suggestion with SSID.</string>
+    <string name="wifi_test_network_suggestion_ssid_info">Tests whether the API can be used to suggest a network with SSID to the device and the device connects to it.</string>
+    <string name="wifi_test_network_suggestion_ssid_bssid">Network Request with a specific SSID and BSSID.</string>
+    <string name="wifi_test_network_suggestion_ssid_bssid_info">Tests whether the API can be used to suggest a network with SSID and specific BSSID to the device and the device connects to it.</string>
+    <string name="wifi_test_network_suggestion_ssid_post_connect">Network Request with a specific SSID and BSSID.</string>
+    <string name="wifi_test_network_suggestion_ssid_post_connect_info">Tests whether the API can be used to suggest a network with SSID to the device and the device connects to it and sends the post connect broadcast back to the app.</string>
 
     <!-- Strings for P2pTestActivity -->
     <string name="p2p_test">Wi-Fi Direct Test</string>
