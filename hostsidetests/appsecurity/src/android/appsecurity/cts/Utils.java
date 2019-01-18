@@ -32,6 +32,19 @@ import java.util.concurrent.TimeUnit;
 public class Utils {
     public static final int USER_SYSTEM = 0;
 
+    public static void runDeviceTestsAsCurrentUser(ITestDevice device, String packageName,
+            String testClassName, String testMethodName) throws DeviceNotAvailableException {
+        runDeviceTests(device, packageName, testClassName, testMethodName, device.getCurrentUser(),
+                null);
+    }
+
+    public static void runDeviceTestsAsCurrentUser(ITestDevice device, String packageName,
+            String testClassName, String testMethodName, Map<String, String> testArgs)
+                    throws DeviceNotAvailableException {
+        runDeviceTests(device, packageName, testClassName, testMethodName, device.getCurrentUser(),
+                testArgs);
+    }
+
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
             String testMethodName) throws DeviceNotAvailableException {
         runDeviceTests(device, packageName, testClassName, testMethodName, USER_SYSTEM, null);

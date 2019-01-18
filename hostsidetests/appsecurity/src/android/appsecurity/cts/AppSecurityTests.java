@@ -173,14 +173,15 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
             assertNull(String.format("failed to install app with data. Reason: %s", installResult),
                     installResult);
             // run appwithdata's tests to create private data
-            runDeviceTests(APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CREATE_METHOD);
+            runDeviceTestsAsCurrentUser(
+                    APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CREATE_METHOD);
 
             installResult = getDevice().installPackage(getTestAppFile(APP_ACCESS_DATA_APK),
                     false, options);
             assertNull(String.format("failed to install app access data. Reason: %s",
                     installResult), installResult);
             // run appaccessdata's tests which attempt to access appwithdata's private data
-            runDeviceTests(APP_ACCESS_DATA_PKG);
+            runDeviceTestsAsCurrentUser(APP_ACCESS_DATA_PKG);
         } finally {
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
             getDevice().uninstallPackage(APP_ACCESS_DATA_PKG);
@@ -204,7 +205,8 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
             assertNull(String.format("failed to install app with data. Reason: %s", installResult),
                     installResult);
             // run appwithdata's tests to create private data
-            runDeviceTests(APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CREATE_METHOD);
+            runDeviceTestsAsCurrentUser(
+                    APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CREATE_METHOD);
 
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
 
@@ -213,7 +215,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
             assertNull(String.format("failed to install app with data second time. Reason: %s",
                     installResult), installResult);
             // run appwithdata's 'check if file exists' test
-            runDeviceTests(APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS,
+            runDeviceTestsAsCurrentUser(APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS,
                     APP_WITH_DATA_CHECK_NOEXIST_METHOD);
         } finally {
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
@@ -247,7 +249,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
             // run INSTRUMENT_DIFF_CERT_PKG tests
             // this test will attempt to call startInstrumentation directly and verify
             // SecurityException is thrown
-            runDeviceTests(INSTRUMENT_DIFF_CERT_PKG);
+            runDeviceTestsAsCurrentUser(INSTRUMENT_DIFF_CERT_PKG);
         } finally {
             getDevice().uninstallPackage(TARGET_INSTRUMENT_PKG);
             getDevice().uninstallPackage(INSTRUMENT_DIFF_CERT_PKG);
@@ -285,7 +287,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
             assertNull(String.format("failed to install permission app with diff cert. Reason: %s",
                     installResult), installResult);
             // run PERMISSION_DIFF_CERT_PKG tests which try to access the permission
-            runDeviceTests(PERMISSION_DIFF_CERT_PKG);
+            runDeviceTestsAsCurrentUser(PERMISSION_DIFF_CERT_PKG);
         } finally {
             getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
             getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
@@ -304,7 +306,14 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
         assertTrue("Error text", output.contains("Error"));
     }
 
-    private void runDeviceTests(String packageName) throws DeviceNotAvailableException {
-        runDeviceTests(packageName, null);
+    private void runDeviceTestsAsCurrentUser(String packageName)
+            throws DeviceNotAvailableException {
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, null, null);
+    }
+
+    private void runDeviceTestsAsCurrentUser(
+            String packageName, String className, String methodName)
+                    throws DeviceNotAvailableException {
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, className, methodName);
     }
 }

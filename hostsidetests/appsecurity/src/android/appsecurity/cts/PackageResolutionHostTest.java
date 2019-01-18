@@ -56,7 +56,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     @AppModeFull // TODO: Needs porting to instant
     public void testResolveOrderedActivity() throws Exception {
         getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
-        Utils.runDeviceTests(getDevice(), TINY_PKG,
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), TINY_PKG,
                 ".PackageResolutionTest", "queryActivityOrdered");
         getDevice().uninstallPackage(TINY_PKG);
     }
@@ -65,7 +65,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     @AppModeFull // TODO: Needs porting to instant
     public void testResolveOrderedService() throws Exception {
         getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
-        Utils.runDeviceTests(getDevice(), TINY_PKG,
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), TINY_PKG,
                 ".PackageResolutionTest", "queryServiceOrdered");
         getDevice().uninstallPackage(TINY_PKG);
     }
@@ -74,7 +74,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     @AppModeFull // TODO: Needs porting to instant
     public void testResolveOrderedReceiver() throws Exception {
         getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
-        Utils.runDeviceTests(getDevice(), TINY_PKG,
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), TINY_PKG,
                 ".PackageResolutionTest", "queryReceiverOrdered");
         getDevice().uninstallPackage(TINY_PKG);
     }
