@@ -16,7 +16,7 @@
 package android.webkit.cts;
 
 import android.webkit.ConsoleMessage;
-import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
 // A chrome client for listening webview chrome events.
 class ChromeClient extends WaitForProgressClient {

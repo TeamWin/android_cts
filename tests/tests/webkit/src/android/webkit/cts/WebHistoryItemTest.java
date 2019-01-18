@@ -19,7 +19,7 @@ package android.webkit.cts;
 import android.graphics.Bitmap;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.WebBackForwardList;
-import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.webkit.WebHistoryItem;
 import android.webkit.WebIconDatabase;
 import android.webkit.WebView;

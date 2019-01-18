@@ -74,8 +74,8 @@ import android.webkit.WebView.PictureListener;
 import android.webkit.WebView.VisualStateCallback;
 import android.webkit.WebViewClient;
 import android.webkit.WebViewDatabase;
-import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
-import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.widget.LinearLayout;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
@@ -954,7 +954,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         childOnUiThread.addJavascriptInterface(obj, "dummy");
 
         final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
-        mOnUiThread.setWebChromeClient(new WebViewOnUiThread.WaitForProgressClient(mOnUiThread) {
+        mOnUiThread.setWebChromeClient(new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
             @Override
             public boolean onCreateWindow(
                 WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
