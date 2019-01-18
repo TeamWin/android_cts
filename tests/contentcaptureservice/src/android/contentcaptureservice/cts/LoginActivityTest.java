@@ -23,7 +23,7 @@ import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
-import static android.contentcaptureservice.cts.Helper.componentNamefor;
+import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -209,7 +209,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final ActivityWatcher watcher = startWatcher();
 
         // Disable activity
-        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
 
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
@@ -444,7 +444,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 .addFlags(WindowManager.LayoutParams.FLAG_SECURE));
 
         // Disable activity
-        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
 
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
@@ -466,7 +466,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 .setContentCaptureEnabled(false));
 
         // Disable activity
-        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
 
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);

@@ -15,7 +15,6 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import android.content.ComponentName;
@@ -74,7 +73,7 @@ final class Helper {
     /**
      * Gets the component name for a given class.
      */
-    public static ComponentName componentNamefor(@NonNull Class<?> clazz) {
+    public static ComponentName componentNameFor(@NonNull Class<?> clazz) {
         return new ComponentName(MY_PACKAGE, clazz.getName());
     }
 

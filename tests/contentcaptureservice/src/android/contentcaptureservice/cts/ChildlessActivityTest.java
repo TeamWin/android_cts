@@ -25,7 +25,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
-import static android.contentcaptureservice.cts.Helper.componentNamefor;
+import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -139,7 +139,7 @@ public class ChildlessActivityTest
         final ActivityWatcher watcher1 = startWatcher();
 
         // Disable activity 2
-        service.setActivityContentCaptureEnabled(componentNamefor(LoginActivity.class), false);
+        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
 
         // Launch and finish 1st activity
         final ChildlessActivity activity1 = launchActivity();
