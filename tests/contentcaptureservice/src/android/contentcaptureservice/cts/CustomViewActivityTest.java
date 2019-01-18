@@ -40,6 +40,7 @@ import androidx.annotation.NonNull;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class CustomViewActivityTest extends
@@ -324,6 +325,65 @@ public class CustomViewActivityTest extends
 
     // TODO(b/119638528): add tests for multiple sessions
 
+    @Test
+    public void testVirtualView_batchDisappear() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        setAsyncDelegate((customView, structure) -> {
+            Log.d(TAG, "delegate running on " + Thread.currentThread());
+            final AutofillId customViewId = customView.getAutofillId();
+            Log.d(TAG, "customViewId: " + customViewId);
+            final ContentCaptureSession session = customView.getContentCaptureSession();
+
+            final ViewStructure child1 = session.newVirtualViewStructure(customViewId, 1);
+            child1.setText("child1");
+            final AutofillId child1Id = child1.getAutofillId();
+            assertThat(session.newAutofillId(customViewId, 1)).isEqualTo(child1Id);
+            Log.d(TAG, "nofifying child1 appeared: " + child1Id);
+            session.notifyViewAppeared(child1);
+
+            final ViewStructure child2 = session.newVirtualViewStructure(customViewId, 2);
+            child2.setText("child2");
+            final AutofillId child2Id = child2.getAutofillId();
+            assertThat(session.newAutofillId(customViewId, 2)).isEqualTo(child2Id);
+            Log.d(TAG, "nofifying child2 appeared: " + child2Id);
+            session.notifyViewAppeared(child2);
+
+            final int[] childrenIds = {2, 1};
+            Log.d(TAG, "nofifying both children disappeared: " + Arrays.toString(childrenIds));
+            session.notifyViewsDisappeared(customViewId, childrenIds);
+        });
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+
+        assertRightActivity(session, session.id, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+        // TODO(b/119638528): check right number once we get rid of grandparent (should be 5)
+        assertThat(events.size()).isAtLeast(7);
+
+        // Assert just the relevant events
+        final AutofillId customViewId = activity.mCustomView.getAutofillId();
+        final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
+
+        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
+        // TODO(b/119638528): next 2 events are the grandparents
+        assertVirtualViewAppeared(events, 3, mainSession, customViewId, 1, "child1");
+        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 2, "child2");
+        assertVirtualViewDisappeared(events, 5, customViewId, mainSession, 2);
+        assertVirtualViewDisappeared(events, 6, customViewId, mainSession, 1);
+
+        // TODO(b/122315042): assert other views disappeared
+    }
     /**
      * Sets a delegate that will generate the events asynchronously,
      * after {@code onProvideContentCaptureStructure()} returns.
