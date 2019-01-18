@@ -17,7 +17,13 @@
 package com.android.cts.deviceowner;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.BatteryManager;
+import android.os.SystemClock;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
@@ -27,6 +33,11 @@ import java.util.concurrent.TimeUnit;
  * Test {@link android.app.admin.DevicePolicyManager#installSystemUpdate}
  */
 public class InstallUpdateTest extends BaseDeviceOwnerTest {
+    private static final int BATTERY_STATE_CHANGE_TIMEOUT_MS = 5000;
+    private static final int BATTERY_STATE_CHANGE_SLEEP_PER_CHECK_MS = 50;
+    private static final int TEST_BATTERY_THRESHOLD = 10;
+    private static final IntentFilter BATTERY_CHANGED_FILTER =
+            new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 
     public static final String TEST_SYSTEM_UPDATES_DIR =
             "/data/local/tmp/cts/deviceowner/";
@@ -36,7 +47,6 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
         assertUpdateError(
                 "random",
                 DevicePolicyManager.InstallUpdateCallback.UPDATE_ERROR_FILE_NOT_FOUND);
-
     }
 
     public void testInstallUpdate_failWrongVersion() throws InterruptedException {
@@ -70,6 +80,58 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
                 DevicePolicyManager.InstallUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
     }
 
+    public void testInstallUpdate_notCharging_belowThreshold_failsBatteryCheck() throws Exception {
+        try {
+            setNonChargingBatteryThreshold(TEST_BATTERY_THRESHOLD);
+            setNonChargingBatteryLevelAndWait(TEST_BATTERY_THRESHOLD - 1);
+            assertUpdateError("wrongSize.zip",
+                    DevicePolicyManager.InstallUpdateCallback.UPDATE_ERROR_BATTERY_LOW);
+        } finally {
+            resetBatteryState();
+            resetDevicePolicyConstants();
+        }
+    }
+
+    public void testInstallUpdate_notCharging_aboveThreshold_passesBatteryCheck() throws Exception {
+        try {
+            setNonChargingBatteryThreshold(TEST_BATTERY_THRESHOLD);
+            setNonChargingBatteryLevelAndWait(TEST_BATTERY_THRESHOLD);
+            // Positive CTS tests aren't possible, so we verify that we get the file-related error
+            // rather than the battery one.
+            assertUpdateError("wrongSize.zip",
+                    DevicePolicyManager.InstallUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+        } finally {
+            resetBatteryState();
+            resetDevicePolicyConstants();
+        }
+    }
+
+    public void testInstallUpdate_charging_belowThreshold_failsBatteryCheck() throws Exception {
+        try {
+            setChargingBatteryThreshold(TEST_BATTERY_THRESHOLD);
+            setChargingBatteryLevelAndWait(TEST_BATTERY_THRESHOLD - 1);
+            assertUpdateError("wrongSize.zip",
+                    DevicePolicyManager.InstallUpdateCallback.UPDATE_ERROR_BATTERY_LOW);
+        } finally {
+            resetBatteryState();
+            resetDevicePolicyConstants();
+        }
+    }
+
+    public void testInstallUpdate_charging_aboveThreshold_passesBatteryCheck() throws Exception {
+        try {
+            setChargingBatteryThreshold(TEST_BATTERY_THRESHOLD);
+            setChargingBatteryLevelAndWait(TEST_BATTERY_THRESHOLD);
+            // Positive CTS tests aren't possible, so we verify that we get the file-related error
+            // rather than the battery one.
+            assertUpdateError("wrongSize.zip",
+                    DevicePolicyManager.InstallUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+        } finally {
+            resetBatteryState();
+            resetDevicePolicyConstants();
+        }
+    }
+
     private void assertUpdateError(String fileName, int expectedErrorCode)
             throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
@@ -86,5 +148,61 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
                     }
                 });
         assertTrue(latch.await(TIMEOUT, TimeUnit.MINUTES));
+    }
+
+    private void setNonChargingBatteryThreshold(int threshold) {
+        SystemUtil.runShellCommand(
+                "settings put global device_policy_constants battery_threshold_not_charging="
+                        + threshold);
+    }
+
+    private void setNonChargingBatteryLevelAndWait(int level) throws Exception {
+        setBatteryStateAndWait(/* plugged= */ false, level);
+    }
+
+    private void setChargingBatteryThreshold(int threshold) {
+        SystemUtil.runShellCommand(
+                "settings put global device_policy_constants battery_threshold_charging="
+                        + threshold);
+    }
+
+    private void setChargingBatteryLevelAndWait(int level) throws Exception {
+        setBatteryStateAndWait(/* plugged= */ true, level);
+    }
+
+    /** Should be paired with {@link #resetBatteryState()} in a {@code finally} block. */
+    private void setBatteryStateAndWait(boolean plugged, int level) throws Exception {
+        SystemUtil.runShellCommand(plugged ? "cmd battery set ac 1" : "cmd battery unplug");
+        SystemUtil.runShellCommand("cmd battery set -f level " + level);
+        long startTime = SystemClock.elapsedRealtime();
+        while (!isBatteryState(plugged, level)
+                && SystemClock.elapsedRealtime() <= startTime + BATTERY_STATE_CHANGE_TIMEOUT_MS) {
+            Thread.sleep(BATTERY_STATE_CHANGE_SLEEP_PER_CHECK_MS);
+        }
+    }
+
+    private boolean isBatteryState(boolean plugged, int level) {
+        final Intent batteryStatus =
+                mContext.registerReceiver(/* receiver= */ null, BATTERY_CHANGED_FILTER);
+        return isPluggedIn(batteryStatus) == plugged
+                && calculateBatteryPercentage(batteryStatus) == level;
+    }
+
+    private boolean isPluggedIn(Intent batteryStatus) {
+        return batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, /* defaultValue= */ -1) > 0;
+    }
+
+    private float calculateBatteryPercentage(Intent batteryStatus) {
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, /* defaultValue= */ -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, /* defaultValue= */ -1);
+        return 100 * level / (float) scale;
+    }
+
+    private void resetBatteryState() {
+        SystemUtil.runShellCommand("dumpsys battery reset");
+    }
+
+    private void resetDevicePolicyConstants() {
+        SystemUtil.runShellCommand("settings delete global device_policy_constants");
     }
 }
