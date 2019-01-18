@@ -29,10 +29,6 @@ import android.util.Log;
  */
 public class ExtraAssistDataActivity extends Activity {
     private static final String TAG = "ExtraAssistDataActivity";
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public void onProvideAssistData(Bundle data) {
