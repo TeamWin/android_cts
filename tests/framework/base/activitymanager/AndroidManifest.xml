@@ -104,6 +104,8 @@
         <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivity2" />
         <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivityWithBrokenContextWrapper" />
 
+        <activity android:name="android.server.am.KeyguardLockedTests$ShowWhenLockedImeActivity" />
+
         <activity android:name="android.server.am.lifecycle.ActivityStarterTests$StandardActivity"
                   android:exported="true" />
 

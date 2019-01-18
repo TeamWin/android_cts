@@ -25,19 +25,39 @@ import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
+import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.ComponentName;
+import android.os.Bundle;
+import android.os.SystemClock;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+
+import android.support.test.InstrumentationRegistry;
+
+import com.android.cts.mockime.ImeEvent;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -272,6 +292,73 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+        }
+    }
+
+    @Test
+    public void testShowWhenLockedAttrImeActivityAndShowSoftInput() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             // Leverage MockImeSession to ensure at least an IME exists as default.
+             final MockImeSession mockImeSession = MockImeSession.create(mContext,
+                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+            lockScreenSession.setLockCredential().gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivity(SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY);
+            mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY, true);
+
+            // Make sure the activity has been called showSoftInput & IME window is visible.
+            final ImeEventStream stream = mockImeSession.openEventStream();
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+            // Assert the IME is shown on the expected display.
+            mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+        }
+    }
+
+    @Test
+    public void testShowWhenLockedImeActivityAndShowSoftInput() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final TestActivitySession<ShowWhenLockedImeActivity> imeTestActivitySession = new
+                     TestActivitySession<>();
+             // Leverage MockImeSession to ensure at least an IME exists as default.
+             final MockImeSession mockImeSession = MockImeSession.create(mContext,
+                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+            lockScreenSession.setLockCredential().gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            imeTestActivitySession.launchTestActivityOnDisplaySync(ShowWhenLockedImeActivity.class,
+                    DEFAULT_DISPLAY);
+
+            // Make sure the activity has been called showSoftInput & IME window is visible.
+            final ImeEventStream stream = mockImeSession.openEventStream();
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+            // Assert the IME is shown on the expected display.
+            mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+        }
+    }
+
+    public static class ShowWhenLockedImeActivity extends Activity {
+
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            final EditText editText = new EditText(this);
+            // Set private IME option for editorMatcher to identify which TextView received
+            // onStartInput event.
+            editText.setPrivateImeOptions(
+                    getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
+            final LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.addView(editText);
+            setContentView(layout);
+
+            // Set showWhenLocked as true & request focus for showing soft input.
+            setShowWhenLocked(true);
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            editText.requestFocus();
         }
     }
 
