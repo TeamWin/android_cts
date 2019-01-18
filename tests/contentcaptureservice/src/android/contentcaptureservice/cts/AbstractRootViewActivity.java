@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -48,14 +49,48 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
 
         mRootView = findViewById(R.id.root_view);
 
+        Log.d(TAG, "Parents for " + getClass() + ": rootView=" + mRootView
+                + "\ngrandParent=" + getGrandParent()
+                + "\ngrandGrandParent=" + getGrandGrandParent()
+                + "\ndecorView=" + getDecorView());
+
         if (sRootViewVisitor != null) {
             Log.d(TAG, "Applying visitor to " + this + "/" + mRootView);
             sRootViewVisitor.visit(this, mRootView);
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Log.d(TAG, "AutofillIds for " + getClass() + ": "
+                + " rootView=" + getRootView().getAutofillId()
+                + ", grandParent=" + getGrandParent().getAutofillId()
+                + ", grandGrandParent=" + getGrandGrandParent().getAutofillId()
+                + ", decorView=" + getDecorView().getAutofillId());
+    }
+
     public LinearLayout getRootView() {
         return mRootView;
+    }
+
+    // TODO(b/122315042): remove this method when not needed anymore
+    @NonNull
+    public ViewGroup getGrandParent() {
+        return (ViewGroup) mRootView.getParent();
+    }
+
+    // TODO(b/122315042): remove this method when not needed anymore
+    @NonNull
+    public ViewGroup getGrandGrandParent() {
+        return (ViewGroup) getGrandParent().getParent();
+    }
+
+    // TODO(b/122315042): remove this method when not needed anymore
+    @NonNull
+    public ViewGroup getDecorView() {
+        return (ViewGroup) getGrandGrandParent().getParent();
     }
 
     /**

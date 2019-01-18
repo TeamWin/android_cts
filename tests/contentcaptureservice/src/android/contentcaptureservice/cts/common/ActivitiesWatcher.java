@@ -101,6 +101,11 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
         return watch(clazz.getName());
     }
 
+    @Override
+    public String toString() {
+        return "[ActivitiesWatcher: activities=" + mWatchers.keySet() + "]";
+    }
+
     /**
      * Gets a watcher for the given activity.
      *
