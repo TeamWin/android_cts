@@ -271,6 +271,37 @@ public class MediaSession2Test {
     }
 
     @Test
+    public void testSetPlaybackActive() {
+        final boolean testInitialPlaybackActive = true;
+        final boolean testPlaybackActive = false;
+        Session2Callback sessionCallback = new Session2Callback();
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .build()) {
+            session.setPlaybackActive(testInitialPlaybackActive);
+
+            Controller2Callback controllerCallback = new Controller2Callback();
+            MediaController2 controller = new MediaController2(mContext, session.getSessionToken(),
+                    sHandlerExecutor, controllerCallback);
+            // Wait for connection
+            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+
+            // Check initial value
+            assertEquals(testInitialPlaybackActive, controller.isPlaybackActive());
+
+            // Change playback active change and wait for changes
+            session.setPlaybackActive(testPlaybackActive);
+            assertTrue(controllerCallback.awaitOnPlaybackActiveChanged(WAIT_TIME_MS));
+
+            assertEquals(testPlaybackActive, controllerCallback.getNotifiedPlaybackActive());
+            assertEquals(testPlaybackActive, controller.isPlaybackActive());
+
+            controller.close();
+            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+        }
+    }
+
+    @Test
     public void testCancelSessionCommand() {
         Session2Callback sessionCallback = new Session2Callback();
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
@@ -308,8 +339,11 @@ public class MediaSession2Test {
     }
 
     class Controller2Callback extends MediaController2.ControllerCallback {
-        CountDownLatch mOnConnectedLatch = new CountDownLatch(1);
-        CountDownLatch mOnDisconnectedLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnConnectedLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnDisconnectedLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnPlaybackActiveChangedLatch = new CountDownLatch(1);
+
+        private boolean mPlaybackActive;
 
         @Override
         public void onConnected(MediaController2 controller,
@@ -320,6 +354,12 @@ public class MediaSession2Test {
         @Override
         public void onDisconnected(MediaController2 controller) {
             mOnDisconnectedLatch.countDown();
+        }
+
+        @Override
+        public void onPlaybackActiveChanged(MediaController2 controller, boolean playbackActive) {
+            mPlaybackActive = playbackActive;
+            mOnPlaybackActiveChangedLatch.countDown();
         }
 
         public boolean awaitOnConnected(long waitTimeMs) {
@@ -337,13 +377,25 @@ public class MediaSession2Test {
                 return false;
             }
         }
+
+        public boolean awaitOnPlaybackActiveChanged(long waitTimeMs) {
+            try {
+                return mOnPlaybackActiveChangedLatch.await(waitTimeMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+
+        public boolean getNotifiedPlaybackActive() {
+            return mPlaybackActive;
+        }
     }
 
     class Session2Callback extends MediaSession2.SessionCallback {
-        private CountDownLatch mOnConnectLatch = new CountDownLatch(1);
-        private CountDownLatch mOnDisconnectLatch = new CountDownLatch(1);
-        private CountDownLatch mOnSessionCommandLatch = new CountDownLatch(1);
-        private CountDownLatch mOnCommandResultLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnConnectLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnDisconnectLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnSessionCommandLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnCommandResultLatch = new CountDownLatch(1);
 
         MediaSession2 mSession;
         MediaSession2.ControllerInfo mController;
