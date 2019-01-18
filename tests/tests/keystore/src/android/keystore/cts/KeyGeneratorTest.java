@@ -297,6 +297,9 @@ public class KeyGeneratorTest extends AndroidTestCase {
 
     // TODO: This test will fail until b/117509689 is resolved.
     public void testDESKeySupportedSizes() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
         KeyGenerator keyGenerator = getKeyGenerator("DESede");
         KeyGenParameterSpec.Builder goodSpec = getWorkingSpec();
         CountingSecureRandom rng = new CountingSecureRandom();
