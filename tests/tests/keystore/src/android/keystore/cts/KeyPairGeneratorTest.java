@@ -1114,7 +1114,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         generator.initialize(new KeyGenParameterSpec.Builder(
                 TEST_ALIAS_1,
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
-                .setDigests(KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA384)
+                .setDigests(KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA256)
                 .setIsStrongBoxBacked(useStrongbox)
                 .build());
         KeyPair keyPair = generator.generateKeyPair();
