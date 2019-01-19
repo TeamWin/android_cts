@@ -1600,6 +1600,7 @@ public abstract class ActivityManagerTestBase {
         public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
             mAmWmState = amWmState;
             mWaitForLaunched = true;
+            mWithShellPermission = true;
         }
 
         public LaunchActivityBuilder setToSide(boolean toSide) {
