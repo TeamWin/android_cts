@@ -26,6 +26,7 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.UriPermission;
@@ -326,7 +327,9 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
     }
 
     private void onScanCompleted(Uri uri, CountDownLatch latch) {
-        mMediaStoreUri = uri;
+        final String volumeName = MediaStore.getVolumeName(uri);
+        mMediaStoreUri = ContentUris.withAppendedId(MediaStore.Files.getContentUri(volumeName),
+                ContentUris.parseId(uri));
         latch.countDown();
     }
 
