@@ -16,13 +16,6 @@
 
 package com.android.cts.usepermission;
 
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertMediaNoAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertMediaReadWriteAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificPaths;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.logCommand;
-
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
@@ -32,13 +25,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.Process;
 import android.provider.CalendarContract;
 
 import org.junit.Test;
 
-import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -51,61 +42,42 @@ public class UsePermissionTest22 extends BasePermissionsTest {
 
     @Test
     public void testCompatDefault() throws Exception {
-        logCommand("/system/bin/cat", "/proc/self/mountinfo");
+        // Legacy permission model appears granted
+        assertEquals(PackageManager.PERMISSION_GRANTED,
+                mContext.checkPermission(android.Manifest.permission.READ_CALENDAR,
+                        Process.myPid(), Process.myUid()));
+        assertEquals(PackageManager.PERMISSION_GRANTED,
+                mContext.checkPermission(android.Manifest.permission.WRITE_CALENDAR,
+                        Process.myPid(), Process.myUid()));
 
-        // Legacy permission model is granted by default
-        assertEquals(PackageManager.PERMISSION_GRANTED,
-                mContext.checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Process.myPid(), Process.myUid()));
-        assertEquals(PackageManager.PERMISSION_GRANTED,
-                mContext.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Process.myPid(), Process.myUid()));
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
-        assertDirReadWriteAccess(Environment.getExternalStorageDirectory());
-        for (File path : getAllPackageSpecificPaths(mContext)) {
-            if (path != null) {
-                assertDirReadWriteAccess(path);
-            }
+        // Read/write access should be allowed
+        final Uri uri = insertCalendarItem();
+        try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
+            assertEquals(1, c.getCount());
         }
-        assertMediaReadWriteAccess(mContext.getContentResolver());
     }
 
     @Test
     public void testCompatRevoked_part1() throws Exception {
         // Revoke the permission
-        revokePermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, true);
-    }
-
-    private void assertNoStorageAccess() throws Exception {
-        assertEquals(Environment.MEDIA_UNMOUNTED, Environment.getExternalStorageState());
-
-        assertDirNoAccess(Environment.getExternalStorageDirectory());
-        for (File dir : getAllPackageSpecificPaths(mContext)) {
-            if (dir != null) {
-                assertDirNoAccess(dir);
-            }
-        }
-        assertMediaNoAccess(mContext.getContentResolver(), true);
-
-        // Just to be sure, poke explicit path
-        assertDirNoAccess(new File(Environment.getExternalStorageDirectory(),
-                "/Android/data/" + mContext.getPackageName()));
+        revokePermissions(new String[] {Manifest.permission.WRITE_CALENDAR}, true);
     }
 
     @Test
     public void testCompatRevoked_part2() throws Exception {
-        logCommand("/system/bin/cat", "/proc/self/mountinfo");
-
-        // Legacy permission model appears granted, but storage looks and
-        // behaves like it's ejected
+        // Legacy permission model appears granted
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                mContext.checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                mContext.checkPermission(android.Manifest.permission.READ_CALENDAR,
                         Process.myPid(), Process.myUid()));
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                mContext.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                mContext.checkPermission(android.Manifest.permission.WRITE_CALENDAR,
                         Process.myPid(), Process.myUid()));
 
-        assertNoStorageAccess();
+        // Read/write access should be ignored
+        final Uri uri = insertCalendarItem();
+        try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
     }
 
     @Test
