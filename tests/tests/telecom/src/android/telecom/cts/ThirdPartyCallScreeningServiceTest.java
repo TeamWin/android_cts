@@ -47,6 +47,7 @@ import android.telecom.cts.screeningtestapp.CallScreeningServiceControl;
 import android.telecom.cts.screeningtestapp.CtsCallScreeningService;
 import android.telecom.cts.screeningtestapp.ICallScreeningControl;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -232,33 +233,7 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         if (!shouldTestTelecom(mContext)) {
             return;
         }
-
-        // Tell the test app to set its call id info.
-        mCallScreeningControl.setProviderCallIdentification(
-                SAMPLE_CALL_ID.getName(),
-                SAMPLE_CALL_ID.getDescription(),
-                SAMPLE_CALL_ID.getDetails(),
-                SAMPLE_CALL_ID.getPhoto(),
-                SAMPLE_CALL_ID.getNuisanceConfidence());
-
-        // Setup content observer to notify us when we call log entry is added.
-        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
-
-        Uri phoneNumber = createRandomTestNumber();
-        Bundle extras = new Bundle();
-        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, phoneNumber);
-        // Create a new outgoing call.
-        placeAndVerifyCall(extras);
-
-        // Wait for call id to be passed back to InCallService
-        assertCallIdentification(SAMPLE_CALL_ID, TEST_APP_NAME, TEST_APP_PACKAGE);
-
-        // Disconnect the call
-        mInCallCallbacks.getService().disconnectAllCalls();
-        assertNumCalls(mInCallCallbacks.getService(), 0);
-
-        // Wait for it to log.
-        callLogEntryLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+        Uri phoneNumber = placeOutgoingCall();
 
         // Query the latest entry into the call log and verify the call identification information
         // was logged appropriately
@@ -310,7 +285,84 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         assertEquals(SAMPLE_CALL_ID, unparceled);
     }
 
-    private void addIncomingAndVerifyBlocked() throws Exception {
+    /**
+     * Verifies operation of the {@link TelecomManager#reportNuisanceCallStatus(Uri, boolean)} API
+     * for an outgoing call; should not be possible to report as nuisance.
+     * @throws Exception
+     */
+    public void testReportNuisanceInvalid() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        Uri phoneNumber = placeOutgoingCall();
+
+        // Report the call as a nuisance call.
+        mTelecomManager.reportNuisanceCallStatus(phoneNumber, true);
+
+        // Block on the control service and wait for the nuisance report; we don't expect one so we
+        // will only wait a short time to avoid this test blocking for a long time.
+        mCallScreeningControl.waitForNuisanceReport(TestUtils.WAIT_FOR_NUISANCE_REPORT_TIMEOUT_MS);
+
+        // We should not have gotten a response back.
+        assertFalse(mCallScreeningControl.isNuisanceReportReceived());
+    }
+
+    /**
+     * Verifies operation of the {@link TelecomManager#reportNuisanceCallStatus(Uri, boolean)} API
+     * for an incoming call.
+     * @throws Exception
+     */
+    public void testReportNuisanceIncoming() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        Uri phoneNumber = addIncoming(true /* disconnectImmediately */);
+
+        // Disconnect the incoming call so it can be logged.
+        mInCallCallbacks.getService().disconnectAllCalls();
+        assertNumCalls(mInCallCallbacks.getService(), 0);
+
+        // Report the call as a nuisance call.
+        mTelecomManager.reportNuisanceCallStatus(phoneNumber, true);
+
+        // Block on the control service and wait for the nuisance report; we will potentially wait
+        // longer because we really do expect something here.
+        mCallScreeningControl.waitForNuisanceReport(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+
+        // We should have gotten a response back.
+        assertTrue(mCallScreeningControl.isNuisanceReportReceived());
+    }
+
+    private Uri placeOutgoingCall() throws Exception {
+        // Tell the test app to set its call id info.
+        mCallScreeningControl.setProviderCallIdentification(
+                SAMPLE_CALL_ID.getName(),
+                SAMPLE_CALL_ID.getDescription(),
+                SAMPLE_CALL_ID.getDetails(),
+                SAMPLE_CALL_ID.getPhoto(),
+                SAMPLE_CALL_ID.getNuisanceConfidence());
+
+        // Setup content observer to notify us when we call log entry is added.
+        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
+
+        Uri phoneNumber = createRandomTestNumber();
+        Bundle extras = new Bundle();
+        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, phoneNumber);
+        // Create a new outgoing call.
+        placeAndVerifyCall(extras);
+
+        // Wait for call id to be passed back to InCallService
+        assertCallIdentification(SAMPLE_CALL_ID, TEST_APP_NAME, TEST_APP_PACKAGE);
+
+        mInCallCallbacks.getService().disconnectAllCalls();
+        assertNumCalls(mInCallCallbacks.getService(), 0);
+
+        // Wait for it to log.
+        callLogEntryLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+        return phoneNumber;
+    }
+
+    private Uri addIncoming(boolean disconnectImmediately) throws Exception {
         // Add call through TelecomManager; we can't use the test methods since they assume a call
         // makes it through to the InCallService; this is blocked so it shouldn't.
         Uri testNumber = createRandomTestNumber();
@@ -325,8 +377,19 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         // Wait until the new incoming call is processed.
         waitOnAllHandlers(getInstrumentation());
 
+        if (disconnectImmediately) {
+            // Disconnect the call
+            mInCallCallbacks.getService().disconnectAllCalls();
+            assertNumCalls(mInCallCallbacks.getService(), 0);
+        }
+
         // Wait for the content observer to report that we have gotten a new call log entry.
         callLogEntryLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+        return testNumber;
+    }
+
+    private void addIncomingAndVerifyBlocked() throws Exception {
+        Uri testNumber = addIncoming(false);
 
         // Query the latest entry into the call log.
         Cursor callsCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
@@ -360,7 +423,7 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
                 CallLog.Calls.CONTENT_URI, true,
                 new ContentObserver(mHandler) {
                     @Override
-                    public void onChange(boolean selfChange) {
+                    public void onChange(boolean selfChange, Uri uri) {
                         mContext.getContentResolver().unregisterContentObserver(this);
                         changeLatch.countDown();
                         super.onChange(selfChange);
