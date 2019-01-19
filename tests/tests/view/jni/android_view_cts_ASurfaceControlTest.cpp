@@ -16,15 +16,19 @@
 
 #define LOG_TAG "ASurfaceControlTest"
 
+#include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include <array>
+#include <cinttypes>
 #include <string>
 
 #include <android/hardware_buffer.h>
 #include <android/log.h>
 #include <android/native_window_jni.h>
 #include <android/surface_control.h>
+#include <android/sync.h>
 
 #include <jni.h>
 
@@ -188,8 +192,8 @@ jlong SurfaceControl_create(JNIEnv* /*env*/, jclass, jlong parentSurfaceControlI
     return reinterpret_cast<jlong>(surfaceControl);
 }
 
-void SurfaceControl_destroy(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
-    ASurfaceControl_destroy(reinterpret_cast<ASurfaceControl*>(surfaceControl));
+void SurfaceControl_release(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
+    ASurfaceControl_release(reinterpret_cast<ASurfaceControl*>(surfaceControl));
 }
 
 jlong SurfaceTransaction_setSolidBuffer(JNIEnv* /*env*/, jclass,
@@ -287,20 +291,49 @@ void SurfaceTransaction_setZOrder(JNIEnv* /*env*/, jclass, jlong surfaceControl,
             reinterpret_cast<ASurfaceControl*>(surfaceControl), z);
 }
 
-static void onComplete(void* context, int presentFence) {
-    close(presentFence);
+static void onComplete(void* context, ASurfaceTransactionStats* stats) {
+    if (!stats) {
+        return;
+    }
+
+    int64_t latchTime = ASurfaceTransactionStats_getLatchTime(stats);
+    if (latchTime < 0) {
+        return;
+    }
+
+    ASurfaceControl** surfaceControls = nullptr;
+    size_t surfaceControlsSize = 0;
+    ASurfaceTransactionStats_getASurfaceControls(stats, &surfaceControls, &surfaceControlsSize);
+
+    for (int i = 0; i < surfaceControlsSize; i++) {
+        ASurfaceControl* surfaceControl = surfaceControls[i];
+
+        int64_t acquireTime = ASurfaceTransactionStats_getAcquireTime(stats, surfaceControl);
+        if (acquireTime < -1) {
+            return;
+        }
+
+        int previousReleaseFence = ASurfaceTransactionStats_getPreviousReleaseFenceFd(
+                    stats, surfaceControl);
+        close(previousReleaseFence);
+    }
+
+    int presentFence = ASurfaceTransactionStats_getPresentFenceFd(stats);
 
     if (!context) {
+        close(presentFence);
         return;
     }
 
     int* contextIntPtr = reinterpret_cast<int*>(context);
-    (*contextIntPtr)++;
+    contextIntPtr[0]++;
+    contextIntPtr[1] = presentFence;
 }
 
 jlong SurfaceTransaction_setOnComplete(JNIEnv* /*env*/, jclass, jlong surfaceTransaction) {
-    int* context = new int;
-    *context = 0;
+    int* context = new int[2];
+    context[0] = 0;
+    context[1] = -1;
 
     ASurfaceTransaction_setOnComplete(
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
@@ -308,26 +341,91 @@ jlong SurfaceTransaction_setOnComplete(JNIEnv* /*env*/, jclass, jlong surfaceTra
     return reinterpret_cast<jlong>(context);
 }
 
-void SurfaceTransaction_checkOnComplete(JNIEnv* env, jclass, jlong context) {
+void SurfaceTransaction_checkOnComplete(JNIEnv* env, jclass, jlong context,
+                                        jlong desiredPresentTime) {
     ASSERT(context != 0, "invalid context")
 
     int* contextPtr = reinterpret_cast<int*>(context);
-    int data = *contextPtr;
+    int data = contextPtr[0];
+    int presentFence = contextPtr[1];
 
-    delete contextPtr;
+    delete[] contextPtr;
+
+    if (desiredPresentTime < 0) {
+        close(presentFence);
+        ASSERT(data >= 1, "did not receive a callback")
+        ASSERT(data <= 1, "received too many callbacks")
+        return;
+    }
+
+    struct sync_file_info* syncFileInfo = sync_file_info(presentFence);
+    ASSERT(syncFileInfo, "invalid fence")
+
+    if (syncFileInfo->status != 1) {
+        sync_file_info_free(syncFileInfo);
+        ASSERT(syncFileInfo->status == 1, "fence did not signal")
+    }
+
+    uint64_t presentTime = 0;
+    struct sync_fence_info* syncFenceInfo = sync_get_fence_info(syncFileInfo);
+    for (size_t i = 0; i < syncFileInfo->num_fences; i++) {
+        if (syncFenceInfo[i].timestamp_ns > presentTime) {
+            presentTime = syncFenceInfo[i].timestamp_ns;
+        }
+    }
+
+    sync_file_info_free(syncFileInfo);
+    close(presentFence);
+
+    // In the worst case the worst present time should be no more than three frames off from the
+    // desired present time. Since the test case is using a virtual display and there are no
+    // requirements for virtual display refresh rate timing, lets assume a refresh rate of 16fps.
+    ASSERT(presentTime < desiredPresentTime + 0.188 * 1e9, "transaction was presented too late");
+    ASSERT(presentTime >= desiredPresentTime, "transaction was presented too early");
 
     ASSERT(data >= 1, "did not receive a callback")
     ASSERT(data <= 1, "received too many callbacks")
 }
 
-const std::array<JNINativeMethod, 16> JNI_METHODS = {{
+jlong SurfaceTransaction_setDesiredPresentTime(JNIEnv* /*env*/, jclass, jlong surfaceTransaction,
+                                              jlong desiredPresentTimeOffset) {
+    struct timespec t;
+    t.tv_sec = t.tv_nsec = 0;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    int64_t currentTime = ((int64_t) t.tv_sec)*1000000000LL + t.tv_nsec;
+
+    int64_t desiredPresentTime = currentTime + desiredPresentTimeOffset;
+
+    ASurfaceTransaction_setDesiredPresentTime(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction), desiredPresentTime);
+
+    return desiredPresentTime;
+}
+
+void SurfaceTransaction_setBufferAlpha(JNIEnv* /*env*/, jclass,
+                                      jlong surfaceControl,
+                                      jlong surfaceTransaction, jdouble alpha) {
+    ASurfaceTransaction_setBufferAlpha(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+            reinterpret_cast<ASurfaceControl*>(surfaceControl), alpha);
+}
+
+void SurfaceTransaction_reparent(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                 jlong newParentSurfaceControl, jlong surfaceTransaction) {
+    ASurfaceTransaction_reparent(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+            reinterpret_cast<ASurfaceControl*>(surfaceControl),
+            reinterpret_cast<ASurfaceControl*>(newParentSurfaceControl));
+}
+
+const std::array<JNINativeMethod, 19> JNI_METHODS = {{
     {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
     {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
     {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
     {"nSurfaceControl_createFromWindow", "(Landroid/view/Surface;)J",
                                             (void*)SurfaceControl_createFromWindow},
     {"nSurfaceControl_create", "(J)J", (void*)SurfaceControl_create},
-    {"nSurfaceControl_destroy", "(J)V", (void*)SurfaceControl_destroy},
+    {"nSurfaceControl_release", "(J)V", (void*)SurfaceControl_release},
     {"nSurfaceTransaction_setSolidBuffer", "(JJIII)J", (void*)SurfaceTransaction_setSolidBuffer},
     {"nSurfaceTransaction_setQuadrantBuffer", "(JJIIIIII)J",
                                             (void*)SurfaceTransaction_setQuadrantBuffer},
@@ -338,7 +436,11 @@ const std::array<JNINativeMethod, 16> JNI_METHODS = {{
     {"nSurfaceTransaction_setDamageRegion", "(JJIIII)V", (void*)SurfaceTransaction_setDamageRegion},
     {"nSurfaceTransaction_setZOrder", "(JJI)V", (void*)SurfaceTransaction_setZOrder},
     {"nSurfaceTransaction_setOnComplete", "(J)J", (void*)SurfaceTransaction_setOnComplete},
-    {"nSurfaceTransaction_checkOnComplete", "(J)V", (void*)SurfaceTransaction_checkOnComplete},
+    {"nSurfaceTransaction_checkOnComplete", "(JJ)V", (void*)SurfaceTransaction_checkOnComplete},
+    {"nSurfaceTransaction_setDesiredPresentTime", "(JJ)J",
+                                            (void*)SurfaceTransaction_setDesiredPresentTime},
+    {"nSurfaceTransaction_setBufferAlpha", "(JJD)V", (void*)SurfaceTransaction_setBufferAlpha},
+    {"nSurfaceTransaction_reparent", "(JJJ)V", (void*)SurfaceTransaction_reparent},
 }};
 
 }  // anonymous namespace
