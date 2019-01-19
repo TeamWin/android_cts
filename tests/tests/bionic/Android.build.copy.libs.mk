@@ -16,6 +16,7 @@ my_bionic_testlib_files := \
   dt_runpath_b_c_x/libtest_dt_runpath_b.so \
   dt_runpath_b_c_x/libtest_dt_runpath_c.so \
   dt_runpath_b_c_x/libtest_dt_runpath_x.so \
+  elftls_dlopen_ie_error_helper/elftls_dlopen_ie_error_helper \
   exec_linker_helper/exec_linker_helper \
   exec_linker_helper_lib.so \
   inaccessible_libs/libtestshared.so \
@@ -74,6 +75,9 @@ my_bionic_testlib_files := \
   libtest_dlsym_from_this_grandchild.so \
   libtest_dlsym_weak_func.so \
   libtest_dt_runpath_d.so \
+  libtest_elftls_shared_var.so \
+  libtest_elftls_shared_var_ie.so \
+  libtest_elftls_tprel.so \
   libtest_empty.so \
   libtest_indirect_thread_local_dtor.so \
   libtest_init_fini_order_child.so \
