@@ -177,6 +177,7 @@ public abstract class ActivityManagerTestBase {
         testPackages.add(TEST_PACKAGE);
         testPackages.add(SECOND_TEST_PACKAGE);
         testPackages.add(THIRD_TEST_PACKAGE);
+        testPackages.add("android.server.cts.am");
         TEST_PACKAGES = Collections.unmodifiableList(testPackages);
     }
 
@@ -600,24 +601,23 @@ public abstract class ActivityManagerTestBase {
 
     /**
      * Moves the device into split-screen with the specified task into the primary stack.
-     *
-     * @param taskId      The id of the task to move into the primary stack.
-     * @param showRecents Whether to show the recents activity (or a placeholder activity in
-     *                    place of the Recents activity if home is the recents component)
+     * @param taskId             The id of the task to move into the primary stack.
+     * @param showSideActivity   Whether to show the Recents activity (or a placeholder activity in
+     *                           place of the Recents activity if home is the recents component)
      */
-    public void moveTaskToPrimarySplitScreen(int taskId, boolean showRecents) {
+    public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
                     SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
                     false /* animate */,
-                    null /* initialBounds */, showRecents);
+                    null /* initialBounds */, showSideActivity);
             mAmWmState.waitForRecentsActivityVisible();
 
-            if (mAmWmState.getAmState().isHomeRecentsComponent() && showRecents) {
-                // Launch Placeholder Recents
-                final Activity recentsActivity = mSideActivityRule.launchActivity(
+            if (mAmWmState.getAmState().isHomeRecentsComponent() && showSideActivity) {
+                // Launch Placeholder Side Activity
+                final Activity sideActivity = mSideActivityRule.launchActivity(
                         new Intent());
-                mAmWmState.waitForActivityState(recentsActivity.getComponentName(), STATE_RESUMED);
+                mAmWmState.waitForActivityState(sideActivity.getComponentName(), STATE_RESUMED);
             }
         });
     }

@@ -1,9 +1,27 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License
+ */
+
 package android.server.am.lifecycle;
 
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.ActivityTaskManager.INVALID_STACK_ID;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
@@ -23,11 +41,10 @@ import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
-import android.app.Instrumentation.ActivityMonitor;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -42,6 +59,7 @@ import com.android.compatibility.common.util.AmUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -76,6 +94,192 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, FirstActivity.class,
                 getLifecycleLog(), isTranslucent(secondActivity));
+    }
+
+    @Test
+    public void testLaunchTranslucentOnTop() throws Exception {
+        // Launch fullscreen activity
+        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+
+        // Launch translucent activity on top
+        getLifecycleLog().clear();
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE),
+                state(translucentActivity, ON_RESUME));
+
+        LifecycleVerifier.assertLaunchSequence(TranslucentActivity.class, FirstActivity.class,
+                getLifecycleLog(), true /* launchIsTranslucent */);
+    }
+
+    @Test
+    public void testLaunchDoubleTranslucentOnTop() throws Exception {
+        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+
+        // Launch translucent activity on top
+        getLifecycleLog().clear();
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE),
+                state(translucentActivity, ON_RESUME));
+
+        LifecycleVerifier.assertLaunchSequence(TranslucentActivity.class, FirstActivity.class,
+                getLifecycleLog(), true /* launchIsTranslucent */);
+
+        // Launch another translucent activity on top
+        getLifecycleLog().clear();
+        final Activity secondTranslucentActivity =
+                mSecondTranslucentActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(translucentActivity, ON_PAUSE),
+                state(secondTranslucentActivity, ON_RESUME));
+        LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_PAUSE), "launch");
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(), new ArrayList<>(),
+                "launch");
+
+        // Finish top translucent activity
+        getLifecycleLog().clear();
+        secondTranslucentActivity.finish();
+
+        waitAndAssertActivityStates(state(translucentActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(secondTranslucentActivity, ON_DESTROY));
+        LifecycleVerifier.assertResumeToDestroySequence(SecondTranslucentActivity.class,
+                getLifecycleLog());
+        LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_RESUME), "launch");
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(), new ArrayList<>(),
+                "launch");
+    }
+
+    @Test
+    public void testTranslucentMovedIntoStack() throws Exception {
+        // Launch a translucent activity and a regular activity in separate stacks
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+        final Activity firstActivity = mFirstActivityTestRule.launchActivity(
+                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME),
+                state(translucentActivity, ON_STOP));
+
+        final ComponentName firstActivityName = getComponentName(FirstActivity.class);
+        mAmWmState.computeState(firstActivityName);
+        int firstActivityStack = mAmWmState.getAmState().getStackIdByActivity(firstActivityName);
+
+        // Move translucent activity into the stack with the first activity
+        getLifecycleLog().clear();
+        moveActivityToStack(getComponentName(TranslucentActivity.class), firstActivityStack);
+
+        // Wait for translucent activity to resume and first activity to pause
+        waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),
+                state(firstActivity, ON_PAUSE));
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_PAUSE), "launchOnTop");
+        LifecycleVerifier.assertRestartAndResumeSequence(TranslucentActivity.class,
+                getLifecycleLog());
+    }
+
+    @Test
+    public void testDestroyTopTranslucent() throws Exception {
+        // Launch a regular activity and a a translucent activity in the same stack
+        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE),
+                state(translucentActivity, ON_RESUME));
+
+        // Finish translucent activity
+        getLifecycleLog().clear();
+        mTranslucentActivityTestRule.finishActivity();
+
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME),
+                state(translucentActivity, ON_DESTROY));
+
+        // Verify destruction lifecycle
+        LifecycleVerifier.assertResumeToDestroySequence(TranslucentActivity.class,
+                getLifecycleLog());
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_RESUME), "resumeAfterTopDestroyed");
+    }
+
+    @Test
+    public void testDestroyOnTopOfTranslucent() throws Exception {
+        // Launch fullscreen activity
+        final Activity firstActivity =
+                mFirstActivityTestRule.launchActivity(new Intent());
+
+        // Launch translucent activity
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+
+        // Launch another fullscreen activity
+        final Activity secondActivity =
+                mSecondActivityTestRule.launchActivity(new Intent());
+
+        // Wait for top activity to resume
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
+                occludedActivityState(translucentActivity, secondActivity),
+                occludedActivityState(firstActivity, secondActivity));
+
+        getLifecycleLog().clear();
+
+        final boolean secondActivityIsTranslucent = ActivityInfo.isTranslucentOrFloating(
+                secondActivity.getWindow().getWindowStyle());
+
+        // Finish top activity
+        mSecondActivityTestRule.finishActivity();
+
+        waitAndAssertActivityStates(state(secondActivity, ON_DESTROY));
+        LifecycleVerifier.assertResumeToDestroySequence(SecondActivity.class, getLifecycleLog());
+        if (secondActivityIsTranslucent) {
+            // In this case we don't expect the state of the firstActivity to change since it is
+            // already in the visible paused state. So, we just verify that translucentActivity
+            // transitions to resumed state.
+            waitAndAssertActivityStates(state(translucentActivity, ON_RESUME));
+        } else {
+            // Wait for translucent activity to resume
+            waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),
+                    state(firstActivity, ON_START));
+
+            // Verify that the first activity was restarted
+            LifecycleVerifier.assertRestartSequence(FirstActivity.class, getLifecycleLog());
+        }
+    }
+
+    @Test
+    public void testDestroyDoubleTranslucentOnTop() throws Exception {
+        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+        final Activity secondTranslucentActivity =
+                mSecondTranslucentActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE),
+                state(translucentActivity, ON_PAUSE), state(secondTranslucentActivity, ON_RESUME));
+
+        // Finish top translucent activity
+        getLifecycleLog().clear();
+        secondTranslucentActivity.finish();
+
+        waitAndAssertActivityStates(state(translucentActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(secondTranslucentActivity, ON_DESTROY));
+        LifecycleVerifier.assertResumeToDestroySequence(SecondTranslucentActivity.class,
+                getLifecycleLog());
+        LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_RESUME), "destroy");
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(), new ArrayList<>(),
+                "destroy");
+
+        // Finish first translucent activity
+        getLifecycleLog().clear();
+        translucentActivity.finish();
+
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(translucentActivity, ON_DESTROY));
+        LifecycleVerifier.assertResumeToDestroySequence(TranslucentActivity.class,
+                getLifecycleLog());
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_RESUME), "secondDestroy");
     }
 
     @Test
@@ -205,212 +409,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    public void testPausedWithTranslucentOnTop() throws Exception {
-        // Launch fullscreen activity
-        final Activity firstActivity =
-                mFirstActivityTestRule.launchActivity(new Intent());
-
-        // Launch translucent activity on top
-        mTranslucentActivityTestRule.launchActivity(new Intent());
-
-        // Launch another translucent activity on top to make sure the fullscreen activity
-        // transitions to final state
-        final Activity secondTranslucentActivity =
-                mSecondTranslucentActivityTestRule.launchActivity(new Intent());
-
-        // Wait for the second translucent activity to become resumed.
-        waitAndAssertActivityStates(state(secondTranslucentActivity, ON_RESUME),
-                state(firstActivity, ON_PAUSE));
-
-        // Assert that the fullscreen activity was not stopped and is in the paused state.
-        LifecycleVerifier.assertLaunchAndPauseSequence(FirstActivity.class, getLifecycleLog());
-    }
-
-    @Test
-    public void testPausedWhenReturningWithTranslucentOnTop() throws Exception {
-        // Launch fullscreen activity
-        final Activity firstActivity =
-                mFirstActivityTestRule.launchActivity(new Intent());
-
-        // Launch translucent activity
-        final Activity translucentActivity =
-                mTranslucentActivityTestRule.launchActivity(new Intent());
-
-        // Launch another fullscreen activity
-        final Activity secondActivity =
-                mSecondActivityTestRule.launchActivity(new Intent());
-
-        // Wait for top activity to resume
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
-                occludedActivityState(translucentActivity, secondActivity),
-                occludedActivityState(firstActivity, secondActivity));
-
-        getLifecycleLog().clear();
-
-        final boolean secondActivityIsTranslucent = ActivityInfo.isTranslucentOrFloating(
-                secondActivity.getWindow().getWindowStyle());
-
-        // Finish top activity
-        mSecondActivityTestRule.finishActivity();
-
-        if (secondActivityIsTranslucent) {
-            // In this case we don't expect the state of the firstActivity to change since it is
-            // already in the visible paused state. So, we just verify that translucentActivity
-            // transitions to resumed state.
-            waitAndAssertActivityStates(state(translucentActivity, ON_RESUME));
-        } else {
-            // Wait for translucent activity to resume
-            waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),
-                    state(firstActivity, ON_START));
-
-            // Verify that the first activity was restarted
-            LifecycleVerifier.assertRestartSequence(FirstActivity.class, getLifecycleLog());
-        }
-    }
-
-    @Test
-    public void testPausedWhenRecreatedFromInNonFocusedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            // Skipping test: no split multi-window support
-            return;
-        }
-
-        // Launch first activity
-        final Activity firstActivity =
-                mFirstActivityTestRule.launchActivity(new Intent());
-
-        // Launch second activity to stop first
-        final Activity secondActivity =
-                mSecondActivityTestRule.launchActivity(new Intent());
-
-        // Wait for second activity to resume. We must also wait for the first activity to stop
-        // so that this event is not included in the logs.
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
-                state(firstActivity, ON_STOP));
-
-        // Enter split screen
-        moveTaskToPrimarySplitScreen(secondActivity.getTaskId());
-
-        // CLear logs so we can capture just the destroy sequence
-        getLifecycleLog().clear();
-
-        // Start an activity in separate task (will be placed in secondary stack)
-        getLaunchActivityBuilder().execute();
-
-        // Finish top activity
-        secondActivity.finish();
-
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
-
-        // Verify that the first activity was recreated to pause as it was created before
-        // windowing mode was switched
-        LifecycleVerifier.assertRecreateAndPauseSequence(FirstActivity.class, getLifecycleLog());
-    }
-
-    @Test
-    public void testResultInNonFocusedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            // Skipping test: no split multi-window support
-            return;
-        }
-
-        // Launch first activity
-        final Activity callbackTrackingActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-
-        // Wait for first activity to resume
-        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
-
-        // Enter split screen
-        moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId(), true /* showRecents */);
-
-        // Launch second activity to pause first
-        // Create an ActivityMonitor that catch ChildActivity and return mock ActivityResult:
-        ActivityMonitor activityMonitor = InstrumentationRegistry.getInstrumentation()
-                .addMonitor(SecondActivity.class.getName(), null /* activityResult */,
-                        false /* block */);
-
-        callbackTrackingActivity.startActivityForResult(
-                new Intent(callbackTrackingActivity, SecondActivity.class), 1 /* requestCode */);
-
-        // Wait for the ActivityMonitor to be hit
-        final Activity secondActivity = InstrumentationRegistry.getInstrumentation()
-                .waitForMonitorWithTimeout(activityMonitor, 5 * 1000);
-
-        // Wait for second activity to resume
-        assertNotNull("Second activity should be started", secondActivity);
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
-
-        // Verify if the first activity stopped (since it is not currently visible)
-        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_STOP));
-
-        // Start an activity in separate task (will be placed in secondary stack)
-        getLaunchActivityBuilder().execute();
-
-        waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
-
-        // Finish top activity and verify that activity below became focused.
-        getLifecycleLog().clear();
-        secondActivity.setResult(Activity.RESULT_OK);
-        secondActivity.finish();
-
-        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_START));
-        LifecycleVerifier.assertRestartSequence(CallbackTrackingActivity.class, getLifecycleLog());
-
-        // Bring the first activity to front to verify that it receives the result.
-        getLifecycleLog().clear();
-        final Intent singleTopIntent = new Intent(InstrumentationRegistry.getTargetContext(),
-                CallbackTrackingActivity.class);
-        singleTopIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(singleTopIntent);
-
-        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_ACTIVITY_RESULT, ON_NEW_INTENT, ON_RESUME), "bring to front");
-    }
-
-    @Test
-    public void testPausedWhenRestartedFromInNonFocusedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            // Skipping test: no split multi-window support
-            return;
-        }
-
-        // Launch first activity
-        final Activity firstActivity =
-                mFirstActivityTestRule.launchActivity(new Intent());
-
-        // Wait for first activity to resume
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-
-        // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId(), true /* showRecents */);
-
-        // Launch second activity to pause first
-        final Activity secondActivity =
-                mSecondActivityTestRule.launchActivity(new Intent());
-
-        // Wait for second activity to resume
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
-
-        // Start an activity in separate task (will be placed in secondary stack)
-        getLaunchActivityBuilder().execute();
-
-        waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
-
-        getLifecycleLog().clear();
-
-        // Finish top activity
-        secondActivity.finish();
-
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
-
-        // Verify that the first activity was restarted to pause as it was brought back after
-        // windowing mode was switched
-        LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
-    }
-
-    @Test
     public void testOnActivityResult() throws Exception {
         final Intent intent = new Intent();
         intent.putExtra(EXTRA_FINISH_IN_ON_RESUME, true);
@@ -425,8 +423,15 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final List<LifecycleLog.ActivityCallback> sequenceWithStop =
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_PAUSE, ON_STOP, ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME);
+        final List<LifecycleLog.ActivityCallback> thirdSequence =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                        ON_PAUSE, ON_STOP, ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME);
+        final List<LifecycleLog.ActivityCallback> fourthSequence =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                        ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(LaunchForResultActivity.class,
-                getLifecycleLog(), Arrays.asList(expectedSequence, sequenceWithStop),
+                getLifecycleLog(),
+                Arrays.asList(expectedSequence, sequenceWithStop, thirdSequence, fourthSequence),
                 "activityResult");
     }
 
@@ -437,19 +442,24 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         mLaunchForResultActivityTestRule.launchActivity(intent);
         final boolean isTranslucent = isTranslucent(mLaunchForResultActivityTestRule.getActivity());
 
-        final List<LifecycleLog.ActivityCallback> expectedSequence;
+        final List<List<LifecycleLog.ActivityCallback>> expectedSequences;
         if (isTranslucent) {
-            expectedSequence = Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
-                    ON_RESUME, ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME);
+            expectedSequences = Arrays.asList(
+                    Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                            ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME)
+            );
         } else {
-            expectedSequence = Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
-                    ON_RESUME, ON_PAUSE, ON_STOP, ON_ACTIVITY_RESULT, ON_RESTART, ON_START,
-                    ON_RESUME);
+            expectedSequences = Arrays.asList(
+                    Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                            ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME),
+                    Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                            ON_PAUSE, ON_STOP, ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME)
+            );
         }
-        waitForActivityTransitions(LaunchForResultActivity.class, expectedSequence);
+        waitForActivityTransitions(LaunchForResultActivity.class, expectedSequences.get(0));
 
-        LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
-                getLifecycleLog(), expectedSequence, "activityResult");
+        LifecycleVerifier.assertSequenceMatchesOneOf(LaunchForResultActivity.class,
+                getLifecycleLog(), expectedSequences, "activityResult");
     }
 
     @Test
@@ -586,7 +596,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     /**
-     * The that recreate request from an activity is executed immediately.
+     * Tests that recreate request from an activity is executed immediately.
      */
     @Test
     public void testLocalRecreate() throws Exception {
@@ -594,36 +604,43 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         Activity recreatingActivity = mSingleTopActivityTestRule.launchActivity(new Intent());
 
         // Launch second activity to cover and stop first
-        final LaunchActivityBuilder launchActivityBuilder = getLaunchActivityBuilder();
-        launchActivityBuilder.setNewTask(true).setMultipleTask(true).execute();
+        Activity secondActivity = mSecondActivityTestRule.launchActivity(
+                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
 
         // Wait for first activity to become stopped
-        waitAndAssertActivityStates(occludedActivityState(recreatingActivity,
-                launchActivityBuilder.isTargetActivityTranslucent()));
+        final boolean secondActivityIsTranslucent = ActivityInfo.isTranslucentOrFloating(
+                secondActivity.getWindow().getWindowStyle());
+        waitAndAssertActivityStates(
+                occludedActivityState(recreatingActivity, secondActivityIsTranslucent),
+                state(secondActivity, ON_RESUME));
 
         // Launch the activity again to recreate
         getLifecycleLog().clear();
         final Intent intent = new Intent(InstrumentationRegistry.getContext(),
                 SingleTopActivity.class);
         intent.putExtra(EXTRA_RECREATE, true);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         InstrumentationRegistry.getTargetContext().startActivity(intent);
 
         // Wait for activity to relaunch and resume
-        final List<LifecycleLog.ActivityCallback> expectedRelaunchSequence;
-        if (launchActivityBuilder.isTargetActivityTranslucent()) {
-            expectedRelaunchSequence = Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_PAUSE, ON_STOP,
-                    ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                    ON_PAUSE, ON_RESUME);
-        } else {
-            expectedRelaunchSequence = Arrays.asList(ON_NEW_INTENT, ON_RESTART, ON_START, ON_RESUME,
+        final List<List<LifecycleLog.ActivityCallback>> expectedRelaunchSequences;
+        if (secondActivityIsTranslucent) {
+            expectedRelaunchSequences = Arrays.asList(Arrays.asList(ON_NEW_INTENT, ON_RESUME,
                     ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                    ON_POST_CREATE, ON_RESUME);
+                    ON_POST_CREATE, ON_RESUME,ON_PAUSE, ON_RESUME));
+        } else {
+            expectedRelaunchSequences = Arrays.asList(
+                    Arrays.asList(ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME, ON_PAUSE, ON_STOP,
+                            ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
+                            ON_RESUME),
+                    Arrays.asList(ON_NEW_INTENT, ON_RESTART, ON_START, ON_RESUME, ON_PAUSE, ON_STOP,
+                            ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
+                            ON_RESUME));
         }
 
-        waitForActivityTransitions(SingleTopActivity.class, expectedRelaunchSequence);
-        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
-                expectedRelaunchSequence, "recreate");
+        waitForActivityTransitions(SingleTopActivity.class, expectedRelaunchSequences.get(0));
+        LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
+                expectedRelaunchSequences, "recreate");
     }
 
     @Test
@@ -641,7 +658,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getLifecycleLog().clear();
         final Intent intent = new Intent(InstrumentationRegistry.getContext(),
                 SingleTopActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         InstrumentationRegistry.getTargetContext().startActivity(intent);
 
         // Wait for the activity to resume again
@@ -665,7 +682,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Launch something on top
         final Intent newTaskIntent = new Intent();
-        newTaskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        newTaskIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
         final Activity secondActivity = mSecondActivityTestRule.launchActivity(newTaskIntent);
 
         // Wait for the activity to resume
@@ -676,7 +693,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getLifecycleLog().clear();
         final Intent intent = new Intent(InstrumentationRegistry.getContext(),
                 SingleTopActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         InstrumentationRegistry.getTargetContext().startActivity(intent);
 
         // Wait for the activity to resume again
@@ -718,7 +735,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getLifecycleLog().clear();
         final Intent intent = new Intent(InstrumentationRegistry.getContext(),
                 SingleTopActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         InstrumentationRegistry.getTargetContext().startActivity(intent);
 
         // Wait for the activity to resume again
@@ -733,92 +750,5 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 Arrays.asList(ON_NEW_INTENT, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
                 Arrays.asList(expectedSequence, extraPauseSequence), "newIntent");
-    }
-
-    @Test
-    public void testLifecycleOnMoveToFromSplitScreenRelaunch() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            // Skipping test: no split multi-window support
-            return;
-        }
-
-        // Launch a singleTop activity
-        final Activity testActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-
-        // Wait for the activity to resume
-        waitAndAssertActivityStates(state(testActivity, ON_RESUME));
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
-
-        // Enter split screen
-        getLifecycleLog().clear();
-        setActivityTaskWindowingMode(CALLBACK_TRACKING_ACTIVITY,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-
-        // Wait for the activity to pause
-        final List<LifecycleLog.ActivityCallback> expectedEnterSequence =
-                Arrays.asList(ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                        ON_POST_CREATE, ON_RESUME, ON_MULTI_WINDOW_MODE_CHANGED, ON_PAUSE);
-        waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
-
-        // Verify that the activity was relaunched and received multi-window mode change
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                expectedEnterSequence, "moveToSplitScreen");
-
-        // Exit split-screen
-        getLifecycleLog().clear();
-        setActivityTaskWindowingMode(CALLBACK_TRACKING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-
-        // Wait for the activity to resume
-        final List<LifecycleLog.ActivityCallback> expectedExitSequence =
-                Arrays.asList(ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                        ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_MULTI_WINDOW_MODE_CHANGED,
-                        ON_RESUME);
-        waitForActivityTransitions(CallbackTrackingActivity.class, expectedExitSequence);
-
-        // Verify that the activity was relaunched and received multi-window mode change
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                expectedExitSequence, "moveFromSplitScreen");
-    }
-
-    @Test
-    public void testLifecycleOnMoveToFromSplitScreenNoRelaunch() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
-            // Skipping test: no split multi-window support
-            return;
-        }
-
-        // Launch a singleTop activity
-        final Activity testActivity =
-                mConfigChangeHandlingActivityTestRule.launchActivity(new Intent());
-
-        // Wait for the activity to resume
-        waitAndAssertActivityStates(state(testActivity, ON_RESUME));
-        LifecycleVerifier.assertLaunchSequence(ConfigChangeHandlingActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
-
-        // Enter split screen
-        getLifecycleLog().clear();
-        setActivityTaskWindowingMode(CONFIG_CHANGE_HANDLING_ACTIVITY,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-
-        // Wait for the activity to pause
-        waitAndAssertActivityStates(state(testActivity, ON_PAUSE));
-
-        // Verify that the activity was relaunched and received multi-window mode change
-        LifecycleVerifier.assertSequence(ConfigChangeHandlingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_PAUSE), "moveToSplitScreen");
-
-        // Exit split-screen
-        getLifecycleLog().clear();
-        setActivityTaskWindowingMode(CONFIG_CHANGE_HANDLING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-
-        // Wait for the activity to resume
-        waitAndAssertActivityStates(state(testActivity, ON_RESUME));
-
-        // Verify that the activity was relaunched and received multi-window mode change
-        LifecycleVerifier.assertSequence(ConfigChangeHandlingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_RESUME), "moveFromSplitScreen");
     }
 }
