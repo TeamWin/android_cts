@@ -274,8 +274,6 @@ final class Assertions {
                 .that(event.getViewNode()).isNull();
         assertWithMessage("event %s (index %s) should not have text", event, index)
             .that(event.getText()).isNull();
-        assertWithMessage("event %s (index %s) should not have flags", event, index)
-            .that(event.getFlags()).isEqualTo(0);
         assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
             .that(event.getViewNode()).isNull();
         return event;
