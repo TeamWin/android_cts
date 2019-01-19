@@ -49,3 +49,30 @@ java_defaults {
         ],
     },
 }
+
+// Used with an android_test / android_test_helper_app, this is equivalent to
+// BUILD_CTS_SUPPORT_PACKAGE
+java_defaults {
+    name: "cts_support_defaults",
+    defaults: ["cts_error_prone_rules_tests"],
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+}
+
+// Used with different module types, this is equivalent to:
+//   android_test: BUILD_CTS_PACKAGE
+//   java_library: BUILD_CTS_TARGET_JAVA_LIBRARY
+//   java_library_host: BUILD_CTS_HOST_JAVA_LIBRARY
+java_defaults {
+    name: "cts_defaults",
+    defaults: ["cts_support_defaults"],
+    target: {
+        android: {
+            static_libs: ["platform-test-annotations"],
+        },
+    },
+}

@@ -14,6 +14,7 @@
 
 android_test {
     name: "CtsTextTestCases",
+    defaults: ["cts_defaults"],
     sdk_version: "test_current",
 
     srcs: [
@@ -22,19 +23,12 @@ android_test {
     ],
 
     static_libs: [
-        "platform-test-annotations",
         "compatibility-device-util",
         "ctsdeviceutillegacy",
         "ctstestrunner",
         "mockito-target-minus-junit4",
         "android-support-test",
     ],
-
-    defaults: ["cts_error_prone_rules_tests"],
-
-    optimize: {
-        enabled: false,
-    },
 
     libs: [
         "android.test.runner.stubs",
