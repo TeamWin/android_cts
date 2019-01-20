@@ -48,3 +48,4 @@ LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_MIN_SDK_VERSION := 21
 
 include $(BUILD_CTS_PACKAGE)
+include $(call all-makefiles-under,$(LOCAL_PATH))

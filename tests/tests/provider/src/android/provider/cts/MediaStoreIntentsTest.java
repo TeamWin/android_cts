@@ -25,9 +25,14 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.util.List;
 
@@ -35,8 +40,30 @@ import java.util.List;
  * Tests to verify that common actions on {@link MediaStore} content are
  * available.
  */
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStoreIntentsTest {
+    private static final String TAG = "MediaStoreIntentsTest";
+
+    private Uri mExternalAudio;
+    private Uri mExternalVideo;
+    private Uri mExternalImages;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalAudio = MediaStore.Audio.Media.getContentUri(mVolumeName);
+        mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
+    }
+
     public void assertCanBeHandled(Intent intent) {
         List<ResolveInfo> resolveInfoList = InstrumentationRegistry.getTargetContext()
                 .getPackageManager().queryIntentActivities(intent, 0);
@@ -48,35 +75,35 @@ public class MediaStoreIntentsTest {
     @Test
     public void testPickImageDir() {
         Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setData(mExternalImages);
         assertCanBeHandled(intent);
     }
 
     @Test
     public void testPickVideoDir() {
         Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setData(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        intent.setData(mExternalVideo);
         assertCanBeHandled(intent);
     }
 
     @Test
     public void testPickAudioDir() {
         Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setData(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+        intent.setData(mExternalAudio);
         assertCanBeHandled(intent);
     }
 
     @Test
     public void testViewImageDir() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setData(mExternalImages);
         assertCanBeHandled(intent);
     }
 
     @Test
     public void testViewVideoDir() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        intent.setData(mExternalVideo);
         assertCanBeHandled(intent);
     }
 
