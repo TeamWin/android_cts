@@ -16,8 +16,11 @@
 package android.assist.common;
 
 import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.os.Process;
+import android.util.Log;
 
 import org.json.JSONObject;
 
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 public class Utils {
+    private static final String TAG = Utils.class.getSimpleName();
     public static final String TESTCASE_TYPE = "testcase_type";
     public static final String TESTINFO = "testinfo";
     public static final String ACTION_PREFIX = "android.intent.action.";
@@ -116,6 +120,8 @@ public class Utils {
     private static Bundle EXTRA_ASSIST_BUNDLE;
     private static String STRUCTURED_JSON;
 
+    private static String MY_UID_EXTRA = "my_uid";
+
     public static final String getStructuredJSON() throws Exception {
         if (STRUCTURED_JSON == null) {
             STRUCTURED_JSON = new JSONObject()
@@ -139,15 +145,24 @@ public class Utils {
     public static final Bundle getExtraAssistBundle() {
         if (EXTRA_ASSIST_BUNDLE == null) {
             EXTRA_ASSIST_BUNDLE = new Bundle();
-            addExtraAssistDataToBundle(EXTRA_ASSIST_BUNDLE);
+            addExtraAssistDataToBundle(EXTRA_ASSIST_BUNDLE, /* addMyUid= */ false);
         }
         return EXTRA_ASSIST_BUNDLE;
     }
 
     public static void addExtraAssistDataToBundle(Bundle data) {
+        addExtraAssistDataToBundle(data, /* addMyUid= */ true);
+
+    }
+
+    private static void addExtraAssistDataToBundle(Bundle data, boolean addMyUid) {
         data.putString("hello", "there");
         data.putBoolean("isthis_true_or_false", true);
         data.putInt("number", 123);
+        if (addMyUid) {
+            Log.i(TAG, "adding " + MY_UID_EXTRA + "=" + Process.myUid());
+            data.putInt(MY_UID_EXTRA, Process.myUid());
+        }
     }
 
     /** The shim activity that starts the service associated with each test. */
@@ -247,5 +262,9 @@ public class Utils {
     public static final void addErrorResult(final Bundle testinfo, final String msg) {
         testinfo.getStringArrayList(testinfo.getString(Utils.TESTCASE_TYPE))
             .add(TEST_ERROR + " " + msg);
+    }
+
+    public static int getExpectedUid(Bundle extras) {
+        return extras.getInt(MY_UID_EXTRA);
     }
 }

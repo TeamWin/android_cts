@@ -20,7 +20,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.TracingConfig;
 import android.webkit.TracingController;
 import android.webkit.WebView;
-import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;

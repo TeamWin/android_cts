@@ -26,6 +26,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.HardwareBuffer;
 import android.util.Size;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.media.CamcorderProfile;
@@ -35,6 +36,7 @@ import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -104,6 +106,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     private Size mVideoSize;
     private long mRecordingStartTime;
 
+    private Surface mIntermediateSurface;
+    private ImageReader mIntermediateReader;
+    private ImageWriter mIntermediateWriter;
+    private ImageWriterQueuer mQueuer;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -115,6 +122,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     }
 
     private void doBasicRecording(boolean useVideoStab) throws Exception {
+        doBasicRecording(useVideoStab, false);
+    }
+
+    private void doBasicRecording(boolean useVideoStab, boolean useIntermediateSurface)
+            throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing basic recording for camera " + mCameraIds[i]);
@@ -144,7 +156,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 openDevice(mCameraIds[i]);
                 initSupportedVideoSize(mCameraIds[i]);
 
-                basicRecordingTestByCamera(mCamcorderProfileList, useVideoStab);
+                basicRecordingTestByCamera(mCamcorderProfileList, useVideoStab,
+                        useIntermediateSurface);
             } finally {
                 closeDevice();
                 releaseRecorder();
@@ -165,7 +178,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * recorded video. Preview is set to the video size.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testBasicVideoStabilizationRecording() throws Exception {
         doBasicRecording(/*useVideoStab*/true);
     }
@@ -185,6 +198,21 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testBasicRecording() throws Exception {
         doBasicRecording(/*useVideoStab*/false);
+    }
+
+    /**
+     * <p>
+     * Test camera recording with intermediate surface.
+     * </p>
+     * <p>
+     * This test is similar to testBasicRecording with a tweak where an intermediate
+     * surface is setup between camera and MediaRecorder, giving application a chance
+     * to decide whether to send a frame to recorder or not.
+     * </p>
+     */
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
+    public void testIntermediateSurfaceRecording() throws Exception {
+        doBasicRecording(/*useVideoStab*/false, /*useIntermediateSurface*/true);
     }
 
     /**
@@ -926,12 +954,17 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
     }
 
+    private void basicRecordingTestByCamera(int[] camcorderProfileList, boolean useVideoStab)
+            throws Exception {
+        basicRecordingTestByCamera(camcorderProfileList, useVideoStab, false);
+    }
+
     /**
      * Test camera recording by using each available CamcorderProfile for a
      * given camera. preview size is set to the video size.
      */
-    private void basicRecordingTestByCamera(int[] camcorderProfileList, boolean useVideoStab)
-            throws Exception {
+    private void basicRecordingTestByCamera(int[] camcorderProfileList, boolean useVideoStab,
+            boolean useIntermediateSurface) throws Exception {
         Size maxPreviewSize = mOrderedPreviewSizes.get(0);
         List<Range<Integer> > fpsRanges = Arrays.asList(
                 mStaticInfo.getAeAvailableTargetFpsRangesChecked());
@@ -977,20 +1010,21 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         + videoSz.toString() + ".mp4";
             }
 
-            prepareRecordingWithProfile(profile);
+            prepareRecordingWithProfile(profile, useIntermediateSurface);
 
             // prepare preview surface by using video size.
             updatePreviewSurfaceWithVideo(videoSz, profile.videoFrameRate);
 
             // Start recording
             SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
-            startRecording(/* useMediaRecorder */true, resultListener, useVideoStab);
+            startRecording(/* useMediaRecorder */true, resultListener, useVideoStab,
+                    useIntermediateSurface);
 
             // Record certain duration.
             SystemClock.sleep(RECORDING_DURATION_MS);
 
             // Stop recording and preview
-            stopRecording(/* useMediaRecorder */true);
+            stopRecording(/* useMediaRecorder */true, useIntermediateSurface);
             // Convert number of frames camera produced into the duration in unit of ms.
             float frameDurationMs = 1000.0f / profile.videoFrameRate;
             float durationMs = resultListener.getTotalNumFrames() * frameDurationMs;
@@ -1060,7 +1094,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
             startRecording(
                     /* useMediaRecorder */true, resultListener,
-                    /*useVideoStab*/false, fpsRange);
+                    /*useVideoStab*/false, fpsRange, false);
 
             // Record certain duration.
             SystemClock.sleep(RECORDING_DURATION_MS);
@@ -1462,12 +1496,16 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         updatePreviewSurface(previewSize);
     }
 
+    private void prepareRecordingWithProfile(CamcorderProfile profile) throws Exception {
+        prepareRecordingWithProfile(profile, false);
+    }
+
     /**
      * Configure MediaRecorder recording session with CamcorderProfile, prepare
      * the recording surface.
      */
-    private void prepareRecordingWithProfile(CamcorderProfile profile)
-            throws Exception {
+    private void prepareRecordingWithProfile(CamcorderProfile profile,
+            boolean useIntermediateSurface) throws Exception {
         // Prepare MediaRecorder.
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
@@ -1484,6 +1522,19 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         assertNotNull("Recording surface must be non-null!", mRecordingSurface);
         mVideoFrameRate = profile.videoFrameRate;
         mVideoSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
+
+        if (useIntermediateSurface) {
+            mIntermediateReader = ImageReader.newInstance(
+                    profile.videoFrameWidth, profile.videoFrameHeight,
+                    ImageFormat.PRIVATE, /*maxImages*/3, HardwareBuffer.USAGE_VIDEO_ENCODE);
+
+            mIntermediateSurface = mIntermediateReader.getSurface();
+            mIntermediateWriter = ImageWriter.newInstance(mRecordingSurface, /*maxImages*/3,
+                    ImageFormat.PRIVATE);
+            mQueuer = new ImageWriterQueuer(mIntermediateWriter);
+
+            mIntermediateReader.setOnImageAvailableListener(mQueuer, mHandler);
+        }
     }
 
     /**
@@ -1519,12 +1570,20 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
     private void startRecording(boolean useMediaRecorder,
             CameraCaptureSession.CaptureCallback listener, boolean useVideoStab) throws Exception {
-        startRecording(useMediaRecorder, listener, useVideoStab, /*variableFpsRange*/null);
+        startRecording(useMediaRecorder, listener, useVideoStab, /*variableFpsRange*/null,
+                /*useIntermediateSurface*/false);
     }
 
     private void startRecording(boolean useMediaRecorder,
             CameraCaptureSession.CaptureCallback listener, boolean useVideoStab,
-            Range<Integer> variableFpsRange) throws Exception {
+            boolean useIntermediateSurface) throws Exception {
+        startRecording(useMediaRecorder, listener, useVideoStab, /*variableFpsRange*/null,
+                useIntermediateSurface);
+    }
+
+    private void startRecording(boolean useMediaRecorder,
+            CameraCaptureSession.CaptureCallback listener, boolean useVideoStab,
+            Range<Integer> variableFpsRange, boolean useIntermediateSurface) throws Exception {
         if (!mStaticInfo.isVideoStabilizationSupported() && useVideoStab) {
             throw new IllegalArgumentException("Video stabilization is not supported");
         }
@@ -1533,7 +1592,12 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         assertTrue("Both preview and recording surfaces should be valid",
                 mPreviewSurface.isValid() && mRecordingSurface.isValid());
         outputSurfaces.add(mPreviewSurface);
-        outputSurfaces.add(mRecordingSurface);
+        if (useIntermediateSurface) {
+            outputSurfaces.add(mIntermediateSurface);
+        } else {
+            outputSurfaces.add(mRecordingSurface);
+        }
+
         // Video snapshot surface
         if (mReaderSurface != null) {
             outputSurfaces.add(mReaderSurface);
@@ -1551,7 +1615,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             recordingRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                     CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
         }
-        recordingRequestBuilder.addTarget(mRecordingSurface);
+        if (useIntermediateSurface) {
+            recordingRequestBuilder.addTarget(mIntermediateSurface);
+        } else {
+            recordingRequestBuilder.addTarget(mRecordingSurface);
+        }
         recordingRequestBuilder.addTarget(mPreviewSurface);
         CaptureRequest recordingRequest = recordingRequestBuilder.build();
         mSession = configureCameraSessionWithParameters(mCamera, outputSurfaces, mSessionListener,
@@ -1631,8 +1699,13 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         mSessionListener.getStateWaiter().waitForState(SESSION_CLOSED, SESSION_CLOSE_TIMEOUT_MS);
     }
 
-    // Stop recording and return the estimated video duration in milliseconds.
     private int stopRecording(boolean useMediaRecorder) throws Exception {
+        return stopRecording(useMediaRecorder, false);
+    }
+
+    // Stop recording and return the estimated video duration in milliseconds.
+    private int stopRecording(boolean useMediaRecorder, boolean useIntermediateSurface)
+            throws Exception {
         long stopRecordingTime = SystemClock.elapsedRealtime();
         if (useMediaRecorder) {
             stopCameraStreaming();
@@ -1646,6 +1719,16 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         if (mPersistentSurface == null && mRecordingSurface != null) {
             mRecordingSurface.release();
             mRecordingSurface = null;
+        }
+        if (useIntermediateSurface) {
+            mIntermediateSurface.release();
+            mIntermediateReader.close();
+            mIntermediateWriter.close();
+            mQueuer.close();
+            mIntermediateSurface = null;
+            mIntermediateReader = null;
+            mIntermediateWriter = null;
+            mQueuer = null;
         }
         return (int) (stopRecordingTime - mRecordingStartTime);
     }
@@ -1954,5 +2037,29 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         return mcl.findEncoderForFormat(format) != null;
+    }
+
+    private static class ImageWriterQueuer implements ImageReader.OnImageAvailableListener {
+        public ImageWriterQueuer(ImageWriter writer) {
+            mWriter = writer;
+        }
+
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            Image image = null;
+            try {
+                image = reader.acquireNextImage();
+            } finally {
+                if (image != null && mWriter != null) {
+                    mWriter.queueInputImage(image);
+                }
+            }
+        }
+
+        public void close() {
+            mWriter = null;
+        }
+
+        private ImageWriter mWriter = null;
     }
 }

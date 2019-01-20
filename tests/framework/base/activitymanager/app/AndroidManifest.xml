@@ -393,6 +393,10 @@
         <activity android:name=".NoInheritShowWhenLockedAttrActivity"
                   android:exported="true" />
 
+        <activity android:name=".ShowWhenLockedAttrImeActivity"
+                  android:showWhenLocked="true"
+                  android:exported="true" />
+
         <activity android:name=".ToastActivity"
                   android:exported="true"/>
 

@@ -59,6 +59,7 @@ public class WallpaperInfoTest {
         assertEquals(context.getString(R.string.wallpaper_slice_uri),
             wallpaperInfo.getSettingsSliceUri().toString());
         assertEquals(true, wallpaperInfo.getShowMetadataInPreview());
+        assertEquals(true, wallpaperInfo.supportsMultipleDisplays());
         assertNotNull(wallpaperInfo.loadIcon(pm));
         assertNotNull(wallpaperInfo.loadThumbnail(pm));
     }

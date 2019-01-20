@@ -24,7 +24,9 @@ import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
+import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -33,6 +35,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
+import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
@@ -49,8 +52,10 @@ import androidx.annotation.NonNull;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -89,17 +94,83 @@ public class ChildlessActivityTest
         watcher.waitFor(DESTROYED);
 
         final Session session = service.getOnlyFinishedSession();
-        final ContentCaptureSessionId sessionId = session.id;
-        Log.v(TAG, "session id: " + sessionId);
+        Log.v(TAG, "session id: " + session.id);
 
-        assertRightActivity(session, sessionId, activity);
-
-        // Should be empty because the root view is not important for content capture without a
-        // child that is important.
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        assertThat(events).isEmpty();
+        activity.assertDefaultEvents(session);
     }
+
+    @Test
+    public void testLaunchAnotherActivity() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher1 = startWatcher();
+
+        // Launch and finish 1st activity
+        final ChildlessActivity activity1 = launchActivity();
+        watcher1.waitFor(RESUMED);
+        activity1.finish();
+        watcher1.waitFor(DESTROYED);
+
+        // Launch and finish 2nd activity
+        final ActivityLauncher<LoginActivity> anotherActivityLauncher = new ActivityLauncher<>(
+                sContext, mActivitiesWatcher, LoginActivity.class);
+        final ActivityWatcher watcher2 = anotherActivityLauncher.getWatcher();
+        final LoginActivity activity2 = anotherActivityLauncher.launchActivity();
+        watcher2.waitFor(RESUMED);
+        activity2.finish();
+        watcher2.waitFor(DESTROYED);
+
+        // Assert the sessions
+        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
+        assertThat(sessionIds).hasSize(2);
+        final ContentCaptureSessionId sessionId1 = sessionIds.get(0);
+        Log.v(TAG, "session id1: " + sessionId1);
+        final ContentCaptureSessionId sessionId2 = sessionIds.get(1);
+        Log.v(TAG, "session id2: " + sessionId2);
+
+        final Session session1 = service.getFinishedSession(sessionId1);
+        activity1.assertDefaultEvents(session1);
+
+        final Session session2 = service.getFinishedSession(sessionId2);
+        activity2.assertDefaultEvents(session2);
+    }
+
+    @Ignore("not implemented yet, pending on b/122595322")
+    @Test
+    public void testLaunchAnotherActivity_serviceDisabledActivity() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher1 = startWatcher();
+
+        // Disable activity 2
+        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
+
+        // Launch and finish 1st activity
+        final ChildlessActivity activity1 = launchActivity();
+        watcher1.waitFor(RESUMED);
+        activity1.finish();
+        watcher1.waitFor(DESTROYED);
+
+        // Launch and finish 2nd activity
+        final ActivityLauncher<LoginActivity> anotherActivityLauncher = new ActivityLauncher<>(
+                sContext, mActivitiesWatcher, LoginActivity.class);
+        final ActivityWatcher watcher2 = anotherActivityLauncher.getWatcher();
+        final LoginActivity activity2 = anotherActivityLauncher.launchActivity();
+        watcher2.waitFor(RESUMED);
+        activity2.finish();
+        watcher2.waitFor(DESTROYED);
+
+        // Assert the sessions
+        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
+        assertThat(sessionIds).hasSize(1);
+        final ContentCaptureSessionId sessionId1 = sessionIds.get(0);
+        Log.v(TAG, "session id1: " + sessionId1);
+
+        final Session session1 = service.getFinishedSession(sessionId1);
+        activity1.assertDefaultEvents(session1);
+
+        // TODO(b/122595322): should also test events after re-enabling it
+    }
+
+    // TODO(b/122595322): same tests for disabled by package, explicity whitelisted, etc...
 
     @Test
     public void testAddAndRemoveNoImportantChild() throws Exception {
@@ -481,7 +552,7 @@ public class ChildlessActivityTest
 
         final TextView s3c1 = addChild(activity, childSession3, "s3c1");
         final TextView s3c2 = addChild(activity, childSession3, "s3c2");
-        waitAndRemoveView(activity, s3c1);
+        waitAndRemoveViews(activity, s3c1);
         final TextView s3c3 = addChild(activity, childSession3, "s3c3");
 
         // ...and close it right away
@@ -719,6 +790,84 @@ public class ChildlessActivityTest
         assertLifecycleOrder(10, mainTestSession,  DESTRUCTION);
     }
 
+    /**
+     * Tests scenario where views from different session are removed in sequence - they should not
+     * have been batched.
+     */
+    @Test
+    public void testRemoveChildrenFromDifferentSessions() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final ChildlessActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+        final ContentCaptureSession mainSession = activity.getRootView().getContentCaptureSession();
+        final ContentCaptureSessionId mainSessionId = mainSession.getContentCaptureSessionId();
+        Log.v(TAG, "main session id: " + mainSessionId);
+
+        // Create 1st session
+        final ContentCaptureContext context1 = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://session1")).build();
+        final ContentCaptureSession childSession1 = mainSession
+                .createContentCaptureSession(context1);
+        final ContentCaptureSessionId childSessionId1 = childSession1.getContentCaptureSessionId();
+        Log.v(TAG, "child session id 1: " + childSessionId1);
+
+        // Session 1, child 1
+        final TextView s1c1 = addChild(activity, childSession1, "s1c1");
+        final AutofillId s1c1Id = s1c1.getAutofillId();
+        Log.v(TAG, "childrens from session1: " + s1c1Id);
+
+        // Create 2nd session
+        final ContentCaptureContext context2 = new ContentCaptureContext.Builder()
+                .setUri(Uri.parse("http://session2")).build();
+        final ContentCaptureSession childSession2 = mainSession
+                .createContentCaptureSession(context2);
+        final ContentCaptureSessionId childSessionId2 = childSession2.getContentCaptureSessionId();
+        Log.v(TAG, "child session id 2: " + childSessionId2);
+
+        final TextView s2c1 = addChild(activity, childSession2, "s2c1");
+        final AutofillId s2c1Id = s2c1.getAutofillId();
+        final TextView s2c2 = addChild(activity, childSession2, "s2c2");
+        final AutofillId s2c2Id = s2c2.getAutofillId();
+        Log.v(TAG, "childrens from session2: " + s2c1Id + ", " + s2c2Id);
+
+        // Remove views - should generate one batch event for s2 and one single event for s1
+        waitAndRemoveViews(activity, s2c1, s2c2, s1c1);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final List<ContentCaptureSessionId> receivedIds = service.getAllSessionIds();
+        assertThat(receivedIds).containsExactly(
+                mainSessionId,
+                childSessionId1,
+                childSessionId2)
+            .inOrder();
+
+        // Assert main sessions info
+        final Session mainTestSession = service.getFinishedSession(mainSessionId);
+        assertMainSessionContext(mainTestSession, activity);
+
+        final Session childTestSession1 = service.getFinishedSession(childSessionId1);
+        assertChildSessionContext(childTestSession1, "http://session1");
+        final List<ContentCaptureEvent> events1 = childTestSession1.getEvents();
+        Log.v(TAG, "events1: " + events1);
+        assertThat(events1.size()).isAtLeast(2);
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+        assertViewAppeared(events1, 0, s1c1, rootId);
+        assertViewDisappeared(events1, 1, s1c1Id);
+
+        final Session childTestSession2 = service.getFinishedSession(childSessionId2);
+        final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
+        assertChildSessionContext(childTestSession2, "http://session2");
+        Log.v(TAG, "events2: " + events2);
+        assertThat(events2.size()).isAtLeast(3);
+        assertViewAppeared(events2, 0, s2c1, rootId);
+        assertViewAppeared(events2, 1, s2c2, rootId);
+        assertViewsDisappeared(events2, 2, s2c1Id, s2c2Id);
+    }
+
     /* TODO(b/119638528): add more scenarios for nested sessions, such as:
      * - add views to the children sessions
      * - s1 -> s2 -> s3 and main -> s4; close(s1) then generate events on view from s3
@@ -744,8 +893,8 @@ public class ChildlessActivityTest
         return child;
     }
 
-    // TODO(b/119638958): these method are used in cases where we cannot close a session because we
-    // would miss intermediate evets, so we need to sleep. This is a hack (it's slow and flaky):
+    // TODO(b/123024698): these method are used in cases where we cannot close a session because we
+    // would miss intermediate events, so we need to sleep. This is a hack (it's slow and flaky):
     // ideally we should block and wait until the service receives the event, but right now
     // we don't get the service events until after the activity is finished, so we cannot do that...
     private void waitAndClose(@NonNull ContentCaptureSession session) {
@@ -753,9 +902,14 @@ public class ChildlessActivityTest
         SystemClock.sleep(1_000);
         session.close();
     }
-    private void waitAndRemoveView(@NonNull ChildlessActivity activity, @NonNull View view) {
-        Log.d(TAG, "sleeping for 1s before removing " + view.getAutofillId());
+
+    private void waitAndRemoveViews(@NonNull ChildlessActivity activity, @NonNull View... views) {
+        Log.d(TAG, "sleeping for 1s before removing " + Arrays.toString(views));
         SystemClock.sleep(1_000);
-        activity.syncRunOnUiThread(() -> activity.getRootView().removeView(view));
+        activity.syncRunOnUiThread(() -> {
+            for (View view : views) {
+                activity.getRootView().removeView(view);
+            }
+        });
     }
 }

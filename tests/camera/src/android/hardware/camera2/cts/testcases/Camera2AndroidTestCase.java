@@ -331,6 +331,31 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
     }
 
     /**
+     * Create an {@link ImageReader} object and get the surface.
+     * <p>
+     * This function creates {@link ImageReader} object and surface, then assign
+     * to the default {@link mReader} and {@link mReaderSurface}. It closes the
+     * current default active {@link ImageReader} if it exists.
+     * </p>
+     *
+     * @param size The size of this ImageReader to be created.
+     * @param format The format of this ImageReader to be created
+     * @param maxNumImages The max number of images that can be acquired
+     *            simultaneously.
+     * @param usage The usage flag of the ImageReader
+     * @param listener The listener used by this ImageReader to notify
+     *            callbacks.
+     */
+    protected void createDefaultImageReader(Size size, int format, int maxNumImages, long usage,
+            ImageReader.OnImageAvailableListener listener) throws Exception {
+        closeDefaultImageReader();
+
+        mReader = createImageReader(size, format, maxNumImages, usage, listener);
+        mReaderSurface = mReader.getSurface();
+        if (VERBOSE) Log.v(TAG, "Created ImageReader size " + size.toString());
+    }
+
+    /**
      * Create an {@link ImageReader} object.
      *
      * <p>This function creates image reader object for given format, maxImages, and size.</p>
@@ -347,6 +372,29 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         ImageReader reader = null;
         reader = ImageReader.newInstance(size.getWidth(), size.getHeight(),
                 format, maxNumImages);
+
+        reader.setOnImageAvailableListener(listener, mHandler);
+        if (VERBOSE) Log.v(TAG, "Created ImageReader size " + size.toString());
+        return reader;
+    }
+
+    /**
+     * Create an {@link ImageReader} object.
+     *
+     * <p>This function creates image reader object for given format, maxImages, usage and size.</p>
+     *
+     * @param size The size of this ImageReader to be created.
+     * @param format The format of this ImageReader to be created
+     * @param maxNumImages The max number of images that can be acquired simultaneously.
+     * @param usage The usage flag of the ImageReader
+     * @param listener The listener used by this ImageReader to notify callbacks.
+     */
+
+    protected ImageReader createImageReader(Size size, int format, int maxNumImages, long usage,
+            ImageReader.OnImageAvailableListener listener) throws Exception {
+        ImageReader reader = null;
+        reader = ImageReader.newInstance(size.getWidth(), size.getHeight(),
+                format, maxNumImages, usage);
 
         reader.setOnImageAvailableListener(listener, mHandler);
         if (VERBOSE) Log.v(TAG, "Created ImageReader size " + size.toString());

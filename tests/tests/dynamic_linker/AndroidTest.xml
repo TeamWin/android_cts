@@ -18,8 +18,12 @@
     <option name="config-descriptor:metadata" key="component" value="bionic" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsDynamicLinkerTestCases27.apk" />
         <option name="test-file-name" value="CtsDynamicLinkerTestCases.apk" />
     </target_preparer>
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="package" value="com.android.dynamiclinker27" />
+    </test>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.dynamiclinker" />
     </test>

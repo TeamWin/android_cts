@@ -141,11 +141,16 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         mListener.onTestMsgReceived(
                 mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestSubscriber: requested network");
-        boolean networkAvailable = networkCb.waitForNetwork();
+        NetworkCapabilities nc = networkCb.waitForNetwork();
         cm.unregisterNetworkCallback(networkCb);
-        if (!networkAvailable) {
+        if (nc == null) {
             setFailureReason(mContext.getString(R.string.aware_status_network_failed));
             Log.e(TAG, "executeTestSubscriber: network request rejected - ON_UNAVAILABLE");
+            return false;
+        }
+        if (nc.getNetworkSpecifier() != null) {
+            setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
+            Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
             return false;
         }
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));
@@ -200,11 +205,16 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         }
 
         // 6. wait for network
-        boolean networkAvailable = networkCb.waitForNetwork();
+        NetworkCapabilities nc = networkCb.waitForNetwork();
         cm.unregisterNetworkCallback(networkCb);
-        if (!networkAvailable) {
+        if (nc == null) {
             setFailureReason(mContext.getString(R.string.aware_status_network_failed));
             Log.e(TAG, "executeTestPublisher: request network rejected - ON_UNAVAILABLE");
+            return false;
+        }
+        if (nc.getNetworkSpecifier() != null) {
+            setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
+            Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
             return false;
         }
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));

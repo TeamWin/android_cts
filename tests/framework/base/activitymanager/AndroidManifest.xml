@@ -21,6 +21,8 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INJECT_EVENTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS"/>
 
     <application android:label="CtsActivityManagerDeviceTestCases">
         <uses-library android:name="android.test.runner" />
@@ -78,6 +80,8 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ThirdActivity"/>
+
         <activity
                 android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$TranslucentActivity"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar" />
@@ -98,11 +102,17 @@
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ConfigChangeHandlingActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$PipActivity"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:supportsPictureInPicture="true"/>
+
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 
         <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivity" />
         <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivity2" />
         <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivityWithBrokenContextWrapper" />
+
+        <activity android:name="android.server.am.KeyguardLockedTests$ShowWhenLockedImeActivity" />
 
         <activity android:name="android.server.am.lifecycle.ActivityStarterTests$StandardActivity"
                   android:exported="true" />
@@ -128,6 +138,9 @@
         <activity android:name="android.server.am.lifecycle.ActivityStarterTests$TestLaunchingActivity"
                   android:taskAffinity="nobody.but.LaunchingActivity"
                   android:exported="true" />
+
+        <activity android:name="android.server.am.ActivityViewTest$ActivityViewTestActivity"
+                  android:exported="true"/>
 
         <provider
             android:name="android.server.am.TestJournalProvider"

@@ -309,6 +309,29 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Test two image stream (YUV420_888 and JPEG) capture by using ImageReader with the ImageReader
+     * factory method that has usage flag argument.
+     *
+     * <p>Both stream formats are mandatory for Camera2 API</p>
+     */
+    public void testYuvAndJpegWithUsageFlag() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "YUV and JPEG testing for camera " + id);
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                bufferFormatWithYuvTestByCamera(ImageFormat.JPEG, true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
      * Test two image stream (YUV420_888 and RAW_SENSOR) capture by using ImageReader.
      *
      */
@@ -323,6 +346,28 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 }
                 openDevice(id);
                 bufferFormatWithYuvTestByCamera(ImageFormat.RAW_SENSOR);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
+     * Test two image stream (YUV420_888 and RAW_SENSOR) capture by using ImageReader with the
+     * ImageReader factory method that has usage flag argument.
+     *
+     */
+    public void testImageReaderYuvAndRawWithUsageFlag() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "YUV and RAW testing for camera " + id);
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                bufferFormatWithYuvTestByCamera(ImageFormat.RAW_SENSOR, true);
             } finally {
                 closeDevice(id);
             }
@@ -685,6 +730,20 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      * @param format The capture format to be tested along with yuv format.
      */
     private void bufferFormatWithYuvTestByCamera(int format) throws Exception {
+        bufferFormatWithYuvTestByCamera(format, false);
+    }
+
+    /**
+     * Test capture a given format stream with yuv stream simultaneously.
+     *
+     * <p>Use fixed yuv size, varies targeted format capture size. Single capture is tested.</p>
+     *
+     * @param format The capture format to be tested along with yuv format.
+     * @param setUsageFlag The ImageReader factory method to be used (with or without specifying
+     *                     usage flag)
+     */
+    private void bufferFormatWithYuvTestByCamera(int format, boolean setUsageFlag)
+            throws Exception {
         if (format != ImageFormat.JPEG && format != ImageFormat.RAW_SENSOR
                 && format != ImageFormat.YUV_420_888) {
             throw new IllegalArgumentException("Unsupported format: " + format);
@@ -706,14 +765,25 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 // Create YUV image reader
                 SimpleImageReaderListener yuvListener  = new SimpleImageReaderListener();
-                yuvReader = createImageReader(maxYuvSz, ImageFormat.YUV_420_888, MAX_NUM_IMAGES,
-                        yuvListener);
+                if (setUsageFlag) {
+                    yuvReader = createImageReader(maxYuvSz, ImageFormat.YUV_420_888, MAX_NUM_IMAGES,
+                            HardwareBuffer.USAGE_CPU_READ_OFTEN, yuvListener);
+                } else {
+                    yuvReader = createImageReader(maxYuvSz, ImageFormat.YUV_420_888, MAX_NUM_IMAGES,
+                            yuvListener);
+                }
+
                 Surface yuvSurface = yuvReader.getSurface();
 
                 // Create capture image reader
                 SimpleImageReaderListener captureListener = new SimpleImageReaderListener();
-                captureReader = createImageReader(captureSz, format, MAX_NUM_IMAGES,
-                        captureListener);
+                if (setUsageFlag) {
+                    captureReader = createImageReader(captureSz, format, MAX_NUM_IMAGES,
+                            HardwareBuffer.USAGE_CPU_READ_OFTEN, captureListener);
+                } else {
+                    captureReader = createImageReader(captureSz, format, MAX_NUM_IMAGES,
+                            captureListener);
+                }
                 Surface captureSurface = captureReader.getSurface();
 
                 // Capture images.

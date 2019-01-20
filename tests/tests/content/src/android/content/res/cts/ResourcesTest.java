@@ -70,6 +70,10 @@ public class ResourcesTest extends AndroidTestCase {
         mResources = getContext().getResources();
     }
 
+    public void testIdNull() {
+        assertEquals(0, Resources.ID_NULL);
+    }
+
     public void testResources() {
         final AssetManager am = new AssetManager();
         final Configuration cfg = new Configuration();

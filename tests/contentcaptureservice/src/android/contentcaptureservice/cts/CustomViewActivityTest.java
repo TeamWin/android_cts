@@ -19,6 +19,8 @@ import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewDisappeared;
+import static android.contentcaptureservice.cts.Assertions.assertVirtualViewsDisappeared;
+import static android.contentcaptureservice.cts.Helper.await;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -40,7 +42,9 @@ import androidx.annotation.NonNull;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class CustomViewActivityTest extends
         AbstractContentCaptureIntegrationTest<CustomViewActivity> {
@@ -76,17 +80,7 @@ public class CustomViewActivityTest extends
         final Session session = service.getOnlyFinishedSession();
         Log.v(TAG, "session id: " + session.id);
 
-        assertRightActivity(session, session.id, activity);
-
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent
-        assertThat(events.size()).isAtLeast(1);
-
-        // Assert just the relevant events
-        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
-
-        // TODO(b/122315042): assert views disappeared
+        activity.assertDefaultEvents(session);
     }
 
     /**
@@ -153,7 +147,7 @@ public class CustomViewActivityTest extends
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        setAsyncDelegate((customView, structure) -> {
+        final CountDownLatch asyncLatch = setAsyncDelegate((customView, structure) -> {
             Log.d(TAG, "delegate running on " + Thread.currentThread());
             final AutofillId customViewId = customView.getAutofillId();
             Log.d(TAG, "customViewId: " + customViewId);
@@ -165,14 +159,12 @@ public class CustomViewActivityTest extends
             assertThat(session.newAutofillId(customViewId, 1)).isEqualTo(child1Id);
             Log.d(TAG, "nofifying child1 appeared: " + child1Id);
             session.notifyViewAppeared(child1);
-
             final ViewStructure child2 = session.newVirtualViewStructure(customViewId, 2);
             child2.setText("child2");
             final AutofillId child2Id = child2.getAutofillId();
             assertThat(session.newAutofillId(customViewId, 2)).isEqualTo(child2Id);
             Log.d(TAG, "nofifying child2 appeared: " + child2Id);
             session.notifyViewAppeared(child2);
-
             Log.d(TAG, "nofifying child2 disappeared: " + child2Id);
             session.notifyViewDisappeared(child2Id);
             Log.d(TAG, "nofifying child1 disappeared: " + child1Id);
@@ -181,6 +173,7 @@ public class CustomViewActivityTest extends
 
         final CustomViewActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
+        await(asyncLatch, "async onProvide");
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -192,8 +185,8 @@ public class CustomViewActivityTest extends
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent (should be 5)
-        assertThat(events.size()).isAtLeast(7);
+        // TODO(b/119638528): check right number once we get rid of grandparent
+        assertThat(events.size()).isAtLeast(6);
 
         // Assert just the relevant events
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
@@ -203,8 +196,7 @@ public class CustomViewActivityTest extends
         // TODO(b/119638528): next 2 events are the grandparents
         assertVirtualViewAppeared(events, 3, mainSession, customViewId, 1, "child1");
         assertVirtualViewAppeared(events, 4, mainSession, customViewId, 2, "child2");
-        assertVirtualViewDisappeared(events, 5, customViewId, mainSession, 2);
-        assertVirtualViewDisappeared(events, 6, customViewId, mainSession, 1);
+        assertVirtualViewsDisappeared(events, 5, customViewId, mainSession, 2, 1);
 
         // TODO(b/122315042): assert views disappeared
     }
@@ -217,7 +209,7 @@ public class CustomViewActivityTest extends
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        setAsyncDelegate((customView, structure) -> {
+        final CountDownLatch asyncLatch = setAsyncDelegate((customView, structure) -> {
             Log.d(TAG, "delegate running on " + Thread.currentThread());
             final AutofillId customViewId = customView.getAutofillId();
             Log.d(TAG, "customViewId: " + customViewId);
@@ -296,7 +288,7 @@ public class CustomViewActivityTest extends
 
         final CustomViewActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
-
+        await(asyncLatch, "async onProvide");
         activity.finish();
         watcher.waitFor(DESTROYED);
 
@@ -308,7 +300,7 @@ public class CustomViewActivityTest extends
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
         // TODO(b/119638528): check right number once we get rid of grandparents
-        assertThat(events.size()).isAtLeast(15);
+        assertThat(events.size()).isAtLeast(11);
 
         // Assert just the relevant events
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
@@ -323,24 +315,85 @@ public class CustomViewActivityTest extends
         assertVirtualViewAppeared(events, 7, mainSession, customViewId, 21, "c2g1");
         assertVirtualViewAppeared(events, 8, mainSession, customViewId, 211, "c2g1gg1");
         assertVirtualViewAppeared(events, 9, mainSession, customViewId, 3, "c3");
-        assertVirtualViewDisappeared(events, 10, customViewId, mainSession, 21);
-        assertVirtualViewDisappeared(events, 11, customViewId, mainSession, 2);
-        assertVirtualViewDisappeared(events, 12, customViewId, mainSession, 11);
-        assertVirtualViewDisappeared(events, 13, customViewId, mainSession, 1);
-        assertVirtualViewDisappeared(events, 14, customViewId, mainSession, 12);
+        assertVirtualViewsDisappeared(events, 10, customViewId, mainSession, 21, 2, 11, 1, 12);
 
-        // TODO(b/122315042): assert views disappeared
+        // TODO(b/122315042): assert other views disappeared
     }
 
     // TODO(b/119638528): add tests for multiple sessions
+
+    @Test
+    public void testVirtualView_batchDisappear() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final CountDownLatch asyncLatch = setAsyncDelegate((customView, structure) -> {
+            Log.d(TAG, "delegate running on " + Thread.currentThread());
+            final AutofillId customViewId = customView.getAutofillId();
+            Log.d(TAG, "customViewId: " + customViewId);
+            final ContentCaptureSession session = customView.getContentCaptureSession();
+
+            final ViewStructure child1 = session.newVirtualViewStructure(customViewId, 1);
+            child1.setText("child1");
+            final AutofillId child1Id = child1.getAutofillId();
+            assertThat(session.newAutofillId(customViewId, 1)).isEqualTo(child1Id);
+            Log.d(TAG, "nofifying child1 appeared: " + child1Id);
+            session.notifyViewAppeared(child1);
+
+            final ViewStructure child2 = session.newVirtualViewStructure(customViewId, 2);
+            child2.setText("child2");
+            final AutofillId child2Id = child2.getAutofillId();
+            assertThat(session.newAutofillId(customViewId, 2)).isEqualTo(child2Id);
+            Log.d(TAG, "nofifying child2 appeared: " + child2Id);
+            session.notifyViewAppeared(child2);
+
+            final int[] childrenIds = {2, 1};
+            Log.d(TAG, "nofifying both children disappeared: " + Arrays.toString(childrenIds));
+            session.notifyViewsDisappeared(customViewId, childrenIds);
+        });
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+        await(asyncLatch, "async onProvide");
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+
+        assertRightActivity(session, session.id, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+        // TODO(b/119638528): check right number once we get rid of grandparent (should be 5)
+        assertThat(events.size()).isAtLeast(6);
+
+        // Assert just the relevant events
+        final AutofillId customViewId = activity.mCustomView.getAutofillId();
+        final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
+
+        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
+        // TODO(b/119638528): next 2 events are the grandparents
+        assertVirtualViewAppeared(events, 3, mainSession, customViewId, 1, "child1");
+        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 2, "child2");
+        assertVirtualViewsDisappeared(events, 5, customViewId, mainSession, 2, 1);
+
+        // TODO(b/122315042): assert other views disappeared
+    }
 
     /**
      * Sets a delegate that will generate the events asynchronously,
      * after {@code onProvideContentCaptureStructure()} returns.
      */
-    private void setAsyncDelegate(@NonNull DoubleVisitor<CustomView, ViewStructure> delegate) {
+    private CountDownLatch setAsyncDelegate(
+            @NonNull DoubleVisitor<CustomView, ViewStructure> delegate) {
+        final CountDownLatch asyncLatch = new CountDownLatch(1);
         CustomViewActivity.setCustomViewDelegate(
                 (customView, structure) -> new Handler(Looper.getMainLooper())
-                        .post(() -> delegate.visit(customView, structure)));
+                        .post(() -> {
+                            delegate.visit(customView, structure);
+                            asyncLatch.countDown();
+                        }));
+        return asyncLatch;
     }
 }
