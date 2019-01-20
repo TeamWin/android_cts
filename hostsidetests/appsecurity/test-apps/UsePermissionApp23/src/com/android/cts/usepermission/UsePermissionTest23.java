@@ -20,15 +20,13 @@ import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.fail;
 
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertMediaNoAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertMediaReadWriteAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.logCommand;
-
 import android.Manifest;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Environment;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.CalendarContract;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.Before;
@@ -39,6 +37,8 @@ import org.junit.Test;
  */
 public class UsePermissionTest23 extends BasePermissionsTest {
     private static final int REQUEST_CODE_PERMISSIONS = 42;
+
+    private final Context mContext = getInstrumentation().getContext();
 
     private boolean mLeanback;
     private boolean mWatch;
@@ -62,49 +62,47 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
     @Test
     public void testDefault() throws Exception {
-        logCommand("/system/bin/cat", "/proc/self/mountinfo");
-
         // New permission model is denied by default
         assertAllPermissionsRevoked();
-
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
-        assertDirNoAccess(Environment.getExternalStorageDirectory());
-        assertDirReadWriteAccess(getInstrumentation().getContext().getExternalCacheDir());
-        assertMediaNoAccess(getInstrumentation().getContext().getContentResolver(), false);
     }
 
     @Test
     public void testGranted() throws Exception {
-        logCommand("/system/bin/cat", "/proc/self/mountinfo");
-        grantPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+        grantPermission(Manifest.permission.READ_CALENDAR);
+
+        // Read/write access should be allowed
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE));
+                .checkSelfPermission(Manifest.permission.READ_CALENDAR));
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
-        assertDirReadWriteAccess(Environment.getExternalStorageDirectory());
-        assertDirReadWriteAccess(getInstrumentation().getContext().getExternalCacheDir());
-        assertMediaReadWriteAccess(getInstrumentation().getContext().getContentResolver());
+                .checkSelfPermission(Manifest.permission.WRITE_CALENDAR));
+        final Uri uri = insertCalendarItem();
+        try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
     }
 
     @Test
     public void testInteractiveGrant() throws Exception {
-        logCommand("/system/bin/cat", "/proc/self/mountinfo");
-
         // Start out without permission
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE));
+                .checkSelfPermission(Manifest.permission.READ_CALENDAR));
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
-        assertDirNoAccess(Environment.getExternalStorageDirectory());
-        assertDirReadWriteAccess(getInstrumentation().getContext().getExternalCacheDir());
-        assertMediaNoAccess(getInstrumentation().getContext().getContentResolver(), false);
+                .checkSelfPermission(Manifest.permission.WRITE_CALENDAR));
+        try {
+            insertCalendarItem();
+            fail();
+        } catch (SecurityException expected) {
+        }
+        try (Cursor c = mContext.getContentResolver().query(
+                CalendarContract.Calendars.CONTENT_URI, null, null, null)) {
+            fail();
+        } catch (SecurityException expected) {
+        }
 
         // Go through normal grant flow
         BasePermissionActivity.Result result = requestPermissions(new String[] {
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                Manifest.permission.READ_CALENDAR,
+                Manifest.permission.WRITE_CALENDAR},
                 REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class,
                 () -> {
@@ -117,22 +115,20 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 });
 
         assertEquals(REQUEST_CODE_PERMISSIONS, result.requestCode);
-        assertEquals(Manifest.permission.READ_EXTERNAL_STORAGE, result.permissions[0]);
-        assertEquals(Manifest.permission.WRITE_EXTERNAL_STORAGE, result.permissions[1]);
+        assertEquals(Manifest.permission.READ_CALENDAR, result.permissions[0]);
+        assertEquals(Manifest.permission.WRITE_CALENDAR, result.permissions[1]);
         assertEquals(PackageManager.PERMISSION_GRANTED, result.grantResults[0]);
         assertEquals(PackageManager.PERMISSION_GRANTED, result.grantResults[1]);
 
-        logCommand("/system/bin/cat", "/proc/self/mountinfo");
-
         // We should have permission now!
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE));
+                .checkSelfPermission(Manifest.permission.READ_CALENDAR));
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
-        assertDirReadWriteAccess(Environment.getExternalStorageDirectory());
-        assertDirReadWriteAccess(getInstrumentation().getContext().getExternalCacheDir());
-        assertMediaReadWriteAccess(getInstrumentation().getContext().getContentResolver());
+                .checkSelfPermission(Manifest.permission.WRITE_CALENDAR));
+        final Uri uri = insertCalendarItem();
+        try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
     }
 
     @Test
@@ -679,5 +675,17 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         } else {
             clickDenyAndDontAskAgainButton();
         }
+    }
+
+    /**
+     * Attempt to insert a new unique calendar item; this might be ignored if
+     * this legacy app has its permission revoked.
+     */
+    private Uri insertCalendarItem() {
+        final ContentValues values = new ContentValues();
+        values.put(CalendarContract.Calendars.NAME, "cts" + System.nanoTime());
+        values.put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, "cts");
+        values.put(CalendarContract.Calendars.CALENDAR_COLOR, 0xffff0000);
+        return mContext.getContentResolver().insert(CalendarContract.Calendars.CONTENT_URI, values);
     }
 }
