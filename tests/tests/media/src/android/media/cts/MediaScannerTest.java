@@ -19,7 +19,6 @@ package android.media.cts;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -29,13 +28,13 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.provider.MediaStore;
+import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
@@ -612,6 +611,13 @@ public class MediaScannerTest extends AndroidTestCase {
         }
     }
 
+    static void startMediaScan() {
+        // Ugh, the best proxy we have is pretending that it was just mounted
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
+                "am broadcast -a android.intent.action.MEDIA_MOUNTED "
+                        + "--receiver-include-background -d file:///sdcard");
+    }
+
     private void startMediaScanAndWait() throws InterruptedException {
         ScannerNotificationReceiver finishedReceiver = new ScannerNotificationReceiver(
                 Intent.ACTION_MEDIA_SCANNER_FINISHED);
@@ -619,12 +625,7 @@ public class MediaScannerTest extends AndroidTestCase {
         finishedIntentFilter.addDataScheme("file");
         mContext.registerReceiver(finishedReceiver, finishedIntentFilter);
 
-        Bundle args = new Bundle();
-        args.putString("volume", "external");
-        Intent i = new Intent("android.media.IMediaScannerService").putExtras(args);
-        i.setClassName("com.android.providers.media",
-                "com.android.providers.media.MediaScannerService");
-        mContext.startService(i);
+        startMediaScan();
 
         finishedReceiver.waitForBroadcast();
         mContext.unregisterReceiver(finishedReceiver);
@@ -683,6 +684,7 @@ public class MediaScannerTest extends AndroidTestCase {
         }
 
         public void onScanCompleted(String path, Uri uri) {
+            Log.v("MediaScannerTest", "onScanCompleted for " + path + " to " + uri);
             mediaPath = path;
             if (uri != null) {
                 mediaUri = uri;
