@@ -224,7 +224,7 @@ class HistoricalAppopsTest {
                 if (d > 0) {
                     val previousIntervalDuration = computeIntervalDurationMillis(d - 1)
                     val currentIntervalDuration = computeIntervalDurationMillis(d)
-                    val sleepDurationMillis = (previousIntervalDuration / 2
+                    val sleepDurationMillis = (previousIntervalDuration
                             + currentIntervalDuration / 2)
                     SystemClock.sleep(sleepDurationMillis)
                 }
@@ -318,7 +318,8 @@ class HistoricalAppopsTest {
         try {
             lock.lock()
             appOpsManager.getHistoricalOps(uid, packageName, opNames,
-                    beginTimeMillis, endTimeMillis, null, { ops ->
+                    beginTimeMillis, endTimeMillis, getContext().getMainExecutor(),
+                    Consumer { ops ->
                 array[0] = ops
                 try {
                     lock.lock()
