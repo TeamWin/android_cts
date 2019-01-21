@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -124,6 +125,20 @@ public class MediaController2Test {
         if (mSession != null) {
             mSession.close();
             mSession = null;
+        }
+    }
+
+    @Test
+    public void testGetConnectedToken() {
+        Controller2Callback controllerCallback = new Controller2Callback();
+        try (MediaController2 controller = new MediaController2(
+                mContext, mSession.getSessionToken(), sHandlerExecutor, controllerCallback)) {
+            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+            assertEquals(controller, controllerCallback.mController);
+            assertEquals(mSession.getSessionToken(), controller.getConnectedSessionToken());
+        } finally {
+            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertNull(controllerCallback.mController.getConnectedSessionToken());
         }
     }
 
