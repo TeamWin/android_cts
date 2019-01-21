@@ -33,7 +33,7 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.MediaStore.PendingParams;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import libcore.io.IoUtils;
 
@@ -43,6 +43,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,20 +59,36 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStorePendingTest {
+    private static final String TAG = "MediaStorePendingTest";
+
     private Context mContext;
     private ContentResolver mResolver;
 
-    private Uri mExternalAudio = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-    private Uri mExternalVideo = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-    private Uri mExternalImages = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-    private Uri mExternalDownloads = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+    private Uri mExternalAudio;
+    private Uri mExternalVideo;
+    private Uri mExternalImages;
+    private Uri mExternalDownloads;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalAudio = MediaStore.Audio.Media.getContentUri(mVolumeName);
+        mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
+        mExternalDownloads = MediaStore.Downloads.getContentUri(mVolumeName);
     }
 
     @After

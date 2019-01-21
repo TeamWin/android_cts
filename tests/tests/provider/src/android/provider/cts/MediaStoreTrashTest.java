@@ -30,30 +30,45 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateUtils;
 import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStoreTrashTest {
     private static final String TAG = "MediaStoreTrashTest";
 
     private Context mContext;
     private ContentResolver mResolver;
 
+    private Uri mExternalImages;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
     }
 
     @Test
     public void testTrashUntrash() throws Exception {
-        final Uri insertUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        final Uri insertUri = mExternalImages;
         final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis, insertUri);
         final long id = ContentUris.parseId(uri);
 
@@ -93,7 +108,7 @@ public class MediaStoreTrashTest {
 
     @Test
     public void testTrashExecutes() throws Exception {
-        final Uri insertUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        final Uri insertUri = mExternalImages;
         final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis, insertUri);
 
         MediaStore.trash(mContext, uri, 1);

@@ -22,6 +22,7 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.system.ErrnoException;
@@ -37,7 +38,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,12 +53,28 @@ public class ProviderTestUtils {
     private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
             "^Backup Manager currently (enabled|disabled)$");
 
+    static Iterable<String> getSharedVolumeNames() {
+        if (StorageManager.hasIsolatedStorage()) {
+            final Set<String> volumeNames = MediaStore
+                    .getAllVolumeNames(InstrumentationRegistry.getTargetContext());
+            volumeNames.remove(MediaStore.VOLUME_INTERNAL);
+            return volumeNames;
+        } else {
+            return Arrays.asList(MediaStore.VOLUME_EXTERNAL);
+        }
+    }
+
     static void setDefaultSmsApp(boolean setToSmsApp, String packageName, UiAutomation uiAutomation)
             throws Exception {
         String mode = setToSmsApp ? "allow" : "default";
         String cmd = "appops set %s %s %s";
         executeShellCommand(String.format(cmd, packageName, "WRITE_SMS", mode), uiAutomation);
         executeShellCommand(String.format(cmd, packageName, "READ_SMS", mode), uiAutomation);
+    }
+
+    static String executeShellCommand(String command) throws IOException {
+        return executeShellCommand(command,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
     }
 
     static String executeShellCommand(String command, UiAutomation uiAutomation)
