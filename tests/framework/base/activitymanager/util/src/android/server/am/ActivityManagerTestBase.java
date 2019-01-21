@@ -85,6 +85,7 @@ import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 import static android.support.test.InstrumentationRegistry.getContext;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
+import static android.view.Surface.ROTATION_0;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -99,15 +100,19 @@ import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.CommandSession.ActivityCallback;
@@ -1062,6 +1067,10 @@ public abstract class ActivityManagerTestBase {
     /** Helper class to save, set & wait, and restore rotation related preferences. */
     protected class RotationSession extends SettingsSession<Integer> {
         private final SettingsSession<Integer> mUserRotation;
+        private final HandlerThread mThread;
+        private final Handler mRunnableHandler;
+        private final SettingsObserver mRotationObserver;
+        private int mPreviousDegree;
 
         public RotationSession() throws Exception {
             // Save accelerometer_rotation preference.
@@ -1070,22 +1079,81 @@ public abstract class ActivityManagerTestBase {
             mUserRotation = new SettingsSession<>(
                     Settings.System.getUriFor(Settings.System.USER_ROTATION),
                     Settings.System::getInt, Settings.System::putInt);
+
+            mThread = new HandlerThread("Observer_Thread");
+            mThread.start();
+            mRunnableHandler = new Handler(mThread.getLooper());
+            mRotationObserver = new SettingsObserver(mRunnableHandler);
+
+            mPreviousDegree = mUserRotation.get();
             // Disable accelerometer_rotation.
             super.set(0);
         }
 
         @Override
         public void set(@NonNull Integer value) throws Exception {
+            // When the rotation is locked and the SystemUI receives the rotation becoming 0deg, it
+            // will call freezeRotation to WMS, which will cause USER_ROTATION be set to zero again.
+            // In order to prevent our test target from being overwritten by SystemUI during
+            // rotation test, wait for the USER_ROTATION changed then continue testing.
+            final boolean waitSystemUI = value == ROTATION_0 && mPreviousDegree != ROTATION_0;
+            if (waitSystemUI) {
+                mRotationObserver.observe();
+            }
             mUserRotation.set(value);
+            mPreviousDegree = value;
+
+            if (waitSystemUI) {
+                waitForRotationNotified();
+            }
             // Wait for settling rotation.
             mAmWmState.waitForRotation(value);
+
+            if (waitSystemUI) {
+                mRotationObserver.stopObserver();
+            }
         }
 
         @Override
         public void close() throws Exception {
+            mThread.quitSafely();
             mUserRotation.close();
             // Restore accelerometer_rotation preference.
             super.close();
+        }
+
+        private void waitForRotationNotified() {
+            for (int retry = 1; retry <= 5; retry++) {
+                if (mRotationObserver.notified) {
+                    return;
+                }
+                logAlways("waitForRotationNotified retry=" + retry);
+                SystemClock.sleep(500);
+            }
+            logE("waitForRotationNotified skip");
+        }
+
+        private class SettingsObserver extends ContentObserver {
+            boolean notified;
+
+            SettingsObserver(Handler handler) { super(handler); }
+
+            void observe() {
+                notified = false;
+                final ContentResolver resolver = mContext.getContentResolver();
+                resolver.registerContentObserver(Settings.System.getUriFor(
+                        Settings.System.USER_ROTATION), false, this);
+            }
+
+            void stopObserver() {
+                final ContentResolver resolver = mContext.getContentResolver();
+                resolver.unregisterContentObserver(this);
+            }
+
+            @Override
+            public void onChange(boolean selfChange) {
+                if (!selfChange) notified = true;
+            }
         }
     }
 
