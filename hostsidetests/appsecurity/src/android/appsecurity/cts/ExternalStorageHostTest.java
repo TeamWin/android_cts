@@ -551,7 +551,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private boolean hasIsolatedStorage() throws DeviceNotAvailableException {
-        return getDevice().executeShellCommand("getprop persist.sys.isolated_storage")
+        return getDevice().executeShellCommand("getprop sys.isolated_storage_snapshot")
                 .contains("true");
     }
 

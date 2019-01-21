@@ -16,6 +16,9 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.ProviderTestUtils.containsId;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -39,7 +42,6 @@ import libcore.io.IoUtils;
 
 import com.google.common.base.Objects;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,8 +63,6 @@ import java.util.regex.Pattern;
 
 @RunWith(Parameterized.class)
 public class MediaStorePendingTest {
-    private static final String TAG = "MediaStorePendingTest";
-
     private Context mContext;
     private ContentResolver mResolver;
 
@@ -89,10 +89,6 @@ public class MediaStorePendingTest {
         mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
         mExternalDownloads = MediaStore.Downloads.getContentUri(mVolumeName);
-    }
-
-    @After
-    public void tearDown() throws Exception {
     }
 
     @Test
@@ -441,16 +437,6 @@ public class MediaStorePendingTest {
         } finally {
             IoUtils.closeQuietly(session);
         }
-    }
-
-    private boolean containsId(Uri uri, long id) {
-        try (Cursor c = mResolver.query(uri,
-                new String[] { MediaColumns._ID }, null, null)) {
-            while (c.moveToNext()) {
-                if (c.getLong(0) == id) return true;
-            }
-        }
-        return false;
     }
 
     private static File getRawFile(Uri uri) throws Exception {

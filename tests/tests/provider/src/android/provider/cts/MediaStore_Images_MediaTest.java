@@ -16,6 +16,8 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -30,63 +32,56 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
-import android.provider.MediaStore.Images.Thumbnails;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.util.Size;
 
 import com.android.compatibility.common.util.FileUtils;
 
 import libcore.io.IoUtils;
 
-import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
 
     private static final String TEST_TITLE1 = "test title1";
-
     private static final String TEST_DESCRIPTION1 = "test description1";
-
     private static final String TEST_TITLE2 = "test title2";
-
     private static final String TEST_DESCRIPTION2 = "test description2";
-
     private static final String TEST_TITLE3 = "test title3";
-
     private static final String TEST_DESCRIPTION3 = "test description3";
-
-    private static final String LOG_TAG = "MediaStore_Images_MediaTest";
     
-    private ArrayList<Uri> mRowsAdded;
-
     private Context mContext;
-
     private ContentResolver mContentResolver;
 
-    @After
-    public void tearDown() throws Exception {
-        for (Uri row : mRowsAdded) {
-            mContentResolver.delete(row, null, null);
-        }
+    private Uri mExternalImages;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
     }
 
     @Before
@@ -94,22 +89,16 @@ public class MediaStore_Images_MediaTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
-        mRowsAdded = new ArrayList<Uri>();
-
-        File pics = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        if (!pics.exists()) {
-            Log.i(LOG_TAG, "Nonstandard test-environment: Pictures directory does not exist!");
-            pics.mkdirs();
-            if (!pics.exists()) {
-                Log.i(LOG_TAG, "Couldn't create Pictures directory, some tests may fail!");
-            }
-        }
-
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
     }
 
     @Test
     public void testInsertImageWithImagePath() throws Exception {
-        Cursor c = Media.query(mContentResolver, Media.EXTERNAL_CONTENT_URI, null, null,
+        // TODO: expand test to verify paths from secondary storage devices
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
+
+        Cursor c = Media.query(mContentResolver, mExternalImages, null, null,
                 "_id ASC");
         int previousCount = c.getCount();
         c.close();
@@ -128,7 +117,6 @@ public class MediaStore_Images_MediaTest {
             fail("There is no sdcard attached! " + e.getMessage());
         }
         assertInsertionSuccess(stringUrl);
-        mRowsAdded.add(Uri.parse(stringUrl));
 
         // insert another image by path
         file = mContext.getFileStreamPath("mediaStoreTest2.jpg");
@@ -144,7 +132,6 @@ public class MediaStore_Images_MediaTest {
             fail("There is no sdcard attached! " + e.getMessage());
         }
         assertInsertionSuccess(stringUrl);
-        mRowsAdded.add(Uri.parse(stringUrl));
 
         // query the newly added image
         c = Media.query(mContentResolver, Uri.parse(stringUrl),
@@ -158,7 +145,7 @@ public class MediaStore_Images_MediaTest {
 
         // query all the images in external db and order them by descending id
         // (make the images added in test case in the first positions)
-        c = Media.query(mContentResolver, Media.EXTERNAL_CONTENT_URI,
+        c = Media.query(mContentResolver, mExternalImages,
                 new String[] { Media.TITLE, Media.DESCRIPTION, Media.MIME_TYPE }, null,
                 "_id DESC");
         assertEquals(previousCount + 2, c.getCount());
@@ -195,7 +182,6 @@ public class MediaStore_Images_MediaTest {
             fail("There is no sdcard attached! " + e.getMessage());
         }
         assertInsertionSuccess(stringUrl);
-        mRowsAdded.add(Uri.parse(stringUrl));
 
         Cursor c = Media.query(mContentResolver, Uri.parse(stringUrl), new String[] { Media.DATA },
                 null, "_id ASC");
@@ -217,7 +203,7 @@ public class MediaStore_Images_MediaTest {
         assertNotNull(c = mContentResolver.query(Media.getContentUri("internal"), null, null, null,
                 null));
         c.close();
-        assertNotNull(c = mContentResolver.query(Media.getContentUri("external"), null, null, null,
+        assertNotNull(c = mContentResolver.query(Media.getContentUri(mVolumeName), null, null, null,
                 null));
         c.close();
 
@@ -227,16 +213,16 @@ public class MediaStore_Images_MediaTest {
     }
 
     private void cleanExternalMediaFile(String path) {
-        mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, "_data=?", new String[] { path });
+        mContentResolver.delete(mExternalImages, "_data=?", new String[] { path });
         new File(path).delete();
     }
 
     @Test
     public void testStoreImagesMediaExternal() throws Exception {
-        final String externalPath = Environment.getExternalStorageDirectory().getPath() +
-                "/testimage.jpg";
-        final String externalPath2 = Environment.getExternalStorageDirectory().getPath() +
-                "/testimage1.jpg";
+        final String externalPath = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "testimage.jpg").getAbsolutePath();
+        final String externalPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "testimage1.jpg").getAbsolutePath();
 
         // clean up any potential left over entries from a previous aborted run
         cleanExternalMediaFile(externalPath);
@@ -264,7 +250,7 @@ public class MediaStore_Images_MediaTest {
         values.put(Media.DATE_MODIFIED, dateModified);
 
         // insert
-        Uri uri = mContentResolver.insert(Media.EXTERNAL_CONTENT_URI, values);
+        Uri uri = mContentResolver.insert(mExternalImages, values);
         assertNotNull(uri);
 
         try {
@@ -310,22 +296,16 @@ public class MediaStore_Images_MediaTest {
         }
     }
 
-    private void assertInsertionSuccess(String stringUrl) {
-        assertNotNull(stringUrl);
+    private void assertInsertionSuccess(String stringUrl) throws IOException {
+        final Uri uri = Uri.parse(stringUrl);
+
         // check whether the thumbnails are generated
-        Cursor c = mContentResolver.query(Uri.parse(stringUrl), new String[]{ Media._ID }, null,
-                null, null);
-        assertTrue(c.moveToFirst());
-        long imageId = c.getLong(c.getColumnIndex(Media._ID));
-        c.close();
-        assertNotNull(Thumbnails.getThumbnail(mContentResolver, imageId,
-                Thumbnails.MINI_KIND, null));
-        assertNotNull(Thumbnails.getThumbnail(mContentResolver, imageId,
-                Thumbnails.MICRO_KIND, null));
-        c = mContentResolver.query(Thumbnails.EXTERNAL_CONTENT_URI, null,
-                Thumbnails.IMAGE_ID + "=" + imageId, null, null);
-        assertEquals(2, c.getCount());
-        c.close();
+        try (Cursor c = mContentResolver.query(uri, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
+
+        assertNotNull(mContentResolver.loadThumbnail(uri, new Size(512, 384), null));
+        assertNotNull(mContentResolver.loadThumbnail(uri, new Size(96, 96), null));
     }
 
     /**
@@ -340,7 +320,7 @@ public class MediaStore_Images_MediaTest {
 
         final String displayName = "cts" + System.nanoTime();
         final MediaStore.PendingParams params = new MediaStore.PendingParams(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, displayName, "image/jpeg");
+                mExternalImages, displayName, "image/jpeg");
 
         final Uri pendingUri = MediaStore.createPending(mContext, params);
         final Uri publishUri;
@@ -392,7 +372,7 @@ public class MediaStore_Images_MediaTest {
     public void testLocationDeprecated() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final MediaStore.PendingParams params = new MediaStore.PendingParams(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, displayName, "image/jpeg");
+                mExternalImages, displayName, "image/jpeg");
 
         final Uri pendingUri = MediaStore.createPending(mContext, params);
         final Uri publishUri;
