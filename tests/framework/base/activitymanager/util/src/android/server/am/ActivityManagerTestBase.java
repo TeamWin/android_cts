@@ -606,14 +606,15 @@ public abstract class ActivityManagerTestBase {
      *                           place of the Recents activity if home is the recents component)
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
+        final boolean isHomeRecentsComponent = mAmWmState.getAmState().isHomeRecentsComponent();
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
                     SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
                     false /* animate */,
-                    null /* initialBounds */, showSideActivity);
+                    null /* initialBounds */, showSideActivity && !isHomeRecentsComponent);
             mAmWmState.waitForRecentsActivityVisible();
 
-            if (mAmWmState.getAmState().isHomeRecentsComponent() && showSideActivity) {
+            if (isHomeRecentsComponent && showSideActivity) {
                 // Launch Placeholder Side Activity
                 final Activity sideActivity = mSideActivityRule.launchActivity(
                         new Intent());
