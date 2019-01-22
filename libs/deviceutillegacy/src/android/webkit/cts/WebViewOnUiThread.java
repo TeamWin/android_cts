@@ -40,11 +40,13 @@ import android.webkit.WebView.HitTestResult;
 import android.webkit.WebView.PictureListener;
 import android.webkit.WebView.VisualStateCallback;
 import android.webkit.WebViewClient;
+import android.webkit.WebViewRendererClient;
 
 import com.android.compatibility.common.util.PollingCheck;
 
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
@@ -89,6 +91,64 @@ public class WebViewOnUiThread extends WebViewSyncLoader {
     public void setWebChromeClient(final WebChromeClient webChromeClient) {
         WebkitUtils.onMainThreadSync(() -> {
             mWebView.setWebChromeClient(webChromeClient);
+        });
+    }
+
+    /**
+     * Set the webview renderer client for {@code mWebView}, on the UI thread.
+     */
+    public void setWebViewRendererClient(
+            final WebViewRendererClient webViewRendererClient) {
+        setWebViewRendererClient(mWebView, webViewRendererClient);
+    }
+
+    /**
+     * Set the webview renderer client for {@code webView}, on the UI thread.
+     */
+    public static void setWebViewRendererClient(
+            final WebView webView,
+            final WebViewRendererClient webViewRendererClient) {
+        WebkitUtils.onMainThreadSync(() ->
+                webView.setWebViewRendererClient(webViewRendererClient)
+        );
+    }
+
+    /**
+     * Set the webview renderer client for {@code mWebView}, on the UI thread, with callbacks
+     * executed by {@code executor}
+     */
+    public void setWebViewRendererClient(
+            final Executor executor, final WebViewRendererClient webViewRendererClient) {
+        setWebViewRendererClient(mWebView, executor, webViewRendererClient);
+    }
+
+    /**
+     * Set the webview renderer client for {@code webView}, on the UI thread, with callbacks
+     * executed by {@code executor}
+     */
+    public static void setWebViewRendererClient(
+            final WebView webView,
+            final Executor executor,
+            final WebViewRendererClient webViewRendererClient) {
+        WebkitUtils.onMainThreadSync(() ->
+                webView.setWebViewRendererClient(executor, webViewRendererClient)
+        );
+    }
+
+    /**
+     * Get the webview renderer client currently set on {@code mWebView}, on the UI thread.
+     */
+    public WebViewRendererClient getWebViewRendererClient() {
+        return getWebViewRendererClient(mWebView);
+    }
+
+    /**
+     * Get the webview renderer client currently set on {@code webView}, on the UI thread.
+     */
+    public static WebViewRendererClient getWebViewRendererClient(
+            final WebView webView) {
+        return WebkitUtils.onMainThreadSync(() -> {
+            return webView.getWebViewRendererClient();
         });
     }
 

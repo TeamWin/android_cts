@@ -607,10 +607,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        if (Build.SUPPORTED_64_BIT_ABIS.length == 0 &&
-            getActivity().getSystemService(ActivityManager.class).isLowRamDevice()) {
-            // Renderer process crashes can only be handled when multiprocess is enabled,
-            // which is not the case for 32-bit lowram devices.
+        if (!getActivity().isMultiprocessMode()) {
             return;
         }
         final MockWebViewClient webViewClient = new MockWebViewClient();
