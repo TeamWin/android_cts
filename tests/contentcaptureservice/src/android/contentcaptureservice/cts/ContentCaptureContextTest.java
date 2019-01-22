@@ -22,6 +22,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureContext.Builder;
@@ -38,6 +39,7 @@ import org.junit.runners.JUnit4;
 public class ContentCaptureContextTest {
 
     private static final Uri URI = Uri.parse("file:/dev/null");
+    private static final String ACTION = "Jackson";
 
     private final ContentCaptureContext.Builder mBuilder = new ContentCaptureContext.Builder();
 
@@ -54,6 +56,11 @@ public class ContentCaptureContextTest {
     }
 
     @Test
+    public void testBuilder_invalidAction() {
+        assertThrows(NullPointerException.class, () -> mBuilder.setAction(null));
+    }
+
+    @Test
     public void testBuilder_invalidExtras() {
         assertThrows(NullPointerException.class, () -> mBuilder.setExtras(null));
     }
@@ -62,6 +69,12 @@ public class ContentCaptureContextTest {
     public void testAfterBuild_setExtras() {
         assertThat(mBuilder.setUri(URI).build()).isNotNull();
         assertThrows(IllegalStateException.class, () -> mBuilder.setExtras(mExtras));
+    }
+
+    @Test
+    public void testAfterBuild_setAction() {
+        assertThat(mBuilder.setUri(URI).build()).isNotNull();
+        assertThrows(IllegalStateException.class, () -> mBuilder.setAction(ACTION));
     }
 
     @Test
@@ -91,6 +104,15 @@ public class ContentCaptureContextTest {
     }
 
     @Test
+    public void testSetGetAction() {
+        final Builder builder = mBuilder.setAction(ACTION);
+        assertThat(builder).isSameAs(mBuilder);
+        final ContentCaptureContext context = builder.build();
+        assertThat(context).isNotNull();
+        assertThat(context.getAction()).isEqualTo(ACTION);
+    }
+
+    @Test
     public void testGetSetBundle() {
         final Builder builder = mBuilder.setExtras(mExtras);
         assertThat(builder).isSameAs(mBuilder);
@@ -99,9 +121,50 @@ public class ContentCaptureContextTest {
         assertExtras(context.getExtras());
     }
 
+    @Test
+    public void testParcel() {
+        final Builder builder = mBuilder
+                .setUri(URI)
+                .setAction(ACTION)
+                .setExtras(mExtras);
+        assertThat(builder).isSameAs(mBuilder);
+        final ContentCaptureContext context = builder.build();
+        assertEverything(context);
+
+        final ContentCaptureContext clone = cloneThroughParcel(context);
+        assertEverything(clone);
+    }
+
+    private void assertEverything(@NonNull ContentCaptureContext context) {
+        assertThat(context).isNotNull();
+        assertThat(context.getUri()).isEqualTo(URI);
+        assertThat(context.getAction()).isEqualTo(ACTION);
+        assertExtras(context.getExtras());
+    }
+
     private void assertExtras(@NonNull Bundle bundle) {
         assertThat(bundle).isNotNull();
         assertThat(bundle.keySet()).hasSize(1);
         assertThat(bundle.getString("DUDE")).isEqualTo("SWEET");
     }
+
+    private ContentCaptureContext cloneThroughParcel(@NonNull ContentCaptureContext context) {
+        final Parcel parcel = Parcel.obtain();
+
+        try {
+            // Write to parcel
+            parcel.setDataPosition(0); // Sanity / paranoid check
+            context.writeToParcel(parcel, 0);
+
+            // Read from parcel
+            parcel.setDataPosition(0);
+            final ContentCaptureContext clone = ContentCaptureContext.CREATOR
+                    .createFromParcel(parcel);
+            assertThat(clone).isNotNull();
+            return clone;
+        } finally {
+            parcel.recycle();
+        }
+    }
+
 }
