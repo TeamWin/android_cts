@@ -34,8 +34,8 @@ public class Poc17_11 extends SecurityTestCase {
         // Wait for intent to be processed before checking logcat
         Thread.sleep(5000);
         String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\)" +
                          "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+                         "mediaserver <<<", logcat);
     }
 }
