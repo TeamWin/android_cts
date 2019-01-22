@@ -46,6 +46,8 @@ public class LocalService extends Service {
     public static final int SET_VALUE_CODE = 7;
     public static final int GET_PID_CODE = 8;
     public static final int GET_UID_CODE = 9;
+    public static final int GET_PPID_CODE = 10;
+    public static final int GET_ZYGOTE_PRELOAD_CALLED = 11;
 
     public static Context sServiceContext = null;
 
@@ -77,6 +79,14 @@ public class LocalService extends Service {
                 case GET_UID_CODE:
                     data.enforceInterface(SERVICE_LOCAL);
                     reply.writeInt(Process.myUid());
+                    return true;
+                case GET_PPID_CODE:
+                    data.enforceInterface(SERVICE_LOCAL);
+                    reply.writeInt(Process.myPpid());
+                    return true;
+                case GET_ZYGOTE_PRELOAD_CALLED:
+                    data.enforceInterface(SERVICE_LOCAL);
+                    reply.writeBoolean(ZygotePreload.preloadCalled());
                     return true;
                 default:
                     return super.onTransact(code, data, reply, flags);
