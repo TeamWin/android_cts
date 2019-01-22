@@ -226,7 +226,7 @@ public class MediaStore_Video_ThumbnailsTest {
                 "_data=?", new String[] { file.getAbsolutePath() });
         file.delete();
 
-        ProviderTestUtils.stageFile(R.raw.testthumbvideo, file);
+        ProviderTestUtils.stageFileRaw(R.raw.testthumbvideo, file);
 
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());

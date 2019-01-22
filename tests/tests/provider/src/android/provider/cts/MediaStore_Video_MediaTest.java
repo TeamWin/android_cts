@@ -16,6 +16,7 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
@@ -30,31 +31,46 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.VideoColumns;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_Video_MediaTest {
     private Context mContext;
     private ContentResolver mContentResolver;
+
+    private Uri mExternalVideo;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
     }
 
     @Test
@@ -63,7 +79,7 @@ public class MediaStore_Video_MediaTest {
         assertNotNull(c = mContentResolver.query(Media.getContentUri("internal"), null, null, null,
                 null));
         c.close();
-        assertNotNull(c = mContentResolver.query(Media.getContentUri("external"), null, null, null,
+        assertNotNull(c = mContentResolver.query(Media.getContentUri(mVolumeName), null, null, null,
                 null));
         c.close();
 
@@ -73,16 +89,16 @@ public class MediaStore_Video_MediaTest {
     }
 
     private void cleanExternalMediaFile(String path) {
-        mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, "_data=?", new String[] { path });
+        mContentResolver.delete(mExternalVideo, "_data=?", new String[] { path });
         new File(path).delete();
     }
 
     @Test
     public void testStoreVideoMediaExternal() throws Exception {
-        final String externalVideoPath = Environment.getExternalStorageDirectory().getPath() +
-                 "/video/testvideo.3gp";
-        final String externalVideoPath2 = Environment.getExternalStorageDirectory().getPath() +
-                "/video/testvideo1.3gp";
+        final String externalVideoPath = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "testvideo.3gp").getAbsolutePath();
+        final String externalVideoPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "testvideo1.3gp").getAbsolutePath();
 
         // clean up any potential left over entries from a previous aborted run
         cleanExternalMediaFile(externalVideoPath);
@@ -116,7 +132,7 @@ public class MediaStore_Video_MediaTest {
         values.put(Media.DATE_MODIFIED, dateModified);
 
         // insert
-        Uri uri = mContentResolver.insert(Media.EXTERNAL_CONTENT_URI, values);
+        Uri uri = mContentResolver.insert(mExternalVideo, values);
         assertNotNull(uri);
 
         try {
@@ -156,7 +172,7 @@ public class MediaStore_Video_MediaTest {
         // check that the video file is removed when deleting the database entry
         Context context = mContext;
         Uri videoUri = insertVideo(context);
-        File videofile = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
+        File videofile = new File(ProviderTestUtils.stageDir(mVolumeName), "testVideo.3gp");
         assertExists(videofile);
         mContentResolver.delete(videoUri, null, null);
         assertNotExists(videofile);
@@ -185,7 +201,8 @@ public class MediaStore_Video_MediaTest {
     }
 
     private Uri insertVideo(Context context) throws IOException {
-        File file = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final File file = new File(dir, "testVideo.3gp");
         // clean up any potential left over entries from a previous aborted run
         cleanExternalMediaFile(file.getAbsolutePath());
 
@@ -193,6 +210,6 @@ public class MediaStore_Video_MediaTest {
 
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());
-        return context.getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, values);
+        return context.getContentResolver().insert(mExternalVideo, values);
     }
 }

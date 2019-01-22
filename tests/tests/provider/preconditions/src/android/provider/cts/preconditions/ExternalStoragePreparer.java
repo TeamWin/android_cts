@@ -28,13 +28,10 @@ import com.android.tradefed.targetprep.TargetSetupError;
  * Creates secondary external storage for use during a test suite.
  */
 public class ExternalStoragePreparer implements ITargetPreparer, ITargetCleaner {
-    // TODO: remove this once we've enabled virtual disks everywhere
-    public static final String FEATURE_ADOPTABLE_STORAGE = "feature:android.software.adoptable_storage";
-
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo)
             throws TargetSetupError, BuildError, DeviceNotAvailableException {
-        if (!isSupportedDevice(device)) return;
+        if (!hasIsolatedStorage(device)) return;
 
         device.executeShellCommand("sm set-virtual-disk false");
         device.executeShellCommand("sm set-virtual-disk true");
@@ -47,13 +44,14 @@ public class ExternalStoragePreparer implements ITargetPreparer, ITargetCleaner 
     @Override
     public void tearDown(ITestDevice device, IBuildInfo buildInfo, Throwable throwable)
             throws DeviceNotAvailableException {
-        if (!isSupportedDevice(device)) return;
+        if (!hasIsolatedStorage(device)) return;
 
         device.executeShellCommand("sm set-virtual-disk false");
     }
 
-    private boolean isSupportedDevice(ITestDevice device) throws DeviceNotAvailableException {
-        return device.hasFeature(FEATURE_ADOPTABLE_STORAGE);
+    private boolean hasIsolatedStorage(ITestDevice device) throws DeviceNotAvailableException {
+        return device.executeShellCommand("getprop sys.isolated_storage_snapshot")
+                .contains("true");
     }
 
     private String getVirtualDisk(ITestDevice device) throws DeviceNotAvailableException {

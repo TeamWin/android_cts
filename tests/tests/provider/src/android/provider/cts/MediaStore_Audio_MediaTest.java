@@ -16,8 +16,9 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -30,34 +31,42 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
-import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_Audio_MediaTest {
     private Context mContext;
     private ContentResolver mContentResolver;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
     }
 
     @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
-                Media.getContentUri(MediaStoreAudioTestHelper.INTERNAL_VOLUME_NAME), null, null,
-                    null, null));
-        c.close();
-        assertNotNull(c = mContentResolver.query(
-                Media.getContentUri(MediaStoreAudioTestHelper.EXTERNAL_VOLUME_NAME), null, null,
+                Media.getContentUri(mVolumeName), null, null,
                     null, null));
         c.close();
 
@@ -81,20 +90,11 @@ public class MediaStore_Audio_MediaTest {
     }
 
     @Test
-    public void testStoreAudioMediaInternal() {
-        doStoreAudioMedia(true);
-    }
-
-    @Test
-    public void testStoreAudioMediaExternal() {
-        doStoreAudioMedia(false);
-    }
-
-    private void doStoreAudioMedia(boolean isInternal) {
+    public void testStoreAudioMedia() {
         Audio1 audio1 = Audio1.getInstance();
-        ContentValues values = audio1.getContentValues(isInternal);
+        ContentValues values = audio1.getContentValues(mVolumeName);
         //insert
-        Uri mediaUri = isInternal ? Media.INTERNAL_CONTENT_URI : Media.EXTERNAL_CONTENT_URI;
+        Uri mediaUri = Media.getContentUri(mVolumeName);
         Uri uri = mContentResolver.insert(mediaUri, values);
         assertNotNull(uri);
 
@@ -108,7 +108,7 @@ public class MediaStore_Audio_MediaTest {
             c.moveToFirst();
             long id = c.getLong(c.getColumnIndex(Media._ID));
             assertTrue(id > 0);
-            String expected = isInternal ? Audio1.INTERNAL_DATA : Audio1.EXTERNAL_DATA;
+            String expected = audio1.getContentValues(mVolumeName).getAsString(Media.DATA);
             assertEquals(expected, c.getString(c.getColumnIndex(Media.DATA)));
             assertTrue(c.getLong(c.getColumnIndex(Media.DATE_ADDED)) > 0);
             assertEquals(Audio1.DATE_MODIFIED, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
@@ -140,7 +140,7 @@ public class MediaStore_Audio_MediaTest {
             c.close();
 
             // test filtering
-            Uri baseUri = isInternal ? Media.INTERNAL_CONTENT_URI : Media.EXTERNAL_CONTENT_URI;
+            Uri baseUri = Media.getContentUri(mVolumeName);
             Uri filterUri = baseUri.buildUpon()
                 .appendQueryParameter("filter", Audio1.ARTIST).build();
             c = mContentResolver.query(filterUri, null, null, null, null);

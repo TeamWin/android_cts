@@ -16,6 +16,8 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -24,7 +26,6 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import org.junit.Before;
@@ -42,8 +43,6 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class MediaStoreIntentsTest {
-    private static final String TAG = "MediaStoreIntentsTest";
-
     private Uri mExternalAudio;
     private Uri mExternalVideo;
     private Uri mExternalImages;

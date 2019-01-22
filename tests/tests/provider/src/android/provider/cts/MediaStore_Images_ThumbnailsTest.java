@@ -88,8 +88,8 @@ public class MediaStore_Images_ThumbnailsTest {
     private void prepareImages() throws Exception {
         final File red = new File(Environment.getExternalStorageDirectory(), "red.jpg");
         final File blue = new File(Environment.getExternalStorageDirectory(), "blue.jpg");
-        ProviderTestUtils.stageFile(R.raw.scenery, red);
-        ProviderTestUtils.stageFile(R.raw.scenery, blue);
+        ProviderTestUtils.stageFileRaw(R.raw.scenery, red);
+        ProviderTestUtils.stageFileRaw(R.raw.scenery, blue);
         try (MediaScanner scanner = new MediaScanner(mContext, "external")) {
             mRed = scanner.scanSingleFile(red.getAbsolutePath(), "image/jpeg");
             mBlue = scanner.scanSingleFile(blue.getAbsolutePath(), "image/jpeg");
@@ -116,7 +116,7 @@ public class MediaStore_Images_ThumbnailsTest {
         // add a thumbnail
         final File file = mContext.getFileStreamPath("testThumbnails.jpg");
         final String path = file.getAbsolutePath();
-        ProviderTestUtils.stageFile(R.raw.scenery, file);
+        ProviderTestUtils.stageFileRaw(R.raw.scenery, file);
         ContentValues values = new ContentValues();
         values.put(Thumbnails.KIND, Thumbnails.MINI_KIND);
         values.put(Thumbnails.DATA, path);
