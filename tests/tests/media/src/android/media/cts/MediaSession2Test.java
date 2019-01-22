@@ -406,6 +406,9 @@ public class MediaSession2Test {
         @Override
         public Session2CommandGroup onConnect(MediaSession2 session,
                 MediaSession2.ControllerInfo controller) {
+            if (controller.getUid() != Process.myUid()) {
+                return null;
+            }
             mSession = session;
             mController = controller;
             mOnConnectLatch.countDown();
@@ -414,6 +417,9 @@ public class MediaSession2Test {
 
         @Override
         public void onDisconnected(MediaSession2 session, MediaSession2.ControllerInfo controller) {
+            if (controller.getUid() != Process.myUid()) {
+                return;
+            }
             mSession = session;
             mController = controller;
             mOnDisconnectLatch.countDown();
@@ -422,6 +428,9 @@ public class MediaSession2Test {
         @Override
         public Session2Command.Result onSessionCommand(MediaSession2 session,
                 MediaSession2.ControllerInfo controller, Session2Command command, Bundle args) {
+            if (controller.getUid() != Process.myUid()) {
+                return null;
+            }
             mSession = session;
             mController = controller;
             mCommand = command;
@@ -441,6 +450,9 @@ public class MediaSession2Test {
         @Override
         public void onCommandResult(MediaSession2 session, MediaSession2.ControllerInfo controller,
                 Object token, Session2Command command, Session2Command.Result result) {
+            if (controller.getUid() != Process.myUid()) {
+                return;
+            }
             mSession = session;
             mController = controller;
             mCommand = command;
