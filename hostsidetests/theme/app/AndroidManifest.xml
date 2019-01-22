@@ -18,7 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.theme.app">
 
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application>
@@ -32,7 +31,7 @@
         </activity>
         <activity android:name=".GenerateImagesActivity"
                   android:screenOrientation="portrait"
-                  android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+                  android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|uiMode"
                   android:exported="true" />
     </application>
 
