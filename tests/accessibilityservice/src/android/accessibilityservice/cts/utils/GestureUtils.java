@@ -73,7 +73,7 @@ public class GestureUtils {
 
     public static StrokeDescription longClick(PointF point) {
         return new StrokeDescription(path(point), 0,
-                ViewConfiguration.getLongPressTimeout() * 3 / 2);
+                ViewConfiguration.getLongPressTimeout() * 3);
     }
 
     public static StrokeDescription swipe(PointF from, PointF to) {
@@ -141,4 +141,33 @@ public class GestureUtils {
     public static PointF ceil(PointF p) {
         return new PointF((float) Math.ceil(p.x), (float) Math.ceil(p.y));
     }
+
+    public static GestureDescription doubleTap(PointF point) {
+        return multiTap(point, 2);
+    }
+
+    public static GestureDescription tripleTap(PointF point) {
+      return multiTap(point, 3);
+    }
+
+    public static GestureDescription multiTap(PointF point, int taps) {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        long time = 0;
+        for (int i = 0; i < taps; i++) {
+            StrokeDescription stroke = click(point);
+            builder.addStroke(startingAt(time, stroke));
+            time += stroke.getDuration() + 40;
+        }
+        return builder.build();
+    }
+
+    public static GestureDescription doubleTapAndHold(PointF point) {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        StrokeDescription tap1 = click(point);
+        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 40, longClick(point));
+        builder.addStroke(tap1);
+        builder.addStroke(tap2);
+        return builder.build();
+    }
+
 }
