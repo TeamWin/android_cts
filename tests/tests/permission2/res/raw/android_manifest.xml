@@ -4426,6 +4426,11 @@
     <permission android:name="android.permission.AMBIENT_WALLPAPER"
                 android:protectionLevel="signature|preinstalled" />
 
+    <!-- Allows the device to be reset, clearing all data and enables Test Harness Mode.
+         @hide-->
+    <permission android:name="android.permission.ENABLE_TEST_HARNESS_MODE"
+        android:protectionLevel="signature" />
+
     <application android:process="system"
                  android:persistent="true"
                  android:hasCode="false"
