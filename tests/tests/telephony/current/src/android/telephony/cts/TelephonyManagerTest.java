@@ -67,6 +67,7 @@ import java.util.regex.Pattern;
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
+    private SubscriptionManager mSubscriptionManager;
     private PackageManager mPackageManager;
     private boolean mOnCellLocationChangedCalled = false;
     private ServiceState mServiceState;
@@ -81,6 +82,8 @@ public class TelephonyManagerTest {
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mSubscriptionManager = (SubscriptionManager) getContext()
+                .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
         mPackageManager = getContext().getPackageManager();
     }
 
@@ -522,6 +525,22 @@ public class TelephonyManagerTest {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
+    }
+
+    @Test
+    public void testGetSimLocale() throws InterruptedException {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG,"skipping test that requires Telephony");
+            return;
+        }
+        if (SubscriptionManager.getDefaultSubscriptionId()
+                == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            fail("Expected SIM inserted");
+        }
+        String locale = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getSimLocale());
+        Log.d(TAG, "testGetSimLocale: " + locale);
+        assertNotNull(locale);
     }
 
     /**
