@@ -69,10 +69,6 @@ public class MediaStore_Audio_MediaTest {
                 Media.getContentUri(mVolumeName), null, null,
                     null, null));
         c.close();
-
-        // can not accept any other volume names
-        String volume = "faveVolume";
-        assertNull(mContentResolver.query(Media.getContentUri(volume), null, null, null, null));
     }
 
     @Test

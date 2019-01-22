@@ -23,6 +23,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Video;
 import android.provider.MediaStore.Video.VideoColumns;
 import android.support.test.InstrumentationRegistry;
@@ -64,14 +65,15 @@ public class MediaStore_VideoTest {
     public void testQuery() throws Exception {
         ContentValues values = new ContentValues();
 
-        final File file = mContext.getFileStreamPath(TEST_VIDEO_3GP);
+        final File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                TEST_VIDEO_3GP);
         final String valueOfData = file.getAbsolutePath();
         ProviderTestUtils.stageFile(R.raw.testvideo, file);
 
         values.put(VideoColumns.DATA, valueOfData);
 
-        Uri newUri = mContentResolver.insert(Video.Media.INTERNAL_CONTENT_URI, values);
-        if (!Video.Media.INTERNAL_CONTENT_URI.equals(newUri)) {
+        Uri newUri = mContentResolver.insert(Video.Media.EXTERNAL_CONTENT_URI, values);
+        if (!Video.Media.EXTERNAL_CONTENT_URI.equals(newUri)) {
             mRowsAdded.add(newUri);
         }
 
