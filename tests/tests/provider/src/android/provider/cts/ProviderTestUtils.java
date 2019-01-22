@@ -16,18 +16,26 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
+
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
+import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -161,7 +169,35 @@ public class ProviderTestUtils {
         return context.getFileStreamPath(fileName).getAbsolutePath();
     }
 
+    static File stageDir(String volumeName) throws IOException {
+        return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "data",
+                "android.provider.cts");
+    }
+
     static void stageFile(int resId, File file) throws IOException {
+        // The caller may be trying to stage into a location only available to
+        // the shell user, so we need to perform the entire copy as the shell
+        if (FileUtils.contains(Environment.getStorageDirectory(), file)) {
+            Log.d(TAG, executeShellCommand("mkdir -p " + file.getParent()));
+
+            final Context context = InstrumentationRegistry.getTargetContext();
+            try (AssetFileDescriptor afd = context.getResources().openRawResourceFd(resId)) {
+                final File source = ParcelFileDescriptor.getFile(afd.getFileDescriptor());
+                final long skip = afd.getStartOffset();
+                final long count = afd.getLength();
+
+                Log.d(TAG, executeShellCommand(String.format("dd bs=1 if=%s skip=%d count=%d of=%s",
+                        source.getAbsolutePath(), skip, count, file.getAbsolutePath())));
+
+                // Force sync to try updating other views
+                Log.d(TAG, executeShellCommand("sync"));
+            }
+        } else {
+            stageFileRaw(resId, file);
+        }
+    }
+
+    static void stageFileRaw(int resId, File file) throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         try (InputStream source = context.getResources().openRawResource(resId);
                 OutputStream target = new FileOutputStream(file)) {
@@ -184,44 +220,60 @@ public class ProviderTestUtils {
         }
     }
 
-    public static void assertExists(String path) throws ErrnoException {
+    public static void assertExists(String path) throws IOException {
         assertExists(null, path);
     }
 
-    public static void assertExists(File file) throws ErrnoException {
+    public static void assertExists(File file) throws IOException {
         assertExists(null, file.getAbsolutePath());
     }
 
-    public static void assertExists(String msg, String path) throws ErrnoException {
-        try {
-            Os.access(path, OsConstants.F_OK);
-        } catch (ErrnoException e) {
-            if (e.errno == OsConstants.ENOENT) {
-                fail(msg);
-            } else {
-                throw e;
-            }
+    public static void assertExists(String msg, String path) throws IOException {
+        if (!access(path)) {
+            fail(msg);
         }
     }
 
-    public static void assertNotExists(String path) throws ErrnoException {
+    public static void assertNotExists(String path) throws IOException {
         assertNotExists(null, path);
     }
 
-    public static void assertNotExists(File file) throws ErrnoException {
+    public static void assertNotExists(File file) throws IOException {
         assertNotExists(null, file.getAbsolutePath());
     }
 
-    public static void assertNotExists(String msg, String path) throws ErrnoException {
-        try {
-            Os.access(path, OsConstants.F_OK);
+    public static void assertNotExists(String msg, String path) throws IOException {
+        if (access(path)) {
             fail(msg);
-        } catch (ErrnoException e) {
-            if (e.errno == OsConstants.ENOENT) {
-                return;
-            } else {
-                throw e;
+        }
+    }
+
+    private static boolean access(String path) throws IOException {
+        // The caller may be trying to stage into a location only available to
+        // the shell user, so we need to perform the entire copy as the shell
+        if (FileUtils.contains(Environment.getStorageDirectory(), new File(path))) {
+            return executeShellCommand("ls -la " + path).contains(path);
+        } else {
+            try {
+                Os.access(path, OsConstants.F_OK);
+                return true;
+            } catch (ErrnoException e) {
+                if (e.errno == OsConstants.ENOENT) {
+                    return false;
+                } else {
+                    throw e.rethrowAsIOException();
+                }
             }
         }
+    }
+
+    public static boolean containsId(Uri uri, long id) {
+        try (Cursor c = InstrumentationRegistry.getTargetContext().getContentResolver().query(uri,
+                new String[] { MediaColumns._ID }, null, null)) {
+            while (c.moveToNext()) {
+                if (c.getLong(0) == id) return true;
+            }
+        }
+        return false;
     }
 }

@@ -38,7 +38,7 @@ import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import libcore.util.HexEncoding;
 
@@ -47,6 +47,9 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -55,8 +58,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStoreTest {
+    static final String TAG = "MediaStoreTest";
+
     private static final String TEST_VOLUME_NAME = "volume_for_cts";
 
     private static final long SIZE_DELTA = 32_000;
@@ -68,6 +73,16 @@ public class MediaStoreTest {
     private String mVolumnBackup;
 
     private ContentResolver mContentResolver;
+
+    private Uri mExternalImages;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
 
     private Context getContext() {
         return InstrumentationRegistry.getTargetContext();
@@ -84,6 +99,9 @@ public class MediaStoreTest {
             mVolumnBackup = c.getString(0);
             c.close();
         }
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
     }
 
     @After
@@ -138,8 +156,8 @@ public class MediaStoreTest {
         Set<String> volumeNames = MediaStore.getAllVolumeNames(getContext());
 
         // At very least should contain these two volumes
-        assertTrue(volumeNames.contains("internal"));
-        assertTrue(volumeNames.contains("external"));
+        assertTrue(volumeNames.contains(MediaStore.VOLUME_INTERNAL));
+        assertTrue(volumeNames.contains(MediaStore.VOLUME_EXTERNAL));
     }
 
     @Test
@@ -166,19 +184,17 @@ public class MediaStoreTest {
         // Create media both inside and outside sandbox
         final Uri inside;
         final Uri outside;
-        final File file = new File(getContext().getExternalMediaDirs()[0],
+        final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
                 "cts" + System.nanoTime());
         ProviderTestUtils.stageFile(R.raw.volantis, file);
-        try (MediaScanner scanner = new MediaScanner(getContext(), "external")) {
+        try (MediaScanner scanner = new MediaScanner(getContext(), mVolumeName)) {
             inside = scanner.scanSingleFile(file.getAbsolutePath(), "image/jpeg");
         }
-        outside = ProviderTestUtils.stageMedia(R.raw.volantis,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        outside = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
         SystemClock.sleep(500);
 
         {
-            final HashSet<Long> visible = getVisibleIds(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            final HashSet<Long> visible = getVisibleIds(mExternalImages);
             assertTrue(visible.contains(ContentUris.parseId(inside)));
             assertTrue(visible.contains(ContentUris.parseId(outside)));
 
@@ -197,8 +213,7 @@ public class MediaStoreTest {
                 android.os.Process.myUserHandle());
         SystemClock.sleep(500);
         {
-            final HashSet<Long> visible = getVisibleIds(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            final HashSet<Long> visible = getVisibleIds(mExternalImages);
             assertTrue(visible.contains(ContentUris.parseId(inside)));
             assertFalse(visible.contains(ContentUris.parseId(outside)));
 
@@ -217,8 +232,7 @@ public class MediaStoreTest {
     public void testHash() throws Exception {
         final ContentResolver resolver = getContext().getContentResolver();
 
-        final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
         SystemClock.sleep(500);
 
         final String expected = Arrays

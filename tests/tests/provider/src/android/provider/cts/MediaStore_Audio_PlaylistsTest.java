@@ -16,6 +16,8 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -28,33 +30,47 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
-import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Playlists;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
+import java.io.File;
 import java.util.regex.Pattern;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_Audio_PlaylistsTest {
     private Context mContext;
     private ContentResolver mContentResolver;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
     }
 
     @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
-                Playlists.getContentUri(MediaStoreAudioTestHelper.EXTERNAL_VOLUME_NAME), null, null,
+                Playlists.getContentUri(mVolumeName), null, null,
                 null, null));
         c.close();
 
@@ -75,9 +91,9 @@ public class MediaStore_Audio_PlaylistsTest {
     }
 
     @Test
-    public void testStoreAudioPlaylistsExternal() {
-        final String externalPlaylistPath = Environment.getExternalStorageDirectory().getPath() +
-            "/my_favorites.pl";
+    public void testStoreAudioPlaylistsExternal() throws Exception {
+        final String externalPlaylistPath = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "my_favorites.pl").getAbsolutePath();
         ContentValues values = new ContentValues();
         values.put(Playlists.NAME, "My favourites");
         values.put(Playlists.DATA, externalPlaylistPath);
@@ -85,7 +101,7 @@ public class MediaStore_Audio_PlaylistsTest {
         long dateModified = System.currentTimeMillis() / 1000;
         values.put(Playlists.DATE_MODIFIED, dateModified);
         // insert
-        Uri uri = mContentResolver.insert(Playlists.EXTERNAL_CONTENT_URI, values);
+        Uri uri = mContentResolver.insert(Playlists.getContentUri(mVolumeName), values);
         assertNotNull(uri);
 
         try {
