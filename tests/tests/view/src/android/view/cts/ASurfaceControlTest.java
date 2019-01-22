@@ -98,7 +98,8 @@ public class ASurfaceControlTest {
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             for (Long surfaceControl : mSurfaceControls) {
-                nSurfaceControl_destroy(surfaceControl);
+                reparent(surfaceControl, 0);
+                nSurfaceControl_release(surfaceControl);
             }
             mSurfaceControls.clear();
 
@@ -230,6 +231,28 @@ public class ASurfaceControlTest {
         public void setZOrder(long surfaceControl, int z) {
             long surfaceTransaction = createSurfaceTransaction();
             setZOrder(surfaceControl, surfaceTransaction, z);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
+
+        public void setBufferAlpha(long surfaceControl, long surfaceTransaction, double alpha) {
+            nSurfaceTransaction_setBufferAlpha(surfaceControl, surfaceTransaction, alpha);
+        }
+
+        public void setBufferAlpha(long surfaceControl, double alpha) {
+            long surfaceTransaction = createSurfaceTransaction();
+            setBufferAlpha(surfaceControl, surfaceTransaction, alpha);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
+
+        public void reparent(long surfaceControl, long newParentSurfaceControl,
+                             long surfaceTransaction) {
+            nSurfaceTransaction_reparent(surfaceControl, newParentSurfaceControl,
+                                         surfaceTransaction);
+        }
+
+        public void reparent(long surfaceControl, long newParentSurfaceControl) {
+            long surfaceTransaction = createSurfaceTransaction();
+            reparent(surfaceControl, newParentSurfaceControl, surfaceTransaction);
             applyAndDeleteSurfaceTransaction(surfaceTransaction);
         }
     }
@@ -1062,10 +1085,229 @@ public class ASurfaceControlTest {
                     @Override
                     public void surfaceDestroyed(SurfaceHolder holder) {
                         super.surfaceDestroyed(holder);
-                        nSurfaceTransaction_checkOnComplete(mContext);
+                        nSurfaceTransaction_checkOnComplete(mContext, -1);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setDesiredPresentTime_now() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    private long mContext;
+                    private long mDesiredPresentTime;
+
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        long surfaceTransaction = createSurfaceTransaction();
+                        setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        mDesiredPresentTime = nSurfaceTransaction_setDesiredPresentTime(
+                                surfaceTransaction, 0);
+                        mContext = nSurfaceTransaction_setOnComplete(surfaceTransaction);
+                        applyAndDeleteSurfaceTransaction(surfaceTransaction);
+                    }
+                    @Override
+                    public void surfaceDestroyed(SurfaceHolder holder) {
+                        super.surfaceDestroyed(holder);
+                        nSurfaceTransaction_checkOnComplete(mContext, mDesiredPresentTime);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setDesiredPresentTime_30ms() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    private long mContext;
+                    private long mDesiredPresentTime;
+
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        long surfaceTransaction = createSurfaceTransaction();
+                        setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        mDesiredPresentTime = nSurfaceTransaction_setDesiredPresentTime(
+                                surfaceTransaction, 30000000);
+                        mContext = nSurfaceTransaction_setOnComplete(surfaceTransaction);
+                        applyAndDeleteSurfaceTransaction(surfaceTransaction);
+                    }
+                    @Override
+                    public void surfaceDestroyed(SurfaceHolder holder) {
+                        super.surfaceDestroyed(holder);
+                        nSurfaceTransaction_checkOnComplete(mContext, mDesiredPresentTime);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setDesiredPresentTime_100ms() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    private long mContext;
+                    private long mDesiredPresentTime;
+
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        long surfaceTransaction = createSurfaceTransaction();
+                        setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        mDesiredPresentTime = nSurfaceTransaction_setDesiredPresentTime(
+                                surfaceTransaction, 100000000);
+                        mContext = nSurfaceTransaction_setOnComplete(surfaceTransaction);
+                        applyAndDeleteSurfaceTransaction(surfaceTransaction);
+                    }
+                    @Override
+                    public void surfaceDestroyed(SurfaceHolder holder) {
+                        super.surfaceDestroyed(holder);
+                        nSurfaceTransaction_checkOnComplete(mContext, mDesiredPresentTime);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setBufferAlpha_1_0() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        setBufferAlpha(surfaceControl, 1.0);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setBufferAlpha_0_5() throws Throwable {
+        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        setBufferAlpha(surfaceControl, 0.5);
+                    }
+                };
+        verifyTest(callback,
+                new PixelChecker(PixelColor.BLACK) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount == 0;
+                    }
+                });
+        verifyTest(callback,
+                new PixelChecker(PixelColor.RED) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount == 0;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setBufferAlpha_0_0() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        setBufferAlpha(surfaceControl, 0.0);
+                    }
+                },
+                new PixelChecker(PixelColor.BLACK) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_reparent() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long parentSurfaceControl1 = createFromWindow(holder.getSurface());
+                        long parentSurfaceControl2 = createFromWindow(holder.getSurface());
+                        long childSurfaceControl = create(parentSurfaceControl1);
+
+                        setGeometry(parentSurfaceControl1, 0, 0, 100, 100, 0, 0, 160, 480, 0);
+                        setGeometry(parentSurfaceControl2, 0, 0, 100, 100, 160, 0, 640, 480, 0);
+
+                        setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+
+                        reparent(childSurfaceControl, parentSurfaceControl2);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //7500
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 6750 && pixelCount < 8250;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_reparent_null() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long parentSurfaceControl = createFromWindow(holder.getSurface());
+                        long childSurfaceControl = create(parentSurfaceControl);
+
+                        setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+
+                        reparent(childSurfaceControl, 0);
+                    }
+                },
+                new PixelChecker(PixelColor.BLACK) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1082,7 +1324,7 @@ public class ASurfaceControlTest {
     private static native void nSurfaceTransaction_apply(long surfaceTransaction);
     private static native long nSurfaceControl_createFromWindow(Surface surface);
     private static native long nSurfaceControl_create(long surfaceControl);
-    private static native void nSurfaceControl_destroy(long surfaceControl);
+    private static native void nSurfaceControl_release(long surfaceControl);
     private static native long nSurfaceTransaction_setSolidBuffer(
             long surfaceControl, long surfaceTransaction, int width, int height, int color);
     private static native long nSurfaceTransaction_setQuadrantBuffer(long surfaceControl,
@@ -1101,5 +1343,12 @@ public class ASurfaceControlTest {
     private static native void nSurfaceTransaction_setZOrder(
             long surfaceControl, long surfaceTransaction, int z);
     private static native long nSurfaceTransaction_setOnComplete(long surfaceTransaction);
-    private static native void nSurfaceTransaction_checkOnComplete(long context);
+    private static native void nSurfaceTransaction_checkOnComplete(long context,
+            long desiredPresentTime);
+    private static native long nSurfaceTransaction_setDesiredPresentTime(long surfaceTransaction,
+            long desiredPresentTimeOffset);
+    private static native void nSurfaceTransaction_setBufferAlpha(long surfaceControl,
+            long surfaceTransaction, double alpha);
+    private static native void nSurfaceTransaction_reparent(long surfaceControl,
+            long newParentSurfaceControl, long surfaceTransaction);
 }
