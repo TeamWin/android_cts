@@ -209,22 +209,15 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
             return;
         }
 
-        try {
-            // Set a non-empty device lockscreen password, which is a precondition for interacting
-            // with KeyStore.
-            changeUserCredential("1234", null, mUserId);
-            // Test that Device ID attestation for the profile owner does not work without grant.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
-                    "testFailsWithoutProfileOwnerIdsGrant", mUserId);
+        // Test that Device ID attestation for the profile owner does not work without grant.
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
+                "testFailsWithoutProfileOwnerIdsGrant", mUserId);
 
-            // Test that Device ID attestation for the profile owner works with a grant.
-            grantProfileOwnerDeviceIdsAccess();
+        // Test that Device ID attestation for the profile owner works with a grant.
+        grantProfileOwnerDeviceIdsAccess();
 
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
-                    "testSucceedsWithProfileOwnerIdsGrant", mUserId);
-        } finally {
-            changeUserCredential(null, "1234", mUserId);
-        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
+                "testSucceedsWithProfileOwnerIdsGrant", mUserId);
     }
 
 }
