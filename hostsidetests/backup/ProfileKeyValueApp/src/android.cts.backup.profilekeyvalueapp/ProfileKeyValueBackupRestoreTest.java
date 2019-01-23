@@ -29,7 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/** Device side test invoked by ManagedProfileKeyValueBackupRestoreHostSideTest. */
+/** Device side test invoked by ProfileKeyValueBackupRestoreHostSideTest. */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class ProfileKeyValueBackupRestoreTest {

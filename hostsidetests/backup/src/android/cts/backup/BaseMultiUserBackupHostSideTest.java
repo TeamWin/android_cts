@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSideTest {
-    private static final String BACKUP_MULTI_USER_SETTING = "backup_multi_user_enabled";
     private static final String USER_SETUP_COMPLETE_SETTING = "user_setup_complete";
     private static final int BROADCAST_IDLE_TIMEOUT_MIN = 2;
 
@@ -50,7 +49,6 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     // Store initial device state as Optional as tearDown() will execute even if we have assumption
     // failures in setUp().
     private Optional<Integer> mInitialUser = Optional.empty();
-    private Optional<String> mInitialSettingValue = Optional.empty();
 
     /** Check device features and keep track of pre-test device state. */
     @Before
@@ -71,11 +69,6 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
         if (currentUserId != primaryUserId) {
             mDevice.switchUser(primaryUserId);
         }
-
-        // Enable multi-user backup/restore feature.
-        // TODO (b/121306407): Change when DeviceConfig is used to gate the feature.
-        mInitialSettingValue = Optional.of(mDevice.getSetting("global", BACKUP_MULTI_USER_SETTING));
-        mDevice.setSetting("global", BACKUP_MULTI_USER_SETTING, "1");
     }
 
     /** Restore pre-test device state. */
@@ -85,23 +78,16 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
             mDevice.switchUser(mInitialUser.get());
             mInitialUser = Optional.empty();
         }
-
-        if (mInitialSettingValue.isPresent()) {
-            mDevice.setSetting("global", BACKUP_MULTI_USER_SETTING, mInitialSettingValue.get());
-            mInitialSettingValue = Optional.empty();
-        }
     }
 
     /**
-     * Attempts to create a managed profile tied to the parent user {@code parentId}. Returns the
-     * user id of the profile if successful, otherwise throws a {@link RuntimeException}.
+     * Attempts to create a profile tied to the parent user {@code parentId}. Returns the user id of
+     * the profile if successful, otherwise throws a {@link RuntimeException}.
      */
-    int createManagedProfileUser(int parentId, String profileName) throws IOException {
+    int createProfileUser(int parentId, String profileName) throws IOException {
         String output =
                 mBackupUtils.executeShellCommandAndReturnOutput(
-                        String.format(
-                                "pm create-user --profileOf %d --managed %s",
-                                parentId, profileName));
+                        String.format("pm create-user --profileOf %d %s", parentId, profileName));
         try {
             // Expected output is "Success: created user id <id>"
             String userId = output.substring(output.lastIndexOf(" ")).trim();
@@ -114,14 +100,34 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
 
     /** Start the user and set necessary conditions for backup to be enabled in the user. */
     void startUserAndInitializeForBackup(int userId) throws Exception {
+        // Turn on multi-user feature for this user.
+        mBackupUtils.executeShellCommandSync(
+                String.format("bmgr --user %d activate %b", userId, true));
+
         mDevice.startUser(userId);
         // Wait for user to be fully started.
-        mDevice.executeShellV2Command("am wait-for-broadcast-idle", BROADCAST_IDLE_TIMEOUT_MIN,
-                TimeUnit.MINUTES);
+        mDevice.executeShellV2Command(
+                "am wait-for-broadcast-idle", BROADCAST_IDLE_TIMEOUT_MIN, TimeUnit.MINUTES);
 
         mDevice.setSetting(userId, "secure", USER_SETUP_COMPLETE_SETTING, "1");
         mBackupUtils.enableBackupForUser(true, userId);
         assertThat(mBackupUtils.isBackupEnabledForUser(userId)).isTrue();
+    }
+
+    /**
+     * Selects the local transport as the current transport for user {@code userId}. Returns the
+     * {@link String} name of the local transport.
+     */
+    String switchUserToLocalTransportAndAssertSuccess(int userId) throws IOException {
+        // Make sure the user has the local transport.
+        String localTransport = mBackupUtils.getLocalTransportName();
+        assertThat(mBackupUtils.userHasBackupTransport(localTransport, userId)).isTrue();
+
+        // Switch to the local transport and assert success.
+        mBackupUtils.setBackupTransportForUser(localTransport, userId);
+        assertThat(mBackupUtils.isLocalTransportSelectedForUser(userId)).isTrue();
+
+        return localTransport;
     }
 
     /** Runs "bmgr --user <id> wipe <transport> <package>" to clear the backup data. */

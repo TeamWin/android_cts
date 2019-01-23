@@ -16,8 +16,6 @@
 
 package android.cts.backup;
 
-import static org.junit.Assert.assertTrue;
-
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
@@ -30,11 +28,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/** Test the backup and restore flow for a key-value app in a managed profile. */
+/** Test the backup and restore flow for a key-value app in a profile. */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
-public class ManagedProfileKeyValueBackupRestoreHostSideTest
-        extends BaseMultiUserBackupHostSideTest {
+public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
     private static final String TEST_APK = "CtsProfileKeyValueApp.apk";
     private static final String TEST_PACKAGE = "android.cts.backup.profilekeyvalueapp";
     private static final String DEVICE_TEST_NAME =
@@ -45,7 +42,7 @@ public class ManagedProfileKeyValueBackupRestoreHostSideTest
     private int mProfileUserId;
     private String mTransport;
 
-    /** Create the managed profile, switch to the local transport and setup the test package. */
+    /** Create the profile, switch to the local transport and setup the test package. */
     @Before
     @Override
     public void setUp() throws Exception {
@@ -54,25 +51,18 @@ public class ManagedProfileKeyValueBackupRestoreHostSideTest
 
         // Create profile user.
         int parentUserId = mDevice.getCurrentUser();
-        mProfileUserId = createManagedProfileUser(parentUserId, "Profile1");
+        mProfileUserId = createProfileUser(parentUserId, "Profile-KV");
         startUserAndInitializeForBackup(mProfileUserId);
 
         // Switch to local transport.
-        mTransport = mBackupUtils.getLocalTransportName();
-        assertTrue(
-                "User doesn't have local transport",
-                mBackupUtils.userHasBackupTransport(mTransport, mProfileUserId));
-        mBackupUtils.setBackupTransportForUser(mTransport, mProfileUserId);
-        assertTrue(
-                "Failed to select local transport",
-                mBackupUtils.isLocalTransportSelectedForUser(mProfileUserId));
+        mTransport = switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
 
         // Setup test package.
         installPackageAsUser(TEST_APK, true, mProfileUserId);
         clearPackageDataAsUser(TEST_PACKAGE, mProfileUserId);
     }
 
-    /** Uninstall the test package and remove the managed profile. */
+    /** Uninstall the test package and remove the profile. */
     @After
     @Override
     public void tearDown() throws Exception {
