@@ -152,7 +152,7 @@
             </intent-filter>
         </service>
 
-        <service android:name="android.app.stubs.IsolatedService" android:isolatedProcess="true">
+        <service android:name="android.app.stubs.IsolatedService" android:isolatedProcess="true" android:useAppZygote="true">
         </service>
 
         <activity android:name="android.app.stubs.TestedScreen"
