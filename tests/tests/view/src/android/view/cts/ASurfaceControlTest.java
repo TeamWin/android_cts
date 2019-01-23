@@ -1351,4 +1351,6 @@ public class ASurfaceControlTest {
             long surfaceTransaction, double alpha);
     private static native void nSurfaceTransaction_reparent(long surfaceControl,
             long newParentSurfaceControl, long surfaceTransaction);
+    private static native void nSurfaceTransaction_setColor(long surfaceControl,
+            long surfaceTransaction, float r, float g, float b, float alpha);
 }
