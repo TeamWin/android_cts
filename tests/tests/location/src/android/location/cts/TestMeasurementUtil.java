@@ -68,6 +68,7 @@ public final class TestMeasurementUtil {
     // android/hardware/libhardware/include/hardware/gps.h
     public static final Set<Integer> GNSS_NAVIGATION_MESSAGE_TYPE =
         new HashSet<Integer>(Arrays.asList(
+            GnssNavigationMessage.TYPE_UNKNOWN,
             GnssNavigationMessage.TYPE_GPS_L1CA,
             GnssNavigationMessage.TYPE_GPS_L2CNAV,
             GnssNavigationMessage.TYPE_GPS_L5CNAV,
