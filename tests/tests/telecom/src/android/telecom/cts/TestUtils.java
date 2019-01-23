@@ -64,6 +64,7 @@ public class TestUtils {
     // Non-final to allow modification by tests not in this package (e.g. permission-related
     // tests in the Telecom2 test package.
     public static String PACKAGE = "android.telecom.cts";
+    public static final String TEST_URI_SCHEME = "foobuzz";
     public static final String COMPONENT = "android.telecom.cts.CtsConnectionService";
     public static final String SELF_MANAGED_COMPONENT =
             "android.telecom.cts.CtsSelfManagedConnectionService";
@@ -74,6 +75,14 @@ public class TestUtils {
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE_2 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_2);
+    public static final String DEFAULT_TEST_ACCOUNT_1_ID = "ctstest_DEFAULT_TEST_ID_1";
+    public static final String DEFAULT_TEST_ACCOUNT_2_ID = "ctstest_DEFAULT_TEST_ID_2";
+    public static final PhoneAccountHandle TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_1 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT),
+                    DEFAULT_TEST_ACCOUNT_1_ID);
+    public static final PhoneAccountHandle TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_2 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT),
+                    DEFAULT_TEST_ACCOUNT_2_ID);
     public static final PhoneAccountHandle TEST_HANDOVER_SRC_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), "handoverFrom");
     public static final PhoneAccountHandle TEST_HANDOVER_DEST_PHONE_ACCOUNT_HANDLE =
@@ -122,6 +131,22 @@ public class TestUtils {
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
 
+    public static final PhoneAccount TEST_DEFAULT_PHONE_ACCOUNT_1 = PhoneAccount.builder(
+            TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_1, "Default Test 1")
+            .setAddress(Uri.parse("foobuzz:testuri1"))
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+            .setHighlightColor(Color.RED)
+            .setShortDescription("Default Test 1")
+            .addSupportedUriScheme(TEST_URI_SCHEME)
+            .build();
+    public static final PhoneAccount TEST_DEFAULT_PHONE_ACCOUNT_2 = PhoneAccount.builder(
+            TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_2, "Default Test 2")
+            .setAddress(Uri.parse("foobuzz:testuri2"))
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+            .setHighlightColor(Color.RED)
+            .setShortDescription("Default Test 2")
+            .addSupportedUriScheme(TEST_URI_SCHEME)
+            .build();
     private static final Bundle SUPPORTS_HANDOVER_FROM_EXTRAS = new Bundle();
     private static final Bundle SUPPORTS_HANDOVER_TO_EXTRAS = new Bundle();
     static {
@@ -152,7 +177,6 @@ public class TestUtils {
             .build();
     public static final String REMOTE_ACCOUNT_LABEL = "CTSRemoteConnectionService";
     public static final String SELF_MANAGED_ACCOUNT_LABEL = "android.telecom.cts";
-    public static final String TEST_URI_SCHEME = "foobuzz";
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_3 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_3, SELF_MANAGED_ACCOUNT_LABEL)
             .setAddress(Uri.fromParts(TEST_URI_SCHEME, "test@test.com", null))
@@ -201,6 +225,9 @@ public class TestUtils {
             "telecom set-phone-acct-suggestion-component ";
 
     private static final String COMMAND_REGISTER_SIM = "telecom register-sim-phone-account ";
+
+    private static final String COMMAND_SET_DEFAULT_PHONE_ACCOUNT =
+            "telecom set-user-selected-outgoing-phone-account ";
 
     private static final String COMMAND_WAIT_ON_HANDLERS = "telecom wait-on-handlers";
 
@@ -252,6 +279,19 @@ public class TestUtils {
         executeShellCommand(instrumentation, COMMAND_REGISTER_SIM
                 + component.getPackageName() + "/" + component.getClassName() + " "
                 + handle.getId() + " " + currentUserSerial + " " + label + " " + address);
+    }
+
+    public static void setDefaultOutgoingPhoneAccount(Instrumentation instrumentation,
+            PhoneAccountHandle handle) throws Exception {
+        if (handle != null) {
+            final ComponentName component = handle.getComponentName();
+            final long currentUserSerial = getCurrentUserSerialNumber(instrumentation);
+            executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_PHONE_ACCOUNT
+                    + component.getPackageName() + "/" + component.getClassName() + " "
+                    + handle.getId() + " " + currentUserSerial);
+        } else {
+            executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_PHONE_ACCOUNT);
+        }
     }
 
     public static void waitOnAllHandlers(Instrumentation instrumentation) throws Exception {

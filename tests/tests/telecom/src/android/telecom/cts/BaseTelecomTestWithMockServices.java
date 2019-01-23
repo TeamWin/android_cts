@@ -63,6 +63,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     public static final int FLAG_REGISTER = 0x1;
     public static final int FLAG_ENABLE = 0x2;
+    public static final int FLAG_SET_DEFAULT = 0x4;
 
     private static int sCounter = 5549999;
 
@@ -89,6 +90,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     InCallServiceCallbacks mInCallCallbacks;
     String mPreviousDefaultDialer = null;
+    PhoneAccountHandle mPreviousDefaultOutgoingAccount = null;
+    boolean mShouldRestoreDefaultOutgoingAccount = false;
     MockConnectionService connectionService = null;
 
     HandlerThread mPhoneStateListenerThread;
@@ -193,6 +196,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             assertPhoneAccountEnabled(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
         }
 
+        if ((flags & FLAG_SET_DEFAULT) != 0) {
+            mPreviousDefaultOutgoingAccount = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+            mShouldRestoreDefaultOutgoingAccount = true;
+            TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(),
+                    TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+            // Wait till the adb commands have executed and the default has changed.
+            assertPhoneAccountIsDefault(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        }
+
         return TestUtils.TEST_PHONE_ACCOUNT;
     }
 
@@ -203,7 +215,13 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mTelecomManager.unregisterPhoneAccount(accountHandle);
         CtsConnectionService.tearDown();
         assertCtsConnectionServiceUnbound();
+        if (mShouldRestoreDefaultOutgoingAccount) {
+            TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(),
+                    mPreviousDefaultOutgoingAccount);
+        }
         this.connectionService = null;
+        mPreviousDefaultOutgoingAccount = null;
+        mShouldRestoreDefaultOutgoingAccount = false;
     }
 
     protected void startCallTo(Uri address, PhoneAccountHandle accountHandle) {
@@ -1044,6 +1062,26 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Phone account enable failed for " + handle
+        );
+    }
+
+    void assertPhoneAccountIsDefault(final PhoneAccountHandle handle) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        PhoneAccountHandle phoneAccountHandle =
+                                mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+                        return (phoneAccountHandle != null && phoneAccountHandle.equals(handle));
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Failed to set default phone account to " + handle
         );
     }
 
