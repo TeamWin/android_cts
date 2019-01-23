@@ -1268,6 +1268,21 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testIsCryptoSchemeSupportedWithSecurityLevel() {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        if (MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, "cenc",
+                                             MediaDrm.SECURITY_LEVEL_HW_SECURE_ALL)) {
+            throw new Error("Clearkey claims to support SECURITY_LEVEL_HW_SECURE_ALL");
+        }
+        if (!MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, "cenc",
+                                              MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO)) {
+            throw new Error("Clearkey claims not to support SECURITY_LEVEL_SW_SECURE_CRYPTO");
+        }
+    }
+
     private String getClearkeyVersion(MediaDrm drm) {
         try {
             return drm.getPropertyString("version");
