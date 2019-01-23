@@ -199,10 +199,14 @@ public class ProviderTestUtils {
     }
 
     static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
+        return stageMedia(resId, collectionUri, "image/png");
+    }
+
+    static Uri stageMedia(int resId, Uri collectionUri, String mimeType) throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         final String displayName = "cts" + System.nanoTime();
         final MediaStore.PendingParams params = new MediaStore.PendingParams(
-                collectionUri, displayName, "image/png");
+                collectionUri, displayName, mimeType);
         final Uri pendingUri = MediaStore.createPending(context, params);
         try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
             try (InputStream source = context.getResources().openRawResource(resId);
