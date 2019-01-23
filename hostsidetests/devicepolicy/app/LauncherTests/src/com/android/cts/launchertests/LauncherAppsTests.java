@@ -216,6 +216,9 @@ public class LauncherAppsTests extends AndroidTestCase {
         List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
         boolean noLaunchableActivityAppFound = false;
         for (LauncherActivityInfo activity : activities) {
+            if (!activity.getUser().equals(mUser)) {
+                continue;
+            }
             ComponentName compName = activity.getComponentName();
             if (compName.getPackageName().equals(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE)) {
                 noLaunchableActivityAppFound = true;
@@ -235,9 +238,27 @@ public class LauncherAppsTests extends AndroidTestCase {
         assertTrue(noLaunchableActivityAppFound);
     }
 
+    public void testNoInjectedActivityFound() throws Exception {
+        // NoLaunchableActivityApp is installed for duration of this test - make sure
+        // it's NOT present on the activity list
+        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
+        for (LauncherActivityInfo activity : activities) {
+            if (!activity.getUser().equals(mUser)) {
+                continue;
+            }
+            ComponentName compName = activity.getComponentName();
+            if (compName.getPackageName().equals(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE)) {
+                fail("Injected activity found in package: " + compName.getPackageName());
+            }
+        }
+    }
+
     public void testNoSystemAppHasSyntheticAppDetailsActivityInjected() throws Exception {
         List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
         for (LauncherActivityInfo activity : activities) {
+            if (!activity.getUser().equals(mUser)) {
+                continue;
+            }
             ApplicationInfo appInfo = activity.getApplicationInfo();
             boolean isSystemApp = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
                     || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
