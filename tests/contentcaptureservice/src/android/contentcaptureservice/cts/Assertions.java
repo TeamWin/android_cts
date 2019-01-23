@@ -309,7 +309,7 @@ final class Assertions {
      */
     public static void assertVirtualViewDisappeared(@NonNull List<ContentCaptureEvent> events,
             int index, @NonNull AutofillId parentId, @NonNull ContentCaptureSession session,
-            int childId) {
+            long childId) {
         assertViewDisappeared(events, index, session.newAutofillId(parentId, childId));
     }
 
@@ -318,7 +318,7 @@ final class Assertions {
      */
     public static void assertVirtualViewsDisappeared(@NonNull List<ContentCaptureEvent> events,
             int index, @NonNull AutofillId parentId, @NonNull ContentCaptureSession session,
-            int... childrenIds) {
+            long... childrenIds) {
         final int size = childrenIds.length;
         final AutofillId[] expectedIds = new AutofillId[size];
         for (int i = 0; i < childrenIds.length; i++) {
