@@ -104,7 +104,8 @@ public class MediaStore_Images_MediaTest {
         c.close();
 
         // insert an image by path
-        File file = mContext.getFileStreamPath("mediaStoreTest1.jpg");
+        File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                "mediaStoreTest1.jpg");
         String path = file.getAbsolutePath();
         ProviderTestUtils.stageFile(R.raw.scenery, file);
         String stringUrl = null;
@@ -119,7 +120,8 @@ public class MediaStore_Images_MediaTest {
         assertInsertionSuccess(stringUrl);
 
         // insert another image by path
-        file = mContext.getFileStreamPath("mediaStoreTest2.jpg");
+        file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                "mediaStoreTest2.jpg");
         path = file.getAbsolutePath();
         ProviderTestUtils.stageFile(R.raw.scenery, file);
         stringUrl = null;
@@ -206,10 +208,6 @@ public class MediaStore_Images_MediaTest {
         assertNotNull(c = mContentResolver.query(Media.getContentUri(mVolumeName), null, null, null,
                 null));
         c.close();
-
-        // can not accept any other volume names
-        String volume = "fakeVolume";
-        assertNull(mContentResolver.query(Media.getContentUri(volume), null, null, null, null));
     }
 
     private void cleanExternalMediaFile(String path) {

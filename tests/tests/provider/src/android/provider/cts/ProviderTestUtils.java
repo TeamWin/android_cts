@@ -40,6 +40,7 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -160,15 +161,6 @@ public class ProviderTestUtils {
         executeShellCommand("bmgr wipe " + backupTransport + " " + packageName, uiAutomation);
     }
 
-    static String stageInternalFile(int resId, String fileName) throws IOException {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        try (InputStream source = context.getResources().openRawResource(resId);
-                OutputStream target = context.openFileOutput(fileName, Context.MODE_PRIVATE)) {
-            android.os.FileUtils.copy(source, target);
-        }
-        return context.getFileStreamPath(fileName).getAbsolutePath();
-    }
-
     static File stageDir(String volumeName) throws IOException {
         return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "data",
                 "android.provider.cts");
@@ -193,15 +185,16 @@ public class ProviderTestUtils {
                 Log.d(TAG, executeShellCommand("sync"));
             }
         } else {
-            stageFileRaw(resId, file);
-        }
-    }
-
-    static void stageFileRaw(int resId, File file) throws IOException {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        try (InputStream source = context.getResources().openRawResource(resId);
-                OutputStream target = new FileOutputStream(file)) {
-            android.os.FileUtils.copy(source, target);
+            final File dir = file.getParentFile();
+            dir.mkdirs();
+            if (!dir.exists()) {
+                throw new FileNotFoundException("Failed to create parent for " + file);
+            }
+            final Context context = InstrumentationRegistry.getTargetContext();
+            try (InputStream source = context.getResources().openRawResource(resId);
+                    OutputStream target = new FileOutputStream(file)) {
+                FileUtils.copy(source, target);
+            }
         }
     }
 

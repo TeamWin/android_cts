@@ -24,7 +24,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -32,7 +31,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.Thumbnails;
@@ -220,13 +219,14 @@ public class MediaStore_Video_ThumbnailsTest {
     }
 
     private Uri insertVideo() throws IOException {
-        File file = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
+        File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                "testVideo.3gp");
         // clean up any potential left over entries from a previous aborted run
         mResolver.delete(Media.EXTERNAL_CONTENT_URI,
                 "_data=?", new String[] { file.getAbsolutePath() });
         file.delete();
 
-        ProviderTestUtils.stageFileRaw(R.raw.testthumbvideo, file);
+        ProviderTestUtils.stageFile(R.raw.testthumbvideo, file);
 
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());

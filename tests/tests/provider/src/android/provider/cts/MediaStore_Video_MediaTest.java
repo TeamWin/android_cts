@@ -82,10 +82,6 @@ public class MediaStore_Video_MediaTest {
         assertNotNull(c = mContentResolver.query(Media.getContentUri(mVolumeName), null, null, null,
                 null));
         c.close();
-
-        // can not accept any other volume names
-        String volume = "fakeVolume";
-        assertNull(mContentResolver.query(Media.getContentUri(volume), null, null, null, null));
     }
 
     private void cleanExternalMediaFile(String path) {

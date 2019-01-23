@@ -126,11 +126,6 @@ public class MediaStore_DownloadsTest {
         assertNotNull(c = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
                 null, null, null, null));
         c.close();
-
-        // can not accept any other volume names
-        final String volume = "faveVolume";
-        assertNull(mContentResolver.query(Downloads.getContentUri(volume),
-                null, null, null, null));
     }
 
     @Test

@@ -19,14 +19,12 @@ package android.provider.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.usage.StorageStatsManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
@@ -62,16 +60,9 @@ import java.util.UUID;
 public class MediaStoreTest {
     static final String TAG = "MediaStoreTest";
 
-    private static final String TEST_VOLUME_NAME = "volume_for_cts";
-
     private static final long SIZE_DELTA = 32_000;
 
-    private static final String[] PROJECTION = new String[] { MediaStore.MEDIA_SCANNER_VOLUME };
-
-    private Uri mScannerUri;
-
-    private String mVolumnBackup;
-
+    private Context mContext;
     private ContentResolver mContentResolver;
 
     private Uri mExternalImages;
@@ -90,15 +81,8 @@ public class MediaStoreTest {
 
     @Before
     public void setUp() throws Exception {
-        mScannerUri = MediaStore.getMediaScannerUri();
-        mContentResolver = getContext().getContentResolver();
-
-        Cursor c = mContentResolver.query(mScannerUri, PROJECTION, null, null, null);
-        if (c != null) {
-            c.moveToFirst();
-            mVolumnBackup = c.getString(0);
-            c.close();
-        }
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
 
         Log.d(TAG, "Using volume " + mVolumeName);
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
@@ -108,41 +92,15 @@ public class MediaStoreTest {
     public void tearDown() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
-
-        // restore initial values
-        if (mVolumnBackup != null) {
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MEDIA_SCANNER_VOLUME, mVolumnBackup);
-            mContentResolver.insert(mScannerUri, values);
-        }
     }
 
     @Test
     public void testGetMediaScannerUri() {
-        ContentValues values = new ContentValues();
-        String selection = MediaStore.MEDIA_SCANNER_VOLUME + "=?";
-        String[] selectionArgs = new String[] { TEST_VOLUME_NAME };
-
-        // assert there is no item with name TEST_VOLUME_NAME
-        assertNull(mContentResolver.query(mScannerUri, PROJECTION,
-                selection, selectionArgs, null));
-
-        // insert
-        values.put(MediaStore.MEDIA_SCANNER_VOLUME, TEST_VOLUME_NAME);
-        assertEquals(MediaStore.getMediaScannerUri(),
-                mContentResolver.insert(mScannerUri, values));
-
         // query
-        Cursor c = mContentResolver.query(mScannerUri, PROJECTION,
-                selection, selectionArgs, null);
+        Cursor c = mContentResolver.query(MediaStore.getMediaScannerUri(), null,
+                null, null, null);
         assertEquals(1, c.getCount());
-        c.moveToFirst();
-        assertEquals(TEST_VOLUME_NAME, c.getString(0));
         c.close();
-
-        // delete
-        assertEquals(1, mContentResolver.delete(mScannerUri, null, null));
-        assertNull(mContentResolver.query(mScannerUri, PROJECTION, null, null, null));
     }
 
     @Test
