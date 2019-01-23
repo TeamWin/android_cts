@@ -472,7 +472,7 @@ public class WindowManagerState {
     /**
      * Check if there exists a window record with matching windowName.
      */
-    boolean containsWindow(String windowName) {
+    public boolean containsWindow(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
                 return true;
