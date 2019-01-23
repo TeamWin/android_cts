@@ -24,6 +24,7 @@ import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
 import android.autofillservice.cts.common.SettingsHelper;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
+import android.view.autofill.AutofillManager;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -36,9 +37,9 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
         <A extends AbstractAutoFillActivity> extends AutoFillServiceTestCase.AutoActivityLaunch<A> {
 
     @ClassRule
-    public static final SettingsStateChangerRule sFeatureEnabler =
-            new SettingsStateChangerRule(sContext, SettingsHelper.NAMESPACE_GLOBAL,
-                    AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS, "2");
+    public static final SettingsStateChangerRule sFeatureEnabler = new SettingsStateChangerRule(
+            sContext, SettingsHelper.NAMESPACE_GLOBAL, AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
+            Integer.toString(AutofillManager.FLAG_SMART_SUGGESTION_SYSTEM));
 
     protected static AugmentedReplier sAugmentedReplier;
     protected AugmentedUiBot mAugmentedUiBot;
