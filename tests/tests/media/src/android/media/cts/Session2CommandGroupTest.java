@@ -16,6 +16,7 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -84,9 +85,9 @@ public class Session2CommandGroupTest {
         Parcel dest = Parcel.obtain();
         commandGroup.writeToParcel(dest, 0);
         dest.setDataPosition(0);
-        assertEquals(commandGroup.getCommands().toArray(new Session2Command[0]),
-                dest.readParcelableArray(Session2Command.class.getClassLoader(),
-                        Session2Command.class));
+        Session2CommandGroup commandGroupFromParcel =
+            Session2CommandGroup.CREATOR.createFromParcel(dest);
+        assertEquals(commandGroup.getCommands(), commandGroupFromParcel.getCommands());
         dest.recycle();
     }
 
