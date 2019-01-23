@@ -347,7 +347,7 @@ public class CustomViewActivityTest extends
             Log.d(TAG, "nofifying child2 appeared: " + child2Id);
             session.notifyViewAppeared(child2);
 
-            final int[] childrenIds = {2, 1};
+            final long[] childrenIds = {2, 1};
             Log.d(TAG, "nofifying both children disappeared: " + Arrays.toString(childrenIds));
             session.notifyViewsDisappeared(customViewId, childrenIds);
         });
