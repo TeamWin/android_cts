@@ -16,6 +16,7 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
@@ -30,12 +31,18 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ImageDecoder;
 import android.media.MediaScanner;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
@@ -43,6 +50,8 @@ import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.Size;
 
 import junit.framework.AssertionFailedError;
 
@@ -50,17 +59,33 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_Images_ThumbnailsTest {
     private ArrayList<Uri> mRowsAdded;
 
     private Context mContext;
-
     private ContentResolver mContentResolver;
+
+    private Uri mExternalImages;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    private int mLargestDimension;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
 
     private Uri mRed;
     private Uri mBlue;
@@ -83,6 +108,14 @@ public class MediaStore_Images_ThumbnailsTest {
         mContentResolver = mContext.getContentResolver();
 
         mRowsAdded = new ArrayList<Uri>();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
+
+        final Resources res = mContext.getResources();
+        final Configuration config = res.getConfiguration();
+        mLargestDimension = (int) (Math.max(config.screenWidthDp, config.screenHeightDp)
+                * res.getDisplayMetrics().density);
     }
 
     private void prepareImages() throws Exception {
@@ -106,6 +139,7 @@ public class MediaStore_Images_ThumbnailsTest {
 
     @Test
     public void testQueryExternalThumbnails() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
         prepareImages();
 
         Cursor c = Thumbnails.queryMiniThumbnails(mContentResolver,
@@ -151,6 +185,9 @@ public class MediaStore_Images_ThumbnailsTest {
 
     @Test
     public void testQueryExternalMiniThumbnails() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
+        final ContentResolver resolver = mContentResolver;
+
         // insert the image by bitmap
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inTargetDensity = DisplayMetrics.DENSITY_XHIGH;
@@ -175,31 +212,8 @@ public class MediaStore_Images_ThumbnailsTest {
         c.close();
 
         assertExists("image file does not exist", imagePath);
-
-        String[] sizeProjection = new String[] { Thumbnails.WIDTH, Thumbnails.HEIGHT };
-        c = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
-                sizeProjection);
-        assertEquals(1, c.getCount());
-        assertTrue(c.moveToFirst());
-        assertMostlyEquals(320, c.getInt(c.getColumnIndex(Thumbnails.WIDTH)), 128);
-        assertMostlyEquals(320, c.getInt(c.getColumnIndex(Thumbnails.HEIGHT)), 128);
-        c.close();
-        c = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MICRO_KIND,
-                sizeProjection);
-        assertEquals(1, c.getCount());
-        assertTrue(c.moveToFirst());
-        assertMostlyEquals(96, c.getInt(c.getColumnIndex(Thumbnails.WIDTH)), 64);
-        assertMostlyEquals(96, c.getInt(c.getColumnIndex(Thumbnails.HEIGHT)), 64);
-        c.close();
-
-        c = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
-                new String[] { Thumbnails._ID, Thumbnails.DATA, Thumbnails.IMAGE_ID});
-
-        c.moveToNext();
-        long img = c.getLong(c.getColumnIndex(Thumbnails.IMAGE_ID));
-        assertEquals(imageId, img);
-        String thumbPath = c.getString(c.getColumnIndex(Thumbnails.DATA));
-        assertExists("thumbnail file does not exist", thumbPath);
+        assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
+        assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // deleting the image from the database also deletes the image file, and the
         // corresponding entry in the thumbnail table, which in turn triggers deletion
@@ -208,14 +222,8 @@ public class MediaStore_Images_ThumbnailsTest {
         mRowsAdded.remove(stringUri);
 
         assertNotExists("image file should no longer exist", imagePath);
-
-        Cursor c2 = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
-                new String[] { Thumbnails._ID, Thumbnails.DATA, Thumbnails.IMAGE_ID});
-        assertEquals(0, c2.getCount());
-        c2.close();
-
-        assertNotExists("thumbnail file should no longer exist", thumbPath);
-        c.close();
+        assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
+        assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // insert image, then delete it via the files table
         stringUrl = Media.insertImage(mContentResolver, src, null, null);
@@ -229,30 +237,6 @@ public class MediaStore_Images_ThumbnailsTest {
         Uri fileuri = MediaStore.Files.getContentUri("external", imageId);
         mContentResolver.delete(fileuri, null, null);
         assertNotExists("image file should no longer exist", imagePath);
-
-
-        // insert image, then delete its thumbnail
-        stringUrl = Media.insertImage(mContentResolver, src, null, null);
-        c = mContentResolver.query(Uri.parse(stringUrl),
-                new String[]{ Media._ID, Media.DATA}, null, null, null);
-        c.moveToFirst();
-        imageId = c.getLong(c.getColumnIndex(Media._ID));
-        imagePath = c.getString(c.getColumnIndex(Media.DATA));
-        c.close();
-        c2 = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
-                new String[] { Thumbnails._ID, Thumbnails.DATA, Thumbnails.IMAGE_ID});
-        c2.moveToFirst();
-        thumbPath = c2.getString(c2.getColumnIndex(Thumbnails.DATA));
-        assertExists("thumbnail file does not exist", thumbPath);
-
-        Uri imguri = Uri.parse(stringUrl);
-        long imgid = ContentUris.parseId(imguri);
-        assertEquals(imgid, imageId);
-        mRowsAdded.add(imguri);
-        mContentResolver.delete(MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI,
-                MediaStore.Images.Thumbnails.IMAGE_ID + "=?", new String[]{ "" + imgid});
-        assertNotExists("thumbnail file should no longer exist", thumbPath);
-        assertExists("image file should still exist", imagePath);
     }
 
     @Test
@@ -261,13 +245,14 @@ public class MediaStore_Images_ThumbnailsTest {
         assertNotNull(c = mContentResolver.query(Thumbnails.getContentUri("internal"), null, null,
                 null, null));
         c.close();
-        assertNotNull(c = mContentResolver.query(Thumbnails.getContentUri("external"), null, null,
+        assertNotNull(c = mContentResolver.query(Thumbnails.getContentUri(mVolumeName), null, null,
                 null, null));
         c.close();
     }
 
     @Test
     public void testStoreImagesMediaExternal() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
         prepareImages();
 
         final String externalImgPath = Environment.getExternalStorageDirectory() +
@@ -313,42 +298,30 @@ public class MediaStore_Images_ThumbnailsTest {
 
     @Test
     public void testThumbnailGenerationAndCleanup() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
+        final ContentResolver resolver = mContentResolver;
+
         // insert an image
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
         Uri uri = Uri.parse(Media.insertImage(mContentResolver, src, "test", "test description"));
+        long imageId = ContentUris.parseId(uri);
 
-        // query its thumbnail
-        Cursor c = mContentResolver.query(
-                Thumbnails.EXTERNAL_CONTENT_URI,
-                new String [] {Thumbnails.DATA},
-                "image_id=?",
-                new String[] {uri.getLastPathSegment()},
-                null /* sort */
-                );
-        assertTrue("couldn't find thumbnail", c.moveToNext());
-        String path = c.getString(0);
-        c.close();
-        assertExists("thumbnail does not exist", path);
+        assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
+        assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // delete the source image and check that the thumbnail is gone too
         mContentResolver.delete(uri, null /* where clause */, null /* where args */);
-        assertNotExists("thumbnail still exists after source file delete", path);
+
+        assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
+        assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // insert again
         uri = Uri.parse(Media.insertImage(mContentResolver, src, "test", "test description"));
+        imageId = ContentUris.parseId(uri);
 
         // query its thumbnail again
-        c = mContentResolver.query(
-                Thumbnails.EXTERNAL_CONTENT_URI,
-                new String [] {Thumbnails.DATA},
-                "image_id=?",
-                new String[] {uri.getLastPathSegment()},
-                null /* sortOrder */
-                );
-        assertTrue("couldn't find thumbnail", c.moveToNext());
-        path = c.getString(0);
-        c.close();
-        assertExists("thumbnail does not exist", path);
+        assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
+        assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // update the media type
         ContentValues values = new ContentValues();
@@ -357,23 +330,11 @@ public class MediaStore_Images_ThumbnailsTest {
                 1, mContentResolver.update(uri, values, null /* where */, null /* where args */));
 
         // image was marked as regular file in the database, which should have deleted its thumbnail
-
-        // query its thumbnail again
-        c = mContentResolver.query(
-                Thumbnails.EXTERNAL_CONTENT_URI,
-                new String [] {Thumbnails.DATA},
-                "image_id=?",
-                new String[] {uri.getLastPathSegment()},
-                null /* sort */
-                );
-        if (c != null) {
-            assertFalse("thumbnail entry exists for non-thumbnail file", c.moveToNext());
-            c.close();
-        }
-        assertNotExists("thumbnail remains after source file type change", path);
+        assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
+        assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // check source no longer exists as image
-        c = mContentResolver.query(uri,
+        Cursor c = mContentResolver.query(uri,
                 null /* projection */, null /* where */, null /* where args */, null /* sort */);
         assertFalse("source entry should be gone", c.moveToNext());
         c.close();
@@ -407,6 +368,8 @@ public class MediaStore_Images_ThumbnailsTest {
 
     @Test
     public void testThumbnailOrderedQuery() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
+
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
         Uri url[] = new Uri[3];
         try{
@@ -451,5 +414,94 @@ public class MediaStore_Images_ThumbnailsTest {
             // the tests will be aborted because the image will be put in sdcard
             fail("There is no sdcard attached! " + e.getMessage());
         }
+    }
+
+    @Test
+    public void testInsertUpdateDelete() throws Exception {
+        final String displayName = "cts" + System.nanoTime();
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                mExternalImages, displayName, "image/png");
+        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri finalUri;
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+            try (OutputStream out = session.openOutputStream()) {
+                writeImage(mLargestDimension, mLargestDimension, Color.RED, out);
+            }
+            finalUri = session.publish();
+        }
+
+        // Directly reading should be larger
+        final Bitmap full = ImageDecoder
+                .decodeBitmap(ImageDecoder.createSource(mContentResolver, finalUri));
+        assertEquals(mLargestDimension, full.getWidth());
+        assertEquals(mLargestDimension, full.getHeight());
+
+        {
+            // Thumbnail should be smaller
+            final Bitmap thumb = mContentResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+            assertTrue(thumb.getWidth() < full.getWidth());
+            assertTrue(thumb.getHeight() < full.getHeight());
+
+            // Thumbnail should match contents
+            assertColorMostlyEquals(Color.RED, thumb.getPixel(16, 16));
+        }
+
+        // Verify legacy APIs still work
+        if (MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) {
+            for (int kind : new int[] {
+                    MediaStore.Images.Thumbnails.MINI_KIND,
+                    MediaStore.Images.Thumbnails.FULL_SCREEN_KIND,
+                    MediaStore.Images.Thumbnails.MICRO_KIND
+            }) {
+                // Thumbnail should be smaller
+                final Bitmap thumb = MediaStore.Images.Thumbnails.getThumbnail(mContentResolver,
+                        ContentUris.parseId(finalUri), kind, null);
+                assertTrue(thumb.getWidth() < full.getWidth());
+                assertTrue(thumb.getHeight() < full.getHeight());
+
+                // Thumbnail should match contents
+                assertColorMostlyEquals(Color.RED, thumb.getPixel(16, 16));
+            }
+        }
+
+        // Edit image contents
+        try (OutputStream out = mContentResolver.openOutputStream(finalUri)) {
+            writeImage(mLargestDimension, mLargestDimension, Color.BLUE, out);
+        }
+
+        // Wait a few moments for events to settle
+        SystemClock.sleep(1000);
+
+        {
+            // Thumbnail should match updated contents
+            final Bitmap thumb = mContentResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+            assertColorMostlyEquals(Color.BLUE, thumb.getPixel(16, 16));
+        }
+
+        // Delete image contents
+        mContentResolver.delete(finalUri, null, null);
+
+        // Thumbnail should no longer exist
+        try {
+            mContentResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+            fail("Funky; we somehow made a thumbnail out of nothing?");
+        } catch (FileNotFoundException expected) {
+        }
+    }
+
+    private static void writeImage(int width, int height, int color, OutputStream out) {
+        final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(color);
+        bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+    }
+
+    /**
+     * Since thumbnails might be bounced through a compression pass, we're okay
+     * if they're mostly equal.
+     */
+    private static void assertColorMostlyEquals(int expected, int actual) {
+        assertEquals(Integer.toHexString(expected & 0xF0F0F0F0),
+                Integer.toHexString(actual & 0xF0F0F0F0));
     }
 }
