@@ -18,22 +18,44 @@ package android.view.cts.surfacevalidator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.view.Gravity;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
 
 public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
-    private final ViewFactory mViewFactory;
+    private final SurfaceViewFactory mViewFactory;
     private final FrameLayout.LayoutParams mLayoutParams;
     private final AnimationFactory mAnimationFactory;
     private final PixelChecker mPixelChecker;
-
+    
     private final int mBufferWidth;
     private final int mBufferHeight;
 
     private FrameLayout mParent;
     private ValueAnimator mAnimator;
+
+    public static abstract class ParentSurfaceConsumer {
+        abstract public void addChildren(SurfaceControl parent);
+    };
+
+    private static class ParentSurfaceHolder implements SurfaceHolder.Callback {
+        ParentSurfaceConsumer mPsc;
+        SurfaceView mSurfaceView;
+
+        ParentSurfaceHolder(ParentSurfaceConsumer psc) {
+            mPsc = psc;
+        }
+
+        public void surfaceCreated(SurfaceHolder holder) {
+            mPsc.addChildren(mSurfaceView.getSurfaceControl());
+        }
+        public void surfaceDestroyed(SurfaceHolder holder) {
+        }
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        }
+    };
 
     public SurfaceControlTestCase(SurfaceHolder.Callback callback,
             AnimationFactory animationFactory, PixelChecker pixelChecker,
@@ -47,22 +69,38 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
         mBufferHeight = bufferHeight;
     }
 
+    public SurfaceControlTestCase(ParentSurfaceConsumer psc,
+            AnimationFactory animationFactory, PixelChecker pixelChecker,
+            int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight) {
+        this(new ParentSurfaceHolder(psc), animationFactory, pixelChecker,
+                layoutWidth, layoutHeight, bufferWidth, bufferHeight);
+    }
+
     public PixelChecker getChecker() {
         return mPixelChecker;
     }
 
     public void start(Context context, FrameLayout parent) {
         View view = mViewFactory.createView(context);
+        if (mViewFactory.mCallback instanceof ParentSurfaceHolder) {
+            ParentSurfaceHolder psh = (ParentSurfaceHolder) mViewFactory.mCallback;
+            psh.mSurfaceView = (SurfaceView) view;
+        }
 
         mParent = parent;
         mParent.addView(view, mLayoutParams);
 
-        mAnimator = mAnimationFactory.createAnimator(view);
-        mAnimator.start();
+        if (mAnimationFactory != null) {
+            mAnimator = mAnimationFactory.createAnimator(view);
+            mAnimator.start();
+        }
     }
 
     public void end() {
-        mAnimator.end();
+        if (mAnimator != null) {
+            mAnimator.end();
+            mAnimator = null;
+        }
         mParent.removeAllViews();
     }
 
