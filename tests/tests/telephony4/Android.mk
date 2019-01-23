@@ -41,8 +41,8 @@ LOCAL_PRIVATE_PLATFORM_APIS := true
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-# Replace this key with the new key once b/122730497 is done.
-LOCAL_CERTIFICATE := build/make/target/product/security/testkey
+LOCAL_CERTIFICATE := cts/tests/tests/telephony4/certs/android_telephony_cts_testkey
+
 
 include $(BUILD_CTS_PACKAGE)
 include $(call all-makefiles-under,$(LOCAL_PATH))
