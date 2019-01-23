@@ -255,6 +255,18 @@ public class ASurfaceControlTest {
             reparent(surfaceControl, newParentSurfaceControl, surfaceTransaction);
             applyAndDeleteSurfaceTransaction(surfaceTransaction);
         }
+
+        public void setColor(long surfaceControl, long surfaceTransaction, float red, float green,
+                float blue, float alpha) {
+            nSurfaceTransaction_setColor(surfaceControl, surfaceTransaction, red, green, blue,
+                    alpha);
+        }
+
+        public void setColor(long surfaceControl, float red, float green, float blue, float alpha) {
+            long surfaceTransaction = createSurfaceTransaction();
+            setColor(surfaceControl, surfaceTransaction, red, green, blue, alpha);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1313,6 +1325,214 @@ public class ASurfaceControlTest {
                         return pixelCount > 9000 && pixelCount < 11000;
                     }
                 });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setColor() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long surfaceControl = createFromWindow(holder.getSurface());
+
+                    setColor(surfaceControl, 0, 1.0f, 0, 1.0f);
+                }
+            },
+                new PixelChecker(PixelColor.GREEN) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_noColorNoBuffer() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long parentSurfaceControl = createFromWindow(holder.getSurface());
+                    long childSurfaceControl = create(parentSurfaceControl);
+
+                    setColor(parentSurfaceControl, 0, 1.0f, 0, 1.0f);
+                }
+            },
+                new PixelChecker(PixelColor.GREEN) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setColorAlpha() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long parentSurfaceControl = createFromWindow(holder.getSurface());
+                    setColor(parentSurfaceControl, 0, 0, 1.0f, 0);
+                }
+            },
+                new PixelChecker(PixelColor.BLACK) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setColorAndBuffer() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long surfaceControl = createFromWindow(holder.getSurface());
+
+                    setSolidBuffer(
+                            surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                            DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                    setColor(surfaceControl, 0, 1.0f, 0, 1.0f);
+                }
+            },
+                new PixelChecker(PixelColor.RED) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setColorAndBuffer_bufferAlpha_0_5() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long surfaceControl = createFromWindow(holder.getSurface());
+
+                    setSolidBuffer(
+                            surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                            PixelColor.RED);
+                    setBufferAlpha(surfaceControl, 0.5);
+                    setColor(surfaceControl, 0, 0, 1.0f, 1.0f);
+                }
+            },
+                new PixelChecker(PixelColor.RED) {
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount == 0;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setBufferNoColor_bufferAlpha_0() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long surfaceControlA = createFromWindow(holder.getSurface());
+                    long surfaceControlB = createFromWindow(holder.getSurface());
+
+                    setColor(surfaceControlA, 1.0f, 0, 0, 1.0f);
+                    setSolidBuffer(surfaceControlB, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                            PixelColor.TRANSPARENT);
+
+                    setZOrder(surfaceControlA, 1);
+                    setZOrder(surfaceControlB, 2);
+                }
+            },
+                new PixelChecker(PixelColor.RED) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setColorAndBuffer_hide() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long parentSurfaceControl = createFromWindow(holder.getSurface());
+                    long childSurfaceControl = create(parentSurfaceControl);
+
+                    setColor(parentSurfaceControl, 0, 1.0f, 0, 1.0f);
+
+                    setSolidBuffer(
+                            childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
+                            DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                    setColor(childSurfaceControl, 0, 0, 1.0f, 1.0f);
+                    setVisibility(childSurfaceControl, false);
+                }
+            },
+                new PixelChecker(PixelColor.GREEN) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_zOrderMultipleSurfaces() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long surfaceControlA = createFromWindow(holder.getSurface());
+                    long surfaceControlB = createFromWindow(holder.getSurface());
+
+                    // blue color layer of A is above the green buffer and red color layer
+                    // of B
+                    setColor(surfaceControlA, 0, 0, 1.0f, 1.0f);
+                    setSolidBuffer(
+                            surfaceControlB, DEFAULT_LAYOUT_WIDTH,
+                            DEFAULT_LAYOUT_HEIGHT, PixelColor.GREEN);
+                    setColor(surfaceControlB, 1.0f, 0, 0, 1.0f);
+                    setZOrder(surfaceControlA, 5);
+                    setZOrder(surfaceControlB, 4);
+                }
+            },
+                new PixelChecker(PixelColor.BLUE) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
+    }
+
+    @Test
+    public void testSurfaceTransaction_zOrderMultipleSurfacesWithParent() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    long parentSurfaceControl = createFromWindow(holder.getSurface());
+                    long surfaceControlA = create(parentSurfaceControl);
+                    long surfaceControlB = create(parentSurfaceControl);
+
+                    setColor(surfaceControlA, 0, 1.0f, 0, 1.0f);
+                    setSolidBuffer(
+                            surfaceControlA, DEFAULT_LAYOUT_WIDTH,
+                            DEFAULT_LAYOUT_HEIGHT, PixelColor.GREEN);
+                    setColor(surfaceControlB, 1.0f, 0, 0, 1.0f);
+                    setZOrder(surfaceControlA, 3);
+                    setZOrder(surfaceControlB, 4);
+                }
+            },
+                new PixelChecker(PixelColor.RED) { // 10000
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount > 9000 && pixelCount < 11000;
+                }
+            });
     }
 
     ///////////////////////////////////////////////////////////////////////////

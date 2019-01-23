@@ -22,6 +22,8 @@ public class PixelColor {
     public static final int BLUE = 0xFFFF0000;
 
     public static final int TRANSPARENT_RED = 0x7F0000FF;
+    public static final int TRANSPARENT_BLUE = 0x7FFF0000;
+    public static final int TRANSPARENT = 0x00000000;
 
     // Default to black
     public short mMinAlpha;
