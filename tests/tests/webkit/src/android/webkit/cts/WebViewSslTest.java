@@ -730,12 +730,23 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         mOnUiThread.clearSslPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         // Page NOT loaded OK...
-        // In this case, we must NOT have received the onReceivedSslError callback as that is for
-        // recoverable (e.g. server auth) errors, whereas failing mandatory client auth is non-
-        // recoverable and should drop straight through to a load error.
-        assertFalse(webViewClient.wasOnReceivedSslErrorCalled());
-        assertFalse(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
-        assertEquals(WebViewClient.ERROR_FAILED_SSL_HANDSHAKE, webViewClient.onReceivedErrorCode());
+        //
+        // In this test, we expect both a recoverable and non-recoverable error:
+        //
+        //  1. WebView does not trust the test server's certificate. This is a recoverable error, so
+        //     WebView invokes #onReceivedSslError (and the WebViewClient calls #proceed). We don't
+        //     specifically intend to test this part of the scenario, but we can't easily mock out
+        //     WebView's certificate roots.
+        //  2. WebView proceeds with the handshake without providing client authentication. The
+        //     server fails the client. This is non-recoverable, so WebView invokes
+        //     #onReceivedError.
+        //
+        // We only assert the second error, since earlier WebView versions had a bug in which
+        // WebView hit error 2 first, which prevented it from hitting error 1.
+        assertFalse("Title should not be updated, since page load should have failed",
+                TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals("Expected ERROR_FAILED_SSL_HANDSHAKE in onReceivedError",
+                WebViewClient.ERROR_FAILED_SSL_HANDSHAKE, webViewClient.onReceivedErrorCode());
     }
 
     public void testProceedClientCertRequest() throws Throwable {
