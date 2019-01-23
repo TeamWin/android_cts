@@ -1431,6 +1431,44 @@
     <string name="sv_failed_title">Test Failed</string>
     <string name="sv_failed_message">Unable to play stream.  See log for details.</string>
 
+    <!-- Strings for TestListActivity -->
+    <string name="wifi_test">Wi-Fi Test</string>
+    <string name="wifi_test_info">
+        The Wi-Fi tests requires an open (no security) access point along with the DUT.
+    </string>
+    <string name="wifi_location_not_enabled">Wi-Fi / Location Mode is not enabled</string>
+    <string name="wifi_location_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
+        Click the button below to go to system settings and enable Wi-Fi and Location Mode.</string>
+    <string name="wifi_settings">Wi-Fi Settings</string>
+    <string name="location_settings">Location Settings</string>
+    <string name="wifi_setup_error">
+        Test failed.\n\nSet up error. Check whether Wi-Fi is enabled.</string>
+    <string name="wifi_unexpected_error">
+        Test failed.\n\nUnexpected error. Check logcat.</string>
+
+    <string name="wifi_status_initiating_scan">Initiating scan.</string>
+    <string name="wifi_status_scan_failure">Unable to initiate scan.</string>
+    <string name="wifi_status_open_network_not_found">Unable to find any open network in scan results.</string>
+    <string name="wifi_status_initiating_network_request">Initiating network request.</string>
+    <string name="wifi_status_network_wait_for_available">Waiting for network connection. Please click the network in the dialog that pops up for approving the request.</string>
+    <string name="wifi_status_network_available">"Connected to network."</string>
+    <string name="wifi_status_network_wait_for_unavailable">"Ensuring device does not connect to any network. You should see an empty dialog that pops up for approving the request."</string>
+    <string name="wifi_status_network_unavailable">"Did not connect to any network."</string>
+    <string name="wifi_status_network_wait_for_lost">Ensuring device does not disconnect from the network until the request is released.</string>
+    <string name="wifi_status_network_lost">Disconnected from the network.</string>
+    <string name="wifi_status_network_cb_timeout">Network callback timed out.</string>
+
+    <string name="wifi_status_test_success">Test completed successfully!</string>
+    <string name="wifi_status_test_failed">Test failed!</string>
+
+    <string name="wifi_test_network_request">Network Request tests</string>
+    <string name="wifi_test_network_request_specific">Network Request with a specific SSID and BSSID.</string>
+    <string name="wifi_test_network_request_specific_info">Tests whether the API can be used to a connect to network with a specific SSID and BSSID specified in the request.</string>
+    <string name="wifi_test_network_request_pattern">Network Request with a SSID and BSSID pattern.</string>
+    <string name="wifi_test_network_request_pattern_info">Tests whether the API can be used to a connect to network with a SSID and BSSID pattern specified in the request.</string>
+    <string name="wifi_test_network_request_unavailable">Network Request with a specific network that is unavailable.</string>
+    <string name="wifi_test_network_request_unavailable_info">Tests that the API fails to connect when an unavailable network is specified in the request.</string>
+
     <!-- Strings for P2pTestActivity -->
     <string name="p2p_test">Wi-Fi Direct Test</string>
     <string name="p2p_test_info">
