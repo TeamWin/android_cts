@@ -29,6 +29,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.ArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
@@ -310,15 +311,20 @@ class HistoricalAppopsTest {
     }
 
     private fun getHistoricalOps(appOpsManager: AppOpsManager, uid: Int,
-            packageName: String, opNames: Array<String>?, beginTimeMillis: Long,
+            packageName: String, opNames: List<String>?, beginTimeMillis: Long,
             endTimeMillis: Long) : HistoricalOps? {
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
         val condition = lock.newCondition()
         try {
             lock.lock()
-            appOpsManager.getHistoricalOps(uid, packageName, opNames,
-                    beginTimeMillis, endTimeMillis, getContext().getMainExecutor(),
+            val request = AppOpsManager.HistoricalOpsRequest.Builder(
+                    beginTimeMillis, endTimeMillis)
+                    .setUid(uid)
+                    .setPackageName(packageName)
+                    .setOpNames(if (opNames != null) ArrayList(opNames) else null)
+                    .build()
+            appOpsManager.getHistoricalOps(request, getContext().getMainExecutor(),
                     Consumer { ops ->
                 array[0] = ops
                 try {
@@ -357,15 +363,20 @@ class HistoricalAppopsTest {
     }
 
     private fun getHistoricalOpsFromDiskRaw(appOpsManager: AppOpsManager, uid: Int,
-            packageName: String, opNames: Array<String>?, beginTimeMillis: Long,
+            packageName: String, opNames: List<String>?, beginTimeMillis: Long,
             endTimeMillis: Long) : HistoricalOps? {
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
         val condition = lock.newCondition()
         try {
             lock.lock()
-            appOpsManager.getHistoricalOpsFromDiskRaw(uid, packageName, opNames,
-                    beginTimeMillis, endTimeMillis, getContext().getMainExecutor(),
+            val request = AppOpsManager.HistoricalOpsRequest.Builder(
+                    beginTimeMillis, endTimeMillis)
+                    .setUid(uid)
+                    .setPackageName(packageName)
+                    .setOpNames(if (opNames != null) ArrayList(opNames) else null)
+                    .build()
+            appOpsManager.getHistoricalOpsFromDiskRaw(request, getContext().getMainExecutor(),
                 Consumer { ops ->
                   array[0] = ops
                   try {
