@@ -1,22 +1,5 @@
-/*
- * Copyright (C) 2018 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License
- */
-
 package android.server.am.lifecycle;
 
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback
@@ -28,7 +11,6 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 
 import android.annotation.Nullable;
 import android.app.Activity;
-import android.app.PictureInPictureParams;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -67,9 +49,6 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     final ActivityTestRule mSecondActivityTestRule = new ActivityTestRule(SecondActivity.class,
             true /* initialTouchMode */, false /* launchActivity */);
 
-    final ActivityTestRule mThirdActivityTestRule = new ActivityTestRule(ThirdActivity.class,
-            true /* initialTouchMode */, false /* launchActivity */);
-
     final ActivityTestRule mTranslucentActivityTestRule = new ActivityTestRule(
             TranslucentActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
@@ -90,9 +69,6 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     final ActivityTestRule mConfigChangeHandlingActivityTestRule = new ActivityTestRule(
             ConfigChangeHandlingActivity.class, true /* initialTouchMode */,
             false /* launchActivity */);
-
-    final ActivityTestRule mPipActivityTestRule = new ActivityTestRule(
-            PipActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
     private final ActivityLifecycleMonitor mLifecycleMonitor = ActivityLifecycleMonitorRegistry
             .getInstance();
@@ -190,10 +166,6 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     public static class SecondActivity extends Activity {
     }
 
-    // Test activity
-    public static class ThirdActivity extends Activity {
-    }
-
     // Translucent test activity
     public static class TranslucentActivity extends Activity {
     }
@@ -277,22 +249,6 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     // Config change handling activity
     public static class ConfigChangeHandlingActivity extends CallbackTrackingActivity {
-    }
-
-    // Pip-capable activity
-    // TODO(b/123013403): Disabled onMultiWindowMode changed callbacks to make the tests pass, so
-    // that they can verify other lifecycle transitions. This should be fixed and switched to
-    // extend CallbackTrackingActivity.
-    public static class PipActivity extends Activity {
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            // Enter picture in picture with the given aspect ratio if provided
-            if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
-                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
-            }
-        }
     }
 
     static ComponentName getComponentName(Class<? extends Activity> activity) {

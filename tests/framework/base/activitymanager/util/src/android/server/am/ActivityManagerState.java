@@ -378,7 +378,7 @@ public class ActivityManagerState {
         return mDisplays.size();
     }
 
-    public boolean containsActivity(ComponentName activityName) {
+    boolean containsActivity(ComponentName activityName) {
         final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
