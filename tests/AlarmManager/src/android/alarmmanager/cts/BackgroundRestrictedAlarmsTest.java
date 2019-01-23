@@ -136,7 +136,7 @@ public class BackgroundRestrictedAlarmsTest {
     @Test
     public void testAlarmClockNotBlocked() throws Exception {
         final long nowRTC = System.currentTimeMillis();
-        final long waitInterval = 10_000;
+        final long waitInterval = 3_000;
         final long triggerRTC = nowRTC + waitInterval;
         scheduleAlarmClock(triggerRTC);
         Thread.sleep(waitInterval);
