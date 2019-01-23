@@ -41,6 +41,9 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
     }
 
     public void testGetMaximumFailedPasswordsForWipe() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         dpm.setMaximumFailedPasswordsForWipe(mAdminComponent, 3);
         assertEquals(3, dpm.getMaximumFailedPasswordsForWipe(mAdminComponent));
 
@@ -49,6 +52,9 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
     }
 
     public void testPasswordHistoryLength() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         // Password history length restriction is only imposed if password quality is at least
         // numeric.
         dpm.setPasswordQuality(mAdminComponent,
@@ -66,6 +72,9 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
     }
 
     public void testPasswordExpirationTimeout() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         long originalValue = dpm.getPasswordExpirationTimeout(mAdminComponent);
         try {
             for (long testLength : new long[] {
