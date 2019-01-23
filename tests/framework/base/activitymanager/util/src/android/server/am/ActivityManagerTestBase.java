@@ -177,7 +177,6 @@ public abstract class ActivityManagerTestBase {
         testPackages.add(TEST_PACKAGE);
         testPackages.add(SECOND_TEST_PACKAGE);
         testPackages.add(THIRD_TEST_PACKAGE);
-        testPackages.add("android.server.cts.am");
         TEST_PACKAGES = Collections.unmodifiableList(testPackages);
     }
 
