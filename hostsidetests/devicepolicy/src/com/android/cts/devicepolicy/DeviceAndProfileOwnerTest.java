@@ -342,9 +342,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        // Set a device lockscreen password (precondition for installing private key pairs).
-        changeUserCredential("1234", null, mPrimaryUserId);
-
         // Install relevant apps.
         installAppAsUser(DELEGATE_APP_APK, mUserId);
         installAppAsUser(TEST_APP_APK, mUserId);
@@ -370,8 +367,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestClass(".DelegationTest");
 
         } finally {
-            // Clear lockscreen password previously set for installing private key pairs.
-            changeUserCredential(null, "1234", mPrimaryUserId);
             // Remove any remaining delegations.
             setDelegatedScopes(DELEGATE_APP_PKG, null);
         }
@@ -381,17 +376,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        changeUserCredential("1234", null, mUserId);
 
-        try {
-            installAppAsUser(CERT_INSTALLER_APK, mUserId);
-            setDelegatedScopes(CERT_INSTALLER_PKG, Arrays.asList(
-                    DELEGATION_CERT_INSTALL, DELEGATION_CERT_SELECTION));
-            runDeviceTestsAsUser(CERT_INSTALLER_PKG, ".CertSelectionDelegateTest", mUserId);
-            // Uninstall of test packages happen in tearDown.
-        } finally {
-            changeUserCredential(null, "1234", mUserId);
-        }
+        installAppAsUser(CERT_INSTALLER_APK, mUserId);
+        setDelegatedScopes(CERT_INSTALLER_PKG, Arrays.asList(
+                DELEGATION_CERT_INSTALL, DELEGATION_CERT_SELECTION));
+        runDeviceTestsAsUser(CERT_INSTALLER_PKG, ".CertSelectionDelegateTest", mUserId);
     }
 
     public void testPermissionGrant() throws Exception {
@@ -788,25 +777,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         boolean isManagedProfile = (mPrimaryUserId != mUserId);
 
-        try {
-            // Set a non-empty device lockscreen password, which is a precondition for installing
-            // private key pairs.
-            changeUserCredential("1234", null, mUserId);
 
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
-            assertMetricsLogged(getDevice(), () -> {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
+        assertMetricsLogged(getDevice(), () -> {
                 runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest",
                         "testInstallKeyPair", mUserId);
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_CERT_INSTALLER_PACKAGE_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(CERT_INSTALLER_PKG)
-                    .build());
-        } finally {
-            if (!isManagedProfile) {
-                // Skip managed profile as dpm doesn't allow clear password
-                changeUserCredential(null, "1234", mUserId);
-            }
-        }
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_CERT_INSTALLER_PACKAGE_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings(CERT_INSTALLER_PKG)
+                .build());
     }
 
     public interface DelegatedCertInstallerTestAction {
@@ -818,10 +797,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
         try {
-            // Set a non-empty device lockscreen password, which is a precondition for installing
-            // private key pairs.
-            changeUserCredential("1234", null, mUserId);
-
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
                     "testManualSetCertInstallerDelegate", mUserId);
 
@@ -829,8 +804,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         } finally {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
                     "testManualClearCertInstallerDelegate", mUserId);
-
-            changeUserCredential(null, "1234", mUserId);
         }
     }
 
@@ -1254,16 +1227,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        try {
-            // Set a non-empty device lockscreen password, which is a precondition for installing
-            // CA certificates.
-            changeUserCredential("1234", null, mUserId);
-            // Verify the credential immediately to unlock the work profile challenge
-            verifyUserCredential("1234", mUserId);
-            executeDeviceTestClass(".KeyManagementTest");
-        } finally {
-            changeUserCredential(null, "1234", mUserId);
-        }
+        executeDeviceTestClass(".KeyManagementTest");
     }
 
     public void testInstallKeyPairLogged() throws Exception {
@@ -1271,26 +1235,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        try {
-            // Set a non-empty device lockscreen password, which is a precondition for installing
-            // CA certificates.
-            changeUserCredential("1234", null, mUserId);
-            // Verify the credential immediately to unlock the work profile challenge
-            verifyUserCredential("1234", mUserId);
-            assertMetricsLogged(getDevice(), () -> {
+        assertMetricsLogged(getDevice(), () -> {
                 executeDeviceTestMethod(".KeyManagementTest", "testCanInstallCertChain");
-            }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_KEY_PAIR_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setBoolean(false)
-                        .build(),
+                }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_KEY_PAIR_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .build(),
                 new DevicePolicyEventWrapper.Builder(EventId.REMOVE_KEY_PAIR_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setBoolean(false)
-                        .build());
-
-        } finally {
-            changeUserCredential(null, "1234", mUserId);
-        }
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .build());
     }
 
     public void testGenerateKeyPairLogged() throws Exception {
@@ -1298,31 +1252,22 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        try {
-            // Set a non-empty device lockscreen password, which is a precondition for installing
-            // CA certificates.
-            changeUserCredential("1234", null, mUserId);
-            // Verify the credential immediately to unlock the work profile challenge
-            verifyUserCredential("1234", mUserId);
-            assertMetricsLogged(getDevice(), () -> {
+        assertMetricsLogged(getDevice(), () -> {
                 executeDeviceTestMethod(
                         ".KeyManagementTest", "testCanGenerateKeyPairWithKeyAttestation");
-            }, new DevicePolicyEventWrapper.Builder(EventId.GENERATE_KEY_PAIR_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setBoolean(false)
-                        .setInt(0)
-                        .setStrings("RSA")
-                        .build(),
+                }, new DevicePolicyEventWrapper.Builder(EventId.GENERATE_KEY_PAIR_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setInt(0)
+                .setStrings("RSA")
+                .build(),
                 new DevicePolicyEventWrapper.Builder(EventId.GENERATE_KEY_PAIR_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setBoolean(false)
-                        .setInt(0)
-                        .setStrings("EC")
-                        .build());
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setInt(0)
+                .setStrings("EC")
+                .build());
 
-        } finally {
-            changeUserCredential(null, "1234", mUserId);
-        }
     }
 
     public void testSetKeyPairCertificateLogged() throws Exception {
@@ -1330,22 +1275,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        try {
-            // Set a non-empty device lockscreen password, which is a precondition for installing
-            // CA certificates.
-            changeUserCredential("1234", null, mUserId);
-            // Verify the credential immediately to unlock the work profile challenge
-            verifyUserCredential("1234", mUserId);
-            assertMetricsLogged(getDevice(), () -> {
+        assertMetricsLogged(getDevice(), () -> {
                 executeDeviceTestMethod(".KeyManagementTest", "testCanSetKeyPairCert");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEY_PAIR_CERTIFICATE_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setBoolean(false)
-                        .build());
-
-        } finally {
-            changeUserCredential(null, "1234", mUserId);
-        }
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEY_PAIR_CERTIFICATE_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .build());
     }
 
     public void testPermittedAccessibilityServices() throws Exception {

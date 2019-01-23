@@ -29,7 +29,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
-LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog
+LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libsync
 
 LOCAL_NDK_STL_VARIANT := c++_static
 
