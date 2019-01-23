@@ -33,18 +33,18 @@ import org.junit.runner.RunWith;
 
 
 /**
- * Test {@link TextView#isHorizontallyScrolling}.
+ * Test {@link TextView#isHorizontallyScrollable}.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class TextViewIsHorizontallyScrollingTest {
+public class TextViewIsHorizontallyScrollableTest {
     private ViewGroup mViewGroup;
 
     @Before
     public void setup() {
         final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         final LayoutInflater inflater = LayoutInflater.from(context);
-        mViewGroup = (ViewGroup) inflater.inflate(R.layout.textview_isHorizontallyScrolling_layout,
+        mViewGroup = (ViewGroup) inflater.inflate(R.layout.textview_isHorizontallyScrollable_layout,
                 null);
     }
 
@@ -53,7 +53,7 @@ public class TextViewIsHorizontallyScrollingTest {
         final TextView textView = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_default);
 
-        assertFalse(textView.isHorizontallyScrolling());
+        assertFalse(textView.isHorizontallyScrollable());
     }
 
     @Test
@@ -62,7 +62,7 @@ public class TextViewIsHorizontallyScrollingTest {
                 R.id.textView_scrollHorizontally_default);
 
         textView.setHorizontallyScrolling(true);
-        assertTrue(textView.isHorizontallyScrolling());
+        assertTrue(textView.isHorizontallyScrollable());
     }
 
     @Test
@@ -70,10 +70,10 @@ public class TextViewIsHorizontallyScrollingTest {
         final TextView textView = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_default);
         textView.setHorizontallyScrolling(true);
-        assertTrue(textView.isHorizontallyScrolling());
+        assertTrue(textView.isHorizontallyScrollable());
 
         textView.setHorizontallyScrolling(false);
-        assertFalse(textView.isHorizontallyScrolling());
+        assertFalse(textView.isHorizontallyScrollable());
     }
 
     @Test
@@ -82,42 +82,42 @@ public class TextViewIsHorizontallyScrollingTest {
                 R.id.textView_scrollHorizontally_true);
         // It should return true here. But because of this bug b/120448952,
         // singleLine will overwrite scrollHorizontally.
-        assertFalse(textViewTrue.isHorizontallyScrolling());
+        assertFalse(textViewTrue.isHorizontallyScrollable());
 
         final TextView textViewFalse = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_false);
-        assertFalse(textViewFalse.isHorizontallyScrolling());
+        assertFalse(textViewFalse.isHorizontallyScrollable());
     }
 
     @Test
     public void testIsHorizontallyScrollingSetInXML_returnTrueWhenSingleLineIsTrue() {
         final TextView textViewDefault = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_default_singleLine_true);
-        assertTrue(textViewDefault.isHorizontallyScrolling());
+        assertTrue(textViewDefault.isHorizontallyScrollable());
 
         final TextView textViewTrue = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_true_singleLine_true);
-        assertTrue(textViewTrue.isHorizontallyScrolling());
+        assertTrue(textViewTrue.isHorizontallyScrollable());
 
         final TextView textViewFalse = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_false_singleLine_true);
-        assertTrue(textViewFalse.isHorizontallyScrolling());
+        assertTrue(textViewFalse.isHorizontallyScrollable());
     }
 
     @Test
     public void testIsHorizontallyScrollingSetInXML_returnGivenValueWhenSingleLineIsFalse() {
         final TextView textViewDefault = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_default_singleLine_false);
-        assertFalse(textViewDefault.isHorizontallyScrolling());
+        assertFalse(textViewDefault.isHorizontallyScrollable());
 
         final TextView textViewTrue = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_true_singleLine_false);
         // It should return true here. But because of this bug b/120448952,
         // singleLine will overwrite scrollHorizontally.
-        assertFalse(textViewTrue.isHorizontallyScrolling());
+        assertFalse(textViewTrue.isHorizontallyScrollable());
 
         final TextView textViewFalse = mViewGroup.findViewById(
                 R.id.textView_scrollHorizontally_false_singleLine_false);
-        assertFalse(textViewFalse.isHorizontallyScrolling());
+        assertFalse(textViewFalse.isHorizontallyScrollable());
     }
 }
