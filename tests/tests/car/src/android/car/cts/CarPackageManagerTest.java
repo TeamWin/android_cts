@@ -82,50 +82,19 @@ public class CarPackageManagerTest extends CarApiTestBase {
        } catch (IllegalArgumentException expected) {
            // Expected.
        }
-   }
-
-    @Test
-    public void testSystemActivitiesAllowed() throws CarNotConnectedException {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        List<PackageInfo> packages = context.getPackageManager().getInstalledPackages(
-                PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA);
-
-        for (PackageInfo info : packages) {
-            if (info.applicationInfo == null) {
-                continue;
-            }
-            if ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
-                    ((info.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0)) {
-
-                Bundle metaData = info.applicationInfo.metaData;
-                if (metaData == null || metaData.getInt(METADATA_ATTRIBUTE, 0) == 0) {
-                    continue;  // No car metadata, ignoring this app.
-                }
-
-                if (info.activities != null && info.activities.length > 0) {
-                    String activity = info.activities[0].name;
-                    String packageName = info.packageName;
-                    assertTrue("Failed for package: " + packageName + ", activity: " + activity,
-                            mCarPm.isActivityDistractionOptimized(packageName, activity));
-                }
-            }
-        }
     }
 
     @Test
-    @Ignore // Enable when b/120125891 is fixed
-    public void testServiceDistractionOptimized() throws Exception {
-        assertFalse(mCarPm.isServiceDistractionOptimized("com.basic.package", ""));
-        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.settings", "Any"));
-        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.settings", ""));
-        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.settings", null));
-
-        try {
-            mCarPm.isServiceDistractionOptimized(null, "Any");
-            fail();
-        } catch (IllegalArgumentException expected) {
-            // Expected.
-        }
+    public void testDistractionOptimizedActivityIsAllowed() throws CarNotConnectedException {
+        // This test relies on test activity in installed apk, and AndroidManifest declaration.
+        assertTrue(mCarPm.isActivityDistractionOptimized("android.car.cts",
+                "android.car.cts.drivingstate.DistractionOptimizedActivity"));
     }
 
+    @Test
+    public void testNonDistractionOptimizedActivityNotAllowed() throws CarNotConnectedException {
+        // This test relies on test activity in installed apk, and AndroidManifest declaration.
+        assertFalse(mCarPm.isActivityDistractionOptimized("android.car.cts",
+                "android.car.cts.drivingstate.NonDistractionOptimizedActivity"));
+    }
 }
