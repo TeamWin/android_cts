@@ -843,7 +843,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             mDevicePolicyManager.setBackupServiceEnabled(mComponent, false);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
+            assertDeviceOwnerMessage(e.getMessage());
         }
     }
 
@@ -856,7 +856,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             mDevicePolicyManager.isBackupServiceEnabled(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
+            assertDeviceOwnerMessage(e.getMessage());
         }
     }
 
