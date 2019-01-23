@@ -78,24 +78,25 @@ public class SensorParameterRangeTest extends SensorTestCase {
     @CddTest(requirement="7.3.9/C-2-1")
     public void testAccelerometerRange() {
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                Sensor.TYPE_ACCELEROMETER,
                 ACCELEROMETER_MAX_RANGE,
                 ACCELEROMETER_MIN_FREQUENCY,
                 ACCELEROMETER_MAX_FREQUENCY);
-  }
+    }
 
-  @CddTest(requirement="7.3.9/C-2-3")
-  public void testGyroscopeRange() {
+    @CddTest(requirement="7.3.9/C-2-3")
+    public void testGyroscopeRange() {
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
+                Sensor.TYPE_GYROSCOPE,
                 GYRO_MAX_RANGE,
                 GYRO_MIN_FREQUENCY,
                 GYRO_MAX_FREQUENCY);
-  }
+    }
+
     @CddTest(requirement="7.3.9/C-2-5")
     public void testMagnetometerRange() {
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+                Sensor.TYPE_MAGNETIC_FIELD,
                 MAGNETOMETER_MAX_RANGE,
                 MAGNETOMETER_MIN_FREQUENCY,
                 MAGNETOMETER_MAX_FREQUENCY);
@@ -105,7 +106,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
     public void testPressureRange() {
         if (mHasHifiSensors) {
             checkSensorRangeAndFrequency(
-                    mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE),
+                    Sensor.TYPE_PRESSURE,
                     PRESSURE_MAX_RANGE,
                     PRESSURE_MIN_FREQUENCY,
                     PRESSURE_MAX_FREQUENCY);
@@ -113,8 +114,14 @@ public class SensorParameterRangeTest extends SensorTestCase {
     }
 
     private void checkSensorRangeAndFrequency(
-          Sensor sensor, double maxRange, double minFrequency, double maxFrequency) {
+          int sensorType, double maxRange, double minFrequency, double maxFrequency) {
         if (!mHasHifiSensors && !mVrModeHighPerformance) return;
+
+        Sensor sensor = mSensorManager.getDefaultSensor(sensorType);
+        if (sensor == null) {
+            fail(String.format("Must support sensor type %d", sensorType));
+        }
+
         assertTrue(String.format("%s Range actual=%.2f expected=%.2f %s",
                     sensor.getName(), sensor.getMaximumRange(), maxRange,
                     SensorCtsHelper.getUnitsForSensor(sensor)),
