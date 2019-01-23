@@ -259,15 +259,6 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             }
 
             @Override
-            public void onTimedText(MediaPlayer2 mp, DataSourceDesc dsd, TimedText text) {
-                synchronized (cbLock) {
-                    for (MediaPlayer2.EventCallback ecb : ecbs) {
-                        ecb.onTimedText(mp, dsd, text);
-                    }
-                }
-            }
-
-            @Override
             public void onTimedMetaDataAvailable(MediaPlayer2 mp, DataSourceDesc dsd,
                     TimedMetaData data) {
                 synchronized (cbLock) {
