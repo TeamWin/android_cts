@@ -50,6 +50,7 @@
         <activity android:name=".ActivityTransitionActivity2"
             android:taskAffinity="android.app.usage.cts.other_task"/>
         <activity android:name=".FragmentTestActivity" />
+        <activity android:name=".TaskRootActivity" />
         <service android:name=".TestService" />
     </application>
 

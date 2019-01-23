@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsUsageStatsTestCases
+LOCAL_PACKAGE_NAME := CtsUsageStatsTestApp1
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
 # don't include this package in any target
@@ -41,4 +41,3 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 include $(BUILD_CTS_PACKAGE)
-include $(call all-makefiles-under,$(LOCAL_PATH))
