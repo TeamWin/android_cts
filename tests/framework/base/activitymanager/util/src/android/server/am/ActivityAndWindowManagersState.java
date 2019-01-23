@@ -306,13 +306,6 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Activity State: " + activityState);
     }
 
-    public void waitForActivityRemoved(ComponentName activityName) {
-        waitForWithAmState((state) -> !state.containsActivity(activityName),
-                "Waiting for activity to be removed");
-        waitForWithWmState((state) -> !state.containsWindow(getWindowName(activityName)),
-                "Waiting for activity window to be gone");
-    }
-
     @Deprecated
     void waitForFocusedStack(int stackId) {
         waitForWithAmState(state -> state.getFocusedStackId() == stackId,
@@ -354,7 +347,7 @@ public class ActivityAndWindowManagersState {
         waitFor((amState, wmState) -> waitCondition.test(amState), message);
     }
 
-    public void waitForWithWmState(Predicate<WindowManagerState> waitCondition, String message) {
+    void waitForWithWmState(Predicate<WindowManagerState> waitCondition, String message) {
         waitFor((amState, wmState) -> waitCondition.test(wmState), message);
     }
 
