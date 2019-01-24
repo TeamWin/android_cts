@@ -22,7 +22,6 @@ import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
-import android.service.contentcapture.ContentCaptureEventsRequest;
 import android.service.contentcapture.ContentCaptureService;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -221,23 +220,16 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     @Override
-    public void onContentCaptureEventsRequest(ContentCaptureSessionId sessionId,
-            ContentCaptureEventsRequest request) {
-        final List<ContentCaptureEvent> events = request.getEvents();
-        final int size = events.size();
-        Log.i(TAG, "onContentCaptureEventsRequest(" + sessionId + "): " + size + " events");
-        for (int i = 0; i < size; i++) {
-            final ContentCaptureEvent event = events.get(i);
-            final StringBuilder msg = new StringBuilder("  ").append(i).append(": ").append(event);
-            final ViewNode node = event.getViewNode();
-            if (node != null) {
-                msg.append(", parent=").append(node.getParentAutofillId());
-            }
-            Log.v(TAG, msg.toString());
+    public void onContentCaptureEvent(ContentCaptureSessionId sessionId,
+            ContentCaptureEvent event) {
+        Log.i(TAG, "onContentCaptureEvent(" + sessionId + "): " + event);
+        final ViewNode node = event.getViewNode();
+        if (node != null) {
+            Log.v(TAG, "onContentCaptureEvent(): parentId=" + node.getParentAutofillId());
         }
         safeRun(() -> {
             final Session session = getExistingSession(sessionId);
-            session.mRequests.add(request);
+            session.mEvents.add(event);
         });
     }
 
@@ -363,7 +355,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
         public final ContentCaptureSessionId id;
         public final ContentCaptureContext context;
         public final int creationOrder;
-        private final List<ContentCaptureEventsRequest> mRequests = new ArrayList<>();
+        private final List<ContentCaptureEvent> mEvents = new ArrayList<>();
         public boolean finished;
         public int destructionOrder;
 
@@ -384,16 +376,12 @@ public class CtsContentCaptureService extends ContentCaptureService {
         // should track individual requests as well to make sure they're probably batch (it will
         // require adding a Settings to tune the buffer parameters.
         public List<ContentCaptureEvent> getEvents() {
-            final List<ContentCaptureEvent> events = new ArrayList<>();
-            for (ContentCaptureEventsRequest request : mRequests) {
-                events.addAll(request.getEvents());
-            }
-            return Collections.unmodifiableList(events);
+            return Collections.unmodifiableList(mEvents);
         }
 
         @Override
         public String toString() {
-            return "[id=" + id + ", context=" + context + ", requests=" + mRequests.size()
+            return "[id=" + id + ", context=" + context + ", events=" + mEvents.size()
                     + ", finished=" + finished + "]";
         }
     }
