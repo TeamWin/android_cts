@@ -25,10 +25,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
 import android.app.RemoteInput;
-import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -39,8 +37,6 @@ import androidx.annotation.Nullable;
 import android.os.StrictMode;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
-
-import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -592,6 +588,8 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(BUBBLE_TITLE, data.getTitle());
         assertEquals(icon, data.getIcon());
         assertEquals(bubbleIntent, data.getIntent());
+        assertFalse(data.getSuppressInitialNotification());
+        assertFalse(data.getAutoExpandBubble());
     }
 
     public void testBubbleMetadata_parcel() {
@@ -601,6 +599,8 @@ public class NotificationTest extends AndroidTestCase {
                 new Notification.BubbleMetadata.Builder()
                         .setDesiredHeight(BUBBLE_HEIGHT)
                         .setTitle(BUBBLE_TITLE)
+                        .setAutoExpandBubble(true)
+                        .setSuppressInitialNotification(true)
                         .setIcon(icon)
                         .setIntent(bubbleIntent)
                         .build();
@@ -610,6 +610,9 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(BUBBLE_HEIGHT, metadata.getDesiredHeight());
         assertEquals(icon, metadata.getIcon());
         assertEquals(bubbleIntent, metadata.getIntent());
+        assertTrue(metadata.getAutoExpandBubble());
+        assertTrue(metadata.getSuppressInitialNotification());
+
     }
 
     public void testBubbleMetadataBuilder_throwForNoIntent() {
