@@ -23,8 +23,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -62,6 +71,44 @@ public class ApiEvolutionTest {
     public void testCovariantReturnTypeMethods_annotation_concurrentHashMap() throws Exception {
         assertSyntheticMethodOverloadExists(ConcurrentHashMap.class, "keySet", null, Set.class,
                 ConcurrentHashMap.KeySetView.class, true);
+    }
+
+    /**
+     * Tests for the presence of synthetic methods overloads for methods that return {@code this} on
+     * {@link Buffer} subclasses, and which are annotated with {@code @CovariantReturnType}.
+     * In OpenJDK 9 the return types were changed from {@link Buffer} to be the subclass's type
+     * instead. http://b/71597787
+     */
+    @Test
+    public void testCovariantReturnTypeMethods_javaNioBuffer() throws Exception {
+        List<Class<? extends Buffer>> classes = Arrays.asList(
+                ByteBuffer.class,
+                CharBuffer.class,
+                DoubleBuffer.class,
+                FloatBuffer.class,
+                IntBuffer.class,
+                LongBuffer.class,
+                ShortBuffer.class
+        );
+
+        for (Class<? extends Buffer> c : classes) {
+            assertSyntheticBufferMethodOverloadExists(c, "position", new Class[] { Integer.TYPE });
+            assertSyntheticBufferMethodOverloadExists(c, "limit", new Class[] { Integer.TYPE });
+            assertSyntheticBufferMethodOverloadExists(c, "mark", null);
+            assertSyntheticBufferMethodOverloadExists(c, "reset", null);
+            assertSyntheticBufferMethodOverloadExists(c, "clear", null);
+            assertSyntheticBufferMethodOverloadExists(c, "flip", null);
+            assertSyntheticBufferMethodOverloadExists(c, "rewind", null);
+        }
+    }
+
+    private static void assertSyntheticBufferMethodOverloadExists(
+            Class<? extends Buffer> bufferClass, String methodName, Class[] parameterTypes)
+            throws Exception {
+        assertSyntheticMethodOverloadExists(bufferClass, methodName, parameterTypes,
+                Buffer.class /* originalReturnType */,
+                bufferClass /* syntheticReturnType */,
+                true  /* requireIdenticalExceptions */);
     }
 
     private static void assertSyntheticMethodOverloadExists(
