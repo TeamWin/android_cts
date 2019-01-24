@@ -29,7 +29,6 @@ import android.provider.Telephony;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -157,16 +156,6 @@ public class MmsTest {
         assertThat(uri).isNotNull();
 
         assertThatMmsInsertSucceeded(uri, expectedSubject);
-    }
-
-    @Test
-    public void testMmsInsert_cannotInsertPartWithDataColumn() {
-        setDefaultSmsApp(true);
-        Uri uri = Uri.parse("content://mms/100/part");
-        ContentValues values = new ContentValues();
-        values.put("_data", "/dev/urandom");
-        Uri uri2 = mContentResolver.insert(uri, values);
-        assertThat(uri2).isNull();
     }
 
     /**
