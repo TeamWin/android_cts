@@ -61,6 +61,8 @@ public class LauncherAppsTests extends AndroidTestCase {
     public static final String PACKAGE_EXTRA = "package_extra";
     public static final String REPLY_EXTRA = "reply_extra";
 
+    private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
+
     public static final int MSG_RESULT = 0;
     public static final int MSG_CHECK_PACKAGE_ADDED = 1;
     public static final int MSG_CHECK_PACKAGE_REMOVED = 2;
@@ -213,6 +215,14 @@ public class LauncherAppsTests extends AndroidTestCase {
         // NoLaunchableActivityApp is installed for duration of this test - make sure
         // it's present on the activity list, has the synthetic activity generated, and it's
         // enabled and exported
+        assertActivityInjected(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
+    }
+
+    public void testProfileOwnerLauncherActivityInjected() throws Exception {
+        assertActivityInjected(MANAGED_PROFILE_PKG);
+    }
+
+    private void assertActivityInjected(String targetPackage) {
         List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
         boolean noLaunchableActivityAppFound = false;
         for (LauncherActivityInfo activity : activities) {
@@ -220,7 +230,7 @@ public class LauncherAppsTests extends AndroidTestCase {
                 continue;
             }
             ComponentName compName = activity.getComponentName();
-            if (compName.getPackageName().equals(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE)) {
+            if (compName.getPackageName().equals(targetPackage)) {
                 noLaunchableActivityAppFound = true;
                 // make sure it points to the synthetic app details activity
                 assertEquals(activity.getName(), SYNTHETIC_APP_DETAILS_ACTIVITY);
@@ -238,17 +248,25 @@ public class LauncherAppsTests extends AndroidTestCase {
         assertTrue(noLaunchableActivityAppFound);
     }
 
-    public void testNoInjectedActivityFound() throws Exception {
+    public void testNoTestAppInjectedActivityFound() throws Exception {
         // NoLaunchableActivityApp is installed for duration of this test - make sure
         // it's NOT present on the activity list
+        assertInjectedActivityNotFound(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
+    }
+
+    public void testProfileOwnerInjectedActivityNotFound() throws Exception {
+        assertInjectedActivityNotFound(MANAGED_PROFILE_PKG);
+    }
+
+    private void assertInjectedActivityNotFound(String targetPackage) {
         List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
         for (LauncherActivityInfo activity : activities) {
             if (!activity.getUser().equals(mUser)) {
                 continue;
             }
             ComponentName compName = activity.getComponentName();
-            if (compName.getPackageName().equals(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE)) {
-                fail("Injected activity found in package: " + compName.getPackageName());
+            if (compName.getPackageName().equals(targetPackage)) {
+                fail("Injected activity found: " + compName.flattenToString());
             }
         }
     }
