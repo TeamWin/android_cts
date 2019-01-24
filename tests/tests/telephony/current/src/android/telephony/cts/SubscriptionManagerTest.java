@@ -43,6 +43,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.internal.util.ArrayUtils;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -144,9 +145,29 @@ public class SubscriptionManagerTest {
     @Test
     public void testGetActiveSubscriptionInfoCount() throws Exception {
         if (!isSupported()) return;
-
         assertTrue(mSm.getActiveSubscriptionInfoCount() <=
                 mSm.getActiveSubscriptionInfoCountMax());
+    }
+
+    @Test
+    public void testIsActiveSubscriptionId() throws Exception {
+        if (!isSupported()) return;
+        assertTrue(mSm.isActiveSubscriptionId(mSubId));
+    }
+
+    @Test
+    public void testGetSubscriptionIds() throws Exception {
+        if (!isSupported()) return;
+        int slotId = SubscriptionManager.getSlotIndex(mSubId);
+        int[] subIds = mSm.getSubscriptionIds(slotId);
+        assertNotNull(subIds);
+        assertTrue(ArrayUtils.contains(subIds, mSubId));
+    }
+
+    @Test
+    public void testIsUsableSubscriptionId() throws Exception {
+        if (!isSupported()) return;
+        assertTrue(SubscriptionManager.isUsableSubIdValue(mSubId));
     }
 
     @Test

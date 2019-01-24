@@ -34,10 +34,13 @@ import android.os.Build;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import static com.google.common.truth.Truth.assertThat;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.AccessNetworkConstants;
 import android.telephony.CellLocation;
+import android.telephony.NetworkRegistrationState;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
@@ -55,6 +58,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -70,12 +74,42 @@ public class TelephonyManagerTest {
     private SubscriptionManager mSubscriptionManager;
     private PackageManager mPackageManager;
     private boolean mOnCellLocationChangedCalled = false;
+    private boolean mServiceStateChangedCalled = false;
+    private boolean mRadioRebootTriggered = false;
+    private boolean mHasRadioPowerOff = false;
     private ServiceState mServiceState;
     private final Object mLock = new Object();
     private static final int TOLERANCE = 1000;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
     private static final String TAG = "TelephonyManagerTest";
+    private static final List<Integer> ROAMING_TYPES = Arrays.asList(
+            ServiceState.ROAMING_TYPE_DOMESTIC,
+            ServiceState.ROAMING_TYPE_INTERNATIONAL,
+            ServiceState.ROAMING_TYPE_NOT_ROAMING,
+            ServiceState.ROAMING_TYPE_UNKNOWN);
+    private static final List<Integer> NETWORK_TYPES = Arrays.asList(
+            TelephonyManager.NETWORK_TYPE_UNKNOWN,
+            TelephonyManager.NETWORK_TYPE_GPRS,
+            TelephonyManager.NETWORK_TYPE_EDGE,
+            TelephonyManager.NETWORK_TYPE_UMTS,
+            TelephonyManager.NETWORK_TYPE_CDMA,
+            TelephonyManager.NETWORK_TYPE_EVDO_0,
+            TelephonyManager.NETWORK_TYPE_EVDO_A,
+            TelephonyManager.NETWORK_TYPE_1xRTT,
+            TelephonyManager.NETWORK_TYPE_HSDPA,
+            TelephonyManager.NETWORK_TYPE_HSUPA,
+            TelephonyManager.NETWORK_TYPE_HSPA,
+            TelephonyManager.NETWORK_TYPE_IDEN,
+            TelephonyManager.NETWORK_TYPE_EVDO_B,
+            TelephonyManager.NETWORK_TYPE_LTE,
+            TelephonyManager.NETWORK_TYPE_EHRPD,
+            TelephonyManager.NETWORK_TYPE_HSPAP,
+            TelephonyManager.NETWORK_TYPE_GSM,
+            TelephonyManager.NETWORK_TYPE_TD_SCDMA,
+            TelephonyManager.NETWORK_TYPE_IWLAN,
+            TelephonyManager.NETWORK_TYPE_LTE_CA,
+            TelephonyManager.NETWORK_TYPE_NR);
 
     @Before
     public void setUp() throws Exception {
@@ -586,6 +620,227 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Verifies that {@link TelephonyManager#getRadioPowerState()} does not throw any exception
+     * and returns radio on.
+     */
+    @Test
+    public void testGetRadioPowerState() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // Also verify that no exception is thrown.
+        assertThat(mTelephonyManager.getRadioPowerState()).isEqualTo(
+                TelephonyManager.RADIO_POWER_ON);
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#setCarrierDataEnabled(boolean)} does not throw any
+     * exception. TODO enhance later if we have an API to get data enabled state.
+     */
+    @Test
+    public void testSetCarrierDataEnabled() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // Also verify that no exception is thrown.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setCarrierDataEnabled(false));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setCarrierDataEnabled(true));
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#rebootRadio()} does not throw any exception
+     * and final radio state is radio power on.
+     */
+    @Test
+    public void testRebootRadio() throws Throwable {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        assertEquals(mTelephonyManager.getServiceState().getState(), ServiceState.STATE_IN_SERVICE);
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onRadioPowerStateChanged(
+                            @TelephonyManager.RadioPowerState int state) {
+                        synchronized (mLock) {
+                            if (state == TelephonyManager.RADIO_POWER_ON && mHasRadioPowerOff) {
+                                mRadioRebootTriggered = true;
+                                mLock.notify();
+                            } else if (state == TelephonyManager.RADIO_POWER_OFF) {
+                                // reboot must go to power off
+                                mHasRadioPowerOff = true;
+                            }
+                        }
+                    }
+                };
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener,
+                                PhoneStateListener.LISTEN_RADIO_POWER_STATE_CHANGED));
+                Looper.loop();
+            }
+        });
+
+        assertThat(mTelephonyManager.getRadioPowerState()).isEqualTo(
+                TelephonyManager.RADIO_POWER_ON);
+        assertThat(mRadioRebootTriggered).isFalse();
+        assertThat(mHasRadioPowerOff).isFalse();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.rebootRadio());
+        t.start();
+        synchronized (mLock) {
+            // reboot takes longer time
+            if (!mRadioRebootTriggered) {
+                mLock.wait(10000);
+            }
+        }
+        assertThat(mTelephonyManager.getRadioPowerState()).isEqualTo(
+                TelephonyManager.RADIO_POWER_ON);
+        assertThat(mRadioRebootTriggered).isTrue();
+
+        // note, other telephony states might not resumes properly at this point. e.g, service state
+        // might still in the transition from OOS to In service. Thus we need to wait for in
+        // service state before running next tests.
+        t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onServiceStateChanged(ServiceState serviceState) {
+                        synchronized (mLock) {
+                            if (serviceState.getState() == ServiceState.STATE_IN_SERVICE) {
+                                mServiceStateChangedCalled = true;
+                                mLock.notify();
+                            }
+                        }
+                    }
+                };
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE));
+                Looper.loop();
+            }
+        });
+
+        synchronized (mLock) {
+            t.start();
+            if (!mServiceStateChangedCalled) {
+                mLock.wait(10000);
+            }
+        }
+        assertThat(mTelephonyManager.getServiceState().getState()).isEqualTo(
+                ServiceState.STATE_IN_SERVICE);
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getAidForAppType(int)} does not throw any exception
+     * for all supported subscription app type.
+     */
+    @Test
+    public void testGetAidForAppType() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getAidForAppType(TelephonyManager.APPTYPE_SIM));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getAidForAppType(TelephonyManager.APPTYPE_CSIM));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getAidForAppType(TelephonyManager.APPTYPE_RUIM));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getAidForAppType(TelephonyManager.APPTYPE_ISIM));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getAidForAppType(TelephonyManager.APPTYPE_USIM));
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getIsimDomain()} does not throw any exception
+     */
+    @Test
+    public void testGetIsimDomain() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getIsimDomain());
+    }
+
+    /**
+     * Basic test to ensure {@link NetworkRegistrationState#isRoaming()} does not throw any
+     * exception.
+     */
+    @Test
+    public void testNetworkRegistrationStateIsRoaming() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // get NetworkRegistration object
+        NetworkRegistrationState nwReg = mTelephonyManager.getServiceState()
+                .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_CS,
+                        AccessNetworkConstants.TransportType.WWAN);
+        assertThat(nwReg).isNotNull();
+        nwReg.isRoaming();
+    }
+
+    /**
+     * Basic test to ensure {@link NetworkRegistrationState#getRoamingType()} ()} does not throw any
+     * exception and returns valid result
+     * @see ServiceState.RoamingType
+     */
+    @Test
+    public void testNetworkRegistrationStateGetRoamingType() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // get NetworkRegistration object for voice
+        NetworkRegistrationState nwReg = mTelephonyManager.getServiceState()
+                .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_CS,
+                        AccessNetworkConstants.TransportType.WWAN);
+        assertNotNull(nwReg);
+        assertThat(nwReg.getRoamingType()).isIn(ROAMING_TYPES);
+
+        // getNetworkRegistration object for data
+        // get NetworkRegistration object for voice
+        nwReg = mTelephonyManager.getServiceState()
+                .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_PS,
+                        AccessNetworkConstants.TransportType.WWAN);
+        assertThat(nwReg).isNotNull();
+        assertThat(nwReg.getRoamingType()).isIn(ROAMING_TYPES);
+    }
+
+    /**
+     * Basic test to ensure {@link NetworkRegistrationState#getAccessNetworkTechnology()} not
+     * throw any exception and returns valid result
+     * @see TelephonyManager.NetworkType
+     */
+    @Test
+    public void testNetworkRegistationStateGetAccessNetworkTechnology() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // get NetworkRegistration object for voice
+        NetworkRegistrationState nwReg = mTelephonyManager.getServiceState()
+                .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_CS,
+                        AccessNetworkConstants.TransportType.WWAN);
+        assertThat(nwReg).isNotNull();
+        assertThat(nwReg.getAccessNetworkTechnology()).isIn(NETWORK_TYPES);
+
+        // get NetworkRegistation object for data
+        nwReg = mTelephonyManager.getServiceState()
+                .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_PS,
+                        AccessNetworkConstants.TransportType.WWAN);
+        assertThat(nwReg).isNotNull();
+        assertThat(nwReg.getAccessNetworkTechnology()).isIn(NETWORK_TYPES);
+    }
+
+
+    /**
      * Tests that the device properly reports either a valid MEID or null.
      */
     @Test
@@ -762,5 +1017,13 @@ public class TelephonyManagerTest {
         }
         boolean isEmergencyNumber = mTelephonyManager.isCurrentPotentialEmergencyNumber("911");
         // TODO enhance it later
+    }
+
+    public static void waitForMs(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Log.d(TAG, "InterruptedException while waiting: " + e);
+        }
     }
 }
