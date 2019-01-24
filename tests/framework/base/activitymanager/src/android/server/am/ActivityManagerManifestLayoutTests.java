@@ -49,8 +49,8 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     // Test parameters
     private static final int DEFAULT_WIDTH_DP = 240;
     private static final int DEFAULT_HEIGHT_DP = 160;
-    private static final float DEFAULT_WIDTH_FRACTION = 0.25f;
-    private static final float DEFAULT_HEIGHT_FRACTION = 0.35f;
+    private static final float DEFAULT_WIDTH_FRACTION = 0.50f;
+    private static final float DEFAULT_HEIGHT_FRACTION = 0.70f;
     private static final int MIN_WIDTH_DP = 100;
     private static final int MIN_HEIGHT_DP = 80;
 
