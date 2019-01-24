@@ -56,6 +56,7 @@ public class InstantAppUserTest extends DeviceTestCase
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
     private int[] mTestUser = new int[2];
+    private int mStartingUser;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -83,6 +84,7 @@ public class InstantAppUserTest extends DeviceTestCase
             if (mPrimaryUserId != USER_SYSTEM) {
                 mFixedUsers.add(USER_SYSTEM);
             }
+            mStartingUser = getDevice().getCurrentUser();
             getDevice().switchUser(mPrimaryUserId);
 
             mTestUser[0] = users[1];
@@ -97,6 +99,7 @@ public class InstantAppUserTest extends DeviceTestCase
         if (mSupportsMultiUser) {
             uninstallTestPackages();
         }
+        getDevice().switchUser(mStartingUser);
         super.tearDown();
     }
 

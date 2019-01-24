@@ -43,6 +43,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         getDevice().uninstallPackage(TINY_PKG);
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
     }

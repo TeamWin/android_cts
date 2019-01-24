@@ -32,7 +32,6 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
 
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
-    protected boolean mIsSplitSystemUser;
     protected int mPrimaryUserId;
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
@@ -42,22 +41,12 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
         Assert.assertNotNull(getBuild()); // ensure build has been set before test is run.
 
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
-        mIsSplitSystemUser = checkIfSplitSystemUser();
         mPrimaryUserId = getDevice().getPrimaryUserId();
         mFixedUsers = new ArrayList<>();
         mFixedUsers.add(mPrimaryUserId);
         if (mPrimaryUserId != Utils.USER_SYSTEM) {
             mFixedUsers.add(Utils.USER_SYSTEM);
         }
-        getDevice().switchUser(mPrimaryUserId);
-    }
-
-    private boolean checkIfSplitSystemUser() throws DeviceNotAvailableException {
-        final String commandOuput = getDevice().executeShellCommand(
-                "getprop ro.fw.system_user_split");
-        return "y".equals(commandOuput) || "yes".equals(commandOuput)
-                || "1".equals(commandOuput) || "true".equals(commandOuput)
-                || "on".equals(commandOuput);
     }
 
     protected void installTestAppForUser(String apk, int userId) throws Exception {

@@ -58,11 +58,9 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
 
     private static final long SHUTDOWN_TIME_MS = 30 * 1000;
 
-    private int[] mUsers;
-
     @Before
     public void setUp() throws Exception {
-        mUsers = Utils.prepareSingleUser(getDevice());
+        Utils.prepareSingleUser(getDevice());
         assertNotNull(getAbi());
         assertNotNull(getBuild());
 
@@ -154,12 +152,13 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
 
             // To receive boot broadcasts, kick our other app out of stopped state
             getDevice().executeShellCommand("am start -a android.intent.action.MAIN"
+                    + " --user current"
                     + " -c android.intent.category.LAUNCHER com.android.cts.splitapp/.MyActivity");
 
             // Give enough time for PackageManager to persist stopped state
             Thread.sleep(15000);
 
-            runDeviceTests(PKG, CLASS, "testSetUp", mUsers);
+            runDeviceTestsAsCurrentUser(PKG, CLASS, "testSetUp");
 
             // Give enough time for vold to update keys
             Thread.sleep(15000);
@@ -179,16 +178,16 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
 
             if (doTest) {
                 if (MODE_NONE.equals(mode)) {
-                    runDeviceTests(PKG, CLASS, "testVerifyUnlockedAndDismiss", mUsers);
+                    runDeviceTestsAsCurrentUser(PKG, CLASS, "testVerifyUnlockedAndDismiss");
                 } else {
-                    runDeviceTests(PKG, CLASS, "testVerifyLockedAndDismiss", mUsers);
+                    runDeviceTestsAsCurrentUser(PKG, CLASS, "testVerifyLockedAndDismiss");
                 }
             }
 
         } finally {
             try {
                 // Remove secure lock screens and tear down test app
-                runDeviceTests(PKG, CLASS, "testTearDown", mUsers);
+                runDeviceTestsAsCurrentUser(PKG, CLASS, "testTearDown");
             } finally {
                 getDevice().uninstallPackage(PKG);
 
@@ -205,12 +204,10 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    private void runDeviceTests(String packageName, String testClassName, String testMethodName,
-            int... users) throws DeviceNotAvailableException {
-        for (int user : users) {
-            Log.d(TAG, "runDeviceTests " + testMethodName + " u" + user);
-            runDeviceTests(getDevice(), packageName, testClassName, testMethodName, user, null);
-        }
+    private void runDeviceTestsAsCurrentUser(
+            String packageName, String testClassName, String testMethodName)
+                throws DeviceNotAvailableException {
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
     }
 
     private String getFbeMode() throws Exception {
