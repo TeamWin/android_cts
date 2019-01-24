@@ -371,6 +371,10 @@ public class MediaScannerTest extends AndroidTestCase {
     }
 
     private void canonicalizeTest(int resId) throws Exception {
+        // erase all audio files that might confuse us below
+        mContext.getContentResolver().delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                null, null);
+
         // write file and scan to insert into database
         String fileDir = Environment.getExternalStorageDirectory() + "/"
                 + getClass().getCanonicalName() + "/canonicaltest-" + System.currentTimeMillis();
@@ -614,8 +618,9 @@ public class MediaScannerTest extends AndroidTestCase {
     static void startMediaScan() {
         // Ugh, the best proxy we have is pretending that it was just mounted
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "am broadcast -a android.intent.action.MEDIA_MOUNTED "
-                        + "--receiver-include-background -d file:///sdcard");
+                "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_VOLUME "
+                        + "--receiver-include-background -d "
+                        + Uri.fromFile(Environment.getExternalStorageDirectory()));
     }
 
     private void startMediaScanAndWait() throws InterruptedException {
