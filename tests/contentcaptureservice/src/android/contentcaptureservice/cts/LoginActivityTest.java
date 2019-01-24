@@ -23,6 +23,7 @@ import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -42,6 +43,7 @@ import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
+import android.view.contentcapture.UserDataRemovalRequest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,6 +52,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<LoginActivity> {
 
@@ -473,7 +476,88 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         watcher.waitFor(DESTROYED);
 
         final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
-        assertThat(sessionIds).isEmpty();
+    }
+
+    @Test
+    public void testUserDataRemovalRequest_forEverything() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
+                .removeUserData(new UserDataRemovalRequest.Builder().forEverything()
+                        .build()));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        UserDataRemovalRequest request = service.getRemovalRequest();
+        assertThat(request).isNotNull();
+        assertThat(request.isForEverything()).isTrue();
+        assertThat(request.getUriRequests()).isNull();
+        assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
+    }
+
+    @Test
+    public void testUserDataRemovalRequest_oneUri() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        Uri uri = Uri.parse("com.example");
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
+                .removeUserData(new UserDataRemovalRequest.Builder()
+                        .addUri(uri, false)
+                        .build()));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        UserDataRemovalRequest request = service.getRemovalRequest();
+        assertThat(request).isNotNull();
+        assertThat(request.isForEverything()).isFalse();
+
+        List<UserDataRemovalRequest.UriRequest> requests = request.getUriRequests();
+        assertThat(requests.size()).isEqualTo(1);
+        assertThat(requests.stream().map((r) -> r.getUri()).collect(Collectors.toList()))
+                .containsExactly(uri).inOrder();
+        assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
+    }
+
+    @Test
+    public void testUserDataRemovalRequest_manyUris() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        Uri uri = Uri.parse("com.example");
+        Uri uri2 = Uri.parse("com.example2");
+
+        LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
+                .removeUserData(new UserDataRemovalRequest.Builder()
+                        .addUri(uri, false)
+                        .addUri(uri2, false)
+                        .build()));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        UserDataRemovalRequest request = service.getRemovalRequest();
+        assertThat(request).isNotNull();
+        assertThat(request.isForEverything()).isFalse();
+
+        List<UserDataRemovalRequest.UriRequest> requests = request.getUriRequests();
+        assertThat(requests.size()).isEqualTo(2);
+        assertThat(requests.stream().map((r) -> r.getUri()).collect(Collectors.toList()))
+                .containsExactly(uri, uri2).inOrder();
+        assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
     }
 
     // TODO(b/119638528): add moar test cases for different sessions:
