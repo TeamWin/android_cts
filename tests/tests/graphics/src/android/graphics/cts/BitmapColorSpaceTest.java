@@ -85,13 +85,13 @@ public class BitmapColorSpaceTest {
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGBA_F16, true, sRGB);
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB), cs);
 
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGBA_F16, true,
                 ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB), cs);
 
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGB_565, true, sRGB);
         cs = b.getColorSpace();

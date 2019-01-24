@@ -1693,13 +1693,16 @@ public class ImageDecoderTest {
         for (int resId : new int[] { R.drawable.png_test, R.raw.f16 }) {
             Bitmap normal = null;
             try {
-                normal = ImageDecoder.decodeBitmap(f.apply(resId));
+                normal = ImageDecoder.decodeBitmap(f.apply(resId), ((decoder, info, source) -> {
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                }));
             } catch (IOException e) {
                 fail("Failed with exception " + e);
             }
             assertNotNull(normal);
             int normalByteCount = normal.getAllocationByteCount();
-            for (int allocator : ALLOCATORS) {
+            int[] allocators = { ImageDecoder.ALLOCATOR_HARDWARE, ImageDecoder.ALLOCATOR_DEFAULT };
+            for (int allocator : allocators) {
                 l.allocator = allocator;
                 Bitmap test = null;
                 try {
@@ -1710,33 +1713,13 @@ public class ImageDecoderTest {
                 assertNotNull(test);
                 int byteCount = test.getAllocationByteCount();
 
-                if (allocator == ImageDecoder.ALLOCATOR_HARDWARE
-                        || allocator == ImageDecoder.ALLOCATOR_DEFAULT) {
-                    if (resId == R.drawable.png_test) {
-                        // We do not support 565 in HARDWARE, so no RAM savings
-                        // are possible.
-                        assertEquals(normalByteCount, byteCount);
-                    } else { // R.raw.f16
-                        // This image defaults to F16. MEMORY_POLICY_LOW_RAM
-                        // forces "test" to decode to 8888. But if the device
-                        // does not support F16 in HARDWARE, "normal" is also
-                        // 8888. Its Config is HARDWARE either way, but we can
-                        // detect its underlying pixel format by checking the
-                        // ColorSpace, which is always LINEAR_EXTENDED_SRGB for
-                        // F16.
-                        if (normal.getColorSpace().equals(
-                                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB))) {
-                            // F16. "test" should be smaller.
-                            assertTrue(byteCount < normalByteCount);
-                        } else {
-                            // 8888. No RAM savings possible.
-                            assertEquals(normalByteCount, byteCount);
-                        }
-                    }
-                } else {
-                    // Not decoding to HARDWARE, but |normal| was. As such this should always
-                    // succeed in being smaller, as software will decode to 565 in this case.
-                    // This will always be less than whatever HARDWARE supports.
+                if (resId == R.drawable.png_test) {
+                    // We do not support 565 in HARDWARE, so no RAM savings
+                    // are possible.
+                    assertEquals(normalByteCount, byteCount);
+                } else { // R.raw.f16
+                    // This image defaults to F16. MEMORY_POLICY_LOW_RAM
+                    // forces "test" to decode to 8888.
                     assertTrue(byteCount < normalByteCount);
                 }
             }
@@ -2109,7 +2092,7 @@ public class ImageDecoderTest {
             ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
             for (ColorSpace cs : new ColorSpace[] {
                     sSRGB,
-                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
+                    ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
                     ColorSpace.get(ColorSpace.Named.ADOBE_RGB),
                     ColorSpace.get(ColorSpace.Named.BT709),
@@ -2120,9 +2103,9 @@ public class ImageDecoderTest {
                     ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB),
                     ColorSpace.get(ColorSpace.Named.ACES),
                     ColorSpace.get(ColorSpace.Named.ACESCG),
-                    // FIXME: This returns LINEAR_EXTENDED_SRGB.
+                    // FIXME: This returns LINEAR_SRGB.
                     // See b/117601185 and b/77276533
-                    //ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
+                    //ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
             }) {
                 try {
                     Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {

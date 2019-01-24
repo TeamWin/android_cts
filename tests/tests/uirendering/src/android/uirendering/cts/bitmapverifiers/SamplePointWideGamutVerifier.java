@@ -16,18 +16,19 @@
 
 package android.uirendering.cts.bitmapverifiers;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.ColorSpace;
 import android.graphics.Point;
 import android.util.Half;
 import android.util.Log;
 
+import org.junit.Assert;
+
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-public class SamplePointWideGamutVerifier extends WideGamutBitmapVerifier {
+public class SamplePointWideGamutVerifier extends BitmapVerifier {
     private static final String TAG = "SamplePointWideGamut";
-
-    private static final ColorSpace SCRGB = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
 
     private final Point[] mPoints;
     private final Color[] mColors;
@@ -40,29 +41,66 @@ public class SamplePointWideGamutVerifier extends WideGamutBitmapVerifier {
     }
 
     @Override
-    public boolean verify(ByteBuffer bitmap, int offset, int stride, int width, int height) {
+    public boolean verify(Bitmap bitmap) {
+        Assert.assertTrue("You cannot use this verifier with an bitmap whose ColorSpace is not "
+                 + "wide gamut: " + bitmap.getColorSpace(), bitmap.getColorSpace().isWideGamut());
+
+        ByteBuffer dst = ByteBuffer.allocateDirect(bitmap.getAllocationByteCount());
+        bitmap.copyPixelsToBuffer(dst);
+        dst.rewind();
+        dst.order(ByteOrder.LITTLE_ENDIAN);
+
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int stride = bitmap.getRowBytes();
+
         boolean success = true;
         for (int i = 0; i < mPoints.length; i++) {
             Point p = mPoints[i];
             Color c = mColors[i];
 
-            int index = p.y * stride + (p.x << 3);
-            float r = Half.toFloat(bitmap.getShort(index));
-            float g = Half.toFloat(bitmap.getShort(index + 2));
-            float b = Half.toFloat(bitmap.getShort(index + 4));
+            float r, g, b, a;
+
+            if (bitmap.getConfig() == Bitmap.Config.RGBA_F16) {
+                int index = p.y * stride + (p.x << 3);
+                r = Half.toFloat(dst.getShort(index));
+                g = Half.toFloat(dst.getShort(index + 2));
+                b = Half.toFloat(dst.getShort(index + 4));
+                a = Half.toFloat(dst.getShort(index + 6));
+            } else if (bitmap.getConfig() == Bitmap.Config.ARGB_8888) {
+                int index = p.y * stride + (p.x << 2);
+                r = dst.get(index + 0) / 255.0f;
+                g = dst.get(index + 1) / 255.0f;
+                b = dst.get(index + 2) / 255.0f;
+                a = dst.get(index + 3) / 255.0f;
+            } else {
+                Assert.fail("This verifier does not support the provided bitmap config: "
+                        + bitmap.getConfig());
+                return false;
+            }
+
+            Color bitmapColor = Color.valueOf(r, g, b, a, bitmap.getColorSpace());
+            Color convertedBitmapColor = bitmapColor.convert(c.getColorSpace());
 
             boolean localSuccess = true;
-            if (!floatCompare(c.red(),   r, mEps)) localSuccess = false;
-            if (!floatCompare(c.green(), g, mEps)) localSuccess = false;
-            if (!floatCompare(c.blue(),  b, mEps)) localSuccess = false;
+            if (!floatCompare(c.red(),   convertedBitmapColor.red(),   mEps)) localSuccess = false;
+            if (!floatCompare(c.green(), convertedBitmapColor.green(), mEps)) localSuccess = false;
+            if (!floatCompare(c.blue(),  convertedBitmapColor.blue(),  mEps)) localSuccess = false;
+            if (!floatCompare(c.alpha(), convertedBitmapColor.alpha(), mEps)) localSuccess = false;
 
             if (!localSuccess) {
                 success = false;
                 Log.w(TAG, "Expected " + c.toString() + " at " + p.x + "x" + p.y
-                        + ", got " + Color.valueOf(r, g, b, 1.0f, SCRGB).toString());
+                        + ", got " + convertedBitmapColor.toString());
             }
         }
         return success;
+    }
+
+    @Override
+    public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
+        Assert.fail("This verifier requires more info than can be encoded in sRGB (int) values");
+        return false;
     }
 
     private static boolean floatCompare(float a, float b, float eps) {
