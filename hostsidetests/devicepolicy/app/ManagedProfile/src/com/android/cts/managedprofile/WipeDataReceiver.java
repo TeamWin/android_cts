@@ -44,7 +44,7 @@ public class WipeDataReceiver extends BroadcastReceiver {
         } else if (ACTION_WIPE_DATA_WITH_REASON.equals(intent.getAction())) {
             dpm.wipeData(0, TEST_WIPE_DATA_REASON);
         } else if (ACTION_WIPE_DATA_WITHOUT_REASON.equals(intent.getAction())) {
-            dpm.wipeData(0, null);
+            dpm.wipeData(DevicePolicyManager.WIPE_SILENTLY);
         }
     }
 }
