@@ -81,12 +81,17 @@ public class TextClassificationManagerTest {
             new TextLanguage.Request.Builder(TEXT)
                     .setExtras(BUNDLE)
                     .build();
-    private static final ConversationActions.Message MESSAGE =
-            new ConversationActions.Message.Builder(ConversationActions.Message.PERSON_USER_REMOTE)
+    private static final ConversationActions.Message FIRST_MESSAGE =
+            new ConversationActions.Message.Builder(ConversationActions.Message.PERSON_USER_SELF)
+                    .setText(TEXT)
+                    .build();
+    private static final ConversationActions.Message SECOND_MESSAGE =
+            new ConversationActions.Message.Builder(ConversationActions.Message.PERSON_USER_OTHERS)
                     .setText(TEXT)
                     .build();
     private static final ConversationActions.Request CONVERSATION_ACTIONS_REQUEST =
-            new ConversationActions.Request.Builder(Arrays.asList(MESSAGE)).build();
+            new ConversationActions.Request.Builder(
+                    Arrays.asList(FIRST_MESSAGE, SECOND_MESSAGE)).build();
 
     private TextClassificationManager mManager;
     private TextClassifier mClassifier;
