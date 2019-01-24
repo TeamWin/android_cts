@@ -54,7 +54,7 @@ public final class PermissionUsageTest extends InstrumentationTestCase {
     }
 
     public void testBasic() throws Exception {
-        UsesPermissionInfo upi = getUsesPermissionInfo(Manifest.permission.READ_CONTACTS);
+        UsesPermissionInfo upi = getUsesPermissionInfo(Manifest.permission.ACCESS_FINE_LOCATION);
         assertEquals(UsesPermissionInfo.USAGE_NO, upi.getDataSentOffDevice());
         assertEquals(UsesPermissionInfo.USAGE_NO, upi.getDataSharedWithThirdParty());
         assertEquals(UsesPermissionInfo.USAGE_NO, upi.getDataUsedForMonetization());
