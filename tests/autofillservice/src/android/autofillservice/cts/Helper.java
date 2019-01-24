@@ -38,6 +38,7 @@ import android.autofillservice.cts.common.SettingsHelper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.icu.util.Calendar;
 import android.os.Bundle;
@@ -106,6 +107,9 @@ final class Helper {
 
     private static final String LOCAL_DIRECTORY = Environment.getExternalStorageDirectory()
             + "/CtsAutoFillServiceTestCases";
+
+    private static final String RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION =
+            "config_forceDefaultOrientation";
 
     /**
      * Helper interface used to filter nodes.
@@ -802,7 +806,35 @@ final class Helper {
      * Checks if screen orientation can be changed.
      */
     public static boolean isRotationSupported(Context context) {
-        return !context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        if (!isScreenRotationSupported(context)) {
+            Log.v(TAG, "isRotationSupported(): screen rotation not supported");
+            return false;
+        }
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            Log.v(TAG, "isRotationSupported(): has leanback feature");
+            return false;
+        }
+        return true;
+    }
+
+     /**
+     * Returns {@code true} if display rotation is supported, {@code false} otherwise.
+     */
+    private static boolean isScreenRotationSupported(Context context) {
+        try {
+            return !getBoolean(context, RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION);
+        } catch (Resources.NotFoundException e) {
+            Log.d(TAG, "Resource not found: "
+                    + RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION
+                    + ". Assume rotation supported");
+            return true;
+        }
+    }
+
+    private static boolean getBoolean(Context context, String id) {
+        final Resources resources = context.getResources();
+        final int booleanId = resources.getIdentifier(id, "bool", "android");
+        return resources.getBoolean(booleanId);
     }
 
     /**
