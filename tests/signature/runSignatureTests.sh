@@ -33,6 +33,8 @@ CtsHiddenApiBlacklistDebugClassTestCases
 CtsHiddenApiKillswitchWildcardTestCases
 CtsHiddenApiKillswitchWhitelistTestCases
 CtsHiddenApiKillswitchDebugClassTestCases
+
+CtsSharedLibsApiSignatureTestCases
 "
 else
     PACKAGES=${1+"$@"}
