@@ -48,7 +48,7 @@ public class WallpaperInfoTest {
         ResolveInfo info = result.get(0);
         WallpaperInfo wallpaperInfo = new WallpaperInfo(context, info);
         assertEquals(context.getString(R.string.wallpaper_title), wallpaperInfo.loadLabel(pm));
-        assertEquals(context.getString(R.string.wallpaper_collection),
+        assertEquals(context.getString(R.string.wallpaper_description),
             wallpaperInfo.loadDescription(pm));
         assertEquals(context.getString(R.string.wallpaper_collection),
             wallpaperInfo.loadAuthor(pm));
