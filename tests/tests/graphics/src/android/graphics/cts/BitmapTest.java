@@ -57,6 +57,8 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -77,6 +79,22 @@ public class BitmapTest {
     private Resources mRes;
     private Bitmap mBitmap;
     private BitmapFactory.Options mOptions;
+
+    public static List<ColorSpace> getRgbColorSpaces() {
+        List<ColorSpace> rgbColorSpaces;
+        rgbColorSpaces = new ArrayList<ColorSpace>();
+        for (ColorSpace.Named e : ColorSpace.Named.values()) {
+            ColorSpace cs = ColorSpace.get(e);
+            if (cs.getModel() != ColorSpace.Model.RGB) {
+                continue;
+            }
+            if (((ColorSpace.Rgb) cs).getTransferParameters() == null) {
+                continue;
+            }
+            rgbColorSpaces.add(cs);
+        }
+        return rgbColorSpaces;
+    }
 
     @Before
     public void setup() {
@@ -612,6 +630,102 @@ public class BitmapTest {
         assertEquals(0xffff0000, mBitmap.getPixel(50, 50));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetColorOOB() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.getColor(-1, 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetColorOOB2() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.getColor(5, -10);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetColorOOB3() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.getColor(100, 10);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetColorOOB4() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.getColor(99, 1000);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetColorRecycled() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.recycle();
+        mBitmap.getColor(0, 0);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetColorHardware() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.HARDWARE;
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, options);
+        mBitmap.getColor(50, 50);
+
+    }
+
+    private static float clamp(float f) {
+        return clamp(f, 0.0f, 1.0f);
+    }
+
+    private static float clamp(float f, float min, float max) {
+        return Math.min(Math.max(f, min), max);
+    }
+
+    @Test
+    public void testGetColor() {
+        final ColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB);
+        List<ColorSpace> rgbColorSpaces = getRgbColorSpaces();
+        for (Config config : new Config[] { Config.ARGB_8888, Config.RGBA_F16, Config.RGB_565 }) {
+            for (ColorSpace bitmapColorSpace : rgbColorSpaces) {
+                mBitmap = Bitmap.createBitmap(1, 1, config, /*hasAlpha*/ false,
+                        bitmapColorSpace);
+                bitmapColorSpace = mBitmap.getColorSpace();
+                for (ColorSpace eraseColorSpace : rgbColorSpaces) {
+                    for (long wideGamutLong : new long[] {
+                            Color.pack(1.0f, 0.0f, 0.0f, 1.0f, eraseColorSpace),
+                            Color.pack(0.0f, 1.0f, 0.0f, 1.0f, eraseColorSpace),
+                            Color.pack(0.0f, 0.0f, 1.0f, 1.0f, eraseColorSpace)}) {
+                        mBitmap.eraseColor(wideGamutLong);
+
+                        Color result = mBitmap.getColor(0, 0);
+                        if (mBitmap.getColorSpace().equals(sRGB)) {
+                            assertEquals(mBitmap.getPixel(0, 0), result.toArgb());
+                        }
+                        if (eraseColorSpace.equals(bitmapColorSpace)) {
+                            final Color wideGamutColor = Color.valueOf(wideGamutLong);
+                            ColorUtils.verifyColor("Erasing to Bitmap's ColorSpace "
+                                    + bitmapColorSpace, wideGamutColor, result, .0f);
+
+                        } else {
+                            Color convertedColor = Color.valueOf(
+                                    Color.convert(wideGamutLong, bitmapColorSpace));
+                            if (mBitmap.getConfig() != Config.RGBA_F16) {
+                                // It's possible that we have to clip to fit into the Config.
+                                convertedColor = Color.valueOf(
+                                        clamp(convertedColor.red()),
+                                        clamp(convertedColor.green()),
+                                        clamp(convertedColor.blue()),
+                                        convertedColor.alpha(),
+                                        bitmapColorSpace);
+                            }
+                            ColorUtils.verifyColor("Bitmap(Config: " + mBitmap.getConfig()
+                                    + ", ColorSpace: " + bitmapColorSpace
+                                    + ") erasing to " + Color.valueOf(wideGamutLong),
+                                    convertedColor, result, .03f);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private static class ARGB {
         public float alpha;
         public float red;
@@ -627,7 +741,7 @@ public class BitmapTest {
 
     @Test
     public void testEraseColorLong() {
-        // normal case
+        List<ColorSpace> rgbColorSpaces = getRgbColorSpaces();
         for (Config config : new Config[]{Config.ARGB_8888, Config.RGB_565, Config.RGBA_F16}) {
             mBitmap = Bitmap.createBitmap(100, 100, config);
             // pack SRGB colors into ColorLongs.
@@ -655,14 +769,7 @@ public class BitmapTest {
                     continue;
                 }
                 int srgbColor = Color.argb(color.alpha, color.red, color.green, color.blue);
-                for (ColorSpace.Named e : ColorSpace.Named.values()) {
-                    ColorSpace cs = ColorSpace.get(e);
-                    if (cs.getModel() != ColorSpace.Model.RGB) {
-                        continue;
-                    }
-                    if (((ColorSpace.Rgb) cs).getTransferParameters() == null) {
-                        continue;
-                    }
+                for (ColorSpace cs : rgbColorSpaces) {
                     long longColor = Color.convert(srgbColor, cs);
                     mBitmap.eraseColor(longColor);
                     // These tolerances were chosen by trial and error. It is expected that
