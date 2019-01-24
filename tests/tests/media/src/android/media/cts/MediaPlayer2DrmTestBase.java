@@ -29,6 +29,7 @@ import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmInfo;
 import android.media.MediaPlayer2.DrmPreparationInfo;
 import android.media.VideoSize;
+import android.media.MediaDrm.KeyRequest;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.SystemClock;
@@ -153,6 +154,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         V2_SYNC_CONFIG_TEST,
         V3_ASYNC_DRMPREPARED_TEST,
         V4_SYNC_OFFLINE_KEY,
+        V5_ASYNC_CALLBACKS_TEST,
     }
 
     // TODO: After living on these tests for a while, we can consider grouping them based on
@@ -224,12 +226,14 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             case V1_ASYNC_TEST:
             case V2_SYNC_CONFIG_TEST:
             case V3_ASYNC_DRMPREPARED_TEST:
+            case V5_ASYNC_CALLBACKS_TEST:
                 playLoadedModularDrmVideo_Generic(file, width, height, playTime, testType);
                 break;
 
             case V4_SYNC_OFFLINE_KEY:
                 playLoadedModularDrmVideo_V4_offlineKey(file, width, height, playTime);
                 break;
+
         }
     }
 
@@ -304,6 +308,13 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 case V3_ASYNC_DRMPREPARED_TEST:
                     preparePlayerAndDrm_V3_asyncDrmSetupPlusDrmPreparedListener(dsd);
                     break;
+
+                case V5_ASYNC_CALLBACKS_TEST:
+                    preparePlayerAndDrm_V5_asyncDrmSetupCallbacks(dsd);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("invalid test type: " + testType);
             }
 
         } catch (IOException e) {
@@ -329,6 +340,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         try {
             Log.v(TAG, "playLoadedVideo: releaseDrm");
+            mPlayer.reset();
             mPlayer.releaseDrm(dsd);
         } catch (Exception e) {
             e.printStackTrace();
@@ -525,6 +537,116 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         // to handle setupDrm error (async) in the main thread rather than the callback
         if (asyncSetupDrmError.get()) {
             fail("preparePlayerAndDrm_V3: setupDrm");
+        }
+    }
+
+    private void preparePlayerAndDrm_V5_asyncDrmSetupCallbacks(DataSourceDesc dsd)
+            throws InterruptedException {
+        final AtomicBoolean drmCallbackError = new AtomicBoolean(false);
+
+        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+            @Override
+            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2,
+                    DrmInfo drmInfo) {
+                Log.v(TAG, "preparePlayerAndDrm_V5: onDrmInfo" + drmInfo);
+
+                // DRM preparation
+                UUID drmScheme = CLEARKEY_SCHEME_UUID;
+                List<UUID> supportedSchemes = drmInfo.getSupportedSchemes();
+                if (dsd != dsd2 || supportedSchemes.isEmpty()) {
+                    String msg = dsd != dsd2 ? "dsd mismatch" : "No supportedSchemes";
+                    Log.e(TAG, "preparePlayerAndDrm_V5: onDrmInfo " + msg);
+                    drmCallbackError.set(true);
+                    return null;
+                }
+
+                // setting up with the first supported UUID
+                // instead of supportedSchemes[0] in GTS
+                DrmPreparationInfo.Builder drmBuilder = new DrmPreparationInfo.Builder();
+                drmBuilder.setUuid(drmScheme);
+                drmBuilder.setMimeType("cenc");
+                drmBuilder.setKeyType(MediaDrm.KEY_TYPE_STREAMING);
+
+                byte[] psshData = drmInfo.getPssh().get(drmScheme);
+                byte[] initData;
+                // diverging from GTS
+                if (psshData == null) {
+                    initData = mClearKeyPssh;
+                    Log.d(TAG, "preparePlayerAndDrm_V5: CLEARKEY scheme not found in PSSH."
+                            + " Using default data.");
+                } else {
+                    // Can skip conversion if ClearKey adds support for BMFF initData b/64863112
+                    initData = makeCencPSSH(drmScheme, psshData);
+                }
+                drmBuilder.setInitData(initData);
+                Log.d(TAG, "preparePlayerAndDrm_V5: initData[" + drmScheme + "]: "
+                        + Arrays.toString(initData));
+
+                Log.v(TAG, "preparePlayerAndDrm_V5: onDrmInfo done!");
+                return drmBuilder.build();
+            }
+
+            @Override
+            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc dsd2, MediaDrm drmObj) {
+                if (dsd != dsd2) {
+                    Log.e(TAG, "preparePlayerAndDrm_V5: onDrmConfig dsd mismatch");
+                    drmCallbackError.set(true);
+                    return;
+                }
+
+                String widevineSecurityLevel3 = "L3";
+                String securityLevelProperty = "securityLevel";
+
+                try {
+                    String level = drmObj.getPropertyString(securityLevelProperty);
+                    Log.v(TAG, "preparePlayerAndDrm_V5: getDrmPropertyString: "
+                            + securityLevelProperty + " -> " + level);
+                    drmObj.setPropertyString(securityLevelProperty, widevineSecurityLevel3);
+                    level = drmObj.getPropertyString(securityLevelProperty);
+                    Log.v(TAG, "preparePlayerAndDrm_V5: getDrmPropertyString: "
+                            + securityLevelProperty + " -> " + level);
+                } catch (Exception e) {
+                    Log.v(TAG, "preparePlayerAndDrm_V5: onDrmConfig EXCEPTION " + e);
+                }
+            }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest req) {
+                byte[][] clearKeys = new byte[][] { CLEAR_KEY_CENC };
+                byte[] response = createKeysResponse(req, clearKeys);
+                return response;
+            }
+
+            @Override
+            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd2, int status,
+                    byte[] keySetId) {
+                Log.v(TAG, "preparePlayerAndDrm_V5: onDrmPrepared status: " + status);
+                String errMsg = null;
+                if (dsd != dsd2) {
+                    errMsg = "dsd mismatch";
+                }
+                if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
+                    errMsg = "drm prepare failed";
+                }
+                if (keySetId != null && keySetId.length > 0) {
+                    errMsg = "unexpected keySetId";
+                }
+                if (errMsg != null) {
+                    drmCallbackError.set(true);
+                    Log.e(TAG, "preparePlayerAndDrm_V5: onDrmPrepared " + errMsg);
+                }
+            }
+        });
+
+        Log.v(TAG, "preparePlayerAndDrm_V5: calling prepare()");
+        mPlayer.prepare();
+
+        // Waiting till the player is prepared
+        mOnPreparedCalled.waitForSignal();
+
+        // handle error (async) in main thread rather than callbacks
+        if (drmCallbackError.get()) {
+            fail("preparePlayerAndDrm_V5: setupDrm");
         }
     }
 

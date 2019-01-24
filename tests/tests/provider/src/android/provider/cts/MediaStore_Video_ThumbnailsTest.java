@@ -16,11 +16,12 @@
 
 package android.provider.cts;
 
-import static android.provider.cts.ProviderTestUtils.assertExists;
-import static android.provider.cts.ProviderTestUtils.assertNotExists;
+import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT;
+import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -31,26 +32,36 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.FileUtils;
+import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.Thumbnails;
 import android.provider.MediaStore.Video.VideoColumns;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.util.Size;
 
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_Video_ThumbnailsTest {
     private static final String TAG = "MediaStore_Video_ThumbnailsTest";
 
@@ -62,10 +73,23 @@ public class MediaStore_Video_ThumbnailsTest {
                 mContext, R.raw.testthumbvideo, "video/");
     }
 
+    private Uri mExternalVideo;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
+    }
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
     }
 
     @Test
@@ -78,15 +102,14 @@ public class MediaStore_Video_ThumbnailsTest {
 
     @Test
     public void testGetThumbnail() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
+
         // Insert a video into the provider.
         Uri videoUri = insertVideo();
         long videoId = ContentUris.parseId(videoUri);
         assertTrue(videoId != -1);
         assertEquals(ContentUris.withAppendedId(Media.EXTERNAL_CONTENT_URI, videoId),
                 videoUri);
-
-        // Get the current thumbnail count for future comparison.
-        int count = getThumbnailCount(Thumbnails.EXTERNAL_CONTENT_URI);
 
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
@@ -100,31 +123,12 @@ public class MediaStore_Video_ThumbnailsTest {
         assertNotNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MINI_KIND, null));
         assertNotNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MICRO_KIND, null));
 
-        // Check that an additional thumbnails have been registered.
-        int count2 = getThumbnailCount(Thumbnails.EXTERNAL_CONTENT_URI);
-        assertTrue(count2 > count);
-
-        Cursor c = mResolver.query(Thumbnails.EXTERNAL_CONTENT_URI,
-                new String[] { Thumbnails._ID, Thumbnails.DATA, Thumbnails.VIDEO_ID },
-                null, null, null);
-
-        if (c.moveToLast()) {
-            long vid = c.getLong(2);
-            assertEquals(videoId, vid);
-            String path = c.getString(1);
-            assertExists("thumbnail file does not exist", path);
-            long id = c.getLong(0);
-            mResolver.delete(ContentUris.withAppendedId(Thumbnails.EXTERNAL_CONTENT_URI, id),
-                    null, null);
-            assertNotExists("thumbnail file should no longer exist", path);
-        }
-        c.close();
-
         assertEquals(1, mResolver.delete(videoUri, null, null));
     }
 
     @Test
     public void testThumbnailGenerationAndCleanup() throws Exception {
+        if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
 
         if (!hasCodec()) {
             // we don't support video, so no need to run the test
@@ -136,45 +140,20 @@ public class MediaStore_Video_ThumbnailsTest {
         Uri uri = insertVideo();
 
         // request thumbnail creation
-        Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
-                Thumbnails.MINI_KIND, null /* options */);
-
-        // query the thumbnail
-        Cursor c = mResolver.query(
-                Thumbnails.EXTERNAL_CONTENT_URI,
-                new String [] {Thumbnails.DATA},
-                "video_id=?",
-                new String[] {uri.getLastPathSegment()},
-                null /* sort */
-                );
-        assertTrue("couldn't find thumbnail", c.moveToNext());
-        String path = c.getString(0);
-        c.close();
-        assertExists("thumbnail does not exist", path);
+        assertNotNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
+                Thumbnails.MINI_KIND, null /* options */));
 
         // delete the source video and check that the thumbnail is gone too
         mResolver.delete(uri, null /* where clause */, null /* where args */);
-        assertNotExists("thumbnail still exists after source file delete", path);
+        assertNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
+                Thumbnails.MINI_KIND, null /* options */));
 
         // insert again
         uri = insertVideo();
 
         // request thumbnail creation
-        Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
-                Thumbnails.MINI_KIND, null);
-
-        // query its thumbnail again
-        c = mResolver.query(
-                Thumbnails.EXTERNAL_CONTENT_URI,
-                new String [] {Thumbnails.DATA},
-                "video_id=?",
-                new String[] {uri.getLastPathSegment()},
-                null /* sort */
-                );
-        assertTrue("couldn't find thumbnail", c.moveToNext());
-        path = c.getString(0);
-        c.close();
-        assertExists("thumbnail does not exist", path);
+        assertNotNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
+                Thumbnails.MINI_KIND, null));
 
         // update the media type
         ContentValues values = new ContentValues();
@@ -183,23 +162,11 @@ public class MediaStore_Video_ThumbnailsTest {
                 1, mResolver.update(uri, values, null /* where */, null /* where args */));
 
         // video was marked as regular file in the database, which should have deleted its thumbnail
-
-        // query its thumbnail again
-        c = mResolver.query(
-                Thumbnails.EXTERNAL_CONTENT_URI,
-                new String [] {Thumbnails.DATA},
-                "video_id=?",
-                new String[] {uri.getLastPathSegment()},
-                null /* sort */
-                );
-        if (c != null) {
-            assertFalse("thumbnail entry exists for non-thumbnail file", c.moveToNext());
-            c.close();
-        }
-        assertNotExists("thumbnail remains after source file type change", path);
+        assertNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
+                Thumbnails.MINI_KIND, null /* options */));
 
         // check source no longer exists as video
-        c = mResolver.query(uri,
+        Cursor c = mResolver.query(uri,
                 null /* projection */, null /* where */, null /* where args */, null /* sort */);
         assertFalse("source entry should be gone", c.moveToNext());
         c.close();
@@ -220,25 +187,83 @@ public class MediaStore_Video_ThumbnailsTest {
     }
 
     private Uri insertVideo() throws IOException {
-        File file = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
+        File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                "testVideo.3gp");
         // clean up any potential left over entries from a previous aborted run
         mResolver.delete(Media.EXTERNAL_CONTENT_URI,
                 "_data=?", new String[] { file.getAbsolutePath() });
         file.delete();
 
-        ProviderTestUtils.stageFileRaw(R.raw.testthumbvideo, file);
+        ProviderTestUtils.stageFile(R.raw.testthumbvideo, file);
 
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());
         return mResolver.insert(Media.EXTERNAL_CONTENT_URI, values);
     }
 
-    private int getThumbnailCount(Uri uri) {
-        Cursor cursor = mResolver.query(uri, null, null, null, null);
-        try {
-            return cursor.getCount();
-        } finally {
-            cursor.close();
+    @Test
+    public void testInsertUpdateDelete() throws Exception {
+        final Uri finalUri = ProviderTestUtils.stageMedia(R.raw.testvideo,
+                mExternalVideo, "video/mp4");
+
+        // Directly reading should be larger
+        final Size full;
+        try (MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+            mmr.setDataSource(mContext, finalUri);
+            full = new Size(
+                    Integer.parseInt(mmr.extractMetadata(METADATA_KEY_VIDEO_WIDTH)),
+                    Integer.parseInt(mmr.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)));
         }
+
+        // Thumbnail should be smaller
+        final Bitmap beforeThumb = mResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+        assertTrue(beforeThumb.getWidth() < full.getWidth());
+        assertTrue(beforeThumb.getHeight() < full.getHeight());
+        final int beforeColor = beforeThumb.getPixel(16, 16);
+
+        // Verify legacy APIs still work
+        if (MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) {
+            for (int kind : new int[] {
+                    MediaStore.Video.Thumbnails.MINI_KIND,
+                    MediaStore.Video.Thumbnails.FULL_SCREEN_KIND,
+                    MediaStore.Video.Thumbnails.MICRO_KIND
+            }) {
+                assertNotNull(MediaStore.Video.Thumbnails.getThumbnail(mResolver,
+                        ContentUris.parseId(finalUri), kind, null));
+            }
+        }
+
+        // Edit video contents
+        try (InputStream from = mContext.getResources().openRawResource(R.raw.testthumbvideo);
+                OutputStream to = mResolver.openOutputStream(finalUri)) {
+            FileUtils.copy(from, to);
+        }
+
+        // Wait a few moments for events to settle
+        SystemClock.sleep(1000);
+
+        // Thumbnail should match updated contents
+        final Bitmap afterThumb = mResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+        final int afterColor = afterThumb.getPixel(16, 16);
+        assertNotColorMostlyEquals(beforeColor, afterColor);
+
+        // Delete video contents
+        mResolver.delete(finalUri, null, null);
+
+        // Thumbnail should no longer exist
+        try {
+            mResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+            fail("Funky; we somehow made a thumbnail out of nothing?");
+        } catch (FileNotFoundException expected) {
+        }
+    }
+
+    /**
+     * Since thumbnails might be bounced through a compression pass, we're okay
+     * if they're mostly equal.
+     */
+    private static void assertNotColorMostlyEquals(int expected, int actual) {
+        assertNotEquals(Integer.toHexString(expected & 0xF0F0F0F0),
+                Integer.toHexString(actual & 0xF0F0F0F0));
     }
 }

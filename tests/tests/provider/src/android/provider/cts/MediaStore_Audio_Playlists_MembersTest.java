@@ -50,8 +50,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.util.regex.Pattern;
-
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_Playlists_MembersTest {
     private String[] mAudioProjection = {
@@ -485,28 +483,6 @@ public class MediaStore_Audio_Playlists_MembersTest {
                 mContentResolver.delete(Playlists.getContentUri(mVolumeName),
                         Playlists._ID + "=" + playlist2Id, null);
             }
-        }
-    }
-
-    @Test
-    public void testStoreAudioPlaylistsMembersInternal() {
-        ContentValues values = new ContentValues();
-        values.put(Playlists.NAME, "My favourites");
-        values.put(Playlists.DATA, "/data/data/android.provider.cts/files/my_favorites.pl");
-        long dateAdded = System.currentTimeMillis();
-        values.put(Playlists.DATE_ADDED, dateAdded);
-        long dateModified = System.currentTimeMillis();
-        values.put(Playlists.DATE_MODIFIED, dateModified);
-        // insert
-        Uri uri = mContentResolver.insert(Playlists.INTERNAL_CONTENT_URI, values);
-        assertNotNull(uri);
-
-        try {
-            assertTrue(Pattern.matches("content://media/internal/audio/playlists/\\d+",
-                    uri.toString()));
-        } finally {
-            // delete the playlists
-            assertEquals(1, mContentResolver.delete(uri, null, null));
         }
     }
 }

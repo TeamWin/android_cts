@@ -66,6 +66,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     private boolean mManagedProfiles;
     private PackageManager mPackageManager;
     private NotificationManager mNotificationManager;
+    private boolean mHasSecureLockScreen;
 
     private static final String TEST_CA_STRING1 =
             "-----BEGIN CERTIFICATE-----\n" +
@@ -98,6 +99,8 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         mDeviceAdmin = mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
         mManagedProfiles = mDeviceAdmin
                 && mPackageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
+        mHasSecureLockScreen =
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN);
     }
 
     public void testGetActiveAdmins() {
@@ -870,7 +873,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     public void testSetResetPasswordToken_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
+        if (!mDeviceAdmin || !mHasSecureLockScreen) {
             Log.w(TAG, "Skipping testSetResetPasswordToken_failIfNotDeviceOwner");
             return;
         }
@@ -883,7 +886,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     public void testClearResetPasswordToken_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
+        if (!mDeviceAdmin || !mHasSecureLockScreen) {
             Log.w(TAG, "Skipping testClearResetPasswordToken_failIfNotDeviceOwner");
             return;
         }
@@ -896,7 +899,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     public void testIsResetPasswordTokenActive_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
+        if (!mDeviceAdmin || !mHasSecureLockScreen) {
             Log.w(TAG, "Skipping testIsResetPasswordTokenActive_failIfNotDeviceOwner");
             return;
         }
@@ -909,7 +912,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     public void testResetPasswordWithToken_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
+        if (!mDeviceAdmin || !mHasSecureLockScreen) {
             Log.w(TAG, "Skipping testResetPasswordWithToken_failIfNotDeviceOwner");
             return;
         }
@@ -922,7 +925,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     public void testIsUsingUnifiedPassword_failIfNotProfileOwner() {
-        if (!mDeviceAdmin) {
+        if (!mDeviceAdmin || !mHasSecureLockScreen) {
             Log.w(TAG, "Skipping testIsUsingUnifiedPassword_failIfNotProfileOwner");
             return;
         }

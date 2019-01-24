@@ -70,11 +70,6 @@ public class MediaStore_Audio_Artists_AlbumsTest {
         Uri contentUri = MediaStore.Audio.Artists.Albums.getContentUri(mVolumeName, 1);
         assertNotNull(c = mContentResolver.query(contentUri, null, null, null, null));
         c.close();
-
-        // can not accept any other volume names
-        String volume = "fakeVolume";
-        assertNull(mContentResolver.query(MediaStore.Audio.Artists.Albums.getContentUri(volume, 1),
-                null, null, null, null));
     }
 
     @Test

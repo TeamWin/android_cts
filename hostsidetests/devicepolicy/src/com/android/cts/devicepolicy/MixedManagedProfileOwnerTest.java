@@ -159,7 +159,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void testResetPasswordWithToken() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // Execute the test method that's guaranteed to succeed. See also test in base class

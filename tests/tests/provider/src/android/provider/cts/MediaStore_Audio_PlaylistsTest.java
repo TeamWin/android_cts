@@ -30,7 +30,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Playlists;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
@@ -43,7 +42,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_PlaylistsTest {
@@ -84,10 +82,6 @@ public class MediaStore_Audio_PlaylistsTest {
         } catch (SQLException e) {
             // expected
         }
-
-        String volume = "fakeVolume";
-        assertNull(mContentResolver.query(Playlists.getContentUri(volume), null, null, null,
-                null));
     }
 
     @Test
@@ -119,28 +113,6 @@ public class MediaStore_Audio_PlaylistsTest {
             assertTrue(c.getLong(c.getColumnIndex(Playlists._ID)) > 0);
             c.close();
         } finally {
-            assertEquals(1, mContentResolver.delete(uri, null, null));
-        }
-    }
-
-    @Test
-    public void testStoreAudioPlaylistsInternal() {
-        ContentValues values = new ContentValues();
-        values.put(Playlists.NAME, "My favourites");
-        values.put(Playlists.DATA, "/data/data/android.provider.cts/files/my_favorites.pl");
-        long dateAdded = System.currentTimeMillis();
-        values.put(Playlists.DATE_ADDED, dateAdded);
-        long dateModified = System.currentTimeMillis();
-        values.put(Playlists.DATE_MODIFIED, dateModified);
-        // insert
-        Uri uri = mContentResolver.insert(Playlists.INTERNAL_CONTENT_URI, values);
-        assertNotNull(uri);
-
-        try {
-            assertTrue(Pattern.matches("content://media/internal/audio/playlists/\\d+",
-                    uri.toString()));
-        } finally {
-            // delete the playlists
             assertEquals(1, mContentResolver.delete(uri, null, null));
         }
     }

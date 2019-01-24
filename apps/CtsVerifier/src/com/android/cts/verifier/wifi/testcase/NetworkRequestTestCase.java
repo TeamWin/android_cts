@@ -1,0 +1,298 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.cts.verifier.wifi.testcase;
+
+import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+
+import android.annotation.IntDef;
+import android.annotation.NonNull;
+import android.annotation.Nullable;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.MacAddress;
+import android.net.Network;
+import android.net.NetworkRequest;
+import android.net.NetworkSpecifier;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiNetworkConfigBuilder;
+import android.os.PatternMatcher;
+import android.text.TextUtils;
+import android.util.Log;
+import android.util.Pair;
+
+import com.android.cts.verifier.R;
+import com.android.cts.verifier.wifi.BaseTestCase;
+import com.android.cts.verifier.wifi.CallbackUtils;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Test case for all {@link NetworkRequest} requests with specifier built using
+ * {@link WifiNetworkConfigBuilder#buildNetworkSpecifier()}.
+ */
+public class NetworkRequestTestCase extends BaseTestCase {
+    private static final String TAG = "NetworkRequestTestCase";
+    private static final boolean DBG = true;
+
+    private static final String UNAVAILABLE_SSID = "blahblahblah";
+    private static final int NETWORK_REQUEST_TIMEOUT_MS = 30_000;
+    private static final int CALLBACK_TIMEOUT_MS = 40_000;
+    private static final int SCAN_TIMEOUT_MS = 30_000;
+
+    public static final int NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID = 0;
+    public static final int NETWORK_SPECIFIER_PATTERN_SSID_BSSID = 1;
+    public static final int NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID = 2;
+
+    @IntDef(prefix = { "NETWORK_SPECIFIER_" }, value = {
+            NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID,
+            NETWORK_SPECIFIER_PATTERN_SSID_BSSID,
+            NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface NetworkSpecifierType{}
+
+    private final Object mLock = new Object();
+    private final @NetworkSpecifierType int mNetworkSpecifierType;
+
+    private ConnectivityManager mConnectivityManager;
+    private NetworkRequest mNetworkRequest;
+    private CallbackUtils.NetworkCallback mNetworkCallback;
+    private BroadcastReceiver mBroadcastReceiver;
+    private String mFailureReason;
+
+    public NetworkRequestTestCase(Context context, @NetworkSpecifierType int networkSpecifierType) {
+        super(context);
+        mNetworkSpecifierType = networkSpecifierType;
+    }
+
+    // Create a network specifier based on the test type.
+    private NetworkSpecifier createNetworkSpecifier(@NonNull ScanResult scanResult)
+            throws InterruptedException {
+        WifiNetworkConfigBuilder configBuilder = new WifiNetworkConfigBuilder();
+        switch (mNetworkSpecifierType) {
+            case NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID:
+                configBuilder.setSsid(scanResult.SSID);
+                configBuilder.setBssid(MacAddress.fromString(scanResult.BSSID));
+                break;
+            case NETWORK_SPECIFIER_PATTERN_SSID_BSSID:
+                String ssidPrefix = scanResult.SSID.substring(0, scanResult.SSID.length() - 1);
+                MacAddress bssidMask = MacAddress.fromString("ff:ff:ff:ff:ff:00");
+                configBuilder.setSsidPattern(
+                        new PatternMatcher(ssidPrefix, PatternMatcher.PATTERN_PREFIX));
+                configBuilder.setBssidPattern(MacAddress.fromString(scanResult.BSSID), bssidMask);
+                break;
+            case NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID:
+                String ssid = UNAVAILABLE_SSID;
+                MacAddress bssid = MacAddress.createRandomUnicastAddress();
+                if (findNetworkInScanResultsResults(ssid, bssid.toString())) {
+                    Log.e(TAG, "The specifiers chosen match a network in scan results."
+                            + "Test will fail");
+                    return null;
+                }
+                configBuilder.setSsid(UNAVAILABLE_SSID);
+                configBuilder.setBssid(bssid);
+                break;
+            default:
+                throw new IllegalStateException("Unknown specifier type specifier");
+        }
+        return configBuilder.buildNetworkSpecifier();
+    }
+
+    private boolean startScanAndWaitForResults() throws InterruptedException {
+        IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        // Scan Results available broadcast receiver.
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (DBG) Log.v(TAG, "Broadcast onReceive " + intent);
+                if (!intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) return;
+                if (!intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)) return;
+                if (DBG) Log.v(TAG, "Scan results received");
+                countDownLatch.countDown();
+            }
+        };
+        // Register the receiver for scan results broadcast.
+        mContext.registerReceiver(mBroadcastReceiver, intentFilter);
+
+        // Start scan.
+        if (DBG) Log.v(TAG, "Starting scan");
+        mListener.onTestMsgReceived(mContext.getString(R.string.wifi_status_initiating_scan));
+        if (!mWifiManager.startScan()) {
+            Log.e(TAG, "Failed to start scan");
+            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
+            return false;
+        }
+        // Wait for scan results.
+        if (DBG) Log.v(TAG, "Wait for scan results");
+        if (!countDownLatch.await(SCAN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            Log.e(TAG, "No new scan results available");
+            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
+            return false;
+        }
+        return true;
+    }
+
+    // Helper to check if the scan result corresponds to an open network.
+    private static boolean isScanResultForOpenNetwork(@NonNull ScanResult scanResult) {
+        String capabilities = scanResult.capabilities;
+        return !capabilities.contains("PSK") && !capabilities.contains("EAP")
+                && !capabilities.contains("WEP") && !capabilities.contains("SAE")
+                && !capabilities.contains("SUITE-B-192") && !capabilities.contains("OWE");
+    }
+
+    private @Nullable ScanResult startScanAndFindAnyOpenNetworkInResults()
+            throws InterruptedException {
+        // Start scan and wait for new results.
+        if (!startScanAndWaitForResults()) {
+            return null;
+        }
+        // Filter results to find an open network.
+        List<ScanResult> scanResults = mWifiManager.getScanResults();
+        for (ScanResult scanResult : scanResults) {
+            if (!TextUtils.isEmpty(scanResult.SSID)
+                    && !TextUtils.isEmpty(scanResult.BSSID)
+                    && isScanResultForOpenNetwork(scanResult)) {
+                if (DBG) Log.v(TAG, "Found open network " + scanResult);
+                return scanResult;
+            }
+        }
+        Log.e(TAG, "No open networks found in scan results");
+        setFailureReason(mContext.getString(R.string.wifi_status_open_network_not_found));
+        return null;
+    }
+
+    private boolean findNetworkInScanResultsResults(@NonNull String ssid, @NonNull String bssid)
+            throws InterruptedException {
+        List<ScanResult> scanResults = mWifiManager.getScanResults();
+        for (ScanResult scanResult : scanResults) {
+            if (TextUtils.equals(scanResult.SSID, ssid)
+                    && TextUtils.equals(scanResult.BSSID, bssid)) {
+                if (DBG) Log.v(TAG, "Found network " + scanResult);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setFailureReason(String reason) {
+        synchronized (mLock) {
+            mFailureReason = reason;
+        }
+    }
+
+    @Override
+    protected boolean executeTest() throws InterruptedException {
+        // Step 1: Scan and find any open network around.
+        if (DBG) Log.v(TAG, "Scan and find an open network");
+        ScanResult openNetwork = startScanAndFindAnyOpenNetworkInResults();
+        if (openNetwork == null) return false;
+
+        // Step 2: Create a specifier for the chosen open network depending on the type of test.
+        NetworkSpecifier wns = createNetworkSpecifier(openNetwork);
+        if (wns == null) return false;
+
+        // Step 3: Create a network request with specifier.
+        mNetworkRequest = new NetworkRequest.Builder()
+                .addTransportType(TRANSPORT_WIFI)
+                .setNetworkSpecifier(wns)
+                .removeCapability(NET_CAPABILITY_INTERNET)
+                .build();
+
+        // Step 4: Send the network request
+        if (DBG) Log.v(TAG, "Request network using " + mNetworkRequest);
+        mNetworkCallback = new CallbackUtils.NetworkCallback(CALLBACK_TIMEOUT_MS);
+        mListener.onTestMsgReceived(
+                mContext.getString(R.string.wifi_status_initiating_network_request));
+        mConnectivityManager.requestNetwork(mNetworkRequest, mNetworkCallback,
+                NETWORK_REQUEST_TIMEOUT_MS);
+
+        // Step 5: Wait for the network available/unavailable callback.
+        if (mNetworkSpecifierType == NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID) {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_network_wait_for_unavailable));
+            if (DBG) Log.v(TAG, "Waiting for network unavailable callback");
+            boolean cbStatusForUnavailable = mNetworkCallback.waitForUnavailable();
+            if (!cbStatusForUnavailable) {
+                Log.e(TAG, "Failed to get network unavailable callback");
+                setFailureReason(mContext.getString(R.string.wifi_status_network_cb_timeout));
+                return false;
+            }
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_network_unavailable));
+            // All done!
+            return true;
+        }
+        mListener.onTestMsgReceived(
+                mContext.getString(R.string.wifi_status_network_wait_for_available));
+        if (DBG) Log.v(TAG, "Waiting for network available callback");
+        Pair<Boolean, Network> cbStatusForAvailable = mNetworkCallback.waitForAvailable();
+        if (!cbStatusForAvailable.first) {
+            Log.e(TAG, "Failed to get network available callback");
+            setFailureReason(mContext.getString(R.string.wifi_status_network_cb_timeout));
+            return false;
+        }
+        mListener.onTestMsgReceived(
+                mContext.getString(R.string.wifi_status_network_available));
+
+        mListener.onTestMsgReceived(
+                mContext.getString(R.string.wifi_status_network_wait_for_lost));
+        // Step 6: Ensure we don't disconnect from the network as long as the request is alive.
+        if (DBG) Log.v(TAG, "Ensuring network lost callback is not invoked");
+        boolean cbStatusForLost = mNetworkCallback.waitForLost();
+        if (cbStatusForLost) {
+            Log.e(TAG, "Disconnected from the network even though the request is active");
+            setFailureReason(mContext.getString(R.string.wifi_status_network_lost));
+            return false;
+        }
+        // All done!
+        return true;
+    }
+
+    @Override
+    protected String getFailureReason() {
+        synchronized (mLock) {
+            return mFailureReason;
+        }
+    }
+
+    @Override
+    protected void setUp() {
+        super.setUp();
+        mConnectivityManager = ConnectivityManager.from(mContext);
+    }
+
+    @Override
+    protected void tearDown() {
+        if (mBroadcastReceiver != null) {
+            mContext.unregisterReceiver(mBroadcastReceiver);
+        }
+        if (mNetworkCallback != null) {
+            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        }
+        super.tearDown();
+    }
+}

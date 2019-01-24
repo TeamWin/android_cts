@@ -112,11 +112,6 @@ public class MediaStore_Audio_Genres_MembersTest {
         } catch (SQLException e) {
             // expected
         }
-
-        // can not accept any other volume names
-        String volume = "fakeVolume";
-        assertNull(mContentResolver.query(Members.getContentUri(volume, 1), null, null, null,
-                null));
     }
 
     @Test

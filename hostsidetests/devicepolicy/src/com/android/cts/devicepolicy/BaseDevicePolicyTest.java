@@ -133,6 +133,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Whether file-based encryption (FBE) is supported. */
     protected boolean mSupportsFbe;
 
+    /** Whether the device has a lock screen.*/
+    protected boolean mHasSecureLockScreen;
+
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
@@ -155,6 +158,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(mCtsBuild);
+
+        mHasSecureLockScreen = hasDeviceFeature("android.software.secure_lock_screen");
 
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(

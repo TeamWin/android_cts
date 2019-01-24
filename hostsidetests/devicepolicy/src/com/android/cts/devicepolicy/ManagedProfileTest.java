@@ -109,8 +109,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         super.setUp();
 
         // We need multi user to be supported in order to create a profile of the user owner.
-        mHasFeature = mHasFeature && hasDeviceFeature(
-                "android.software.managed_users");
+        mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
         mHasNfcFeature = hasDeviceFeature("android.hardware.nfc");
 
         if (mHasFeature) {
@@ -149,6 +148,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(NOTIFICATION_PKG);
         }
         super.tearDown();
+    }
+
+    public void testManagedProfilesSupportedWithLockScreenOnly() throws Exception {
+        if (mHasFeature) {
+            // Managed profiles should be only supported if the device supports the secure lock
+            // screen feature.
+            assertTrue(mHasSecureLockScreen);
+        }
     }
 
     public void testManagedProfileSetup() throws Exception {
@@ -235,7 +242,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testLockNowWithKeyEviction() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
         changeUserCredential("1234", null, mProfileUserId);
@@ -1225,7 +1232,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testTrustAgentInfo() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // Set and get trust agent config using child dpm instance.
@@ -1300,7 +1307,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
 
@@ -1321,7 +1328,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
      * the device lock.
      */
     public void testResetPasswordTokenUsableAfterClearingLock() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
         final String devicePassword = "1234";
@@ -1348,7 +1355,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testIsUsingUnifiedPassword() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
 
@@ -1361,7 +1368,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testUnlockWorkProfile_deviceWidePassword() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
         String password = "0000";
@@ -1383,7 +1390,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testRebootDevice_unifiedPassword() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // Waiting before rebooting prevents flakiness.
@@ -1404,7 +1411,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testRebootDevice_separatePasswords() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // Waiting before rebooting prevents flakiness.
@@ -1559,7 +1566,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testCreateSeparateChallengeChangedLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

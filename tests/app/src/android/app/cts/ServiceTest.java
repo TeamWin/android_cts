@@ -79,6 +79,7 @@ public class ServiceTest extends ActivityTestsBase {
     private static final String EXTERNAL_SERVICE_PACKAGE = "com.android.app2";
     private static final String EXTERNAL_SERVICE_COMPONENT =
             EXTERNAL_SERVICE_PACKAGE + "/android.app.stubs.LocalService";
+    private static final String APP_ZYGOTE_PROCESS_NAME = "android.app.stubs_zygote";
     private int mExpectedServiceState;
     private Context mContext;
     private Intent mLocalService;
@@ -209,6 +210,7 @@ public class ServiceTest extends ActivityTestsBase {
         private IBinder mService;
         private int mUid;
         private int mPid;
+        private int mPpid;
 
         public IsolatedConnection() {
             mUid = mPid = -1;
@@ -245,6 +247,25 @@ public class ServiceTest extends ActivityTestsBase {
 
         public int getPid() {
             return mPid;
+        }
+
+        public int getPpid() {
+            return mPpid;
+        }
+
+        public boolean zygotePreloadCalled() {
+            Parcel data = Parcel.obtain();
+            Parcel reply = Parcel.obtain();
+            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
+            try {
+                mService.transact(LocalService.GET_ZYGOTE_PRELOAD_CALLED, data, reply, 0);
+            } catch (RemoteException e) {
+                finishBad("DeadObjectException when sending reporting object");
+            }
+            boolean value = reply.readBoolean();
+            reply.recycle();
+            data.recycle();
+            return value;
         }
 
         public void setValue(int value) {
@@ -289,6 +310,21 @@ public class ServiceTest extends ActivityTestsBase {
             return value;
         }
 
+        public int getPpidIpc() {
+            Parcel data = Parcel.obtain();
+            Parcel reply = Parcel.obtain();
+            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
+            try {
+                mService.transact(LocalService.GET_PPID_CODE, data, reply, 0);
+            } catch (RemoteException e) {
+                finishBad("DeadObjectException when sending reporting object");
+            }
+            int value = reply.readInt();
+            reply.recycle();
+            data.recycle();
+            return value;
+        }
+
         public int getUidIpc() {
             Parcel data = Parcel.obtain();
             Parcel reply = Parcel.obtain();
@@ -310,6 +346,7 @@ public class ServiceTest extends ActivityTestsBase {
                 mService = service;
                 mUid = getUidIpc();
                 mPid = getPidIpc();
+                mPpid = getPpidIpc();
                 notifyAll();
             }
         }
@@ -1342,6 +1379,92 @@ public class ServiceTest extends ActivityTestsBase {
                 return;
             }
         }
+    }
+
+    @MediumTest
+    public void testAppZygotePreload() throws Exception {
+        IsolatedConnection conn = new IsolatedConnection();
+        try {
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn, Context.BIND_AUTO_CREATE, "1");
+
+            conn.waitForService(DELAY);
+
+            // Verify application preload was done
+            assertTrue(conn.zygotePreloadCalled());
+        } finally {
+            if (conn != null) {
+                mContext.unbindService(conn);
+            }
+        }
+    }
+
+    @MediumTest
+    public void testAppZygoteServices() throws Exception {
+        IsolatedConnection conn1a = null;
+        IsolatedConnection conn1b = null;
+        IsolatedConnection conn2 = null;
+        int appZygotePid;
+        try {
+            conn1a = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn1a, Context.BIND_AUTO_CREATE, "1");
+            conn1b = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn1b, Context.BIND_AUTO_CREATE, "1");
+            conn2 = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn2, Context.BIND_AUTO_CREATE, "2");
+
+            conn1a.waitForService(DELAY);
+            conn1b.waitForService(DELAY);
+            conn2.waitForService(DELAY);
+
+            // Get PPID of each service, and verify they're identical
+            int ppid1a = conn1a.getPpid();
+            int ppid1b = conn1b.getPpid();
+            int ppid2 = conn2.getPpid();
+
+            assertEquals(ppid1a, ppid1b);
+            assertEquals(ppid1b, ppid2);
+            // Find the app zygote process hosting these
+            String result = SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "ps -p " + Integer.toString(ppid1a) + " -o NAME=");
+            result = result.replaceAll("\\s+", "");
+            assertEquals(result, APP_ZYGOTE_PROCESS_NAME);
+            appZygotePid = ppid1a;
+        } finally {
+            if (conn2 != null) {
+                mContext.unbindService(conn2);
+            }
+            if (conn1b != null) {
+                mContext.unbindService(conn1b);
+            }
+            if (conn1a != null) {
+                mContext.unbindService(conn1a);
+            }
+        }
+        // Sleep for 2 seconds and bind a service again, see it uses the same Zygote
+        try {
+            conn1a = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn1a, Context.BIND_AUTO_CREATE, "1");
+
+            conn1a.waitForService(DELAY);
+
+            int ppid1a = conn1a.getPpid();
+            assertEquals(appZygotePid, ppid1a);
+        } finally {
+            if (conn1a != null) {
+                mContext.unbindService(conn1a);
+            }
+        }
+        // Sleep for 10 seconds, verify the app_zygote is gone
+        Thread.sleep(10000);
+        String result = SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+            "ps -p " + Integer.toString(appZygotePid) + " -o NAME=");
+        result = result.replaceAll("\\s+", "");
+        assertEquals("", result);
     }
 
     /**

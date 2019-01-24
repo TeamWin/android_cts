@@ -25,6 +25,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.PersistableBundle;
@@ -73,12 +74,15 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
     protected Context mContext;
     protected ComponentName mIncomingComponentName;
     protected DevicePolicyManager mDevicePolicyManager;
+    protected boolean mHasSecureLockScreen;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
         mIncomingComponentName = new ComponentName(mContext, BasicAdminReceiver.class.getName());
+        mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SECURE_LOCK_SCREEN);
     }
 
     @Test

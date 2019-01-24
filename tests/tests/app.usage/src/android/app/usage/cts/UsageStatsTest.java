@@ -54,11 +54,13 @@ import android.view.KeyEvent;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,6 +90,15 @@ public class UsageStatsTest {
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
 
+    private static final String USAGE_SOURCE_GET_SHELL_COMMAND = "settings get global " +
+            Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE;
+
+    private static final String USAGE_SOURCE_SET_SHELL_COMMAND = "settings put global " +
+            Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE + " {0}";
+
+    private static final String USAGE_SOURCE_DELETE_SHELL_COMMAND = "settings delete global " +
+            Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE;
+
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
     private static final long DAY = TimeUnit.DAYS.toMillis(1);
@@ -101,6 +112,7 @@ public class UsageStatsTest {
     private UiDevice mUiDevice;
     private UsageStatsManager mUsageStatsManager;
     private String mTargetPackage;
+    private String mCachedUsageSourceSetting;
 
     @Before
     public void setUp() throws Exception {
@@ -110,6 +122,16 @@ public class UsageStatsTest {
         mTargetPackage = InstrumentationRegistry.getContext().getPackageName();
         assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
         setAppOpsMode("allow");
+        mCachedUsageSourceSetting = getUsageSourceSetting();
+    }
+
+
+    @After
+    public void cleanUp() throws Exception {
+        if (!mCachedUsageSourceSetting.equals(getUsageSourceSetting())) {
+            setUsageSourceSetting(mCachedUsageSourceSetting);
+            mUsageStatsManager.forceUsageSourceSettingRead();
+        }
     }
 
     private static void assertLessThan(long left, long right) {
@@ -124,6 +146,22 @@ public class UsageStatsTest {
         final String command = MessageFormat.format(APPOPS_SET_SHELL_COMMAND,
                 InstrumentationRegistry.getContext().getPackageName(), mode);
         mUiDevice.executeShellCommand(command);
+    }
+
+
+    private String getUsageSourceSetting() throws Exception {
+        return mUiDevice.executeShellCommand(USAGE_SOURCE_GET_SHELL_COMMAND);
+    }
+
+    private void setUsageSourceSetting(String usageSource) throws Exception {
+        if (usageSource.equals("null")) {
+            mUiDevice.executeShellCommand(USAGE_SOURCE_DELETE_SHELL_COMMAND);
+        } else {
+            final String command = MessageFormat.format(USAGE_SOURCE_SET_SHELL_COMMAND,
+                                                        usageSource);
+            mUiDevice.executeShellCommand(command);
+        }
+        mUsageStatsManager.forceUsageSourceSettingRead();
     }
 
     private void launchSubActivity(Class<? extends Activity> clazz) {
@@ -927,11 +965,99 @@ public class UsageStatsTest {
         assertLessThan(startIdx, stopIdx);
     }
 
+    @AppModeFull // No usage events access in instant apps
+    @Test
+    public void testTaskRootEventField() throws Exception {
+        final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
+                .getContext().getSystemService(KeyguardManager.class);
+        mUiDevice.wakeUp();
+        // Also want to start out with the keyguard dismissed.
+        if (kmgr.isKeyguardLocked()) {
+            final long startTime = getEvents(KEYGUARD_EVENTS, 0, null) + 1;
+            mUiDevice.executeShellCommand("wm dismiss-keyguard");
+            ArrayList<Event> events = waitForEventCount(KEYGUARD_EVENTS, startTime, 1);
+            assertEquals(Event.KEYGUARD_HIDDEN, events.get(0).getEventType());
+            SystemClock.sleep(500);
+        }
+
+        final long startTime = System.currentTimeMillis();
+        launchSubActivity(TaskRootActivity.class);
+        final long endTime = System.currentTimeMillis();
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            if (TaskRootActivity.TEST_APP_PKG.equals(event.getPackageName())
+                    && TaskRootActivity.TEST_APP_CLASS.equals(event.getClassName())) {
+                assertEquals(mTargetPackage, event.getTaskRootPackageName());
+                assertEquals(TaskRootActivity.class.getCanonicalName(),
+                        event.getTaskRootClassName());
+                return;
+            }
+        }
+        fail("Did not find nested activity name in usage events");
+    }
+
+    @Test
+    public void testUsageSourceAttribution() throws Exception {
+        final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
+                .getContext().getSystemService(KeyguardManager.class);
+        mUiDevice.wakeUp();
+        // Also want to start out with the keyguard dismissed.
+        if (kmgr.isKeyguardLocked()) {
+            final long startTime = getEvents(KEYGUARD_EVENTS, 0, null) + 1;
+            mUiDevice.executeShellCommand("wm dismiss-keyguard");
+            ArrayList<Event> events = waitForEventCount(KEYGUARD_EVENTS, startTime, 1);
+            assertEquals(Event.KEYGUARD_HIDDEN, events.get(0).getEventType());
+            SystemClock.sleep(500);
+        }
+
+        setUsageSourceSetting(Integer.toString(mUsageStatsManager.USAGE_SOURCE_CURRENT_ACTIVITY));
+        launchSubActivity(TaskRootActivity.class);
+        // Usage should be attributed to the test app package
+        assertAppOrTokenUsed(TaskRootActivity.TEST_APP_PKG, true);
+
+        mUiDevice.pressHome();
+
+        setUsageSourceSetting(Integer.toString(
+                mUsageStatsManager.USAGE_SOURCE_TASK_ROOT_ACTIVITY));
+        launchSubActivity(TaskRootActivity.class);
+        // Usage should be attributed to this package
+        assertAppOrTokenUsed(mTargetPackage, true);
+    }
+
     private void pressWakeUp() {
         mUiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP);
     }
 
     private void pressSleep() {
         mUiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP);
+    }
+
+    /**
+     * Assert on an app or token's usage state.
+     * @param entity name of the app or token
+     * @param expected expected usage state, true for in use, false for not in use
+     */
+    private void assertAppOrTokenUsed(String entity, boolean expected) throws IOException {
+        final String activeUsages =
+                mUiDevice.executeShellCommand("dumpsys usagestats apptimelimit actives");
+        final String[] actives = activeUsages.split("\n");
+        boolean found = false;
+
+        for (String active : actives) {
+            if (active.equals(entity)) {
+                found = true;
+                break;
+            }
+        }
+        if (expected) {
+            assertTrue(entity + " not found in list of active activities and tokens\n"
+                    + activeUsages, found);
+        } else {
+            assertFalse(entity + " found in list of active activities and tokens\n"
+                    + activeUsages, found);
+        }
     }
 }

@@ -26,7 +26,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.annotation_annotation \
     compatibility-device-util \
     ctstestrunner \
-    truth-prebuilt
+    truth-prebuilt \
+    testng # TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

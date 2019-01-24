@@ -64,7 +64,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     /** Test for resetPassword for all devices. */
     public void testResetPassword() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
@@ -72,7 +72,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     /** Additional test for resetPassword for FBE-enabled devices. */
     public void testResetPasswordFbe() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
 
