@@ -891,6 +891,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testCoredomainViolators() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
         assertSepolicyTests("CoredomainViolations", "/treble_sepolicy_tests");
     }
 
