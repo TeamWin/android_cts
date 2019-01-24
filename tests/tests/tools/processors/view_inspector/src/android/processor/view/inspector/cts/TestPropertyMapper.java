@@ -16,8 +16,8 @@
 
 package android.processor.view.inspector.cts;
 
-import android.util.SparseArray;
 import android.view.inspector.InspectableProperty.ValueType;
+import android.view.inspector.IntEnumMapping;
 import android.view.inspector.IntFlagMapping;
 import android.view.inspector.PropertyMapper;
 
@@ -95,7 +95,7 @@ class TestPropertyMapper implements PropertyMapper {
     }
 
     @Override
-    public int mapIntEnum(String name, int attributeId, SparseArray<String> intEnumMapping) {
+    public int mapIntEnum(String name, int attributeId, IntEnumMapping intEnumMapping) {
         return map(name, attributeId, ValueType.INT_ENUM);
     }
 

@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Tests for {@link IntFlagMapping}
+ * Tests for {@link IntFlagMapping}.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -84,6 +84,11 @@ public final class IntFlagMappingTest {
         assertEquals(setOf("ONE", "FOUR"), mapping.get(5));
         assertEquals(setOf("TWO", "FOUR"), mapping.get(6));
         assertEquals(setOf("FOUR"), mapping.get(7));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullName() {
+        new IntFlagMapping.Builder().addFlag(null, 0);
     }
 
     private static Set<String> setOf(String... values) {
