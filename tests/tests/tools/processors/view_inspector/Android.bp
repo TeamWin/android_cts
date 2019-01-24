@@ -18,7 +18,7 @@ android_test {
 
     srcs: ["src/**/*.java"],
 
-    annotation_processors: ["view-inspector-annotation-processor"],
+    plugins: ["view-inspector-annotation-processor"],
 
     static_libs: [
         "android-support-test",
