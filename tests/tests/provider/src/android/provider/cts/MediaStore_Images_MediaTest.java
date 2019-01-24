@@ -20,7 +20,6 @@ import static android.provider.cts.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -64,13 +63,6 @@ import java.io.OutputStream;
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
 
-    private static final String TEST_TITLE1 = "test title1";
-    private static final String TEST_DESCRIPTION1 = "test description1";
-    private static final String TEST_TITLE2 = "test title2";
-    private static final String TEST_DESCRIPTION2 = "test description2";
-    private static final String TEST_TITLE3 = "test title3";
-    private static final String TEST_DESCRIPTION3 = "test description3";
-    
     private Context mContext;
     private ContentResolver mContentResolver;
 
@@ -97,6 +89,14 @@ public class MediaStore_Images_MediaTest {
     public void testInsertImageWithImagePath() throws Exception {
         // TODO: expand test to verify paths from secondary storage devices
         if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
+
+        final long unique1 = System.nanoTime();
+        final String TEST_TITLE1 = "Title " + unique1;
+        final String TEST_DESCRIPTION1 = "Description " + unique1;
+
+        final long unique2 = System.nanoTime();
+        final String TEST_TITLE2 = "Title " + unique2;
+        final String TEST_DESCRIPTION2 = "Description " + unique2;
 
         Cursor c = Media.query(mContentResolver, mExternalImages, null, null,
                 "_id ASC");
@@ -174,6 +174,10 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testInsertImageWithBitmap() throws Exception {
+        final long unique3 = System.nanoTime();
+        final String TEST_TITLE3 = "Title " + unique3;
+        final String TEST_DESCRIPTION3 = "Description " + unique3;
+
         // insert the image by bitmap
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
         String stringUrl = null;

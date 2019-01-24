@@ -181,7 +181,7 @@ public class MediaStore_FilesTest {
         final Uri internalFiles = MediaStore.Files.getContentUri(MediaStore.VOLUME_INTERNAL);
 
         for (String valid : new String[] {
-                "/system/media/ringtone.ogg",
+                "/system/media/" + System.nanoTime() + ".ogg",
         }) {
             final ContentValues values = new ContentValues();
             values.put(MediaColumns.DATA, valid);
@@ -192,10 +192,11 @@ public class MediaStore_FilesTest {
         }
 
         for (String invalid : new String[] {
-                "/data/media/foo.jpg",
+                "/data/media/" + System.nanoTime() + ".jpg",
                 "/data/system/appops.xml",
                 "/data/data/com.android.providers.media/databases/internal.db",
-                new File(Environment.getExternalStorageDirectory(), "foo.jpg").getAbsolutePath(),
+                new File(Environment.getExternalStorageDirectory(), System.nanoTime() + ".jpg")
+                        .getAbsolutePath(),
         }) {
             final ContentValues values = new ContentValues();
             values.put(MediaColumns.DATA, invalid);
@@ -215,8 +216,8 @@ public class MediaStore_FilesTest {
                 ContentUris.parseId(ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages)));
 
         for (String valid : new String[] {
-                path + "/foo.jpg",
-                path + "/DCIM/foo.jpg",
+                path + "/" + System.nanoTime() + ".jpg",
+                path + "/DCIM/" + System.nanoTime() + ".jpg",
         }) {
             final ContentValues values = new ContentValues();
             values.put(MediaColumns.DATA, valid);
@@ -230,7 +231,7 @@ public class MediaStore_FilesTest {
         }
 
         for (String invalid : new String[] {
-                "/data/media/foo.jpg",
+                "/data/media/" + System.nanoTime() + ".jpg",
                 "/data/system/appops.xml",
                 "/data/data/com.android.providers.media/databases/internal.db",
                 path + "/../../../../../data/system/appops.xml",
