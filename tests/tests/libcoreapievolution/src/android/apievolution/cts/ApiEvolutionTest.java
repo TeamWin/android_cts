@@ -73,33 +73,49 @@ public class ApiEvolutionTest {
                 ConcurrentHashMap.KeySetView.class, true);
     }
 
+    @Test public void testCovariantReturnTypeMethods_annotation_byteBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(ByteBuffer.class);
+    }
+
+    @Test public void testCovariantReturnTypeMethods_annotation_charBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(CharBuffer.class);
+    }
+
+    @Test public void testCovariantReturnTypeMethods_annotation_doubleBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(DoubleBuffer.class);
+    }
+
+    @Test public void testCovariantReturnTypeMethods_annotation_floatBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(FloatBuffer.class);
+    }
+
+    @Test public void testCovariantReturnTypeMethods_annotation_intBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(IntBuffer.class);
+    }
+
+    @Test public void testCovariantReturnTypeMethods_annotation_longBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(LongBuffer.class);
+    }
+
+    @Test public void testCovariantReturnTypeMethods_annotation_shortBuffer() throws Exception {
+        assertSyntheticBufferMethodOverloadsExists(ShortBuffer.class);
+    }
+
     /**
-     * Tests for the presence of synthetic methods overloads for methods that return {@code this} on
+     * Asserts the presence of synthetic methods overloads for methods that return {@code this} on
      * {@link Buffer} subclasses, and which are annotated with {@code @CovariantReturnType}.
      * In OpenJDK 9 the return types were changed from {@link Buffer} to be the subclass's type
      * instead. http://b/71597787
      */
-    @Test
-    public void testCovariantReturnTypeMethods_javaNioBuffer() throws Exception {
-        List<Class<? extends Buffer>> classes = Arrays.asList(
-                ByteBuffer.class,
-                CharBuffer.class,
-                DoubleBuffer.class,
-                FloatBuffer.class,
-                IntBuffer.class,
-                LongBuffer.class,
-                ShortBuffer.class
-        );
-
-        for (Class<? extends Buffer> c : classes) {
-            assertSyntheticBufferMethodOverloadExists(c, "position", new Class[] { Integer.TYPE });
-            assertSyntheticBufferMethodOverloadExists(c, "limit", new Class[] { Integer.TYPE });
-            assertSyntheticBufferMethodOverloadExists(c, "mark", null);
-            assertSyntheticBufferMethodOverloadExists(c, "reset", null);
-            assertSyntheticBufferMethodOverloadExists(c, "clear", null);
-            assertSyntheticBufferMethodOverloadExists(c, "flip", null);
-            assertSyntheticBufferMethodOverloadExists(c, "rewind", null);
-        }
+    private static void assertSyntheticBufferMethodOverloadsExists(Class<? extends Buffer> c)
+            throws Exception {
+        assertSyntheticBufferMethodOverloadExists(c, "position", new Class[] { Integer.TYPE });
+        assertSyntheticBufferMethodOverloadExists(c, "limit", new Class[] { Integer.TYPE });
+        assertSyntheticBufferMethodOverloadExists(c, "mark", null);
+        assertSyntheticBufferMethodOverloadExists(c, "reset", null);
+        assertSyntheticBufferMethodOverloadExists(c, "clear", null);
+        assertSyntheticBufferMethodOverloadExists(c, "flip", null);
+        assertSyntheticBufferMethodOverloadExists(c, "rewind", null);
     }
 
     private static void assertSyntheticBufferMethodOverloadExists(
