@@ -20,6 +20,8 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -66,7 +68,7 @@ import static org.mockito.Mockito.*;
  * Tests exercising logical camera setup, configuration, and usage.
  */
 public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
-    private static final String TAG = "LogicalCameraTest";
+    private static final String TAG = "LogicalCameraDeviceTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
     private static final int CONFIGURE_TIMEOUT = 5000; //ms
@@ -500,6 +502,237 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
                 if (mSession != null) {
                     mSession.close();
+                }
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test for physical camera switch based on focal length (optical zoom) and crop region
+     * (digital zoom).
+     *
+     * - Focal length and crop region change must be synchronized to not have sudden jump in field
+     *   of view.
+     * - Main physical id must be valid.
+     */
+    @Test
+    public void testLogicalCameraZoomSwitch() throws Exception {
+
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+
+                if (!staticInfo.isLogicalMultiCamera()) {
+                    Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
+                    continue;
+                }
+
+                openDevice(id);
+                Size yuvSize = mOrderedPreviewSizes.get(0);
+                // Create a YUV image reader.
+                ImageReader imageReader = CameraTestUtils.makeImageReader(yuvSize,
+                        ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
+                        new ImageDropperListener(), mHandler);
+
+                List<OutputConfiguration> outputConfigs = new ArrayList<>();
+                OutputConfiguration config = new OutputConfiguration(imageReader.getSurface());
+                outputConfigs.add(config);
+
+                mSessionListener = new BlockingSessionCallback();
+                mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
+                        mSessionListener, mHandler);
+
+                final float FOV_MARGIN = 0.01f;
+                final float[] focalLengths = staticInfo.getAvailableFocalLengthsChecked();
+                final int zoomSteps = focalLengths.length;
+                final float maxZoom = staticInfo.getAvailableMaxDigitalZoomChecked();
+                final Rect activeArraySize = staticInfo.getActiveArraySizeChecked();
+                final Set<String> physicalIds =
+                        staticInfo.getCharacteristics().getPhysicalCameraIds();
+
+                CaptureRequest.Builder requestBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                requestBuilder.addTarget(imageReader.getSurface());
+
+                // For each adjacent focal lengths, set different crop region such that the
+                // resulting angle of view is the same. This is to make sure that no sudden FOV
+                // (field of view) jump when switching between different focal lengths.
+                for (int i = 0; i < zoomSteps-1; i++) {
+                    // Start with larger focal length + full active array crop region.
+                    requestBuilder.set(CaptureRequest.LENS_FOCAL_LENGTH, focalLengths[i+1]);
+                    requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, activeArraySize);
+                    SimpleCaptureCallback simpleResultListener = new SimpleCaptureCallback();
+                    mSession.setRepeatingRequest(requestBuilder.build(), simpleResultListener,
+                            mHandler);
+                    waitForAeStable(simpleResultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+
+                    // This is an approximate, assuming that subject distance >> focal length.
+                    float zoomFactor = focalLengths[i+1]/focalLengths[i];
+                    PointF zoomCenter = new PointF(0.5f, 0.5f);
+                    Rect requestCropRegion = getCropRegionForZoom(zoomFactor,
+                            zoomCenter, maxZoom, activeArraySize);
+                    if (VERBOSE) {
+                        Log.v(TAG, "Switching from crop region " + activeArraySize + ", focal " +
+                            "length " + focalLengths[i+1] + " to crop region " + requestCropRegion +
+                            ", focal length " + focalLengths[i]);
+                    }
+
+                    // Create a burst capture to switch between different focal_length/crop_region
+                    // combination with same field of view.
+                    List<CaptureRequest> requests = new ArrayList<CaptureRequest>();
+                    SimpleCaptureCallback listener = new SimpleCaptureCallback();
+
+                    requestBuilder.set(CaptureRequest.LENS_FOCAL_LENGTH, focalLengths[i]);
+                    requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, requestCropRegion);
+                    requests.add(requestBuilder.build());
+                    requests.add(requestBuilder.build());
+
+                    requestBuilder.set(CaptureRequest.LENS_FOCAL_LENGTH, focalLengths[i+1]);
+                    requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, activeArraySize);
+                    requests.add(requestBuilder.build());
+                    requests.add(requestBuilder.build());
+
+                    requestBuilder.set(CaptureRequest.LENS_FOCAL_LENGTH, focalLengths[i]);
+                    requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, requestCropRegion);
+                    requests.add(requestBuilder.build());
+                    requests.add(requestBuilder.build());
+
+                    mSession.captureBurst(requests, listener, mHandler);
+                    TotalCaptureResult[] results = listener.getTotalCaptureResultsForRequests(
+                            requests, WAIT_FOR_RESULT_TIMEOUT_MS);
+
+                    // Verify result metadata to produce similar field of view.
+                    float fov = activeArraySize.width()/(2*focalLengths[i+1]);
+                    for (int j = 0; j < results.length; j++) {
+                        TotalCaptureResult result = results[j];
+                        Float resultFocalLength = result.get(CaptureResult.LENS_FOCAL_LENGTH);
+                        Rect resultCropRegion = result.get(CaptureResult.SCALER_CROP_REGION);
+
+                        if (VERBOSE) {
+                            Log.v(TAG, "Result crop region " + resultCropRegion + ", focal length "
+                                    + resultFocalLength + " for result " + j);
+                        }
+                        float newFov = resultCropRegion.width()/(2*resultFocalLength);
+
+                        mCollector.expectTrue("Field of view must be consistent with focal " +
+                                "length and crop region change cancelling out each other.",
+                                Math.abs(newFov - fov)/fov < FOV_MARGIN);
+
+                        if (staticInfo.isActivePhysicalCameraIdSupported()) {
+                            String activePhysicalId = result.get(
+                                    CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                            assertTrue(physicalIds.contains(activePhysicalId));
+
+                            StaticMetadata physicalCameraStaticInfo =
+                                    mAllStaticInfo.get(activePhysicalId);
+                            float[] physicalCameraFocalLengths =
+                                    physicalCameraStaticInfo.getAvailableFocalLengthsChecked();
+                            mCollector.expectTrue("Current focal length " + resultFocalLength
+                                    + " must be supported by active physical camera "
+                                    + activePhysicalId, Arrays.asList(CameraTestUtils.toObject(
+                                    physicalCameraFocalLengths)).contains(resultFocalLength));
+                        }
+                    }
+                }
+
+                if (mSession != null) {
+                    mSession.close();
+                }
+
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test that for logical multi-camera, the activePhysicalId is valid, and is the same
+     * for all capture templates.
+     */
+    @Test
+    public void testActivePhysicalId() throws Exception {
+        int[] sTemplates = new int[] {
+            CameraDevice.TEMPLATE_PREVIEW,
+            CameraDevice.TEMPLATE_RECORD,
+            CameraDevice.TEMPLATE_STILL_CAPTURE,
+            CameraDevice.TEMPLATE_VIDEO_SNAPSHOT,
+            CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG,
+            CameraDevice.TEMPLATE_MANUAL,
+        };
+
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+
+                if (!staticInfo.isLogicalMultiCamera()) {
+                    Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
+                    continue;
+                }
+
+                if (!staticInfo.isActivePhysicalCameraIdSupported()) {
+                    continue;
+                }
+
+                final Set<String> physicalIds =
+                        staticInfo.getCharacteristics().getPhysicalCameraIds();
+                openDevice(id);
+                Size previewSz =
+                        getMaxPreviewSize(mCamera.getId(), mCameraManager,
+                        getPreviewSizeBound(mWindowManager, PREVIEW_SIZE_BOUND));
+
+                String storedActiveId = null;
+                for (int template : sTemplates) {
+                    try {
+                        CaptureRequest.Builder requestBuilder =
+                                mCamera.createCaptureRequest(template);
+                        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+                        startPreview(requestBuilder, previewSz, listener);
+                        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+
+                        CaptureResult result = listener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+                        String activePhysicalId = result.get(
+                                CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+
+                        assertNotNull("activePhysicalId must not be null", activePhysicalId);
+                        if (storedActiveId == null) {
+                            storedActiveId = activePhysicalId;
+                            assertTrue(
+                                  "Camera device reported invalid activePhysicalId: " +
+                                  activePhysicalId, physicalIds.contains(activePhysicalId));
+                        } else {
+                            assertTrue(
+                                  "Camera device reported different activePhysicalId " +
+                                  activePhysicalId + " vs " + storedActiveId +
+                                  " for different capture templates",
+                                  storedActiveId.equals(activePhysicalId));
+                        }
+                    } catch (IllegalArgumentException e) {
+                        if (template == CameraDevice.TEMPLATE_MANUAL &&
+                                !staticInfo.isCapabilitySupported(CameraCharacteristics.
+                                REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                            // OK
+                        } else if (template == CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG &&
+                                !staticInfo.isCapabilitySupported(CameraCharacteristics.
+                                REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING)) {
+                            // OK.
+                        } else {
+                            throw e; // rethrow
+                        }
+                    }
                 }
             } finally {
                 closeDevice();

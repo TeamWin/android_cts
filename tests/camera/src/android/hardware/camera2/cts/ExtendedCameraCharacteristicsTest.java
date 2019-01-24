@@ -1968,6 +1968,19 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                             "timestamp source", timestampSource, timestampSourcePhysical);
                 }
             }
+
+            // Verify that if multiple focal lengths or apertures are supported, they are in
+            // ascending order.
+            float[] focalLengths = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            for (int i = 0; i < focalLengths.length-1; i++) {
+                mCollector.expectTrue("Camera's available focal lengths must be ascending!",
+                        focalLengths[i] < focalLengths[i+1]);
+            }
+            float[] apertures = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES);
+            for (int i = 0; i < apertures.length-1; i++) {
+                mCollector.expectTrue("Camera's available apertures must be ascending!",
+                        apertures[i] < apertures[i+1]);
+            }
             counter++;
         }
     }

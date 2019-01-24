@@ -555,6 +555,12 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         // Only present in reprocessing capture result.
         waiverKeys.add(CaptureResult.REPROCESS_EFFECTIVE_EXPOSURE_FACTOR);
 
+        // LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID not required if key is not supported.
+        if (!staticInfo.isLogicalMultiCamera() ||
+                !staticInfo.isActivePhysicalCameraIdSupported()) {
+            waiverKeys.add(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+        }
+
         //Keys not required if RAW is not supported
         if (!staticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
@@ -968,6 +974,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.TONEMAP_PRESET_CURVE);
         resultKeys.add(CaptureResult.BLACK_LEVEL_LOCK);
         resultKeys.add(CaptureResult.REPROCESS_EFFECTIVE_EXPOSURE_FACTOR);
+        resultKeys.add(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
         resultKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
 
         return resultKeys;
