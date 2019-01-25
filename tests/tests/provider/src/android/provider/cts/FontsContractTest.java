@@ -40,8 +40,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.android.internal.annotations.GuardedBy;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -99,13 +97,13 @@ public class FontsContractTest {
 
     private static class TestCallback extends FontsContract.FontRequestCallback {
         private final Object mLock = new Object();
-        @GuardedBy("mLock")
+        // @GuardedBy("mLock")
         private Typeface mTypeface;
-        @GuardedBy("mLock")
+        // @GuardedBy("mLock")
         private int mFailedReason;
-        @GuardedBy("mLock")
+        // @GuardedBy("mLock")
         private int mSuccessCallCount;
-        @GuardedBy("mLock")
+        // @GuardedBy("mLock")
         private int mFailedCallCount;
 
         public void onTypefaceRetrieved(Typeface typeface) {

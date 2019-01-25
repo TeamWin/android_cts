@@ -67,7 +67,6 @@ public class MediaStore_Audio_Playlists_MembersTest {
             Members.DISPLAY_NAME,
             Members.DURATION,
             Members.IS_ALARM,
-            Members.IS_DRM,
             Members.IS_MUSIC,
             Members.IS_NOTIFICATION,
             Members.IS_RINGTONE,
@@ -97,7 +96,6 @@ public class MediaStore_Audio_Playlists_MembersTest {
             Members.DISPLAY_NAME,
             Members.DURATION,
             Members.IS_ALARM,
-            Members.IS_DRM,
             Members.IS_MUSIC,
             Members.IS_NOTIFICATION,
             Members.IS_RINGTONE,
@@ -253,7 +251,6 @@ public class MediaStore_Audio_Playlists_MembersTest {
             assertEquals(expected1, c.getString(c.getColumnIndex(Members.DATA)));
             assertTrue(c.getLong(c.getColumnIndex(Members.DATE_ADDED)) > 0);
             assertEquals(Audio1.DATE_MODIFIED, c.getLong(c.getColumnIndex(Members.DATE_MODIFIED)));
-            assertEquals(Audio1.IS_DRM, c.getInt(c.getColumnIndex(Members.IS_DRM)));
             assertEquals(Audio1.DISPLAY_NAME, c.getString(c.getColumnIndex(Members.DISPLAY_NAME)));
             assertEquals(Audio1.MIME_TYPE, c.getString(c.getColumnIndex(Members.MIME_TYPE)));
             assertEquals(Audio1.SIZE, c.getInt(c.getColumnIndex(Members.SIZE)));
@@ -299,7 +296,6 @@ public class MediaStore_Audio_Playlists_MembersTest {
             assertEquals(expected2, c.getString(c.getColumnIndex(Members.DATA)));
             assertTrue(c.getLong(c.getColumnIndex(Members.DATE_ADDED)) > 0);
             assertEquals(Audio2.DATE_MODIFIED, c.getLong(c.getColumnIndex(Members.DATE_MODIFIED)));
-            assertEquals(Audio2.IS_DRM, c.getInt(c.getColumnIndex(Members.IS_DRM)));
             assertEquals(Audio2.DISPLAY_NAME, c.getString(c.getColumnIndex(Members.DISPLAY_NAME)));
             assertEquals(Audio2.MIME_TYPE, c.getString(c.getColumnIndex(Members.MIME_TYPE)));
             assertEquals(Audio2.SIZE, c.getInt(c.getColumnIndex(Members.SIZE)));

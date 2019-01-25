@@ -188,7 +188,7 @@ public class MediaStore_Video_ThumbnailsTest {
 
     private Uri insertVideo() throws IOException {
         File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
-                "testVideo.3gp");
+                "testVideo" + System.nanoTime() + ".3gp");
         // clean up any potential left over entries from a previous aborted run
         mResolver.delete(Media.EXTERNAL_CONTENT_URI,
                 "_data=?", new String[] { file.getAbsolutePath() });

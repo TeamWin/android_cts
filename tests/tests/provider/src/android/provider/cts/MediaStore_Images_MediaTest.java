@@ -43,8 +43,6 @@ import android.util.Size;
 
 import com.android.compatibility.common.util.FileUtils;
 
-import libcore.io.IoUtils;
-
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -326,15 +324,12 @@ public class MediaStore_Images_MediaTest {
 
         final Uri pendingUri = MediaStore.createPending(mContext, params);
         final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
             }
             publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
 
         final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
@@ -378,15 +373,12 @@ public class MediaStore_Images_MediaTest {
 
         final Uri pendingUri = MediaStore.createPending(mContext, params);
         final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
                     OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
             }
             publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
 
         // Verify that location wasn't indexed
