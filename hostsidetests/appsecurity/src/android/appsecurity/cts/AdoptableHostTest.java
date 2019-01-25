@@ -114,6 +114,18 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             // Unmount, remount and verify
             getDevice().executeShellCommand("sm unmount " + vol.volId);
             getDevice().executeShellCommand("sm mount " + vol.volId);
+
+            int attempt = 0;
+            String pkgPath = getDevice().executeShellCommand("pm path " + PKG);
+            while ((pkgPath == null || pkgPath.isEmpty()) && attempt++ < 15) {
+                Thread.sleep(1000);
+                pkgPath = getDevice().executeShellCommand("pm path " + PKG);
+            }
+
+            if (pkgPath == null || pkgPath.isEmpty()) {
+                throw new AssertionError("Package not ready yet");
+            }
+
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDataRead");
             runDeviceTests(PKG, CLASS, "testNative");
