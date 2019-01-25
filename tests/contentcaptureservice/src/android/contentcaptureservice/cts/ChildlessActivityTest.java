@@ -29,26 +29,32 @@ import static android.contentcaptureservice.cts.Assertions.assertViewsOptionally
 import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.contentcaptureservice.cts.CtsContentCaptureService.DisconnectListener;
+import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -876,6 +882,91 @@ public class ChildlessActivityTest
      * - etc
      */
 
+    @Test
+    public void testSetContentCaptureFeatureEnabled_disabledBySettings() throws Exception {
+        // TODO(b/123429736): remove try/finally once we use a StateChangerRule
+        try {
+            final ContentCaptureManager mgr = getContentCaptureManagerHack();
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+
+            final CtsContentCaptureService service = enableService();
+            final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
+
+            setFeatureEnabled("false");
+            disconnectedListener.waitForOnDisconnected();
+
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+
+            final ActivityWatcher watcher = startWatcher();
+            final ChildlessActivity activity = launchActivity();
+
+            watcher.waitFor(RESUMED);
+            activity.finish();
+            watcher.waitFor(DESTROYED);
+
+            assertThat(service.getAllSessionIds()).isEmpty();
+        } finally {
+            try {
+                Helper.resetService();
+            } finally {
+                setFeatureEnabled("true");
+            }
+        }
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_disabledThenReEnabledBySettings()
+            throws Exception {
+        // TODO(b/123429736): remove try/finally once we use a StateChangerRule
+        try {
+            final ContentCaptureManager mgr = getContentCaptureManagerHack();
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+
+            final CtsContentCaptureService service1 = enableService();
+            final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
+
+            setFeatureEnabled("false");
+            disconnectedListener.waitForOnDisconnected();
+
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+
+            // Launch and finish 1st activity while it's disabled
+            final ActivityWatcher watcher1 = startWatcher();
+            final ChildlessActivity activity1 = launchActivity();
+            watcher1.waitFor(RESUMED);
+            activity1.finish();
+            watcher1.waitFor(DESTROYED);
+
+            // Re-enable feature
+            final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
+            setFeatureEnabled("true");
+            final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+
+            // Launch and finish 2nd activity while it's enabled
+            final ActivityLauncher<CustomViewActivity> launcher2 = new ActivityLauncher<>(
+                    sContext, mActivitiesWatcher, CustomViewActivity.class);
+            final ActivityWatcher watcher2 = launcher2.getWatcher();
+            final CustomViewActivity activity2 = launcher2.launchActivity();
+            watcher2.waitFor(RESUMED);
+            activity2.finish();
+            watcher2.waitFor(DESTROYED);
+
+            assertThat(service1.getAllSessionIds()).isEmpty();
+            final Session session = service2.getOnlyFinishedSession();
+            activity2.assertDefaultEvents(session);
+        } finally {
+            try {
+                Helper.resetService();
+            } finally {
+                setFeatureEnabled("true");
+            }
+        }
+    }
+
+    // TODO(b/123406031): add tests that mix feature_enabled with user_restriction_enabled (and
+    // make sure mgr.isContentCaptureFeatureEnabled() returns only the state of the 1st)
+
     private TextView newImportantChild(@NonNull Context context, @NonNull String text) {
         final TextView child = new TextView(context);
         child.setText(text);
@@ -911,5 +1002,39 @@ public class ChildlessActivityTest
                 activity.getRootView().removeView(view);
             }
         });
+    }
+
+    // TODO(b/120494182): temporary hack to get the manager, which currently is only available on
+    // Activity contexts (and would be null from sContext)
+    @NonNull
+    private ContentCaptureManager getContentCaptureManagerHack() throws InterruptedException {
+        final AtomicReference<ContentCaptureManager> ref = new AtomicReference<>();
+        LoginActivity.onRootView(
+                (activity, rootView) -> ref.set(activity.getContentCaptureManager()));
+
+        final ActivityLauncher<LoginActivity> launcher = new ActivityLauncher<>(
+                sContext, mActivitiesWatcher, LoginActivity.class);
+        final ActivityWatcher watcher = launcher.getWatcher();
+        final LoginActivity activity = launcher.launchActivity();
+        watcher.waitFor(RESUMED);
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final ContentCaptureManager mgr = ref.get();
+        assertThat(mgr).isNotNull();
+
+        return mgr;
+    }
+
+    // TODO(b/123429736): temporary method until Autofill's StateChangerRule is moved to common
+    @Nullable
+    public static void setFeatureEnabled(@Nullable String enabled) {
+        final String property = Settings.Secure.CONTENT_CAPTURE_ENABLED;
+        if (enabled == null) {
+            runShellCommand("settings delete secure %s", property);
+        } else {
+            runShellCommand("settings put secure %s %s", property, enabled);
+        }
+        SystemClock.sleep(1000); // We need to sleep as we're not waiting for the listener callback
     }
 }
