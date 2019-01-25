@@ -29,6 +29,7 @@ import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -748,7 +749,8 @@ public abstract class ActivityManagerTestBase {
     protected boolean supportsInsecureLock() {
         return !hasDeviceFeature(FEATURE_LEANBACK)
                 && !hasDeviceFeature(FEATURE_WATCH)
-                && !hasDeviceFeature(FEATURE_EMBEDDED);
+                && !hasDeviceFeature(FEATURE_EMBEDDED)
+                && !hasDeviceFeature(FEATURE_AUTOMOTIVE);
     }
 
     protected boolean isWatch() {
