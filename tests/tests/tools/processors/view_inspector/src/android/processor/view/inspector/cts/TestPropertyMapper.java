@@ -27,6 +27,8 @@ class TestPropertyMapper implements PropertyMapper {
     private final HashMap<String, Integer> mPropertyIds = new HashMap<>();
     private final HashMap<String, Integer> mAttributeIds = new HashMap<>();
     private final HashMap<String, ValueType> mValueTypes = new HashMap<>();
+    private final HashMap<String, IntEnumMapping> mIntEnumMappings = new HashMap<>();
+    private final HashMap<String, IntFlagMapping> mIntFlagMappings = new HashMap<>();
     private int mNextId = 1;
 
     int getId(String name) {
@@ -39,6 +41,14 @@ class TestPropertyMapper implements PropertyMapper {
 
     ValueType getValueType(String name) {
         return mValueTypes.getOrDefault(name, ValueType.NONE);
+    }
+
+    IntEnumMapping getIntEnumMapping(String name) {
+        return mIntEnumMappings.get(name);
+    }
+
+    IntFlagMapping getIntFlagMapping(String name) {
+        return mIntFlagMappings.get(name);
     }
 
     @Override
@@ -96,11 +106,13 @@ class TestPropertyMapper implements PropertyMapper {
 
     @Override
     public int mapIntEnum(String name, int attributeId, IntEnumMapping intEnumMapping) {
+        mIntEnumMappings.put(name, intEnumMapping);
         return map(name, attributeId, ValueType.INT_ENUM);
     }
 
     @Override
     public int mapIntFlag(String name, int attributeId, IntFlagMapping intFlagMapping) {
+        mIntFlagMappings.put(name, intFlagMapping);
         return map(name, attributeId, ValueType.INT_FLAG);
     }
 
