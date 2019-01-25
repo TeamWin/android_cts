@@ -277,20 +277,13 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testGetSession2Tokens() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
-        Executor handlerExecutor = (runnable) -> {
-            if (handler != null) {
-                handler.post(() -> {
-                    runnable.run();
-                });
-            }
-        };
 
         Session2TokenListener listener = new Session2TokenListener();
         mSessionManager.addOnSession2TokensChangedListener(listener, handler);
 
         Session2Callback sessionCallback = new Session2Callback();
         try (MediaSession2 session = new MediaSession2.Builder(context)
-                .setSessionCallback(handlerExecutor, sessionCallback)
+                .setSessionCallback(new HandlerExecutor(handler.getLooper()), sessionCallback)
                 .build()) {
             assertTrue(sessionCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -304,20 +297,13 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testAddAndRemoveSession2TokensListener() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
-        Executor handlerExecutor = (runnable) -> {
-            if (handler != null) {
-                handler.post(() -> {
-                    runnable.run();
-                });
-            }
-        };
 
         Session2TokenListener listener1 = new Session2TokenListener();
         mSessionManager.addOnSession2TokensChangedListener(listener1, handler);
 
         Session2Callback sessionCallback = new Session2Callback();
         try (MediaSession2 session = new MediaSession2.Builder(context)
-                .setSessionCallback(handlerExecutor, sessionCallback)
+                .setSessionCallback(new HandlerExecutor(handler.getLooper()), sessionCallback)
                 .build()) {
             assertTrue(listener1.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             Session2Token currentToken = session.getSessionToken();
@@ -332,6 +318,43 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             session.close();
             assertFalse(listener1.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(listener2.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    public void testNotifySession2Created_withDestroyedToken_shouldThrowIAE() {
+        final Context context = getInstrumentation().getTargetContext();
+
+        MediaSession2 session = new MediaSession2.Builder(context)
+                .setSessionCallback(new HandlerExecutor(createHandler().getLooper()),
+                        new Session2Callback())
+                .build();
+        session.close();
+        Session2Token destroyedToken = session.getSessionToken();
+
+        try {
+            mSessionManager.notifySession2Created(destroyedToken);
+            fail("notifySession2Created should throw IAE");
+        } catch (IllegalArgumentException ex) {
+            // Expected.
+        }
+    }
+
+    public void testNotifySession2Destroyed_withLiveToken_shouldThrowIAE() {
+        final Context context = getInstrumentation().getTargetContext();
+
+        MediaSession2 session = new MediaSession2.Builder(context)
+                .setSessionCallback(new HandlerExecutor(createHandler().getLooper()),
+                        new Session2Callback())
+                .build();
+        Session2Token liveToken = session.getSessionToken();
+
+        try {
+            mSessionManager.notifySession2Destroyed(liveToken);
+            fail("notifySession2Destroyed should throw IAE");
+        } catch (IllegalArgumentException ex) {
+            // Expected.
+        } finally {
+            session.close();
         }
     }
 
