@@ -16,6 +16,8 @@
 
 package android.permission.cts;
 
+import static android.Manifest.permission.WRITE_MEDIA_STORAGE;
+
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -27,6 +29,7 @@ import android.platform.test.annotations.AppModeInstant;
 import android.provider.CallLog;
 import android.provider.Contacts;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.test.AndroidTestCase;
@@ -210,6 +213,38 @@ public class ProviderPermissionTest extends AndroidTestCase {
                 fail("Exactly one package (must be " + validPkg
                         + ") can request the MANAGE_DOCUMENTS permission; found package "
                         + pi.packageName + " which must be revoked for security reasons");
+            }
+        }
+    }
+
+    /**
+     * The {@link android.Manifest.permission#WRITE_MEDIA_STORAGE} permission is
+     * a very powerful permission that grants raw storage access to all devices,
+     * and as such it's only appropriate to be granted to the media stack. Any
+     * apps with a user-visible component (such as Camera or Gallery apps) must
+     * go through public {@link MediaStore} APIs, to ensure that users have
+     * meaningful permission controls.
+     * <p>
+     * For example, if the end user revokes the "Music" permission from an app,
+     * but that app still has raw access to music via
+     * {@link android.Manifest.permission#WRITE_MEDIA_STORAGE}, that would be a
+     * privacy incident.
+     */
+    public void testMediaStackPermissions() throws Exception {
+        // The only apps holding this permission should be the internal media
+        // stack, and the best way to identify them is having no launchable UI.
+        final PackageManager pm = getContext().getPackageManager();
+        final List<PackageInfo> pkgs = pm
+                .getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES);
+        for (PackageInfo pkg : pkgs) {
+            final boolean isSystem = pkg.applicationInfo.uid == android.os.Process.SYSTEM_UID;
+            final boolean hasFrontDoor = pm.getLaunchIntentForPackage(pkg.packageName) != null;
+            final boolean hasPermission = pm.checkPermission(WRITE_MEDIA_STORAGE,
+                    pkg.packageName) == PackageManager.PERMISSION_GRANTED;
+            if (!isSystem && hasFrontDoor && hasPermission) {
+                fail("Found " + pkg.packageName + " holding WRITE_MEDIA_STORAGE permission while "
+                        + "also having user-visible UI; this permission must only be held by "
+                        + "the core media stack, and must not be granted to user-launchable apps");
             }
         }
     }
