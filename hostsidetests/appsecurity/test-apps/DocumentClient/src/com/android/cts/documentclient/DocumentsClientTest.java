@@ -276,6 +276,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         findDocument("DIR2").click();
         mDevice.waitForIdle();
         findSaveButton().click();
+        mDevice.waitForIdle();
+        findPositiveButton().click();
 
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
@@ -397,6 +399,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         findDocument("DIR2").click();
         mDevice.waitForIdle();
         findSaveButton().click();
+        mDevice.waitForIdle();
+        findPositiveButton().click();
 
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
@@ -504,6 +508,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         findDocument("DIR2").click();
         mDevice.waitForIdle();
         findSaveButton().click();
+        mDevice.waitForIdle();
+        findPositiveButton().click();
 
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
