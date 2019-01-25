@@ -20,9 +20,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.HardwareBuffer;
@@ -623,6 +625,29 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 closeDevice(id);
             }
         }
+    }
+
+    /** Tests that usage bits are preserved */
+    public void testUsageRespected() throws Exception {
+        ImageReader reader = ImageReader.newInstance(1, 1, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        Surface surface = reader.getSurface();
+        Canvas canvas = surface.lockHardwareCanvas();
+        canvas.drawColor(Color.RED);
+        surface.unlockCanvasAndPost(canvas);
+        Image image = null;
+        for (int i = 0; i < 100; i++) {
+            image = reader.acquireNextImage();
+            if (image != null) break;
+            Thread.sleep(10);
+        }
+        assertNotNull(image);
+        HardwareBuffer buffer = image.getHardwareBuffer();
+        assertNotNull(buffer);
+        // Mask off the upper vendor bits
+        int myBits = (int) (buffer.getUsage() & 0xFFFFFFF);
+        assertEquals(HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
+                myBits);
     }
 
     /**
