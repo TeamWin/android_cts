@@ -155,18 +155,28 @@ public class EncoderTest extends AndroidTestCase {
             MediaUtils.skipTest("no encoders found for " + Arrays.toString(formats));
             return;
         }
-        ExecutorService pool = Executors.newFixedThreadPool(3);
+
+        int ThreadCount = 3;
+        int testsStarted = 0;
+        int allowPerTest = 30;
+
+        ExecutorService pool = Executors.newFixedThreadPool(ThreadCount);
 
         for (String componentName : componentNames) {
             for (MediaFormat format : formats) {
                 assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
                 pool.execute(new EncoderRun(componentName, format));
+                testsStarted++;
             }
         }
         try {
             pool.shutdown();
+            int waitingSeconds = ((testsStarted + ThreadCount - 1) / ThreadCount) * allowPerTest;
+            waitingSeconds += 300;
+            Log.i(TAG, "waiting up to " + waitingSeconds + " seconds for "
+                            + testsStarted + " sub-tests to finish");
             assertTrue("timed out waiting for encoder threads",
-                    pool.awaitTermination(10, TimeUnit.MINUTES));
+                    pool.awaitTermination(waitingSeconds, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             fail("interrupted while waiting for encoder threads");
         }
