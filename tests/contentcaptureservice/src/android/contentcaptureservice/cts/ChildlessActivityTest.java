@@ -29,9 +29,10 @@ import static android.contentcaptureservice.cts.Assertions.assertViewsOptionally
 import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
-import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
 import android.contentcaptureservice.cts.CtsContentCaptureService.DisconnectListener;
@@ -41,7 +42,6 @@ import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatche
 import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.net.Uri;
 import android.os.SystemClock;
-import android.provider.Settings;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
@@ -54,7 +54,6 @@ import android.view.contentcapture.ContentCaptureSessionId;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -883,18 +882,32 @@ public class ChildlessActivityTest
      */
 
     @Test
+    public void testIsContentCaptureFeatureEnabled_notService() throws Exception {
+        final ContentCaptureManager mgr = getContentCaptureManagerHack();
+        assertThrows(SecurityException.class,  () -> mgr.isContentCaptureFeatureEnabled());
+    }
+
+    @Test
     public void testSetContentCaptureFeatureEnabled_disabledBySettings() throws Exception {
+        setContentCaptureFeatureEnabledTest_disabled(/* bySettings= */ true);
+    }
+
+    private void setContentCaptureFeatureEnabledTest_disabled(boolean bySettings) throws Exception {
         // TODO(b/123429736): remove try/finally once we use a StateChangerRule
         try {
             final ContentCaptureManager mgr = getContentCaptureManagerHack();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
 
             final CtsContentCaptureService service = enableService();
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
             final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
 
-            setFeatureEnabled("false");
-            disconnectedListener.waitForOnDisconnected();
+            if (bySettings) {
+                setFeatureEnabled("false");
+            } else {
+                mgr.setContentCaptureFeatureEnabled(false);
+            }
 
+            disconnectedListener.waitForOnDisconnected();
             assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
 
             final ActivityWatcher watcher = startWatcher();
@@ -917,15 +930,24 @@ public class ChildlessActivityTest
     @Test
     public void testSetContentCaptureFeatureEnabled_disabledThenReEnabledBySettings()
             throws Exception {
+        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(/* bySettings= */ true);
+    }
+
+    private void setContentCaptureFeatureEnabledTest_disabledThenReEnabled(boolean bySettings)
+            throws Exception {
         // TODO(b/123429736): remove try/finally once we use a StateChangerRule
         try {
             final ContentCaptureManager mgr = getContentCaptureManagerHack();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
 
             final CtsContentCaptureService service1 = enableService();
+            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
             final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
 
-            setFeatureEnabled("false");
+            if (bySettings) {
+                setFeatureEnabled("false");
+            } else {
+                mgr.setContentCaptureFeatureEnabled(false);
+            }
             disconnectedListener.waitForOnDisconnected();
 
             assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -939,7 +961,11 @@ public class ChildlessActivityTest
 
             // Re-enable feature
             final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
-            setFeatureEnabled("true");
+            if (bySettings) {
+                setFeatureEnabled("true");
+            } else {
+                mgr.setContentCaptureFeatureEnabled(true);
+            }
             final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
             assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
 
@@ -962,6 +988,23 @@ public class ChildlessActivityTest
                 setFeatureEnabled("true");
             }
         }
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_notService() throws Exception {
+        final ContentCaptureManager mgr = getContentCaptureManagerHack();
+        assertThrows(SecurityException.class,  () -> mgr.setContentCaptureFeatureEnabled(true));
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_disabledByApi() throws Exception {
+        setContentCaptureFeatureEnabledTest_disabled(/* bySettings= */ false);
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_disabledThenReEnabledByApi()
+            throws Exception {
+        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(/* bySettings= */ false);
     }
 
     // TODO(b/123406031): add tests that mix feature_enabled with user_restriction_enabled (and
@@ -1024,17 +1067,5 @@ public class ChildlessActivityTest
         assertThat(mgr).isNotNull();
 
         return mgr;
-    }
-
-    // TODO(b/123429736): temporary method until Autofill's StateChangerRule is moved to common
-    @Nullable
-    public static void setFeatureEnabled(@Nullable String enabled) {
-        final String property = Settings.Secure.CONTENT_CAPTURE_ENABLED;
-        if (enabled == null) {
-            runShellCommand("settings delete secure %s", property);
-        } else {
-            runShellCommand("settings put secure %s %s", property, enabled);
-        }
-        SystemClock.sleep(1000); // We need to sleep as we're not waiting for the listener callback
     }
 }

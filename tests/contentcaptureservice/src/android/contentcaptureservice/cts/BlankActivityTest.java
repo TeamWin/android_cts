@@ -132,6 +132,32 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
     }
 
     @Test
+    public void testSetContentCaptureFeatureEnabled_onUiThread() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        service.waitUntilConnected();
+
+        final ActivityWatcher watcher = startWatcher();
+
+        final BlankActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final AtomicReference<Exception> ref = new AtomicReference<>();
+        activity.syncRunOnUiThread(() -> {
+            try {
+                activity.getContentCaptureManager().setContentCaptureFeatureEnabled(true);
+            } catch (Exception e) {
+                ref.set(e);
+            }
+        });
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Exception e = ref.get();
+        if (e != null) throw e;
+    }
+
+    @Test
     public void testOnConnectionEvents() throws Exception {
         final CtsContentCaptureService service = enableService();
         service.waitUntilConnected();
