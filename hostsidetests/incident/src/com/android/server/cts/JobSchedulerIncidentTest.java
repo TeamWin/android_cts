@@ -20,6 +20,7 @@ import android.app.job.StopReasonEnum;
 import android.net.NetworkCapabilitiesProto;
 import android.net.NetworkRequestProto;
 import com.android.server.job.ConstantsProto;
+import com.android.server.job.ConstraintEnum;
 import com.android.server.job.DataSetProto;
 import com.android.server.job.JobPackageHistoryProto;
 import com.android.server.job.JobPackageTrackerDumpProto;
@@ -192,16 +193,16 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
                 .contains(bp.getPolicy().getValueDescriptor()));
         assertTrue(0 <= bp.getInitialBackoffMs());
 
-        for (JobStatusDumpProto.Constraint c : jsd.getRequiredConstraintsList()) {
-            assertTrue(JobStatusDumpProto.Constraint.getDescriptor().getValues()
+        for (ConstraintEnum c : jsd.getRequiredConstraintsList()) {
+            assertTrue(ConstraintEnum.getDescriptor().getValues()
                     .contains(c.getValueDescriptor()));
         }
-        for (JobStatusDumpProto.Constraint c : jsd.getSatisfiedConstraintsList()) {
-            assertTrue(JobStatusDumpProto.Constraint.getDescriptor().getValues()
+        for (ConstraintEnum c : jsd.getSatisfiedConstraintsList()) {
+            assertTrue(ConstraintEnum.getDescriptor().getValues()
                     .contains(c.getValueDescriptor()));
         }
-        for (JobStatusDumpProto.Constraint c : jsd.getUnsatisfiedConstraintsList()) {
-            assertTrue(JobStatusDumpProto.Constraint.getDescriptor().getValues()
+        for (ConstraintEnum c : jsd.getUnsatisfiedConstraintsList()) {
+            assertTrue(ConstraintEnum.getDescriptor().getValues()
                     .contains(c.getValueDescriptor()));
         }
 
