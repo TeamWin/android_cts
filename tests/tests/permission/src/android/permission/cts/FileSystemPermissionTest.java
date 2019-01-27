@@ -1041,6 +1041,21 @@ public class FileSystemPermissionTest {
     }
 
     @Test
+    public void testProcUUIDReadable() throws Exception {
+        File f = new File("/proc/sys/kernel/random/uuid");
+
+        assertTrue(f + " cannot be opened for reading", canOpenForReading(f));
+        assertFalse(f + " can be opened for writing", canOpenForWriting(f));
+
+        FileUtils.FileStatus status = new FileUtils.FileStatus();
+        assertTrue(FileUtils.getFileStatus(f.getPath(), status, false));
+        assertTrue(
+                f + " not 0444. Actual mode: 0"
+                        + Integer.toString(status.mode, 8),
+                (status.mode & 0666) == 0444);
+    }
+
+    @Test
     public void testDevHwRandomLockedDown() throws Exception {
         File f = new File("/dev/hw_random");
         if (!f.exists()) {
