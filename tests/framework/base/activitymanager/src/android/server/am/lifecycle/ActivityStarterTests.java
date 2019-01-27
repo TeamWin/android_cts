@@ -16,14 +16,6 @@
 
 package android.server.am.lifecycle;
 
-import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.os.Bundle;
-import android.server.am.ActivityLauncher;
-import android.support.test.InstrumentationRegistry;
-import org.junit.Test;
-
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -32,10 +24,21 @@ import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.Components.ALIAS_TEST_ACTIVITY;
+import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
+import android.server.am.ActivityLauncher;
+
+import org.junit.Test;
 
 /**
  * Build/Install/Run:
@@ -231,6 +234,38 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         assertEquals("Instance of second standard activity must not exist.", 0,
                 mAmWmState.getAmState().getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY));
 
+    }
+
+    /**
+     * Tests that the existing task would be brought to top while launching alias activity or
+     * real activity without creating new activity instances, tasks, or stacks.
+     */
+    @Test
+    public void testLaunchAliasActivity() {
+        // Launch alias activity.
+        getLaunchActivityBuilder().setUseInstrumentation().setTargetActivity(ALIAS_TEST_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
+        final int stacks = mAmWmState.getAmState().getStackCounts();
+        final int taskId =
+                mAmWmState.getAmState().getTaskByActivity(ALIAS_TEST_ACTIVITY).getTaskId();
+
+        // Return to home and launch the alias activity again.
+        launchHomeActivity();
+        getLaunchActivityBuilder().setUseInstrumentation().setTargetActivity(ALIAS_TEST_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
+        assertEquals("Instance of the activity in its task must be only one", 1,
+                mAmWmState.getAmState().getActivityCountInTask(taskId, ALIAS_TEST_ACTIVITY));
+        assertEquals("Stacks counts should not be increased.", stacks,
+                mAmWmState.getAmState().getStackCounts());
+
+        // Return to home and launch the real activity.
+        launchHomeActivity();
+        getLaunchActivityBuilder().setUseInstrumentation().setTargetActivity(TEST_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
+        assertEquals("Instance of the activity in its task must be only one", 1,
+                mAmWmState.getAmState().getActivityCountInTask(taskId, ALIAS_TEST_ACTIVITY));
+        assertEquals("Stacks counts should not be increased.", stacks,
+                mAmWmState.getAmState().getStackCounts());
     }
 
     /**
