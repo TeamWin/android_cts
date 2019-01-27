@@ -16,7 +16,6 @@
 
 package android.provider.cts;
 
-import android.annotation.Nullable;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -323,7 +322,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
     }
 
     private Uri assertInsertBlockedNumberSucceeds(
-            String originalNumber, @Nullable String e164Number) {
+            String originalNumber, String e164Number) {
         ContentValues cv = new ContentValues();
         cv.put(BlockedNumbers.COLUMN_ORIGINAL_NUMBER, originalNumber);
         if (e164Number != null) {

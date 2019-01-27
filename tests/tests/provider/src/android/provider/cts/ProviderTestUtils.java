@@ -21,10 +21,14 @@ import static android.provider.cts.MediaStoreTest.TAG;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
@@ -47,6 +51,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
@@ -88,6 +94,7 @@ public class ProviderTestUtils {
 
     static String executeShellCommand(String command, UiAutomation uiAutomation)
             throws IOException {
+        Log.v(TAG, "$ " + command);
         ParcelFileDescriptor pfd = uiAutomation.executeShellCommand(command.toString());
         BufferedReader br = null;
         try (InputStream in = new FileInputStream(pfd.getFileDescriptor());) {
@@ -95,6 +102,7 @@ public class ProviderTestUtils {
             String str = null;
             StringBuilder out = new StringBuilder();
             while ((str = br.readLine()) != null) {
+                Log.v(TAG, "> " + str);
                 out.append(str);
             }
             return out.toString();
@@ -162,7 +170,7 @@ public class ProviderTestUtils {
     }
 
     static File stageDir(String volumeName) throws IOException {
-        return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "data",
+        return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
                 "android.provider.cts");
     }
 
@@ -170,7 +178,7 @@ public class ProviderTestUtils {
         // The caller may be trying to stage into a location only available to
         // the shell user, so we need to perform the entire copy as the shell
         if (FileUtils.contains(Environment.getStorageDirectory(), file)) {
-            Log.d(TAG, executeShellCommand("mkdir -p " + file.getParent()));
+            executeShellCommand("mkdir -p " + file.getParent());
 
             final Context context = InstrumentationRegistry.getTargetContext();
             try (AssetFileDescriptor afd = context.getResources().openRawResourceFd(resId)) {
@@ -178,11 +186,11 @@ public class ProviderTestUtils {
                 final long skip = afd.getStartOffset();
                 final long count = afd.getLength();
 
-                Log.d(TAG, executeShellCommand(String.format("dd bs=1 if=%s skip=%d count=%d of=%s",
-                        source.getAbsolutePath(), skip, count, file.getAbsolutePath())));
+                executeShellCommand(String.format("dd bs=1 if=%s skip=%d count=%d of=%s",
+                        source.getAbsolutePath(), skip, count, file.getAbsolutePath()));
 
                 // Force sync to try updating other views
-                Log.d(TAG, executeShellCommand("sync"));
+                executeShellCommand("sync");
             }
         } else {
             final File dir = file.getParentFile();
@@ -211,9 +219,43 @@ public class ProviderTestUtils {
         try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
             try (InputStream source = context.getResources().openRawResource(resId);
                     OutputStream target = session.openOutputStream()) {
-                android.os.FileUtils.copy(source, target);
+                FileUtils.copy(source, target);
             }
             return session.publish();
+        }
+    }
+
+    static Uri scanFile(File file) throws Exception {
+        final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
+                .getContentResolver();
+        try (ContentProviderClient cpc = resolver
+                .acquireContentProviderClient(MediaStore.AUTHORITY)) {
+            final Bundle in = new Bundle();
+            in.putParcelable(Intent.EXTRA_STREAM, Uri.fromFile(file));
+            in.putBoolean(Intent.EXTRA_LOCAL_ONLY, true);
+            final Bundle out = cpc.call(MediaStore.AUTHORITY, MediaStore.SCAN_FILE_CALL, null, in);
+            return out.getParcelable(Intent.EXTRA_STREAM);
+        }
+    }
+
+    static void scanVolume(File file) throws Exception {
+        final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
+                .getContentResolver();
+        try (ContentProviderClient cpc = resolver
+                .acquireContentProviderClient(MediaStore.AUTHORITY)) {
+            final Bundle in = new Bundle();
+            in.putParcelable(Intent.EXTRA_STREAM, Uri.fromFile(file));
+            in.putBoolean(Intent.EXTRA_LOCAL_ONLY, true);
+            cpc.call(MediaStore.AUTHORITY, MediaStore.SCAN_VOLUME_CALL, null, in);
+        }
+    }
+
+    public static byte[] hash(InputStream in) throws Exception {
+        try (DigestInputStream digestIn = new DigestInputStream(in,
+                MessageDigest.getInstance("SHA-1"));
+                OutputStream out = new FileOutputStream(new File("/dev/null"))) {
+            FileUtils.copy(digestIn, out);
+            return digestIn.getMessageDigest().digest();
         }
     }
 
@@ -258,7 +300,7 @@ public class ProviderTestUtils {
                 if (e.errno == OsConstants.ENOENT) {
                     return false;
                 } else {
-                    throw e.rethrowAsIOException();
+                    throw new IOException(e.getMessage());
                 }
             }
         }

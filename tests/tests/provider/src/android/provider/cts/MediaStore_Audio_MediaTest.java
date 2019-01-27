@@ -108,7 +108,6 @@ public class MediaStore_Audio_MediaTest {
             assertEquals(expected, c.getString(c.getColumnIndex(Media.DATA)));
             assertTrue(c.getLong(c.getColumnIndex(Media.DATE_ADDED)) > 0);
             assertEquals(Audio1.DATE_MODIFIED, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
-            assertEquals(Audio1.IS_DRM, c.getInt(c.getColumnIndex(Media.IS_DRM)));
             assertEquals(Audio1.DISPLAY_NAME, c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals(Audio1.MIME_TYPE, c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals(Audio1.SIZE, c.getInt(c.getColumnIndex(Media.SIZE)));

@@ -39,7 +39,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
-import android.media.MediaScanner;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.SystemClock;
@@ -48,7 +47,6 @@ import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -119,14 +117,8 @@ public class MediaStore_Images_ThumbnailsTest {
     }
 
     private void prepareImages() throws Exception {
-        File red = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL), "red.jpg");
-        File blue = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL), "blue.jpg");
-        ProviderTestUtils.stageFile(R.raw.scenery, red);
-        ProviderTestUtils.stageFile(R.raw.scenery, blue);
-        try (MediaScanner scanner = new MediaScanner(mContext, "external")) {
-            mRed = scanner.scanSingleFile(red.getAbsolutePath(), "image/jpeg");
-            mBlue = scanner.scanSingleFile(blue.getAbsolutePath(), "image/jpeg");
-        }
+        mRed = ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
+        mBlue = ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
         mRowsAdded.add(mRed);
         mRowsAdded.add(mBlue);
     }

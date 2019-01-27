@@ -22,7 +22,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.provider.BlockedNumberContract;
-import android.telecom.Log;
+import android.util.Log;
 
 /**
  * CTS tests for backup and restore of blocked numbers using local transport.

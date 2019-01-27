@@ -18,6 +18,7 @@ package android.provider.cts;
 
 import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.containsId;
+import static android.provider.cts.ProviderTestUtils.hash;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -38,8 +39,6 @@ import android.provider.MediaStore.PendingParams;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
-import libcore.io.IoUtils;
-
 import com.google.common.base.Objects;
 
 import org.junit.Before;
@@ -51,11 +50,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -122,15 +118,12 @@ public class MediaStorePendingTest {
 
         // Write an image into place
         final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
                  OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
             }
             publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
 
         // Verify pending status across various queries
@@ -164,8 +157,7 @@ public class MediaStorePendingTest {
         final Uri pendingUri = MediaStore.createPending(mContext, params);
         final File pendingFile;
 
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
@@ -176,8 +168,6 @@ public class MediaStorePendingTest {
             getRawFileHash(pendingFile);
 
             session.abandon();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
 
         // Should have no record of abandoned item
@@ -427,15 +417,12 @@ public class MediaStorePendingTest {
 
     private Uri execPending(PendingParams params, int resId) throws Exception {
         final Uri pendingUri = MediaStore.createPending(mContext, params);
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(resId);
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
             }
             return session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
     }
 
@@ -459,17 +446,6 @@ public class MediaStorePendingTest {
             return res.substring(0, 40);
         } else {
             throw new FileNotFoundException("Failed to find hash for " + file + "; found " + res);
-        }
-    }
-
-    private static byte[] hash(InputStream in) throws Exception {
-        try (DigestInputStream digestIn = new DigestInputStream(in,
-                MessageDigest.getInstance("SHA-1"));
-                OutputStream out = new FileOutputStream(new File("/dev/null"))) {
-            FileUtils.copy(digestIn, out);
-            return digestIn.getMessageDigest().digest();
-        } finally {
-            IoUtils.closeQuietly(in);
         }
     }
 }

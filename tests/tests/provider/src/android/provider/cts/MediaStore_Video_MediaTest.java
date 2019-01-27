@@ -22,7 +22,6 @@ import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -172,16 +171,6 @@ public class MediaStore_Video_MediaTest {
         assertExists(videofile);
         mContentResolver.delete(videoUri, null, null);
         assertNotExists(videofile);
-
-        // insert again, then delete with the "delete data" parameter set to false
-        videoUri = insertVideo(context);
-        assertExists(videofile);
-        Uri.Builder builder = videoUri.buildUpon();
-        builder.appendQueryParameter(MediaStore.PARAM_DELETE_DATA, "false");
-        mContentResolver.delete(builder.build(), null, null);
-        assertExists(videofile);
-        videofile.delete();
-
     }
 
     @Test

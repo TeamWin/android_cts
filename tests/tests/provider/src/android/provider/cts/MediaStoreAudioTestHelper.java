@@ -87,7 +87,6 @@ public class MediaStoreAudioTestHelper {
         public static final int IS_NOTIFICATION = 0;
         public static final int IS_ALARM = 0;
         public static final int IS_MUSIC = 1;
-        public static final int IS_DRM = 0;
         public static final int YEAR = 1992;
         public static final int TRACK = 1;
         public static final int DURATION = 340000;
@@ -131,7 +130,6 @@ public class MediaStoreAudioTestHelper {
             values.put(Media.IS_ALARM, IS_ALARM);
             values.put(Media.IS_NOTIFICATION, IS_NOTIFICATION);
             values.put(Media.IS_RINGTONE, IS_RINGTONE);
-            values.put(Media.IS_DRM, IS_DRM);
             return values;
         }
     }
@@ -150,7 +148,6 @@ public class MediaStoreAudioTestHelper {
         public static final int IS_NOTIFICATION = 0;
         public static final int IS_ALARM = 0;
         public static final int IS_MUSIC = 0;
-        public static final int IS_DRM = 0;
         public static final int YEAR = 1992;
         public static final int TRACK = 1001;
         public static final int DURATION = 338000;
@@ -195,7 +192,6 @@ public class MediaStoreAudioTestHelper {
             values.put(Media.IS_ALARM, IS_ALARM);
             values.put(Media.IS_NOTIFICATION, IS_NOTIFICATION);
             values.put(Media.IS_RINGTONE, IS_RINGTONE);
-            values.put(Media.IS_DRM, IS_DRM);
             return values;
         }
     }

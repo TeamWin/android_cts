@@ -16,10 +16,11 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.ProviderTestUtils.hash;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
@@ -40,8 +41,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import libcore.io.IoUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,8 +52,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -165,15 +162,12 @@ public class MediaStore_DownloadsTest {
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
             }
             publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
 
         final ContentValues updateValues = new ContentValues();
@@ -205,15 +199,12 @@ public class MediaStore_DownloadsTest {
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
             }
             publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
 
         assertEquals(1, mContentResolver.delete(publishUri, null, null));
@@ -249,15 +240,12 @@ public class MediaStore_DownloadsTest {
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
-        try {
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
             }
             publishUri = session.publish();
-        } finally {
-            IoUtils.closeQuietly(session);
         }
         mCountDownLatch.await(NOTIFY_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
@@ -335,16 +323,5 @@ public class MediaStore_DownloadsTest {
         }
         assertNotNull("Failed to scan " + file.getAbsolutePath(), mediaStoreUris[0]);
         return mediaStoreUris[0];
-    }
-
-    private static byte[] hash(InputStream in) throws Exception {
-        try (DigestInputStream digestIn = new DigestInputStream(in,
-                MessageDigest.getInstance("SHA-1"));
-                OutputStream out = new FileOutputStream(new File("/dev/null"))) {
-            FileUtils.copy(digestIn, out);
-            return digestIn.getMessageDigest().digest();
-        } finally {
-            IoUtils.closeQuietly(in);
-        }
     }
 }

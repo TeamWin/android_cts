@@ -1,0 +1,37 @@
+
+android_test {
+    name: "CtsProviderTestCases",
+    defaults: ["cts_defaults"],
+
+    compile_multilib: "both",
+
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+
+    libs: [
+        "android.test.mock",
+        "android.test.base.stubs",
+        "android.test.runner.stubs",
+        "telephony-common",
+    ],
+
+    static_libs: [
+        "compatibility-device-util",
+        "ctstestrunner",
+        "junit",
+        "truth-prebuilt",
+    ],
+
+    jni_libs: [
+        "libcts_jni",
+        "libnativehelper_compat_libc++",
+    ],
+
+    srcs: ["src/**/*.java"],
+
+    sdk_version: "test_current",
+    min_sdk_version: "21",
+}
