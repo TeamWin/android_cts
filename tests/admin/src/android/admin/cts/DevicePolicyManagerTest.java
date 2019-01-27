@@ -46,6 +46,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -1061,14 +1062,9 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             return;
         }
         try {
-            mDevicePolicyManager.addCrossProfileCalendarPackage(mComponent, TEST_PACKAGE_NAME);
-            fail("addCrossProfileCalendarPackage did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
-        }
-        try {
-            mDevicePolicyManager.removeCrossProfileCalendarPackage(mComponent, TEST_PACKAGE_NAME);
-            fail("removeCrossProfileCalendarPackage did not throw expected SecurityException");
+            mDevicePolicyManager.setCrossProfileCalendarPackages(mComponent,
+                    Collections.singleton(TEST_PACKAGE_NAME));
+            fail("setCrossProfileCalendarPackages did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
         }

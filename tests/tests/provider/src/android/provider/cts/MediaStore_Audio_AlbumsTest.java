@@ -28,8 +28,8 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Albums;
@@ -38,6 +38,7 @@ import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+import android.util.Size;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +48,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_AlbumsTest {
@@ -174,7 +175,6 @@ public class MediaStore_Audio_AlbumsTest {
     public void testAlbumArt() throws Exception {
         final File dir = ProviderTestUtils.stageDir(mVolumeName);
         final File path = new File(dir, "test" + System.currentTimeMillis() + ".mp3");
-        Uri uri = null;
         try {
             ProviderTestUtils.stageFile(R.raw.testmp3, path);
 
@@ -182,44 +182,51 @@ public class MediaStore_Audio_AlbumsTest {
             v.put(Media.DATA, path.getAbsolutePath());
             v.put(Media.TITLE, "testing");
             v.put(Albums.ALBUM, "test" + System.currentTimeMillis());
-            uri = mContentResolver.insert(MediaStore.Audio.Media.getContentUri(mVolumeName), v);
-            AssetFileDescriptor afd = mContentResolver.openAssetFileDescriptor(
-                    uri.buildUpon().appendPath("albumart").build(), "r");
-            assertNotNull(afd);
-            afd.close();
 
-            Cursor c = mContentResolver.query(uri, null, null, null, null);
-            c.moveToFirst();
-            long aid = c.getLong(c.getColumnIndex(Albums.ALBUM_ID));
-            c.close();
+            final Uri mediaUri = mContentResolver
+                    .insert(MediaStore.Audio.Media.getContentUri(mVolumeName), v);
+            final long mediaId = ContentUris.parseId(mediaUri);
 
-            // TODO: migrate this to using public API
-            Uri albumartDir = MediaStore.AUTHORITY_URI.buildUpon().appendPath(mVolumeName)
-                    .appendPath("audio").appendPath("albumart").build();
-            Uri albumart = ContentUris.withAppendedId(albumartDir, aid);
-            try {
-                mContentResolver.delete(albumart, null, null);
-                afd = mContentResolver.openAssetFileDescriptor(albumart, "r");
-            } catch (FileNotFoundException e) {
-                fail("no album art");
+            final long albumId;
+            try (Cursor c = mContentResolver.query(mediaUri, null, null, null, null)) {
+                assertTrue(c.moveToFirst());
+                albumId = c.getLong(c.getColumnIndex(Albums.ALBUM_ID));
             }
 
-            c = mContentResolver.query(albumart, null, null, null, null);
-            c.moveToFirst();
-            String albumartfile = c.getString(c.getColumnIndex("_data"));
-            c.close();
-            new File(albumartfile).delete();
+            // Verify that normal thumbnails work
+            assertNotNull(mContentResolver.loadThumbnail(mediaUri, new Size(32, 32), null));
+
+            // Verify that hidden APIs still work to obtain album art
+            final Uri byMedia = MediaStore.AUTHORITY_URI.buildUpon().appendPath(mVolumeName)
+                    .appendPath("audio").appendPath("media")
+                    .appendPath(Long.toString(mediaId)).appendPath("albumart").build();
+            final Uri byAlbum = MediaStore.AUTHORITY_URI.buildUpon().appendPath(mVolumeName)
+                    .appendPath("audio").appendPath("albumart")
+                    .appendPath(Long.toString(albumId)).build();
+            assertNotNull(BitmapFactory.decodeStream(mContentResolver.openInputStream(byMedia)));
+            assertNotNull(BitmapFactory.decodeStream(mContentResolver.openInputStream(byAlbum)));
+
+            // Delete item and confirm art is cleaned up
+            mContentResolver.delete(mediaUri, null, null);
+
             try {
-                afd = mContentResolver.openAssetFileDescriptor(albumart, "r");
-            } catch (FileNotFoundException e) {
-                fail("no album art");
+                mContentResolver.loadThumbnail(mediaUri, new Size(32, 32), null);
+                fail();
+            } catch (IOException expected) {
+            }
+            try {
+                BitmapFactory.decodeStream(mContentResolver.openInputStream(byMedia));
+                fail();
+            } catch (IOException expected) {
+            }
+            try {
+                BitmapFactory.decodeStream(mContentResolver.openInputStream(byAlbum));
+                fail();
+            } catch (IOException expected) {
             }
 
         } finally {
             path.delete();
-            if (uri != null) {
-                mContentResolver.delete(uri, null, null);
-            }
         }
     }
 }

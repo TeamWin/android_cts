@@ -28,6 +28,7 @@
         <option name="test-file-name" value="EmbmsMiddlewareCtsTestApp.apk"/>
         <option name="test-file-name" value="TestSmsApp22.apk"/>
         <option name="test-file-name" value="TestSmsApp.apk"/>
+        <option name="test-file-name" value="TestSmsRetrieverApp.apk"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telephony.cts" />

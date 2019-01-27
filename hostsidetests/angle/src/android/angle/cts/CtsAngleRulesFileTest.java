@@ -67,8 +67,10 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         CtsAngleCommon.clearSettings(getDevice());
 
-        // Enable checking the rules file
-        CtsAngleCommon.setProperty(getDevice(), CtsAngleCommon.PROPERTY_ENABLE_RULES_FILE, "1");
+        // Application must be whitelisted to load temp rules
+        getDevice().setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_WHITELIST,
+            CtsAngleCommon.ANGLE_DRIVER_TEST_PKG + "," +
+            CtsAngleCommon.ANGLE_DRIVER_TEST_SEC_PKG);
     }
 
     @After

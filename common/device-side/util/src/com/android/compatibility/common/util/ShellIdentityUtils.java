@@ -41,6 +41,20 @@ public class ShellIdentityUtils {
     }
 
     /**
+     * Utility interface to invoke a method against the target object.
+     *
+     * @param <U> the type of the object against which the method is invoked.
+     */
+    public interface ShellPermissionMethodHelperNoReturn<U> {
+        /**
+         * Invokes the method against the target object.
+         *
+         * @param targetObject the object against which the method should be invoked.
+         */
+        void callMethod(U targetObject);
+    }
+
+    /**
      * Invokes the specified method on the targetObject as the shell user. The method can be invoked
      * as follows:
      *
@@ -54,6 +68,25 @@ public class ShellIdentityUtils {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             return methodHelper.callMethod(targetObject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Invokes the specified method on the targetObject as the shell user. The method can be invoked
+     * as follows:
+     *
+     * {@code ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+     *        (tm) -> tm.getDeviceId());}
+     */
+    public static <U> void invokeMethodWithShellPermissionsNoReturn(
+            U targetObject, ShellPermissionMethodHelperNoReturn<U> methodHelper) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            methodHelper.callMethod(targetObject);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }

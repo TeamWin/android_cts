@@ -418,7 +418,16 @@ void SurfaceTransaction_reparent(JNIEnv* /*env*/, jclass, jlong surfaceControl,
             reinterpret_cast<ASurfaceControl*>(newParentSurfaceControl));
 }
 
-const std::array<JNINativeMethod, 19> JNI_METHODS = {{
+void SurfaceTransaction_setColor(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                 jlong surfaceTransaction, jfloat r,
+                                 jfloat g, jfloat b, jfloat alpha) {
+    ASurfaceTransaction_setColor(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+            reinterpret_cast<ASurfaceControl*>(surfaceControl),
+            r, g, b, alpha, ADATASPACE_UNKNOWN);
+}
+
+const std::array<JNINativeMethod, 20> JNI_METHODS = {{
     {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
     {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
     {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
@@ -441,6 +450,7 @@ const std::array<JNINativeMethod, 19> JNI_METHODS = {{
                                             (void*)SurfaceTransaction_setDesiredPresentTime},
     {"nSurfaceTransaction_setBufferAlpha", "(JJD)V", (void*)SurfaceTransaction_setBufferAlpha},
     {"nSurfaceTransaction_reparent", "(JJJ)V", (void*)SurfaceTransaction_reparent},
+    {"nSurfaceTransaction_setColor", "(JJFFFF)V", (void*)SurfaceTransaction_setColor},
 }};
 
 }  // anonymous namespace

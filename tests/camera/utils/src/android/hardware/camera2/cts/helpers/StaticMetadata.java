@@ -2427,6 +2427,13 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if active physical camera Id metadata is supported.
+     */
+    public boolean isActivePhysicalCameraIdSupported() {
+        return areKeysAvailable(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return

@@ -141,11 +141,9 @@ final class Assertions {
     public static ViewNode assertViewWithUnknownParentAppeared(
             @NonNull List<ContentCaptureEvent> events, int index, @NonNull View expectedView,
             @Nullable String expectedText) {
-        final ContentCaptureEvent event = getEvent(events, index);
-        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
-                .isEqualTo(TYPE_VIEW_APPEARED);
-        final ViewNode node = event.getViewNode();
-        assertThat(node).isNotNull();
+        final ViewNode node = assertViewAppeared(events, index);
+        final ContentCaptureEvent event = events.get(index);
+
         assertWithMessage("invalid time on %s (%s)", event, index).that(event.getEventTime())
                 .isAtLeast(MY_EPOCH);
         assertWithMessage("wrong class on %s (%s)", event, index).that(node.getClassName())
@@ -158,6 +156,19 @@ final class Assertions {
                     .isEqualTo(expectedText);
         }
         // TODO(b/119638958): test more fields, like resource id
+        return node;
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
+     */
+    public static ViewNode assertViewAppeared(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        final ContentCaptureEvent event = getEvent(events, index);
+        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
+                .isEqualTo(TYPE_VIEW_APPEARED);
+        final ViewNode node = event.getViewNode();
+        assertThat(node).isNotNull();
         return node;
     }
 

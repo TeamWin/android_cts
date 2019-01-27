@@ -22,8 +22,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 
 import android.graphics.ColorSpace;
 import android.support.test.filters.SmallTest;
@@ -70,9 +68,6 @@ public class ColorSpaceTest {
     private static final float[] SRGB_WHITE_POINT_XYZ = { 0.950456f, 1.000f, 1.089058f };
 
     private static final DoubleUnaryOperator sIdentity = DoubleUnaryOperator.identity();
-
-    @Rule
-    public ExpectedException mExpectedException = ExpectedException.none();
 
     @Test
     public void testNamedColorSpaces() {
@@ -617,31 +612,6 @@ public class ColorSpaceTest {
     }
 
     @Test
-    public void testSinglePointAdaptation() {
-        float[] illumD65xyY = Arrays.copyOf(ColorSpace.ILLUMINANT_D65,
-                ColorSpace.ILLUMINANT_D65.length);
-        float[] illumD50xyY = Arrays.copyOf(ColorSpace.ILLUMINANT_D50,
-                ColorSpace.ILLUMINANT_D50.length);
-
-        final float[] catXyz = ColorSpace.chromaticAdaptation(ColorSpace.Adaptation.BRADFORD,
-                illumD65xyY, illumD50xyY);
-
-        // Ensure the original arguments were not modified
-        assertArrayEquals(illumD65xyY, ColorSpace.ILLUMINANT_D65, 0);
-        assertArrayEquals(illumD50xyY, ColorSpace.ILLUMINANT_D50, 0);
-
-        // Verify results. This reference data has been cross-checked with
-        // http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-        final float[] illumD65ToIllumD50Xyz = {
-             1.0478525f,  0.0295722f, -0.0092367f,
-             0.0229074f,  0.9904668f,  0.0150463f,
-            -0.0501464f, -0.0170567f,  0.7520621f
-        };
-
-        assertArrayEquals(catXyz, illumD65ToIllumD50Xyz, 1e-7f);
-    }
-
-    @Test
     public void testImplicitSRGBConnector() {
         ColorSpace.Connector connector1 = ColorSpace.connect(
                 ColorSpace.get(ColorSpace.Named.DCI_P3));
@@ -815,19 +785,6 @@ public class ColorSpaceTest {
                         1 / 1.055, 0.055 / 1.055, 1 / 12.92, 0.04045, 2.4)));
     }
 
-    @Test
-    public void testCctToIlluminantdXyz() {
-        assertArrayEquals(ColorSpace.cctToIlluminantdXyz(5000),
-                xyYToXyz(ColorSpace.ILLUMINANT_D50), 0.01f);
-        assertArrayEquals(ColorSpace.cctToIlluminantdXyz(7500),
-                xyYToXyz(ColorSpace.ILLUMINANT_D75), 0.01f);
-    }
-
-    @Test
-    public void testCctToIlluminantdXyzErrors() {
-        mExpectedException.expect(IllegalArgumentException.class);
-        ColorSpace.cctToIlluminantdXyz(0);
-    }
 
     @SuppressWarnings("SameParameterValue")
     private static void assertArrayNotEquals(float[] a, float[] b, float eps) {
@@ -845,12 +802,4 @@ public class ColorSpaceTest {
             }
         }
     }
-
-    /**
-     * Convenience function copied from android.graphics.ColorSpace
-     */
-    private static float[] xyYToXyz(float[] xyY) {
-        return new float[] { xyY[0] / xyY[1], 1.0f, (1 - xyY[0] - xyY[1]) / xyY[1] };
-    }
-
 }

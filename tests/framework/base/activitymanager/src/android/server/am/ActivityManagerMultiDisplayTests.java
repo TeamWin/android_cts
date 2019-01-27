@@ -1546,7 +1546,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Test that the update of display metrics updates all its content.
      */
     @Test
-    @FlakyTest(bugId = 121105810)
     public void testDisplayResize() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.

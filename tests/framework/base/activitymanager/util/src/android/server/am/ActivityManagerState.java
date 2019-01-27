@@ -618,6 +618,10 @@ public class ActivityManagerState {
         return 0;
     }
 
+    public int getStackCounts() {
+        return mStacks.size();
+    }
+
     boolean pendingActivityContain(ComponentName activityName) {
         return mPendingActivities.contains(getActivityName(activityName));
     }
