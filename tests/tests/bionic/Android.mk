@@ -28,7 +28,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES += \
 
 LOCAL_STATIC_LIBRARIES += \
     libbase \
-    libpagemap \
+    libmeminfo \
     libziparchive \
     libtinyxml2 \
     liblog \
