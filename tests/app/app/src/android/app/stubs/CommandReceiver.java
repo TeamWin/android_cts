@@ -37,6 +37,8 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_UNBIND_SERVICE = 2;
     public static final int COMMAND_START_FOREGROUND_SERVICE = 3;
     public static final int COMMAND_STOP_FOREGROUND_SERVICE = 4;
+    public static final int COMMAND_START_FOREGROUND_SERVICE_LOCATION = 5;
+    public static final int COMMAND_STOP_FOREGROUND_SERVICE_LOCATION = 6;
 
     public static final String EXTRA_COMMAND = "android.app.stubs.extra.COMMAND";
     public static final String EXTRA_TARGET_PACKAGE = "android.app.stubs.extra.TARGET_PACKAGE";
@@ -64,10 +66,16 @@ public class CommandReceiver extends BroadcastReceiver {
                 doUnbindService(context, intent);
                 break;
             case COMMAND_START_FOREGROUND_SERVICE:
-                doStartForegroundService(context);
+                doStartForegroundService(context, LocalForegroundService.class);
                 break;
             case COMMAND_STOP_FOREGROUND_SERVICE:
-                doStopForegroundService(context);
+                doStopForegroundService(context, LocalForegroundService.class);
+                break;
+            case COMMAND_START_FOREGROUND_SERVICE_LOCATION:
+                doStartForegroundService(context, LocalForegroundServiceLocation.class);
+                break;
+            case COMMAND_STOP_FOREGROUND_SERVICE_LOCATION:
+                doStopForegroundService(context, LocalForegroundServiceLocation.class);
                 break;
         }
     }
@@ -94,15 +102,15 @@ public class CommandReceiver extends BroadcastReceiver {
         context.unbindService(sServiceMap.remove(targetPackage));
     }
 
-    private void doStartForegroundService(Context context) {
-        Intent fgsIntent = new Intent(context, LocalForegroundService.class);
+    private void doStartForegroundService(Context context, Class cls) {
+        Intent fgsIntent = new Intent(context, cls);
         int command = LocalForegroundService.COMMAND_START_FOREGROUND;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
         context.startForegroundService(fgsIntent);
     }
 
-    private void doStopForegroundService(Context context) {
-        Intent fgsIntent = new Intent(context, LocalForegroundService.class);
+    private void doStopForegroundService(Context context, Class cls) {
+        Intent fgsIntent = new Intent(context, cls);
         context.stopService(fgsIntent);
     }
 

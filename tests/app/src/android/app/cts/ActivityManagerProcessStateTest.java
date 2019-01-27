@@ -1569,6 +1569,56 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
+    /**
+     * Test process states for foreground service with and without location type in the manifest.
+     * When running a foreground service with location type, the process should go to
+     * PROCESS_STATE_FOREGROUND_SERVICE_LOCATION.
+     * @throws Exception
+     */
+    public void testFgsLocation() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+
+        try {
+            // First start a foreground service
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // Try to elevate to foreground service location
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE_LOCATION);
+
+            // Back down to foreground service
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            try {
+                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                        WatchUidRunner.STATE_CACHED_EMPTY);
+                fail("App1 should not be demoted to cached");
+            } catch (IllegalStateException ise) {
+            }
+
+            // Remove foreground service as well
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+        } finally {
+            uid1Watcher.finish();
+        }
+    }
+
     private final <T extends Activity> Activity startSubActivity(Class<T> activityClass) {
         final Instrumentation.ActivityResult result = new Instrumentation.ActivityResult(
                 0, new Intent());
