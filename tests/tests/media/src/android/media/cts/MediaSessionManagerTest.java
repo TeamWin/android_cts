@@ -274,22 +274,15 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
-    public void testGetSession2Tokens() throws Exception {
+    public void testGetSession2Tokens() {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
 
-        Session2TokenListener listener = new Session2TokenListener();
-        mSessionManager.addOnSession2TokensChangedListener(listener, handler);
-
-        Session2Callback sessionCallback = new Session2Callback();
+        MediaSession2.SessionCallback sessionCallback = new MediaSession2.SessionCallback() {};
         try (MediaSession2 session = new MediaSession2.Builder(context)
                 .setSessionCallback(new HandlerExecutor(handler.getLooper()), sessionCallback)
                 .build()) {
-            assertTrue(sessionCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-            assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-
             Session2Token currentToken = session.getSessionToken();
-            assertTrue(listContainsToken(listener.mTokens, currentToken));
             assertTrue(listContainsToken(mSessionManager.getSession2Tokens(), currentToken));
         }
     }
@@ -301,7 +294,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         Session2TokenListener listener1 = new Session2TokenListener();
         mSessionManager.addOnSession2TokensChangedListener(listener1, handler);
 
-        Session2Callback sessionCallback = new Session2Callback();
+        MediaSession2.SessionCallback sessionCallback = new MediaSession2.SessionCallback() {};
         try (MediaSession2 session = new MediaSession2.Builder(context)
                 .setSessionCallback(new HandlerExecutor(handler.getLooper()), sessionCallback)
                 .build()) {
@@ -326,7 +319,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
         MediaSession2 session = new MediaSession2.Builder(context)
                 .setSessionCallback(new HandlerExecutor(createHandler().getLooper()),
-                        new Session2Callback())
+                        new MediaSession2.SessionCallback() {})
                 .build();
         session.close();
         Session2Token destroyedToken = session.getSessionToken();
@@ -344,7 +337,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
         MediaSession2 session = new MediaSession2.Builder(context)
                 .setSessionCallback(new HandlerExecutor(createHandler().getLooper()),
-                        new Session2Callback())
+                        new MediaSession2.SessionCallback() {})
                 .build();
         Session2Token liveToken = session.getSessionToken();
 
@@ -441,21 +434,6 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             mCallers.add(mSession.getCurrentControllerInfo());
             mCountDownLatch.countDown();
             return true;
-        }
-    }
-
-    private class Session2Callback extends MediaSession2.SessionCallback {
-        private CountDownLatch mCountDownLatch;
-
-        private Session2Callback() {
-            mCountDownLatch = new CountDownLatch(1);
-        }
-
-        @Override
-        public Session2CommandGroup onConnect(MediaSession2 session,
-                MediaSession2.ControllerInfo controller) {
-            mCountDownLatch.countDown();
-            return new Session2CommandGroup.Builder().build();
         }
     }
 
