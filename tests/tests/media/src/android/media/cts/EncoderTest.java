@@ -107,6 +107,24 @@ public class EncoderTest extends AndroidTestCase {
         testEncoderWithFormats(MediaFormat.MIMETYPE_AUDIO_AMR_WB, formats);
     }
 
+    public void testOpusEncoders() {
+        LinkedList<MediaFormat> formats = new LinkedList<MediaFormat>();
+
+        final int kBitRates[] =
+            { 6600, 8850, 12650, 14250, 15850, 18250, 19850, 23050, 23850 };
+
+        for (int j = 0; j < kBitRates.length; ++j) {
+            MediaFormat format  = new MediaFormat();
+            format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_OPUS);
+            format.setInteger(MediaFormat.KEY_SAMPLE_RATE, 16000);
+            format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+            format.setInteger(MediaFormat.KEY_BIT_RATE, kBitRates[j]);
+            formats.push(format);
+        }
+
+        testEncoderWithFormats(MediaFormat.MIMETYPE_AUDIO_OPUS, formats);
+    }
+
     public void testAACEncoders() {
         LinkedList<MediaFormat> formats = new LinkedList<MediaFormat>();
 
