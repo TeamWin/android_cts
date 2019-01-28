@@ -44,6 +44,7 @@ import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -539,10 +540,12 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         boolean enabled = mWifiManager.isWifiEnabled();
         try {
             // assert wifimanager can toggle wifi from current sate
-            assertTrue(mWifiManager.setWifiEnabled(!enabled));
+            SystemUtil.runShellCommand("svc wifi " + (!enabled ? "enable" : "disable"));
+            Thread.sleep(5_000); // wait for the toggle to take effect.
+            assertEquals(!enabled, mWifiManager.isWifiEnabled());
 
         } finally {
-            mWifiManager.setWifiEnabled(enabled);
+            SystemUtil.runShellCommand("svc wifi " + (enabled ? "enable" : "disable"));
         }
     }
 
