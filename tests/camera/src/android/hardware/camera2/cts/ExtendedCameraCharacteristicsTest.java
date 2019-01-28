@@ -1363,6 +1363,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
             Rect activeArray = c.get(
                 CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            float jpegAspectRatioThreshold = .01f;
+            boolean jpegSizeMatch = false;
 
             // Verify pre-correction array encloses active array
             mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
@@ -1392,6 +1394,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         hasDepth16);
                 if (hasDepth16) {
                     Size[] depthSizes = configs.getOutputSizes(ImageFormat.DEPTH16);
+                    Size[] jpegSizes = configs.getOutputSizes(ImageFormat.JPEG);
                     mCollector.expectTrue("Supports DEPTH_OUTPUT but no sizes for DEPTH16 supported!",
                             depthSizes != null && depthSizes.length > 0);
                     if (depthSizes != null) {
@@ -1408,6 +1411,24 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                             mCollector.expectTrue("Non-negative stall duration for depth size "
                                     + depthSize + " expected, got " + stallDuration,
                                     stallDuration >= 0);
+                            if ((jpegSizes != null) && (!jpegSizeMatch)) {
+                                for (Size jpegSize : jpegSizes) {
+                                    if (jpegSize.equals(depthSize)) {
+                                        jpegSizeMatch = true;
+                                        break;
+                                    } else {
+                                        float depthAR = (float) depthSize.getWidth() /
+                                                (float) depthSize.getHeight();
+                                        float jpegAR = (float) jpegSize.getWidth() /
+                                                (float) jpegSize.getHeight();
+                                        if (Math.abs(depthAR - jpegAR) <=
+                                                jpegAspectRatioThreshold) {
+                                            jpegSizeMatch = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1446,6 +1467,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                     mCollector.expectTrue("Supports DEPTH_JPEG " +
                             "but no sizes for DEPTH_JPEG supported!",
                             depthJpegSizes != null && depthJpegSizes.length > 0);
+                    mCollector.expectTrue("Supports DEPTH_JPEG but there are no JPEG sizes with" +
+                            " matching DEPTH16 aspect ratio", jpegSizeMatch);
                     if (depthJpegSizes != null) {
                         for (Size depthJpegSize : depthJpegSizes) {
                             mCollector.expectTrue("All depth jpeg sizes must be nonzero",
@@ -1462,6 +1485,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                                     stallDuration >= 0);
                         }
                     }
+                } else {
+                    boolean canSupportDynamicDepth = jpegSizeMatch && !depthIsExclusive;
+                    mCollector.expectTrue("Device must support DEPTH_JPEG, please check whether " +
+                            "library libdepthphoto.so is part of the device PRODUCT_PACKAGES",
+                            !canSupportDynamicDepth);
                 }
 
 
