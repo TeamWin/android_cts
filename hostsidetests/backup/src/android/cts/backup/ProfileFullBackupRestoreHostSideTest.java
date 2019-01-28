@@ -32,12 +32,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
-    private static final String TEST_APK = "CtsProfileFullBackupApp.apk";
-    private static final String TEST_FULL_BACKUP_PACKAGE =
-            "android.cts.backup.profilefullbackupapp";
-    private static final String DEVICE_TEST_NAME =
-            TEST_FULL_BACKUP_PACKAGE + ".ProfileFullBackupRestoreTest";
-
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
     private int mProfileUserId;
@@ -59,16 +53,16 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
         mTransport = switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
 
         // Setup test package.
-        installPackageAsUser(TEST_APK, true, mProfileUserId);
-        clearPackageDataAsUser(TEST_FULL_BACKUP_PACKAGE, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, true, mProfileUserId);
+        clearPackageDataAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
     }
 
     /** Uninstall the test package and remove the profile. */
     @After
     @Override
     public void tearDown() throws Exception {
-        clearBackupDataInTransportForUser(TEST_FULL_BACKUP_PACKAGE, mTransport, mProfileUserId);
-        uninstallPackageAsUser(TEST_FULL_BACKUP_PACKAGE, mProfileUserId);
+        clearBackupDataInTransportForUser(FULL_BACKUP_TEST_PACKAGE, mTransport, mProfileUserId);
+        uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
         mDevice.removeUser(mProfileUserId);
         super.tearDown();
     }
@@ -89,12 +83,12 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
         checkDeviceTest("assertFilesDontExist");
         checkDeviceTest("writeFilesAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(TEST_FULL_BACKUP_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
 
         checkDeviceTest("clearFilesAndAssertSuccess");
 
         mBackupUtils.restoreAndAssertSuccessForUser(
-                BackupUtils.LOCAL_TRANSPORT_TOKEN, TEST_FULL_BACKUP_PACKAGE, mProfileUserId);
+                BackupUtils.LOCAL_TRANSPORT_TOKEN, FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
 
         checkDeviceTest("assertFilesRestored");
     }
@@ -115,19 +109,19 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
         checkDeviceTest("assertFilesDontExist");
         checkDeviceTest("writeFilesAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(TEST_FULL_BACKUP_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
 
         checkDeviceTest("clearFilesAndAssertSuccess");
 
-        uninstallPackageAsUser(TEST_FULL_BACKUP_PACKAGE, mProfileUserId);
+        uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
 
-        installPackageAsUser(TEST_APK, true, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, true, mProfileUserId);
 
         checkDeviceTest("assertFilesRestored");
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
         checkDeviceTestAsUser(
-                TEST_FULL_BACKUP_PACKAGE, DEVICE_TEST_NAME, methodName, mProfileUserId);
+                FULL_BACKUP_TEST_PACKAGE, FULL_BACKUP_DEVICE_TEST_NAME, methodName, mProfileUserId);
     }
 }

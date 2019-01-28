@@ -32,11 +32,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
-    private static final String TEST_APK = "CtsProfileKeyValueApp.apk";
-    private static final String TEST_PACKAGE = "android.cts.backup.profilekeyvalueapp";
-    private static final String DEVICE_TEST_NAME =
-            TEST_PACKAGE + ".ProfileKeyValueBackupRestoreTest";
-
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
     private int mProfileUserId;
@@ -58,16 +53,16 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         mTransport = switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
 
         // Setup test package.
-        installPackageAsUser(TEST_APK, true, mProfileUserId);
-        clearPackageDataAsUser(TEST_PACKAGE, mProfileUserId);
+        installPackageAsUser(KEY_VALUE_APK, true, mProfileUserId);
+        clearPackageDataAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
     }
 
     /** Uninstall the test package and remove the profile. */
     @After
     @Override
     public void tearDown() throws Exception {
-        clearBackupDataInTransportForUser(TEST_PACKAGE, mTransport, mProfileUserId);
-        uninstallPackageAsUser(TEST_PACKAGE, mProfileUserId);
+        clearBackupDataInTransportForUser(KEY_VALUE_TEST_PACKAGE, mTransport, mProfileUserId);
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
         mDevice.removeUser(mProfileUserId);
         super.tearDown();
     }
@@ -88,16 +83,17 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         checkDeviceTest("assertSharedPrefsIsEmpty");
         checkDeviceTest("writeSharedPrefsAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(TEST_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
 
-        uninstallPackageAsUser(TEST_PACKAGE, mProfileUserId);
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
 
-        installPackageAsUser(TEST_APK, true, mProfileUserId);
+        installPackageAsUser(KEY_VALUE_APK, true, mProfileUserId);
 
         checkDeviceTest("assertSharedPrefsRestored");
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
-        checkDeviceTestAsUser(TEST_PACKAGE, DEVICE_TEST_NAME, methodName, mProfileUserId);
+        checkDeviceTestAsUser(
+                KEY_VALUE_TEST_PACKAGE, KEY_VALUE_DEVICE_TEST_NAME, methodName, mProfileUserId);
     }
 }

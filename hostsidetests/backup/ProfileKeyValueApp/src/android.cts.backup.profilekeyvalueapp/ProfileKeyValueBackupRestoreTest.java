@@ -20,6 +20,7 @@ import static android.support.test.InstrumentationRegistry.getTargetContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.platform.test.annotations.AppModeFull;
@@ -29,7 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/** Device side test invoked by ProfileKeyValueBackupRestoreHostSideTest. */
+/** Device side test invoked by profile host side tests. */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class ProfileKeyValueBackupRestoreTest {
@@ -37,14 +38,15 @@ public class ProfileKeyValueBackupRestoreTest {
     private static final String PREFS_USER_KEY = "userId";
     private static final int PREFS_USER_DEFAULT = -1000;
 
+    private Context mContext;
     private int mUserId;
     private SharedPreferences mPreferences;
 
     @Before
     public void setUp() {
-        Context context = getTargetContext();
-        mUserId = context.getUserId();
-        mPreferences = context.getSharedPreferences(TEST_PREFS_NAME, Context.MODE_PRIVATE);
+        mContext = getTargetContext();
+        mUserId = mContext.getUserId();
+        mPreferences = mContext.getSharedPreferences(TEST_PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     @Test
@@ -64,5 +66,11 @@ public class ProfileKeyValueBackupRestoreTest {
     public void assertSharedPrefsRestored() {
         int userIdPref = mPreferences.getInt(PREFS_USER_KEY, PREFS_USER_DEFAULT);
         assertThat(userIdPref).isEqualTo(mUserId);
+    }
+
+    @Test
+    public void callDataChanged() {
+        BackupManager backupManager = new BackupManager(mContext);
+        backupManager.dataChanged();
     }
 }
