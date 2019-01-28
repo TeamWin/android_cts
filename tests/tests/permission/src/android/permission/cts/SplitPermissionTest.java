@@ -27,6 +27,11 @@ import static android.app.AppOpsManager.permissionToOp;
 import static android.app.AppOpsManager.permissionToOpCode;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.permission.cts.PermissionUtils.getAppOp;
+import static android.permission.cts.PermissionUtils.grantPermission;
+import static android.permission.cts.PermissionUtils.isGranted;
+import static android.permission.cts.PermissionUtils.setAppOp;
+import static android.permission.cts.PermissionUtils.uninstallApp;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -85,89 +90,6 @@ public class SplitPermissionTest {
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
     private static final String LOG_TAG = SplitPermissionTest.class.getSimpleName();
-
-    /**
-     * Get the state of an app-op.
-     *
-     * @param packageName The package the app-op belongs to
-     * @param permission The permission the app-op belongs to
-     *
-     * @return The mode the op is on
-     */
-    private int getAppOp(@NonNull String packageName, @NonNull String permission)
-            throws Exception {
-        return callWithShellPermissionIdentity(
-                () -> sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
-                        permissionToOp(permission),
-                        sContext.getPackageManager().getPackageUid(packageName, 0), packageName));
-    }
-
-    /**
-     * Set a new state for an app-op
-     *
-     * @param packageName The package the app-op belongs to
-     * @param permission The permission the app-op belongs to
-     * @param mode The new mode
-     */
-    private void setAppOp(@NonNull String packageName, @NonNull String permission,
-            int mode){
-        runWithShellPermissionIdentity(() -> sContext.getSystemService(AppOpsManager.class).setMode(
-                        permissionToOpCode(permission),
-                        sContext.getPackageManager().getPackageUid(packageName, 0), packageName,
-                        mode));
-    }
-
-    /**
-     * Checks if a permission is granted for a package.
-     *
-     * <p>This correctly handles pre-M apps by checking the app-ops instead.
-     * <p>This also correctly handles the location background permission, but does not handle any
-     * other background permission
-     *
-     * @param packageName The package that might have the permission granted
-     * @param permission The permission that might be granted
-     *
-     * @return {@code true} iff the permission is granted
-     */
-    private boolean isGranted(@NonNull String packageName, @NonNull String permission)
-            throws Exception {
-        if (sContext.getPackageManager().checkPermission(permission, packageName)
-                == PERMISSION_DENIED) {
-            return false;
-        }
-
-        if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
-            // The app-op for background location is encoded into the mode of the foreground
-            // location
-            return getAppOp(packageName, ACCESS_COARSE_LOCATION) == MODE_ALLOWED;
-        } else {
-            return getAppOp(packageName, permission) != MODE_IGNORED;
-        }
-    }
-
-    /**
-     * Grant a permission to an app.
-     *
-     * <p>This correctly handles pre-M apps by setting the app-ops.
-     * <p>This also correctly handles the location background permission, but does not handle any
-     * other background permission
-     *
-     * @param packageName The app that should have the permission granted
-     * @param permission The permission to grant
-     */
-    private void grantPermission(String packageName, String permission) throws Exception {
-        sUiAutomation.grantRuntimePermission(packageName, permission);
-
-        if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
-            // The app-op for background location is encoded into the mode of the foreground
-            // location
-            if (isGranted(packageName, ACCESS_COARSE_LOCATION)) {
-                setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
-            }
-        } else {
-            setAppOp(packageName, permission, MODE_ALLOWED);
-        }
-    }
 
     /**
      * Revoke a permission from an app.
@@ -250,12 +172,12 @@ public class SplitPermissionTest {
      * @param apkFile The apk to install
      */
     public void install(@NonNull String apkFile) {
-        runShellCommand("pm install -r --force-sdk " + apkFile);
+        PermissionUtils.install(apkFile);
     }
 
     @After
     public void uninstallTestApp() {
-        runShellCommand("pm uninstall " + APP_PKG);
+        uninstallApp(APP_PKG);
     }
 
     /**
