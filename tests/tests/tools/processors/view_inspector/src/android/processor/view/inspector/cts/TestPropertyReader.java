@@ -21,6 +21,7 @@ import android.util.SparseArray;
 import android.view.inspector.PropertyReader;
 
 import java.util.Objects;
+import java.util.Set;
 
 
 class TestPropertyReader implements PropertyReader {
@@ -31,12 +32,16 @@ class TestPropertyReader implements PropertyReader {
         mPropertyMapper = Objects.requireNonNull(propertyMapper);
     }
 
-    Object get(int id) {
-        return mProperties.get(id);
-    }
-
     Object get(String name) {
         return mProperties.get(mPropertyMapper.getId(name));
+    }
+
+    String getIntEnum(String name) {
+        return mPropertyMapper.getIntEnumMapping(name).get((Integer) get(name));
+    }
+
+    Set<String> getIntFlag(String name) {
+        return mPropertyMapper.getIntFlagMapping(name).get((Integer) get(name));
     }
 
     @Override
