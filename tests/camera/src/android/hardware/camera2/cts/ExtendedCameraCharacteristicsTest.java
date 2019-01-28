@@ -279,7 +279,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             // Handle FullHD special case first
             if (jpegSizesList.contains(FULLHD)) {
-                if (hwLevel >= LEVEL_3 || hwLevel == FULL || (hwLevel == LIMITED &&
+                if (compareHardwareLevel(hwLevel, LEVEL_3) >= 0 || hwLevel == FULL ||
+                        (hwLevel == LIMITED &&
                         maxVideoSize.getWidth() >= FULLHD.getWidth() &&
                         maxVideoSize.getHeight() >= FULLHD.getHeight())) {
                     boolean yuvSupportFullHD = yuvSizesList.contains(FULLHD) ||
@@ -314,7 +315,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 jpegSizesList.removeAll(toBeRemoved);
             }
 
-            if (hwLevel >= LEVEL_3 || hwLevel == FULL || hwLevel == LIMITED) {
+            if (compareHardwareLevel(hwLevel, LEVEL_3) >= 0 || hwLevel == FULL ||
+                    hwLevel == LIMITED) {
                 if (!yuvSizesList.containsAll(jpegSizesList)) {
                     for (Size s : jpegSizesList) {
                         if (!yuvSizesList.contains(s)) {
