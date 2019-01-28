@@ -17,9 +17,9 @@
 package android.hardware.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.graphics.PixelFormat;
 import android.hardware.HardwareBuffer;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -109,5 +109,15 @@ public class HardwareBufferTest {
         assertEquals(1, buffer.getLayers());
         assertEquals(HardwareBuffer.USAGE_CPU_READ_RARELY, buffer.getUsage());
         nativeReleaseHardwareBuffer(buffer);
+    }
+
+    @Test
+    public void testIsSupported() {
+        assertTrue(HardwareBuffer.isSupported(1, 1, HardwareBuffer.RGBA_8888,
+                1, HardwareBuffer.USAGE_CPU_READ_RARELY));
+        assertTrue(HardwareBuffer.isSupported(1, 1, HardwareBuffer.RGBA_8888,
+                1, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE));
+        assertFalse(HardwareBuffer.isSupported(1, 1, HardwareBuffer.BLOB,
+                1, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT));
     }
 }
