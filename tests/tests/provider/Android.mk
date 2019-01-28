@@ -48,6 +48,4 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_PACKAGE_NAME := CtsProviderTestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
-LOCAL_MIN_SDK_VERSION := 21
-
 include $(BUILD_CTS_PACKAGE)

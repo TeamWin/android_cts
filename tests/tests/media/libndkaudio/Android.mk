@@ -57,6 +57,5 @@ LOCAL_SRC_FILES := $(call all-subdir-java-files)
 LOCAL_CERTIFICATE := platform
 
 LOCAL_SDK_VERSION := current
-LOCAL_MIN_SDK_VERSION := 23
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
