@@ -64,6 +64,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -109,7 +110,10 @@ public class DisplayCutoutTests {
     @Test
     public void testDisplayCutout_shortEdges_portrait() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, (a, insets, displayCutout, which) -> {
-            // common assertions in runTest are enough.
+            if (which == ROOT) {
+                assertThat("Display.getCutout() must equal view root cutout",
+                        a.getDisplay().getCutout(), equalTo(displayCutout));
+            }
         });
     }
 
