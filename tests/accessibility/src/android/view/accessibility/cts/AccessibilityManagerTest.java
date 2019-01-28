@@ -37,6 +37,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -380,6 +381,7 @@ public class AccessibilityManagerTest {
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
     }
 
+    @AppModeFull
     @Test
     public void testGetRecommendedTimeoutMillis() throws Exception {
         ServiceControlUtils.enableSpeakingAndVibratingServices(sInstrumentation);
@@ -410,6 +412,7 @@ public class AccessibilityManagerTest {
         }
     }
 
+    @AppModeFull
     @Test
     public void performShortcut_withoutPermission_fails() {
         UiAutomation uiAutomation = sInstrumentation.getUiAutomation(
@@ -429,6 +432,7 @@ public class AccessibilityManagerTest {
         assertTrue(TextUtils.isEmpty(getEnabledServices(mTargetContext.getContentResolver())));
     }
 
+    @AppModeFull
     @Test
     public void performShortcut_withPermission_succeeds() {
         UiAutomation uiAutomation = sInstrumentation.getUiAutomation(
