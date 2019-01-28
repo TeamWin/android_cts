@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.storage.StorageManager;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
@@ -40,6 +41,8 @@ import java.util.List;
 public class AvailableIntentsTest extends AndroidTestCase {
     private static final String NORMAL_URL = "http://www.google.com/";
     private static final String SECURE_URL = "https://www.google.com/";
+    private static final String QRCODE= "DPP:I:SN=4774LH2b4044;M:010203040506;K:MDkwEwYHKoZIzj" +
+            "0CAQYIKoZIzj0DAQcDIgADURzxmttZoIRIPWGoQMV00XHWCAQIhXruVWOz0NjlkIA=;;";
 
     /**
      * Assert target intent can be handled by at least one Activity.
@@ -389,5 +392,15 @@ public class AvailableIntentsTest extends AndroidTestCase {
 
     public void testPowerUsageSummarySettings() {
         assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
+    }
+
+    public void testEasyConnectIntent() {
+        WifiManager manager = mContext.getSystemService(WifiManager.class);
+
+        if (manager.isEasyConnectSupported()) {
+            Intent intent = new Intent(Settings.ACTION_PROCESS_WIFI_EASY_CONNECT_QR_CODE);
+            intent.putExtra(Settings.EXTRA_QR_CODE, QRCODE);
+            assertCanBeHandled(intent);
+        }
     }
 }
