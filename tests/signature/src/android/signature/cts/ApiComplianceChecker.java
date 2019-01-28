@@ -131,6 +131,13 @@ public class ApiComplianceChecker extends AbstractApiChecker {
         }
         if (classDescription.isEnumType() && runtimeClass.isEnum()) {
             reflectionModifiers &= ~CLASS_MODIFIER_ENUM;
+
+            // Most enums are marked as final, however enums that have one or more constants that
+            // override a method from the class cannot be marked as final because those constants
+            // are represented as a subclass. As enum classes cannot be extended (except for its own
+            // constants) there is no benefit in checking final modifier so just ignore them.
+            reflectionModifiers &= ~Modifier.FINAL;
+            apiModifiers &= ~Modifier.FINAL;
         }
 
         if ((reflectionModifiers == apiModifiers)
@@ -480,7 +487,7 @@ public class ApiComplianceChecker extends AbstractApiChecker {
         }
 
         String reason;
-        if ((reason = areMethodsModifiedCompatible(
+        if ((reason = areMethodsModifierCompatible(
                 classDescription, methodDescription, method)) != null) {
             resultObserver.notifyFailure(FailureType.MISMATCH_METHOD,
                     methodDescription.toReadableString(classDescription.getAbsoluteClassName()),
@@ -493,14 +500,14 @@ public class ApiComplianceChecker extends AbstractApiChecker {
      * Checks to ensure that the modifiers value for two methods are compatible.
      *
      * Allowable differences are:
-     *   - the native modified is ignored
+     *   - the native modifier is ignored
      *
      * @param classDescription a description of a class in an API.
      * @param apiMethod the method read from the api file.
      * @param reflectedMethod the method found via reflection.
      * @return null if the method modifiers are compatible otherwise the reason why not.
      */
-    private static String areMethodsModifiedCompatible(
+    private static String areMethodsModifierCompatible(
             JDiffClassDescription classDescription,
             JDiffClassDescription.JDiffMethod apiMethod,
             Method reflectedMethod) {
