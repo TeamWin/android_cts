@@ -28,9 +28,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
-import android.media.MediaScanner;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
@@ -122,10 +120,19 @@ public class MediaStoreTest {
     public void testContributedMedia() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(StorageManager.hasIsolatedStorage());
+        Assume.assumeTrue(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 android.Manifest.permission.CLEAR_APP_USER_DATA,
                 android.Manifest.permission.PACKAGE_USAGE_STATS);
+
+        // Start by cleaning up contributed items
+        MediaStore.deleteContributedMedia(getContext(), getContext().getPackageName(),
+                android.os.Process.myUserHandle());
+
+        // Force sync to try updating other views
+        ProviderTestUtils.executeShellCommand("sync");
+        SystemClock.sleep(500);
 
         // Measure usage before
         final long beforePackage = getExternalPackageSize();
@@ -143,18 +150,19 @@ public class MediaStoreTest {
         final Uri inside;
         final Uri outside;
         final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "cts" + System.nanoTime());
+                "cts" + System.nanoTime() + ".jpg");
         ProviderTestUtils.stageFile(R.raw.volantis, file);
-        try (MediaScanner scanner = new MediaScanner(getContext(), mVolumeName)) {
-            inside = scanner.scanSingleFile(file.getAbsolutePath(), "image/jpeg");
-        }
+        inside = ProviderTestUtils.scanFile(file);
         outside = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
-        SystemClock.sleep(500);
 
         {
             final HashSet<Long> visible = getVisibleIds(mExternalImages);
             assertTrue(visible.contains(ContentUris.parseId(inside)));
             assertTrue(visible.contains(ContentUris.parseId(outside)));
+
+            // Force sync to try updating other views
+            ProviderTestUtils.executeShellCommand("sync");
+            SystemClock.sleep(500);
 
             final long afterPackage = getExternalPackageSize();
             final long afterTotal = getExternalTotalSize();
@@ -169,11 +177,14 @@ public class MediaStoreTest {
         // Delete only contributed items
         MediaStore.deleteContributedMedia(getContext(), getContext().getPackageName(),
                 android.os.Process.myUserHandle());
-        SystemClock.sleep(500);
         {
             final HashSet<Long> visible = getVisibleIds(mExternalImages);
             assertTrue(visible.contains(ContentUris.parseId(inside)));
             assertFalse(visible.contains(ContentUris.parseId(outside)));
+
+            // Force sync to try updating other views
+            ProviderTestUtils.executeShellCommand("sync");
+            SystemClock.sleep(500);
 
             final long afterPackage = getExternalPackageSize();
             final long afterTotal = getExternalTotalSize();
@@ -218,7 +229,7 @@ public class MediaStoreTest {
         final StorageManager storage = getContext().getSystemService(StorageManager.class);
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
 
-        final UUID externalUuid = storage.getUuidForPath(Environment.getExternalStorageDirectory());
+        final UUID externalUuid = storage.getUuidForPath(MediaStore.getVolumePath(mVolumeName));
         return stats.queryStatsForPackage(externalUuid, getContext().getPackageName(),
                 android.os.Process.myUserHandle()).getDataBytes();
     }
@@ -227,7 +238,7 @@ public class MediaStoreTest {
         final StorageManager storage = getContext().getSystemService(StorageManager.class);
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
 
-        final UUID externalUuid = storage.getUuidForPath(Environment.getExternalStorageDirectory());
+        final UUID externalUuid = storage.getUuidForPath(MediaStore.getVolumePath(mVolumeName));
         return stats.queryExternalStatsForUser(externalUuid, android.os.Process.myUserHandle())
                 .getTotalBytes();
     }

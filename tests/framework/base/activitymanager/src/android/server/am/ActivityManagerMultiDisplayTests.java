@@ -1493,14 +1493,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Destroy the display and check if activities are removed from system.
         }
 
-        mAmWmState.waitForWithAmState(
-                (state) -> !state.containsActivity(TEST_ACTIVITY)
-                        && !state.containsActivity(RESIZEABLE_ACTIVITY),
-                "Waiting for activity to be removed");
-        mAmWmState.waitForWithWmState(
-                (state) -> !state.containsWindow(getWindowName(TEST_ACTIVITY))
-                        && !state.containsWindow(getWindowName(RESIZEABLE_ACTIVITY)),
-                "Waiting for activity window to be gone");
+        mAmWmState.waitForActivityRemoved(TEST_ACTIVITY);
+        mAmWmState.waitForActivityRemoved(RESIZEABLE_ACTIVITY);
 
         // Check AM state.
         assertFalse("Activity from removed display must be destroyed",

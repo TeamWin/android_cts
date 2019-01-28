@@ -2354,11 +2354,35 @@
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".p2p.P2pClientWithConfig2gBandTestListActivity"
+                android:label="@string/p2p_join_go"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestListActivity"
+                android:label="@string/p2p_join_go"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity android:name=".p2p.P2pClientWithConfigTestActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".p2p.P2pClientWithConfig2gBandTestActivity"
+                android:label="@string/p2p_join_go"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestActivity"
+                android:label="@string/p2p_join_go"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity android:name=".p2p.GoWithConfigTestActivity"
+                android:label="@string/p2p_accept_client"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".p2p.GoWithConfig2gBandTestActivity"
+                android:label="@string/p2p_accept_client"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".p2p.GoWithConfigFixedFrequencyTestActivity"
                 android:label="@string/p2p_accept_client"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
 
