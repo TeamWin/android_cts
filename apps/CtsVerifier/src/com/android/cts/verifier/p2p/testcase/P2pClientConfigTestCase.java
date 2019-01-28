@@ -26,17 +26,49 @@ import com.android.cts.verifier.R;
  */
 public class P2pClientConfigTestCase extends ConnectReqTestCase {
 
+    private int mGroupOperatingBand = WifiP2pConfig.GROUP_OWNER_BAND_AUTO;
+    private int mGroupOperatingFrequency = 0;
+    private String mNetworkName = "DIRECT-XY-HELLO";
+
     public P2pClientConfigTestCase(Context context) {
         super(context);
+    }
+
+    public P2pClientConfigTestCase(Context context, int bandOrFrequency) {
+        super(context);
+        StringBuilder builder = new StringBuilder(mNetworkName);
+        switch(bandOrFrequency) {
+            case WifiP2pConfig.GROUP_OWNER_BAND_AUTO:
+                break;
+            case WifiP2pConfig.GROUP_OWNER_BAND_2GHZ:
+                builder.append("-2.4G");
+                mGroupOperatingBand = bandOrFrequency;
+                break;
+            case WifiP2pConfig.GROUP_OWNER_BAND_5GHZ:
+                builder.append("-5G");
+                mGroupOperatingBand = bandOrFrequency;
+                break;
+            default:
+                builder.append("-" + bandOrFrequency + "MHz");
+                mGroupOperatingFrequency = bandOrFrequency;
+        }
+        mNetworkName = builder.toString();
     }
 
     @Override
     protected boolean executeTest() throws InterruptedException {
 
-        WifiP2pConfig config = new WifiP2pConfig.Builder()
-                .setNetworkName("DIRECT-XY-HELLO")
-                .setPassphrase("DEADBEEF")
-                .build();
+        WifiP2pConfig.Builder b = new WifiP2pConfig.Builder()
+                .setNetworkName(mNetworkName)
+                .setPassphrase("DEADBEEF");
+
+        if (mGroupOperatingBand > 0) {
+            b.setGroupOperatingBand(mGroupOperatingBand);
+        } else if (mGroupOperatingFrequency > 0) {
+            b.setGroupOperatingFrequency(mGroupOperatingFrequency);
+        }
+
+        WifiP2pConfig config = b.build();
 
         return connectTest(config);
     }
@@ -50,6 +82,22 @@ public class P2pClientConfigTestCase extends ConnectReqTestCase {
 
     @Override
     public String getTestName() {
-        return "Join p2p group test (config)";
+        if (mGroupOperatingBand > 0) {
+            String bandName = "";
+            switch (mGroupOperatingBand) {
+                case WifiP2pConfig.GROUP_OWNER_BAND_2GHZ:
+                    bandName = "2.4G";
+                    break;
+                case WifiP2pConfig.GROUP_OWNER_BAND_5GHZ:
+                    bandName = "5G";
+                    break;
+            }
+            return "Join p2p group test (" + bandName + " config)";
+        } else if (mGroupOperatingFrequency > 0) {
+            String freqName = mGroupOperatingFrequency + " MHz";
+            return "Join p2p group test (" + freqName + " config)";
+        } else {
+            return "Join p2p group test (config)";
+        }
     }
 }

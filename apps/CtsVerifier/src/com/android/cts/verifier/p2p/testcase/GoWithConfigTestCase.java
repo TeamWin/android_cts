@@ -30,8 +30,33 @@ public class GoWithConfigTestCase extends TestCase {
 
     protected P2pBroadcastReceiverTest mReceiverTest;
 
+    private int mGroupOperatingBand = WifiP2pConfig.GROUP_OWNER_BAND_AUTO;
+    private int mGroupOperatingFrequency = 0;
+    private String mNetworkName = "DIRECT-XY-HELLO";
+
     public GoWithConfigTestCase(Context context) {
         super(context);
+    }
+
+    public GoWithConfigTestCase(Context context, int bandOrFrequency) {
+        super(context);
+        StringBuilder builder = new StringBuilder(mNetworkName);
+        switch(bandOrFrequency) {
+            case WifiP2pConfig.GROUP_OWNER_BAND_AUTO:
+                break;
+            case WifiP2pConfig.GROUP_OWNER_BAND_2GHZ:
+                builder.append("-2.4G");
+                mGroupOperatingBand = bandOrFrequency;
+                break;
+            case WifiP2pConfig.GROUP_OWNER_BAND_5GHZ:
+                builder.append("-5G");
+                mGroupOperatingBand = bandOrFrequency;
+                break;
+            default:
+                builder.append("-" + bandOrFrequency + "MHz");
+                mGroupOperatingFrequency = bandOrFrequency;
+        }
+        mNetworkName = builder.toString();
     }
 
     @Override
@@ -79,10 +104,15 @@ public class GoWithConfigTestCase extends TestCase {
         /*
          * Start up an autonomous group owner.
          */
-        WifiP2pConfig config = new WifiP2pConfig.Builder()
-                .setNetworkName("DIRECT-XY-HELLO")
-                .setPassphrase("DEADBEEF")
-                .build();
+        WifiP2pConfig.Builder b = new WifiP2pConfig.Builder()
+                .setNetworkName(mNetworkName)
+                .setPassphrase("DEADBEEF");
+        if (mGroupOperatingBand > 0) {
+            b.setGroupOperatingBand(mGroupOperatingBand);
+        } else if (mGroupOperatingFrequency > 0) {
+            b.setGroupOperatingFrequency(mGroupOperatingFrequency);
+        }
+        WifiP2pConfig config = b.build();
         mP2pMgr.createGroup(mChannel, config, listener);
         if (!listener.check(ActionListenerTest.SUCCESS, TIMEOUT)) {
             mReason = mContext.getString(R.string.p2p_ceate_group_error);
@@ -126,6 +156,12 @@ public class GoWithConfigTestCase extends TestCase {
 
     @Override
     public String getTestName() {
-        return "Accept client connection test";
+        String testName = "Accept client connection test";
+        if (mGroupOperatingBand > 0) {
+            testName += " with " + mGroupOperatingBand + "G band";
+        } else if (mGroupOperatingFrequency > 0) {
+            testName += " with " + mGroupOperatingFrequency + " MHz";
+        }
+        return testName;
     }
 }

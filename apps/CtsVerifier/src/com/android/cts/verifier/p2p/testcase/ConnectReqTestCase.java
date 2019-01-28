@@ -211,6 +211,7 @@ public abstract class ConnectReqTestCase extends ReqTestCase {
         /*
          * Check if the connection broadcast is received.
          */
+        notifyTestMsg(R.string.p2p_waiting_for_peer_to_connect);
         WifiP2pInfo p2pInfo = mReceiverTest.waitConnectionNotice(TIMEOUT_FOR_USER_ACTION);
         if (p2pInfo == null) {
             mReason = mContext.getString(R.string.p2p_connection_error);
@@ -229,15 +230,6 @@ public abstract class ConnectReqTestCase extends ReqTestCase {
                 return false;
             }
         } else {
-            mReason = mContext.getString(R.string.p2p_connection_error);
-            return false;
-        }
-
-        /*
-         * Wait until peer gets marked conencted.
-         */
-        notifyTestMsg(R.string.p2p_waiting_for_peer_to_connect);
-        if (mReceiverTest.waitPeerConnected(mTargetAddress, TIMEOUT) != true) {
             mReason = mContext.getString(R.string.p2p_connection_error);
             return false;
         }
