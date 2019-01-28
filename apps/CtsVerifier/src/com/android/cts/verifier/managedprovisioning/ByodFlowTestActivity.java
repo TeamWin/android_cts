@@ -27,8 +27,6 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Toast;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
@@ -80,12 +78,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mCrossProfileIntentFiltersTestFromPersonal;
     private DialogTestListItem mCrossProfileIntentFiltersTestFromWork;
     private DialogTestListItem mAppLinkingTest;
-    private DialogTestListItem mDisableNonMarketTest;
-    private DialogTestListItem mEnableNonMarketTest;
-    private DialogTestListItem mDisableNonMarketWorkProfileDeviceWideTest;
-    private DialogTestListItem mEnableNonMarketWorkProfileDeviceWideTest;
-    private DialogTestListItem mDisableNonMarketPrimaryUserDeviceWideTest;
-    private DialogTestListItem mEnableNonMarketPrimaryUserDeviceWideTest;
+    private TestListItem mNonMarketAppsTest;
     private DialogTestListItem mWorkNotificationBadgedTest;
     private DialogTestListItem mWorkStatusBarIconTest;
     private DialogTestListItem mWorkStatusBarToastTest;
@@ -140,13 +133,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         mByodFlowTestHelper.setup();
 
         mPrepareTestButton.setText(R.string.provisioning_byod_start);
-        mPrepareTestButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.provisionManagedProfile(ByodFlowTestActivity.this, mAdminReceiverComponent,
-                        REQUEST_MANAGED_PROVISIONING);
-            }
-        });
+        mPrepareTestButton.setOnClickListener(v -> Utils.provisionManagedProfile(
+                ByodFlowTestActivity.this, mAdminReceiverComponent,
+                REQUEST_MANAGED_PROVISIONING));
 
         // If we are started by managed provisioning (fresh managed provisioning after encryption
         // reboot), redirect the user back to the main test list. This is because the test result
@@ -293,49 +282,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 workStatusToast);
         */
 
-        mDisableNonMarketTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_nonmarket_deny,
-                "BYOD_DisableNonMarketTest",
-                R.string.provisioning_byod_nonmarket_deny_info,
-                new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
-                        .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, false));
-
-        mEnableNonMarketTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_nonmarket_allow,
-                "BYOD_EnableNonMarketTest",
-                R.string.provisioning_byod_nonmarket_allow_info,
-                new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
-                        .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true));
-
-        mDisableNonMarketWorkProfileDeviceWideTest = new DialogTestListItem(this,
-            R.string.provisioning_byod_nonmarket_deny_global,
-            "BYOD_DisableNonMarketDeviceWideTest",
-            R.string.provisioning_byod_nonmarket_deny_global_info,
-            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION)
-                .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, false));
-
-        mEnableNonMarketWorkProfileDeviceWideTest = new DialogTestListItem(this,
-            R.string.provisioning_byod_nonmarket_allow_global,
-            "BYOD_EnableNonMarketDeviceWideTest",
-            R.string.provisioning_byod_nonmarket_allow_global_info,
-            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION)
-                .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, true));
-
-        mDisableNonMarketPrimaryUserDeviceWideTest = new DialogTestListItem(this,
-            R.string.provisioning_byod_nonmarket_deny_global_primary,
-            "BYOD_DisableNonMarketPrimaryUserDeviceWideTest",
-            R.string.provisioning_byod_nonmarket_deny_global_primary_info,
-            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION)
-                    .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE,
-                            false));
-
-        mEnableNonMarketPrimaryUserDeviceWideTest = new DialogTestListItem(this,
-            R.string.provisioning_byod_nonmarket_allow_global_primary,
-            "BYOD_EnableNonMarketPrimaryUserDeviceWideTest",
-            R.string.provisioning_byod_nonmarket_allow_global_primary_info,
-            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION)
-                    .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE,
-                            true));
+        mNonMarketAppsTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_non_market_apps,
+                NonMarketAppsActivity.class.getName(),
+                new Intent(this, NonMarketAppsActivity.class), null);
 
         mProfileAccountVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_profile_visible,
@@ -539,13 +489,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         /* Disable due to b/33571176
         adapter.add(mAppLinkingTest);
         */
-        adapter.add(mDisableNonMarketTest);
-        adapter.add(mEnableNonMarketTest);
-        adapter.add(mDisableNonMarketWorkProfileDeviceWideTest);
-        adapter.add(mEnableNonMarketWorkProfileDeviceWideTest);
-        adapter.add(mDisableNonMarketPrimaryUserDeviceWideTest);
-        adapter.add(mEnableNonMarketPrimaryUserDeviceWideTest);
         adapter.add(mIntentFiltersTest);
+        adapter.add(mNonMarketAppsTest);
         adapter.add(mPermissionLockdownTest);
         adapter.add(mKeyguardDisabledFeaturesTest);
         adapter.add(mAuthenticationBoundKeyTest);
