@@ -29,6 +29,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsPermissionPolicyTest25
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 25
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
