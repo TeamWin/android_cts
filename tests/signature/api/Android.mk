@@ -50,26 +50,11 @@ $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   )\
 )
 
-LOCAL_JAVA_SDK_LIBRARIES := \
-        android.test.base \
-        android.test.mock \
-        android.test.runner \
-        com.android.future.usb.accessory \
-        com.android.location.provider \
-        com.android.mediadrm.signer \
-        com.android.media.remotedisplay \
-        com.android.media.tv.remoteprovider \
-        com.android.nfc_extras \
-        javax.obex \
-        org.apache.http.legacy
-
-$(foreach ver,28,\
+$(foreach ver,$(call int_range_list,28,$(PLATFORM_SDK_VERSION)),\
   $(foreach api_level,public system,\
-    $(foreach lib,$(LOCAL_JAVA_SDK_LIBRARIES),\
-      $(eval $(call build_xml_api_file,$(lib)-$(ver)-$(api_level).api,prebuilts/sdk/$(ver)/$(api_level)/api/$(lib).txt)))))
-
-LOCAL_JAVA_SDK_LIBRARIES :=
-
+    $(foreach lib,$(filter-out android,$(filter-out %removed,\
+      $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt))))),\
+        $(eval $(call build_xml_api_file,$(lib)-$(ver)-$(api_level).api,prebuilts/sdk/$(ver)/$(api_level)/api/$(lib).txt)))))
 
 # current apache-http-legacy minus current api, in text format.
 # =============================================================
