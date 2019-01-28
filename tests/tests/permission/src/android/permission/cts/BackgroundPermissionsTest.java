@@ -16,9 +16,16 @@
 
 package android.permission.cts;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.content.pm.PermissionInfo.PROTECTION_DANGEROUS;
+import static android.permission.cts.PermissionUtils.getAppOp;
+import static android.permission.cts.PermissionUtils.grantPermission;
+import static android.permission.cts.PermissionUtils.install;
+import static android.permission.cts.PermissionUtils.uninstallApp;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -30,8 +37,8 @@ import android.content.pm.PermissionInfo;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 import android.util.ArrayMap;
+import android.util.Log;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +46,15 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class BackgroundPermissionsTest {
     private static final String LOG_TAG = BackgroundPermissionsTest.class.getSimpleName();
+
+    /** The package name of all apps used in the test */
+    private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";
+
+    private static final String TMP_DIR = "/data/local/tmp/cts/permissions/";
+    private static final String APK_LOCATION_BACKGROUND_29 =
+            TMP_DIR + "CtsAppThatRequestsLocationAndBackgroundPermission29.apk";
+    private static final String APK_LOCATION_29v4 =
+            TMP_DIR + "CtsAppThatRequestsLocationPermission29v4.apk";
 
     @Test
     @AppModeFull(reason = "Instant apps cannot read properties of other packages")
@@ -74,6 +90,23 @@ public class BackgroundPermissionsTest {
                 assertTrue(potentialBackgroundPermissionsToGroup
                         .containsKey(backgroundPermissionName));
             }
+        }
+    }
+
+    /**
+     * If a bg permission is lost during an upgrade, the app-op should downgrade to foreground
+     */
+    @Test
+    public void appOpGetsDowngradedWhenBgPermIsNotRequestedAnymore() throws Exception {
+        install(APK_LOCATION_BACKGROUND_29);
+        try {
+            grantPermission(APP_PKG, ACCESS_COARSE_LOCATION);
+            install(APK_LOCATION_29v4);
+
+            assertThat(getAppOp(APP_PKG, ACCESS_COARSE_LOCATION)).named(
+                    "foreground app-op").isEqualTo(MODE_FOREGROUND);
+        } finally {
+            uninstallApp(APP_PKG);
         }
     }
 }
