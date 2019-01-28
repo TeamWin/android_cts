@@ -24,6 +24,8 @@ import android.net.wifi.WifiManager;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -61,6 +63,7 @@ public class WifiTest extends AndroidTestCase {
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         mWifiEnabled = mWifiManager.isWifiEnabled();
         if (!mWifiEnabled) {
+            SystemUtil.runShellCommand("svc wifi enable");
             mWifiManager.setWifiEnabled(true);
             awaitWifiEnabledState(true);
         }
@@ -69,7 +72,7 @@ public class WifiTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         if (!mWifiEnabled) {
-            mWifiManager.setWifiEnabled(false);
+            SystemUtil.runShellCommand("svc wifi disable");
             awaitWifiEnabledState(false);
         }
         super.tearDown();

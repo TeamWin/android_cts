@@ -377,28 +377,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
-    /**
-     * Verify that removing a managed profile will remove all networks owned by that profile.
-     */
-    public void testProfileWifiCleanup() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
-            return;
-        }
-        installAppAsUser(WIFI_CONFIG_CREATOR_APK, mProfileUserId);
-
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId);
-
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId);
-
-        // Now delete the user - should undo the effect of testAddWifiNetwork.
-        removeUser(mProfileUserId);
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
-                mParentUserId);
-    }
-
     public void testWifiMacAddress() throws Exception {
         if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
             return;
