@@ -142,6 +142,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testDynamicDepth() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.DEPTH_JPEG, /*repeating*/true,
+                        /*checkSession*/ true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
     public void testY8() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -918,7 +930,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     private void bufferFormatTestByCamera(int format, boolean repeating) throws Exception {
+        bufferFormatTestByCamera(format, repeating, /*checkSession*/ false);
+    }
 
+    private void bufferFormatTestByCamera(int format, boolean repeating, boolean checkSession)
+            throws Exception {
         Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
 
@@ -933,6 +949,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 // Create ImageReader.
                 mListener  = new SimpleImageListener();
                 createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mListener);
+
+                if (checkSession) {
+                    assertTrue("Camera capture session validation for format: " + format +
+                            " failed", checkImageReaderSessionConfiguration());
+                }
 
                 // Start capture.
                 CaptureRequest request = prepareCaptureRequest();
@@ -1152,6 +1173,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     mDebugFileNameBase);
             HardwareBuffer hwb = img.getHardwareBuffer();
             assertNotNull("Unable to retrieve the Image's HardwareBuffer", hwb);
+            if (format == ImageFormat.DEPTH_JPEG) {
+                byte [] dynamicDepthBuffer = CameraTestUtils.getDataFromImage(img);
+                assertTrue("Dynamic depth validation failed!",
+                        validateDynamicDepthNative(dynamicDepthBuffer));
+            }
             if (VERBOSE) Log.v(TAG, "finish validation of image " + numImageVerified);
             img.close();
             numImageVerified++;
@@ -1162,4 +1188,17 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         // take a while to return and there could be many images pending.
         mListener.closePendingImages();
     }
+
+    /** Load dynamic depth validation jni on initialization */
+    static {
+        System.loadLibrary("dynamic_depth");
+        System.loadLibrary("ctscamera2_jni");
+    }
+    /**
+     * Use the dynamic depth SDK to validate a dynamic depth file stored in the buffer.
+     *
+     * Returns false if the dynamic depth has validation errors. Validation warnings/errors
+     * will be printed to logcat.
+     */
+    private static native boolean validateDynamicDepthNative(byte[] dynamicDepthBuffer);
 }

@@ -1435,6 +1435,35 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         }
                     }
                 }
+                if (arrayContains(outputFormats, ImageFormat.DEPTH_JPEG)) {
+                    mCollector.expectTrue("Supports DEPTH_JPEG but has no DEPTH16 support!",
+                            hasDepth16);
+                    mCollector.expectTrue("Supports DEPTH_JPEG but DEPTH_IS_EXCLUSIVE is not " +
+                            "defined", depthIsExclusive != null);
+                    mCollector.expectTrue("Supports DEPTH_JPEG but DEPTH_IS_EXCLUSIVE is true",
+                            !depthIsExclusive.booleanValue());
+                    Size[] depthJpegSizes = configs.getOutputSizes(ImageFormat.DEPTH_JPEG);
+                    mCollector.expectTrue("Supports DEPTH_JPEG " +
+                            "but no sizes for DEPTH_JPEG supported!",
+                            depthJpegSizes != null && depthJpegSizes.length > 0);
+                    if (depthJpegSizes != null) {
+                        for (Size depthJpegSize : depthJpegSizes) {
+                            mCollector.expectTrue("All depth jpeg sizes must be nonzero",
+                                    depthJpegSize.getWidth() > 0 && depthJpegSize.getHeight() > 0);
+                            long minFrameDuration = configs.getOutputMinFrameDuration(
+                                    ImageFormat.DEPTH_JPEG, depthJpegSize);
+                            mCollector.expectTrue("Non-negative min frame duration for depth jpeg" +
+                                   " size " + depthJpegSize + " expected, got " + minFrameDuration,
+                                    minFrameDuration >= 0);
+                            long stallDuration = configs.getOutputStallDuration(
+                                    ImageFormat.DEPTH_JPEG, depthJpegSize);
+                            mCollector.expectTrue("Non-negative stall duration for depth jpeg size "
+                                    + depthJpegSize + " expected, got " + stallDuration,
+                                    stallDuration >= 0);
+                        }
+                    }
+                }
+
 
                 mCollector.expectTrue("Supports DEPTH_OUTPUT but DEPTH_IS_EXCLUSIVE is not defined",
                         depthIsExclusive != null);
