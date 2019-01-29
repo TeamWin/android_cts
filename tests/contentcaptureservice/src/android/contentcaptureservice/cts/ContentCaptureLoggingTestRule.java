@@ -54,7 +54,7 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
 
             @Override
             public void evaluate() throws Throwable {
-                // TODO(b/119638958): set verbose logging once ContentCapture supports it
+                // TODO(b/121044306): set verbose logging once ContentCapture supports it
                 final String testName = description.getDisplayName();
                 try {
                     base.evaluate();
@@ -62,7 +62,7 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
                     dump(testName, t);
                     throw t;
                 } finally {
-                    // TODO(b/119638958): recover logging level
+                    // TODO(b/121044306): recover logging level
                 }
             }
         };
@@ -80,7 +80,7 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
             Log.w(TAG, "ignoring exception: " + t);
             return;
         }
-        // TODO(b/119638958, b/120784831): should dump to a file (and integrate with tradefed)
+        // TODO(b/123540602, b/120784831): should dump to a file (and integrate with tradefed)
         // instead of outputting to log directly...
         Log.e(mTag, "Dumping after exception on " + testName, t);
         final String autofillDump = runShellCommand("dumpsys content_capture");

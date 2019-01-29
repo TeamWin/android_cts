@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-// TODO(b/119638958): if we don't move this service to a separate package, we need to handle the
+// TODO(b/123540602): if we don't move this service to a separate package, we need to handle the
 // onXXXX methods in a separate thread
 // Either way, we need to make sure its methods are thread safe
 
@@ -56,7 +56,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private static ServiceWatcher sServiceWatcher;
 
-    // TODO(b/119638958): reuse with allSessions
+    // TODO(b/123421324): reuse with allSessions
     /** Used by {@link #getOnlyFinishedSession()}. */
     private static ContentCaptureSessionId sFirstSessionId;
 
@@ -109,10 +109,10 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public static void resetStaticState() {
         sFirstSessionId = null;
         sExceptions.clear();
-        // TODO(b/119638958): should probably set sInstance to null as well, but first we would need
+        // TODO(b/123540602): should probably set sInstance to null as well, but first we would need
         // to make sure each test unbinds the service.
 
-        // TODO(b/119638958): each test should use a different service instance, but we need
+        // TODO(b/123540602): each test should use a different service instance, but we need
         // to provide onConnected() / onDisconnected() methods first and then change the infra so
         // we can wait for those
 
@@ -271,7 +271,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
      */
     @NonNull
     public Session getOnlyFinishedSession() throws InterruptedException {
-        // TODO(b/119638958): add some assertions to make sure There Can Be Only One!
+        // TODO(b/123421324): add some assertions to make sure There Can Be Only One!
         assertWithMessage("No session yet").that(sFirstSessionId).isNotNull();
         return getFinishedSession(sFirstSessionId);
     }
@@ -372,7 +372,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             Log.d(TAG, "finish(" + id  + "): order=" + destructionOrder);
         }
 
-        // TODO(b/119638958): currently we're only interested on all events, but eventually we
+        // TODO(b/123540602): currently we're only interested on all events, but eventually we
         // should track individual requests as well to make sure they're probably batch (it will
         // require adding a Settings to tune the buffer parameters.
         public List<ContentCaptureEvent> getEvents() {

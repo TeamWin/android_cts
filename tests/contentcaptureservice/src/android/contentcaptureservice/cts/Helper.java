@@ -58,7 +58,7 @@ final class Helper {
      */
     public static void setService(@NonNull String service) {
         Log.d(TAG, "Setting service to " + service);
-        // TODO(b/119638958): use @TestingAPI to get max duration constant
+        // TODO(b/123540602): use @TestingAPI to get max duration constant
         runShellCommand("cmd content_capture set temporary-service 0 " + service + " 12000");
     }
 
