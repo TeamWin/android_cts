@@ -349,7 +349,15 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         final UiObject2 buttonPanel = mDevice.findObject(buttonPanelSelector);
         final UiObject2 allowButton = buttonPanel.findObject(By.res("android:id/button1"));
         allowButton.click();
+        mDevice.waitForIdle();
 
+        // Granting the access by click "allow" in confirm dialog
+        final BySelector dialogButtonPanelSelector = By.pkg("com.android.documentsui")
+                .res("com.android.documentsui:id/buttonPanel");
+        mDevice.wait(Until.hasObject(dialogButtonPanelSelector), 30 * DateUtils.SECOND_IN_MILLIS);
+        final UiObject2 positiveButton = mDevice.findObject(dialogButtonPanelSelector)
+                .findObject(By.res("android:id/button1"));
+        positiveButton.click();
         mDevice.waitForIdle();
 
         // Check granting result and take persistent permission
