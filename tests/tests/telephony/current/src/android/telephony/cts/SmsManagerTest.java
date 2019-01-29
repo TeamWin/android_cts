@@ -16,6 +16,8 @@
 
 package android.telephony.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.equalTo;
@@ -36,6 +38,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.CursorWindow;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -44,6 +47,7 @@ import android.os.SystemClock;
 import android.provider.BlockedNumberContract;
 import android.provider.Settings;
 import android.provider.Telephony;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
@@ -94,6 +98,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
     public static final String MODERN_SMS_APP = "android.telephony.cts.sms";
     private static final String SMS_RETRIEVER_APP = "android.telephony.cts.smsretriever";
     private static final String SMS_RETRIEVER_ACTION = "CTS_SMS_RETRIEVER_ACTION";
+    private static final String FINANCIAL_SMS_APP = "android.telephony.cts.financialsms";
 
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
@@ -341,6 +346,57 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testGetSmsMessagesForFinancialAppPermissionNotRequested() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            getSmsManager().getSmsMessagesForFinancialApp(new Bundle(),
+                    getInstrumentation().getContext().getMainExecutor(),
+                    new SmsManager.FinancialSmsCallback() {
+                        public void onFinancialSmsMessages(CursorWindow msgs) {
+                            assertNull(msgs);
+                            latch.countDown();
+                    }});
+            assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+        } catch (Exception e) {
+            // do nothing
+        }
+    }
+
+    public void testGetSmsMessagesForFinancialAppPermissionRequestedNotGranted() throws Exception {
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(FINANCIAL_SMS_APP, FINANCIAL_SMS_APP + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+        Bundle bundle = callbackResult.get(500, TimeUnit.SECONDS);
+
+        assertThat(bundle.getString("class"), startsWith(FINANCIAL_SMS_APP));
+        assertThat(bundle.getInt("rowNum"), equalTo(-1));
+    }
+
+    public void testGetSmsMessagesForFinancialAppPermissionRequestedGranted() throws Exception {
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+        String ctsPackageName = getInstrumentation().getContext().getPackageName();
+
+        executeWithShellPermissionIdentity(() -> {
+            setModeForOps(FINANCIAL_SMS_APP,
+                    AppOpsManager.MODE_ALLOWED,
+                    AppOpsManager.OPSTR_SMS_FINANCIAL_TRANSACTIONS);
+            });
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(FINANCIAL_SMS_APP, FINANCIAL_SMS_APP + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+
+        Bundle bundle = callbackResult.get(500, TimeUnit.SECONDS);
+
+        assertThat(bundle.getString("class"), startsWith(FINANCIAL_SMS_APP));
+        assertThat(bundle.getInt("rowNum"), equalTo(-1));
+    }
 
     public void testSmsNotPersisted_failsWithoutCarrierPermissions() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {

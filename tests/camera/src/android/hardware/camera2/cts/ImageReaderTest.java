@@ -20,9 +20,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.HardwareBuffer;
@@ -134,6 +136,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
                 bufferFormatTestByCamera(ImageFormat.DEPTH_POINT_CLOUD, /*repeating*/true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    public void testDynamicDepth() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.DEPTH_JPEG, /*repeating*/true,
+                        /*checkSession*/ true);
             } finally {
                 closeDevice(id);
             }
@@ -625,6 +639,29 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    /** Tests that usage bits are preserved */
+    public void testUsageRespected() throws Exception {
+        ImageReader reader = ImageReader.newInstance(1, 1, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        Surface surface = reader.getSurface();
+        Canvas canvas = surface.lockHardwareCanvas();
+        canvas.drawColor(Color.RED);
+        surface.unlockCanvasAndPost(canvas);
+        Image image = null;
+        for (int i = 0; i < 100; i++) {
+            image = reader.acquireNextImage();
+            if (image != null) break;
+            Thread.sleep(10);
+        }
+        assertNotNull(image);
+        HardwareBuffer buffer = image.getHardwareBuffer();
+        assertNotNull(buffer);
+        // Mask off the upper vendor bits
+        int myBits = (int) (buffer.getUsage() & 0xFFFFFFF);
+        assertEquals(HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
+                myBits);
+    }
+
     /**
      * Convert a rectangular patch in a YUV image to an ARGB color array.
      *
@@ -893,7 +930,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     private void bufferFormatTestByCamera(int format, boolean repeating) throws Exception {
+        bufferFormatTestByCamera(format, repeating, /*checkSession*/ false);
+    }
 
+    private void bufferFormatTestByCamera(int format, boolean repeating, boolean checkSession)
+            throws Exception {
         Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
 
@@ -908,6 +949,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 // Create ImageReader.
                 mListener  = new SimpleImageListener();
                 createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mListener);
+
+                if (checkSession) {
+                    assertTrue("Camera capture session validation for format: " + format +
+                            " failed", checkImageReaderSessionConfiguration());
+                }
 
                 // Start capture.
                 CaptureRequest request = prepareCaptureRequest();
@@ -1127,6 +1173,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     mDebugFileNameBase);
             HardwareBuffer hwb = img.getHardwareBuffer();
             assertNotNull("Unable to retrieve the Image's HardwareBuffer", hwb);
+            if (format == ImageFormat.DEPTH_JPEG) {
+                byte [] dynamicDepthBuffer = CameraTestUtils.getDataFromImage(img);
+                assertTrue("Dynamic depth validation failed!",
+                        validateDynamicDepthNative(dynamicDepthBuffer));
+            }
             if (VERBOSE) Log.v(TAG, "finish validation of image " + numImageVerified);
             img.close();
             numImageVerified++;
@@ -1137,4 +1188,17 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         // take a while to return and there could be many images pending.
         mListener.closePendingImages();
     }
+
+    /** Load dynamic depth validation jni on initialization */
+    static {
+        System.loadLibrary("dynamic_depth");
+        System.loadLibrary("ctscamera2_jni");
+    }
+    /**
+     * Use the dynamic depth SDK to validate a dynamic depth file stored in the buffer.
+     *
+     * Returns false if the dynamic depth has validation errors. Validation warnings/errors
+     * will be printed to logcat.
+     */
+    private static native boolean validateDynamicDepthNative(byte[] dynamicDepthBuffer);
 }

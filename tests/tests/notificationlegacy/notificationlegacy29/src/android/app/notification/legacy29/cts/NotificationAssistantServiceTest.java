@@ -193,7 +193,7 @@ public class NotificationAssistantServiceTest {
         ArrayList<Notification.Action> extraAction = new ArrayList<>();
         extraAction.add(sendAction);
         Bundle signals = new Bundle();
-        signals.putParcelableArrayList(Adjustment.KEY_SMART_ACTIONS, extraAction);
+        signals.putParcelableArrayList(Adjustment.KEY_CONTEXTUAL_ACTIONS, extraAction);
         Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
                 sbn.getUserId());
 
@@ -232,7 +232,7 @@ public class NotificationAssistantServiceTest {
         ArrayList<CharSequence> extraReply = new ArrayList<>();
         extraReply.add(smartReply);
         Bundle signals = new Bundle();
-        signals.putCharSequenceArrayList(Adjustment.KEY_SMART_REPLIES, extraReply);
+        signals.putCharSequenceArrayList(Adjustment.KEY_TEXT_REPLIES, extraReply);
         Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
                 sbn.getUserId());
 

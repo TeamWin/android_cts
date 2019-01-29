@@ -16,6 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     package="android.server.cts.am">
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
@@ -92,6 +93,11 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$CallbackTrackingActivity"/>
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$TranslucentCallbackTrackingActivity"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ShowWhenLockedCallbackTrackingActivity" />
+
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$LaunchForResultActivity"/>
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>
@@ -105,6 +111,13 @@
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$PipActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:supportsPictureInPicture="true"/>
+
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$AlwaysFocusablePipActivity"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:resizeableActivity="false"
+                  android:supportsPictureInPicture="true"
+                  androidprv:alwaysFocusable="true"
+                  android:exported="true"/>
 
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 

@@ -139,8 +139,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         pipActivity.finish();
 
         waitAndAssertActivityStates(state(pipActivity, ON_DESTROY));
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(), new ArrayList<>(),
-                "finishPip");
+        LifecycleVerifier.assertEmptySequence(FirstActivity.class, getLifecycleLog(), "finishPip");
         LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_STOP, ON_DESTROY), "finishPip");
     }
@@ -162,8 +161,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
                 false /* includeCallbacks */);
-        LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
-                new ArrayList<>(), "launchBelowPip");
+        LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
+                "launchBelowPip");
     }
 
     @Test
@@ -212,8 +211,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         firstActivity.finish();
         waitAndAssertActivityStates(state(firstActivity, ON_DESTROY));
         LifecycleVerifier.assertResumeToDestroySequence(FirstActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
-                new ArrayList<>(), "destroyBelowPip");
+        LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
+                "destroyBelowPip");
     }
 
     @Test
@@ -244,7 +243,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                         ON_RESUME, ON_PAUSE), "moveToSplitScreen");
         // TODO(b/123013403): will fail with callback tracking enabled - delivers extra
         // MULTI_WINDOW_MODE_CHANGED
-        LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(), new ArrayList<>(),
+        LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
                 "launchBelow");
 
         // Launch second activity to side
@@ -258,7 +257,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 false /* includeCallbacks */);
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "launchToSide");
-        LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(), new ArrayList<>(),
+        LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
                 "launchBelow");
     }
 
@@ -289,8 +288,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE),
                 "launchAndEnterPip");
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                new ArrayList<>(), "launchPipOnTop");
+        LifecycleVerifier.assertEmptySequence(FirstActivity.class, getLifecycleLog(),
+                "launchPipOnTop");
         final List<LifecycleLog.ActivityCallback> expectedSequence =
                 Arrays.asList(ON_PAUSE, ON_RESUME);
         final List<LifecycleLog.ActivityCallback> extraCycleSequence =

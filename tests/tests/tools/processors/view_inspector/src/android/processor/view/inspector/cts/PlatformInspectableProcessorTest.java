@@ -19,6 +19,7 @@ package android.processor.view.inspector.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.R;
@@ -28,6 +29,8 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.inspector.InspectableNodeName;
 import android.view.inspector.InspectableProperty;
+import android.view.inspector.InspectableProperty.EnumMap;
+import android.view.inspector.InspectableProperty.FlagMap;
 import android.view.inspector.InspectableProperty.ValueType;
 import android.view.inspector.InspectionCompanion;
 
@@ -38,8 +41,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Behavioral tests for {@link android.processor.view.inspector.PlatformInspectableProcessor}.
@@ -59,20 +65,20 @@ public class PlatformInspectableProcessorTest {
     }
 
     @InspectableNodeName("my_node")
-    class NodeNameInspectable {
+    class NodeNameTest {
     }
 
 
     @Test
     public void testNodeName() {
-        assertEquals("my_node", loadCompanion(NodeNameInspectable.class).getNodeName());
-        assertNull(loadCompanion(IntPropertyInspectable.class).getNodeName());
+        assertEquals("my_node", loadCompanion(NodeNameTest.class).getNodeName());
+        assertNull(loadCompanion(IntPropertyTest.class).getNodeName());
     }
 
-    class IntPropertyInspectable {
+    class IntPropertyTest {
         private final int mValue;
 
-        IntPropertyInspectable(Random seed) {
+        IntPropertyTest(Random seed) {
             mValue = seed.nextInt();
         }
 
@@ -84,27 +90,27 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testMapAndReadInt() {
-        IntPropertyInspectable inspectable = new IntPropertyInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getValue(), mPropertyReader.get("value"));
+        IntPropertyTest node = new IntPropertyTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getValue(), mPropertyReader.get("value"));
     }
 
     @Test
     public void testInferredAttributeId() {
-        loadCompanion(IntPropertyInspectable.class).mapProperties(mPropertyMapper);
+        loadCompanion(IntPropertyTest.class).mapProperties(mPropertyMapper);
         assertEquals(R.attr.value, mPropertyMapper.getAttributeId("value"));
     }
 
     @Test(expected = InspectionCompanion.UninitializedPropertyMapException.class)
     public void testUninitializedPropertyMap() {
-        IntPropertyInspectable inspectable = new IntPropertyInspectable(mRandom);
-        loadCompanion(IntPropertyInspectable.class).readProperties(inspectable, mPropertyReader);
+        IntPropertyTest node = new IntPropertyTest(mRandom);
+        loadCompanion(IntPropertyTest.class).readProperties(node, mPropertyReader);
     }
 
-    class NamedPropertyInspectable {
+    class NamedPropertyTest {
         private final int mValue;
 
-        NamedPropertyInspectable(Random seed) {
+        NamedPropertyTest(Random seed) {
             mValue = seed.nextInt();
         }
 
@@ -116,13 +122,13 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testNamedProperty() {
-        NamedPropertyInspectable inspectable = new NamedPropertyInspectable(mRandom);
-        mapAndRead(inspectable);
+        NamedPropertyTest node = new NamedPropertyTest(mRandom);
+        mapAndRead(node);
         assertEquals(0, mPropertyMapper.getId("value"));
-        assertEquals(inspectable.getValue(), mPropertyReader.get("myNamedValue"));
+        assertEquals(node.getValue(), mPropertyReader.get("myNamedValue"));
     }
 
-    class HasAttributeIdFalseInspectable {
+    class HasAttributeIdFalseTest {
         @InspectableProperty(hasAttributeId = false)
         public int getValue() {
             return 0;
@@ -131,11 +137,11 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testHasAttributeIdFalse() {
-        loadCompanion(HasAttributeIdFalseInspectable.class).mapProperties(mPropertyMapper);
+        loadCompanion(HasAttributeIdFalseTest.class).mapProperties(mPropertyMapper);
         assertEquals(Resources.ID_NULL, mPropertyMapper.getAttributeId("value"));
     }
 
-    class AttributeIdEqualsInspectable {
+    class AttributeIdEqualsTest {
         @InspectableProperty(attributeId = 0xdecafbad)
         public int getValue() {
             return 0;
@@ -144,16 +150,16 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testAttributeIdEquals() {
-        loadCompanion(AttributeIdEqualsInspectable.class).mapProperties(mPropertyMapper);
+        loadCompanion(AttributeIdEqualsTest.class).mapProperties(mPropertyMapper);
         assertEquals(0xdecafbad, mPropertyMapper.getAttributeId("value"));
     }
 
-    class InferredPropertyNameInspectable {
+    class InferredPropertyNameTest {
         private final int mValueA;
         private final int mValueB;
         private final int mValueC;
 
-        InferredPropertyNameInspectable(Random seed) {
+        InferredPropertyNameTest(Random seed) {
             mValueA = seed.nextInt();
             mValueB = seed.nextInt();
             mValueC = seed.nextInt();
@@ -177,19 +183,19 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testInferredPropertyName() {
-        InferredPropertyNameInspectable inspectable = new InferredPropertyNameInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getValueA(), mPropertyReader.get("valueA"));
-        assertEquals(inspectable.isValueB(), mPropertyReader.get("isValueB"));
-        assertEquals(inspectable.obtainValueC(), mPropertyReader.get("obtainValueC"));
+        InferredPropertyNameTest node = new InferredPropertyNameTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getValueA(), mPropertyReader.get("valueA"));
+        assertEquals(node.isValueB(), mPropertyReader.get("isValueB"));
+        assertEquals(node.obtainValueC(), mPropertyReader.get("obtainValueC"));
     }
 
-    class InferredBooleanNameInspectable {
+    class InferredBooleanNameTest {
         private final boolean mValueA;
         private final boolean mValueB;
         private final boolean mValueC;
 
-        InferredBooleanNameInspectable(Random seed) {
+        InferredBooleanNameTest(Random seed) {
             mValueA = seed.nextBoolean();
             mValueB = seed.nextBoolean();
             mValueC = seed.nextBoolean();
@@ -213,20 +219,20 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testInferredBooleanName() {
-        InferredBooleanNameInspectable inspectable = new InferredBooleanNameInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getValueA(), mPropertyReader.get("valueA"));
-        assertEquals(inspectable.isValueB(), mPropertyReader.get("valueB"));
-        assertEquals(inspectable.obtainValueC(), mPropertyReader.get("obtainValueC"));
+        InferredBooleanNameTest node = new InferredBooleanNameTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getValueA(), mPropertyReader.get("valueA"));
+        assertEquals(node.isValueB(), mPropertyReader.get("valueB"));
+        assertEquals(node.obtainValueC(), mPropertyReader.get("obtainValueC"));
     }
 
-    class ColorInspectable {
+    class ColorTest {
         private final int mColorInt;
         private final long mColorLong;
 
         private final Color mColorObject;
 
-        ColorInspectable(Random seed) {
+        ColorTest(Random seed) {
             mColorInt = seed.nextInt();
             mColorLong = Color.pack(seed.nextInt());
             mColorObject = Color.valueOf(seed.nextInt());
@@ -252,22 +258,22 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testColorTypeInference() {
-        ColorInspectable inspectable = new ColorInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getColorInt(), mPropertyReader.get("colorInt"));
-        assertEquals(inspectable.getColorLong(), mPropertyReader.get("colorLong"));
-        assertEquals(inspectable.getColorObject(), mPropertyReader.get("colorObject"));
+        ColorTest node = new ColorTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getColorInt(), mPropertyReader.get("colorInt"));
+        assertEquals(node.getColorLong(), mPropertyReader.get("colorLong"));
+        assertEquals(node.getColorObject(), mPropertyReader.get("colorObject"));
         assertEquals(ValueType.COLOR, mPropertyMapper.getValueType("colorInt"));
         assertEquals(ValueType.COLOR, mPropertyMapper.getValueType("colorLong"));
         assertEquals(ValueType.COLOR, mPropertyMapper.getValueType("colorObject"));
     }
 
-    class ValueTypeInspectable {
+    class ValueTypeTest {
         private final int mColor;
         private final int mGravity;
         private final int mValue;
 
-        ValueTypeInspectable(Random seed) {
+        ValueTypeTest(Random seed) {
             mColor = seed.nextInt();
             mGravity = seed.nextInt();
             mValue = seed.nextInt();
@@ -292,17 +298,17 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testValueTypeEquals() {
-        ValueTypeInspectable inspectable = new ValueTypeInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getColor(), mPropertyReader.get("color"));
-        assertEquals(inspectable.getGravity(), mPropertyReader.get("gravity"));
-        assertEquals(inspectable.getValue(), mPropertyReader.get("value"));
+        ValueTypeTest node = new ValueTypeTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getColor(), mPropertyReader.get("color"));
+        assertEquals(node.getGravity(), mPropertyReader.get("gravity"));
+        assertEquals(node.getValue(), mPropertyReader.get("value"));
         assertEquals(ValueType.COLOR, mPropertyMapper.getValueType("color"));
         assertEquals(ValueType.GRAVITY, mPropertyMapper.getValueType("gravity"));
         assertEquals(ValueType.NONE, mPropertyMapper.getValueType("value"));
     }
 
-    class PrimitivePropertiesInspectable {
+    class PrimitivePropertiesTest {
         private final boolean mBoolean;
         private final byte mByte;
         private final char mChar;
@@ -312,7 +318,7 @@ public class PlatformInspectableProcessorTest {
         private final long mLong;
         private final short mShort;
 
-        PrimitivePropertiesInspectable(Random seed) {
+        PrimitivePropertiesTest(Random seed) {
             mBoolean = seed.nextBoolean();
             mByte = (byte) seed.nextInt();
             mChar = randomLetter(seed);
@@ -366,22 +372,22 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testPrimitiveProperties() {
-        PrimitivePropertiesInspectable inspectable = new PrimitivePropertiesInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getBoolean(), mPropertyReader.get("boolean"));
-        assertEquals(inspectable.getByte(), mPropertyReader.get("byte"));
-        assertEquals(inspectable.getChar(), mPropertyReader.get("char"));
-        assertEquals(inspectable.getDouble(), mPropertyReader.get("double"));
-        assertEquals(inspectable.getFloat(), mPropertyReader.get("float"));
-        assertEquals(inspectable.getInt(), mPropertyReader.get("int"));
-        assertEquals(inspectable.getLong(), mPropertyReader.get("long"));
-        assertEquals(inspectable.getShort(), mPropertyReader.get("short"));
+        PrimitivePropertiesTest node = new PrimitivePropertiesTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getBoolean(), mPropertyReader.get("boolean"));
+        assertEquals(node.getByte(), mPropertyReader.get("byte"));
+        assertEquals(node.getChar(), mPropertyReader.get("char"));
+        assertEquals(node.getDouble(), mPropertyReader.get("double"));
+        assertEquals(node.getFloat(), mPropertyReader.get("float"));
+        assertEquals(node.getInt(), mPropertyReader.get("int"));
+        assertEquals(node.getLong(), mPropertyReader.get("long"));
+        assertEquals(node.getShort(), mPropertyReader.get("short"));
     }
 
-    class ObjectPropertiesInspectable {
+    class ObjectPropertiesTest {
         private final String mText;
 
-        ObjectPropertiesInspectable(Random seed) {
+        ObjectPropertiesTest(Random seed) {
             final StringBuilder stringBuilder = new StringBuilder();
             final int length = seed.nextInt(8) + 8;
 
@@ -405,18 +411,110 @@ public class PlatformInspectableProcessorTest {
 
     @Test
     public void testObjectProperties() {
-        ObjectPropertiesInspectable inspectable = new ObjectPropertiesInspectable(mRandom);
-        mapAndRead(inspectable);
-        assertEquals(inspectable.getText(), mPropertyReader.get("text"));
+        ObjectPropertiesTest node = new ObjectPropertiesTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.getText(), mPropertyReader.get("text"));
         assertNull(mPropertyReader.get("null"));
         assertNotEquals(0, mPropertyMapper.getId("null"));
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> void mapAndRead(T inspectable) {
-        InspectionCompanion<T> companion = loadCompanion((Class<T>) inspectable.getClass());
+    class IntEnumTest {
+        private int mValue;
+
+        @InspectableProperty(enumMapping = {
+                @EnumMap(name = "ONE", value = 1),
+                @EnumMap(name = "TWO", value = 2)})
+        public int getValue() {
+            return mValue;
+        }
+
+        public void setValue(int value) {
+            mValue = value;
+        }
+    }
+
+    @Test
+    public void testIntEnum() {
+        IntEnumTest node = new IntEnumTest();
+        InspectionCompanion<IntEnumTest> companion = loadCompanion(IntEnumTest.class);
         companion.mapProperties(mPropertyMapper);
-        companion.readProperties(inspectable, mPropertyReader);
+
+        node.setValue(1);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals("ONE", mPropertyReader.getIntEnum("value"));
+
+        node.setValue(2);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals("TWO", mPropertyReader.getIntEnum("value"));
+
+        node.setValue(3);
+        companion.readProperties(node, mPropertyReader);
+        assertNull(mPropertyReader.getIntEnum("value"));
+    }
+
+    class IntFlagTest {
+        private int mValue;
+
+        @InspectableProperty(flagMapping = {
+                @FlagMap(name = "ONE", target = 0x1, mask = 0x3),
+                @FlagMap(name = "TWO", target = 0x2, mask = 0x3),
+                @FlagMap(name = "THREE", target = 0x3, mask = 0x3),
+                @FlagMap(name = "FOUR", target = 0x4)})
+        public int getValue() {
+            return mValue;
+        }
+
+        public void setValue(int value) {
+            mValue = value;
+        }
+    }
+
+    @Test
+    public void testIntFlag() {
+        IntFlagTest node = new IntFlagTest();
+        InspectionCompanion<IntFlagTest> companion = loadCompanion(IntFlagTest.class);
+        companion.mapProperties(mPropertyMapper);
+
+        node.setValue(0);
+        companion.readProperties(node, mPropertyReader);
+        assertTrue(mPropertyReader.getIntFlag("value").isEmpty());
+
+        node.setValue(1);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals(setOf("ONE"), mPropertyReader.getIntFlag("value"));
+
+        node.setValue(2);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals(setOf("TWO"), mPropertyReader.getIntFlag("value"));
+
+        node.setValue(3);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals(setOf("THREE"), mPropertyReader.getIntFlag("value"));
+
+        node.setValue(4);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals(setOf("FOUR"), mPropertyReader.getIntFlag("value"));
+
+        node.setValue(5);
+        companion.readProperties(node, mPropertyReader);
+        assertEquals(setOf("FOUR", "ONE"), mPropertyReader.getIntFlag("value"));
+    }
+
+    private static <T> Set<T> setOf(T... items) {
+        Set<T> set = new HashSet<>(items.length);
+
+        for (T item : items) {
+            set.add(item);
+        }
+
+        return set;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void mapAndRead(T node) {
+        InspectionCompanion<T> companion = loadCompanion((Class<T>) node.getClass());
+        companion.mapProperties(mPropertyMapper);
+        companion.readProperties(node, mPropertyReader);
     }
 
     @SuppressWarnings("unchecked")

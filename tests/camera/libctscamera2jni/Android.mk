@@ -22,7 +22,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
 	native-camera-jni.cpp \
-	dng-validate-jni.cpp
+	dng-validate-jni.cpp \
+	dynamic-depth-validate-jni.cpp
 
 LOCAL_C_INCLUDES := \
 	$(JNI_H_INCLUDE) \
@@ -42,6 +43,7 @@ LOCAL_SHARED_LIBRARIES := libandroid \
     libcamera2ndk \
     libmediandk \
     libz \
+    libdl \
 
 # NDK build, shared C++ runtime
 LOCAL_SDK_VERSION := current

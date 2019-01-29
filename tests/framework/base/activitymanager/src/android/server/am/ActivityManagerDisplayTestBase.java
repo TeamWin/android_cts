@@ -69,7 +69,7 @@ import java.util.regex.Pattern;
  * @see ActivityManagerDisplayTests
  * @see ActivityManagerDisplayLockedKeyguardTests
  */
-class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
+public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
     static final int CUSTOM_DENSITY_DPI = 222;
     private static final int INVALID_DENSITY_DPI = -1;
@@ -122,7 +122,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         return result;
     }
 
-    static class ReportedDisplayMetrics {
+    public static class ReportedDisplayMetrics {
         private static final String WM_SIZE = "wm size";
         private static final String WM_DENSITY = "wm density";
         private static final Pattern PHYSICAL_SIZE =
@@ -143,10 +143,10 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         @Nullable
         final Integer overrideDensity;
 
-        /** Get physical and override display metrics from WM. */
-        static ReportedDisplayMetrics getDisplayMetrics() {
-            return new ReportedDisplayMetrics(
-                    executeShellCommand(WM_SIZE) + executeShellCommand(WM_DENSITY));
+        /** Get physical and override display metrics from WM for specified display. */
+        public static ReportedDisplayMetrics getDisplayMetrics(int displayId) {
+            return new ReportedDisplayMetrics(executeShellCommand(WM_SIZE + " -d " + displayId)
+                            + executeShellCommand(WM_DENSITY + " -d " + displayId));
         }
 
         void setDisplayMetrics(final Size size, final int density) {
@@ -176,7 +176,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
 
         /** Get display size that WM operates with. */
-        Size getSize() {
+        public Size getSize() {
             return overrideSize != null ? overrideSize : physicalSize;
         }
 
@@ -216,7 +216,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
-    protected class VirtualDisplaySession implements AutoCloseable {
+    public class VirtualDisplaySession implements AutoCloseable {
         private int mDensityDpi = CUSTOM_DENSITY_DPI;
         private boolean mLaunchInSplitScreen = false;
         private boolean mCanShowWithInsecureKeyguard = false;
@@ -273,7 +273,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        VirtualDisplaySession setSimulateDisplay(boolean simulateDisplay) {
+        public VirtualDisplaySession setSimulateDisplay(boolean simulateDisplay) {
             mSimulateDisplay = simulateDisplay;
             return this;
         }
@@ -289,7 +289,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Nullable
-        ActivityDisplay createDisplay() throws Exception {
+        public ActivityDisplay createDisplay() throws Exception {
             return createDisplays(1).stream().findFirst().orElse(null);
         }
 
@@ -525,7 +525,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Checks if the device supports multi-display. */
-    boolean supportsMultiDisplay() {
+    protected boolean supportsMultiDisplay() {
         return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 }

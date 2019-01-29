@@ -196,19 +196,19 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         installPackageAsUser(Ime1Constants.APK, true, primaryUserId, "-r");
 
         assertIme1ExistsInApiResult(primaryUserId);
-        assertIme1ExistsInApiResult(profileUserId);
+        assertIme1NotExistInApiResult(profileUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeExists(profileUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
         switchUser(secondaryUserId);
 
         assertIme1ExistsInApiResult(primaryUserId);
-        assertIme1ExistsInApiResult(profileUserId);
+        assertIme1NotExistInApiResult(profileUserId);
         assertIme1NotExistInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeExists(profileUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
     }
 
