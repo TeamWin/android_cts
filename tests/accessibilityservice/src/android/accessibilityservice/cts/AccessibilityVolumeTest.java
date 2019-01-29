@@ -71,7 +71,8 @@ public class AccessibilityVolumeTest {
             return;
         }
         final int startingVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY);
-        final int otherVolume = (startingVolume == 0) ? 1 : startingVolume - 1;
+        final int minVolume = mAudioManager.getStreamMinVolume(AudioManager.STREAM_ACCESSIBILITY);
+        final int otherVolume = (startingVolume == minVolume) ? (minVolume + 1) : startingVolume - 1;
         final InstrumentedAccessibilityService service = InstrumentedAccessibilityService
                 .enableService(mInstrumentation, InstrumentedAccessibilityService.class);
         try {
