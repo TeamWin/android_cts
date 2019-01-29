@@ -1191,7 +1191,6 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
     /** Load dynamic depth validation jni on initialization */
     static {
-        System.loadLibrary("dynamic_depth");
         System.loadLibrary("ctscamera2_jni");
     }
     /**

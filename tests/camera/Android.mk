@@ -82,12 +82,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 LOCAL_JNI_SHARED_LIBRARIES := \
 	libctscamera2_jni \
 	libnativehelper_compat_libc++ \
-	libdynamic_depth \
-	libimage_io \
-	libxml2 \
-	libandroidicu \
-	libbase \
-	libc++ \
 
 LOCAL_NDK_STL_VARIANT := c++_shared
 
