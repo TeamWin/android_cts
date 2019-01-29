@@ -19,6 +19,8 @@
 
     <uses-sdk android:minSdkVersion="22"/>
 
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
     <application>
         <uses-library android:name="android.test.runner" />
 
