@@ -43,6 +43,7 @@ import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiObject2;
 import android.view.inputmethod.InputMethodSubtype;
 
 import org.junit.Test;
@@ -217,7 +218,8 @@ public class InputMethodServiceDeviceTest {
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
-        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
+        final UiObject2 editText = helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME);
+        editText.click();
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
@@ -232,7 +234,7 @@ public class InputMethodServiceDeviceTest {
         helper.shell(ShellCommandUtils.uninstallPackage(Ime1Constants.PACKAGE));
 
         helper.shell(ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID));
-        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
+        editText.click();
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(imeForceStopTime))
                         .anyMatch(isFrom(Ime2Constants.CLASS).and(isType(ON_START_INPUT))),
