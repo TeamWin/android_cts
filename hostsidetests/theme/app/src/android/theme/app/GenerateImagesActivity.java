@@ -16,27 +16,20 @@
 
 package android.theme.app;
 
-import android.Manifest.permission;
+import static android.theme.app.TestConfiguration.THEMES;
+
 import android.app.Activity;
-import android.app.KeyguardManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.util.Log;
-import android.util.Pair;
 import android.view.WindowManager.LayoutParams;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Generates images by iterating through all themes and launching instances of
@@ -69,16 +62,9 @@ public class GenerateImagesActivity extends Activity {
         mOutputDir = setupOutputDirectory();
         if (mOutputDir == null) {
             finish("Failed to create output directory " + mOutputDir.getAbsolutePath(), false);
+        } else {
+            generateNextImage();
         }
-
-        // The activity has been created, but we don't want to start image generation until various
-        // asynchronous conditions are satisfied.
-        new ConditionCheck(this, () -> generateNextImage(), message -> finish(message, false))
-                .addCondition("Device is unlocked",
-                        () -> !getSystemService(KeyguardManager.class).isDeviceLocked())
-                .addCondition("Window is focused",
-                        () -> hasWindowFocus())
-                .start();
     }
 
     private File setupOutputDirectory() {
@@ -90,63 +76,6 @@ public class GenerateImagesActivity extends Activity {
             return mOutputDir;
         }
         return null;
-    }
-
-    /**
-     * Runnable that re-posts itself on a handler until either all of the conditions are satisfied
-     * or a retry threshold is exceeded.
-     */
-    class ConditionCheck implements Runnable {
-        private static final int MAX_RETRIES = 3;
-        private static final int RETRY_DELAY = 500;
-
-        private final Handler mHandler;
-        private final Runnable mOnSuccess;
-        private final Consumer<String> mOnFailure;
-        private final ArrayList<Pair<String, Supplier<Boolean>>> mConditions = new ArrayList<>();
-
-        private ArrayList<Pair<String, Supplier<Boolean>>> mRemainingConditions = new ArrayList<>();
-        private int mRemainingRetries;
-
-        ConditionCheck(Context context, Runnable onSuccess, Consumer<String> onFailure) {
-            mHandler = new Handler(context.getMainLooper());
-            mOnSuccess = onSuccess;
-            mOnFailure = onFailure;
-        }
-
-        public ConditionCheck addCondition(String summary, Supplier<Boolean> condition) {
-            mConditions.add(new Pair<>(summary, condition));
-            return this;
-        }
-
-        public void start() {
-            mRemainingConditions = new ArrayList<>(mConditions);
-            mRemainingRetries = 0;
-
-            mHandler.removeCallbacks(this);
-            mHandler.post(this);
-        }
-
-        public void cancel() {
-            mHandler.removeCallbacks(this);
-        }
-
-        @Override
-        public void run() {
-            mRemainingConditions.removeIf(condition -> condition.second.get());
-            if (mRemainingConditions.isEmpty()) {
-                mOnSuccess.run();
-            } else if (mRemainingRetries < MAX_RETRIES) {
-                mRemainingRetries++;
-                mHandler.removeCallbacks(this);
-                mHandler.postDelayed(this, RETRY_DELAY);
-            } else {
-                final StringBuffer buffer = new StringBuffer("Failed conditions:");
-                mRemainingConditions.forEach(condition ->
-                        buffer.append("\n").append(condition.first));
-                mOnFailure.accept(buffer.toString());
-            }
-        }
     }
 
     /**
@@ -167,8 +96,23 @@ public class GenerateImagesActivity extends Activity {
     /**
      * Starts the activity to generate the next image.
      */
-    private boolean generateNextImage() {
-        final ThemeDeviceActivity.Theme theme = ThemeDeviceActivity.THEMES[mCurrentTheme];
+    private void generateNextImage() {
+        // Keep trying themes until one works.
+        boolean success = false;
+        while (++mCurrentTheme < THEMES.length && !success) {
+            success = launchThemeDeviceActivity();
+        }
+
+        // If we ran out of themes, we're done.
+        if (!success) {
+            compressOutput();
+
+            finish("Image generation complete!", true);
+        }
+    }
+
+    private boolean launchThemeDeviceActivity() {
+        final ThemeInfo theme = THEMES[mCurrentTheme];
         if (theme.apiLevel > VERSION.SDK_INT) {
             Log.v(TAG, "Skipping theme \"" + theme.name
                     + "\" (requires API " + theme.apiLevel + ")");
@@ -193,18 +137,7 @@ public class GenerateImagesActivity extends Activity {
             return;
         }
 
-        // Keep trying themes until one works.
-        boolean success = false;
-        while (++mCurrentTheme < ThemeDeviceActivity.THEMES.length && !success) {
-            success = generateNextImage();
-        }
-
-        // If we ran out of themes, we're done.
-        if (!success) {
-            compressOutput();
-
-            finish("Image generation complete!", true);
-        }
+        generateNextImage();
     }
 
     private void compressOutput() {

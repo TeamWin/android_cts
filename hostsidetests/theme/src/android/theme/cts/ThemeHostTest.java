@@ -159,7 +159,7 @@ public class ThemeHostTest extends DeviceTestCase {
             return;
         }
 
-        assertTrue("Aborted image generation", generateDeviceImages());
+        assertTrue("Aborted image generation, see device log for details", generateDeviceImages());
 
         // Pull ZIP file from remote device.
         final File localZip = File.createTempFile("generated", ".zip");
