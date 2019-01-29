@@ -39,7 +39,6 @@ my_bionic_testlib_files := \
   libdlext_test_runpath_zip/libdlext_test_runpath_zip_zipaligned.zip \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
-  libelf-tls-library.so \
   libsysv-hash-table-library.so \
   libtest_atexit.so \
   libtest_check_order_dlsym.so \
@@ -75,6 +74,10 @@ my_bionic_testlib_files := \
   libtest_dlsym_from_this_grandchild.so \
   libtest_dlsym_weak_func.so \
   libtest_dt_runpath_d.so \
+  libtest_elftls_dynamic.so \
+  libtest_elftls_dynamic_filler_1.so \
+  libtest_elftls_dynamic_filler_2.so \
+  libtest_elftls_dynamic_filler_3.so \
   libtest_elftls_shared_var.so \
   libtest_elftls_shared_var_ie.so \
   libtest_elftls_tprel.so \
