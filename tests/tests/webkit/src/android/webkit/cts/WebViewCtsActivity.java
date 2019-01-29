@@ -19,6 +19,8 @@ package android.webkit.cts;
 import android.webkit.cts.R;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -38,6 +40,13 @@ public class WebViewCtsActivity extends Activity {
         } catch (Exception e) {
             NullWebViewUtils.determineIfWebViewAvailable(this, e);
         }
+    }
+
+    public boolean isMultiprocessMode() {
+        // Currently multiprocess is disabled on low RAM 32 bit devices.
+        return
+            Build.SUPPORTED_64_BIT_ABIS.length > 0 ||
+            !getSystemService(ActivityManager.class).isLowRamDevice();
     }
 
     public WebView getWebView() {
