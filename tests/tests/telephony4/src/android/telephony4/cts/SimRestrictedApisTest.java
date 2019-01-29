@@ -89,7 +89,8 @@ public class SimRestrictedApisTest extends AndroidTestCase {
     public void testIccOpenLogicalChannel() {
         try {
             if (isSimCardPresent()) {
-                mTelephonyManager.iccOpenLogicalChannel("");
+                mTelephonyManager.iccCloseLogicalChannel(
+                        mTelephonyManager.iccOpenLogicalChannel("").getChannel());
                 fail("Expected SecurityException. App doesn't have carrier privileges.");
             }
         } catch (SecurityException expected) {
