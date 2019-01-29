@@ -122,7 +122,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
             mActivity.mPassword.setText("PASS");
             mActivity.mCommit.performClick();
         });
-        final UiObject2 saveUi = mUiBot.assertUpdateShowing(SAVE_DATA_TYPE_GENERIC);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Save it...
         mUiBot.saveForAutofill(saveUi, true);
@@ -177,7 +177,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         input.setText("ID");
         password.setText("PASS");
         mUiBot.assertShownByRelativeId(ID_COMMIT).click();
-        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
 
         // ... and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -797,7 +797,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
             mActivity.mPassword.setText("PASS");
             mActivity.mCommit.performClick();
         });
-        final UiObject2 saveUi = mUiBot.assertUpdateShowing(SAVE_DATA_TYPE_GENERIC);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Save it...
         mUiBot.saveForAutofill(saveUi, true);
