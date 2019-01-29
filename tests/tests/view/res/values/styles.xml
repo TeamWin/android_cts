@@ -187,4 +187,26 @@
         <item name="android:windowContentTransitions">false</item>
         <item name="android:windowAnimationStyle">@null</item>
     </style>
+
+    <style name="ViewStyleTestTheme" parent="@android:Theme.Material">
+        <item name="android:buttonStyle">@style/MyButtonStyle</item>
+    </style>
+
+    <style name="MyButtonStyle" parent="@style/MyButtonStyleParent">
+        <item name="android:paddingTop">3dp</item>
+    </style>
+
+    <style name="MyButtonStyleParent">
+        <item name="android:textColor">#ff00ff</item>
+    </style>
+
+    <style name="ExplicitStyle1" parent="@style/ParentOfExplicitStyle1">
+        <item name="android:padding">1dp</item>
+    </style>
+
+    <style name="ParentOfExplicitStyle1">
+        <item name="android:paddingLeft">2dp</item>
+    </style>
+
+    <style name="ExplicitStyle2" />
 </resources>
