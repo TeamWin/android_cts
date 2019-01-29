@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -36,6 +37,7 @@ import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
 
 import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 /**
  */
@@ -62,6 +64,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
     }
 
     private TestResultObserver mResultObserver;
+    private boolean checkLibraryNames;
 
     ClassProvider classProvider;
 
@@ -83,7 +86,6 @@ public class AbstractApiTest extends InstrumentationTestCase {
                 name -> KNOWN_INACCESSIBLE_CLASSES.contains(name)
                         || (name != null && name.startsWith("com.android.internal.R.")));
 
-
         initializeFromArgs(instrumentationArgs);
     }
 
@@ -98,6 +100,10 @@ public class AbstractApiTest extends InstrumentationTestCase {
 
     protected interface RunnableWithTestResultObserver {
         void run(TestResultObserver observer) throws Exception;
+    }
+
+    protected void setCheckLibraryNames() {
+        checkLibraryNames = true;
     }
 
     void runWithTestResultObserver(RunnableWithTestResultObserver runnable) {
@@ -131,11 +137,32 @@ public class AbstractApiTest extends InstrumentationTestCase {
         return argument.split(",");
     }
 
-    static Stream<InputStream> readFile(File file) {
+    private Stream<String> getLibraries() {
+        try {
+            String result = runShellCommand(getInstrumentation(), "cmd package list libraries");
+            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1]);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean checkLibrary (String name) {
+        if (!checkLibraryNames) {
+            return true;
+        }
+
+        String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
+        if (getLibraries().filter(lib -> lib.equals(libraryName)).findAny().isPresent()) {
+            return true;
+        }
+        return false;
+    }
+
+    protected Stream<InputStream> readFile(File file) {
         try {
             if (file.getName().endsWith(".zip")) {
                 ZipFile zip = new ZipFile(file);
-                return zip.stream().map(entry -> {
+                return zip.stream().filter(entry -> checkLibrary(entry.getName())).map(entry -> {
                     try {
                         return zip.getInputStream(entry);
                     } catch (IOException e) {
@@ -149,7 +176,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
         }
     }
 
-    static Stream<JDiffClassDescription> parseApiFilesAsStream(
+    protected Stream<JDiffClassDescription> parseApiFilesAsStream(
             ApiDocumentParser apiDocumentParser, String[] apiFiles)
             throws XmlPullParserException, IOException {
         return Stream.of(apiFiles)
