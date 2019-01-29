@@ -40,9 +40,9 @@ public class DummyCrossProfileViewEventActivity extends Activity {
     public void onStart() {
         super.onStart();
         // Only set the text when managed profile is getting the
-        // ACTION_VIEW_WORK_CALENDAR_EVENT intent.
+        // ACTION_VIEW_MANAGED_PROFILE_CALENDAR_EVENT intent.
         final Intent intent = getIntent();
-        if (intent.getAction() == CalendarContract.ACTION_VIEW_WORK_CALENDAR_EVENT
+        if (intent.getAction() == CalendarContract.ACTION_VIEW_MANAGED_PROFILE_CALENDAR_EVENT
                 && isManagedProfile()) {
             TextView textView = findViewById(R.id.view_event_text);
             final Bundle bundle = getIntent().getExtras();
