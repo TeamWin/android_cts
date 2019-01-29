@@ -16,28 +16,31 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_JAVA_SDK_LIBRARIES := \
-        android.test.base \
-        android.test.mock \
-        android.test.runner \
-        com.android.future.usb.accessory \
-        com.android.location.provider \
-        com.android.mediadrm.signer \
-        com.android.media.remotedisplay \
-        com.android.media.tv.remoteprovider \
-        com.android.nfc_extras \
-        javax.obex \
-        org.apache.http.legacy
-
-$(foreach ver,28,\
+$(foreach ver,$(call int_range_list,28,$(PLATFORM_SDK_VERSION)),\
   $(foreach api_level,public system,\
-    $(foreach lib,$(LOCAL_JAVA_SDK_LIBRARIES),\
-      $(eval all_shared_libs_files += $(lib)-$(ver)-$(api_level).api))))
+    $(foreach lib,$(filter-out android,$(filter-out %removed,\
+      $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt))))),\
+        $(eval all_shared_libs_files += $(lib)-$(ver)-$(api_level).api))))
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-shared-libs-all.api
+LOCAL_MODULE_STEM := shared-libs-all.api.zip
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
+LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
+include $(BUILD_SYSTEM)/base_rules.mk
+$(LOCAL_BUILT_MODULE): $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_shared_libs_files))
+	@echo "Zip API files $^ -> $@"
+	@mkdir -p $(dir $@)
+	$(hide) rm -f $@
+	$(hide) zip -q $@ $^
+
+include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSharedLibsApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
+    shared-libs-all.api.zip \
     $(all_shared_libs_files)
 
 include $(LOCAL_PATH)/../build_signature_apk.mk

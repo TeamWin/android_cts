@@ -47,6 +47,11 @@ public class SignatureTest extends AbstractApiTest {
         expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
         baseApiFiles = getCommaSeparatedList(instrumentationArgs, "base-api-files");
         unexpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "unexpected-api-files");
+        String checkLibraryNames = instrumentationArgs.getString("check-library-names");
+
+        if (Boolean.valueOf(checkLibraryNames)) {
+            setCheckLibraryNames();
+        }
     }
 
     /**
