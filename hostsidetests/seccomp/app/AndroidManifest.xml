@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.seccomp.cts.app">
 
-    <application>
+    <application android:zygotePreloadName=".ZygotePreload">
         <uses-library android:name="android.test.runner" />
         <service
             android:name=".IsolatedService"

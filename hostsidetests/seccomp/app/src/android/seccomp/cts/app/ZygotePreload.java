@@ -16,13 +16,14 @@
 
 package android.seccomp.cts.app;
 
+import android.content.pm.ApplicationInfo;
 import android.os.Process;
 import android.util.Log;
 
-public class ZygotePreload {
+public class ZygotePreload implements android.app.ZygotePreload {
     static final String TAG = "SeccompDeviceTest";
 
-    static boolean sResult = false;
+    static volatile boolean sResult = false;
 
     static private boolean testSetResUidGidBlocked(int rid, int eid, int sid) {
         if (!SeccompDeviceTest.testSetresuidBlocked(rid, eid, sid)) {
@@ -71,7 +72,8 @@ public class ZygotePreload {
      *
      * This test enforces 2) is in place.
      */
-    static synchronized public void doPreload() {
+    @Override
+    synchronized public void doPreload(ApplicationInfo appInfo) {
         boolean result = true;
 
         // root uid
