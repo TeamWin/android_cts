@@ -30,6 +30,7 @@ import android.util.Log;
 
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<BlankActivity> {
@@ -75,14 +76,19 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         final BlankActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
-        assertThat(activity.getContentCaptureManager().getServiceComponentName())
-                .isEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+        try {
+            assertThat(activity.getContentCaptureManager().getServiceComponentName())
+                    .isEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
 
-        resetService();
-        service.waitUntilDisconnected();
+            resetService();
+            service.waitUntilDisconnected();
 
-        assertThat(activity.getContentCaptureManager().getServiceComponentName())
-                .isNotEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+            assertThat(activity.getContentCaptureManager().getServiceComponentName())
+                    .isNotEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+        } finally {
+            activity.finish();
+            watcher.waitFor(DESTROYED);
+        }
     }
 
     @Test
@@ -99,13 +105,56 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         activity.syncRunOnUiThread(
                 () -> ref.set(activity.getContentCaptureManager().getServiceComponentName()));
 
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
         assertThat(ref.get()).isEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+    }
 
-        resetService();
-        service.waitUntilDisconnected();
+    @Test
+    public void testIsContentCaptureFeatureEnabled_onUiThread() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        service.waitUntilConnected();
 
-        assertThat(activity.getContentCaptureManager().getServiceComponentName())
-                .isNotEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+        final ActivityWatcher watcher = startWatcher();
+
+        final BlankActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final AtomicBoolean ref = new AtomicBoolean();
+        activity.syncRunOnUiThread(() -> ref
+                .set(activity.getContentCaptureManager().isContentCaptureFeatureEnabled()));
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        assertThat(ref.get()).isTrue();
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_onUiThread() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        service.waitUntilConnected();
+
+        final ActivityWatcher watcher = startWatcher();
+
+        final BlankActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final AtomicReference<Exception> ref = new AtomicReference<>();
+        activity.syncRunOnUiThread(() -> {
+            try {
+                activity.getContentCaptureManager().setContentCaptureFeatureEnabled(true);
+            } catch (Exception e) {
+                ref.set(e);
+            }
+        });
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Exception e = ref.get();
+        if (e != null) throw e;
     }
 
     @Test
