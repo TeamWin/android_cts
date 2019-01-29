@@ -280,7 +280,7 @@ public class ChildlessActivityTest
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events: " + events);
-        // TODO(b/119638958): ideally it should be 3 so it reflects just the views defined
+        // TODO(b/123540067): ideally it should be 3 so it reflects just the views defined
         // in the layout - right now it's generating events for 2 intermediate parents
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
@@ -323,7 +323,7 @@ public class ChildlessActivityTest
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
         final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
-        // TODO(b/119638958): ideally it should have only one event for the root view ,
+        // TODO(b/123540067): ideally it should have only one event for the root view ,
         // right now it's generating events for 2 intermediate parents
         // (android:action_mode_bar_stub and android:content), we should try to create an
         // activity without them
@@ -485,7 +485,7 @@ public class ChildlessActivityTest
         // Assert main session
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
-        // TODO(b/119638958): ideally it should be empty, but has intermediate parents stuff...
+        // TODO(b/123540067): ideally it should be empty, but has intermediate parents stuff...
         // assertThat(mainTestSession.getEvents()).isEmpty();
 
         // Assert child session

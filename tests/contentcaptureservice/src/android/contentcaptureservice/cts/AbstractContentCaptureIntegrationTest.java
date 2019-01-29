@@ -133,7 +133,7 @@ public abstract class AbstractContentCaptureIntegrationTest
         }
     }
 
-    // TODO(b/119638958): this method should be called from the SafeCleaner, but we'll need to
+    // TODO(b/123539404): this method should be called from the SafeCleaner, but we'll need to
     // add a run() method that takes an object that can throw an exception
     @After
     public void restoreDefaultService() throws InterruptedException {
