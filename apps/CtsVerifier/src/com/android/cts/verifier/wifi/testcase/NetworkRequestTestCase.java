@@ -33,7 +33,7 @@ import android.net.NetworkRequest;
 import android.net.NetworkSpecifier;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiNetworkConfigBuilder;
+import android.net.wifi.WifiNetworkSpecifier;
 import android.os.PatternMatcher;
 import android.text.TextUtils;
 import android.util.Log;
@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Test case for all {@link NetworkRequest} requests with specifier built using
- * {@link WifiNetworkConfigBuilder#buildNetworkSpecifier()}.
+ * {@link WifiNetworkSpecifier.Builder#build()}.
  */
 public class NetworkRequestTestCase extends BaseTestCase {
     private static final String TAG = "NetworkRequestTestCase";
@@ -91,7 +91,7 @@ public class NetworkRequestTestCase extends BaseTestCase {
     // Create a network specifier based on the test type.
     private NetworkSpecifier createNetworkSpecifier(@NonNull ScanResult scanResult)
             throws InterruptedException {
-        WifiNetworkConfigBuilder configBuilder = new WifiNetworkConfigBuilder();
+        WifiNetworkSpecifier.Builder configBuilder = new WifiNetworkSpecifier.Builder();
         switch (mNetworkSpecifierType) {
             case NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID:
                 configBuilder.setSsid(scanResult.SSID);
@@ -118,7 +118,7 @@ public class NetworkRequestTestCase extends BaseTestCase {
             default:
                 throw new IllegalStateException("Unknown specifier type specifier");
         }
-        return configBuilder.buildNetworkSpecifier();
+        return configBuilder.build();
     }
 
     private boolean startScanAndWaitForResults() throws InterruptedException {
