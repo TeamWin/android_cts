@@ -34,26 +34,46 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test cases for {@link BluetoothHearingAid}.
  * <p>
- * To run the test, use adb shell am instrument -e class 'android.bluetooth.HearingAidProfileTest' 
- * -w 'com.android.bluetooth.tests/android.bluetooth.BluetoothTestRunner' 
+ * To run the test, use adb shell am instrument -e class 'android.bluetooth.HearingAidProfileTest'
+ * -w 'com.android.bluetooth.tests/android.bluetooth.BluetoothTestRunner'
  */
 public class HearingAidProfileTest extends AndroidTestCase {
     private static final String TAG = "HearingAidProfileTest";
 
     private static final int WAIT_FOR_INTENT_TIMEOUT_MS = 10000; // ms to wait for intent callback
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final int ADAPTER_ENABLE_TIMEOUT_MS = 5000;
+    // ADAPTER_ENABLE_TIMEOUT_MS = AdapterState.BLE_START_TIMEOUT_DELAY +
+    //                              AdapterState.BREDR_START_TIMEOUT_DELAY
+    private static final int ADAPTER_ENABLE_TIMEOUT_MS = 8000;
+    // ADAPTER_DISABLE_TIMEOUT_MS = AdapterState.BLE_STOP_TIMEOUT_DELAY +
+    //                                  AdapterState.BREDR_STOP_TIMEOUT_DELAY
+    private static final int ADAPTER_DISABLE_TIMEOUT_MS = 5000;
 
     private boolean mIsHearingAidSupported;
-    private boolean mIsProfileReady;
     private boolean mIsBleSupported;
     private BluetoothHearingAid mService;
     private BluetoothAdapter mBluetoothAdapter;
     private BroadcastReceiver mIntentReceiver;
+
+    private BroadcastReceiver mAdapterIntentReceiver;
+
+    private Condition mConditionAdapterIsEnabled;
+    private ReentrantLock mAdapterStateEnablinglock;
+
+    private Condition mConditionAdapterIsDisabled;
+    private ReentrantLock mAdapterStateDisablinglock;
+    private boolean mAdapterOffSignalReceived;
+
+    private Condition mConditionProfileIsConnected;
+    private ReentrantLock mProfileConnectedlock;
+    private boolean mIsProfileReady;
 
     private static List<Integer> mValidConnectionStates = new ArrayList<Integer>(
         Arrays.asList(BluetoothProfile.STATE_CONNECTING, BluetoothProfile.STATE_CONNECTED,
@@ -68,9 +88,20 @@ public class HearingAidProfileTest extends AndroidTestCase {
         BluetoothManager manager = (BluetoothManager) mContext.getSystemService(
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
-        if (!mBluetoothAdapter.isEnabled()) {
-            mBluetoothAdapter.enable();
-            sleep(ADAPTER_ENABLE_TIMEOUT_MS);
+
+        mAdapterStateEnablinglock = new ReentrantLock();
+        mConditionAdapterIsEnabled  = mAdapterStateEnablinglock.newCondition();
+        mAdapterStateDisablinglock = new ReentrantLock();
+        mConditionAdapterIsDisabled  = mAdapterStateDisablinglock.newCondition();
+        mProfileConnectedlock = new ReentrantLock();
+        mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
+
+        mAdapterIntentReceiver = new AdapterIntentReceiver();
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        mContext.registerReceiver(mAdapterIntentReceiver, filter);
+
+        if (!enableAdapter()) {
+            Log.e(TAG, "Unable to enable Bluetooth Adapter!");
             assertTrue(mBluetoothAdapter.isEnabled());
         }
 
@@ -80,17 +111,18 @@ public class HearingAidProfileTest extends AndroidTestCase {
                                                   new HearingAidsServiceListener(),
                                                   BluetoothProfile.HEARING_AID);
         if (!mIsHearingAidSupported) return;
-
-        // Give the Service Proxy enough time to Connect
-        sleep(PROXY_CONNECTION_TIMEOUT_MS);
     }
 
     @Override
     public void tearDown() {
         if (!mIsBleSupported) return;
 
-        mBluetoothAdapter.disable();
-        sleep(ADAPTER_ENABLE_TIMEOUT_MS);
+        if (!disableAdapter()) {
+            Log.e(TAG, "Unable to disable Bluetooth Adapter!");
+            assertTrue(mBluetoothAdapter.isEnabled());
+        }
+
+        mContext.unregisterReceiver(mAdapterIntentReceiver);
     }
 
     /**
@@ -100,6 +132,7 @@ public class HearingAidProfileTest extends AndroidTestCase {
     public void test_getProxyServiceConnect() {
         if (!(mIsBleSupported && mIsHearingAidSupported)) return;
 
+        waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
     }
@@ -109,10 +142,13 @@ public class HearingAidProfileTest extends AndroidTestCase {
      */
     @MediumTest
     public void test_getConnectionState() {
-        if (!(mIsBleSupported && mIsHearingAidSupported && mIsProfileReady &&
-                   (mService != null))) {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
             return;
         }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
 
         // Create a dummy device
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
@@ -128,10 +164,13 @@ public class HearingAidProfileTest extends AndroidTestCase {
      */
     @MediumTest
     public void test_getConnectedDevices() {
-        if (!(mIsBleSupported && mIsHearingAidSupported && mIsProfileReady &&
-                   (mService != null))) {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
             return;
         }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
 
         List<BluetoothDevice> deviceList;
 
@@ -149,10 +188,13 @@ public class HearingAidProfileTest extends AndroidTestCase {
      */
     @MediumTest
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mIsBleSupported && mIsHearingAidSupported && mIsProfileReady &&
-                   (mService != null))) {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
             return;
         }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
 
         for (int connectionState : mValidConnectionStates) {
             List<BluetoothDevice> deviceList;
@@ -171,10 +213,13 @@ public class HearingAidProfileTest extends AndroidTestCase {
      */
     @MediumTest
     public void test_getConnectionStateChangedIntent() {
-        if (!(mIsBleSupported && mIsHearingAidSupported && mIsProfileReady &&
-                   (mService != null))) {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
             return;
         }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
 
         // Find out how many Hearing Aid bonded devices
         List<BluetoothDevice> bondedDeviceList = new ArrayList();
@@ -199,11 +244,10 @@ public class HearingAidProfileTest extends AndroidTestCase {
         mContext.registerReceiver(mIntentReceiver, filter);
 
         Log.d(TAG, "test_getConnectionStateChangedIntent: disable adapter and wait");
-        mBluetoothAdapter.disable();
-        sleep(ADAPTER_ENABLE_TIMEOUT_MS);
+        assertTrue(disableAdapter());
 
-        Log.d(TAG, "test_getConnectionStateChangedIntent: re-enable adapter and wait");
-        mBluetoothAdapter.enable();
+        Log.d(TAG, "test_getConnectionStateChangedIntent: enable adapter and wait");
+        assertTrue(enableAdapter());
 
         int sanityCount = WAIT_FOR_INTENT_TIMEOUT_MS;
         while ((numDevices != mIntentCallbackDeviceList.size()) && (sanityCount > 0)) {
@@ -223,17 +267,125 @@ public class HearingAidProfileTest extends AndroidTestCase {
         }
     }
 
+    private class AdapterIntentReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())) {
+                int previousState = intent.getIntExtra(BluetoothAdapter.EXTRA_PREVIOUS_STATE, -1);
+                int newState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
+                Log.d(TAG, "Previous state: " + previousState + " New state: " + newState);
+
+                if (newState == BluetoothAdapter.STATE_ON) {
+                    mAdapterStateEnablinglock.lock();
+                    try {
+                        mConditionAdapterIsEnabled.signal();
+                    } finally {
+                        mAdapterStateEnablinglock.unlock();
+                    }
+                } else if (newState == BluetoothAdapter.STATE_OFF) {
+                    mAdapterStateDisablinglock.lock();
+                    mAdapterOffSignalReceived = true;
+                    try {
+                        mConditionAdapterIsDisabled.signal();
+                    } finally {
+                        mAdapterStateDisablinglock.unlock();
+                    }
+                }
+            }
+        }
+    }
+
+    // Enables the Bluetooth Adapter. Return true if it is already enabled or is enabled.
+    private boolean enableAdapter() {
+        if (mBluetoothAdapter.isEnabled()) return true;
+
+        mBluetoothAdapter.enable();
+        mAdapterStateEnablinglock.lock();
+        try {
+            // Wait for the Adapter to be enabled
+            while (!mBluetoothAdapter.isEnabled()) {
+                if (!mConditionAdapterIsEnabled.await(
+                    ADAPTER_ENABLE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    // Timeout
+                    Log.e(TAG, "Timeout while waiting for the Bluetooth Adapter enable");
+                    break;
+                } // else spurious wakeups
+            }
+        } catch(InterruptedException e) {
+            Log.e(TAG, "enableAdapter: interrrupted");
+        } finally {
+            mAdapterStateEnablinglock.unlock();
+        }
+        if (!mBluetoothAdapter.isEnabled()) {
+            return false;
+        }
+        return true;
+    }
+
+    // Disable the Bluetooth Adapter. Return true if it is already disabled or is disabled.
+    private boolean disableAdapter() {
+        // Note: !mBluetoothAdapter.isEnabled() is not an accurate indication that the
+        // BluetoothAdapter is OFF.
+        mBluetoothAdapter.disable();
+        mAdapterOffSignalReceived = false;
+        mAdapterStateDisablinglock.lock();
+        try {
+            // Wait for the Adapter to be disabled
+            while (!mAdapterOffSignalReceived) {
+                if (!mConditionAdapterIsDisabled.await(
+                    ADAPTER_DISABLE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    // Timeout
+                    Log.e(TAG, "Timeout while waiting for the Bluetooth Adapter disable");
+                    break;
+                } // else spurious wakeups
+            }
+        } catch(InterruptedException e) {
+            Log.e(TAG, "enableAdapter: interrrupted");
+        } finally {
+            mAdapterStateDisablinglock.unlock();
+        }
+        return mAdapterOffSignalReceived;
+    }
+
+    private boolean waitForProfileConnect() {
+        mProfileConnectedlock.lock();
+        try {
+            // Wait for the Adapter to be disabled
+            while (!mIsProfileReady) {
+                if (!mConditionProfileIsConnected.await(
+                    PROXY_CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    // Timeout
+                    Log.e(TAG, "Timeout while waiting for Profile Connect");
+                    break;
+                } // else spurious wakeups
+            }
+        } catch(InterruptedException e) {
+            Log.e(TAG, "waitForProfileConnect: interrrupted");
+        } finally {
+            mProfileConnectedlock.unlock();
+        }
+        return mIsProfileReady;
+    }
+
     private final class HearingAidsServiceListener
             implements BluetoothProfile.ServiceListener {
 
         public void onServiceConnected(int profile, BluetoothProfile proxy) {
+            mProfileConnectedlock.lock();
             mService = (BluetoothHearingAid) proxy;
-
             mIsProfileReady = true;
+            try {
+                mConditionProfileIsConnected.signal();
+            } finally {
+                mProfileConnectedlock.unlock();
+            }
         }
 
         public void onServiceDisconnected(int profile) {
+            mProfileConnectedlock.lock();
             mIsProfileReady = false;
+            mService = null;
+            mProfileConnectedlock.unlock();
         }
     }
 
