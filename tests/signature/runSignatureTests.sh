@@ -40,15 +40,4 @@ else
     PACKAGES=${1+"$@"}
 fi
 
-cd $ANDROID_BUILD_TOP
-make -j32 $PACKAGES
-
-TMPFILE=$(mktemp)
-trap "echo Removing temporary directory; rm -f $TMPFILE" EXIT
-
-for p in $PACKAGES
-do
-    echo cts -a arm64-v8a -m "$p" >> $TMPFILE
-done
-
-cts-tradefed run cmdfileAndExit $TMPFILE
+atest ${PACKAGES}
