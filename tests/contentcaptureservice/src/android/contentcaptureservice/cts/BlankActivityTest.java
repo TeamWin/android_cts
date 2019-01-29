@@ -22,12 +22,15 @@ import static android.contentcaptureservice.cts.common.ActivitiesWatcher.Activit
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.ComponentName;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 
 import org.junit.Test;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<BlankActivity> {
 
@@ -74,6 +77,29 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
 
         assertThat(activity.getContentCaptureManager().getServiceComponentName())
                 .isEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+
+        resetService();
+        service.waitUntilDisconnected();
+
+        assertThat(activity.getContentCaptureManager().getServiceComponentName())
+                .isNotEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
+    }
+
+    @Test
+    public void testGetServiceComponentName_onUiThread() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        service.waitUntilConnected();
+
+        final ActivityWatcher watcher = startWatcher();
+
+        final BlankActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final AtomicReference<ComponentName> ref = new AtomicReference<>();
+        activity.syncRunOnUiThread(
+                () -> ref.set(activity.getContentCaptureManager().getServiceComponentName()));
+
+        assertThat(ref.get()).isEqualTo(CONTENT_CAPTURE_SERVICE_COMPONENT_NAME);
 
         resetService();
         service.waitUntilDisconnected();
