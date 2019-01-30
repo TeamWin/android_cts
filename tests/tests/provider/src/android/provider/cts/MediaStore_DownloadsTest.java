@@ -21,7 +21,6 @@ import static android.provider.cts.ProviderTestUtils.hash;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -29,7 +28,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -59,7 +57,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class MediaStore_DownloadsTest {
     private static final String TAG = MediaStore_DownloadsTest.class.getSimpleName();
-    private static final long SCAN_TIMEOUT_MILLIS = 4000;
     private static final long NOTIFY_TIMEOUT_MILLIS = 4000;
 
     private Context mContext;
@@ -173,14 +170,14 @@ public class MediaStore_DownloadsTest {
         final ContentValues updateValues = new ContentValues();
         updateValues.put(MediaStore.Files.FileColumns.MEDIA_TYPE,
                 MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO);
-        updateValues.put(Downloads.MIME_TYPE, "audio/3gp");
+        updateValues.put(Downloads.MIME_TYPE, "audio/3gpp");
         assertEquals(1, mContentResolver.update(publishUri, updateValues, null, null));
 
         try (Cursor cursor = mContentResolver.query(publishUri,
                 null, null, null, null)) {
             assertEquals(1, cursor.getCount());
             cursor.moveToNext();
-            assertEquals("audio/3gp",
+            assertEquals("audio/3gpp",
                     cursor.getString(cursor.getColumnIndex(Downloads.MIME_TYPE)));
             assertEquals(downloadUri.toString(),
                     cursor.getString(cursor.getColumnIndex(Downloads.DOWNLOAD_URI)));
@@ -293,7 +290,7 @@ public class MediaStore_DownloadsTest {
     }
 
     private void verifyScannedDownload(File file) throws Exception {
-        final Uri mediaStoreUri = scanFile(file);
+        final Uri mediaStoreUri = ProviderTestUtils.scanFile(file, false);
         Log.e(TAG, "Scanned file " + file.getAbsolutePath() + ": " + mediaStoreUri);
         mAddedUris.add(mediaStoreUri);
         assertArrayEquals("File hashes should match for " + file + " and " + mediaStoreUri,
@@ -305,23 +302,5 @@ public class MediaStore_DownloadsTest {
         final Cursor cursor = mContentResolver.query(mExternalDownloads,
                 null, MediaStore.Downloads._ID + "=" + id, null, null);
         assertEquals(1, cursor.getCount());
-    }
-
-    private Uri scanFile(File file) throws Exception {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final Uri[] mediaStoreUris = new Uri[1];
-        MediaScannerConnection.scanFile(mContext,
-                new String[] {file.getAbsolutePath()},
-                null /* mimeType */,
-                (String path, Uri uri) -> {
-                    mediaStoreUris[0] = uri;
-                    latch.countDown();
-                });
-
-        if (!latch.await(SCAN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-            fail("Timed out waiting for scanFile: " + file.getAbsolutePath());
-        }
-        assertNotNull("Failed to scan " + file.getAbsolutePath(), mediaStoreUris[0]);
-        return mediaStoreUris[0];
     }
 }
