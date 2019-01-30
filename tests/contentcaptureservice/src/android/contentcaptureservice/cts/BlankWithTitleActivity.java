@@ -15,13 +15,18 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
+import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.util.Log;
+import android.view.View;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.ViewNode;
@@ -39,14 +44,23 @@ public class BlankWithTitleActivity extends AbstractContentCaptureActivity {
         final ContentCaptureSessionId sessionId = session.id;
         assertRightActivity(session, sessionId, this);
 
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
+        final View decorView = getDecorView();
 
-        final int minEvents = 1;
-        // TODO(b/119638528): somehow asset the grandparents...
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+
+        final int minEvents = 7; // TODO(b/122315042): disappeared not always sent
         assertThat(events.size()).isAtLeast(minEvents);
 
-        final ViewNode title = assertViewAppeared(events, 0);
+        assertViewHierarchyStarted(events, 0);
+        assertDecorViewAppeared(events, 1, decorView);
+        // TODO(b/123540067): ignoring 4 intermediate parents
+        final ViewNode title = assertViewAppeared(events, 5).getViewNode();
         assertThat(title.getText()).isEqualTo("Blanka");
+        assertViewHierarchyFinished(events, 6);
+        if (false) { // TODO(b/123540067): disabled because it includes the parent
+            assertViewsOptionallyDisappeared(events, minEvents, decorView.getAutofillId(),
+                    title.getAutofillId());
+        }
     }
 }

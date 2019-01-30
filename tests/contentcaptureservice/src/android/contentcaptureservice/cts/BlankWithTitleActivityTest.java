@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
+import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.support.test.rule.ActivityTestRule;
@@ -48,6 +49,25 @@ public class BlankWithTitleActivityTest
         final ActivityWatcher watcher = startWatcher();
 
         final BlankWithTitleActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+
+        activity.assertDefaultEvents(session);
+    }
+
+    @Test
+    public void testSimpleSessionLifecycle_noAnimation() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final BlankWithTitleActivity activity = launchActivity(
+                (intent) -> intent.addFlags(
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_NEW_TASK));
         watcher.waitFor(RESUMED);
 
         activity.finish();

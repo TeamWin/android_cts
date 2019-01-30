@@ -15,8 +15,13 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -24,6 +29,7 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewStructure;
 import android.view.contentcapture.ContentCaptureEvent;
 
@@ -36,6 +42,14 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
     private static final String TAG = CustomViewActivity.class.getSimpleName();
 
     private static DoubleVisitor<CustomView, ViewStructure> sCustomViewDelegate;
+
+    /**
+     * Mininum number of events generated when the activity starts.
+     *
+     * <p>Used on {@link #assertInitialViewsAppeared(Session, int)} and
+     * {@link #assertInitialViewsDisappeared(List, int)}.
+     */
+    public static final int MIN_EVENTS = 6;
 
     CustomView mCustomView;
 
@@ -63,15 +77,57 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
     @Override
     public void assertDefaultEvents(@NonNull Session session) {
         assertRightActivity(session, session.id, this);
+        final int additionalEvents = 0;
+        final List<ContentCaptureEvent> events = assertInitialViewsAppeared(session,
+                additionalEvents);
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+        assertInitialViewsDisappeared(events, additionalEvents);
+    }
 
+    /**
+     * Asserts the events generated when this activity was launched, up to the
+     * {@code TYPE_INITIAL_VIEW_HIERARCHY_FINISHED} event.
+     */
+    @NonNull
+    public List<ContentCaptureEvent> assertInitialViewsAppeared(Session session,
+            int additionalEvents) {
+        return assertJustInitialViewsAppeared(session, additionalEvents);
+    }
+
+    /**
+     * Asserts the events generated when this activity was launched, but without the
+     * {@code TYPE_INITIAL_VIEW_HIERARCHY_FINISHED} event.
+     */
+    @NonNull
+    private List<ContentCaptureEvent> assertJustInitialViewsAppeared(@NonNull Session session,
+            int additionalEvents) {
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent
-        assertThat(events.size()).isAtLeast(1);
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+        assertThat(events.size()).isAtLeast(MIN_EVENTS + additionalEvents);
+
+        final View grandpa1 = (View) mCustomView.getParent();
+        final View grandpa2 = (View) grandpa1.getParent();
+        final View decorView = getDecorView();
 
         // Assert just the relevant events
-        assertViewWithUnknownParentAppeared(events, 0, session.id, mCustomView);
+        assertViewHierarchyStarted(events, 0);
+        assertDecorViewAppeared(events, 1, getDecorView());
+        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
+        assertViewWithUnknownParentAppeared(events, 4, session.id, mCustomView);
+        assertViewHierarchyFinished(events, 5);
 
-        // TODO(b/122315042): assert views disappeared
+        return events;
+    }
+
+    /**
+     * Asserts the initial views disappeared after the activity was finished.
+     */
+    // TODO(b/123540067, 122315042): fix and document or remove
+    public void assertInitialViewsDisappeared(@NonNull List<ContentCaptureEvent> events,
+            int additionalEvents) {
+        if (true) return;     // TODO(b/123540067, 122315042): not really working
+        assertViewsOptionallyDisappeared(events, MIN_EVENTS + additionalEvents,
+                getDecorView().getAutofillId(), mCustomView.getAutofillId());
     }
 }

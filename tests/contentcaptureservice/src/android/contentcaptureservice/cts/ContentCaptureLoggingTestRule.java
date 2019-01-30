@@ -41,12 +41,7 @@ import org.junit.runners.model.Statement;
  */
 public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.Dumper {
 
-    private final String mTag;
     private boolean mDumped;
-
-    public ContentCaptureLoggingTestRule(String tag) {
-        mTag = tag;
-    }
 
     @Override
     public Statement apply(Statement base, Description description) {
@@ -71,7 +66,7 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
     @Override
     public void dump(@NonNull String testName, @NonNull Throwable t) {
         if (mDumped) {
-            Log.e(mTag, "dump(" + testName + "): already dumped");
+            Log.e(TAG, "dump(" + testName + "): already dumped");
             return;
         }
         if ((t instanceof AssumptionViolatedException)) {
@@ -82,12 +77,12 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
         }
         // TODO(b/123540602, b/120784831): should dump to a file (and integrate with tradefed)
         // instead of outputting to log directly...
-        Log.e(mTag, "Dumping after exception on " + testName, t);
+        Log.e(TAG, "Dumping after exception on " + testName, t);
         final String serviceDump = runShellCommand("dumpsys content_capture");
-        Log.e(mTag, "content_capture dump: \n" + serviceDump);
+        Log.e(TAG, "content_capture dump: \n" + serviceDump);
         final String activityDump = runShellCommand("dumpsys activity %s --contentcapture",
                 MY_PACKAGE);
-        Log.e(mTag, "activity dump: \n" + activityDump);
+        Log.e(TAG, "activity dump: \n" + activityDump);
         mDumped = true;
     }
 }

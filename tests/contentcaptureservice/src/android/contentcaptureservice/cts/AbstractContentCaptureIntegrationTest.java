@@ -64,8 +64,8 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     private final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule("content_capture");
-    private final ContentCaptureLoggingTestRule mLoggingRule =
-            new ContentCaptureLoggingTestRule(mTag);
+
+    private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
 
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
