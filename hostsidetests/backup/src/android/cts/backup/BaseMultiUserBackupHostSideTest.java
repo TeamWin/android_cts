@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 @AppModeFull
 public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSideTest {
     private static final String USER_SETUP_COMPLETE_SETTING = "user_setup_complete";
-    private static final int BROADCAST_IDLE_TIMEOUT_MIN = 2;
+    private static final int BROADCAST_IDLE_TIMEOUT_MIN = 10;
 
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
