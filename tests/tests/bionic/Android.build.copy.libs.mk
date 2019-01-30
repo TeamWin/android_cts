@@ -1,10 +1,12 @@
 LOCAL_PATH := $(call my-dir)
 
 cts_bionic_tests_dir := lib32
+lib_or_lib64 := lib
 
 ifeq (true,$(TARGET_IS_64_BIT))
   ifeq (,$(cts_bionic_tests_2nd_arch_prefix))
     cts_bionic_tests_dir := lib64
+    lib_or_lib64 := lib64
   endif
 endif
 
@@ -16,6 +18,7 @@ my_bionic_testlib_files := \
   dt_runpath_b_c_x/libtest_dt_runpath_b.so \
   dt_runpath_b_c_x/libtest_dt_runpath_c.so \
   dt_runpath_b_c_x/libtest_dt_runpath_x.so \
+  dt_runpath_y/$(lib_or_lib64)/libtest_dt_runpath_y.so \
   elftls_dlopen_ie_error_helper/elftls_dlopen_ie_error_helper \
   exec_linker_helper/exec_linker_helper \
   exec_linker_helper_lib.so \
@@ -165,9 +168,28 @@ LOCAL_COMPATIBILITY_SUPPORT_FILES += \
     $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
 endif
 
+# Special casing for libtest_dt_runpath_y.so. Since we use the standard ARM CTS
+# to test ARM-on-x86 devices where ${LIB} is expanded to lib/arm, the lib
+# is installed to ./lib/arm as well as ./lib to make sure that the lib can be
+# found on any device.
+archname := $(TARGET_ARCH)
+ifneq (,$(cts_bionic_tests_2nd_arch_prefix))
+  archname := $(TARGET_2ND_ARCH)
+endif
+
+src := $(my_bionic_testlibs_src_dir)/dt_runpath_y/$(lib_or_lib64)/libtest_dt_runpath_y.so
+dst := $(my_bionic_testlibs_out_dir)/dt_runpath_y/$(lib_or_lib64)/$(archname)/libtest_dt_runpath_y.so
+
+LOCAL_COMPATIBILITY_SUPPORT_FILES += $(src):$(dst)
+
 my_bionic_testlib_files :=
 my_bionic_testlib_files_non_mips :=
 my_bionic_testlibs_src_dir :=
 my_bionic_testlibs_out_dir :=
 cts_bionic_tests_dir :=
 cts_bionic_tests_2nd_arch_prefix :=
+lib_or_lib64 :=
+archname :=
+src :=
+dst :=
+
