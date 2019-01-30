@@ -955,7 +955,10 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        boolean isEmergencyNumber = mTelephonyManager.isCurrentPotentialEmergencyNumber("911");
+        // use shell permission to run system api
+        boolean isEmergencyNumber =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        (tm) -> tm.isCurrentPotentialEmergencyNumber("911"));
         // TODO enhance it later
     }
 
