@@ -40,7 +40,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class ReflectorVpnService extends VpnService {
-
     private static final String TAG = "ReflectorVpnService";
     private static final String DEVICE_AND_PROFILE_OWNER_PACKAGE =
         "com.android.cts.deviceandprofileowner";
@@ -48,7 +47,7 @@ public class ReflectorVpnService extends VpnService {
     private static final String ACTION_VPN_ON_START = "com.android.cts.vpnfirewall.VPN_ON_START";
     private static final int NOTIFICATION_ID = 1;
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
-    private static int MTU = 1799;
+    private static final int MTU = 1799;
 
     private ParcelFileDescriptor mFd = null;
     private PingReflector mPingReflector = null;
@@ -61,6 +60,8 @@ public class ReflectorVpnService extends VpnService {
     private static final String RESTRICTION_DISALLOWED = "vpn.disallowed";
     /** Service won't create the tunnel, to test lockdown behavior in case of VPN failure. */
     private static final String RESTRICTION_DONT_ESTABLISH = "vpn.dont_establish";
+    private static final String EXTRA_ALWAYS_ON = "always-on";
+    private static final String EXTRA_LOCKDOWN = "lockdown";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -101,7 +102,9 @@ public class ReflectorVpnService extends VpnService {
         final UserManager um = (UserManager) getSystemService(Context.USER_SERVICE);
         final Bundle restrictions = um.getApplicationRestrictions(getPackageName());
 
-        sendBroadcastToAdmin(ACTION_VPN_ON_START);
+        final Intent intent = new Intent(ACTION_VPN_ON_START);
+        intent.setPackage(DEVICE_AND_PROFILE_OWNER_PACKAGE);
+        sendBroadcast(intent);
 
         if (restrictions.getBoolean(RESTRICTION_DONT_ESTABLISH)) {
             stopSelf();
@@ -119,7 +122,11 @@ public class ReflectorVpnService extends VpnService {
         mNetworkCallback = new ConnectivityManager.NetworkCallback() {
                 @Override
                 public void onAvailable(final Network net) {
-                    sendBroadcastToAdmin(ACTION_VPN_IS_UP);
+                    final Intent intent = new Intent(ACTION_VPN_IS_UP);
+                    intent.setPackage(DEVICE_AND_PROFILE_OWNER_PACKAGE);
+                    intent.putExtra(EXTRA_ALWAYS_ON, isAlwaysOn());
+                    intent.putExtra(EXTRA_LOCKDOWN, isLockdownEnabled());
+                    sendBroadcast(intent);
                     ensureNetworkCallbackUnregistered();
                 }
             };
@@ -217,12 +224,6 @@ public class ReflectorVpnService extends VpnService {
 
         mPingReflector = new PingReflector(mFd.getFileDescriptor(), MTU);
         mPingReflector.start();
-    }
-
-    private void sendBroadcastToAdmin(String action) {
-        final Intent intent = new Intent(action);
-        intent.setPackage(DEVICE_AND_PROFILE_OWNER_PACKAGE);
-        sendBroadcast(intent);
     }
 
     private void stop() {
