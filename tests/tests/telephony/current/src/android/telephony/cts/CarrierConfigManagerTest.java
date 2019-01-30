@@ -69,7 +69,12 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
     }
 
     private boolean isSimCardPresent() {
-        return mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
+        return mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE &&
+                mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
+    }
+
+    private boolean isSimCardAbsent() {
+        return mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_ABSENT;
     }
 
     private void checkConfig(PersistableBundle config) {
@@ -78,7 +83,7 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
             return;
         }
         assertNotNull("CarrierConfigManager should not return null config", config);
-        if (!isSimCardPresent()) {
+        if (isSimCardAbsent()) {
             // Static default in CarrierConfigManager will be returned when no sim card present.
             assertEquals("Config doesn't match static default.",
                     config.getBoolean(CarrierConfigManager.KEY_ADDITIONAL_CALL_SETTING_BOOL), true);
