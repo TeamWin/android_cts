@@ -53,7 +53,7 @@ final class Assertions {
         assertWithMessage("wrong activity for %s", session)
                 .that(session.context.getActivityComponent())
                 .isEqualTo(activity.getComponentName());
-        // TODO(b/119638958): merge both or replace check above by:
+        // TODO(b/123540602): merge both or replace check above by:
         //  assertMainSessionContext(session, activity);
         assertThat(session.id).isEqualTo(expectedSessionId);
     }
@@ -155,7 +155,7 @@ final class Assertions {
             assertWithMessage("wrong text on %s (%s)", event, index).that(node.getText().toString())
                     .isEqualTo(expectedText);
         }
-        // TODO(b/119638958): test more fields, like resource id
+        // TODO(b/123540602): test more fields, like resource id
         return node;
     }
 
@@ -223,7 +223,7 @@ final class Assertions {
      * @param minimumSize size of events received if activity stopped before views disappeared
      * @param expectedIds ids of views that might have disappeared.
      */
-    // TODO(b/122315042): remove this method if we could make it deterministic
+    // TODO(b/123540067): remove this method if we could make it deterministic
     public static void assertViewsOptionallyDisappeared(@NonNull List<ContentCaptureEvent> events,
             int minimumSize, @NonNull AutofillId... expectedIds) {
         final int actualSize = events.size();

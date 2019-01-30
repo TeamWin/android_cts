@@ -129,6 +129,14 @@ public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
     }
 
     @LargeTest
+    public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V4_OFFLINE_KEY() throws Exception {
+        download(CENC_AUDIO_URL,
+                CENC_AUDIO_URL_DOWNLOADED,
+                RES_AUDIO,
+                ModularDrmTestType.V4_SYNC_OFFLINE_KEY);
+    }
+
+    @LargeTest
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V5_ASYNC_CALLBACKS() throws Exception {
         download(CENC_AUDIO_URL,
                 CENC_AUDIO_URL_DOWNLOADED,

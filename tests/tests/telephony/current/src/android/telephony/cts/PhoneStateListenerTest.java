@@ -26,6 +26,7 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.net.ConnectivityManager;
+import android.telephony.ims.ImsReasonInfo;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -54,6 +55,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
     private boolean mOnSignalStrengthChangedCalled;
     private boolean mOnPreciseCallStateChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
+    private boolean mOnImsCallDisconnectCauseChangedCalled;
     private boolean mOnPreciseDataConnectionStateChanged;
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
@@ -373,6 +375,48 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         }
         t.checkException();
         assertThat(mOnCallDisconnectCauseChangedCalled).isTrue();
+    }
+
+    /*
+     * The tests below rely on the framework to immediately call the installed listener upon
+     * registration. There is no simple way to emulate state changes for testing the listeners.
+     */
+    public void testOnImsCallDisconnectCauseChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
+                        synchronized (mLock) {
+                            mOnImsCallDisconnectCauseChangedCalled = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener,
+                                PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES));
+                Looper.loop();
+            }
+        });
+
+        assertThat(mOnImsCallDisconnectCauseChangedCalled).isFalse();
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnImsCallDisconnectCauseChangedCalled){
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
     }
 
     public void testOnPhoneStateListenerExecutorWithSrvccChanged() throws Throwable {

@@ -138,6 +138,13 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.app.stubs.LocalForegroundServiceLocation"
+                android:foregroundServiceType="location">
+            <intent-filter>
+                <action android:name="android.app.stubs.FOREGROUND_SERVICE_LOCATION" />
+            </intent-filter>
+        </service>
+
         <service android:name="android.app.stubs.LocalGrantedService"
              android:permission="android.app.stubs.permission.TEST_GRANTED">
             <intent-filter>

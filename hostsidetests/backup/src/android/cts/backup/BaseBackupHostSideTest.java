@@ -151,7 +151,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         setLocalTransportParameters("fake_encryption_flag=false");
     }
 
-    private static InputStream executeDeviceShellCommand(
+    static InputStream executeDeviceShellCommand(
             ITestDevice device, String command) throws IOException {
         try {
             String result = device.executeShellCommand(command);

@@ -118,7 +118,7 @@ public class HiddenApiTest extends AbstractApiTest {
         });
     }
 
-    private static Stream<DexMember> parseDexApiFilesAsStream(String[] apiFiles) {
+    private Stream<DexMember> parseDexApiFilesAsStream(String[] apiFiles) {
         DexApiDocumentParser dexApiDocumentParser = new DexApiDocumentParser();
         return Stream.of(apiFiles)
                 .map(name -> new File(API_FILE_DIRECTORY + "/" + name))

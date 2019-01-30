@@ -2796,6 +2796,20 @@
     <permission android:name="android.permission.SIGNAL_PERSISTENT_PROCESSES"
         android:protectionLevel="signature|privileged|development" />
 
+    <!-- @hide @SystemApi @TestApi
+         Allow an application to approve incident and bug reports to be
+         shared off-device.  There can be only one application installed on the
+         device with this permission, and since this is a privileged permission, it
+         must be in priv-app.
+        <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.APPROVE_INCIDENT_REPORTS"
+        android:protectionLevel="signature|incidentReportApprover" />
+
+    <!-- @hide Allow an application to approve an incident or bug report approval from
+        the system. -->
+    <permission android:name="android.permission.REQUEST_INCIDENT_REPORT_APPROVAL"
+        android:protectionLevel="signature|privileged" />
+
     <!-- ==================================== -->
     <!-- Private permissions                  -->
     <!-- ==================================== -->
@@ -3529,6 +3543,12 @@
     <permission android:name="android.permission.CONTROL_VPN"
         android:protectionLevel="signature|privileged" />
     <uses-permission android:name="android.permission.CONTROL_VPN" />
+
+    <!-- Allows an application to access and modify always-on VPN configuration.
+         <p>Not for use by third-party or privileged applications.
+         @hide -->
+    <permission android:name="android.permission.CONTROL_ALWAYS_ON_VPN"
+                android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows an application to capture audio output.
          <p>Not for use by third-party applications.</p> -->

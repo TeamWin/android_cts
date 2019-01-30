@@ -43,6 +43,18 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     private static final String USER_SETUP_COMPLETE_SETTING = "user_setup_complete";
     private static final int BROADCAST_IDLE_TIMEOUT_MIN = 2;
 
+    // Key-value test package.
+    static final String KEY_VALUE_APK = "CtsProfileKeyValueApp.apk";
+    static final String KEY_VALUE_TEST_PACKAGE = "android.cts.backup.profilekeyvalueapp";
+    static final String KEY_VALUE_DEVICE_TEST_NAME =
+            KEY_VALUE_TEST_PACKAGE + ".ProfileKeyValueBackupRestoreTest";
+
+    // Full backup test package.
+    static final String FULL_BACKUP_APK = "CtsProfileFullBackupApp.apk";
+    static final String FULL_BACKUP_TEST_PACKAGE = "android.cts.backup.profilefullbackupapp";
+    static final String FULL_BACKUP_DEVICE_TEST_NAME =
+            FULL_BACKUP_TEST_PACKAGE + ".ProfileFullBackupRestoreTest";
+
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
 

@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-// TODO(b/119638958): if we don't move this service to a separate package, we need to handle the
+// TODO(b/123540602): if we don't move this service to a separate package, we need to handle the
 // onXXXX methods in a separate thread
 // Either way, we need to make sure its methods are thread safe
 
@@ -54,11 +54,16 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public static final ComponentName CONTENT_CAPTURE_SERVICE_COMPONENT_NAME =
             componentNameFor(CtsContentCaptureService.class);
 
+    private static int sIdCounter;
+
     private static ServiceWatcher sServiceWatcher;
 
-    // TODO(b/119638958): reuse with allSessions
+    // TODO(b/123421324): reuse with allSessions
     /** Used by {@link #getOnlyFinishedSession()}. */
     private static ContentCaptureSessionId sFirstSessionId;
+
+
+    private final int mId = ++sIdCounter;
 
     private static final ArrayList<Throwable> sExceptions = new ArrayList<>();
 
@@ -96,6 +101,12 @@ public class CtsContentCaptureService extends ContentCaptureService {
      */
     private UserDataRemovalRequest mRemovalRequest;
 
+    /**
+     * Optional listener for {@code onDisconnect()}.
+     */
+    @Nullable
+    private DisconnectListener mOnDisconnectListener;
+
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
         if (sServiceWatcher != null) {
@@ -109,10 +120,10 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public static void resetStaticState() {
         sFirstSessionId = null;
         sExceptions.clear();
-        // TODO(b/119638958): should probably set sInstance to null as well, but first we would need
+        // TODO(b/123540602): should probably set sInstance to null as well, but first we would need
         // to make sure each test unbinds the service.
 
-        // TODO(b/119638958): each test should use a different service instance, but we need
+        // TODO(b/123540602): each test should use a different service instance, but we need
         // to provide onConnected() / onDisconnected() methods first and then change the infra so
         // we can wait for those
 
@@ -124,7 +135,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onConnected() {
-        Log.i(TAG, "onConnected(): sServiceWatcher=" + sServiceWatcher);
+        Log.i(TAG, "onConnected(id=" + mId + "): sServiceWatcher=" + sServiceWatcher);
 
         if (sServiceWatcher == null) {
             addException("onConnected() without a watcher");
@@ -147,7 +158,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onDisconnected() {
-        Log.i(TAG, "onDisconnected(): sServiceWatcher=" + sServiceWatcher);
+        Log.i(TAG, "onDisconnected(id=" + mId + "): sServiceWatcher=" + sServiceWatcher);
 
         if (mDisconnectedLatch.getCount() == 0) {
             addException("already disconnected: %s", mConnectedLatch);
@@ -161,6 +172,12 @@ public class CtsContentCaptureService extends ContentCaptureService {
         if (sServiceWatcher.mService == null) {
             addException("onDisconnected(): no service on %s", sServiceWatcher);
             return;
+        }
+        // Notify test case as well
+        if (mOnDisconnectListener != null) {
+            final CountDownLatch latch = mOnDisconnectListener.mLatch;
+            mOnDisconnectListener = null;
+            latch.countDown();
         }
         sServiceWatcher.mDestroyed.countDown();
         sServiceWatcher.mService = null;
@@ -184,8 +201,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
     @Override
     public void onCreateContentCaptureSession(ContentCaptureContext context,
             ContentCaptureSessionId sessionId) {
-        Log.i(TAG, "onCreateContentCaptureSession(ctx=" + context + ", id=" + sessionId
-                + ", firstId=" + sFirstSessionId + ")");
+        Log.i(TAG, "onCreateContentCaptureSession(id=" + mId + ", ctx=" + context
+                + ", session=" + sessionId + ", firstId=" + sFirstSessionId + ")");
         mAllSessions.add(sessionId);
         if (sFirstSessionId == null) {
             sFirstSessionId = sessionId;
@@ -204,7 +221,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onDestroyContentCaptureSession(ContentCaptureSessionId sessionId) {
-        Log.i(TAG, "onDestroyContentCaptureSession(" + sessionId + ")");
+        Log.i(TAG, "onDestroyContentCaptureSession(id=" + mId + ", session=" + sessionId + ")");
         safeRun(() -> {
             final Session session = getExistingSession(sessionId);
             session.finish();
@@ -222,7 +239,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
     @Override
     public void onContentCaptureEvent(ContentCaptureSessionId sessionId,
             ContentCaptureEvent event) {
-        Log.i(TAG, "onContentCaptureEvent(" + sessionId + "): " + event);
+        Log.i(TAG, "onContentCaptureEventsRequest(id=" + mId + ", session=" + sessionId + "): "
+                + event);
         final ViewNode node = event.getViewNode();
         if (node != null) {
             Log.v(TAG, "onContentCaptureEvent(): parentId=" + node.getParentAutofillId());
@@ -235,7 +253,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onUserDataRemovalRequest(@NonNull UserDataRemovalRequest request) {
-        Log.i(TAG, "onUserDataRemovalRequest(" + request + ")");
+        Log.i(TAG, "onUserDataRemovalRequest(id=" + mId + ",req=" + request + ")");
         mRemovalRequest = request;
     }
 
@@ -271,7 +289,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
      */
     @NonNull
     public Session getOnlyFinishedSession() throws InterruptedException {
-        // TODO(b/119638958): add some assertions to make sure There Can Be Only One!
+        // TODO(b/123421324): add some assertions to make sure There Can Be Only One!
         assertWithMessage("No session yet").that(sFirstSessionId).isNotNull();
         return getFinishedSession(sFirstSessionId);
     }
@@ -284,6 +302,18 @@ public class CtsContentCaptureService extends ContentCaptureService {
         return Collections.unmodifiableList(mAllSessions);
     }
 
+    /**
+     * Sets a listener to wait until the service disconnects.
+     */
+    @NonNull
+    public DisconnectListener setOnDisconnectListener() {
+        if (mOnDisconnectListener != null) {
+            throw new IllegalStateException("already set");
+        }
+        mOnDisconnectListener = new DisconnectListener();
+        return mOnDisconnectListener;
+    }
+
     @Override
     protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         super.dump(fd, pw, args);
@@ -291,6 +321,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
         pw.print("sServiceWatcher: "); pw.println(sServiceWatcher);
         pw.print("sFirstSessionId: "); pw.println(sFirstSessionId);
         pw.print("sExceptions: "); pw.println(sExceptions);
+        pw.print("sIdCounter: "); pw.println(sIdCounter);
+        pw.print("mId: "); pw.println(mId);
         pw.print("mConnectedLatch: "); pw.println(mConnectedLatch);
         pw.print("mDisconnectedLatch: "); pw.println(mDisconnectedLatch);
         pw.print("mAllSessions: "); pw.println(mAllSessions);
@@ -318,6 +350,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private void throwIllegalSessionStateException(@NonNull String fmt, @Nullable Object...args) {
         throw new IllegalStateException(String.format(fmt, args)
+                + ".\nID=" + mId
                 + ".\nAll=" + mAllSessions
                 + ".\nOpen=" + mOpenSessions
                 + ".\nLatches=" + mUnfinishedSessionLatches
@@ -372,7 +405,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             Log.d(TAG, "finish(" + id  + "): order=" + destructionOrder);
         }
 
-        // TODO(b/119638958): currently we're only interested on all events, but eventually we
+        // TODO(b/123540602): currently we're only interested on all events, but eventually we
         // should track individual requests as well to make sure they're probably batch (it will
         // require adding a Settings to tune the buffer parameters.
         public List<ContentCaptureEvent> getEvents() {
@@ -412,6 +445,24 @@ public class CtsContentCaptureService extends ContentCaptureService {
         public String toString() {
             return "mService: " + mService + " created: " + (mCreated.getCount() == 0)
                     + " destroyed: " + (mDestroyed.getCount() == 0);
+        }
+    }
+
+    /**
+     * Listener used to block until the service is disconnected.
+     */
+    public class DisconnectListener {
+        private final CountDownLatch mLatch = new CountDownLatch(1);
+
+        /**
+         * Wait or die!
+         */
+        public void waitForOnDisconnected() {
+            try {
+                await(mLatch, "not disconnected");
+            } catch (Exception e) {
+                addException("DisconnectListener: onDisconnected() not called: " + e);
+            }
         }
     }
 }

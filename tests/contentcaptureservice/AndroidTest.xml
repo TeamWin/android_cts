@@ -22,7 +22,7 @@
     <option name="test-file-name" value="CtsContentCaptureServiceTestCases.apk" />
   </target_preparer>
 
-  <!--  TODO(b/119638958): add preparer for instant-apps tests  -->
+  <!--  TODO(b/122605818): add preparer for instant-apps tests  -->
 
   <test class="com.android.tradefed.testtype.AndroidJUnitTest">
     <option name="package" value="android.contentcaptureservice.cts" />

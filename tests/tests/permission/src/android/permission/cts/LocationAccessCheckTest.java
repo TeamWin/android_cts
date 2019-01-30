@@ -22,6 +22,7 @@ import static android.app.Notification.EXTRA_TITLE;
 import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.location.Criteria.ACCURACY_FINE;
+import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_DELAY_MILLIS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_INTERVAL_MILLIS;
 
@@ -52,6 +53,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.provider.DeviceConfig;
+import android.provider.DeviceConfig.Privacy;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -65,6 +68,7 @@ import androidx.annotation.Nullable;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -341,6 +345,15 @@ public class LocationAccessCheckTest {
     }
 
     /**
+     * Enable location access check
+     */
+    @Before
+    public void enableLocationAccessCheck() {
+        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(Privacy.NAMESPACE,
+                Privacy.PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "true", false));
+    }
+
+    /**
      * Make sure fine location can be accessed at all.
      */
     @Before
@@ -446,6 +459,15 @@ public class LocationAccessCheckTest {
         });
 
         resetPermissionController();
+    }
+
+    /**
+     * Reset location access check
+     */
+    @After
+    public void resetPrivacyConfig() {
+        runWithShellPermissionIdentity(
+                () -> DeviceConfig.resetToDefaults(RESET_MODE_PACKAGE_DEFAULTS, Privacy.NAMESPACE));
     }
 
     @Test

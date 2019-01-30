@@ -27,6 +27,8 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.Visitor;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -133,7 +135,7 @@ public abstract class AbstractContentCaptureIntegrationTest
         }
     }
 
-    // TODO(b/119638958): this method should be called from the SafeCleaner, but we'll need to
+    // TODO(b/123539404): this method should be called from the SafeCleaner, but we'll need to
     // add a run() method that takes an object that can throw an exception
     @After
     public void restoreDefaultService() throws InterruptedException {
@@ -143,6 +145,18 @@ public abstract class AbstractContentCaptureIntegrationTest
         if (mServiceWatcher != null) {
             mServiceWatcher.waitOnDestroy();
         }
+    }
+
+    // TODO(b/123429736): temporary method until Autofill's StateChangerRule is moved to common
+    @Nullable
+    public static void setFeatureEnabled(@Nullable String enabled) {
+        final String property = Settings.Secure.CONTENT_CAPTURE_ENABLED;
+        if (enabled == null) {
+            runShellCommand("settings delete secure %s", property);
+        } else {
+            runShellCommand("settings put secure %s %s", property, enabled);
+        }
+        SystemClock.sleep(1000); // We need to sleep as we're not waiting for the listener callback
     }
 
     /**
