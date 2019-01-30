@@ -230,7 +230,7 @@ public abstract class AbstractApiChecker {
                 if (m == null) {
                     resultObserver.notifyFailure(FailureType.MISSING_METHOD,
                             method.toReadableString(classDescription.getAbsoluteClassName()),
-                            "No method with correct signature found:" +
+                            "No method with correct signature found, looking for:" +
                                     method.toSignatureString());
                 } else {
                     checkMethod(classDescription, runtimeClass, method, m);
