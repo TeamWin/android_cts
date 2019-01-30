@@ -19,6 +19,7 @@
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="inputmethod" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <!--
         TODO(yukawa): come up with a proper way to take care of devices that do not support
         installable IMEs.  Ideally target_preparer should have an option to annotate required
