@@ -21,6 +21,7 @@ package com.android.cts.devicepolicy;
 public class ProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PROFILE_OWNER_PKG = "com.android.cts.profileowner";
     private static final String PROFILE_OWNER_APK = "CtsProfileOwnerApp.apk";
+    private static final String FEATURE_BACKUP = "android.software.backup";
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             PROFILE_OWNER_PKG + ".BaseProfileOwnerTest$BasicAdminReceiver";
@@ -72,6 +73,15 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeProfileOwnerTest("AppUsageObserverTest");
+    }
+
+    public void testBackupServiceEnabling() throws Exception {
+        final boolean hasBackupService = getDevice().hasFeature(FEATURE_BACKUP);
+        // The backup service cannot be enabled if the backup feature is not supported.
+        if (!mHasFeature || !hasBackupService) {
+            return;
+        }
+        executeProfileOwnerTest("BackupServicePoliciesTest");
     }
 
     @Override
