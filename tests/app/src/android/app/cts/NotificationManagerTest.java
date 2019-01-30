@@ -1540,4 +1540,18 @@ public class NotificationManagerTest extends AndroidTestCase {
         StatusBarNotification n = findPostedNotification(id);
         assertNotNull(n);
     }
+
+    public void testShouldHideSilentStatusIcons() throws Exception {
+        try {
+            mNotificationManager.shouldHideSilentStatusBarIcons();
+            fail("Non-privileged apps should not get this information");
+        } catch (SecurityException e) {
+            // pass
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        // no exception this time
+        mNotificationManager.shouldHideSilentStatusBarIcons();
+    }
 }
