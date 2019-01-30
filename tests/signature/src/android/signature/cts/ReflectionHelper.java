@@ -205,15 +205,23 @@ public class ReflectionHelper {
      * @param method description of the method to find
      * @return the reflected method, or null if not found.
      */
-    @SuppressWarnings("unchecked")
     static Method findMatchingMethod(Class<?> runtimeClass,
             JDiffClassDescription.JDiffMethod method) {
-        Method[] methods = runtimeClass.getDeclaredMethods();
 
-        for (Method m : methods) {
-            if (matches(method, m)) {
-                return m;
+        // Search through the class to find the methods just in case the method was actually
+        // declared in a superclass which is not part of the API and so was made to appear as if
+        // it was declared in each of the hidden class' subclasses. Cannot use getMethods() as that
+        // will only return public methods and the API includes protected methods.
+        while (runtimeClass != null) {
+            Method[] methods = runtimeClass.getDeclaredMethods();
+
+            for (Method m : methods) {
+                if (matches(method, m)) {
+                    return m;
+                }
             }
+
+            runtimeClass = runtimeClass.getSuperclass();
         }
 
         return null;
