@@ -72,25 +72,28 @@ public class BitmapRegionDecoderTest {
 
     // Do not change the order!
     private static final String[] ASSET_NAMES = {
-            "prophoto-rgba16f.png",
+            "blue-16bit-srgb.png",
             "green-p3.png",
             "red-adobergb.png",
             "green-srgb.png",
+            "blue-16bit-prophoto.png",
     };
     private static final ColorSpace.Named[][] ASSET_COLOR_SPACES = {
-            // ARGB8888
+            // inPreferredConfig = ARGB_8888
             {
-                    ColorSpace.Named.LINEAR_EXTENDED_SRGB,
+                    ColorSpace.Named.EXTENDED_SRGB, // This 16 bit PNG is decoded to F16.
                     ColorSpace.Named.DISPLAY_P3,
                     ColorSpace.Named.ADOBE_RGB,
-                    ColorSpace.Named.SRGB
+                    ColorSpace.Named.SRGB,
+                    ColorSpace.Named.PRO_PHOTO_RGB,
             },
-            // RGB565
+            // inPreferredConfig = RGB_565
             {
                     ColorSpace.Named.SRGB,
+                    ColorSpace.Named.DISPLAY_P3,
+                    ColorSpace.Named.ADOBE_RGB,
                     ColorSpace.Named.SRGB,
-                    ColorSpace.Named.SRGB,
-                    ColorSpace.Named.SRGB
+                    ColorSpace.Named.PRO_PHOTO_RGB,
             }
     };
 
@@ -538,12 +541,12 @@ public class BitmapRegionDecoderTest {
         Options opts = new BitmapFactory.Options();
         opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
 
-        InputStream is1 = obtainInputStream(ASSET_NAMES[0]); // ProPhoto 16 bit
+        InputStream is1 = obtainInputStream(ASSET_NAMES[0]);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
         decoder.recycle();
 
-        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), region.getColorSpace());
+        assertSame(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), region.getColorSpace());
         region.recycle();
     }
 
@@ -558,7 +561,7 @@ public class BitmapRegionDecoderTest {
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
         decoder.recycle();
 
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), region.getColorSpace());
+        assertSame(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), region.getColorSpace());
         region.recycle();
     }
 
@@ -601,7 +604,11 @@ public class BitmapRegionDecoderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testInColorSpaceNoTransferParameters() throws IOException {
         Options opts = new BitmapFactory.Options();
-        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+        opts.inPreferredColorSpace = new ColorSpace.Rgb("NoTransferParams",
+                new float[]{ 0.640f, 0.330f, 0.300f, 0.600f, 0.150f, 0.060f },
+                ColorSpace.ILLUMINANT_D50,
+                x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f),
+                0, 1);
         InputStream is1 = obtainInputStream(RES_IDS[0]);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
