@@ -1969,6 +1969,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="widget_pass">Pass</string>
     <string name="widget_fail">Fail</string>
 
+    <string name="provisioning_byod_non_market_apps">Non-market app installation restrictions</string>
+    <string name="provisioning_byod_non_market_apps_info">
+        This test exercises user restrictions on installation of non-market apps. Follow
+        instructions in each test.
+    </string>
+
     <string name="provisioning_byod_nonmarket_allow">Enable non-market apps</string>
     <string name="provisioning_byod_nonmarket_allow_info">
         This test verifies that non-market apps can be installed if permitted.\n
