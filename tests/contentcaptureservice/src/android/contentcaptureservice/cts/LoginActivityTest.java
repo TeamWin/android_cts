@@ -25,6 +25,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.componentNameFor;
+import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -32,6 +33,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
+import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.test.rule.ActivityTestRule;
@@ -44,6 +46,8 @@ import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.UserDataRemovalRequest;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import org.junit.After;
 import org.junit.Before;
@@ -92,7 +96,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         activity.assertDefaultEvents(session);
     }
-
 
     @Test
     public void testSimpleLifecycle_rootViewSession() throws Exception {
@@ -558,6 +561,85 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertThat(requests.stream().map((r) -> r.getUri()).collect(Collectors.toList()))
                 .containsExactly(uri, uri2).inOrder();
         assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
+    }
+
+    @Test
+    public void testAddChildren_rightAway() throws Exception {
+        addChildrenTest(/* afterAnimation= */ false);
+    }
+
+    @Test
+    public void testAddChildren_afterAnimation() throws Exception {
+        addChildrenTest(/* afterAnimation= */ true);
+    }
+
+    private void addChildrenTest(boolean afterAnimation) throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+        final View[] children = new View[2];
+
+        final DoubleVisitor<AbstractRootViewActivity, LinearLayout> visitor = (activity,
+                rootView) -> {
+            final TextView child1 = newImportantView(activity, "c1");
+            children[0] = child1;
+            Log.v(TAG, "Adding child1(" + child1.getAutofillId() + "): " + child1);
+            rootView.addView(child1);
+            final TextView child2 = newImportantView(activity, "c1");
+            children[1] = child2;
+            Log.v(TAG, "Adding child2(" + child2.getAutofillId() + "): " + child2);
+            rootView.addView(child2);
+        };
+        if (afterAnimation) {
+            LoginActivity.onAnimationComplete(visitor);
+        } else {
+            LoginActivity.onRootView(visitor);
+        }
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+
+        final ContentCaptureSessionId sessionId = session.id;
+        assertRightActivity(session, sessionId, activity);
+
+        // Sanity check
+        assertSessionId(sessionId, activity.mUsernameLabel);
+        assertSessionId(sessionId, activity.mUsername);
+        assertSessionId(sessionId, activity.mPassword);
+        assertSessionId(sessionId, activity.mPasswordLabel);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+
+        final int minEvents = 9; // TODO(b/123540067): get rid of those intermediated parents
+        assertThat(events.size()).isAtLeast(minEvents);
+        assertViewAppeared(events, 0, sessionId, activity.mUsernameLabel, rootId);
+        assertViewAppeared(events, 1, sessionId, activity.mUsername, rootId);
+        assertViewAppeared(events, 2, sessionId, activity.mPasswordLabel, rootId);
+        assertViewAppeared(events, 3, sessionId, activity.mPassword, rootId);
+        if (afterAnimation) {
+            // TODO(b/123540067): get rid of those intermediated parents
+            final View grandpa1 = activity.getGrandParent();
+            final View grandpa2 = activity.getGrandGrandParent();
+            final View decorView = activity.getDecorView();
+
+            assertViewAppeared(events, 4, sessionId, activity.getRootView(),
+                    grandpa1.getAutofillId());
+            assertViewAppeared(events, 5, grandpa1, grandpa2.getAutofillId());
+            assertViewAppeared(events, 6, grandpa2, decorView.getAutofillId());
+            assertViewAppeared(events, 7, sessionId, children[0], rootId);
+            assertViewAppeared(events, 8, sessionId, children[1], rootId);
+        } else {
+            assertViewAppeared(events, 4, sessionId, children[0], rootId);
+            assertViewAppeared(events, 5, sessionId, children[1], rootId);
+        }
     }
 
     // TODO(b/119638528): add moar test cases for different sessions:
