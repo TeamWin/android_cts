@@ -939,8 +939,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         Pattern p = Pattern.compile("avc: *denied.*scontext=u:(?:r|object_r):(?:" + typeRegex + "):s0.*");
         // Fail if logcat contains such a denial.
         Matcher m = p.matcher(log);
-        if (m.find())
-            fail("Found illegal SELinux denial: " + m.group());
+        StringBuilder errorString = new StringBuilder();
+        while (m.find()) {
+            errorString.append(m.group());
+            errorString.append("\n");
+        }
+        assertTrue("Found illegal SELinux denial(s): " + errorString, errorString.length() == 0);
     }
 
     /**
