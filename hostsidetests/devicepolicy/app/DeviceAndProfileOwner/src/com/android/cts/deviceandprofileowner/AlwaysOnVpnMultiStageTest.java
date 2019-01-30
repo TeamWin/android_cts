@@ -37,20 +37,23 @@ public class AlwaysOnVpnMultiStageTest extends BaseDeviceAdminTest {
 
     public void testAlwaysOnSet() throws Exception {
         // Setup always-on vpn
-        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE, /* usable */ true, /* whitelist */ false);
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE,
+                /* usable */ true, /* lockdown */ true, /* whitelist */ false);
         assertTrue(VpnTestHelper.isNetworkVpn(mContext));
         VpnTestHelper.checkPing(TEST_ADDRESS);
     }
 
     public void testAlwaysOnSetWithWhitelist() throws Exception {
-        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE, /* usable */ true, /* whitelist */ true);
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE,
+                /* usable */ true, /* lockdown */ true, /* whitelist */ true);
         assertTrue(VpnTestHelper.isNetworkVpn(mContext));
         VpnTestHelper.checkPing(TEST_ADDRESS);
     }
 
     // Should be run after running testAlwaysOnSetWithWhitelist and rebooting.
     public void testAlwaysOnSetAfterReboot() throws Exception {
-        VpnTestHelper.waitForVpn(mContext, null, /* usable */ true, /* whitelist */ true);
+        VpnTestHelper.waitForVpn(mContext, null,
+                /* usable */ true, /* lockdown */ true, /* whitelist */ true);
         VpnTestHelper.checkPing(TEST_ADDRESS);
         final List<String> whitelist =
                 mDevicePolicyManager.getAlwaysOnVpnLockdownWhitelist(ADMIN_RECEIVER_COMPONENT);
