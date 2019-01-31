@@ -37,11 +37,30 @@ $(LOCAL_BUILT_MODULE): $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_sha
 
 include $(CLEAR_VARS)
 
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_MODULE := cts-api-signature-multilib-test
+
+LOCAL_SDK_VERSION := test_current
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+        cts-api-signature-test \
+        compatibility-device-util
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
+include $(CLEAR_VARS)
+
 LOCAL_PACKAGE_NAME := CtsSharedLibsApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
     shared-libs-all.api.zip \
     $(all_shared_libs_files)
+
+LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-multilib-test
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
 
