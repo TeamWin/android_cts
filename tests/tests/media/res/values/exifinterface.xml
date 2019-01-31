@@ -17,7 +17,7 @@
 <resources>
     <array name="exifbyteorderii_jpg">
         <item>true</item>
-        <item>3500</item>
+        <item>3112</item>
         <item>6265</item>
         <item>512</item>
         <item>288</item>
@@ -58,7 +58,7 @@
         <item>0</item>
         <item>false</item>
         <item>true</item>
-        <item>572</item>
+        <item>675</item>
         <item>24</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -128,7 +128,7 @@
         <item>0</item>
         <item>false</item>
         <item>true</item>
-        <item>3143</item>
+        <item>3081</item>
         <item>24</item>
         <item>37.423</item>
         <item>-122.162</item>
