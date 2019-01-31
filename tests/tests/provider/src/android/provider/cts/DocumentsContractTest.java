@@ -41,6 +41,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.RETURNS_DEFAULTS;
 import static org.mockito.Mockito.doNothing;
@@ -53,7 +55,9 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -70,7 +74,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -110,6 +116,49 @@ public class DocumentsContractTest {
         mProvider.attachInfo(mContext, pi);
 
         mResolver = ContentResolver.wrap(mProvider);
+    }
+
+    @Test
+    public void testRootUri() {
+        final String auth = "com.example";
+        final String rootId = "rootId";
+        final PackageManager pm = mock(PackageManager.class);
+        final ProviderInfo providerInfo = new ProviderInfo();
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        final List<ResolveInfo> infoList = new ArrayList<>();
+
+        providerInfo.authority = auth;
+        resolveInfo.providerInfo = providerInfo;
+        infoList.add(resolveInfo);
+
+        doReturn(pm).when(mContext).getPackageManager();
+        doReturn(infoList).when(pm).queryIntentContentProviders(any(Intent.class), anyInt());
+
+        final Uri uri = DocumentsContract.buildRootUri(auth, rootId);
+
+        assertEquals(auth, uri.getAuthority());
+        assertEquals(rootId, DocumentsContract.getRootId(uri));
+        assertTrue(DocumentsContract.isRootUri(mContext, uri));
+    }
+
+    @Test
+    public void testRootsUri() {
+        final String auth = "com.example";
+        final PackageManager pm = mock(PackageManager.class);
+        final ProviderInfo providerInfo = new ProviderInfo();
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        final List<ResolveInfo> infoList = new ArrayList<>();
+
+        providerInfo.authority = auth;
+        resolveInfo.providerInfo = providerInfo;
+        infoList.add(resolveInfo);
+
+        doReturn(pm).when(mContext).getPackageManager();
+        doReturn(infoList).when(pm).queryIntentContentProviders(any(Intent.class), anyInt());
+
+        final Uri uri = DocumentsContract.buildRootsUri(auth);
+        assertEquals(auth, uri.getAuthority());
+        assertTrue(DocumentsContract.isRootsUri(mContext, uri));
     }
 
     @Test
