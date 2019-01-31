@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -37,7 +36,6 @@ import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
 
 import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 /**
  */
@@ -64,7 +62,6 @@ public class AbstractApiTest extends InstrumentationTestCase {
     }
 
     private TestResultObserver mResultObserver;
-    private boolean checkLibraryNames;
 
     ClassProvider classProvider;
 
@@ -93,17 +90,13 @@ public class AbstractApiTest extends InstrumentationTestCase {
 
     }
 
-    private static boolean isAccessibleClass(JDiffClassDescription classDescription) {
+    protected static boolean isAccessibleClass(JDiffClassDescription classDescription) {
         // Ignore classes that are known to be inaccessible.
         return !KNOWN_INACCESSIBLE_CLASSES.contains(classDescription.getAbsoluteClassName());
     }
 
     protected interface RunnableWithTestResultObserver {
         void run(TestResultObserver observer) throws Exception;
-    }
-
-    protected void setCheckLibraryNames() {
-        checkLibraryNames = true;
     }
 
     void runWithTestResultObserver(RunnableWithTestResultObserver runnable) {
@@ -137,32 +130,11 @@ public class AbstractApiTest extends InstrumentationTestCase {
         return argument.split(",");
     }
 
-    private Stream<String> getLibraries() {
-        try {
-            String result = runShellCommand(getInstrumentation(), "cmd package list libraries");
-            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1]);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private boolean checkLibrary (String name) {
-        if (!checkLibraryNames) {
-            return true;
-        }
-
-        String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
-        if (getLibraries().filter(lib -> lib.equals(libraryName)).findAny().isPresent()) {
-            return true;
-        }
-        return false;
-    }
-
     protected Stream<InputStream> readFile(File file) {
         try {
             if (file.getName().endsWith(".zip")) {
                 ZipFile zip = new ZipFile(file);
-                return zip.stream().filter(entry -> checkLibrary(entry.getName())).map(entry -> {
+                return zip.stream().map(entry -> {
                     try {
                         return zip.getInputStream(entry);
                     } catch (IOException e) {
