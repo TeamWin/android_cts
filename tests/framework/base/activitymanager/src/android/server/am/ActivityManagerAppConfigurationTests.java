@@ -144,7 +144,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     @Test
-    @FlakyTest(bugId = 121165130)
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
@@ -171,7 +170,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     @Test
-    @FlakyTest(bugId = 121165130)
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
