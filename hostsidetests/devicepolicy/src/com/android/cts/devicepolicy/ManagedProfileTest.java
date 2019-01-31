@@ -110,7 +110,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         // We need multi user to be supported in order to create a profile of the user owner.
         mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
-        mHasNfcFeature = hasDeviceFeature("android.hardware.nfc");
+        mHasNfcFeature = hasDeviceFeature("android.hardware.nfc")
+                && hasDeviceFeature("android.sofware.nfc.beam");
 
         if (mHasFeature) {
             removeTestUsers();
