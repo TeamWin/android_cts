@@ -54,6 +54,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1017,6 +1018,19 @@ public class TelephonyManagerTest {
         }
         boolean isEmergencyNumber = mTelephonyManager.isCurrentPotentialEmergencyNumber("911");
         // TODO enhance it later
+    }
+
+    /**
+     * Tests {@link TelephonyManager#getSupportedRadioAccessFamily()}
+     */
+    @Test
+    public void testGetRadioAccessFamily() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        long raf = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getSupportedRadioAccessFamily());
+        assertThat(raf).isNotEqualTo(TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN);
     }
 
     public static void waitForMs(long ms) {

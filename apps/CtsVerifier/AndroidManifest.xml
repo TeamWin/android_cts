@@ -2714,6 +2714,10 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
 
+        <activity android:name=".managedprovisioning.NonMarketAppsActivity"
+                  android:label="@string/provisioning_byod_non_market_apps">
+        </activity>
+
         <activity android:name=".managedprovisioning.KeyguardDisabledFeaturesActivity"
                 android:label="@string/provisioning_byod_keyguard_disabled_features">
         </activity>

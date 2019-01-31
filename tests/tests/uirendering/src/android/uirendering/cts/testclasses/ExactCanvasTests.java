@@ -19,6 +19,7 @@ package android.uirendering.cts.testclasses;
 import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Picture;
@@ -278,6 +279,22 @@ public class ExactCanvasTests extends ActivityTestBase {
                     canvas.drawVertices(Canvas.VertexMode.TRIANGLES, vertices.length, vertices, 0,
                             null, 0, colors, 0, null, 0, 0,
                             new Paint());
+                })
+                .runWithComparer(mExactComparer);
+    }
+
+    @Test
+    public void testColorLongs() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    canvas.drawColor(Color.pack(0.5f, 0.3f, 0.1f, 1.0f,
+                                ColorSpace.get(ColorSpace.Named.DISPLAY_P3)));
+                    canvas.drawColor(Color.pack(0.2f, 0.2f, 0.2f, 1.0f,
+                                ColorSpace.get(ColorSpace.Named.DISPLAY_P3)), BlendMode.PLUS);
+                    Paint p = new Paint();
+                    p.setColor(Color.pack(0.7f, 0.9f, 0.4f, 1.0f,
+                                ColorSpace.get(ColorSpace.Named.DISPLAY_P3)));
+                    canvas.drawRect(20, 20, 70, 70, p);
                 })
                 .runWithComparer(mExactComparer);
     }

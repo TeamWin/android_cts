@@ -394,6 +394,17 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testMccMncString() {
+        if (!isSupported()) return;
+
+        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
+        String mcc = info.getMccString();
+        String mnc = info.getMncString();
+        assertTrue(mcc == null || mcc.length() <= 3);
+        assertTrue(mnc == null || mnc.length() <= 3);
+    }
+
+    @Test
     public void testSettingSubscriptionMeteredNess() throws Exception {
         if (!isSupported()) return;
 

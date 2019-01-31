@@ -18,6 +18,7 @@ package android.uirendering.cts.testclasses;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Point;
@@ -30,6 +31,7 @@ import android.uirendering.cts.bitmapverifiers.SamplePointWideGamutVerifier;
 import android.uirendering.cts.testclasses.view.BitmapView;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.view.View;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -128,5 +130,34 @@ public class WideColorGamutTests extends ActivityTestBase {
                     bv.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                 }, true)
                 .runWithVerifier(getVerifier(POINTS, COLORS, 1e-2f));
+    }
+
+    @Test
+    public void testCanvasDrawColorLong() {
+        final Color greenP3 = Color.valueOf(0, 1.0f, 0, 1.0f, DISPLAY_P3);
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    canvas.drawColor(greenP3.pack());
+                })
+                .runWithVerifier(getVerifier(
+                            new Point[] { new Point(0, 0), new Point(50, 50) },
+                            new Color[] { greenP3, greenP3 },
+                            0));
+    }
+
+    @Test
+    public void testCanvasDrawColorLongBlendMode() {
+        final Color greenP3 = Color.valueOf(0, 1.0f, 0, 1.0f, DISPLAY_P3);
+        final Color redP3 = Color.valueOf(1.0f, 0, 0, 1.0f, DISPLAY_P3);
+        final Color expected = Color.valueOf(1.0f, 1.0f, 0, 1.0f, DISPLAY_P3);
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    canvas.drawColor(greenP3.pack());
+                    canvas.drawColor(redP3.pack(), BlendMode.PLUS);
+                })
+                .runWithVerifier(getVerifier(
+                            new Point[] { new Point(0, 0), new Point(50, 50) },
+                            new Color[] { expected, expected },
+                            0));
     }
 }

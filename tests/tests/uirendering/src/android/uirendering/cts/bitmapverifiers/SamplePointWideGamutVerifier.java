@@ -19,13 +19,9 @@ package android.uirendering.cts.bitmapverifiers;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.util.Half;
 import android.util.Log;
 
 import org.junit.Assert;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class SamplePointWideGamutVerifier extends BitmapVerifier {
     private static final String TAG = "SamplePointWideGamut";
@@ -45,53 +41,22 @@ public class SamplePointWideGamutVerifier extends BitmapVerifier {
         Assert.assertTrue("You cannot use this verifier with an bitmap whose ColorSpace is not "
                  + "wide gamut: " + bitmap.getColorSpace(), bitmap.getColorSpace().isWideGamut());
 
-        ByteBuffer dst = ByteBuffer.allocateDirect(bitmap.getAllocationByteCount());
-        bitmap.copyPixelsToBuffer(dst);
-        dst.rewind();
-        dst.order(ByteOrder.LITTLE_ENDIAN);
-
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        int stride = bitmap.getRowBytes();
-
         boolean success = true;
         for (int i = 0; i < mPoints.length; i++) {
             Point p = mPoints[i];
-            Color c = mColors[i];
+            Color expected = mColors[i];
 
-            float r, g, b, a;
-
-            if (bitmap.getConfig() == Bitmap.Config.RGBA_F16) {
-                int index = p.y * stride + (p.x << 3);
-                r = Half.toFloat(dst.getShort(index));
-                g = Half.toFloat(dst.getShort(index + 2));
-                b = Half.toFloat(dst.getShort(index + 4));
-                a = Half.toFloat(dst.getShort(index + 6));
-            } else if (bitmap.getConfig() == Bitmap.Config.ARGB_8888) {
-                int index = p.y * stride + (p.x << 2);
-                r = dst.get(index + 0) / 255.0f;
-                g = dst.get(index + 1) / 255.0f;
-                b = dst.get(index + 2) / 255.0f;
-                a = dst.get(index + 3) / 255.0f;
-            } else {
-                Assert.fail("This verifier does not support the provided bitmap config: "
-                        + bitmap.getConfig());
-                return false;
-            }
-
-            Color bitmapColor = Color.valueOf(r, g, b, a, bitmap.getColorSpace());
-            Color convertedBitmapColor = bitmapColor.convert(c.getColorSpace());
+            Color actual = bitmap.getColor(p.x, p.y).convert(expected.getColorSpace());
 
             boolean localSuccess = true;
-            if (!floatCompare(c.red(),   convertedBitmapColor.red(),   mEps)) localSuccess = false;
-            if (!floatCompare(c.green(), convertedBitmapColor.green(), mEps)) localSuccess = false;
-            if (!floatCompare(c.blue(),  convertedBitmapColor.blue(),  mEps)) localSuccess = false;
-            if (!floatCompare(c.alpha(), convertedBitmapColor.alpha(), mEps)) localSuccess = false;
+            if (!floatCompare(expected.red(),   actual.red(),   mEps)) localSuccess = false;
+            if (!floatCompare(expected.green(), actual.green(), mEps)) localSuccess = false;
+            if (!floatCompare(expected.blue(),  actual.blue(),  mEps)) localSuccess = false;
+            if (!floatCompare(expected.alpha(), actual.alpha(), mEps)) localSuccess = false;
 
             if (!localSuccess) {
                 success = false;
-                Log.w(TAG, "Expected " + c.toString() + " at " + p.x + "x" + p.y
-                        + ", got " + convertedBitmapColor.toString());
+                Log.w(TAG, "Expected " + expected + " at " + p + ", got " + actual);
             }
         }
         return success;

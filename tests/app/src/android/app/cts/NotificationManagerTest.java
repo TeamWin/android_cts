@@ -35,21 +35,32 @@ import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
+import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.Intent;
+import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
 import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.Condition;
@@ -58,6 +69,8 @@ import android.service.notification.StatusBarNotification;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
 
@@ -140,6 +153,74 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
         }
     }
+
+    private void insertSingleContact(String name, String phone, String email, boolean starred) {
+        final ArrayList<ContentProviderOperation> operationList =
+                new ArrayList<ContentProviderOperation>();
+        ContentProviderOperation.Builder builder =
+                ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI);
+        builder.withValue(ContactsContract.RawContacts.STARRED, starred ? 1 : 0);
+        operationList.add(builder.build());
+
+        builder = ContentProviderOperation.newInsert(Data.CONTENT_URI);
+        builder.withValueBackReference(StructuredName.RAW_CONTACT_ID, 0);
+        builder.withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
+        builder.withValue(StructuredName.DISPLAY_NAME, name);
+        operationList.add(builder.build());
+
+        if (phone != null) {
+            builder = ContentProviderOperation.newInsert(Data.CONTENT_URI);
+            builder.withValueBackReference(Phone.RAW_CONTACT_ID, 0);
+            builder.withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE);
+            builder.withValue(Phone.TYPE, Phone.TYPE_MOBILE);
+            builder.withValue(Phone.NUMBER, phone);
+            builder.withValue(Data.IS_PRIMARY, 1);
+            operationList.add(builder.build());
+        }
+        if (email != null) {
+            builder = ContentProviderOperation.newInsert(Data.CONTENT_URI);
+            builder.withValueBackReference(Email.RAW_CONTACT_ID, 0);
+            builder.withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE);
+            builder.withValue(Email.TYPE, Email.TYPE_HOME);
+            builder.withValue(Email.DATA, email);
+            operationList.add(builder.build());
+        }
+
+        try {
+            mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY, operationList);
+        } catch (RemoteException e) {
+            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
+        } catch (OperationApplicationException e) {
+            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
+        }
+    }
+
+    private Uri lookupContact(String phone) {
+        Cursor c = null;
+        try {
+            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode(phone));
+            String[] projection = new String[] { ContactsContract.Contacts._ID,
+                    ContactsContract.Contacts.LOOKUP_KEY };
+            c = mContext.getContentResolver().query(phoneUri, projection, null, null, null);
+            if (c != null && c.getCount() > 0) {
+                c.moveToFirst();
+                int lookupIdx = c.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY);
+                int idIdx = c.getColumnIndex(ContactsContract.Contacts._ID);
+                String lookupKey = c.getString(lookupIdx);
+                long contactId = c.getLong(idIdx);
+                return ContactsContract.Contacts.getLookupUri(contactId, lookupKey);
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "Problem getting content resolver or performing contacts query.", t);
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+        return null;
+    }
+
 
     private StatusBarNotification findPostedNotification(int id) {
         // notification is a bit asynchronous so it may take a few ms to appear in
@@ -1539,5 +1620,47 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         StatusBarNotification n = findPostedNotification(id);
         assertNotNull(n);
+    }
+
+    public void testShouldHideSilentStatusIcons() throws Exception {
+        try {
+            mNotificationManager.shouldHideSilentStatusBarIcons();
+            fail("Non-privileged apps should not get this information");
+        } catch (SecurityException e) {
+            // pass
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        // no exception this time
+        mNotificationManager.shouldHideSilentStatusBarIcons();
+    }
+
+    public void testMatchesCallFilter() throws Exception {
+        // allow all callers
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        NotificationManager.Policy currPolicy = mNotificationManager.getNotificationPolicy();
+        NotificationManager.Policy newPolicy = new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_CALLS
+                        | NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS,
+                NotificationManager.Policy.PRIORITY_SENDERS_ANY,
+                currPolicy.priorityMessageSenders,
+                currPolicy.suppressedVisualEffects);
+        mNotificationManager.setNotificationPolicy(newPolicy);
+
+        // add a contact
+        String ALICE = "Alice";
+        String ALICE_PHONE = "+16175551212";
+        String ALICE_EMAIL = "alice@_foo._bar";
+
+        insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
+
+        final Bundle peopleExtras = new Bundle();
+        ArrayList<Person> personList = new ArrayList<>();
+        personList.add(new Person.Builder().setUri(lookupContact(ALICE_PHONE).toString()).build());
+        peopleExtras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST, personList);
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                assertTrue(mNotificationManager.matchesCallFilter(peopleExtras)));
     }
 }

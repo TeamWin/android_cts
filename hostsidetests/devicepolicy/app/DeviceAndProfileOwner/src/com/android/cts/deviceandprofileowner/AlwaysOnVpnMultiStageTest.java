@@ -25,6 +25,7 @@ import android.system.OsConstants;
 
 import com.android.cts.deviceandprofileowner.vpn.VpnTestHelper;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,14 +37,31 @@ public class AlwaysOnVpnMultiStageTest extends BaseDeviceAdminTest {
 
     public void testAlwaysOnSet() throws Exception {
         // Setup always-on vpn
-        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE, /* usable */ true);
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE,
+                /* usable */ true, /* lockdown */ true, /* whitelist */ false);
         assertTrue(VpnTestHelper.isNetworkVpn(mContext));
         VpnTestHelper.checkPing(TEST_ADDRESS);
     }
 
-    public void testAlwaysOnSetAfterReboot() throws Exception {
-        VpnTestHelper.waitForVpn(mContext, null, /* usable */ true);
+    public void testAlwaysOnSetWithWhitelist() throws Exception {
+        VpnTestHelper.waitForVpn(mContext, VPN_PACKAGE,
+                /* usable */ true, /* lockdown */ true, /* whitelist */ true);
+        assertTrue(VpnTestHelper.isNetworkVpn(mContext));
         VpnTestHelper.checkPing(TEST_ADDRESS);
+    }
+
+    // Should be run after running testAlwaysOnSetWithWhitelist and rebooting.
+    public void testAlwaysOnSetAfterReboot() throws Exception {
+        VpnTestHelper.waitForVpn(mContext, null,
+                /* usable */ true, /* lockdown */ true, /* whitelist */ true);
+        VpnTestHelper.checkPing(TEST_ADDRESS);
+        final List<String> whitelist =
+                mDevicePolicyManager.getAlwaysOnVpnLockdownWhitelist(ADMIN_RECEIVER_COMPONENT);
+        assertTrue("Lockdown bit lost after reboot",
+                mDevicePolicyManager.isAlwaysOnVpnLockdownEnabled(ADMIN_RECEIVER_COMPONENT));
+        assertNotNull("whitelist is lost after reboot", whitelist);
+        assertTrue("whitelist changed after reboot",
+                whitelist.size() == 1 && mContext.getPackageName().equals(whitelist.get(0)));
     }
 
     public void testNetworkBlocked() throws Exception {

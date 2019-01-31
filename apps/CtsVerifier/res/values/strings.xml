@@ -1969,6 +1969,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="widget_pass">Pass</string>
     <string name="widget_fail">Fail</string>
 
+    <string name="provisioning_byod_non_market_apps">Non-market app installation restrictions</string>
+    <string name="provisioning_byod_non_market_apps_info">
+        This test exercises user restrictions on installation of non-market apps. Follow
+        instructions in each test.
+    </string>
+
     <string name="provisioning_byod_nonmarket_allow">Enable non-market apps</string>
     <string name="provisioning_byod_nonmarket_allow_info">
         This test verifies that non-market apps can be installed if permitted.\n
@@ -2006,18 +2012,34 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_nonmarket_allow_global_primary">Enable primary user non-market apps (global restriction)</string>
     <string name="provisioning_byod_nonmarket_allow_global_primary_info">
         This test verifies that non-market apps from the primary user can be installed if permitted.\n
-        1. A package installation UI should appear.\n
-        2. If \'Cts Verifier\' is not allowed to install apps, a warning dialog will appear
-        blocking the install. In this case go to step 3, else skip to step 4.\n
-        3. Allow \'Cts Verifier\' to install apps. Return to package installer.\n
-        4. Accept the installation and verify that it succeeds (no error message is displayed).
+        1. You should have received NotificationBot.apk together with the CTS verifier. If you built
+        the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on
+        the host:\n
+        make NotificationBot\n
+        2. Upload the NotificationBot.apk to your device by issuing the following command on the
+        host:\n
+        adb push /path/to/NotificationBot.apk /data/local/tmp/\n
+        3. Press \"Go\" to install NotificationBot.apk in your personal profile. A package
+        installation UI should appear.\n
+        4. If \'Cts Verifier\' is not allowed to install apps, a warning dialog will appear
+        blocking the install. In this case go to step 5, else skip to step 6.\n
+        5. Allow \'Cts Verifier\' to install apps. Return to package installer.\n
+        6. Accept the installation and verify that it succeeds (no error message is displayed).
     </string>
 
     <string name="provisioning_byod_nonmarket_deny_global_primary">Disable primary user non-market apps (global restriction)</string>
     <string name="provisioning_byod_nonmarket_deny_global_primary_info">
         This test verifies that non-market apps from the primary user cannot be installed unless permitted.\n
-        1. A package installation UI should appear.\n
-        2. Verify that the installation of the package is refused.
+        1. You should have received NotificationBot.apk together with the CTS verifier. If you built
+        the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on
+        the host:\n
+        make NotificationBot\n
+        2. Upload the NotificationBot.apk to your device by issuing the following command on the
+        host:\n
+        adb push /path/to/NotificationBot.apk /data/local/tmp/\n
+        3. Press \"Go\" to install NotificationBot.apk in your personal profile. A package
+        installation UI should appear.\n
+        4. Verify that the installation of the package is refused.
     </string>
 
     <string name="provisioning_byod_capture_image_support">Camera support cross profile image capture</string>
