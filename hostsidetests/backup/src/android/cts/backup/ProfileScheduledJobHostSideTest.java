@@ -146,7 +146,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
         int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, mProfileUserId);
         assertThat(isSystemJobScheduled(jobId, KEY_VALUE_JOB_NAME)).isTrue();
 
-        mDevice.stopUser(mProfileUserId);
+        mDevice.stopUser(mProfileUserId, /* waitFlag */ true, /* forceFlag */ true);
 
         assertThat(isSystemJobScheduled(jobId, KEY_VALUE_JOB_NAME)).isFalse();
     }
@@ -196,7 +196,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
         int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, mProfileUserId);
         assertThat(isSystemJobScheduled(jobId, FULL_BACKUP_JOB_NAME)).isTrue();
 
-        mDevice.stopUser(mProfileUserId);
+        mDevice.stopUser(mProfileUserId, /* waitFlag */ true, /* forceFlag */ true);
 
         assertThat(isSystemJobScheduled(jobId, FULL_BACKUP_JOB_NAME)).isFalse();
     }

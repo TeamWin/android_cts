@@ -41,7 +41,8 @@ import java.util.concurrent.TimeUnit;
 @AppModeFull
 public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSideTest {
     private static final String USER_SETUP_COMPLETE_SETTING = "user_setup_complete";
-    private static final int BROADCAST_IDLE_TIMEOUT_MIN = 10;
+    private static final long USER_STATE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(5);
+    private static final long TRANSPORT_INITIALIZATION_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
 
     // Key-value test package.
     static final String KEY_VALUE_APK = "CtsProfileKeyValueApp.apk";
@@ -111,15 +112,16 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     }
 
     /** Start the user and set necessary conditions for backup to be enabled in the user. */
-    void startUserAndInitializeForBackup(int userId) throws Exception {
+    void startUserAndInitializeForBackup(int userId)
+            throws IOException, DeviceNotAvailableException {
         // Turn on multi-user feature for this user.
         mBackupUtils.executeShellCommandSync(
                 String.format("bmgr --user %d activate %b", userId, true));
 
         mDevice.startUser(userId);
         // Wait for user to be fully started.
-        mDevice.executeShellV2Command(
-                "am wait-for-broadcast-idle", BROADCAST_IDLE_TIMEOUT_MIN, TimeUnit.MINUTES);
+        boolean isUserStarted = waitForUserState(userId, "RUNNING_UNLOCKED");
+        assertThat(isUserStarted).isTrue();
 
         mDevice.setSetting(userId, "secure", USER_SETUP_COMPLETE_SETTING, "1");
         mBackupUtils.enableBackupForUser(true, userId);
@@ -133,7 +135,24 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     String switchUserToLocalTransportAndAssertSuccess(int userId) throws IOException {
         // Make sure the user has the local transport.
         String localTransport = mBackupUtils.getLocalTransportName();
-        assertThat(mBackupUtils.userHasBackupTransport(localTransport, userId)).isTrue();
+
+        // TODO (b/121198010): Update dumpsys or add shell command to query status of transport
+        // initialization. Transports won't be available until they are initialized/registered.
+        boolean hasLocalTransport = false;
+        long timeout = System.currentTimeMillis() + TRANSPORT_INITIALIZATION_TIMEOUT_MS;
+        while (System.currentTimeMillis() <= timeout) {
+            if (mBackupUtils.userHasBackupTransport(localTransport, userId)) {
+                hasLocalTransport = true;
+                break;
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // Do nothing.
+            }
+        }
+        assertThat(hasLocalTransport).isTrue();
 
         // Switch to the local transport and assert success.
         mBackupUtils.setBackupTransportForUser(localTransport, userId);
@@ -165,5 +184,28 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
             throws DeviceNotAvailableException {
         boolean result = runDeviceTests(mDevice, packageName, className, testName, userId, null);
         assertThat(result).isTrue();
+    }
+
+    /**
+     * Waits for user {@code userId} to be in the state {@code expectedState}. Returns {@code true}
+     * if the user is in the state within the timeout.
+     */
+    boolean waitForUserState(int userId, String expectedState) throws IOException {
+        long timeout = System.currentTimeMillis() + USER_STATE_TIMEOUT_MS;
+        while (System.currentTimeMillis() <= timeout) {
+            String output =
+                    mBackupUtils.executeShellCommandAndReturnOutput(
+                            String.format("am get-started-user-state %d", userId));
+            if (output.contains(expectedState)) {
+                return true;
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // Do nothing.
+            }
+        }
+        return false;
     }
 }
