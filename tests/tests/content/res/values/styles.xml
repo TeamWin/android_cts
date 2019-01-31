@@ -41,6 +41,7 @@
 
     <style name="StyleA" parent="StyleB">
         <item name="type1">true</item>
+        <item name="type17">@color/testcolor_orientation</item>
     </style>
     <style name="StyleB" parent="StyleC">
         <item name="type1">false</item>

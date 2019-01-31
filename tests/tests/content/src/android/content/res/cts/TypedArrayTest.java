@@ -28,8 +28,10 @@ import android.graphics.Typeface;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.util.Xml;
 import android.view.ContextThemeWrapper;
 
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -72,17 +74,39 @@ public class TypedArrayTest extends AndroidTestCase {
         mTypedArray.recycle();
     }
 
-    public void testSourceStyleResourceId() {
+    public void testSourceResourceIdFromStyle() {
         final TypedArray t = getContext().getTheme().obtainStyledAttributes(
                 R.style.StyleA, R.styleable.style1);
 
-        assertEquals(R.style.StyleA, t.getSourceStyleResourceId(R.styleable.style1_type1, 0));
-        assertEquals(R.style.StyleB, t.getSourceStyleResourceId(R.styleable.style1_type2, 0));
-        assertEquals(R.style.StyleC, t.getSourceStyleResourceId(R.styleable.style1_type3, 0));
-        assertEquals(R.style.StyleB, t.getSourceStyleResourceId(R.styleable.style1_type4, 0));
-        assertEquals(0, t.getSourceStyleResourceId(R.styleable.style1_type5, 0));
+        assertEquals(R.style.StyleA, t.getSourceResourceId(R.styleable.style1_type1, 0));
+        assertEquals(R.style.StyleB, t.getSourceResourceId(R.styleable.style1_type2, 0));
+        assertEquals(R.style.StyleC, t.getSourceResourceId(R.styleable.style1_type3, 0));
+        assertEquals(R.style.StyleB, t.getSourceResourceId(R.styleable.style1_type4, 0));
+        assertEquals(0, t.getSourceResourceId(R.styleable.style1_type5, 0));
+        assertEquals(R.style.StyleA, t.getSourceResourceId(R.styleable.style1_type17, 0));
 
         t.recycle();
+    }
+
+    public void testSourceResourceIdFromLayout() throws Exception {
+        XmlResourceParser parser =
+                getContext().getResources().getLayout(R.layout.source_style_layout);
+
+        final AttributeSet attrs = Xml.asAttributeSet(parser);
+
+        // Look for the root node.
+        assertEquals(XmlPullParser.START_DOCUMENT, parser.next());
+        assertEquals(XmlPullParser.START_TAG, parser.next());
+
+        final TypedArray t = getContext().getTheme().obtainStyledAttributes(
+                attrs, R.styleable.style1, 0, 0);
+        assertEquals(R.layout.source_style_layout,
+                t.getSourceResourceId(R.styleable.style1_type1, 0));
+        assertEquals(R.style.StyleB, t.getSourceResourceId(R.styleable.style1_type2, 0));
+        assertEquals(R.style.StyleC, t.getSourceResourceId(R.styleable.style1_type3, 0));
+        assertEquals(R.style.StyleB, t.getSourceResourceId(R.styleable.style1_type4, 0));
+        assertEquals(0, t.getSourceResourceId(R.styleable.style1_type5, 0));
+        assertEquals(R.style.StyleA, t.getSourceResourceId(R.styleable.style1_type17, 0));
     }
 
     public void testGetType() {
