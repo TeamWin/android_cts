@@ -18,7 +18,7 @@
     package="com.android.cts.ephemeralapp2"
     android:targetSandboxVersion="2">
     <uses-sdk
-        android:minSdkVersion="24" />
+        android:minSdkVersion="24" android:targetSdkVersion="26" />
 
     <!-- TEST: exists only for testing ephemeral app1 can't see this app -->
     <application
