@@ -20,8 +20,12 @@ public class PixelColor {
     public static final int RED = 0xFF0000FF;
     public static final int GREEN = 0xFF00FF00;
     public static final int BLUE = 0xFFFF0000;
+    public static final int YELLOW = 0xFF00FFFF;
+    public static final int MAGENTA = 0xFFFF00FF;
 
     public static final int TRANSPARENT_RED = 0x7F0000FF;
+    public static final int TRANSPARENT_BLUE = 0x7FFF0000;
+    public static final int TRANSPARENT = 0x00000000;
 
     // Default to black
     public short mMinAlpha;

@@ -110,7 +110,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         // We need multi user to be supported in order to create a profile of the user owner.
         mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
-        mHasNfcFeature = hasDeviceFeature("android.hardware.nfc");
+        mHasNfcFeature = hasDeviceFeature("android.hardware.nfc")
+                && hasDeviceFeature("android.sofware.nfc.beam");
 
         if (mHasFeature) {
             removeTestUsers();
@@ -375,28 +376,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             fail(mHasFeature ? "Device must allow creating only one managed profile"
                     : "Device must not allow creating a managed profile");
         }
-    }
-
-    /**
-     * Verify that removing a managed profile will remove all networks owned by that profile.
-     */
-    public void testProfileWifiCleanup() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
-            return;
-        }
-        installAppAsUser(WIFI_CONFIG_CREATOR_APK, mProfileUserId);
-
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId);
-
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId);
-
-        // Now delete the user - should undo the effect of testAddWifiNetwork.
-        removeUser(mProfileUserId);
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
-                mParentUserId);
     }
 
     public void testWifiMacAddress() throws Exception {

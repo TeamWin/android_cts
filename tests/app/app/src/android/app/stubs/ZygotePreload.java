@@ -16,10 +16,9 @@
 
 package android.app.stubs;
 
-import android.os.Process;
-import android.util.Log;
+import android.content.pm.ApplicationInfo;
 
-public class ZygotePreload {
+public class ZygotePreload implements android.app.ZygotePreload {
     static final String TAG = "ZygotePreload";
 
     static boolean sPreloadCalled = false;
@@ -28,7 +27,8 @@ public class ZygotePreload {
         return sPreloadCalled;
     }
 
-    static synchronized public void doPreload() {
+    @Override
+    synchronized public void doPreload(ApplicationInfo appInfo) {
         sPreloadCalled = true;
     }
 }

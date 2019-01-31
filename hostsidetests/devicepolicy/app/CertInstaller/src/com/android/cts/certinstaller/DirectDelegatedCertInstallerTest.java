@@ -22,11 +22,13 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.os.Build;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.KeyChainException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 import android.util.Base64;
 import android.util.Base64InputStream;
@@ -207,6 +209,19 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
         } finally {
             assertThat(mDpm.removeKeyPair(null, alias)).isTrue();
         }
+    }
+
+    public void testAccessToDeviceIdentifiers() {
+        String serialNumber = Build.getSerial();
+        assertThat(Build.getSerial()).doesNotMatch(Build.UNKNOWN);
+
+        TelephonyManager telephonyService = (TelephonyManager) getContext().getSystemService(
+                Context.TELEPHONY_SERVICE);
+        assertWithMessage("Telephony service must be available.")
+                .that(telephonyService).isNotNull();
+
+        assertWithMessage("Must be able to obtain a valid IMEI.")
+                .that(telephonyService.getImei()).isNotNull();
     }
 
     private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)
