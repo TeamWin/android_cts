@@ -642,44 +642,6 @@ public class MagnifierTest {
     }
 
     @Test
-    public void testSourcePosition_respectsMaxInViewBounds() throws Throwable {
-        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
-            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
-        }, false /*forceLayout*/);
-        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
-        final Magnifier.Builder builder = new Magnifier.Builder(view)
-                .setSize(100, 100)
-                .setInitialZoom(10f) /* 10x10 source size */
-                .setSourceBounds(
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW
-                );
-
-        runOnUiThreadAndWaitForCompletion(() -> mMagnifier = builder.build());
-
-        final int[] viewPosition = new int[2];
-        view.getLocationInSurface(viewPosition);
-
-        // Copy content centered on relative position (0, 0) and expect the top left
-        // corner of the source to have been pulled to coincide with (0, 0) of the view.
-        showMagnifier(0, 0);
-        Point sourcePosition = mMagnifier.getSourcePosition();
-        assertNotNull(sourcePosition);
-        assertEquals(viewPosition[0], sourcePosition.x);
-        assertEquals(viewPosition[1], sourcePosition.y);
-
-        showMagnifier(view.getWidth(), view.getHeight());
-        sourcePosition = mMagnifier.getSourcePosition();
-        assertNotNull(sourcePosition);
-        assertEquals(viewPosition[0] + view.getWidth() - mMagnifier.getSourceWidth(),
-                sourcePosition.x);
-        assertEquals(viewPosition[1] + view.getHeight() - mMagnifier.getSourceHeight(),
-                sourcePosition.y);
-    }
-
-    @Test
     public void testSourcePosition_respectsMaxInSurfaceBounds() throws Throwable {
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
             mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
@@ -796,10 +758,10 @@ public class MagnifierTest {
                         2 * view.getHeight() + systemInsets.bottom)
                 .setInitialZoom(1f) /* source double the size of the view + right/bottom insets */
                 .setSourceBounds(/* invalid bounds */
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
-                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE,
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE,
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE,
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE
                 );
 
         runOnUiThreadAndWaitForCompletion(() -> mMagnifier = builder.build());
