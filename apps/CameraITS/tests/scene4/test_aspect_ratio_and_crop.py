@@ -260,7 +260,7 @@ def main():
                 sensor_w = props["android.sensor.info.physicalSize"]["width"]
                 pixel_h = props["android.sensor.info.pixelArraySize"]["height"]
                 pixel_w = props["android.sensor.info.pixelArraySize"]["width"]
-                fd = float(props["android.lens.info.availableFocalLengths"][0])
+                fd = float(cap_raw["metadata"]["android.lens.focalLength"])
                 fd_w_pix = pixel_w * fd / sensor_w
                 fd_h_pix = pixel_h * fd / sensor_h
                 # transformation matrix
