@@ -41,7 +41,6 @@ import android.media.PlaybackParams;
 import android.media.SubtitleData;
 import android.media.SyncParams;
 import android.media.TimedText;
-import android.media.VideoSize;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
 import android.media.cts.TestUtils.Monitor;
@@ -59,6 +58,7 @@ import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 import android.util.Pair;
+import android.util.Size;
 import android.webkit.cts.CtsTestServer;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -2138,7 +2138,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mOnCompletionCalled.reset();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
-            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, VideoSize size) {
+            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, Size size) {
                 mOnVideoSizeChangedCalled.signal();
             }
 
@@ -2474,7 +2474,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         Monitor mOnVideoSizeChangedCalled = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
-            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, VideoSize size) {
+            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, Size size) {
                 if (size.getWidth() > 0 && size.getHeight() > 0) {
                     mOnVideoSizeChangedCalled.signal();
                 }
