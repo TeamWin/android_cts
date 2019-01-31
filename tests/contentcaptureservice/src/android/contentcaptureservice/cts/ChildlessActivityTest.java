@@ -104,6 +104,39 @@ public class ChildlessActivityTest
         activity.assertDefaultEvents(session);
     }
 
+    @Ignore("not implemented yet, pending on b/123658889")
+    @Test
+    public void testGetContentCapture_disabledWhenNoService() throws Exception {
+
+        // TODO(b/123658889): must call a cmd that always disable the service, even if the OEM
+        // provides an implementation
+
+        final ActivityWatcher watcher = startWatcher();
+
+        final ChildlessActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        assertThat(activity.getContentCaptureManager().isContentCaptureEnabled()).isFalse();
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+    }
+
+    @Test
+    public void testGetContentCapture_enabledWhenNoService() throws Exception {
+        enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final ChildlessActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        assertThat(activity.getContentCaptureManager().isContentCaptureEnabled()).isTrue();
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+    }
+
     @Test
     public void testLaunchAnotherActivity() throws Exception {
         final CtsContentCaptureService service = enableService();
@@ -909,6 +942,7 @@ public class ChildlessActivityTest
 
             disconnectedListener.waitForOnDisconnected();
             assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+            assertThat(mgr.isContentCaptureEnabled()).isFalse();
 
             final ActivityWatcher watcher = startWatcher();
             final ChildlessActivity activity = launchActivity();
@@ -951,6 +985,7 @@ public class ChildlessActivityTest
             disconnectedListener.waitForOnDisconnected();
 
             assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+            assertThat(mgr.isContentCaptureEnabled()).isFalse();
 
             // Launch and finish 1st activity while it's disabled
             final ActivityWatcher watcher1 = startWatcher();
