@@ -651,7 +651,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             getKeys(drm, "cenc", mSessionId, mDrmInitData, MediaDrm.KEY_TYPE_OFFLINE,
                     new byte[][] { CLEAR_KEY_CENC });
 
-            if (drm.getOfflineLicenseState(mKeySetId) != MediaDrm.OFFLINE_LICENSE_USABLE) {
+            if (drm.getOfflineLicenseState(mKeySetId) != MediaDrm.OFFLINE_LICENSE_STATE_USABLE) {
                 throw new Error("Offline license state is not usable");
             }
 
