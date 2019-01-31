@@ -41,4 +41,6 @@ LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
+LOCAL_MIN_SDK_VERSION := 23
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
