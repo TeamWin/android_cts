@@ -389,6 +389,8 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
+        assertThat(activity.getContentCaptureManager().isContentCaptureEnabled()).isFalse();
+
         activity.syncRunOnUiThread(() -> activity.mUsername.setText("D'OH"));
 
         activity.finish();
@@ -419,6 +421,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
+        assertThat(activity.getContentCaptureManager().isContentCaptureEnabled()).isFalse();
         activity.syncRunOnUiThread(() -> activity.mUsername.setText("D'OH"));
 
         activity.finish();
@@ -474,6 +477,8 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
+
+        assertThat(activity.getContentCaptureManager().isContentCaptureEnabled()).isFalse();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
