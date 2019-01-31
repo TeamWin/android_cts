@@ -27,6 +27,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknown
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.componentNameFor;
+import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
@@ -34,7 +35,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
-import android.content.Context;
 import android.contentcaptureservice.cts.CtsContentCaptureService.DisconnectListener;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
@@ -226,7 +226,7 @@ public class ChildlessActivityTest
         final AtomicReference<TextView> childRef = new AtomicReference<>();
 
         ChildlessActivity.onRootView((activity, rootView) -> {
-            final TextView text = newImportantChild(activity, "Important I am");
+            final TextView text = newImportantView(activity, "Important I am");
             rootView.addView(text);
             childRef.set(text);
         });
@@ -271,7 +271,7 @@ public class ChildlessActivityTest
         final ChildlessActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
-        final TextView child = newImportantChild(activity, "Important I am");
+        final TextView child = newImportantView(activity, "Important I am");
         activity.runOnUiThread(() -> activity.getRootView().addView(child));
 
         activity.finish();
@@ -314,7 +314,7 @@ public class ChildlessActivityTest
         final ContentCaptureSessionId childSessionId = childSession.getContentCaptureSessionId();
         Log.v(TAG, "child session id: " + childSessionId);
 
-        final TextView child = newImportantChild(activity, "Important I am");
+        final TextView child = newImportantView(activity, "Important I am");
         child.setContentCaptureSession(childSession);
         activity.runOnUiThread(() -> activity.getRootView().addView(child));
 
@@ -1010,16 +1010,9 @@ public class ChildlessActivityTest
     // TODO(b/123406031): add tests that mix feature_enabled with user_restriction_enabled (and
     // make sure mgr.isContentCaptureFeatureEnabled() returns only the state of the 1st)
 
-    private TextView newImportantChild(@NonNull Context context, @NonNull String text) {
-        final TextView child = new TextView(context);
-        child.setText(text);
-        child.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_YES);
-        return child;
-    }
-
     private TextView addChild(@NonNull ChildlessActivity activity,
             @NonNull ContentCaptureSession session, @NonNull String text) {
-        final TextView child = newImportantChild(activity, text);
+        final TextView child = newImportantView(activity, text);
         child.setContentCaptureSession(session);
         Log.i(TAG, "adding " + child.getAutofillId() + " on session "
                 + session.getContentCaptureSessionId());

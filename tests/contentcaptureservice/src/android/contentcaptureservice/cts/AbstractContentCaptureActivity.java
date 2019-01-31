@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 abstract class AbstractContentCaptureActivity extends Activity {
 
-    protected final String mTag = getClass().getSimpleName();
+    private final String mTag = getClass().getSimpleName();
 
     private int mRealTaskId;
 

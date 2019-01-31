@@ -68,7 +68,7 @@ public class LoginActivity extends AbstractRootViewActivity {
         assertSessionId(sessionId, activity.mPasswordLabel);
 
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(mTag, "events: " + events);
+        Log.v(TAG, "events: " + events);
         // TODO(b/119638528): ideally it should be 5 so it reflects just the views defined
         // in the layout - right now it's generating events for 2 intermediate parents
         // (android:action_mode_bar_stub and android:content), we should try to create an
