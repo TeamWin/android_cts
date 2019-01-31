@@ -46,6 +46,7 @@ import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.UserDataRemovalRequest;
+import android.view.contentcapture.UserDataRemovalRequest.UriRequest;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -56,7 +57,6 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<LoginActivity> {
 
@@ -508,7 +508,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        Uri uri = Uri.parse("com.example");
+        final Uri uri = Uri.parse("com.example");
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
                 .removeUserData(new UserDataRemovalRequest.Builder()
@@ -524,12 +524,14 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         UserDataRemovalRequest request = service.getRemovalRequest();
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isFalse();
-
-        List<UserDataRemovalRequest.UriRequest> requests = request.getUriRequests();
-        assertThat(requests.size()).isEqualTo(1);
-        assertThat(requests.stream().map((r) -> r.getUri()).collect(Collectors.toList()))
-                .containsExactly(uri).inOrder();
         assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
+
+        final List<UserDataRemovalRequest.UriRequest> requests = request.getUriRequests();
+        assertThat(requests.size()).isEqualTo(1);
+
+        final UriRequest actualRequest = requests.get(0);
+        assertThat(actualRequest.getUri()).isEqualTo(uri);
+        assertThat(actualRequest.isRecursive()).isFalse();
     }
 
     @Test
@@ -537,13 +539,13 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        Uri uri = Uri.parse("com.example");
-        Uri uri2 = Uri.parse("com.example2");
+        final Uri uri1 = Uri.parse("com.example");
+        final Uri uri2 = Uri.parse("com.example2");
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
                 .removeUserData(new UserDataRemovalRequest.Builder()
-                        .addUri(uri, false)
-                        .addUri(uri2, false)
+                        .addUri(uri1, false)
+                        .addUri(uri2, true)
                         .build()));
 
         final LoginActivity activity = launchActivity();
@@ -552,15 +554,22 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        UserDataRemovalRequest request = service.getRemovalRequest();
+        final UserDataRemovalRequest request = service.getRemovalRequest();
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isFalse();
-
-        List<UserDataRemovalRequest.UriRequest> requests = request.getUriRequests();
-        assertThat(requests.size()).isEqualTo(2);
-        assertThat(requests.stream().map((r) -> r.getUri()).collect(Collectors.toList()))
-                .containsExactly(uri, uri2).inOrder();
         assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
+
+        // felipeal: change it here so it checks URI getters
+        final List<UserDataRemovalRequest.UriRequest> requests = request.getUriRequests();
+        assertThat(requests.size()).isEqualTo(2);
+
+        final UriRequest actualRequest1 = requests.get(0);
+        assertThat(actualRequest1.getUri()).isEqualTo(uri1);
+        assertThat(actualRequest1.isRecursive()).isFalse();
+
+        final UriRequest actualRequest2 = requests.get(1);
+        assertThat(actualRequest2.getUri()).isEqualTo(uri2);
+        assertThat(actualRequest2.isRecursive()).isTrue();
     }
 
     @Test
