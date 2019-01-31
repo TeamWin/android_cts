@@ -117,6 +117,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -2754,12 +2755,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     public static class ImeTestActivity extends Activity {
-        EditText mEditText;
+        ImeAwareEditText mEditText;
 
         @Override
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
-            mEditText = new EditText(this);
+            mEditText = new ImeAwareEditText(this);
             // Set private IME option for editorMatcher to identify which TextView received
             // onStartInput event.
             mEditText.setPrivateImeOptions(
@@ -2772,7 +2773,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
 
         void showSoftInput() {
-            getSystemService(InputMethodManager.class).showSoftInput(mEditText, 0);
+            mEditText.scheduleShowSoftInput();
         }
     }
 
