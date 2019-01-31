@@ -350,4 +350,17 @@ public class RenderNodeTests extends ActivityTestBase {
             assertTrue(usedIds.add(new RenderNode(null).getUniqueId()));
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidCameraDistance() {
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setCameraDistance(-1f);
+    }
+
+    @Test
+    public void testCameraDistanceSetGet() {
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setCameraDistance(100f);
+        assertEquals(100f, renderNode.getCameraDistance(), 0.0f);
+    }
 }
