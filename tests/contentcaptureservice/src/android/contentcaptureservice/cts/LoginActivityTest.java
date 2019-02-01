@@ -24,7 +24,6 @@ import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
-import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -52,7 +51,6 @@ import android.widget.TextView;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -207,29 +205,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
         );
     }
-
-    @Ignore("not implemented yet, pending on b/122595322")
-    @Test
-    public void testSimpleLifecycle_serviceDisabledActivity() throws Exception {
-        final CtsContentCaptureService service = enableService();
-        final ActivityWatcher watcher = startWatcher();
-
-        // Disable activity
-        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
-
-        final LoginActivity activity = launchActivity();
-        watcher.waitFor(RESUMED);
-
-        activity.finish();
-        watcher.waitFor(DESTROYED);
-
-        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
-        assertThat(sessionIds).isEmpty();
-
-        // TODO(b/122595322): should also test events after re-enabling it
-    }
-
-    // TODO(b/122595322): same tests for disabled by package, explicity whitelisted, etc...
 
     @Test
     public void testTextChanged() throws Exception {
@@ -439,51 +414,6 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final List<ContentCaptureEvent> events = session.getEvents();
         assertThat(events).isEmpty();
-    }
-
-    @Ignore("not implemented yet, pending on b/122595322")
-    @Test
-    public void testDisabledByFlagSecureAndService() throws Exception {
-        final CtsContentCaptureService service = enableService();
-        final ActivityWatcher watcher = startWatcher();
-
-        LoginActivity.onRootView((activity, rootView) -> activity.getWindow()
-                .addFlags(WindowManager.LayoutParams.FLAG_SECURE));
-
-        // Disable activity
-        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
-
-        final LoginActivity activity = launchActivity();
-        watcher.waitFor(RESUMED);
-
-        activity.finish();
-        watcher.waitFor(DESTROYED);
-
-        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
-        assertThat(sessionIds).isEmpty();
-    }
-
-    @Ignore("not implemented yet, pending on b/122595322")
-    @Test
-    public void testDisabledByAppAndAndService() throws Exception {
-        final CtsContentCaptureService service = enableService();
-        final ActivityWatcher watcher = startWatcher();
-
-        LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
-                .setContentCaptureEnabled(false));
-
-        // Disable activity
-        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
-
-        final LoginActivity activity = launchActivity();
-        watcher.waitFor(RESUMED);
-
-        assertThat(activity.getContentCaptureManager().isContentCaptureEnabled()).isFalse();
-
-        activity.finish();
-        watcher.waitFor(DESTROYED);
-
-        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
     }
 
     @Test
