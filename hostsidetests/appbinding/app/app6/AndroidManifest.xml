@@ -30,9 +30,9 @@
         <service
             android:name=".MyService2"
             android:exported="false"
-            android:permission="android.permission.BIND_SMS_APP_SERVICE" >
+            android:permission="android.permission.BIND_CARRIER_MESSAGING_CLIENT_SERVICE" >
             <intent-filter>
-                <action android:name="android.telephony.action.SMS_APP_SERVICE" />
+                <action android:name="android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE" />
             </intent-filter>
         </service>
 
