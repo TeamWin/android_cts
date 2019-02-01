@@ -150,7 +150,8 @@ public class ReflectionHelper {
                 int i = 0;
                 int j = startParamOffset;
                 while (i < jdiffParamList.size()) {
-                    if (!compareParam(jdiffParamList.get(i), params[j])) {
+                    if (!compareParam(jdiffParamList.get(i), params[j],
+                            DefaultTypeComparator.INSTANCE)) {
                         isFound = false;
                         break;
                     }
@@ -171,9 +172,11 @@ public class ReflectionHelper {
      *
      * @param jdiffParam param parsed from the API xml file.
      * @param reflectionParamType param gotten from the Java reflection.
+     * @param typeComparator compares two types to determine if they are equal.
      * @return True if the two params match, otherwise return false.
      */
-    private static boolean compareParam(String jdiffParam, Type reflectionParamType) {
+    private static boolean compareParam(String jdiffParam, Type reflectionParamType,
+            TypeComparator typeComparator) {
         if (jdiffParam == null) {
             return false;
         }
@@ -181,7 +184,7 @@ public class ReflectionHelper {
         String reflectionParam = typeToString(reflectionParamType);
         // Most things aren't varargs, so just do a simple compare
         // first.
-        if (jdiffParam.equals(reflectionParam)) {
+        if (typeComparator.compare(jdiffParam, reflectionParam)) {
             return true;
         }
 
@@ -192,7 +195,7 @@ public class ReflectionHelper {
         if (jdiffParamEndOffset != -1 && reflectionParamEndOffset != -1) {
             jdiffParam = jdiffParam.substring(0, jdiffParamEndOffset);
             reflectionParam = reflectionParam.substring(0, reflectionParamEndOffset);
-            return jdiffParam.equals(reflectionParam);
+            return typeComparator.compare(jdiffParam, reflectionParam);
         }
 
         return false;
@@ -240,13 +243,19 @@ public class ReflectionHelper {
         if (!jDiffMethod.mName.equals(reflectedMethod.getName())) {
             return false;
         }
+
+        // If the method is a bridge then use a special comparator for comparing types as
+        // generic methods may not have generic signatures.
+        TypeComparator typeComparator = reflectedMethod.isBridge()
+                ? BridgeTypeComparator.INSTANCE : DefaultTypeComparator.INSTANCE;
+
         String jdiffReturnType = jDiffMethod.mReturnType;
         String reflectionReturnType = typeToString(reflectedMethod.getGenericReturnType());
         List<String> jdiffParamList = jDiffMethod.mParamList;
 
         // Next, compare the return types of the two methods.  If
         // they aren't equal, the methods can't match.
-        if (!jdiffReturnType.equals(reflectionReturnType)) {
+        if (!typeComparator.compare(jdiffReturnType, reflectionReturnType)) {
             return false;
         }
 
@@ -262,7 +271,7 @@ public class ReflectionHelper {
 
         // Compare method parameters piecewise and return true if they all match.
         for (int i = 0; i < jdiffParamList.size(); i++) {
-            piecewiseParamsMatch &= compareParam(jdiffParamList.get(i), params[i]);
+            piecewiseParamsMatch &= compareParam(jdiffParamList.get(i), params[i], typeComparator);
         }
         if (piecewiseParamsMatch) {
             return true;
@@ -512,6 +521,52 @@ public class ReflectionHelper {
         } catch (ClassNotFoundException e) {
             LogHelper.loge("ClassNotFoundException for " + classDescription.getAbsoluteClassName(), e);
             return null;
+        }
+    }
+
+    /**
+     * Compare the string representation of types for equality.
+     */
+    interface TypeComparator {
+        boolean compare(String apiType, String reflectedType);
+    }
+
+    /**
+     * Compare the types using their default signature, i.e. generic for generic methods, otherwise
+     * basic types.
+     */
+    static class DefaultTypeComparator implements TypeComparator {
+        static final TypeComparator INSTANCE = new DefaultTypeComparator();
+        @Override
+        public boolean compare(String apiType, String reflectedType) {
+            return apiType.equals(reflectedType);
+        }
+    }
+
+    /**
+     * Comparator for the types of bridge methods.
+     *
+     * <p>Bridge methods may not have generic signatures so compare as for
+     * {@link DefaultTypeComparator}, but if they do not match and the api type is
+     * generic then fall back to comparing their raw types.
+     */
+    static class BridgeTypeComparator implements TypeComparator {
+        static final TypeComparator INSTANCE = new BridgeTypeComparator();
+        @Override
+        public boolean compare(String apiType, String reflectedType) {
+            if (DefaultTypeComparator.INSTANCE.compare(apiType, reflectedType)) {
+                return true;
+            }
+
+            // If the method is a bridge method and the return types are generic then compare the
+            // non generic types as bridge methods do not have generic types.
+            int index = apiType.indexOf('<');
+            if (index != -1) {
+                String rawReturnType = apiType.substring(0, index);
+                return rawReturnType.equals(reflectedType);
+            } else {
+            }
+            return false;
         }
     }
 }
