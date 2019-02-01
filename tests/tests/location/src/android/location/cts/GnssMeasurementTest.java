@@ -40,6 +40,7 @@ public class GnssMeasurementTest extends GnssTestCase {
         measurement.setCarrierPhase(6.0);
         measurement.setCarrierPhaseUncertainty(7.0);
         measurement.setCn0DbHz(8.0);
+        measurement.setCodeType(GnssMeasurement.CODE_TYPE_C);
         measurement.setConstellationType(GnssStatus.CONSTELLATION_GALILEO);
         measurement.setMultipathIndicator(GnssMeasurement.MULTIPATH_INDICATOR_DETECTED);
         measurement.setPseudorangeRateMetersPerSecond(9.0);
@@ -64,6 +65,7 @@ public class GnssMeasurementTest extends GnssTestCase {
         assertEquals(GnssStatus.CONSTELLATION_GALILEO, measurement.getConstellationType());
         assertEquals(GnssMeasurement.MULTIPATH_INDICATOR_DETECTED,
                 measurement.getMultipathIndicator());
+        assertEquals(GnssMeasurement.CODE_TYPE_C, measurement.getCodeType());
         assertEquals(9.0, measurement.getPseudorangeRateMetersPerSecond());
         assertEquals(10.0, measurement.getPseudorangeRateUncertaintyMetersPerSecond());
         assertEquals(11, measurement.getReceivedSvTimeNanos());
