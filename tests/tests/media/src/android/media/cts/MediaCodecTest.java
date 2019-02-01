@@ -16,10 +16,13 @@
 
 package android.media.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import android.media.cts.R;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.AudioFormat;
+import android.media.AudioPresentation;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
@@ -2378,5 +2381,19 @@ public class MediaCodecTest extends AndroidTestCase {
                 codec.release();
             }
         }
+    }
+
+    public void testSetAudioPresentation() throws Exception {
+        MediaFormat format = MediaFormat.createAudioFormat(
+                MediaFormat.MIMETYPE_AUDIO_MPEG, 44100 /* sampleRate */, 2 /* channelCount */);
+        String mimeType = format.getString(MediaFormat.KEY_MIME);
+        MediaCodec codec = createCodecByType(
+                format.getString(MediaFormat.KEY_MIME), false /* isEncoder */);
+        assertNotNull(codec);
+        assertThrows(NullPointerException.class, () -> {
+            codec.setAudioPresentation(null);
+        });
+        codec.setAudioPresentation(
+                (new AudioPresentation.Builder(42 /* presentationId */)).build());
     }
 }
