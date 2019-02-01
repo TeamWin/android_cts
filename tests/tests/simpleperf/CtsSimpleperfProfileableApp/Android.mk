@@ -28,6 +28,8 @@ LOCAL_PACKAGE_NAME := CtsSimpleperfProfileableApp
 
 LOCAL_SDK_VERSION := current
 
+LOCAL_AAPT_FLAGS += --warn-manifest-validation
+
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)
