@@ -29,6 +29,23 @@ import java.util.Set;
  */
 public class ApiComplianceChecker extends AbstractApiChecker {
 
+    /**
+     * A set of method signatures whose abstract modifier should be ignored.
+     *
+     * <p>If a class is not intended to be created or extended by application developers and all
+     * instances are created and supplied by Android itself then the abstract modifier has no
+     * impact on runtime compatibility.
+     */
+    private static final Set<String> IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST = new HashSet<>();
+    static {
+        // This method was previously abstract and is now not abstract. As the
+        // CtsSystemApiSignatureTestCases package tests both the old and new specifications, with
+        // and without the abstract modifier this needs to ignore the abstract modifier.
+        IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.add(
+                "public int android.service.euicc.EuiccService.onDownloadSubscription("
+                        + "int,android.telephony.euicc.DownloadableSubscription,boolean,boolean)");
+    }
+
     /** Indicates that the class is an annotation. */
     private static final int CLASS_MODIFIER_ANNOTATION = 0x00002000;
 
@@ -524,11 +541,17 @@ public class ApiComplianceChecker extends AbstractApiChecker {
             apiModifiers &= ~Modifier.FINAL;
         }
 
+        String genericString = reflectedMethod.toGenericString();
+        if (IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.contains(genericString)) {
+            reflectionModifiers &= ~Modifier.ABSTRACT;
+            apiModifiers &= ~Modifier.ABSTRACT;
+        }
+
         if (reflectionModifiers == apiModifiers) {
             return null;
         } else {
-            return String.format("modifier mismatch - description (%s), method (%s)",
-                    Modifier.toString(apiModifiers), Modifier.toString(reflectionModifiers));
+            return String.format("modifier mismatch - description (%s), method (%s), for %s",
+                Modifier.toString(apiModifiers), Modifier.toString(reflectionModifiers), genericString);
         }
     }
 
