@@ -17,8 +17,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.simpleperf.profileable">
 
-    <!-- TODO: change to <profileable android:shell="true" /> -->
-    <application android:debuggable="true">
+    <application>
+        <profileable android:shell="true" />
         <activity
             android:label="simpleperf"
             android:name="com.android.simpleperf.profileable.MainActivity">
