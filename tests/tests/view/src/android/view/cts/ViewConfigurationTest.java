@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -82,5 +83,20 @@ public class ViewConfigurationTest {
         vc.getScaledTouchSlop();
         vc.getScaledWindowTouchSlop();
         vc.hasPermanentMenuKey();
+    }
+
+    /**
+     * The purpose of the ambiguous gesture multiplier is to potentially increase the touch slop
+     * and the long press timeout to allow the gesture classifier an additional window to
+     * make the classification. Therefore, this multiplier should be always greater or equal to 1.
+     */
+    @Test
+    public void testGetAmbiguousGestureMultiplier() {
+        final float staticMultiplier = ViewConfiguration.getAmbiguousGestureMultiplier();
+        assertTrue(staticMultiplier >= 1);
+
+        ViewConfiguration vc = ViewConfiguration.get(InstrumentationRegistry.getTargetContext());
+        final float instanceMultiplier = vc.getAmbiguousGestureMultiplier();
+        assertTrue(instanceMultiplier >= 1);
     }
 }
