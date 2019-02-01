@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.inputmethod.cts.util;
+package com.android.compatibility.common.util;
 
 import android.content.Context;
 import android.util.AttributeSet;
