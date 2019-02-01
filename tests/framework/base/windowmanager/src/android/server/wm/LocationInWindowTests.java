@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.server.wm.LocationOnScreenTests.TestActivity.EXTRA_LAYOUT_PARAMS;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
@@ -31,11 +32,9 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,14 +49,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
-import org.junit.runner.RunWith;
 
 import java.util.function.Supplier;
 
-@RunWith(AndroidJUnit4.class)
+@FlakyTest(detail = "until proven non-flaky")
 @SmallTest
 @Presubmit
-@FlakyTest(detail = "until proven non-flaky")
 public class LocationInWindowTests {
 
     @Rule
@@ -157,7 +154,7 @@ public class LocationInWindowTests {
     }
 
     private void runOnMainSync(Runnable runnable) {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
+        getInstrumentation().runOnMainSync(runnable);
     }
 
     private <T extends Activity> T launchAndWait(ActivityTestRule<T> rule,

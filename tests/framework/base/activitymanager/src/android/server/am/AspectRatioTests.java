@@ -24,18 +24,15 @@ import static org.junit.Assume.assumeThat;
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.Display;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:AspectRatioTests
  */
-@RunWith(AndroidJUnit4.class)
 @Presubmit
 public class AspectRatioTests extends AspectRatioTestsBase {
 

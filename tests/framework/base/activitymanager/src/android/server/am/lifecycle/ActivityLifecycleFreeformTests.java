@@ -24,6 +24,7 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
@@ -33,26 +34,21 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleFreeformTests
  */
-@MediumTest
-@RunWith(AndroidJUnit4.class)
-@Presubmit
 @FlakyTest(bugId = 77652261)
+@MediumTest
+@Presubmit
 public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestBase {
 
     @Before
@@ -71,10 +67,9 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         final Bundle bundle = launchOptions.toBundle();
 
         // Launch an activity in freeform
-        final Intent firstIntent =
-                new Intent(InstrumentationRegistry.getContext(), FirstActivity.class)
+        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(firstIntent, bundle);
+        mTargetContext.startActivity(firstIntent, bundle);
 
         // Wait and assert resume
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
@@ -95,20 +90,17 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         final Bundle bundle = launchOptions.toBundle();
 
         // Launch three activities in freeform
-        final Intent firstIntent =
-                new Intent(InstrumentationRegistry.getContext(), FirstActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(firstIntent, bundle);
+        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(firstIntent, bundle);
 
-        final Intent secondIntent =
-                new Intent(InstrumentationRegistry.getContext(), SecondActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(secondIntent, bundle);
+        final Intent secondIntent = new Intent(mContext, SecondActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(secondIntent, bundle);
 
-        final Intent thirdIntent =
-                new Intent(InstrumentationRegistry.getContext(), ThirdActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(thirdIntent, bundle);
+        final Intent thirdIntent = new Intent(mContext, ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(thirdIntent, bundle);
 
         // Wait for resume
         final String message = "Activity should be resumed after launch";
@@ -137,17 +129,15 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         final Bundle bundle = launchOptions.toBundle();
 
         // Launch two activities in freeform in the same task
-        final Intent firstIntent =
-                new Intent(InstrumentationRegistry.getContext(), FirstActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(firstIntent, bundle);
+        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(firstIntent, bundle);
 
         final Activity secondActivity = mSecondActivityTestRule.launchActivity(new Intent());
 
-        final Intent thirdIntent =
-                new Intent(InstrumentationRegistry.getContext(), ThirdActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(thirdIntent, bundle);
+        final Intent thirdIntent = new Intent(mContext, ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(thirdIntent, bundle);
 
         // Wait for valid states
         final String stopMessage = "Activity should be stopped after being covered above";
@@ -198,18 +188,16 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         final Bundle bundle = launchOptions.toBundle();
 
         // Launch two activities in freeform in the same task
-        final Intent firstIntent =
-                new Intent(InstrumentationRegistry.getContext(), FirstActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(firstIntent, bundle);
+        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(firstIntent, bundle);
 
         final Activity transparentActivity = mTranslucentActivityTestRule
                 .launchActivity(new Intent());
 
-        final Intent thirdIntent =
-                new Intent(InstrumentationRegistry.getContext(), ThirdActivity.class)
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(thirdIntent, bundle);
+        final Intent thirdIntent = new Intent(mContext, ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        mTargetContext.startActivity(thirdIntent, bundle);
 
         // Wait for valid states
         final String pauseMessage = "Activity should be stopped after transparent launch above";

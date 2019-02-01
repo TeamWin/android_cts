@@ -16,6 +16,8 @@
 
 package android.server.am;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -34,7 +36,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.server.am.TestJournalProvider.TestJournalClient;
-import android.support.test.InstrumentationRegistry;
 import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -360,7 +361,7 @@ public final class CommandSession {
         private boolean mClosed;
 
         public ActivitySessionClient() {
-            this(InstrumentationRegistry.getContext());
+            this(getInstrumentation().getContext());
         }
 
         public ActivitySessionClient(Context context) {

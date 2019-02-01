@@ -30,7 +30,6 @@ import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.util.TimeUtils.formatDuration;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION_DELAY_MS;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION_DEVICE_UPTIME_SECONDS;
@@ -63,6 +62,8 @@ import android.support.test.filters.FlakyTest;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.hamcrest.collection.IsIn;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,7 +74,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * CTS device tests for {@link com.android.server.am.ActivityMetricsLogger}.
+ * CTS device tests for {@link com.android.server.wm.ActivityMetricsLogger}.
  * Build/Install/Run:
  * atest CtsActivityManagerDeviceTestCases:ActivityMetricsLoggerTests
  */
@@ -217,15 +218,15 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     @Presubmit
     @FlakyTest(bugId = 122118854)
     public void testAppWarmLaunchSetsWaitResultDelayData() {
-        runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
+        SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
         // Test warm launch
         pressBackButton();
         waitForDeviceIdle(1000);
         mMetricsReader.checkpoint(); // clear out old logs
 
-        final String amStartOutput =
-                runShellCommand("am start -W " + TEST_ACTIVITY.flattenToShortString());
+        final String amStartOutput = SystemUtil.runShellCommand(
+                "am start -W " + TEST_ACTIVITY.flattenToShortString());
 
         final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         assertNotNull("log should have windows drawn delay", metricsLog);
@@ -255,15 +256,15 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     @Presubmit
     @FlakyTest(bugId = 122118854)
     public void testAppHotLaunchSetsWaitResultDelayData() {
-        runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
+        SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
         // Test hot launch
         pressHomeButton();
         waitForDeviceIdle(1000);
         mMetricsReader.checkpoint(); // clear out old logs
 
-        final String amStartOutput =
-                runShellCommand("am start -W " + TEST_ACTIVITY.flattenToShortString());
+        final String amStartOutput = SystemUtil.runShellCommand(
+                "am start -W " + TEST_ACTIVITY.flattenToShortString());
 
         final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         assertNotNull("log should have windows drawn delay", metricsLog);
@@ -292,8 +293,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     @Test
     @Presubmit
     public void testAppColdLaunchSetsWaitResultDelayData() {
-        final String amStartOutput =
-                runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
+        final String amStartOutput = SystemUtil.runShellCommand(
+                "am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
         final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         assertNotNull("log should have windows drawn delay", metricsLog);

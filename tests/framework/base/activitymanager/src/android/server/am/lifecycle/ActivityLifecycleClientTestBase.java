@@ -19,28 +19,27 @@ package android.server.am.lifecycle;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
-import static android.server.am.lifecycle.LifecycleLog.ActivityCallback
-        .ON_MULTI_WINDOW_MODE_CHANGED;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.PictureInPictureParams;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.server.am.ActivityManagerDisplayTestBase;
-import android.server.am.ActivityManagerTestBase;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitor;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
@@ -112,12 +111,16 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
     private final ActivityLifecycleMonitor mLifecycleMonitor = ActivityLifecycleMonitorRegistry
             .getInstance();
     private static LifecycleLog mLifecycleLog;
+
+    protected Context mTargetContext;
     private LifecycleTracker mLifecycleTracker;
 
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        mTargetContext = getInstrumentation().getTargetContext();
         // Log transitions for all activities that belong to this app.
         mLifecycleLog = new LifecycleLog();
         mLifecycleMonitor.addLifecycleCallback(mLifecycleLog);
@@ -137,8 +140,8 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
 
     /** Launch an activity given a class. */
     protected Activity launchActivity(Class<? extends Activity> activityClass) {
-        final Intent intent = new Intent(InstrumentationRegistry.getTargetContext(), activityClass);
-        return InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
+        final Intent intent = new Intent(mTargetContext, activityClass);
+        return getInstrumentation().startActivitySync(intent);
     }
 
     /**
@@ -347,6 +350,6 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
     }
 
     static ComponentName getComponentName(Class<? extends Activity> activity) {
-        return new ComponentName(InstrumentationRegistry.getContext(), activity);
+        return new ComponentName(getInstrumentation().getContext(), activity);
     }
 }

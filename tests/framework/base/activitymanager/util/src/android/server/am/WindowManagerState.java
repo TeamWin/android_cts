@@ -22,6 +22,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertTrue;
@@ -31,7 +32,6 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.view.WindowManager;
 import android.view.nano.DisplayInfoProto;
 import android.view.nano.ViewProtoEnums;
@@ -166,9 +166,8 @@ public class WindowManagerState {
 
     private byte[] executeShellCommand(String cmd) {
         try {
-            ParcelFileDescriptor pfd =
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                            .executeShellCommand(cmd);
+            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
+                    .executeShellCommand(cmd);
             byte[] buf = new byte[512];
             int bytesRead;
             FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
