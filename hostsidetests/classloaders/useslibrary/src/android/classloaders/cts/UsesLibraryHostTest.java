@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package android.appsecurity.cts;
+package android.classloaders.cts;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +33,7 @@ import org.junit.runner.RunWith;
  */
 @AppModeFull(reason = "TODO verify whether or not these should run in instant mode")
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class UsesLibraryHostTest extends BaseAppSecurityTest {
+public class UsesLibraryHostTest extends BaseHostJUnit4Test {
     private static final String PKG = "com.android.cts.useslibrary";
 
     private static final String APK = "CtsUsesLibraryApp.apk";
@@ -78,5 +79,15 @@ public class UsesLibraryHostTest extends BaseAppSecurityTest {
     public void testDuplicateLibrary(boolean instant) throws Exception {
         new InstallMultiple(instant).addApk(APK).run();
         Utils.runDeviceTests(getDevice(), PKG, ".UsesLibraryTest", "testDuplicateLibrary");
+    }
+
+    protected class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
+        public InstallMultiple() {
+            this(false);
+        }
+        public InstallMultiple(boolean instant) {
+            super(getDevice(), getBuild(), getAbi());
+            addArg(instant ? "--instant" : "");
+        }
     }
 }

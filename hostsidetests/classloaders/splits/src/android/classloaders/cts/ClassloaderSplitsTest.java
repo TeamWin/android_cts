@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package android.appsecurity.cts;
+package android.classloaders.cts;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,7 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class ClassloaderSplitsTest extends BaseAppSecurityTest {
+public class ClassloaderSplitsTest extends BaseHostJUnit4Test {
     private static final String PKG = "com.android.cts.classloadersplitapp";
     private static final String TEST_CLASS = PKG + ".SplitAppTest";
 
@@ -47,7 +48,6 @@ public class ClassloaderSplitsTest extends BaseAppSecurityTest {
 
     @Before
     public void setUp() throws Exception {
-        Utils.prepareSingleUser(getDevice());
         getDevice().uninstallPackage(PKG);
     }
 
@@ -115,5 +115,15 @@ public class ClassloaderSplitsTest extends BaseAppSecurityTest {
                 .addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testAllReceivers");
+    }
+
+    protected class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
+        public InstallMultiple() {
+            this(false);
+        }
+        public InstallMultiple(boolean instant) {
+            super(getDevice(), getBuild(), getAbi());
+            addArg(instant ? "--instant" : "");
+        }
     }
 }
