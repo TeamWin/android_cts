@@ -22,9 +22,6 @@
  */
 package android.security.cts;
 
-import com.android.compatibility.common.util.CrashUtils;
-import com.android.compatibility.common.util.Crash;
-
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.content.Context;
@@ -56,7 +53,6 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.ServerSocket;
-import java.io.ObjectInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1014,38 +1010,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         return new Surface(surfaceTex);
     }
 
-    public ArrayList<Crash> getCrashReport(String testname, long timeout)
-            throws IOException {
-        Log.e(TAG, CrashUtils.UPLOAD_REQUEST);
-        File reportFile = new File(CrashUtils.DEVICE_PATH + testname);
-        File lockFile = new File(CrashUtils.DEVICE_PATH + CrashUtils.LOCK_FILENAME);
-        long checkInterval = 50;
-        while ((!reportFile.exists() || !lockFile.exists()) && timeout > 0) {
-            SystemClock.sleep(checkInterval);
-            timeout -= checkInterval;
-        }
-        if (!reportFile.exists() || !reportFile.isFile() || !lockFile.exists()) {
-            return null;
-        }
-        try (ObjectInputStream reader = new ObjectInputStream(new FileInputStream(reportFile))) {
-            return (ArrayList<Crash>) reader.readObject();
-        } catch (IOException e) {
-            throw e;
-        } catch (ClassNotFoundException e) {
-            Log.e(TAG, "Failed to deserialize crash list with error " + e.toString());
-            return null;
-        }
-    }
-
     class MediaPlayerCrashListener
     implements MediaPlayer.OnErrorListener,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
-
-        private final String[] validProcessNames = {
-            "mediaserver", "mediadrmserver", "media.extractor", "media.codec", "media.metrics"
-        };
-
         @Override
         public boolean onError(MediaPlayer mp, int newWhat, int extra) {
             Log.i(TAG, "error: " + newWhat + "/" + extra);
@@ -1085,25 +1053,6 @@ public class StagefrightTest extends InstrumentationTestCase {
                 // due to additional in-flight buffers being processed, so wait a little
                 // and see if more errors show up.
                 SystemClock.sleep(1000);
-            }
-            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
-                try {
-                    ArrayList<Crash> crashes = getCrashReport(getName(), 5000);
-                    if (crashes == null) {
-                        Log.e(TAG, "Crash results not found for test " + getName());
-                        return 0;
-                    } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
-                        return what;
-                    } else {
-                        Log.i(TAG, "Crash ignored due to crash parser results for test " +
-                                getName());
-                        return 0;
-                    }
-                } catch (IOException e) {
-                    Log.e(TAG, "Failed to parse crash data with error " + e.toString());
-                    return 0;
-                }
-
             }
             return what;
         }
