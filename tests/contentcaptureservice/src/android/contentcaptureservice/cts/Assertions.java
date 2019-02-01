@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.net.Uri;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -75,9 +76,8 @@ final class Assertions {
         assertWithMessage("wrong activity for %s", session)
                 .that(session.context.getActivityComponent())
                 .isEqualTo(activity.getComponentName());
-        // TODO(b/121260224): add this assertion when it's set
-        // assertWithMessage("context for session %s should have displayId", session)
-        //        .that(session.context.getDisplayId()).isNotEqualTo(0);
+        assertWithMessage("context for session %s should have displayId", session)
+                .that(session.context.getDisplayId()).isNotEqualTo(Display.INVALID_DISPLAY);
         assertWithMessage("wrong task id for session %s", session)
                 .that(session.context.getTaskId()).isEqualTo(activity.getRealTaskId());
         assertWithMessage("wrong flags on context for session %s", session)
@@ -96,7 +96,7 @@ final class Assertions {
         assertWithMessage("context for session %s should not have component", session)
                 .that(session.context.getActivityComponent()).isNull();
         assertWithMessage("context for session %s should not have displayId", session)
-                .that(session.context.getDisplayId()).isEqualTo(0);
+                .that(session.context.getDisplayId()).isEqualTo(Display.INVALID_DISPLAY);
         assertWithMessage("context for session %s should not have taskId", session)
                 .that(session.context.getTaskId()).isEqualTo(0);
         assertWithMessage("context for session %s should not have flags", session)
