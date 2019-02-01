@@ -28,6 +28,7 @@ import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
@@ -42,14 +43,9 @@ import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import android.support.test.InstrumentationRegistry;
-
-import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -300,8 +296,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(mContext,
-                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                     new ImeSettings.Builder())) {
+                     getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY);
@@ -324,8 +319,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
                      TestActivitySession<>();
              // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(mContext,
-                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                     new ImeSettings.Builder())) {
+                     getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             imeTestActivitySession.launchTestActivityOnDisplaySync(ShowWhenLockedImeActivity.class,

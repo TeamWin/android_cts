@@ -29,10 +29,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 
@@ -41,7 +39,6 @@ import java.util.Arrays;
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleKeyguardTests
  */
 @MediumTest
-@RunWith(AndroidJUnit4.class)
 @Presubmit
 public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestBase {
 

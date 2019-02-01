@@ -26,16 +26,15 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
+import android.util.SparseArray;
 
 import androidx.annotation.Nullable;
-
-import android.util.SparseArray;
 
 import com.android.server.am.nano.ActivityDisplayProto;
 import com.android.server.am.nano.ActivityManagerServiceDumpActivitiesProto;
@@ -136,9 +135,8 @@ public class ActivityManagerState {
 
     private byte[] executeShellCommand(String cmd) {
         try {
-            ParcelFileDescriptor pfd =
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                            .executeShellCommand(cmd);
+            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
+                    .executeShellCommand(cmd);
             byte[] buf = new byte[512];
             int bytesRead;
             FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);

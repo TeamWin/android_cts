@@ -19,11 +19,8 @@ package android.server.am;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.deprecatedsdk.Components.MAIN_ACTIVITY;
 
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.After;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Ensure that compatibility dialog is shown when launching an application
@@ -31,10 +28,9 @@ import org.junit.runner.RunWith;
  * <p>Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:DeprecatedTargetSdkTest
  */
-@RunWith(AndroidJUnit4.class)
 public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
 
-    /** @see com.android.server.am.DeprecatedTargetSdkVersionDialog */
+    /** @see com.android.server.wm.DeprecatedTargetSdkVersionDialog */
     private static final String DEPRECATED_TARGET_SDK_VERSION_DIALOG =
             "DeprecatedTargetSdkVersionDialog";
 

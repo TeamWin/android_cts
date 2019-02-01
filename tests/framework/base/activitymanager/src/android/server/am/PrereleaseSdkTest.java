@@ -33,7 +33,7 @@ import org.junit.Test;
  */
 public class PrereleaseSdkTest extends ActivityManagerTestBase {
 
-    /** @see com.android.server.am.UnsupportedCompileSdkDialog */
+    /** @see com.android.server.wm.UnsupportedCompileSdkDialog */
     private static final String UNSUPPORTED_COMPILE_SDK_DIALOG = "UnsupportedCompileSdkDialog";
 
     @Before

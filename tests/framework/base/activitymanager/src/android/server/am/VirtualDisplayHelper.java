@@ -15,12 +15,13 @@
  */
 
 package android.server.am;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
+
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.am.ActivityManagerTestBase.isDisplayOn;
 import static android.server.am.StateLogger.logAlways;
-import static android.support.test.InstrumentationRegistry.getContext;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.fail;
@@ -101,7 +102,8 @@ class VirtualDisplayHelper {
     private void createVirtualDisplay(boolean requestShowWhenLocked, int virtualDisplayFlags) {
         mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888, 2);
 
-        final DisplayManager displayManager = getContext().getSystemService(DisplayManager.class);
+        final DisplayManager displayManager = getInstrumentation()
+                .getContext().getSystemService(DisplayManager.class);
 
         int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
                 | virtualDisplayFlags;

@@ -16,6 +16,11 @@
 
 package android.server.am;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.Context;
@@ -28,18 +33,19 @@ import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.SharedLibraryInfo;
 import android.content.res.Configuration;
-import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.opengl.GLES10;
 import android.os.Build;
 import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
-import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -58,12 +64,6 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
 public class ActivityManagerGetConfigTests {
     Context mContext;
     ActivityManager mAm;
@@ -71,16 +71,15 @@ public class ActivityManagerGetConfigTests {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mContext = getInstrumentation().getTargetContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mPm = mContext.getPackageManager();
     }
 
     private byte[] executeShellCommand(String cmd) {
         try {
-            ParcelFileDescriptor pfd =
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                            .executeShellCommand(cmd);
+            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
+                    .executeShellCommand(cmd);
             byte[] buf = new byte[512];
             int bytesRead;
             FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);

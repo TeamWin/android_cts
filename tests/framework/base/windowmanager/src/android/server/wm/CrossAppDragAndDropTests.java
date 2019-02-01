@@ -26,6 +26,7 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.UiDeviceUtils.dragPointer;
 import static android.server.am.UiDeviceUtils.pressMenuButton;
 import static android.server.am.UiDeviceUtils.wakeUpDevice;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -41,10 +42,9 @@ import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.RemoteException;
-import android.platform.test.annotations.AppModeFull;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
@@ -62,8 +62,8 @@ import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
 /**
- * Build: mmma -j32 cts/tests/framework/base
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.CrossAppDragAndDropTests
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:CrossAppDragAndDropTests
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
@@ -191,7 +191,7 @@ public class CrossAppDragAndDropTests {
         mSourceLogTag = SOURCE_LOG_TAG + mSessionId;
         mTargetLogTag = TARGET_LOG_TAG + mSessionId;
 
-        mContext = InstrumentationRegistry.getContext();
+        mContext = getInstrumentation().getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mAtm = mContext.getSystemService(ActivityTaskManager.class);
 
@@ -287,8 +287,7 @@ public class CrossAppDragAndDropTests {
 
     private String findTaskInfo(String name) {
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity();
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
 
             final String output = mAtm.listAllStacks();
             final StringBuilder builder = new StringBuilder();
@@ -313,8 +312,7 @@ public class CrossAppDragAndDropTests {
             }
             return "";
         } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -465,15 +463,16 @@ public class CrossAppDragAndDropTests {
     }
 
     private static boolean supportsDragAndDrop() {
-        return ActivityTaskManager.supportsMultiWindow(InstrumentationRegistry.getContext());
+        return ActivityTaskManager.supportsMultiWindow(getInstrumentation().getContext());
     }
 
     private static boolean supportsSplitScreenMultiWindow() {
-        return ActivityTaskManager.supportsSplitScreenMultiWindow(InstrumentationRegistry.getContext());
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(
+                getInstrumentation().getContext());
     }
 
     private static boolean supportsFreeformMultiWindow() {
-        return InstrumentationRegistry.getContext()
+        return getInstrumentation().getContext()
                 .getPackageManager()
                 .hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT);
     }

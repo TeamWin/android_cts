@@ -16,21 +16,20 @@
 
 package android.server.am.intent;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Environment;
-import android.server.am.UiDeviceUtils;
 import android.server.am.intent.Persistence.IntentFlag;
 import android.server.am.intent.Persistence.TestCase;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 
 import com.google.common.collect.Lists;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -69,7 +68,7 @@ public class IntentTests extends IntentTestBase {
      * The flag parsing table used to parse the json files.
      */
     private static final Map<String, IntentFlag> TABLE = CASES.createFlagParsingTable();
-    private static Context TARGET_CONTEXT = InstrumentationRegistry.getTargetContext();
+    private static Context TARGET_CONTEXT = getInstrumentation().getTargetContext();
 
     private static final int JSON_INDENTATION_LEVEL = 4;
 

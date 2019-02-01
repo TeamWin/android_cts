@@ -4,8 +4,6 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
-import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
-import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
@@ -23,6 +21,7 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.am.lifecycle.LifecycleVerifier.transition;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
@@ -30,27 +29,17 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
-import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.am.ActivityManagerDisplayTestBase;
-import android.server.am.ActivityManagerDisplayTestBase.VirtualDisplaySession;
 import android.server.am.ActivityManagerState;
 import android.server.am.ActivityManagerState.ActivityStack;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Pair;
-import android.view.Display;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,10 +49,9 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleTopResumedStateTests
  */
-@MediumTest
-@RunWith(AndroidJUnit4.class)
-@Presubmit
 @FlakyTest(bugId = 117135575)
+@MediumTest
+@Presubmit
 public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClientTestBase {
 
     @Test
@@ -286,10 +274,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Switch top between two activities
         getLifecycleLog().clear();
-        final Intent switchToFirstIntent = new Intent(InstrumentationRegistry.getContext(),
-                CallbackTrackingActivity.class);
+        final Intent switchToFirstIntent = new Intent(mContext, CallbackTrackingActivity.class);
         switchToFirstIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(switchToFirstIntent);
+        mTargetContext.startActivity(switchToFirstIntent);
 
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED),
                 state(secondActivity, ON_TOP_POSITION_LOST));
@@ -300,10 +287,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Switch top again
         getLifecycleLog().clear();
-        final Intent switchToSecondIntent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent switchToSecondIntent = new Intent(mContext, SingleTopActivity.class);
         switchToSecondIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(switchToSecondIntent);
+        mTargetContext.startActivity(switchToSecondIntent);
 
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_LOST),
                 state(secondActivity, ON_TOP_POSITION_GAINED));
@@ -322,10 +308,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Launch the activity again to observe new intent
         getLifecycleLog().clear();
-        final Intent newIntent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent newIntent = new Intent(mContext, SingleTopActivity.class);
         newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(newIntent);
+        mTargetContext.startActivity(newIntent);
 
         waitAndAssertActivityTransitions(SingleTopActivity.class,
                 Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_NEW_INTENT, ON_RESUME,
@@ -345,10 +330,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Launch the single top activity again to observe new intent
         getLifecycleLog().clear();
-        final Intent newIntent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent newIntent = new Intent(mContext, SingleTopActivity.class);
         newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP);
-        InstrumentationRegistry.getTargetContext().startActivity(newIntent);
+        mTargetContext.startActivity(newIntent);
 
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED),
                 state(topActivity, ON_DESTROY));
@@ -380,10 +364,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Launch the single top activity again to observe new intent
         getLifecycleLog().clear();
-        final Intent newIntent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent newIntent = new Intent(mContext, SingleTopActivity.class);
         newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP);
-        InstrumentationRegistry.getTargetContext().startActivity(newIntent);
+        mTargetContext.startActivity(newIntent);
 
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED),
                 state(topActivity, ON_DESTROY));
@@ -478,7 +461,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
 
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::recreate);
+        getInstrumentation().runOnMainSync(activity::recreate);
         waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
 
         LifecycleVerifier.assertRelaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
@@ -568,11 +551,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Launch activity on default display.
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
-        final Intent defaultDisplayIntent =
-                new Intent(InstrumentationRegistry.getContext(), CallbackTrackingActivity.class);
+        final Intent defaultDisplayIntent = new Intent(mContext, CallbackTrackingActivity.class);
         defaultDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(defaultDisplayIntent,
-                launchOptions.toBundle());
+        mTargetContext.startActivity(defaultDisplayIntent, launchOptions.toBundle());
 
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
@@ -587,11 +568,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             // Launch another activity on new secondary display.
             getLifecycleLog().clear();
             launchOptions.setLaunchDisplayId(newDisplay.mId);
-            final Intent newDisplayIntent =
-                    new Intent(InstrumentationRegistry.getContext(), SingleTopActivity.class);
+            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
             newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            InstrumentationRegistry.getTargetContext().startActivity(newDisplayIntent,
-                    launchOptions.toBundle());
+            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 
@@ -627,11 +606,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Launch activity on default display.
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
-        final Intent defaultDisplayIntent =
-                new Intent(InstrumentationRegistry.getContext(), CallbackTrackingActivity.class);
+        final Intent defaultDisplayIntent = new Intent(mContext, CallbackTrackingActivity.class);
         defaultDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(defaultDisplayIntent,
-                launchOptions.toBundle());
+        mTargetContext.startActivity(defaultDisplayIntent, launchOptions.toBundle());
 
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
@@ -644,11 +621,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             // Launch another activity on new secondary display.
             getLifecycleLog().clear();
             launchOptions.setLaunchDisplayId(newDisplay.mId);
-            final Intent newDisplayIntent =
-                    new Intent(InstrumentationRegistry.getContext(), SingleTopActivity.class);
+            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
             newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            InstrumentationRegistry.getTargetContext().startActivity(newDisplayIntent,
-                    launchOptions.toBundle());
+            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 

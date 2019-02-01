@@ -16,12 +16,13 @@
 
 package android.server.am.intent;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Environment;
 import android.server.am.intent.Persistence.IntentFlag;
 import android.server.am.intent.Persistence.TestCase;
-import android.support.test.InstrumentationRegistry;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -80,7 +81,7 @@ public class IntentGenerationTests extends IntentTestBase {
     /**
      * The target context we can launch the first activity from.
      */
-    private Context mTargetContext = InstrumentationRegistry.getTargetContext();
+    private Context mTargetContext = getInstrumentation().getTargetContext();
 
     //20 minute timeout.
     @Test(timeout = 1_200_000)

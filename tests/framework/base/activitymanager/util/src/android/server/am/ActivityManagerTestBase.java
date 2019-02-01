@@ -82,7 +82,7 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
-import static android.support.test.InstrumentationRegistry.getContext;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
@@ -123,7 +123,6 @@ import android.server.am.CommandSession.LaunchProxy;
 import android.server.am.CommandSession.SizeInfo;
 import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.settings.SettingsSession;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.util.EventLog;
 import android.util.EventLog.Event;
@@ -352,7 +351,7 @@ public abstract class ActivityManagerTestBase {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 final Bundle bundle = ActivityOptions.makeBasic()
                         .setLaunchDisplayId(displayId).toBundle();
-                final ActivityMonitor monitor = InstrumentationRegistry.getInstrumentation()
+                final ActivityMonitor monitor = getInstrumentation()
                         .addMonitor((String) null, null, false);
                 mContext.startActivity(new Intent(mContext, activityClass)
                         .addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
@@ -374,8 +373,8 @@ public abstract class ActivityManagerTestBase {
         }
 
         void runOnMainSyncAndWait(Runnable runnable) {
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            getInstrumentation().runOnMainSync(runnable);
+            getInstrumentation().waitForIdleSync();
         }
 
         void runOnMainAndAssertWithTimeout(@NonNull BooleanSupplier condition, long timeoutMs,
@@ -409,7 +408,7 @@ public abstract class ActivityManagerTestBase {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getContext();
+        mContext = getInstrumentation().getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mAtm = mContext.getSystemService(ActivityTaskManager.class);
 
@@ -474,8 +473,7 @@ public abstract class ActivityManagerTestBase {
                 x, y, 0 /* metaState */);
         event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         event.setDisplayId(displayId);
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().injectInputEvent(
-                event, true /* sync */);
+        getInstrumentation().getUiAutomation().injectInputEvent(event, true /* sync */);
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
@@ -494,8 +492,7 @@ public abstract class ActivityManagerTestBase {
     public static String executeShellCommand(String command) {
         log("Shell command: " + command);
         try {
-            return SystemUtil
-                    .runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
+            return SystemUtil.runShellCommand(getInstrumentation(), command);
         } catch (IOException e) {
             //bubble it up
             logE("Error running shell command: " + command);
@@ -504,7 +501,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected Bitmap takeScreenshot() {
-        return InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
+        return getInstrumentation().getUiAutomation().takeScreenshot();
     }
 
     protected void launchActivity(final ComponentName activityName, final String... keyValuePairs) {
@@ -523,7 +520,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     private static void waitForIdle() {
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getInstrumentation().waitForIdleSync();
     }
 
     /** Returns the set of stack ids. */
@@ -843,13 +840,13 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean hasDeviceFeature(final String requiredFeature) {
-        return InstrumentationRegistry.getContext()
-                .getPackageManager()
+        return mContext.getPackageManager()
                 .hasSystemFeature(requiredFeature);
     }
 
     protected static boolean isDisplayOn(int displayId) {
-        final DisplayManager displayManager = getContext().getSystemService(DisplayManager.class);
+        final DisplayManager displayManager = getInstrumentation()
+                .getContext().getSystemService(DisplayManager.class);
         final Display display = displayManager.getDisplay(displayId);
         return display != null && display.getState() == Display.STATE_ON;
     }
@@ -978,7 +975,7 @@ public abstract class ActivityManagerTestBase {
 
             waitForDeviceIdle(3000);
             SystemUtil.runWithShellPermissionIdentity(() ->
-                    InstrumentationRegistry.getInstrumentation().sendStringSync(LOCK_CREDENTIAL));
+                    getInstrumentation().sendStringSync(LOCK_CREDENTIAL));
             pressEnterButton();
             return this;
         }
@@ -998,7 +995,7 @@ public abstract class ActivityManagerTestBase {
             // Not all device variants lock when we go to sleep, so we need to explicitly lock the
             // device. Note that pressSleepButton() above is redundant because the action also
             // puts the device to sleep, but kept around for clarity.
-            InstrumentationRegistry.getInstrumentation().getUiAutomation().performGlobalAction(
+            getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
             for (int retry = 1; isDisplayOn(DEFAULT_DISPLAY) && retry <= 5; retry++) {
                 logAlways("***Waiting for display to turn off... retry=" + retry);
@@ -1835,7 +1832,7 @@ public abstract class ActivityManagerTestBase {
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
             b.putInt(KEY_INTENT_FLAGS, mIntentFlags);
-            final Context context = InstrumentationRegistry.getContext();
+            final Context context = getInstrumentation().getContext();
             launchActivityFromExtras(context, b, mLaunchInjector);
         }
 

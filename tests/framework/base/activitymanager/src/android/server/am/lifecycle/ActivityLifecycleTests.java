@@ -16,18 +16,14 @@
 
 package android.server.am.lifecycle;
 
-import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
-import static android.server.am.lifecycle.LifecycleLog.ActivityCallback
-        .ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
@@ -38,12 +34,12 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -51,17 +47,13 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,10 +61,9 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleTests
  */
-@MediumTest
-@RunWith(AndroidJUnit4.class)
-@Presubmit
 @FlakyTest(bugId = 77652261)
+@MediumTest
+@Presubmit
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
@@ -297,7 +288,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(activity, ON_RESUME));
 
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::recreate);
+        getInstrumentation().runOnMainSync(activity::recreate);
         waitAndAssertActivityStates(state(activity, ON_RESUME));
 
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_RESUME);
@@ -313,7 +304,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 state(topTranslucentActivity, ON_RESUME));
 
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(pausedActivity::recreate);
+        getInstrumentation().runOnMainSync(pausedActivity::recreate);
         waitAndAssertActivityStates(state(pausedActivity, ON_PAUSE));
 
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_PAUSE);
@@ -328,7 +319,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 occludedActivityState(stoppedActivity, topActivity), state(topActivity, ON_RESUME));
 
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(stoppedActivity::recreate);
+        getInstrumentation().runOnMainSync(stoppedActivity::recreate);
         waitAndAssertActivityStates(occludedActivityState(stoppedActivity, topActivity));
 
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(),
@@ -496,7 +487,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Call "recreate" and assert sequence
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(trackingActivity::recreate);
+        getInstrumentation().runOnMainSync(trackingActivity::recreate);
         waitAndAssertActivityStates(state(trackingActivity, ON_TOP_POSITION_GAINED));
 
         LifecycleVerifier.assertSequence(CallbackTrackingActivity.class,
@@ -523,7 +514,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Call "recreate" and assert sequence
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(trackingActivity::recreate);
+        getInstrumentation().runOnMainSync(trackingActivity::recreate);
         waitAndAssertActivityStates(state(trackingActivity, ON_PAUSE));
 
         LifecycleVerifier.assertSequence(CallbackTrackingActivity.class,
@@ -554,7 +545,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Call "recreate" and assert sequence
         getLifecycleLog().clear();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(trackingActivity::recreate);
+        getInstrumentation().runOnMainSync(trackingActivity::recreate);
         waitAndAssertActivityStates(occludedActivityState(trackingActivity, secondActivity));
 
         final List<LifecycleLog.ActivityCallback> callbacks;
@@ -626,11 +617,10 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Launch the activity again to recreate
         getLifecycleLog().clear();
-        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent intent = new Intent(mContext, SingleTopActivity.class);
         intent.putExtra(EXTRA_RECREATE, true);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(intent);
+        mTargetContext.startActivity(intent);
 
         // Wait for activity to relaunch and resume
         final List<List<LifecycleLog.ActivityCallback>> expectedRelaunchSequences;
@@ -669,10 +659,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Try to launch again
         getLifecycleLog().clear();
-        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent intent = new Intent(mContext, SingleTopActivity.class);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(intent);
+        mTargetContext.startActivity(intent);
 
         // Wait for the activity to resume again
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
@@ -705,10 +694,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Try to launch again
         getLifecycleLog().clear();
-        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent intent = new Intent(mContext, SingleTopActivity.class);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        InstrumentationRegistry.getTargetContext().startActivity(intent);
+        mTargetContext.startActivity(intent);
 
         // Wait for the activity to resume again
         waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
@@ -747,10 +735,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Try to launch again
         getLifecycleLog().clear();
-        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
-                SingleTopActivity.class);
+        final Intent intent = new Intent(mContext, SingleTopActivity.class);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        InstrumentationRegistry.getTargetContext().startActivity(intent);
+        mTargetContext.startActivity(intent);
 
         // Wait for the activity to resume again
         // TODO(b/77974794): New intent handling sequence should always be the same.

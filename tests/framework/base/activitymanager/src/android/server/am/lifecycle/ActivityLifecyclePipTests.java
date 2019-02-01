@@ -36,16 +36,12 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,10 +49,9 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecyclePipTests
  */
-@MediumTest
-@RunWith(AndroidJUnit4.class)
-@Presubmit
 @FlakyTest(bugId = 77652261)
+@MediumTest
+@Presubmit
 public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Before

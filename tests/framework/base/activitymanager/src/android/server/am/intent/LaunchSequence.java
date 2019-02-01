@@ -17,10 +17,11 @@
 package android.server.am.intent;
 
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
 import android.content.ComponentName;
 import android.server.am.intent.Persistence.LaunchFromIntent;
 import android.server.am.intent.Persistence.LaunchIntent;
-import android.support.test.InstrumentationRegistry;
 
 import com.google.common.collect.Lists;
 
@@ -158,7 +159,7 @@ public interface LaunchSequence {
         return new LaunchIntent(Lists.newArrayList(), createComponent(activity), true);
     }
 
-    String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
+    String packageName = getInstrumentation().getTargetContext().getPackageName();
 
     static ComponentName createComponent(Class<? extends android.app.Activity> activity) {
         return new ComponentName(packageName, activity.getName());
