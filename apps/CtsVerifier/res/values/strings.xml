@@ -2245,9 +2245,6 @@ You should be prompted to select credentials; choose the ones you just installed
         2) Testing that a generated key can be hidden from users.\n
         \n
         Tap \"Prepare Test\" button below to begin.\n
-        \n
-        NOTE: A screen lock must be configured for this test. Otherwise, test preparation
-        will fail to generate a key for use by the test.
     </string>
     <string name="provisioning_byod_keychain_info_first_test">
         Once you press \'Go\', a prompt titled \"Choose certificate\" should appear.\n
