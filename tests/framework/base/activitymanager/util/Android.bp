@@ -24,7 +24,9 @@ java_test {
     static_libs: [
         "platformprotosnano",
         "compatibility-device-util",
-        "android-support-test",
+	"android-support-test",
+        "androidx.test.rules",
+        "androidx.test.runner",
     ],
 
     sdk_version: "test_current",
