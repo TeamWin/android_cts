@@ -367,6 +367,32 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * If the camera device advertises the SECURE_IAMGE_DATA capability, test
+     * ImageFormat.PRIVATE + PROTECTED usage capture by using ImageReader with the
+     * ImageReader factory method that has usage flag argument, and uses a custom usage flag.
+     */
+    public void testImageReaderPrivateWithProtectedUsageFlag() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "Private format and protected usage testing for camera " + id);
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA)) {
+                    Log.i(TAG, "Camera " + id +
+                            " does not support secure image data capability, skipping");
+
+                    continue;
+                }
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.PRIVATE, /*setUsageFlag*/ true,
+                        HardwareBuffer.USAGE_PROTECTED_CONTENT, /*repeating*/ true,
+                        /*checkSession*/ true, /*validateImageData*/ false);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
      * Test two image stream (YUV420_888 and RAW_SENSOR) capture by using ImageReader with the
      * ImageReader factory method that has usage flag argument.
      *
@@ -930,10 +956,22 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     private void bufferFormatTestByCamera(int format, boolean repeating) throws Exception {
-        bufferFormatTestByCamera(format, repeating, /*checkSession*/ false);
+        bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN, repeating,
+                /*checkSession*/ false, /*validateImageData*/ true);
     }
 
     private void bufferFormatTestByCamera(int format, boolean repeating, boolean checkSession)
+            throws Exception {
+        bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN,
+                repeating, checkSession, /*validateImageData*/true);
+    }
+
+    private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
+            // TODO: Consider having some sort of test configuration class passed to reduce the
+            //       proliferation of parameters ?
+            boolean repeating, boolean checkSession, boolean validateImageData)
             throws Exception {
         Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
@@ -948,7 +986,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
                 // Create ImageReader.
                 mListener  = new SimpleImageListener();
-                createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mListener);
+                if (setUsageFlag) {
+                    createDefaultImageReader(sz, format, MAX_NUM_IMAGES, usageFlag, mListener);
+                } else {
+                    createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mListener);
+                }
 
                 if (checkSession) {
                     assertTrue("Camera capture session validation for format: " + format +
@@ -962,8 +1004,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
                 int numFrameVerified = repeating ? NUM_FRAME_VERIFIED : 1;
 
-                // Validate images.
-                validateImage(sz, format, numFrameVerified, repeating);
+                if (validateImageData) {
+                    // Validate images.
+                    validateImage(sz, format, numFrameVerified, repeating);
+                }
 
                 // Validate capture result.
                 validateCaptureResult(format, sz, listener, numFrameVerified);
