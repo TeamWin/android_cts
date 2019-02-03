@@ -17,23 +17,20 @@
 package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertThat;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Run: atest AspectRatioSdk28Tests
  */
-@RunWith(AndroidJUnit4.class)
 @Presubmit
 public class AspectRatioSdk28Tests extends AspectRatioTestsBase {
 
@@ -55,7 +52,7 @@ public class AspectRatioSdk28Tests extends AspectRatioTestsBase {
 
     @Test
     public void testMaxAspectRatioPreQActivity() {
-        boolean isWatch = InstrumentationRegistry.getContext().getPackageManager()
+        boolean isWatch = getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(FEATURE_WATCH);
         float minAspectRatio = isWatch ? MIN_WATCH_DEVICE_ASPECT_RATIO : MIN_DEVICE_ASPECT_RATIO;
 

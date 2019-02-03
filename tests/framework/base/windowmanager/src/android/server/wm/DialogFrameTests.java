@@ -29,6 +29,7 @@ import static android.server.wm.DialogFrameTestActivity.TEST_NO_FOCUS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
 import static android.server.wm.DialogFrameTestActivity.TEST_WITH_MARGINS;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -40,7 +41,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 import android.server.am.WindowManagerState.WindowState;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 
 import org.junit.Ignore;
@@ -59,7 +59,7 @@ import java.util.List;
 public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivity> {
 
     private static final ComponentName DIALOG_FRAME_TEST_ACTIVITY = new ComponentName(
-            InstrumentationRegistry.getContext(), DialogFrameTestActivity.class);
+            getInstrumentation().getContext(), DialogFrameTestActivity.class);
 
     @Rule
     public final ActivityTestRule<DialogFrameTestActivity> mDialogTestActivity =

@@ -60,7 +60,9 @@ import static android.server.am.Components.TestActivity.EXTRA_CONFIGURATION;
 import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressWindowButton;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -87,19 +89,19 @@ import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Size;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.junit.Ignore;
-import org.junit.Test;
 
 /**
  * Build/Install/Run:
@@ -874,7 +876,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         public void close() throws Exception {
             // Wait for the restored setting to apply before we continue on with the next test
             final CountDownLatch waitLock = new CountDownLatch(1);
-            final Context context = InstrumentationRegistry.getTargetContext();
+            final Context context = getInstrumentation().getTargetContext();
             context.getContentResolver().registerContentObserver(mUri, false,
                     new ContentObserver(new Handler(Looper.getMainLooper())) {
                         @Override

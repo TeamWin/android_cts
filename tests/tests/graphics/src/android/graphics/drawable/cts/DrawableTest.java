@@ -58,6 +58,7 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -155,6 +156,47 @@ public class DrawableTest {
         final String path = imageFile.getPath();
         Uri u = Uri.parse(path);
         assertNotNull(Drawable.createFromPath(u.toString()));
+        assertTrue(imageFile.delete());
+    }
+
+    @Test
+    public void testCreateFromIncomplete() throws IOException {
+        // Create a truncated image file.
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        try (InputStream source = mResources.openRawResource(R.raw.testimage)) {
+            for (int len = source.read(buffer); len >= 0; len = source.read(buffer)) {
+                bytes.write(buffer, 0, len);
+            }
+        }
+
+        File imageFile = new File(mContext.getFilesDir(), "tempimage.jpg");
+        assertTrue(imageFile.createNewFile());
+        assertTrue(imageFile.exists());
+        try (OutputStream target = new FileOutputStream(imageFile)) {
+            byte[] byteArray = bytes.toByteArray();
+            target.write(byteArray, 0, byteArray.length / 2);
+        }
+
+        // Now test various Drawable APIs that should succeed.
+        final String path = imageFile.getPath();
+        Uri u = Uri.parse(path);
+        assertNotNull(Drawable.createFromPath(u.toString()));
+
+        try (FileInputStream input = new FileInputStream(imageFile)) {
+            assertNotNull(Drawable.createFromStream(input, ""));
+        }
+
+        try (FileInputStream input = new FileInputStream(imageFile)) {
+            assertNotNull(Drawable.createFromResourceStream(mResources, new TypedValue(),
+                        input, ""));
+        }
+
+        try (FileInputStream input = new FileInputStream(imageFile)) {
+            assertNotNull(Drawable.createFromResourceStream(mResources, new TypedValue(),
+                        input, "", new BitmapFactory.Options()));
+        }
+
         assertTrue(imageFile.delete());
     }
 

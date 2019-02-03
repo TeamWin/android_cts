@@ -327,6 +327,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 case "documenter": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_DOCUMENTER;
                 } break;
+                case "appPredictor": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_APP_PREDICTOR;
+                } break;
                 case "instant": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_INSTANT;
                 } break;

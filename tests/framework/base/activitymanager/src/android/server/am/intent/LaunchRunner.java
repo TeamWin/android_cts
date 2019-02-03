@@ -19,6 +19,7 @@ package android.server.am.intent;
 import static android.server.am.intent.Persistence.LaunchFromIntent.prepareSerialisation;
 import static android.server.am.intent.StateComparisonException.assertEndStatesEqual;
 import static android.server.am.intent.StateComparisonException.assertInitialStateEqual;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.collect.Iterables.getLast;
 
@@ -36,7 +37,6 @@ import android.server.am.intent.LaunchSequence.LaunchSequenceExecutionInfo;
 import android.server.am.intent.Persistence.GenerationIntent;
 import android.server.am.intent.Persistence.LaunchFromIntent;
 import android.server.am.intent.Persistence.StateDump;
-import android.support.test.InstrumentationRegistry;
 import android.view.Display;
 
 import com.google.common.collect.Lists;
@@ -240,7 +240,7 @@ public class LaunchRunner {
 
 
     public Activity launchFromContext(Context context, Intent intent) {
-        Instrumentation.ActivityMonitor monitor = InstrumentationRegistry.getInstrumentation()
+        Instrumentation.ActivityMonitor monitor = getInstrumentation()
                 .addMonitor((String) null, null, false);
 
         context.startActivity(intent);
@@ -251,7 +251,7 @@ public class LaunchRunner {
     }
 
     public Activity launch(Activity activityContext, Intent intent, boolean startForResult) {
-        Instrumentation.ActivityMonitor monitor = InstrumentationRegistry.getInstrumentation()
+        Instrumentation.ActivityMonitor monitor = getInstrumentation()
                 .addMonitor((String) null, null, false);
 
         if (startForResult) {

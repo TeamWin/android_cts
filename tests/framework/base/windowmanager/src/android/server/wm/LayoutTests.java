@@ -16,37 +16,35 @@
 
 package android.server.wm;
 
+import static android.provider.Settings.Global.WINDOW_ANIMATION_SCALE;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import static android.provider.Settings.Global.WINDOW_ANIMATION_SCALE;
-import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.SystemUtil;
 
 /**
  * Test whether WindowManager performs the correct layout after we make some changes to it.
@@ -54,9 +52,8 @@ import com.android.compatibility.common.util.SystemUtil;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:LayoutTests
  */
-@Presubmit
 @FlakyTest(detail = "Can be promoted to pre-submit once confirmed stable.")
-@RunWith(AndroidJUnit4.class)
+@Presubmit
 public class LayoutTests {
     private static final long TIMEOUT_LAYOUT = 200; // milliseconds
     private static final long TIMEOUT_RECEIVE_KEY = 100;
@@ -78,7 +75,7 @@ public class LayoutTests {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mInstrumentation = getInstrumentation();
         mResolver = mInstrumentation.getContext().getContentResolver();
 
         SystemUtil.runWithShellPermissionIdentity(() -> {

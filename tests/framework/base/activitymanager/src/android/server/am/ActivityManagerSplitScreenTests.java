@@ -37,6 +37,9 @@ import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
+import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -568,6 +571,28 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+    }
+
+    @Test
+    public void testSameProcessActivityResumedPreQ() {
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(SDK_27_TEST_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(SDK_27_LAUNCHING_ACTIVITY));
+
+        assertEquals("There must be only one resumed activity in the package.", 1,
+                mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                        SDK_27_TEST_ACTIVITY.getPackageName()));
+    }
+
+    @Test
+    public void testDifferentProcessActivityResumedPreQ() {
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(SDK_27_TEST_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY));
+
+        assertEquals("There must be only two resumed activities in the package.", 2,
+                mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                        SDK_27_TEST_ACTIVITY.getPackageName()));
     }
 
     @Test

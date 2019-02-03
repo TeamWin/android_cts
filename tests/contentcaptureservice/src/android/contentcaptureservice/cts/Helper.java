@@ -18,8 +18,11 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -75,6 +78,16 @@ final class Helper {
      */
     public static ComponentName componentNameFor(@NonNull Class<?> clazz) {
         return new ComponentName(MY_PACKAGE, clazz.getName());
+    }
+
+    /**
+     * Creates a view that can be added to a parent and is important for content capture
+     */
+    public static TextView newImportantView(@NonNull Context context, @NonNull String text) {
+        final TextView child = new TextView(context);
+        child.setText(text);
+        child.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_YES);
+        return child;
     }
 
     private Helper() {

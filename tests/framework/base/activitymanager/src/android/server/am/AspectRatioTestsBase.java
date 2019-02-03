@@ -16,12 +16,13 @@
 
 package android.server.am;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 import android.app.Activity;
 import android.graphics.Point;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.view.Display;
 import android.view.WindowManager;
@@ -63,7 +64,7 @@ class AspectRatioTestsBase {
     }
 
     static float getDefaultDisplayAspectRatio() {
-        return getAspectRatio(InstrumentationRegistry.getContext().getSystemService(
+        return getAspectRatio(getInstrumentation().getContext().getSystemService(
                 WindowManager.class).getDefaultDisplay());
     }
 
@@ -97,7 +98,7 @@ class AspectRatioTestsBase {
     }
 
     private static void waitForIdle() {
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getInstrumentation().waitForIdleSync();
     }
 
     static Matcher<Float> greaterThanOrEqualToInexact(float expected) {

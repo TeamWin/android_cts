@@ -85,8 +85,7 @@ LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_JAVA_LIBRARIES += \
     org.apache.http.legacy \
     android.test.base.stubs \
-    android.test.runner.stubs \
-    updatable-media # TODO(b/112766913): replace with stub to prevent private API use.
+    android.test.runner.stubs
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant

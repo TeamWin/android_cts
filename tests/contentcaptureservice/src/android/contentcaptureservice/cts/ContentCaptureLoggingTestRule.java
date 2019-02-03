@@ -83,10 +83,10 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
         // TODO(b/123540602, b/120784831): should dump to a file (and integrate with tradefed)
         // instead of outputting to log directly...
         Log.e(mTag, "Dumping after exception on " + testName, t);
-        final String autofillDump = runShellCommand("dumpsys content_capture");
-        Log.e(mTag, "content_capture dump: \n" + autofillDump);
-        final String activityDump = runShellCommand(
-                "dumpsys activity " + MY_PACKAGE + " --contentcapture");
+        final String serviceDump = runShellCommand("dumpsys content_capture");
+        Log.e(mTag, "content_capture dump: \n" + serviceDump);
+        final String activityDump = runShellCommand("dumpsys activity %s --contentcapture",
+                MY_PACKAGE);
         Log.e(mTag, "activity dump: \n" + activityDump);
         mDumped = true;
     }

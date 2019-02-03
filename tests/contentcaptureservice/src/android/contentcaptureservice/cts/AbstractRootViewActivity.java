@@ -15,6 +15,7 @@
  */
 package android.contentcaptureservice.cts;
 
+import android.app.Activity;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,16 +31,24 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
 
     private static final String TAG = AbstractRootViewActivity.class.getSimpleName();
 
-    private static DoubleVisitor<AbstractContentCaptureActivity, LinearLayout> sRootViewVisitor;
+    private static DoubleVisitor<AbstractRootViewActivity, LinearLayout> sRootViewVisitor;
+    private static DoubleVisitor<AbstractRootViewActivity, LinearLayout> sOnAnimationVisitor;
 
     private LinearLayout mRootView;
 
     /**
-     * Applies a visitor to the root view {@code onCreate()}.
+     * Sets a visitor called when the activity is created.
      */
-    static void onRootView(
-            @NonNull DoubleVisitor<AbstractContentCaptureActivity, LinearLayout> visitor) {
+    static void onRootView(@NonNull DoubleVisitor<AbstractRootViewActivity, LinearLayout> visitor) {
         sRootViewVisitor = visitor;
+    }
+
+    /**
+     * Sets a visitor to be called on {@link Activity#onEnterAnimationComplete()}.
+     */
+    static void onAnimationComplete(
+            @NonNull DoubleVisitor<AbstractRootViewActivity, LinearLayout> visitor) {
+        sOnAnimationVisitor = visitor;
     }
 
     @Override
@@ -56,7 +65,11 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
 
         if (sRootViewVisitor != null) {
             Log.d(TAG, "Applying visitor to " + this + "/" + mRootView);
-            sRootViewVisitor.visit(this, mRootView);
+            try {
+                sRootViewVisitor.visit(this, mRootView);
+            } finally {
+                sRootViewVisitor = null;
+            }
         }
     }
 
@@ -69,6 +82,20 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
                 + ", grandParent=" + getGrandParent().getAutofillId()
                 + ", grandGrandParent=" + getGrandGrandParent().getAutofillId()
                 + ", decorView=" + getDecorView().getAutofillId());
+    }
+
+    @Override
+    public void onEnterAnimationComplete() {
+        if (sOnAnimationVisitor != null) {
+            Log.i(TAG, "onEnterAnimationComplete(): applying visitor on " + this);
+            try {
+                sOnAnimationVisitor.visit(this, mRootView);
+            } finally {
+                sOnAnimationVisitor = null;
+            }
+        } else {
+            Log.i(TAG, "onEnterAnimationComplete(): no visitor on " + this);
+        }
     }
 
     public LinearLayout getRootView() {

@@ -53,7 +53,7 @@ import org.junit.runner.RunWith;
 public abstract class AbstractContentCaptureIntegrationTest
         <A extends AbstractContentCaptureActivity> {
 
-    private static final String TAG = AbstractContentCaptureIntegrationTest.class.getSimpleName();
+    private final String mTag = getClass().getSimpleName();
 
     protected static final Context sContext = InstrumentationRegistry.getTargetContext();
 
@@ -64,7 +64,7 @@ public abstract class AbstractContentCaptureIntegrationTest
     private final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule("content_capture");
     private final ContentCaptureLoggingTestRule mLoggingRule =
-            new ContentCaptureLoggingTestRule(TAG);
+            new ContentCaptureLoggingTestRule(mTag);
 
 
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
@@ -100,7 +100,7 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     @Before
     public void prepareDevice() throws Exception {
-        Log.v(TAG, "@Before: prepareDevice()");
+        Log.v(mTag, "@Before: prepareDevice()");
 
         // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
@@ -114,13 +114,13 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     @Before
     public void clearState() {
-        Log.v(TAG, "@Before: clearState()");
+        Log.v(mTag, "@Before: clearState()");
         CtsContentCaptureService.resetStaticState();
     }
 
     @Before
     public void registerLifecycleCallback() {
-        Log.v(TAG, "@Before: Registering lifecycle callback");
+        Log.v(mTag, "@Before: Registering lifecycle callback");
         final Application app = (Application) sContext.getApplicationContext();
         mActivitiesWatcher = new ActivitiesWatcher(GENERIC_TIMEOUT_MS);
         app.registerActivityLifecycleCallbacks(mActivitiesWatcher);
@@ -128,7 +128,7 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     @After
     public void unregisterLifecycleCallback() {
-        Log.d(TAG, "@After: Unregistering lifecycle callback: " + mActivitiesWatcher);
+        Log.d(mTag, "@After: Unregistering lifecycle callback: " + mActivitiesWatcher);
         if (mActivitiesWatcher != null) {
             final Application app = (Application) sContext.getApplicationContext();
             app.unregisterActivityLifecycleCallbacks(mActivitiesWatcher);
@@ -139,7 +139,7 @@ public abstract class AbstractContentCaptureIntegrationTest
     // add a run() method that takes an object that can throw an exception
     @After
     public void restoreDefaultService() throws InterruptedException {
-        Log.v(TAG, "@After: restoreDefaultService()");
+        Log.v(mTag, "@After: restoreDefaultService()");
         resetService();
 
         if (mServiceWatcher != null) {
@@ -182,13 +182,13 @@ public abstract class AbstractContentCaptureIntegrationTest
     protected abstract ActivityTestRule<A> getActivityTestRule();
 
     protected A launchActivity() {
-        Log.d(TAG, "Launching " + mActivityClass.getSimpleName());
+        Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
 
         return getActivityTestRule().launchActivity(new Intent(sContext, mActivityClass));
     }
 
     protected A launchActivity(@Nullable Visitor<Intent> visitor) {
-        Log.d(TAG, "Launching " + mActivityClass.getSimpleName());
+        Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
 
         final Intent intent = new Intent(sContext, mActivityClass);
         if (visitor != null) {

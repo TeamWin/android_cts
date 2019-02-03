@@ -17,22 +17,18 @@
 package android.server.am;
 
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Build: mmma -j32 cts/tests/framework/base/activitymanager
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsActivityManagerDeviceSdk25TestCases android.server.am.AspectRatioSdk25Tests
  */
-@RunWith(AndroidJUnit4.class)
 @Presubmit
 public class AspectRatioSdk25Tests extends AspectRatioTestsBase {
 

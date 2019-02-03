@@ -23,7 +23,6 @@ import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
-import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -59,7 +58,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ComponentNameUtils;
 import android.support.test.filters.FlakyTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -70,7 +68,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 
@@ -83,7 +80,6 @@ import javax.annotation.concurrent.GuardedBy;
  *     atest WindowFocusTests
  */
 @Presubmit
-@RunWith(AndroidJUnit4.class)
 public class WindowFocusTests {
 
     @Before
@@ -98,7 +94,8 @@ public class WindowFocusTests {
         final Bundle options = (displayId == DEFAULT_DISPLAY
                 ? null : ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle());
         final T activity = (T) getInstrumentation().startActivitySync(
-                new Intent(getTargetContext(), cls).addFlags(FLAG_ACTIVITY_NEW_TASK), options);
+                new Intent(getInstrumentation().getTargetContext(), cls)
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK), options);
         activity.waitAndAssertWindowFocusState(true /* hasFocus */);
         return activity;
     }
@@ -128,7 +125,9 @@ public class WindowFocusTests {
 
     private static void tapOnCenterOfDisplay(int displayId) {
         final Point point = new Point();
-        getTargetContext().getSystemService(DisplayManager.class).getDisplay(displayId)
+        getInstrumentation().getTargetContext()
+                .getSystemService(DisplayManager.class)
+                .getDisplay(displayId)
                 .getSize(point);
         final int x = point.x / 2;
         final int y = point.y / 2;
@@ -159,15 +158,16 @@ public class WindowFocusTests {
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId =
-                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final int secondaryDisplayId = displaySession.createDisplay(
+                    getInstrumentation().getTargetContext()).getDisplayId();
             final SecondaryActivity secondaryActivity =
                     startActivity(SecondaryActivity.class, secondaryDisplayId);
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
 
-            final boolean perDisplayFocusEnabled = getTargetContext().getResources().getBoolean(
-                    com.android.internal.R.bool.config_perDisplayFocusEnabled);
+            final boolean perDisplayFocusEnabled = getInstrumentation()
+                    .getTargetContext().getResources()
+                    .getBoolean(com.android.internal.R.bool.config_perDisplayFocusEnabled);
             if (perDisplayFocusEnabled) {
                 primaryActivity.assertWindowFocusState(true /* hasFocus */);
                 sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
@@ -206,7 +206,7 @@ public class WindowFocusTests {
      */
     @Test
     public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
-        if (getTargetContext().getResources().getBoolean(
+        if (getInstrumentation().getTargetContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_perDisplayFocusEnabled)) {
             return;
         }
@@ -215,8 +215,8 @@ public class WindowFocusTests {
                 DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId =
-                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final int secondaryDisplayId = displaySession.createDisplay(
+                    getInstrumentation().getTargetContext()).getDisplayId();
             final SecondaryActivity secondaryActivity =
                     startActivity(SecondaryActivity.class, secondaryDisplayId);
 
@@ -259,8 +259,8 @@ public class WindowFocusTests {
         primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId =
-                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final int secondaryDisplayId = displaySession.createDisplay(
+                    getInstrumentation().getTargetContext()).getDisplayId();
             final SecondaryActivity secondaryActivity =
                     startActivity(SecondaryActivity.class, secondaryDisplayId);
 
@@ -288,8 +288,8 @@ public class WindowFocusTests {
 
         final SecondaryActivity secondaryActivity;
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId =
-                    displaySession.createDisplay(getTargetContext()).getDisplayId();
+            final int secondaryDisplayId = displaySession.createDisplay(
+                    getInstrumentation().getTargetContext()).getDisplayId();
             secondaryActivity = startActivity(SecondaryActivity.class, secondaryDisplayId);
         }
         // Secondary display disconnected.

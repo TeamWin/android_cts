@@ -15,6 +15,8 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
+
 import android.app.Activity;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 abstract class AbstractContentCaptureActivity extends Activity {
 
-    protected final String mTag = getClass().getSimpleName();
+    private final String mTag = getClass().getSimpleName();
 
     private int mRealTaskId;
 
@@ -142,5 +144,14 @@ abstract class AbstractContentCaptureActivity extends Activity {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted", e);
         }
+    }
+
+    /**
+     * Dumps the {@link ContentCaptureManager} state of the activity on logcat.
+     */
+    public void dumpIt() {
+        final String dump = runShellCommand(
+                "dumpsys activity %s --contentcapture",  getComponentName().flattenToString());
+        Log.v(mTag, "dump it: " + dump);
     }
 }

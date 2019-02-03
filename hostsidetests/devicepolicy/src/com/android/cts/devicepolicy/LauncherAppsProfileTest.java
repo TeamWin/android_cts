@@ -109,6 +109,18 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mProfileUserId);
     }
 
+    public void testProfileOwnerAppHiddenInPrimaryProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        String command = "pm disable --user " + mParentUserId + " " + MANAGED_PROFILE_PKG
+                + "/.PrimaryUserFilterSetterActivity";
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
+        runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_CLASS, "testProfileOwnerInjectedActivityNotFound",
+                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mMainUserSerialNumber));
+    }
+
     public void testNoHiddenActivityInProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -119,7 +131,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
         // Run tests to check SimpleApp exists in both profile and main user.
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testNoInjectedActivityFound",
+                LAUNCHER_TESTS_CLASS, "testNoTestAppInjectedActivityFound",
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber));
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testNoLaunchableActivityAppHasAppDetailsActivityInjected",

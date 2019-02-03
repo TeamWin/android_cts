@@ -21,15 +21,19 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaController2;
 import android.media.MediaSession2;
 import android.media.Session2Command;
 import android.media.Session2CommandGroup;
 import android.media.Session2Token;
+import android.media.session.MediaSessionManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Parcel;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -120,6 +124,19 @@ public class MediaSession2Test {
     }
 
     @Test
+    public void testBuilder_setSessionActivity() {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext, 0 /* requestCode */, intent, 0 /* flags */);
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionActivity(pendingIntent)
+                .build()) {
+            // Note: The pendingIntent is set but is never used inside of MediaSession2.
+            // TODO: If getter is created, put assertEquals() here.
+        }
+    }
+
+    @Test
     public void testBuilder_createSessionWithoutId() {
         try (MediaSession2 session = new MediaSession2.Builder(mContext).build()) {
             assertEquals("", session.getSessionId());
@@ -148,6 +165,83 @@ public class MediaSession2Test {
             assertEquals(mContext.getPackageName(), token.getPackageName());
             assertNull(token.getServiceName());
             assertEquals(Session2Token.TYPE_SESSION, token.getType());
+            assertEquals(0, token.describeContents());
+        }
+    }
+
+    @Test
+    public void testSession2Token_writeToParcel() {
+        try (MediaSession2 session = new MediaSession2.Builder(mContext).build()) {
+            Session2Token token = session.getSessionToken();
+
+            Parcel parcel = Parcel.obtain();
+            token.writeToParcel(parcel, 0 /* flags */);
+            parcel.setDataPosition(0);
+            Session2Token tokenOut = Session2Token.CREATOR.createFromParcel(parcel);
+
+            assertEquals(Process.myUid(), tokenOut.getUid());
+            assertEquals(mContext.getPackageName(), tokenOut.getPackageName());
+            assertNull(tokenOut.getServiceName());
+            assertEquals(Session2Token.TYPE_SESSION, tokenOut.getType());
+
+            parcel.recycle();
+        }
+    }
+
+    @Test
+    public void testBroadcastSessionCommand() throws Exception {
+        Session2Callback sessionCallback = new Session2Callback();
+
+        String commandStr = "test_command";
+        Session2Command command = new Session2Command(commandStr, null);
+
+        int resultCode = 100;
+        Session2Command.Result commandResult = new Session2Command.Result(resultCode, null);
+
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .build()) {
+
+            // 1. Create two controllers with each latch.
+            final CountDownLatch latch1 = new CountDownLatch(1);
+            Controller2Callback callback1 = new Controller2Callback() {
+                @Override
+                public Session2Command.Result onSessionCommand(MediaController2 controller,
+                        Session2Command command, Bundle args) {
+                    if (commandStr.equals(command.getCustomCommand())
+                            && command.getExtras() == null) {
+                        latch1.countDown();
+                    }
+                    return commandResult;
+                }
+            };
+            MediaController2 controller1 = new MediaController2(
+                    mContext, session.getSessionToken(), sHandlerExecutor, callback1);
+
+            final CountDownLatch latch2 = new CountDownLatch(1);
+            Controller2Callback callback2 = new Controller2Callback() {
+                @Override
+                public Session2Command.Result onSessionCommand(MediaController2 controller,
+                        Session2Command command, Bundle args) {
+                    if (commandStr.equals(command.getCustomCommand())
+                            && command.getExtras() == null) {
+                        latch2.countDown();
+                    }
+                    return commandResult;
+                }
+            };
+            MediaController2 controller2 = new MediaController2(
+                    mContext, session.getSessionToken(), sHandlerExecutor, callback2);
+
+            // 2. Wait until all the controllers are connected.
+            assertTrue(callback1.awaitOnConnected(WAIT_TIME_MS));
+            assertTrue(callback2.awaitOnConnected(WAIT_TIME_MS));
+
+            // 3. Call MediaSession2#broadcastSessionCommand() and check both controller's
+            // onSessionCommand is called.
+            session.broadcastSessionCommand(command, null);
+            assertTrue(latch1.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            assertTrue(latch2.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         }
     }
 
@@ -165,6 +259,13 @@ public class MediaSession2Test {
             assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
             assertEquals(session, sessionCallback.mSession);
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
+
+            // Check whether the controllerInfo is the right one.
+            assertEquals(mContext.getPackageName(), controllerInfo.getPackageName());
+            MediaSessionManager.RemoteUserInfo remoteUserInfo = controllerInfo.getRemoteUserInfo();
+            assertEquals(Process.myPid(), remoteUserInfo.getPid());
+            assertEquals(Process.myUid(), remoteUserInfo.getUid());
+            assertEquals(mContext.getPackageName(), remoteUserInfo.getPackageName());
 
             // Test onDisconnect
             controller.close();
@@ -279,6 +380,7 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             session.setPlaybackActive(testInitialPlaybackActive);
+            assertEquals(testInitialPlaybackActive, session.isPlaybackActive());
 
             Controller2Callback controllerCallback = new Controller2Callback();
             MediaController2 controller = new MediaController2(mContext, session.getSessionToken(),
@@ -291,6 +393,7 @@ public class MediaSession2Test {
 
             // Change playback active change and wait for changes
             session.setPlaybackActive(testPlaybackActive);
+            assertEquals(testPlaybackActive, session.isPlaybackActive());
             assertTrue(controllerCallback.awaitOnPlaybackActiveChanged(WAIT_TIME_MS));
 
             assertEquals(testPlaybackActive, controllerCallback.getNotifiedPlaybackActive());

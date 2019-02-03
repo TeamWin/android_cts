@@ -17,10 +17,12 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.media.MediaItem2;
 import android.media.MediaMetadata;
+import android.os.Parcel;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -105,6 +107,40 @@ public class MediaItem2Test {
         item.setMetadata(meta3);
         // metadata shouldn't be changed
         assertEquals(meta2, item.getMetadata());
+    }
+
+    @Test
+    public void testDescribeContents() {
+        MediaItem2 item = new MediaItem2.Builder().setStartPosition(0).setEndPosition(10).build();
+        assertEquals(0, item.describeContents());
+    }
+
+    @Test
+    public void testWriteToParcel() {
+        long testStartPosition = 100;
+        long testEndPosition = 200;
+        final String testId = "testId";
+        final long testDuration = 12345;
+
+        MediaItem2 item = new MediaItem2.Builder()
+                .setStartPosition(testStartPosition)
+                .setEndPosition(testEndPosition)
+                .setMetadata(createMetadata(testId, testDuration))
+                .build();
+
+        Parcel parcel = Parcel.obtain();
+        item.writeToParcel(parcel, 0 /* flags */);
+        parcel.setDataPosition(0);
+        MediaItem2 itemOut = MediaItem2.CREATOR.createFromParcel(parcel);
+
+        assertEquals(testStartPosition, itemOut.getStartPosition());
+        assertEquals(testEndPosition, itemOut.getEndPosition());
+        MediaMetadata metadataOut = item.getMetadata();
+        assertNotNull(metadataOut);
+        assertEquals(testId, metadataOut.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+        assertEquals(testDuration, metadataOut.getLong(MediaMetadata.METADATA_KEY_DURATION));
+
+        parcel.recycle();
     }
 
     private MediaMetadata createMetadata(String id, long duration) {

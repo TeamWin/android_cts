@@ -58,6 +58,9 @@ import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
 import static android.server.am.app27.Components.SDK_27_HOME_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
 import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.server.am.second.Components.EMBEDDING_ACTIVITY;
 import static android.server.am.second.Components.EmbeddingActivity.ACTION_EMBEDDING_TEST_ACTIVITY_START;
@@ -68,12 +71,13 @@ import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
 import static android.server.am.second.Components.SECOND_NO_EMBEDDING_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
-import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -105,7 +109,6 @@ import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.SizeInfo;
 import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowState;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.text.TextUtils;
 import android.util.SparseArray;
@@ -117,6 +120,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -124,6 +128,7 @@ import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -136,12 +141,17 @@ import java.util.function.Predicate;
  */
 @Presubmit
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
+
+    private Context mTargetContext;
+
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         assumeTrue(supportsMultiDisplay());
+
+        mTargetContext = getInstrumentation().getTargetContext();
     }
 
     /**
@@ -171,8 +181,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching a single instance home activity on virtual display that supports system
      * decorations.
      */
-    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
-    private void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
+    @Ignore("TODO (b/118206886): Will add it back once launcher's patch is merged into master.")
+    @Test
+    public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession session = new HomeActivitySession(SINGLE_HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
                 // Create new virtual display with system decoration support.
@@ -188,8 +199,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Tests launching a home activity on virtual display that supports system decorations.
      */
-    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
-    private void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
+    @Ignore("TODO (b/118206886): Will add it back once launcher's patch is merged into master.")
+    @Test
+    public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
                 // Create new virtual display with system decoration support.
@@ -209,8 +221,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests home activity that target before Q won't be started on virtual display that supports
      * system decorations.
      */
-    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
-    private void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
+    @Ignore("TODO (b/118206886): Will add it back once launcher's patch is merged into master.")
+    @Test
+    public void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession
                      = new HomeActivitySession(SDK_27_HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -707,12 +720,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(TEST_ACTIVITY);
 
-            assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+            assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                     newDisplay.mId, intent));
         }
     }
@@ -728,14 +740,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW)
                     .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
 
             SystemUtil.runWithShellPermissionIdentity(() ->
-                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                             newDisplay.mId, intent)), "android.permission.INTERNAL_SYSTEM_WINDOW");
         }
     }
@@ -751,14 +762,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW)
                     .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
 
             SystemUtil.runWithShellPermissionIdentity(() ->
-                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                             newDisplay.mId, intent)), "android.permission.INTERNAL_SYSTEM_WINDOW");
         }
     }
@@ -775,12 +785,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(SECOND_ACTIVITY);
 
-            assertFalse(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+            assertFalse(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                     newDisplay.mId, intent));
         }
     }
@@ -796,14 +805,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW)
                     .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
 
             SystemUtil.runWithShellPermissionIdentity(() ->
-                    assertFalse(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    assertFalse(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                             newDisplay.mId, intent)), "android.permission.ACTIVITY_EMBEDDING");
         }
     }
@@ -819,14 +827,13 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW)
                     .setComponent(SECOND_ACTIVITY);
 
             SystemUtil.runWithShellPermissionIdentity(() ->
-                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                             newDisplay.mId, intent)), "android.permission.ACTIVITY_EMBEDDING");
         }
     }
@@ -842,12 +849,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
                     .createDisplay();
 
-            final Context targetContext = InstrumentationRegistry.getTargetContext();
             final ActivityManager activityManager =
-                    (ActivityManager) targetContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
             final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(SECOND_ACTIVITY);
 
-            assertFalse(activityManager.isActivityStartAllowedOnDisplay(targetContext,
+            assertFalse(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
                     newDisplay.mId, intent));
         }
     }
@@ -2216,8 +2222,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
              // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(
-                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                     new ImeSettings.Builder())) {
+                     mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
 
             // Create a virtual display and launch an activity on it.
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
@@ -2267,8 +2272,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
              // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(
-                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                     new ImeSettings.Builder())) {
+                     mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
 
             // Create a virtual display and launch an activity on it.
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
@@ -2306,8 +2310,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                      TestActivitySession<>();
              // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession1 = MockImeSession.create(
-                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                     new ImeSettings.Builder())) {
+                     mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
 
             // Create 2 virtual displays and launch an activity on each display.
             final List<ActivityDisplay> newDisplays = virtualDisplaySession.setPublicDisplay(true)
@@ -2454,15 +2457,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                      imeTestActivitySession = new TestActivitySession<>();
              // Leverage MockImeSession to ensure at least a test Ime exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(
-                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                     new ImeSettings.Builder())) {
+                     mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
 
             // Create a virtual display and pretend display does not support system decoration.
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .setShowSystemDecorations(false).createDisplay();
             // Verify the virtual display should not support system decoration.
-            final DisplayManager displayManager = InstrumentationRegistry.getTargetContext()
-                    .getSystemService(DisplayManager.class);
+            final DisplayManager displayManager =
+                    mTargetContext.getSystemService(DisplayManager.class);
             final Display display = displayManager.getDisplay(newDisplay.mId);
             final boolean supportSystemDecoration =
                     display != null && display.supportsSystemDecorations();
@@ -2654,6 +2656,41 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
+    @Test
+    public void testPreQTopProcessResumedActivity() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SDK_27_TEST_ACTIVITY).setNewTask(true)
+                    .setDisplayId(newDisplay.mId).execute();
+            waitAndAssertTopResumedActivity(SDK_27_TEST_ACTIVITY, newDisplay.mId,
+                    "Activity launched on secondary display must be resumed and focused");
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SDK_27_LAUNCHING_ACTIVITY).setNewTask(true)
+                    .setDisplayId(DEFAULT_DISPLAY).execute();
+            waitAndAssertTopResumedActivity(SDK_27_LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on default display must be resumed and focused");
+
+            assertEquals("There must be only one resumed activity in the package.", 1,
+                    mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                            SDK_27_LAUNCHING_ACTIVITY.getPackageName()));
+
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY).setNewTask(true)
+                    .setDisplayId(DEFAULT_DISPLAY).execute();
+            waitAndAssertTopResumedActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on default display must be resumed and focused");
+            assertTrue("Activity that was on secondary display must be resumed",
+                    mAmWmState.getAmState().hasActivityState(SDK_27_TEST_ACTIVITY, STATE_RESUMED));
+            assertEquals("There must be only two resumed activities in the package.", 2,
+                    mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                            SDK_27_TEST_ACTIVITY.getPackageName()));
+        }
+    }
+
     private void waitAndAssertNavBarStatesAreTheSame(List<WindowState> expected) throws Exception {
         // This is used to verify that we have nav bars shown on the same displays
         // as before the test.
@@ -2754,12 +2791,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     public static class ImeTestActivity extends Activity {
-        EditText mEditText;
+        ImeAwareEditText mEditText;
 
         @Override
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
-            mEditText = new EditText(this);
+            mEditText = new ImeAwareEditText(this);
             // Set private IME option for editorMatcher to identify which TextView received
             // onStartInput event.
             mEditText.setPrivateImeOptions(
@@ -2772,7 +2809,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
 
         void showSoftInput() {
-            getSystemService(InputMethodManager.class).showSoftInput(mEditText, 0);
+            mEditText.scheduleShowSoftInput();
         }
     }
 

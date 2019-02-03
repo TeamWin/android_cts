@@ -32,13 +32,15 @@ import java.util.List;
 
 public class BlankWithTitleActivity extends AbstractContentCaptureActivity {
 
+    private static final String TAG = BlankWithTitleActivity.class.getSimpleName();
+
     @Override
     public void assertDefaultEvents(@NonNull Session session) {
         final ContentCaptureSessionId sessionId = session.id;
         assertRightActivity(session, sessionId, this);
 
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(mTag, "events: " + events);
+        Log.v(TAG, "events: " + events);
 
         final int minEvents = 1;
         // TODO(b/119638528): somehow asset the grandparents...

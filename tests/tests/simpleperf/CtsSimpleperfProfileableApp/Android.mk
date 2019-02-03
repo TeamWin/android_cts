@@ -20,17 +20,15 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
-
-LOCAL_JAVA_LIBRARIES := android.test.base.stubs
-
 LOCAL_SRC_FILES := $(call all-java-files-under, .)
 
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
 
-LOCAL_PACKAGE_NAME := CtsSimpleperfDebugApp
+LOCAL_PACKAGE_NAME := CtsSimpleperfProfileableApp
 
 LOCAL_SDK_VERSION := current
+
+LOCAL_AAPT_FLAGS += --warn-manifest-validation
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 

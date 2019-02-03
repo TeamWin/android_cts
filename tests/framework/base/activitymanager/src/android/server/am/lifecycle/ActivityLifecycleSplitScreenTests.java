@@ -20,7 +20,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
@@ -35,6 +34,7 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.am.lifecycle.LifecycleVerifier.transition;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -44,16 +44,12 @@ import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,10 +57,9 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleSplitScreenTests
  */
-@MediumTest
-@RunWith(AndroidJUnit4.class)
-@Presubmit
 @FlakyTest(bugId = 77652261)
+@MediumTest
+@Presubmit
 public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTestBase {
 
     @Before
@@ -227,8 +222,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         // Launch second activity
         // Create an ActivityMonitor that catch ChildActivity and return mock ActivityResult:
-        Instrumentation.ActivityMonitor activityMonitor = InstrumentationRegistry
-                .getInstrumentation()
+        Instrumentation.ActivityMonitor activityMonitor = getInstrumentation()
                 .addMonitor(SecondActivity.class.getName(), null /* activityResult */,
                         false /* block */);
 
@@ -236,7 +230,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 new Intent(callbackTrackingActivity, SecondActivity.class), 1 /* requestCode */);
 
         // Wait for the ActivityMonitor to be hit
-        final Activity secondActivity = InstrumentationRegistry.getInstrumentation()
+        final Activity secondActivity = getInstrumentation()
                 .waitForMonitorWithTimeout(activityMonitor, 5 * 1000);
 
         // Wait for second activity to resume

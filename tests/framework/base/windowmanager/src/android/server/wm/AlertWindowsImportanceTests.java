@@ -27,6 +27,7 @@ import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Context.BIND_NOT_FOREGROUND;
 import static android.server.wm.alertwindowappsdk25.Components.SDK25_ALERT_WINDOW_TEST_ACTIVITY;
 import static android.server.wm.alertwindowservice.Components.ALERT_WINDOW_SERVICE;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 
@@ -34,8 +35,8 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -45,8 +46,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.alertwindowservice.AlertWindowService;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import com.android.compatibility.common.util.AppOpsUtils;
@@ -54,7 +53,6 @@ import com.android.compatibility.common.util.AppOpsUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToIntFunction;
@@ -64,7 +62,6 @@ import java.util.function.ToIntFunction;
  *     atest CtsWindowManagerDeviceTestCases:AlertWindowsImportanceTests
  */
 @Presubmit
-@RunWith(AndroidJUnit4.class)
 public final class AlertWindowsImportanceTests {
 
     private static final String TAG = "AlertWindowsTests";
@@ -85,7 +82,7 @@ public final class AlertWindowsImportanceTests {
     @Before
     public void setUp() throws Exception {
         if (DEBUG) Log.e(TAG, "setUp");
-        final Context context = InstrumentationRegistry.getTargetContext();
+        final Context context = getInstrumentation().getTargetContext();
 
         mAm = context.getSystemService(ActivityManager.class);
         mAm25 = context.createPackageContext(SDK25_ALERT_WINDOW_TEST_ACTIVITY.getPackageName(), 0)
@@ -110,7 +107,7 @@ public final class AlertWindowsImportanceTests {
         if (mService != null) {
             mService.send(Message.obtain(null, AlertWindowService.MSG_REMOVE_ALL_ALERT_WINDOWS));
         }
-        final Context context = InstrumentationRegistry.getTargetContext();
+        final Context context = getInstrumentation().getTargetContext();
         context.unbindService(mConnection);
         mAm = null;
         mAm25 = null;
@@ -180,8 +177,7 @@ public final class AlertWindowsImportanceTests {
     private void assertImportance(ToIntFunction<ActivityManager> apiCaller,
             int expectedForO, int expectedForPreO) throws Exception {
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity();
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
 
             final long TIMEOUT = SystemClock.uptimeMillis() + TimeUnit.SECONDS.toMillis(30);
             int actual;
@@ -198,8 +194,7 @@ public final class AlertWindowsImportanceTests {
             // Check the result for pre-O apps.
             assertEquals(expectedForPreO, apiCaller.applyAsInt(mAm25));
         } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -258,7 +253,7 @@ public final class AlertWindowsImportanceTests {
     }
 
     private boolean isRunningInVR() {
-        final Context context = InstrumentationRegistry.getTargetContext();
+        final Context context = getInstrumentation().getTargetContext();
         if ((context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_TYPE_MASK)
              == Configuration.UI_MODE_TYPE_VR_HEADSET) {
             return true;

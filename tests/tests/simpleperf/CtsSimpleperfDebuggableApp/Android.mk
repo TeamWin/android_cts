@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,33 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
-
+LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsDebugTestCases
-
-# Don't include this package in any target.
+# don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-# Include both the 32 and 64 bit versions
-LOCAL_MULTILIB := both
-
-# When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_SRC_FILES := $(call all-java-files-under, .)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner nativetesthelper
+LOCAL_MANIFEST_FILE := AndroidManifest.xml
 
-LOCAL_JNI_SHARED_LIBRARIES := libdebugtest
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_PACKAGE_NAME := CtsSimpleperfDebuggableApp
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_CTS_PACKAGE)
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-# Include the associated library's makefile.
-include $(LOCAL_PATH)/libdebugtest/Android.mk
+include $(BUILD_CTS_PACKAGE)
