@@ -207,7 +207,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
-
+            mAmWmState.waitForWithWmState((wmState1) -> {
+                Rect db = wmState1.getDefaultPinnedStackBounds();
+                Rect sb = wmState1.getStableBounds();
+                return (db.width() > 0 && db.height() > 0) &&
+                        (sb.contains(db));
+            }, "Waiting for valid bounds..");
             WindowManagerState wmState = mAmWmState.getWmState();
             wmState.computeState();
             Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
@@ -216,6 +221,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             assertTrue(stableBounds.contains(defaultPipBounds));
 
             rotationSession.set(ROTATION_90);
+            mAmWmState.waitForWithWmState((wmState1) -> {
+                Rect db = wmState1.getDefaultPinnedStackBounds();
+                Rect sb = wmState1.getStableBounds();
+                return (db.width() > 0 && db.height() > 0) &&
+                        (sb.contains(db));
+            }, "Waiting for valid bounds...");
             wmState = mAmWmState.getWmState();
             wmState.computeState();
             defaultPipBounds = wmState.getDefaultPinnedStackBounds();
