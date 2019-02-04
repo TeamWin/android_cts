@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
 import android.content.Context;
 import android.provider.Settings;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -48,13 +49,13 @@ public class SettingsStateManager implements StateManager<String> {
 
     @Override
     public void set(@Nullable String value) {
-        SettingsHelper.syncSet(mContext, mNamespace, mKey, value);
+        SettingsUtils.syncSet(mContext, mNamespace, mKey, value);
     }
 
     @Override
     @Nullable
     public String get() {
-        return SettingsHelper.get(mNamespace, mKey);
+        return SettingsUtils.get(mNamespace, mKey);
     }
 
     @Override

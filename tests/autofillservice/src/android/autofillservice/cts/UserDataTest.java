@@ -26,11 +26,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
-import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.UserData;
 import android.support.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import com.google.common.base.Strings;
 

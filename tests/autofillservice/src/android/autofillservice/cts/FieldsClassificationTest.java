@@ -29,7 +29,6 @@ import static android.service.autofill.AutofillFieldClassificationService.REQUIR
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
-import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory.Event;
@@ -37,6 +36,8 @@ import android.service.autofill.UserData;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.widget.EditText;
+
+import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.ClassRule;
 import org.junit.Test;

@@ -28,6 +28,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillManager.AutofillCallback;
 
+import com.android.compatibility.common.util.RetryableException;
+import com.android.compatibility.common.util.Timeout;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;

@@ -23,8 +23,6 @@ import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.AugmentedResponseType.TIMEOUT;
 
 import android.autofillservice.cts.Helper;
-import android.autofillservice.cts.JUnitHelper;
-import android.autofillservice.cts.RetryableException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.CancellationSignal;
@@ -39,6 +37,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.android.compatibility.common.util.RetryableException;
+import com.android.compatibility.common.util.TestNameUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +82,7 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
 
         final ComponentName component = request.getActivityComponent();
 
-        if (!JUnitHelper.isRunningTest()) {
+        if (!TestNameUtils.isRunningTest()) {
             Log.e(TAG, "onFillRequest(" + component + ") called after tests finished");
             return;
         }

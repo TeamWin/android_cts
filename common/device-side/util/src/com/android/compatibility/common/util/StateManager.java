@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
 import androidx.annotation.Nullable;
 
 /**
  * Abstraction for a state that is managed somewhere, like Android Settings.
+ *
+ * @param <T> value type
  */
 public interface StateManager<T> {
 

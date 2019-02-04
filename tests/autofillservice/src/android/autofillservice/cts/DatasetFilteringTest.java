@@ -17,7 +17,8 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.common.ShellHelper.sendKeyEvent;
+
+import static com.android.compatibility.common.util.ShellUtils.sendKeyEvent;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;

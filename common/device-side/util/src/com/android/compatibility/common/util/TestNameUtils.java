@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package com.android.compatibility.common.util;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
- * Generic helper for JUnit needs.
+ * Generic helper used to set / get the the name of the test being run.
+ *
+ * <p>Typically used on {@code @Rule} classes.
  */
-public final class JUnitHelper {
+public final class TestNameUtils {
 
     private static String sCurrentTestName;
     private static String sCurrentTestClass;
 
+    /**
+     * Gets the name of the test current running.
+     */
     @NonNull
     public static String getCurrentTestName() {
         if (sCurrentTestName != null) return sCurrentTestName;
@@ -34,19 +39,29 @@ public final class JUnitHelper {
         return "(Unknown test)";
     }
 
+    /**
+     * Sets the name of the test current running
+     */
     public static void setCurrentTestName(@Nullable String name) {
         sCurrentTestName = name;
     }
 
+    /**
+     * Sets the name of the test class current running
+     */
     public static void setCurrentTestClass(@Nullable String testClass) {
         sCurrentTestClass = testClass;
     }
 
+    /**
+     * Checks whether a test is running, based on whether {@link #setCurrentTestName(String)} was
+     * called.
+     */
     public static boolean isRunningTest() {
         return sCurrentTestName != null;
     }
 
-    private JUnitHelper() {
+    private TestNameUtils() {
         throw new UnsupportedOperationException("contain static methods only");
     }
 }

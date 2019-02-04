@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import com.android.compatibility.common.util.Timeout;
+
 /**
  * Timeouts for common tasks.
  */

@@ -50,6 +50,10 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.RetryableException;
+import com.android.compatibility.common.util.TestNameUtils;
+import com.android.compatibility.common.util.Timeout;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -187,7 +191,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             CancellationSignal cancellationSignal, FillCallback callback) {
 
         final ComponentName component = getLastActivityComponent(request.getFillContexts());
-        if (!JUnitHelper.isRunningTest()) {
+        if (!TestNameUtils.isRunningTest()) {
             Log.e(TAG, "onFillRequest(" + component + ") called after tests finished");
             return;
         }
@@ -214,7 +218,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     private void handleSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
         final ComponentName component = getLastActivityComponent(request.getFillContexts());
-        if (!JUnitHelper.isRunningTest()) {
+        if (!TestNameUtils.isRunningTest()) {
             Log.e(TAG, "onSaveRequest(" + component + ") called after tests finished");
             return;
         }
