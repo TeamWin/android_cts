@@ -29,6 +29,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewHierarchySt
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
+import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
