@@ -511,6 +511,9 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     private void testReprocessingAllCombinations(String cameraId, Size previewSize,
             CaptureTestCase captureTestCase) throws Exception {
 
+        Size QCIF = new Size(176, 144);
+        Size VGA = new Size(640, 480);
+        Size FULL_HD = new Size(1920, 1080);
         int[] supportedInputFormats =
                 mStaticInfo.getAvailableFormats(StaticMetadata.StreamDirection.Input);
         for (int inputFormat : supportedInputFormats) {
@@ -528,6 +531,24 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                             StaticMetadata.StreamDirection.Output);
 
                     for (Size reprocessOutputSize : supportedReprocessOutputSizes) {
+                        // Handle QCIF exceptions
+                        if (reprocessOutputSize.equals(QCIF) &&
+                                ((inputSize.getWidth() > FULL_HD.getWidth()) ||
+                                 (inputSize.getHeight() > FULL_HD.getHeight()))) {
+                            continue;
+                        }
+                        if (inputSize.equals(QCIF) &&
+                                ((reprocessOutputSize.getWidth() > FULL_HD.getWidth()) ||
+                                 (reprocessOutputSize.getHeight() > FULL_HD.getHeight()))) {
+                            continue;
+                        }
+                        if ((previewSize != null) &&
+                                ((previewSize.getWidth() > FULL_HD.getWidth()) || (
+                                  previewSize.getHeight() > FULL_HD.getHeight())) &&
+                                (inputSize.equals(QCIF) || reprocessOutputSize.equals(QCIF))) {
+                            previewSize = VGA;
+                        }
+
                         switch (captureTestCase) {
                             case SINGLE_SHOT:
                                 testReprocess(cameraId, inputSize, inputFormat,

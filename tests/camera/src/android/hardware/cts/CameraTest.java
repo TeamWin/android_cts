@@ -470,10 +470,20 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         // Test all preview sizes.
         initializeMessageLooper(cameraId);
         Parameters parameters = mCamera.getParameters();
+
+        Size QCIF = mCamera.new Size(176, 144);
+        Size VGA = mCamera.new Size(640, 480);
+        Size defaultPicSize = parameters.getPictureSize();
+
         for (Size size: parameters.getSupportedPreviewSizes()) {
             mPreviewCallbackResult = PREVIEW_CALLBACK_NOT_RECEIVED;
             mCamera.setPreviewCallback(mPreviewCallback);
             parameters.setPreviewSize(size.width, size.height);
+            if (size.equals(QCIF)) {
+                parameters.setPictureSize(VGA.width, VGA.height);
+            } else {
+                parameters.setPictureSize(defaultPicSize.width, defaultPicSize.height);
+            }
             mCamera.setParameters(parameters);
             assertEquals(size, mCamera.getParameters().getPreviewSize());
             checkPreviewCallback();
@@ -1413,8 +1423,17 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         mCamera.setPreviewDisplay(surfaceHolder);
         Parameters parameters = mCamera.getParameters();
         PreviewCallbackWithBuffer callback = new PreviewCallbackWithBuffer();
+        Size QCIF = mCamera.new Size(176, 144);
+        Size VGA = mCamera.new Size(640, 480);
+        Size defaultPicSize = parameters.getPictureSize();
+
         // Test all preview sizes.
         for (Size size: parameters.getSupportedPreviewSizes()) {
+            if (size.equals(QCIF)) {
+                parameters.setPictureSize(VGA.width, VGA.height);
+            } else {
+                parameters.setPictureSize(defaultPicSize.width, defaultPicSize.height);
+            }
             parameters.setPreviewSize(size.width, size.height);
             mCamera.setParameters(parameters);
             assertEquals(size, mCamera.getParameters().getPreviewSize());
@@ -1503,11 +1522,20 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             return;
         }
 
+        Size QCIF = mCamera.new Size(176, 144);
+        Size VGA = mCamera.new Size(640, 480);
+        Size defaultPicSize = parameters.getPictureSize();
+
         // Test the zoom parameters.
         assertEquals(0, parameters.getZoom());  // default zoom should be 0.
         for (Size size: parameters.getSupportedPreviewSizes()) {
             parameters = mCamera.getParameters();
             parameters.setPreviewSize(size.width, size.height);
+            if (size.equals(QCIF)) {
+                parameters.setPictureSize(VGA.width, VGA.height);
+            } else {
+                parameters.setPictureSize(defaultPicSize.width, defaultPicSize.height);
+            }
             mCamera.setParameters(parameters);
             parameters = mCamera.getParameters();
             int maxZoom = parameters.getMaxZoom();
@@ -1932,6 +1960,22 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         }
     }
 
+    // API exception on QCIF size. QCIF size along with anything larger than
+    // 1920x1080 on either width/height is not guaranteed to be supported.
+    private boolean isWaivedCombination(Size previewSize, Size pictureSize) {
+        Size QCIF = mCamera.new Size(176, 144);
+        Size FULL_HD = mCamera.new Size(1920, 1080);
+        if (previewSize.equals(QCIF) && (pictureSize.width > FULL_HD.width ||
+                pictureSize.height > FULL_HD.height)) {
+            return true;
+        }
+        if (pictureSize.equals(QCIF) && (previewSize.width > FULL_HD.width ||
+                previewSize.height > FULL_HD.height)) {
+            return true;
+        }
+        return false;
+    }
+
     private void testPreviewPictureSizesCombinationByCamera(int cameraId) throws Exception {
         initializeMessageLooper(cameraId);
         Parameters parameters = mCamera.getParameters();
@@ -1949,12 +1993,33 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
                 callback.expectedPreviewSize = previewSize;
                 parameters.setPreviewSize(previewSize.width, previewSize.height);
                 parameters.setPictureSize(pictureSize.width, pictureSize.height);
-                mCamera.setParameters(parameters);
+                try {
+                    mCamera.setParameters(parameters);
+                } catch (RuntimeException e) {
+                    if (isWaivedCombination(previewSize, pictureSize)) {
+                        Log.i(TAG, String.format("Preview %dx%d and still %dx%d combination is" +
+                                "waived", previewSize.width, previewSize.height,
+                                pictureSize.width, pictureSize.height));
+                        continue;
+                    }
+                    throw e;
+                }
+
                 assertEquals(previewSize, mCamera.getParameters().getPreviewSize());
                 assertEquals(pictureSize, mCamera.getParameters().getPictureSize());
 
                 // Check if the preview size is the same as requested.
-                mCamera.startPreview();
+                try {
+                    mCamera.startPreview();
+                } catch (RuntimeException e) {
+                    if (isWaivedCombination(previewSize, pictureSize)) {
+                        Log.i(TAG, String.format("Preview %dx%d and still %dx%d combination is" +
+                                "waived", previewSize.width, previewSize.height,
+                                pictureSize.width, pictureSize.height));
+                        continue;
+                    }
+                    throw e;
+                }
                 waitForPreviewDone();
                 assertEquals(PREVIEW_CALLBACK_RECEIVED, mPreviewCallbackResult);
 
