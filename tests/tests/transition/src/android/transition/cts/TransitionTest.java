@@ -557,7 +557,7 @@ public class TransitionTest extends BaseTransitionTest {
         Animator animator = transition.animators.get(redSquare);
         assertFalse(animator.isRunning());
         Animator.AnimatorListener listener = transition.listeners.get(redSquare);
-        verify(listener, within(250)).onAnimationStart(any(), eq(false));
+        verify(listener, within(1000)).onAnimationStart(any(), eq(false));
         endTransition();
     }
 
