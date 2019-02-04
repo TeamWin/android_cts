@@ -73,6 +73,7 @@ import java.util.concurrent.TimeUnit;
 public class MagnifierTest {
     private static final String TIME_LIMIT_EXCEEDED =
             "Completing the magnifier operation took too long";
+    private static final float PIXEL_COMPARISON_DELTA = 1f;
 
     private Activity mActivity;
     private LinearLayout mLayout;
@@ -303,19 +304,19 @@ public class MagnifierTest {
         final Point sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
         assertEquals(xCenter + mViewLocationInSurface[0],
-                sourcePosition.x + mMagnifier.getSourceWidth() / 2f, 0.01f);
+                sourcePosition.x + mMagnifier.getSourceWidth() / 2f, PIXEL_COMPARISON_DELTA);
         assertEquals(yCenter + mViewLocationInSurface[1],
-                sourcePosition.y + mMagnifier.getSourceHeight() / 2f, 0.01f);
+                sourcePosition.y + mMagnifier.getSourceHeight() / 2f, PIXEL_COMPARISON_DELTA);
 
         // Check the coordinates of the magnifier.
         final Point magnifierPosition = mMagnifier.getPosition();
         assertNotNull(magnifierPosition);
         assertEquals(sourcePosition.x + mMagnifier.getDefaultHorizontalSourceToMagnifierOffset()
                         - mMagnifier.getWidth() / 2f + mMagnifier.getSourceWidth() / 2f,
-                magnifierPosition.x, 0.01f);
+                magnifierPosition.x, PIXEL_COMPARISON_DELTA);
         assertEquals(sourcePosition.y + mMagnifier.getDefaultVerticalSourceToMagnifierOffset()
                         - mMagnifier.getHeight() / 2f + mMagnifier.getSourceHeight() / 2f,
-                magnifierPosition.y, 0.01f);
+                magnifierPosition.y, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -339,10 +340,10 @@ public class MagnifierTest {
         assertNotNull(magnifierPosition);
         assertEquals(
                 mViewLocationInSurface[0] + xMagnifier - mMagnifier.getWidth() / 2,
-                magnifierPosition.x, 0.01f);
+                magnifierPosition.x, PIXEL_COMPARISON_DELTA);
         assertEquals(
                 mViewLocationInSurface[1] + yMagnifier - mMagnifier.getHeight() / 2,
-                magnifierPosition.y, 0.01f);
+                magnifierPosition.y, PIXEL_COMPARISON_DELTA);
     }
 
     //***** Tests for #dismiss() *****//
@@ -423,8 +424,10 @@ public class MagnifierTest {
         final Rect surfaceInsets = mLayout.getViewRootImpl().mWindowAttributes.surfaceInsets;
         final Point magnifierCoords = mMagnifier.getPosition();
         assertNotNull(magnifierCoords);
-        assertEquals(systemInsets.left + surfaceInsets.left, magnifierCoords.x);
-        assertEquals(systemInsets.top + surfaceInsets.top, magnifierCoords.y);
+        assertEquals(systemInsets.left + surfaceInsets.left, magnifierCoords.x,
+                PIXEL_COMPARISON_DELTA);
+        assertEquals(systemInsets.top + surfaceInsets.top, magnifierCoords.y,
+                PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -444,10 +447,10 @@ public class MagnifierTest {
         assertNotNull(magnifierCoords);
         assertEquals(mLayout.getViewRootImpl().getWidth()
                         - systemInsets.right - mMagnifier.getWidth() + surfaceInsets.left,
-                magnifierCoords.x);
+                magnifierCoords.x, PIXEL_COMPARISON_DELTA);
         assertEquals(mLayout.getViewRootImpl().getHeight()
                         - systemInsets.bottom - mMagnifier.getHeight() + surfaceInsets.top,
-                magnifierCoords.y);
+                magnifierCoords.y, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -466,8 +469,10 @@ public class MagnifierTest {
         final int[] magnifiedViewPosition = new int[2];
         mLayout.getLocationInSurface(magnifiedViewPosition);
         assertNotNull(magnifierCoords);
-        assertEquals(magnifiedViewPosition[0] - 3 * mMagnifier.getWidth() / 2, magnifierCoords.x);
-        assertEquals(magnifiedViewPosition[1] - 3 * mMagnifier.getHeight() / 2, magnifierCoords.y);
+        assertEquals(magnifiedViewPosition[0] - 3 * mMagnifier.getWidth() / 2, magnifierCoords.x,
+                PIXEL_COMPARISON_DELTA);
+        assertEquals(magnifiedViewPosition[1] - 3 * mMagnifier.getHeight() / 2, magnifierCoords.y,
+                PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -490,11 +495,9 @@ public class MagnifierTest {
         mLayout.getLocationInSurface(magnifiedViewPosition);
         assertNotNull(magnifierCoords);
         assertEquals(magnifiedViewPosition[0] + mLayout.getViewRootImpl().getWidth()
-                        + mMagnifier.getWidth() / 2,
-                magnifierCoords.x);
+                        + mMagnifier.getWidth() / 2, magnifierCoords.x, PIXEL_COMPARISON_DELTA);
         assertEquals(magnifiedViewPosition[1] + mLayout.getViewRootImpl().getHeight()
-                        + mMagnifier.getHeight() / 2,
-                magnifierCoords.y);
+                        + mMagnifier.getHeight() / 2, magnifierCoords.y, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -515,9 +518,9 @@ public class MagnifierTest {
         final Point sourceCoords = mMagnifier.getSourcePosition();
         assertNotNull(magnifierCoords);
         assertEquals(sourceCoords.x + mMagnifier.getSourceWidth() / 2f + horizontalOffset,
-                magnifierCoords.x + mMagnifier.getWidth() / 2f, 0.01f);
+                magnifierCoords.x + mMagnifier.getWidth() / 2f, PIXEL_COMPARISON_DELTA);
         assertEquals(sourceCoords.y + mMagnifier.getSourceHeight() / 2f + verticalOffset,
-                magnifierCoords.y + mMagnifier.getHeight() / 2f, 0.01f);
+                magnifierCoords.y + mMagnifier.getHeight() / 2f, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -589,14 +592,14 @@ public class MagnifierTest {
         showMagnifier(view.getWidth() / 4, 0);
         Point sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(containerPosition[0], sourcePosition.x);
+        assertEquals(containerPosition[0], sourcePosition.x, PIXEL_COMPARISON_DELTA);
 
         // Try to copy from an x to the right of the currently visible region.
         showMagnifier(3 * view.getWidth() / 4, 0);
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(containerPosition[0] + container.getWidth() - mMagnifier.getSourceWidth() + 1,
-                sourcePosition.x);
+        assertEquals(containerPosition[0] + container.getWidth() - mMagnifier.getSourceWidth(),
+                sourcePosition.x, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -631,14 +634,14 @@ public class MagnifierTest {
         showMagnifier(0, view.getHeight() / 4);
         Point sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(containerPosition[1], sourcePosition.y);
+        assertEquals(containerPosition[1], sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
         // Try to copy from an x below the currently visible region.
         showMagnifier(0, 3 * view.getHeight() / 4);
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
         assertEquals(containerPosition[1] + container.getHeight() - mMagnifier.getSourceHeight(),
-                sourcePosition.y);
+                sourcePosition.y, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -667,8 +670,10 @@ public class MagnifierTest {
         showMagnifier(0, 0);
         Point sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(viewPosition[0] - mMagnifier.getSourceWidth() / 2, sourcePosition.x);
-        assertEquals(viewPosition[1] - mMagnifier.getSourceHeight() / 2, sourcePosition.y);
+        assertEquals(viewPosition[0] - mMagnifier.getSourceWidth() / 2, sourcePosition.x,
+                PIXEL_COMPARISON_DELTA);
+        assertEquals(viewPosition[1] - mMagnifier.getSourceHeight() / 2, sourcePosition.y,
+                PIXEL_COMPARISON_DELTA);
 
         // Copy content centered on the bottom right corner of the view and expect the top left
         // corner of the source NOT to have been pulled inside the view.
@@ -676,17 +681,17 @@ public class MagnifierTest {
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
         assertEquals(viewPosition[0] + view.getWidth() - mMagnifier.getSourceWidth() / 2,
-                sourcePosition.x);
+                sourcePosition.x, PIXEL_COMPARISON_DELTA);
         assertEquals(viewPosition[1] + view.getHeight() - mMagnifier.getSourceHeight() / 2,
-                sourcePosition.y);
+                sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
         // Copy content centered on the top left corner of the main app surface and expect the top
         // left corner of the source to have been pulled to the top left corner of the surface.
         showMagnifier(-viewPosition[0], -viewPosition[1]);
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(0, sourcePosition.x);
-        assertEquals(0, sourcePosition.y);
+        assertEquals(0, sourcePosition.x, PIXEL_COMPARISON_DELTA);
+        assertEquals(0, sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
         // Copy content centered on the bottom right corner of the main app surface and expect the
         // source to have been pulled inside the surface at its bottom right.
@@ -699,8 +704,10 @@ public class MagnifierTest {
                 surfaceHeight - viewPosition[1] + view.getHeight());
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(surfaceWidth - mMagnifier.getSourceWidth(), sourcePosition.x);
-        assertEquals(surfaceHeight - mMagnifier.getSourceHeight(), sourcePosition.y);
+        assertEquals(surfaceWidth - mMagnifier.getSourceWidth(), sourcePosition.x,
+                PIXEL_COMPARISON_DELTA);
+        assertEquals(surfaceHeight - mMagnifier.getSourceHeight(), sourcePosition.y,
+                PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -727,8 +734,8 @@ public class MagnifierTest {
         showMagnifier(0, 0);
         Point sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(0, sourcePosition.x);
-        assertEquals(0, sourcePosition.y);
+        assertEquals(0, sourcePosition.x, PIXEL_COMPARISON_DELTA);
+        assertEquals(0, sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
         // Copy content centered on the bottom right corner of the view and expect the top left
         // corner of the source to have been pulled inside the surface view.
@@ -742,8 +749,10 @@ public class MagnifierTest {
         showMagnifier(view.getWidth() / 2, view.getHeight() / 2);
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(view.getWidth() / 2 - mMagnifier.getSourceWidth() / 2, sourcePosition.x);
-        assertEquals(view.getHeight() / 2 - mMagnifier.getSourceHeight() / 2, sourcePosition.y);
+        assertEquals(view.getWidth() / 2 - mMagnifier.getSourceWidth() / 2, sourcePosition.x,
+                PIXEL_COMPARISON_DELTA);
+        assertEquals(view.getHeight() / 2 - mMagnifier.getSourceHeight() / 2, sourcePosition.y,
+                PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -773,8 +782,8 @@ public class MagnifierTest {
         // for this source size, when the view is centered.
         showMagnifier(0, 0);
         Point sourcePosition = mMagnifier.getSourcePosition();
-        assertEquals(viewPosition[0], sourcePosition.x);
-        assertEquals(viewPosition[1], sourcePosition.y);
+        assertEquals(viewPosition[0], sourcePosition.x, PIXEL_COMPARISON_DELTA);
+        assertEquals(viewPosition[1], sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
         // Move the magnified view to the top left of the screen, and make sure that
         // the top and left bounds are still respected.
@@ -788,8 +797,8 @@ public class MagnifierTest {
 
         showMagnifier(0, 0);
         sourcePosition = mMagnifier.getSourcePosition();
-        assertEquals(viewPosition[0], sourcePosition.x);
-        assertEquals(viewPosition[1], sourcePosition.y);
+        assertEquals(viewPosition[0], sourcePosition.x, PIXEL_COMPARISON_DELTA);
+        assertEquals(viewPosition[1], sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
         // Move the magnified view to the bottom right of the layout, and expect the top and left
         // bounds to have been shifted such that the source sits inside the surface.
@@ -803,8 +812,8 @@ public class MagnifierTest {
 
         showMagnifier(0, 0);
         sourcePosition = mMagnifier.getSourcePosition();
-        assertEquals(viewPosition[0] - view.getWidth(), sourcePosition.x);
-        assertEquals(viewPosition[1] - view.getHeight(), sourcePosition.y);
+        assertEquals(viewPosition[0] - view.getWidth(), sourcePosition.x, PIXEL_COMPARISON_DELTA);
+        assertEquals(viewPosition[1] - view.getHeight(), sourcePosition.y, PIXEL_COMPARISON_DELTA);
     }
 
     //***** Tests for zoom change *****//
