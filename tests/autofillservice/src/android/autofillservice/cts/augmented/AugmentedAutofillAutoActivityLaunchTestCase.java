@@ -22,9 +22,10 @@ import static android.provider.Settings.Global.AUTOFILL_SMART_SUGGESTION_EMULATI
 import android.autofillservice.cts.AbstractAutoFillActivity;
 import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
-import android.autofillservice.cts.common.SettingsHelper;
-import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.view.autofill.AutofillManager;
+
+import com.android.compatibility.common.util.SettingsStateChangerRule;
+import com.android.compatibility.common.util.SettingsUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -38,7 +39,7 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
 
     @ClassRule
     public static final SettingsStateChangerRule sFeatureEnabler = new SettingsStateChangerRule(
-            sContext, SettingsHelper.NAMESPACE_GLOBAL, AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
+            sContext, SettingsUtils.NAMESPACE_GLOBAL, AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
             Integer.toString(AutofillManager.FLAG_SMART_SUGGESTION_SYSTEM));
 
     protected static AugmentedReplier sAugmentedReplier;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package com.android.compatibility.common.util;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -24,8 +24,6 @@ import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
-import android.platform.test.annotations.AppModeFull;
-
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -34,7 +32,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-@AppModeFull // Unit test
 public class RetryRuleTest {
 
     private final Description mDescription = Description.createSuiteDescription("Whatever");
@@ -54,7 +51,7 @@ public class RetryRuleTest {
 
         @Override
         public void evaluate() throws Throwable {
-            mNumberCalls ++;
+            mNumberCalls++;
             if (mNumberCalls <= mNumberFailures) {
                 throw mException;
             }

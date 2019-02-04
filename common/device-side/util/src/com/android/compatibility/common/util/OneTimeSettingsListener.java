@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
-import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
-import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_SECURE;
+import static com.android.compatibility.common.util.SettingsUtils.NAMESPACE_GLOBAL;
+import static com.android.compatibility.common.util.SettingsUtils.NAMESPACE_SECURE;
 
-import android.autofillservice.cts.JUnitHelper;
-import android.autofillservice.cts.RetryableException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
@@ -87,7 +85,7 @@ public final class OneTimeSettingsListener extends ContentObserver {
             final long delta = SystemClock.elapsedRealtime() - mStarted;
             // TODO: usually it's notified in ~50-150ms, but for some reason it takes ~10s
             // on some ViewAttributesTest methods, hence the 30s limit
-            Log.v(TAG, JUnitHelper.getCurrentTestName() + "/" + mKey + ": " + delta + "ms");
+            Log.v(TAG, TestNameUtils.getCurrentTestName() + "/" + mKey + ": " + delta + "ms");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted", e);

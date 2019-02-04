@@ -26,9 +26,10 @@ import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.
 import static android.autofillservice.cts.VirtualContainerActivity.INITIAL_URL_BAR_VALUE;
 import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR;
 import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR2;
-import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
 import static android.provider.Settings.Global.AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+
+import static com.android.compatibility.common.util.SettingsUtils.NAMESPACE_GLOBAL;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -36,11 +37,12 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.autofillservice.cts.common.SettingsHelper;
-import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;
+
+import com.android.compatibility.common.util.SettingsStateChangerRule;
+import com.android.compatibility.common.util.SettingsUtils;
 
 import org.junit.After;
 import org.junit.ClassRule;
@@ -96,7 +98,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Test
     public void testMultipleUrlBars_firstDoesNotExist() throws Exception {
-        SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
+        SettingsUtils.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[first_am_i,my_url_bar]");
 
         // Set service.
@@ -121,7 +123,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     @Test
     @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
     public void testMultipleUrlBars_bothExist() throws Exception {
-        SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
+        SettingsUtils.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[my_url_bar,my_url_bar2]");
 
         // Set service.

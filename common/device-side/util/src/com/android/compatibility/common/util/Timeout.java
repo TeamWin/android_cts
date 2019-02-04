@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
+package com.android.compatibility.common.util;
 
 import android.os.SystemClock;
 import android.text.TextUtils;
@@ -76,7 +76,7 @@ public final class Timeout {
         mCurrentValue = initialValue;
         mMultiplier = multiplier;
         mMaxValue = maxValue;
-        Log.d(TAG, "Constructor: " + this + " at " + JUnitHelper.getCurrentTestName());
+        Log.d(TAG, "Constructor: " + this + " at " + TestNameUtils.getCurrentTestName());
     }
 
     /**
@@ -118,7 +118,7 @@ public final class Timeout {
         mCurrentValue = Math.min(mMaxValue, (long) (mCurrentValue * mMultiplier));
         if (oldValue != mCurrentValue) {
             Log.w(TAG, mName + " increased from " + oldValue + "ms to " + mCurrentValue + "ms at "
-                    + JUnitHelper.getCurrentTestName());
+                    + TestNameUtils.getCurrentTestName());
         }
         return oldValue;
     }

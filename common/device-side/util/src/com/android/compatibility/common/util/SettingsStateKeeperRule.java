@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
 import android.content.Context;
 import android.provider.Settings;
+
 import androidx.annotation.NonNull;
 
 /**
@@ -33,6 +34,6 @@ public class SettingsStateKeeperRule extends StateKeeperRule<String> {
      * @param key prefence key.
      */
     public SettingsStateKeeperRule(@NonNull Context context, @NonNull String key) {
-        super(new SettingsStateManager(context, SettingsHelper.NAMESPACE_SECURE, key));
+        super(new SettingsStateManager(context, SettingsUtils.NAMESPACE_SECURE, key));
     }
 }

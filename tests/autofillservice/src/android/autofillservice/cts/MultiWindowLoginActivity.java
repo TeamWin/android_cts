@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import com.android.compatibility.common.util.RetryableException;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

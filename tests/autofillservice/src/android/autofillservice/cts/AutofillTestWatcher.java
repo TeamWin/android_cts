@@ -22,6 +22,8 @@ import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.TestNameUtils;
+
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
@@ -47,7 +49,7 @@ public final class AutofillTestWatcher extends TestWatcher {
         resetStaticState();
         final String testName = description.getDisplayName();
         Log.i(TAG, "Starting " + testName);
-        JUnitHelper.setCurrentTestName(testName);
+        TestNameUtils.setCurrentTestName(testName);
     }
 
     @Override
@@ -60,7 +62,7 @@ public final class AutofillTestWatcher extends TestWatcher {
             resetStaticState();
         }
         Log.i(TAG, "Finished " + testName);
-        JUnitHelper.setCurrentTestName(null);
+        TestNameUtils.setCurrentTestName(null);
     }
 
     private void resetStaticState() {

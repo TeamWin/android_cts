@@ -26,6 +26,8 @@ import android.view.autofill.AutofillManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
+import com.android.compatibility.common.util.RetryableException;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
