@@ -180,6 +180,13 @@ public class MediaCasTest extends AndroidTestCase {
                                 + "event=" + event + ", arg=" + arg
                                 + ", data=" + Arrays.toString(data));
                     }
+                    @Override
+                    public void onSessionEvent(MediaCas MediaCas, MediaCas.Session session,
+                            int event, int arg, byte[] data) {
+                        Log.d(TAG, "Received MediaCas Session event: "
+                                + "event=" + event + ", arg=" + arg
+                                + ", data=" + Arrays.toString(data));
+                    }
                 }, null);
             } finally {
                 if (mediaCas != null) {
@@ -280,11 +287,13 @@ public class MediaCasTest extends AndroidTestCase {
             thread.start();
             Handler handler = new Handler(thread.getLooper());
             testEventEcho(mediaCas, 1, 2, null /* data */, handler);
+            testSessionEventEcho(mediaCas, session, 1, 2, null /* data */, handler);
             thread.interrupt();
 
             String eventDataString = "event data string";
             byte[] eventData = eventDataString.getBytes();
             testEventEcho(mediaCas, 3, 4, eventData, null /* handler */);
+            testSessionEventEcho(mediaCas, session, 3, 4, eventData, null /* handler */);
 
             String emm = "clear key emm";
             byte[] emmData = emm.getBytes();
@@ -485,6 +494,7 @@ public class MediaCasTest extends AndroidTestCase {
     private class TestEventListener implements MediaCas.EventListener {
         private final CountDownLatch mLatch = new CountDownLatch(1);
         private final MediaCas mMediaCas;
+        private final MediaCas.Session mSession;
         private final int mEvent;
         private final int mArg;
         private final byte[] mData;
@@ -492,6 +502,16 @@ public class MediaCasTest extends AndroidTestCase {
 
         TestEventListener(MediaCas mediaCas, int event, int arg, byte[] data) {
             mMediaCas = mediaCas;
+            mEvent = event;
+            mArg = arg;
+            mData = data;
+            mSession = null;
+        }
+
+        TestEventListener(MediaCas mediaCas, MediaCas.Session session, int event,
+                int arg, byte[] data) {
+            mMediaCas = mediaCas;
+            mSession = session;
             mEvent = event;
             mArg = arg;
             mData = data;
@@ -519,7 +539,21 @@ public class MediaCasTest extends AndroidTestCase {
             }
             mLatch.countDown();
         }
-    }
+
+        @Override
+        public void onSessionEvent(MediaCas mediaCas, MediaCas.Session session,
+            int event, int arg, byte[] data) {
+            Log.d(TAG, "Received MediaCas session event: event=" + event
+                    + ", arg=" + arg + ", data=" + Arrays.toString(data));
+            if (mediaCas == mMediaCas && mSession.equals(session) && event == mEvent
+                    && arg == mArg && (Arrays.equals(data, mData) ||
+                            data == null && mData.length == 0 ||
+                            mData == null && data.length == 0)) {
+                mIsIdential = true;
+            }
+            mLatch.countDown();
+        }
+     }
 
     // helper to send an event and wait for echo
     private void testEventEcho(MediaCas mediaCas, int event,
@@ -527,6 +561,15 @@ public class MediaCasTest extends AndroidTestCase {
         TestEventListener listener = new TestEventListener(mediaCas, event, arg, data);
         mediaCas.setEventListener(listener, handler);
         mediaCas.sendEvent(event, arg, data);
+        assertTrue("Didn't receive event callback for " + event, listener.waitForResult());
+    }
+
+    // helper to send an event and wait for echo
+    private void testSessionEventEcho(MediaCas mediaCas, MediaCas.Session session, int event,
+            int arg, byte[] data, Handler handler) throws Exception {
+        TestEventListener listener = new TestEventListener(mediaCas, session, event, arg, data);
+        mediaCas.setEventListener(listener, handler);
+        session.sendSessionEvent(event, arg, data);
         assertTrue("Didn't receive event callback for " + event, listener.waitForResult());
     }
 
