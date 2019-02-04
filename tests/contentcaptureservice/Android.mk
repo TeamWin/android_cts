@@ -36,6 +36,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_PACKAGE_NAME := CtsContentCaptureServiceTestCases
 
-LOCAL_SDK_VERSION := system_current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
