@@ -15,6 +15,8 @@
  */
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assert.assertEquals;
+
 import android.graphics.Bitmap;
 import android.graphics.BlendMode;
 import android.graphics.BlendModeColorFilter;
@@ -102,5 +104,17 @@ public class BlendModeColorFilterTest extends ActivityTestBase {
     public void testBlendModeColorFilter_SCREEN() {
         testBlendModeColorFilter(Color.GREEN, BlendMode.SCREEN,
                 new int[]{Color.RED, Color.CYAN, Color.CYAN});
+    }
+
+    @Test
+    public void testBlendModeColorFilterGetMode() {
+        BlendModeColorFilter filter = new BlendModeColorFilter(Color.CYAN, BlendMode.SOFT_LIGHT);
+        assertEquals(BlendMode.SOFT_LIGHT, filter.getMode());
+    }
+
+    @Test
+    public void testBlendModeColorFilterGetColor() {
+        BlendModeColorFilter filter = new BlendModeColorFilter(Color.MAGENTA, BlendMode.HARD_LIGHT);
+        assertEquals(Color.MAGENTA, filter.getColor());
     }
 }
