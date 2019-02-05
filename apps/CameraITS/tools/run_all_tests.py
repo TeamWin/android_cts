@@ -361,12 +361,15 @@ def main():
         for d in scenes:
             os.mkdir(os.path.join(topdir, camera_id, d))
 
+        tot_tests = []
+        tot_pass = 0
         for scene in scenes:
             skip_code = None
             tests = [(s[:-3], os.path.join("tests", scene, s))
                      for s in os.listdir(os.path.join("tests", scene))
                      if s[-3:] == ".py" and s[:4] == "test"]
             tests.sort()
+            tot_tests.extend(tests)
 
             summary = "Cam" + camera_id + " " + scene + "\n"
             numpass = 0
@@ -509,6 +512,10 @@ def main():
                 msg = "(*) tests are not yet mandated"
                 print msg
 
+            tot_pass += numpass
+            print "%s compatibility score: %.f/100\n" % (
+                    scene, 100.0 * numpass / len(tests))
+
             summary_path = os.path.join(topdir, camera_id, scene, "summary.txt")
             with open(summary_path, "w") as f:
                 f.write(summary)
@@ -517,6 +524,8 @@ def main():
             results[scene][result_key] = (ItsSession.RESULT_PASS if passed
                                           else ItsSession.RESULT_FAIL)
             results[scene][ItsSession.SUMMARY_KEY] = summary_path
+
+        print "Compatibility Score: %.f/100" % (100.0 * tot_pass / len(tot_tests))
 
         msg = "Reporting ITS result to CtsVerifier"
         print msg
