@@ -40,7 +40,7 @@ public final class SafeCleanerRule implements TestRule {
 
     private static final String TAG = "SafeCleanerRule";
 
-    private final List<Runnable> mCleaners = new ArrayList<>();
+    private final List<ThrowingRunnable> mCleaners = new ArrayList<>();
     private final List<Callable<List<Throwable>>> mExtraThrowables = new ArrayList<>();
     private final List<Throwable> mThrowables = new ArrayList<>();
     private Dumper mDumper;
@@ -48,7 +48,7 @@ public final class SafeCleanerRule implements TestRule {
     /**
      * Runs {@code cleaner} after the test is finished, catching any {@link Throwable} thrown by it.
      */
-    public SafeCleanerRule run(@NonNull Runnable cleaner) {
+    public SafeCleanerRule run(@NonNull ThrowingRunnable cleaner) {
         mCleaners.add(cleaner);
         return this;
     }
@@ -96,7 +96,7 @@ public final class SafeCleanerRule implements TestRule {
                 }
 
                 // Then the cleanup runners
-                for (Runnable runner : mCleaners) {
+                for (ThrowingRunnable runner : mCleaners) {
                     try {
                         runner.run();
                     } catch (Throwable t) {
@@ -108,7 +108,7 @@ public final class SafeCleanerRule implements TestRule {
                 // And finally add the extra exceptions
                 for (Callable<List<Throwable>> extraThrowablesCallable : mExtraThrowables) {
                     final List<Throwable> extraThrowables = extraThrowablesCallable.call();
-                    if (extraThrowables != null) {
+                    if (extraThrowables != null && !extraThrowables.isEmpty()) {
                         Log.w(TAG, "Adding " + extraThrowables.size() + " extra exceptions");
                         mThrowables.addAll(extraThrowables);
                     }
