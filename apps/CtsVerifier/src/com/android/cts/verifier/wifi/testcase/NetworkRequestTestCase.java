@@ -21,21 +21,16 @@ import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 
 import android.annotation.IntDef;
 import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkRequest;
 import android.net.NetworkSpecifier;
 import android.net.wifi.ScanResult;
-import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.os.PatternMatcher;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
@@ -45,9 +40,6 @@ import com.android.cts.verifier.wifi.CallbackUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test case for all {@link NetworkRequest} requests with specifier built using
@@ -60,7 +52,6 @@ public class NetworkRequestTestCase extends BaseTestCase {
     private static final String UNAVAILABLE_SSID = "blahblahblah";
     private static final int NETWORK_REQUEST_TIMEOUT_MS = 30_000;
     private static final int CALLBACK_TIMEOUT_MS = 40_000;
-    private static final int SCAN_TIMEOUT_MS = 30_000;
 
     public static final int NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID = 0;
     public static final int NETWORK_SPECIFIER_PATTERN_SSID_BSSID = 1;
@@ -80,7 +71,6 @@ public class NetworkRequestTestCase extends BaseTestCase {
     private ConnectivityManager mConnectivityManager;
     private NetworkRequest mNetworkRequest;
     private CallbackUtils.NetworkCallback mNetworkCallback;
-    private BroadcastReceiver mBroadcastReceiver;
     private String mFailureReason;
 
     public NetworkRequestTestCase(Context context, @NetworkSpecifierType int networkSpecifierType) {
@@ -107,7 +97,7 @@ public class NetworkRequestTestCase extends BaseTestCase {
             case NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID:
                 String ssid = UNAVAILABLE_SSID;
                 MacAddress bssid = MacAddress.createRandomUnicastAddress();
-                if (findNetworkInScanResultsResults(ssid, bssid.toString())) {
+                if (mTestUtils.findNetworkInScanResultsResults(ssid, bssid.toString())) {
                     Log.e(TAG, "The specifiers chosen match a network in scan results."
                             + "Test will fail");
                     return null;
@@ -121,82 +111,6 @@ public class NetworkRequestTestCase extends BaseTestCase {
         return configBuilder.build();
     }
 
-    private boolean startScanAndWaitForResults() throws InterruptedException {
-        IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        // Scan Results available broadcast receiver.
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (DBG) Log.v(TAG, "Broadcast onReceive " + intent);
-                if (!intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) return;
-                if (!intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)) return;
-                if (DBG) Log.v(TAG, "Scan results received");
-                countDownLatch.countDown();
-            }
-        };
-        // Register the receiver for scan results broadcast.
-        mContext.registerReceiver(mBroadcastReceiver, intentFilter);
-
-        // Start scan.
-        if (DBG) Log.v(TAG, "Starting scan");
-        mListener.onTestMsgReceived(mContext.getString(R.string.wifi_status_initiating_scan));
-        if (!mWifiManager.startScan()) {
-            Log.e(TAG, "Failed to start scan");
-            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
-            return false;
-        }
-        // Wait for scan results.
-        if (DBG) Log.v(TAG, "Wait for scan results");
-        if (!countDownLatch.await(SCAN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            Log.e(TAG, "No new scan results available");
-            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
-            return false;
-        }
-        return true;
-    }
-
-    // Helper to check if the scan result corresponds to an open network.
-    private static boolean isScanResultForOpenNetwork(@NonNull ScanResult scanResult) {
-        String capabilities = scanResult.capabilities;
-        return !capabilities.contains("PSK") && !capabilities.contains("EAP")
-                && !capabilities.contains("WEP") && !capabilities.contains("SAE")
-                && !capabilities.contains("SUITE-B-192") && !capabilities.contains("OWE");
-    }
-
-    private @Nullable ScanResult startScanAndFindAnyOpenNetworkInResults()
-            throws InterruptedException {
-        // Start scan and wait for new results.
-        if (!startScanAndWaitForResults()) {
-            return null;
-        }
-        // Filter results to find an open network.
-        List<ScanResult> scanResults = mWifiManager.getScanResults();
-        for (ScanResult scanResult : scanResults) {
-            if (!TextUtils.isEmpty(scanResult.SSID)
-                    && !TextUtils.isEmpty(scanResult.BSSID)
-                    && isScanResultForOpenNetwork(scanResult)) {
-                if (DBG) Log.v(TAG, "Found open network " + scanResult);
-                return scanResult;
-            }
-        }
-        Log.e(TAG, "No open networks found in scan results");
-        setFailureReason(mContext.getString(R.string.wifi_status_open_network_not_found));
-        return null;
-    }
-
-    private boolean findNetworkInScanResultsResults(@NonNull String ssid, @NonNull String bssid)
-            throws InterruptedException {
-        List<ScanResult> scanResults = mWifiManager.getScanResults();
-        for (ScanResult scanResult : scanResults) {
-            if (TextUtils.equals(scanResult.SSID, ssid)
-                    && TextUtils.equals(scanResult.BSSID, bssid)) {
-                if (DBG) Log.v(TAG, "Found network " + scanResult);
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void setFailureReason(String reason) {
         synchronized (mLock) {
@@ -208,8 +122,11 @@ public class NetworkRequestTestCase extends BaseTestCase {
     protected boolean executeTest() throws InterruptedException {
         // Step 1: Scan and find any open network around.
         if (DBG) Log.v(TAG, "Scan and find an open network");
-        ScanResult openNetwork = startScanAndFindAnyOpenNetworkInResults();
-        if (openNetwork == null) return false;
+        ScanResult openNetwork = mTestUtils.startScanAndFindAnyOpenNetworkInResults();
+        if (openNetwork == null) {
+            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
+            return false;
+        }
 
         // Step 2: Create a specifier for the chosen open network depending on the type of test.
         NetworkSpecifier wns = createNetworkSpecifier(openNetwork);
@@ -287,9 +204,6 @@ public class NetworkRequestTestCase extends BaseTestCase {
 
     @Override
     protected void tearDown() {
-        if (mBroadcastReceiver != null) {
-            mContext.unregisterReceiver(mBroadcastReceiver);
-        }
         if (mNetworkCallback != null) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
         }

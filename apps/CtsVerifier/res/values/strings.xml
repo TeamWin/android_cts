@@ -1448,10 +1448,8 @@
         Test failed.\n\nUnexpected error. Check logcat.</string>
 
     <string name="wifi_status_initiating_scan">Initiating scan.</string>
-    <string name="wifi_status_scan_failure">Unable to initiate scan.</string>
-    <string name="wifi_status_open_network_not_found">Unable to find any open network in scan results.</string>
+    <string name="wifi_status_scan_failure">Unable to initiate scan or find any open network in scan results.</string>
     <string name="wifi_status_connected_to_other_network">Connected to some other network on the device. Please ensure that there is no saved networks on the device.</string>
-
     <string name="wifi_status_initiating_network_request">Initiating network request.</string>
     <string name="wifi_status_network_wait_for_available">Waiting for network connection. Please click the network in the dialog that pops up for approving the request.</string>
     <string name="wifi_status_network_available">"Connected to network."</string>
