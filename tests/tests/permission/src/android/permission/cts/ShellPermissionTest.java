@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotNull;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.UsesPermissionInfo;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -65,10 +64,9 @@ public class ShellPermissionTest {
         String pkg = pkgs[0];
 
         final PackageInfo packageInfo = pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
-        assertNotNull("No permissions found for " + pkg, packageInfo.usesPermissions);
+        assertNotNull("No permissions found for " + pkg, packageInfo.requestedPermissions);
 
-        for (UsesPermissionInfo permInfo : packageInfo.usesPermissions) {
-            final String permission = permInfo.getPermission();
+        for (String permission : packageInfo.requestedPermissions) {
             Log.d(LOG_TAG, "SHELL as " + pkg + " uses permission " + permission);
             assertFalse("SHELL as " + pkg + " contains the illegal permission " + permission,
                     blacklist.contains(permission));
