@@ -20,6 +20,7 @@ import static android.contentcaptureservice.cts.common.ShellHelper.runShellComma
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Helper for common funcionalities.
  */
-final class Helper {
+public final class Helper {
 
     public static final String TAG = "ContentCaptureTest";
 
@@ -42,6 +43,8 @@ final class Helper {
     public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
 
     public static final long MY_EPOCH = SystemClock.uptimeMillis();
+
+    public static final Context sContext = InstrumentationRegistry.getTargetContext();
 
     /**
      * Awaits for a latch to be counted down.

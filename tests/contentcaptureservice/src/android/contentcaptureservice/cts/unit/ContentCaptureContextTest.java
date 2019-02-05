@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.contentcaptureservice.cts;
+package android.contentcaptureservice.cts.unit;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -34,8 +34,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+@AppModeFull(reason = "unit test")
 @RunWith(JUnit4.class)
-@AppModeFull // Unit test
 public class ContentCaptureContextTest {
 
     private static final Uri URI = Uri.parse("file:/dev/null");
