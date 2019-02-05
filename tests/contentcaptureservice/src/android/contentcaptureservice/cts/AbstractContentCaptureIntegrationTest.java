@@ -42,7 +42,9 @@ import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SettingsUtils;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
@@ -53,6 +55,8 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public abstract class AbstractContentCaptureIntegrationTest
         <A extends AbstractContentCaptureActivity> {
+
+    private static final String TAG = AbstractContentCaptureIntegrationTest.class.getSimpleName();
 
     private final String mTag = getClass().getSimpleName();
 
@@ -101,6 +105,18 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
+    }
+
+    @BeforeClass
+    public static void disableDefaultService() {
+        Log.v(TAG, "@BeforeClass: disableDefaultService()");
+        Helper.setDefaultServiceEnabled(false);
+    }
+
+    @AfterClass
+    public static void enableDefaultService() {
+        Log.v(TAG, "@AfterClass: enableDefaultService()");
+        Helper.setDefaultServiceEnabled(true);
     }
 
     @Before

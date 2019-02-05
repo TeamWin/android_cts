@@ -74,6 +74,15 @@ final class Helper {
     }
 
     /**
+     * Enables / disables the default service.
+     */
+    public static void setDefaultServiceEnabled(boolean enabled) {
+        Log.d(TAG, "setDefaultServiceEnabled(): " + enabled);
+        runShellCommand("cmd content_capture set default-service-enabled 0 %s",
+                Boolean.toString(enabled));
+    }
+
+    /**
      * Gets the component name for a given class.
      */
     public static ComponentName componentNameFor(@NonNull Class<?> clazz) {
