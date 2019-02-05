@@ -321,6 +321,33 @@ public class FileSystemPermissionTest {
         assertFileOwnedByGroup(f, "net_bw_stats");
     }
 
+    private static List<String> procNetFiles = Arrays.asList("anycast6", "arp", "arp_tables_matches",
+            "arp_tables_names", "arp_tables_targets", "dev", "dev_mcast", "fib_trie", "fib_triestat",
+            "hci", "icmp", "icmp6", "if_inet6", "igmp", "igmp6", "ip6_flowlabel",
+            "ip6_tables_matches", "ip6_tables_names", "ip6_tables_targets", "ip_tables_matches",
+            "ip_tables_names", "ip_tables_targets", "ipv6_route", "l2cap", "mcfilter", "mcfilter6",
+            "netlink", "netstat", "nf_conntrack", "nf_conntrack_expect", "packet", "pfkey", "pnp",
+            "pppoe", "pppol2tp", "protocols", "psched", "ptype", "raw", "raw6", "route", "rt6_stats",
+            "rt_cache", "sco", "snmp", "snmp6", "sockstat", "sockstat6", "softnet_stat", "tcp",
+            "tcp6", "udp", "udp6", "udplite", "udplite6", "unix", "wireless", "xfrm_stat");
+
+    private static void procNetSane(String path) {
+        File f = new File(path);
+        assertFalse(f.canRead());
+        assertFalse(f.canWrite());
+        assertFalse(f.canExecute());
+        assertFileOwnedBy(f, "root");
+        assertFileOwnedByGroup(f, "root");
+    }
+
+    @MediumTest
+    @Test
+    public void testProcNetSane() throws Exception {
+        for (String file : procNetFiles) {
+            procNetSane("/proc/net/" + file);
+        }
+    }
+
     private static int readInt(File f) throws FileNotFoundException {
         try (Scanner s = new Scanner(f)) {
             return s.nextInt();
