@@ -887,39 +887,30 @@ public class ChildlessActivityTest
     }
 
     private void setContentCaptureFeatureEnabledTest_disabled(boolean bySettings) throws Exception {
-        // TODO(b/123429736): remove try/finally once we use a StateChangerRule
-        try {
-            final ContentCaptureManager mgr = getContentCaptureManagerHack();
+        final ContentCaptureManager mgr = getContentCaptureManagerHack();
 
-            final CtsContentCaptureService service = enableService();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
-            final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
+        final CtsContentCaptureService service = enableService();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+        final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
 
-            if (bySettings) {
-                setFeatureEnabled("false");
-            } else {
-                mgr.setContentCaptureFeatureEnabled(false);
-            }
-
-            disconnectedListener.waitForOnDisconnected();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
-            assertThat(mgr.isContentCaptureEnabled()).isFalse();
-
-            final ActivityWatcher watcher = startWatcher();
-            final ChildlessActivity activity = launchActivity();
-
-            watcher.waitFor(RESUMED);
-            activity.finish();
-            watcher.waitFor(DESTROYED);
-
-            assertThat(service.getAllSessionIds()).isEmpty();
-        } finally {
-            try {
-                Helper.resetService();
-            } finally {
-                setFeatureEnabled("true");
-            }
+        if (bySettings) {
+            setFeatureEnabled("false");
+        } else {
+            mgr.setContentCaptureFeatureEnabled(false);
         }
+
+        disconnectedListener.waitForOnDisconnected();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+        assertThat(mgr.isContentCaptureEnabled()).isFalse();
+
+        final ActivityWatcher watcher = startWatcher();
+        final ChildlessActivity activity = launchActivity();
+
+        watcher.waitFor(RESUMED);
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        assertThat(service.getAllSessionIds()).isEmpty();
     }
 
     @Test
@@ -930,60 +921,51 @@ public class ChildlessActivityTest
 
     private void setContentCaptureFeatureEnabledTest_disabledThenReEnabled(boolean bySettings)
             throws Exception {
-        // TODO(b/123429736): remove try/finally once we use a StateChangerRule
-        try {
-            final ContentCaptureManager mgr = getContentCaptureManagerHack();
+        final ContentCaptureManager mgr = getContentCaptureManagerHack();
 
-            final CtsContentCaptureService service1 = enableService();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
-            final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
+        final CtsContentCaptureService service1 = enableService();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+        final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
 
-            if (bySettings) {
-                setFeatureEnabled("false");
-            } else {
-                mgr.setContentCaptureFeatureEnabled(false);
-            }
-            disconnectedListener.waitForOnDisconnected();
-
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
-            assertThat(mgr.isContentCaptureEnabled()).isFalse();
-
-            // Launch and finish 1st activity while it's disabled
-            final ActivityWatcher watcher1 = startWatcher();
-            final ChildlessActivity activity1 = launchActivity();
-            watcher1.waitFor(RESUMED);
-            activity1.finish();
-            watcher1.waitFor(DESTROYED);
-
-            // Re-enable feature
-            final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
-            if (bySettings) {
-                setFeatureEnabled("true");
-            } else {
-                mgr.setContentCaptureFeatureEnabled(true);
-            }
-            final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
-
-            // Launch and finish 2nd activity while it's enabled
-            final ActivityLauncher<CustomViewActivity> launcher2 = new ActivityLauncher<>(
-                    sContext, mActivitiesWatcher, CustomViewActivity.class);
-            final ActivityWatcher watcher2 = launcher2.getWatcher();
-            final CustomViewActivity activity2 = launcher2.launchActivity();
-            watcher2.waitFor(RESUMED);
-            activity2.finish();
-            watcher2.waitFor(DESTROYED);
-
-            assertThat(service1.getAllSessionIds()).isEmpty();
-            final Session session = service2.getOnlyFinishedSession();
-            activity2.assertDefaultEvents(session);
-        } finally {
-            try {
-                Helper.resetService();
-            } finally {
-                setFeatureEnabled("true");
-            }
+        if (bySettings) {
+            setFeatureEnabled("false");
+        } else {
+            mgr.setContentCaptureFeatureEnabled(false);
         }
+        disconnectedListener.waitForOnDisconnected();
+
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+        assertThat(mgr.isContentCaptureEnabled()).isFalse();
+
+        // Launch and finish 1st activity while it's disabled
+        final ActivityWatcher watcher1 = startWatcher();
+        final ChildlessActivity activity1 = launchActivity();
+        watcher1.waitFor(RESUMED);
+        activity1.finish();
+        watcher1.waitFor(DESTROYED);
+
+        // Re-enable feature
+        final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
+        if (bySettings) {
+            setFeatureEnabled("true");
+        } else {
+            mgr.setContentCaptureFeatureEnabled(true);
+        }
+        final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+
+        // Launch and finish 2nd activity while it's enabled
+        final ActivityLauncher<CustomViewActivity> launcher2 = new ActivityLauncher<>(
+                sContext, mActivitiesWatcher, CustomViewActivity.class);
+        final ActivityWatcher watcher2 = launcher2.getWatcher();
+        final CustomViewActivity activity2 = launcher2.launchActivity();
+        watcher2.waitFor(RESUMED);
+        activity2.finish();
+        watcher2.waitFor(DESTROYED);
+
+        assertThat(service1.getAllSessionIds()).isEmpty();
+        final Session session = service2.getOnlyFinishedSession();
+        activity2.assertDefaultEvents(session);
     }
 
     @Test
