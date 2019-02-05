@@ -37,7 +37,6 @@ import android.test.suitebuilder.annotation.SmallTest;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
