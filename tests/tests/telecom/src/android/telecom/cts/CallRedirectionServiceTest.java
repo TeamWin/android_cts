@@ -180,7 +180,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
 
         runWithShellPermissionIdentity(() -> mRoleManager.addRoleHolderAsUser(roleName,
-                packageName, user, executor, new RoleManagerCallback() {
+                packageName, 0, user, executor, new RoleManagerCallback() {
                     @Override
                     public void onSuccess() {
                         try {
@@ -209,7 +209,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
 
         runWithShellPermissionIdentity(() -> mRoleManager.removeRoleHolderAsUser(roleName,
-                packageName, user, executor, new RoleManagerCallback() {
+                packageName, 0, user, executor, new RoleManagerCallback() {
                     @Override
                     public void onSuccess() {
                         try {
