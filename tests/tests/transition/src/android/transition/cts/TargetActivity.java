@@ -76,7 +76,9 @@ public class TargetActivity extends Activity {
 
         if (useAnimator) {
             enterTransition = new TrackingVisibilityWithAnimator();
+            enterTransition.setDuration(2000);
             returnTransition = new TrackingVisibilityWithAnimator();
+            returnTransition.setDuration(2000);
         }
 
         if (excludeId != 0) {
