@@ -16,7 +16,6 @@
 package android.transition.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -77,6 +76,8 @@ public class TransitionManagerTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         final CountDownLatch startLatch = new CountDownLatch(1);
         final Scene scene6 = loadScene(R.layout.scene6);
+
+        final CountDownLatch moveLatch = watchForRedSquareMoving();
         mActivityRule.runOnUiThread(() -> {
             mSceneRoot.getViewTreeObserver().addOnPreDrawListener(
                     new ViewTreeObserver.OnPreDrawListener() {
@@ -91,37 +92,56 @@ public class TransitionManagerTest extends BaseTransitionTest {
             scene6.enter();
         });
         assertTrue(startLatch.await(500, TimeUnit.MILLISECONDS));
-        ensureRedSquareIsMoving();
+        assertTrue(moveLatch.await(1000, TimeUnit.MILLISECONDS));
         endTransition();
     }
 
-    private void ensureRedSquareIsMoving() throws InterruptedException {
-        final View view = mActivity.findViewById(R.id.redSquare);
-        assertNotNull(view);
-        // We should see a ChangeBounds on redSquare
-        final Rect position = new Rect(view.getLeft(), view.getTop(), view.getRight(),
-                view.getBottom());
-
+    private CountDownLatch watchForRedSquareMoving() throws Throwable {
         final CountDownLatch latch = new CountDownLatch(1);
-        final Rect[] nextArr = new Rect[1];
-        view.postOnAnimation(new Runnable() {
-            // Wait at most 10 frames for the position to change
-            int mFramesToChange = 10;
 
-            @Override
-            public void run() {
-                nextArr[0] = new Rect(view.getLeft(), view.getTop(), view.getRight(),
-                        view.getBottom());
-                mFramesToChange--;
-                if (nextArr[0].equals(position) && mFramesToChange > 0) {
-                    view.postOnAnimation(this);
-                } else {
-                    latch.countDown();
-                }
-            }
+        mActivityRule.runOnUiThread(() -> {
+            final View decor = mActivity.getWindow().getDecorView();
+            final View viewBeforeTransition = mActivity.findViewById(R.id.redSquare);
+            decor.getViewTreeObserver().addOnPreDrawListener(
+                    new ViewTreeObserver.OnPreDrawListener() {
+                        // Wait at most 20 frames for the position to change
+                        int mFramesToChange = 20;
+                        Rect mLastPosition = null;
+                        View mView = null;
+                        int mPositionChanges = 0;
+
+                        @Override
+                        public boolean onPreDraw() {
+                            final View view = mActivity.findViewById(R.id.redSquare);
+                            if (mView == null && view != viewBeforeTransition) {
+                                // Capture the new red square View. It will be in the end
+                                // position now, so don't capture its position.
+                                mView = view;
+                                return true;
+                            }
+                            Rect nextPosition = new Rect(view.getLeft(), view.getTop(),
+                                    view.getRight(), view.getBottom());
+                            if (mLastPosition == null) {
+                                // This is the start position
+                                mLastPosition = nextPosition;
+                                return true;
+                            }
+                            mFramesToChange--;
+                            if (!nextPosition.equals(mLastPosition)) {
+                                mPositionChanges++;
+                                mLastPosition = nextPosition;
+                                if (mPositionChanges > 2) {
+                                    latch.countDown();
+                                }
+                            }
+                            if (mFramesToChange <= 0 || mPositionChanges > 2) {
+                                decor.getViewTreeObserver().removeOnPreDrawListener(this);
+                            }
+                            return true;
+                        }
+                    });
         });
-        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
-        assertNotEquals(position, nextArr[0]);
+        return latch;
     }
 
     @Test
@@ -149,6 +169,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         final CountDownLatch startLatch = new CountDownLatch(1);
         final Scene scene6 = loadScene(R.layout.scene6);
+        final CountDownLatch moveLatch = watchForRedSquareMoving();
         mActivityRule.runOnUiThread(() -> {
             mSceneRoot.getViewTreeObserver().addOnPreDrawListener(
                     new ViewTreeObserver.OnPreDrawListener() {
@@ -162,7 +183,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
             TransitionManager.go(scene6);
         });
         assertTrue(startLatch.await(500, TimeUnit.MILLISECONDS));
-        ensureRedSquareIsMoving();
+        assertTrue(moveLatch.await(1000, TimeUnit.MILLISECONDS));
         endTransition();
     }
 
