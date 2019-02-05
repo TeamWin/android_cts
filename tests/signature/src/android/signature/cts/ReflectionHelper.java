@@ -245,7 +245,8 @@ public class ReflectionHelper {
         }
 
         // If the method is a bridge then use a special comparator for comparing types as
-        // generic methods may not have generic signatures.
+        // bridge methods created for generic methods may not have generic signatures.
+        // See b/123558763 for more information.
         TypeComparator typeComparator = reflectedMethod.isBridge()
                 ? BridgeTypeComparator.INSTANCE : DefaultTypeComparator.INSTANCE;
 
@@ -564,7 +565,6 @@ public class ReflectionHelper {
             if (index != -1) {
                 String rawReturnType = apiType.substring(0, index);
                 return rawReturnType.equals(reflectedType);
-            } else {
             }
             return false;
         }
