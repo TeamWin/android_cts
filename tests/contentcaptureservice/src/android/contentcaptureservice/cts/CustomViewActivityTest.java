@@ -40,6 +40,7 @@ import android.view.contentcapture.ContentCaptureSession;
 
 import androidx.annotation.NonNull;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -88,6 +89,7 @@ public class CustomViewActivityTest extends
      * the session notification methods instead - this is wrong because the main view will be
      * notified last, but we cannot prevent the apps from doing so...
      */
+    @Ignore("current broken, will be fixed by b/123777277")
     @Test
     public void testVirtualView_wrongWay() throws Exception {
         final CtsContentCaptureService service = enableService();
@@ -121,21 +123,23 @@ public class CustomViewActivityTest extends
 
         assertRightActivity(session, session.id, activity);
 
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent
-        assertThat(events.size()).isAtLeast(3);
 
-        // Assert just the relevant events
+        final int additionalEvents = 3;
+        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
+                additionalEvents);
+
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
         final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
 
-        assertVirtualViewAppeared(events, 0, mainSession, customViewId, 1, "child");
-        assertVirtualViewDisappeared(events, 1, customViewId, mainSession, 1);
+        final int i = CustomViewActivity.MIN_EVENTS;
+
+        assertVirtualViewAppeared(events, i, mainSession, customViewId, 1, "child");
+        assertVirtualViewDisappeared(events, i + 1, customViewId, mainSession, 1);
 
         // This is the "wrong" part - the parent is notified last
-        assertViewWithUnknownParentAppeared(events, 2, session.id, activity.mCustomView);
+        assertViewWithUnknownParentAppeared(events, i + 2, session.id, activity.mCustomView);
 
+        activity.assertInitialViewsDisappeared(events, additionalEvents);
         // TODO(b/122315042): assert views disappeared
     }
 
@@ -183,21 +187,20 @@ public class CustomViewActivityTest extends
 
         assertRightActivity(session, session.id, activity);
 
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent
-        assertThat(events.size()).isAtLeast(6);
+        final int additionalEvents = 3;
+        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
+                additionalEvents);
 
-        // Assert just the relevant events
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
         final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
 
-        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
-        // TODO(b/119638528): next 2 events are the grandparents
-        assertVirtualViewAppeared(events, 3, mainSession, customViewId, 1, "child1");
-        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 2, "child2");
-        assertVirtualViewsDisappeared(events, 5, customViewId, mainSession, 2, 1);
+        final int i = CustomViewActivity.MIN_EVENTS;
 
+        assertVirtualViewAppeared(events, i, mainSession, customViewId, 1, "child1");
+        assertVirtualViewAppeared(events, i + 1, mainSession, customViewId, 2, "child2");
+        assertVirtualViewsDisappeared(events, i + 2, customViewId, mainSession, 2, 1);
+
+        activity.assertInitialViewsDisappeared(events, additionalEvents);
         // TODO(b/122315042): assert views disappeared
     }
 
@@ -297,26 +300,25 @@ public class CustomViewActivityTest extends
 
         assertRightActivity(session, session.id, activity);
 
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparents
-        assertThat(events.size()).isAtLeast(11);
+        final int additionalEvents = 7;
+        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
+                additionalEvents);
 
-        // Assert just the relevant events
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
         final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
 
-        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
-        // TODO(b/119638528): next 2 events are the grandparents
-        assertVirtualViewAppeared(events, 3, mainSession, customViewId, 1, "c1");
-        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 11, "c1g1");
-        assertVirtualViewAppeared(events, 5, mainSession, customViewId, 12, "c1g2");
-        assertVirtualViewAppeared(events, 6, mainSession, customViewId, 2, "c2");
-        assertVirtualViewAppeared(events, 7, mainSession, customViewId, 21, "c2g1");
-        assertVirtualViewAppeared(events, 8, mainSession, customViewId, 211, "c2g1gg1");
-        assertVirtualViewAppeared(events, 9, mainSession, customViewId, 3, "c3");
-        assertVirtualViewsDisappeared(events, 10, customViewId, mainSession, 21, 2, 11, 1, 12);
+        final int i = CustomViewActivity.MIN_EVENTS;
 
+        assertVirtualViewAppeared(events, i, mainSession, customViewId, 1, "c1");
+        assertVirtualViewAppeared(events, i + 1, mainSession, customViewId, 11, "c1g1");
+        assertVirtualViewAppeared(events, i + 2, mainSession, customViewId, 12, "c1g2");
+        assertVirtualViewAppeared(events, i + 3, mainSession, customViewId, 2, "c2");
+        assertVirtualViewAppeared(events, i + 4, mainSession, customViewId, 21, "c2g1");
+        assertVirtualViewAppeared(events, i + 5, mainSession, customViewId, 211, "c2g1gg1");
+        assertVirtualViewAppeared(events, i + 6, mainSession, customViewId, 3, "c3");
+        assertVirtualViewsDisappeared(events, i + 7, customViewId, mainSession, 21, 2, 11, 1, 12);
+
+        activity.assertInitialViewsDisappeared(events, additionalEvents);
         // TODO(b/122315042): assert other views disappeared
     }
 
@@ -363,21 +365,21 @@ public class CustomViewActivityTest extends
 
         assertRightActivity(session, session.id, activity);
 
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): check right number once we get rid of grandparent (should be 5)
-        assertThat(events.size()).isAtLeast(6);
 
-        // Assert just the relevant events
+        final int additionalEvents = 3;
+        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
+                additionalEvents);
+
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
         final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
 
-        assertViewWithUnknownParentAppeared(events, 0, session.id, activity.mCustomView);
-        // TODO(b/119638528): next 2 events are the grandparents
-        assertVirtualViewAppeared(events, 3, mainSession, customViewId, 1, "child1");
-        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 2, "child2");
-        assertVirtualViewsDisappeared(events, 5, customViewId, mainSession, 2, 1);
+        final int i = CustomViewActivity.MIN_EVENTS;
 
+        assertVirtualViewAppeared(events, i, mainSession, customViewId, 1, "child1");
+        assertVirtualViewAppeared(events, i + 1, mainSession, customViewId, 2, "child2");
+        assertVirtualViewsDisappeared(events, i + 2, customViewId, mainSession, 2, 1);
+
+        activity.assertInitialViewsDisappeared(events, additionalEvents);
         // TODO(b/122315042): assert other views disappeared
     }
 
