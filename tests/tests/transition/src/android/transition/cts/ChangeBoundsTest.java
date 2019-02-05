@@ -71,7 +71,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     private void resetChangeBoundsTransition() {
         mListener = mock(Transition.TransitionListener.class);
         mChangeBounds = new MyChangeBounds();
-        mChangeBounds.setDuration(500);
+        mChangeBounds.setDuration(1000);
         mChangeBounds.addListener(mListener);
         mChangeBounds.setInterpolator(new LinearInterpolator());
         mTransition = mChangeBounds;
