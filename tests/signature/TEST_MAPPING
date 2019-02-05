@@ -1,0 +1,63 @@
+{
+  "presubmit": [
+    {
+      "name": "CtsAndroidTestMockCurrentApiSignatureTestCases"
+    },
+    {
+      "name": "CtsAndroidTestRunnerCurrentApiSignatureTestCases"
+    },
+    {
+      "name": "CtsApacheHttpLegacyCurrentApiSignatureTestCases"
+    },
+    {
+      "name": "CtsCurrentApiSignatureTestCases"
+    },
+    {
+      "name": "CtsAndroidTestBase27ApiSignatureTestCases"
+    },
+    {
+      "name": "CtsAndroidTestBase27ApiSignatureTestCases"
+    },
+    {
+      "name": "CtsApacheHttpLegacy27ApiSignatureTestCases"
+    },
+    {
+      "name": "CtsApacheHttpLegacyUsesLibraryApiSignatureTestCases"
+    },
+    {
+      "name": "CtsHiddenApiBlacklistApi27TestCases"
+    },
+    {
+      "name": "CtsHiddenApiBlacklistCurrentApiTestCases"
+    },
+    {
+      "name": "CtsHiddenApiBlacklistDebugClassTestCases"
+    },
+    {
+      "name": "CtsHiddenApiKillswitchDebugClassTestCases"
+    },
+    {
+      "name": "CtsHiddenApiKillswitchWhitelistTestCases"
+    },
+    {
+      "name": "CtsHiddenApiKillswitchWildcardTestCases"
+    },
+    {
+      "name": "CtsSystemApiAnnotationTestCases"
+    },
+    {
+      "name": "CtsSystemApiSignatureTestCases"
+    },
+    {
+      "name": "CtsHiddenApiBlacklistApi28TestCases"
+    },
+    {
+      "name": "CtsSharedLibsApiSignatureTestCases"
+    }
+  ]
+}
+
+
+
+
+
