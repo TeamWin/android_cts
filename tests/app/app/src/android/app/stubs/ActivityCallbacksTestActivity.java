@@ -55,10 +55,12 @@ public class ActivityCallbacksTestActivity extends Activity {
     public enum Source {
         ACTIVITY,
         ACTIVITY_CALLBACK,
+        ACTIVITY_CALLBACK_CREATE_ONLY,
         APPLICATION_ACTIVITY_CALLBACK
     }
 
     private final Application.ActivityLifecycleCallbacks mActivityCallbacks;
+    private final Application.ActivityLifecycleCallbacks mActivityCallbacksCreateOnly;
 
     private ArrayList<Pair<Source, Event>> mCollectedEvents = new ArrayList<>();
 
@@ -161,6 +163,101 @@ public class ActivityCallbacksTestActivity extends Activity {
             }
         };
         registerActivityLifecycleCallbacks(mActivityCallbacks);
+        mActivityCallbacksCreateOnly = new Application.ActivityLifecycleCallbacks() {
+
+            @Override
+            public void onActivityPreCreated(Activity activity, Bundle savedInstanceState) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_PRE_CREATE);
+            }
+
+            @Override
+            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_CREATE);
+            }
+
+            @Override
+            public void onActivityPostCreated(Activity activity, Bundle savedInstanceState) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_POST_CREATE);
+                // We shouldn't get any additional callbacks after this point
+                unregisterActivityLifecycleCallbacks(this);
+            }
+
+            @Override
+            public void onActivityStarted(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_START);
+            }
+
+            @Override
+            public void onActivityPostStarted(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_POST_START);
+            }
+
+            @Override
+            public void onActivityPreResumed(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_PRE_RESUME);
+            }
+
+            @Override
+            public void onActivityResumed(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_RESUME);
+            }
+
+            @Override
+            public void onActivityPostResumed(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_POST_RESUME);
+            }
+
+            @Override
+            public void onActivityPrePaused(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_PRE_PAUSE);
+            }
+
+            @Override
+            public void onActivityPaused(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_PAUSE);
+            }
+
+            @Override
+            public void onActivityPostPaused(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_POST_PAUSE);
+            }
+
+            @Override
+            public void onActivityPreStopped(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_PRE_STOP);
+            }
+
+            @Override
+            public void onActivityStopped(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_STOP);
+            }
+
+            @Override
+            public void onActivityPostStopped(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_POST_STOP);
+            }
+
+            @Override
+            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+            }
+
+            @Override
+            public void onActivityPreDestroyed(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_PRE_DESTROY);
+            }
+
+            @Override
+            public void onActivityDestroyed(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_DESTROY);
+            }
+
+            @Override
+            public void onActivityPostDestroyed(Activity activity) {
+                collectEvent(Source.ACTIVITY_CALLBACK_CREATE_ONLY, Event.ON_POST_DESTROY);
+            }
+        };
+        registerActivityLifecycleCallbacks(mActivityCallbacksCreateOnly);
     }
 
     public void collectEvent(Source source, Event event) {

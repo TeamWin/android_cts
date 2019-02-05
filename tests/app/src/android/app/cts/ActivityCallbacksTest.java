@@ -229,11 +229,19 @@ public class ActivityCallbacksTest {
             Event preEvent, Event event, Event postEvent) {
         expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, preEvent));
         expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, preEvent));
+        if (preEvent == ON_PRE_CREATE) {
+            // ACTIVITY_CALLBACK_CREATE_ONLY only gets create events
+            expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK_CREATE_ONLY, preEvent));
+        }
         expectedEvents.add(new Pair<>(Source.ACTIVITY, preEvent));
         if (event == ON_CREATE || event == ON_START || event == ON_RESUME) {
             // Application goes first on upward lifecycle events
             expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, event));
             expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, event));
+            if (event == ON_CREATE) {
+                // ACTIVITY_CALLBACK_CREATE_ONLY only gets create events
+                expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK_CREATE_ONLY, event));
+            }
         } else {
             // Application goes last on downward lifecycle events
             expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, event));
@@ -241,6 +249,10 @@ public class ActivityCallbacksTest {
         }
         expectedEvents.add(new Pair<>(Source.ACTIVITY, postEvent));
         expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, postEvent));
+        if (postEvent == ON_POST_CREATE) {
+            // ACTIVITY_CALLBACK_CREATE_ONLY only gets create events
+            expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK_CREATE_ONLY, postEvent));
+        }
         expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, postEvent));
     }
 }
