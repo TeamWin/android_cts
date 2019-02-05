@@ -30,7 +30,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api.hiddenapi_blacklist_api_28" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="class" value="android.signature.cts.api.HiddenApiTest" />
+        <option name="class" value="android.signature.cts.api.api28.HiddenApiTest" />
         <option name="instrumentation-arg" key="hiddenapi-files" value="hiddenapi_flags.csv" />
         <option name="instrumentation-arg" key="hiddenapi-test-flags" value="blacklist,greylist-max-o" />
         <option name="runtime-hint" value="30s" />
