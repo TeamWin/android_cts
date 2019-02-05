@@ -30,5 +30,6 @@ android_test {
         "cts",
         "vts",
         "general-tests",
+        "cts_instant",
     ]
 }
