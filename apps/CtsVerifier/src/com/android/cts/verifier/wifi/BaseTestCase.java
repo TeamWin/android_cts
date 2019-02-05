@@ -16,11 +16,15 @@
 
 package com.android.cts.verifier.wifi;
 
+import android.annotation.Nullable;
 import android.content.Context;
 import android.content.res.Resources;
+import android.net.wifi.SupplicantState;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
 import com.android.cts.verifier.R;
 
@@ -28,6 +32,7 @@ import com.android.cts.verifier.R;
  * Base class for all Wifi test cases.
  */
 public abstract class BaseTestCase {
+    private static final String TAG = "BaseTestCase";
     protected Context mContext;
     protected Resources mResources;
     protected Listener mListener;
@@ -48,6 +53,42 @@ public abstract class BaseTestCase {
      */
     protected void setUp() {
         mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+
+        // Ensure we're not connected to any wifi network before we start the tests.
+        if (isConnected(null, null)) {
+            mListener.onTestFailed(mContext.getString(
+                    R.string.wifi_status_connected_to_other_network));
+            throw new IllegalStateException("Should not be connected to any network");
+        }
+        /**
+         * TODO: Clear the state before each test. This needs to be an instrumentation to
+         * run the below shell commands.
+        SystemUtil.runShellCommand("wifi network-suggestions-set-user-approved "
+                + mContext.getPackageName() + " no");
+        SystemUtil.runShellCommand("wifi network-requests-remove-user-approved-access-points "
+                + mContext.getPackageName());
+        */
+    }
+
+    /**
+     * Checks whether the device is connected.
+     *
+     * @param ssid If ssid is specified, then check where the device is connected to a network
+     *             with the specified SSID.
+     * @param bssid If bssid is specified, then check where the device is connected to a network
+     *             with the specified BSSID.
+     * @return
+     */
+    protected boolean isConnected(@Nullable String ssid, @Nullable String bssid) {
+        WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+        if (wifiInfo == null) {
+            Log.e(TAG, "Failed to get WifiInfo");
+            return false;
+        }
+        if (wifiInfo.getSupplicantState() != SupplicantState.COMPLETED) return false;
+        if (ssid != null && !wifiInfo.getSSID().equals(ssid)) return false;
+        if (bssid != null && !wifiInfo.getBSSID().equals(bssid)) return false;
+        return true;
     }
 
     /**
@@ -92,6 +133,7 @@ public abstract class BaseTestCase {
                         try {
                             setUp();
                         } catch (Exception e) {
+                            Log.e(TAG, "Setup failed", e);
                             mListener.onTestFailed(mContext.getString(R.string.wifi_setup_error));
                             return;
                         }
@@ -103,7 +145,7 @@ public abstract class BaseTestCase {
                                 mListener.onTestFailed(getFailureReason());
                             }
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "Execute failed", e);
                             mListener.onTestFailed(
                                     mContext.getString(R.string.aware_unexpected_error));
                         } finally {

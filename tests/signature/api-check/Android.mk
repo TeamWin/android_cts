@@ -39,7 +39,7 @@ include $(BUILD_STATIC_JAVA_LIBRARY)
 # ===================================
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-hiddenapi-flags
+LOCAL_MODULE := cts-hiddenapi_flags-csv
 LOCAL_MODULE_STEM := hiddenapi_flags.csv
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)

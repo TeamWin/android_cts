@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
-
-import static android.autofillservice.cts.Helper.assertFloat;
+package com.android.compatibility.common.util;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -24,8 +22,9 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
-import android.autofillservice.cts.Timeout.Sleeper;
 import android.os.SystemClock;
+
+import com.android.compatibility.common.util.Timeout.Sleeper;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -139,5 +138,9 @@ public class TimeoutTest {
             SystemClock.sleep(napTimeMs);
             totalSleepingTime += napTimeMs;
         }
+    }
+
+    public static void assertFloat(float actualValue, float expectedValue) {
+        assertThat(actualValue).isWithin(1.0e-10f).of(expectedValue);
     }
 }

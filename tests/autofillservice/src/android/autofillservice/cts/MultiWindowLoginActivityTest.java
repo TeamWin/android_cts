@@ -18,8 +18,9 @@ package android.autofillservice.cts;
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
-import static android.autofillservice.cts.common.ShellHelper.tap;
+
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+import static com.android.compatibility.common.util.ShellUtils.tap;
 
 import static com.google.common.truth.Truth.assertThat;
 

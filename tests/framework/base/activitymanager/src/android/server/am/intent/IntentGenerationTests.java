@@ -64,7 +64,6 @@ import java.util.Map;
  * Build/Install/Run:
  * atest CtsActivityManagerDeviceTestCases:IntentGenerationTests
  */
-@Ignore
 public class IntentGenerationTests extends IntentTestBase {
     private static final Cases CASES = new Cases();
 
@@ -85,6 +84,7 @@ public class IntentGenerationTests extends IntentTestBase {
 
     //20 minute timeout.
     @Test(timeout = 1_200_000)
+    @Ignore
     public void generate() throws Exception {
         mLaunchRunner.runAndWrite(mTargetContext, "forResult", CASES.forResultCases());
         mLaunchRunner.runAndWrite(mTargetContext, "newTask", CASES.newTaskCases());
@@ -106,6 +106,7 @@ public class IntentGenerationTests extends IntentTestBase {
      * @throws JSONException if the file has invalid json in it.
      */
     @Test
+    @Ignore
     public void verifySingle() throws IOException, JSONException {
         String test = "forResult/test-1.json";
         TestCase testCase = readFromStorage(test);

@@ -79,7 +79,7 @@ public class SurfaceControlTest {
     @Test
     public void testLifecycle() {
         final SurfaceControl.Builder b = new SurfaceControl.Builder();
-        final SurfaceControl sc = b.build();
+        final SurfaceControl sc = b.setName("CTS").build();
 
         assertTrue("Failed to build SurfaceControl", sc != null);
         assertTrue(sc.isValid());
@@ -90,6 +90,7 @@ public class SurfaceControlTest {
     private SurfaceControl buildDefaultSurface(SurfaceControl parent) {
         return new SurfaceControl.Builder()
             .setBufferSize(DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT)
+            .setName("CTS surface")
             .setParent(parent)
             .build();
 

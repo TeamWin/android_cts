@@ -26,7 +26,6 @@ import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
-import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -171,44 +170,6 @@ public class ChildlessActivityTest
         final Session session2 = service.getFinishedSession(sessionId2);
         activity2.assertDefaultEvents(session2);
     }
-
-    @Ignore("not implemented yet, pending on b/122595322")
-    @Test
-    public void testLaunchAnotherActivity_serviceDisabledActivity() throws Exception {
-        final CtsContentCaptureService service = enableService();
-        final ActivityWatcher watcher1 = startWatcher();
-
-        // Disable activity 2
-        service.setActivityContentCaptureEnabled(componentNameFor(LoginActivity.class), false);
-
-        // Launch and finish 1st activity
-        final ChildlessActivity activity1 = launchActivity();
-        watcher1.waitFor(RESUMED);
-        activity1.finish();
-        watcher1.waitFor(DESTROYED);
-
-        // Launch and finish 2nd activity
-        final ActivityLauncher<LoginActivity> anotherActivityLauncher = new ActivityLauncher<>(
-                sContext, mActivitiesWatcher, LoginActivity.class);
-        final ActivityWatcher watcher2 = anotherActivityLauncher.getWatcher();
-        final LoginActivity activity2 = anotherActivityLauncher.launchActivity();
-        watcher2.waitFor(RESUMED);
-        activity2.finish();
-        watcher2.waitFor(DESTROYED);
-
-        // Assert the sessions
-        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
-        assertThat(sessionIds).hasSize(1);
-        final ContentCaptureSessionId sessionId1 = sessionIds.get(0);
-        Log.v(TAG, "session id1: " + sessionId1);
-
-        final Session session1 = service.getFinishedSession(sessionId1);
-        activity1.assertDefaultEvents(session1);
-
-        // TODO(b/122595322): should also test events after re-enabling it
-    }
-
-    // TODO(b/122595322): same tests for disabled by package, explicity whitelisted, etc...
 
     @Test
     public void testAddAndRemoveNoImportantChild() throws Exception {

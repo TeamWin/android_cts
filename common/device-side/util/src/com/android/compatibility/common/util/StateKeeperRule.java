@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
 import androidx.annotation.NonNull;
 
@@ -30,6 +30,8 @@ import java.util.Objects;
  * JUnit rule used to restore a state after the test is run.
  *
  * <p>It stores the current state before the test, and restores it after the test (if necessary).
+ *
+ * @param <T> value type
  */
 public class StateKeeperRule<T> implements TestRule {
 

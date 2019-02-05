@@ -26,6 +26,8 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
 import android.util.Log;
 
+import com.android.compatibility.common.util.RetryableException;
+
 import org.junit.Test;
 
 /**

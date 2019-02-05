@@ -17,7 +17,6 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.UiBot.PORTRAIT;
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
@@ -26,6 +25,8 @@ import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHE
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -33,9 +34,6 @@ import android.app.Activity;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
-import android.autofillservice.cts.common.OneTimeSettingsListener;
-import android.autofillservice.cts.common.SettingsHelper;
-import android.autofillservice.cts.common.ShellHelper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -64,6 +62,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.compatibility.common.util.OneTimeSettingsListener;
+import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.ShellUtils;
+import com.android.compatibility.common.util.TestNameUtils;
+import com.android.compatibility.common.util.Timeout;
 
 import java.io.File;
 import java.io.IOException;
@@ -223,7 +226,7 @@ public final class Helper {
      * Sets whether the user completed the initial setup.
      */
     public static void setUserComplete(Context context, boolean complete) {
-        SettingsHelper.syncSet(context, USER_SETUP_COMPLETE, complete ? "1" : null);
+        SettingsUtils.syncSet(context, USER_SETUP_COMPLETE, complete ? "1" : null);
     }
 
     private static void dump(@NonNull StringBuilder builder, @NonNull ViewNode node,
@@ -899,7 +902,7 @@ public final class Helper {
             @NonNull String serviceName) {
         if (isAutofillServiceEnabled(serviceName)) return;
 
-        SettingsHelper.syncSet(context, AUTOFILL_SERVICE, serviceName);
+        SettingsUtils.syncSet(context, AUTOFILL_SERVICE, serviceName);
     }
 
     /**
@@ -907,13 +910,13 @@ public final class Helper {
      * the setting is deleted.
      */
     public static void disableAutofillService(@NonNull Context context) {
-        final String currentService = SettingsHelper.get(AUTOFILL_SERVICE);
+        final String currentService = SettingsUtils.get(AUTOFILL_SERVICE);
         if (currentService == null) {
             Log.v(TAG, "disableAutofillService(): already disabled");
             return;
         }
         Log.v(TAG, "Disabling " + currentService);
-        SettingsHelper.syncDelete(context, AUTOFILL_SERVICE);
+        SettingsUtils.syncDelete(context, AUTOFILL_SERVICE);
     }
 
     /**
@@ -928,14 +931,14 @@ public final class Helper {
      * Gets then name of the autofill service for the default user.
      */
     public static String getAutofillServiceName() {
-        return SettingsHelper.get(AUTOFILL_SERVICE);
+        return SettingsUtils.get(AUTOFILL_SERVICE);
     }
 
     /**
      * Asserts whether the given service is enabled as the autofill service for the default user.
      */
     public static void assertAutofillServiceStatus(@NonNull String serviceName, boolean enabled) {
-        final String actual = SettingsHelper.get(AUTOFILL_SERVICE);
+        final String actual = SettingsUtils.get(AUTOFILL_SERVICE);
         final String expected = enabled ? serviceName : null;
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
@@ -1339,7 +1342,7 @@ public final class Helper {
         final File dir = getLocalDirectory();
         if (dir == null) return null;
 
-        final String prefix = JUnitHelper.getCurrentTestName().replaceAll("\\.|\\(|\\/", "_")
+        final String prefix = TestNameUtils.getCurrentTestName().replaceAll("\\.|\\(|\\/", "_")
                 .replaceAll("\\)", "");
         final String filename = prefix + "-" + name;
 
@@ -1383,7 +1386,7 @@ public final class Helper {
      * <p>Should call {@link #disallowOverlays()} afterwards.
      */
     public static void allowOverlays() {
-        ShellHelper.setOverlayPermissions(MY_PACKAGE, true);
+        ShellUtils.setOverlayPermissions(MY_PACKAGE, true);
     }
 
     /**
@@ -1392,7 +1395,7 @@ public final class Helper {
      * <p>Should call {@link #disallowOverlays()} afterwards.
      */
     public static void disallowOverlays() {
-        ShellHelper.setOverlayPermissions(MY_PACKAGE, false);
+        ShellUtils.setOverlayPermissions(MY_PACKAGE, false);
     }
 
     private Helper() {

@@ -16,8 +16,9 @@
 
 package android.autofillservice.cts.augmented;
 
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.view.autofill.AutofillManager.MAX_TEMP_AUGMENTED_SERVICE_DURATION_MS;
+
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 

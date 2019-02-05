@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,6 +32,8 @@ import java.util.Objects;
  *
  * <p>It stores the current state before the test, changes it (if necessary), then restores it after
  * the test (if necessary).
+ *
+ * @param <T> value type
  */
 public class StateChangerRule<T> implements TestRule {
 

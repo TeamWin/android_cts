@@ -18,11 +18,11 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.content.Context.CLIPBOARD_SERVICE;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
-import android.autofillservice.cts.common.SettingsStateKeeperRule;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -36,7 +36,10 @@ import android.widget.RemoteViews;
 import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
+import com.android.compatibility.common.util.SettingsStateKeeperRule;
+import com.android.compatibility.common.util.TestNameUtils;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -156,12 +159,12 @@ public final class AutoFillServiceTestCase {
                 new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE) {
             @Override
             protected void preEvaluate(Description description) {
-                JUnitHelper.setCurrentTestClass(description.getClassName());
+                TestNameUtils.setCurrentTestClass(description.getClassName());
             }
 
             @Override
             protected void postEvaluate(Description description) {
-                JUnitHelper.setCurrentTestClass(null);
+                TestNameUtils.setCurrentTestClass(null);
             }
         };
 

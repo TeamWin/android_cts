@@ -27,6 +27,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.android.compatibility.common.util.RetryableException;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

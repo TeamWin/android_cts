@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package com.android.compatibility.common.util;
 
 import android.util.Log;
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts.common;
+package com.android.compatibility.common.util;
 
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
@@ -25,12 +25,10 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 /**
  * Provides Shell-based utilities such as running a command.
  */
-public final class ShellHelper {
+public final class ShellUtils {
 
     private static final String TAG = "ShellHelper";
 
@@ -65,7 +63,7 @@ public final class ShellHelper {
     }
 
 
-    private ShellHelper() {
+    private ShellUtils() {
         throw new UnsupportedOperationException("contain static methods only");
     }
 

@@ -1,5 +1,11 @@
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+
+import android.stats.devicepolicy.EventId;
+
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
+
 /** Host-side tests to run the CtsPasswordComplexity device-side tests. */
 public class PasswordComplexityTest extends BaseDevicePolicyTest {
 
@@ -36,6 +42,12 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
         if (!mHasSecureLockScreen) {
             return;
         }
-        runDeviceTestsAsUser(PKG, CLS, mPrimaryUserId);
+
+        assertMetricsLogged(
+                getDevice(),
+                () -> runDeviceTestsAsUser(PKG, CLS, mPrimaryUserId),
+                new DevicePolicyEventWrapper
+                        .Builder(EventId.GET_USER_PASSWORD_COMPLEXITY_LEVEL_VALUE)
+                        .setStrings(PKG).build());
     }
 }
