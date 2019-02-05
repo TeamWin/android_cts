@@ -188,7 +188,20 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         assertFeature(manualPostProcessing,
                 PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_POST_PROCESSING);
         assertFeature(raw, PackageManager.FEATURE_CAMERA_CAPABILITY_RAW);
-        assertFeature(motionTracking, PackageManager.FEATURE_CAMERA_AR);
+        if (!motionTracking) {
+          // FEATURE_CAMERA_AR requires the presence of
+          // CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING but
+          // MOTION_TRACKING does not require the presence of FEATURE_CAMERA_AR
+          //
+          // Logic table:
+          //    AR= F   T
+          // MT=F   Y   N
+          //   =T   Y   Y
+          //
+          // So only check the one disallowed condition: No motion tracking and FEATURE_CAMERA_AR is
+          // available
+          assertNotAvailable(PackageManager.FEATURE_CAMERA_AR);
+        }
     }
 
     private void checkFrontCamera() {
