@@ -42,6 +42,8 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
@@ -110,6 +112,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     private ImageReader mIntermediateReader;
     private ImageWriter mIntermediateWriter;
     private ImageWriterQueuer mQueuer;
+    private HandlerThread mIntermediateThread;
+    private Handler mIntermediateHandler;
 
     @Override
     public void setUp() throws Exception {
@@ -1027,7 +1031,12 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             stopRecording(/* useMediaRecorder */true, useIntermediateSurface);
             // Convert number of frames camera produced into the duration in unit of ms.
             float frameDurationMs = 1000.0f / profile.videoFrameRate;
-            float durationMs = resultListener.getTotalNumFrames() * frameDurationMs;
+            float durationMs = 0.f;
+            if (useIntermediateSurface) {
+                durationMs = mQueuer.getQueuedCount() * frameDurationMs;
+            } else {
+                durationMs = resultListener.getTotalNumFrames() * frameDurationMs;
+            }
 
             if (VERBOSE) {
                 Log.v(TAG, "video frame rate: " + profile.videoFrameRate +
@@ -1533,7 +1542,10 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                     ImageFormat.PRIVATE);
             mQueuer = new ImageWriterQueuer(mIntermediateWriter);
 
-            mIntermediateReader.setOnImageAvailableListener(mQueuer, mHandler);
+            mIntermediateThread = new HandlerThread(TAG);
+            mIntermediateThread.start();
+            mIntermediateHandler = new Handler(mIntermediateThread.getLooper());
+            mIntermediateReader.setOnImageAvailableListener(mQueuer, mIntermediateHandler);
         }
     }
 
@@ -1709,6 +1721,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         long stopRecordingTime = SystemClock.elapsedRealtime();
         if (useMediaRecorder) {
             stopCameraStreaming();
+            if (useIntermediateSurface) {
+                mIntermediateReader.setOnImageAvailableListener(null, null);
+            }
 
             mMediaRecorder.stop();
             // Can reuse the MediaRecorder object after reset.
@@ -1716,19 +1731,22 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         } else {
             // TODO: need implement MediaCodec path.
         }
+
+        if (useIntermediateSurface) {
+            mIntermediateReader.close();
+            mQueuer.close();
+            mIntermediateWriter.close();
+            mIntermediateSurface.release();
+            mIntermediateReader = null;
+            mIntermediateSurface = null;
+            mIntermediateWriter = null;
+            mIntermediateThread.quitSafely();
+            mIntermediateHandler = null;
+        }
+
         if (mPersistentSurface == null && mRecordingSurface != null) {
             mRecordingSurface.release();
             mRecordingSurface = null;
-        }
-        if (useIntermediateSurface) {
-            mIntermediateSurface.release();
-            mIntermediateReader.close();
-            mIntermediateWriter.close();
-            mQueuer.close();
-            mIntermediateSurface = null;
-            mIntermediateReader = null;
-            mIntermediateWriter = null;
-            mQueuer = null;
         }
         return (int) (stopRecordingTime - mRecordingStartTime);
     }
@@ -1808,7 +1826,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             // TODO: Don't skip this one for video snapshot on LEGACY
             assertTrue(String.format(
                     "Camera %s: Video duration doesn't match: recorded %fms, expected [%f,%f]ms.",
-                    mCamera.getId(), duration, expectedDurationMinMs, expectedDurationMaxMs),
+                    mCamera.getId(), duration,
+                    expectedDurationMinMs * (1.f - DURATION_MARGIN),
+                    expectedDurationMaxMs * (1.f + DURATION_MARGIN)),
                     duration > expectedDurationMinMs * (1.f - DURATION_MARGIN) &&
                             duration < expectedDurationMaxMs * (1.f + DURATION_MARGIN));
 
@@ -2050,16 +2070,31 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             try {
                 image = reader.acquireNextImage();
             } finally {
-                if (image != null && mWriter != null) {
-                    mWriter.queueInputImage(image);
+                synchronized (mLock) {
+                    if (image != null && mWriter != null) {
+                        mWriter.queueInputImage(image);
+                        mQueuedCount++;
+                    } else if (image != null) {
+                        image.close();
+                    }
                 }
             }
         }
 
-        public void close() {
-            mWriter = null;
+        public int getQueuedCount() {
+            synchronized (mLock) {
+                return mQueuedCount;
+            }
         }
 
+        public void close() {
+            synchronized (mLock) {
+                mWriter = null;
+            }
+        }
+
+        private Object      mLock = new Object();
         private ImageWriter mWriter = null;
+        private int         mQueuedCount = 0;
     }
 }
