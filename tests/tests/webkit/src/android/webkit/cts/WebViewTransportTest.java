@@ -23,10 +23,10 @@ import android.webkit.WebView.WebViewTransport;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 
-public class WebView_WebViewTransportTest
+public class WebViewTransportTest
         extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
-    public WebView_WebViewTransportTest() {
+    public WebViewTransportTest() {
         super("android.webkit.cts", WebViewCtsActivity.class);
     }
 
