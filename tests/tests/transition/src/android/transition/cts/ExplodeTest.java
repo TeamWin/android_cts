@@ -51,7 +51,7 @@ public class ExplodeTest extends BaseTransitionTest {
 
     private void resetTransition() {
         mExplode = new Explode();
-        mExplode.setDuration(500);
+        mExplode.setDuration(1000);
         mTransition = mExplode;
         resetListener();
     }
