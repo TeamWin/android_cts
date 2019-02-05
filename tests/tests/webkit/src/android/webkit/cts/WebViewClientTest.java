@@ -307,7 +307,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         mOnUiThread.setWebViewClient(webViewClient);
         mWebServer = new CtsTestServer(getActivity());
 
-        assertEquals(null, webViewClient.hasOnReceivedResourceError());
+        assertNull(webViewClient.hasOnReceivedResourceError());
         String url = mWebServer.getAssetUrl(TestHtmlConstants.BAD_IMAGE_PAGE_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertTrue(webViewClient.hasOnReceivedResourceError() != null);
@@ -323,7 +323,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         mOnUiThread.setWebViewClient(webViewClient);
         mWebServer = new CtsTestServer(getActivity());
 
-        assertEquals(null, webViewClient.hasOnReceivedHttpError());
+        assertNull(webViewClient.hasOnReceivedHttpError());
         String url = mWebServer.getAssetUrl(TestHtmlConstants.NON_EXISTENT_PAGE_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertTrue(webViewClient.hasOnReceivedHttpError() != null);
