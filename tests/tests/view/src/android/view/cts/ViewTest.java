@@ -4855,6 +4855,30 @@ public class ViewTest {
         }
     }
 
+    @Test
+    public void testSetTransitionVisibility() {
+        MockView view = new MockView(mContext);
+        view.setVisibility(View.GONE);
+        view.setParent(mMockParent);
+        mMockParent.reset();
+
+        // setTransitionVisibility shouldn't trigger requestLayout() on the parent
+        view.setTransitionVisibility(View.VISIBLE);
+
+        assertEquals(View.VISIBLE, view.getVisibility());
+        assertFalse(mMockParent.hasRequestLayout());
+
+        // Reset state
+        view.setVisibility(View.GONE);
+        mMockParent.reset();
+
+        // setVisibility should trigger requestLayout() on the parent
+        view.setVisibility(View.VISIBLE);
+
+        assertEquals(View.VISIBLE, view.getVisibility());
+        assertTrue(mMockParent.hasRequestLayout());
+    }
+
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetTint = false;
 
