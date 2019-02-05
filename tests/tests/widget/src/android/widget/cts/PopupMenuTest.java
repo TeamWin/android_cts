@@ -29,6 +29,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -339,6 +342,42 @@ public class PopupMenuTest {
         teardown();
     }
 
+    @Test
+    public void testForceShowIcon_enabled() throws Throwable {
+        testForceShowIcon(true);
+    }
+
+    @Test
+    public void testForceShowIcon_disabled() throws Throwable {
+        testForceShowIcon(false);
+    }
+
+    private void testForceShowIcon(boolean forceShowIcon) throws Throwable {
+        mBuilder = new Builder().withForceShowIcon(forceShowIcon);
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mBuilder::configure, true);
+        final TestColorDrawable drawable = new TestColorDrawable(Color.BLUE);
+        mPopupMenu.getMenu().getItem(0).setIcon(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(
+                mActivityRule,
+                mActivity.findViewById(R.id.anchor_middle_left),
+                mBuilder::show
+        );
+        assertEquals(forceShowIcon, drawable.mWasDrawn);
+    }
+
+    private class TestColorDrawable extends ColorDrawable {
+        boolean mWasDrawn = false;
+        TestColorDrawable(final int color) {
+            super(color);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            super.draw(canvas);
+            mWasDrawn = true;
+        }
+    }
+
     /**
      * Inner helper class to configure an instance of {@link PopupMenu} for the specific test.
      * The main reason for its existence is that once a popup menu is shown with the show() method,
@@ -366,6 +405,8 @@ public class PopupMenuTest {
         private View mAnchor;
 
         private boolean mGroupDividerEnabled = false;
+
+        private boolean mForceShowIcon = false;
 
         public Builder withMenuItemClickListener() {
             mHasMenuItemClickListener = true;
@@ -409,7 +450,12 @@ public class PopupMenuTest {
             return this;
         }
 
-        private void configure() {
+        public Builder withForceShowIcon(boolean forceShowIcon) {
+            mForceShowIcon = forceShowIcon;
+            return this;
+        }
+
+        public void configure() {
             mAnchor = mActivity.findViewById(mAnchorId);
             if (!mUseCustomGravity && !mUseCustomPopupResource) {
                 mPopupMenu = new PopupMenu(mActivity, mAnchor);
@@ -443,10 +489,14 @@ public class PopupMenuTest {
             if (mGroupDividerEnabled) {
                 mPopupMenu.getMenu().setGroupDividerEnabled(true);
             }
+
+            mPopupMenu.setForceShowIcon(mForceShowIcon);
         }
 
         public void show() {
-            configure();
+            if (mPopupMenu == null) {
+                configure();
+            }
             // Show the popup menu
             mPopupMenu.show();
         }
