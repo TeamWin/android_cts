@@ -18,6 +18,7 @@ package android.app.usage.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -971,6 +972,8 @@ public class UsageStatsTest {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         context.startService(new Intent(context, TestService.class));
         mUiDevice.wait(Until.hasObject(By.clazz(TestService.class)), TIMEOUT);
+        final long sleepTime = 500;
+        SystemClock.sleep(sleepTime);
         context.stopService(new Intent(context, TestService.class));
         mUiDevice.wait(Until.gone(By.clazz(TestService.class)), TIMEOUT);
         final long endTime = System.currentTimeMillis();
@@ -1000,6 +1003,19 @@ public class UsageStatsTest {
         assertEquals(numStarts, 1);
         assertEquals(numStops, 1);
         assertLessThan(startIdx, stopIdx);
+
+        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+            startTime, endTime);
+        final UsageStats stats = map.get(mTargetPackage);
+        assertNotNull(stats);
+        final long lastTimeUsed = stats.getLastTimeForegroundServiceUsed();
+        // lastTimeUsed should be falling between startTime and endTime.
+        assertLessThan(startTime, lastTimeUsed);
+        assertLessThan(lastTimeUsed, endTime);
+        final long totalTimeUsed = stats.getTotalTimeForegroundServiceUsed();
+        // because we slept for 500 milliseconds earlier, we know the totalTimeUsed must be more
+        // more than 500 milliseconds.
+        assertLessThan(sleepTime, totalTimeUsed);
     }
 
     @AppModeFull // No usage events access in instant apps
