@@ -1050,6 +1050,8 @@ public class UsageStatsTest {
             SystemClock.sleep(500);
         }
 
+        mUiDevice.pressHome();
+
         setUsageSourceSetting(Integer.toString(mUsageStatsManager.USAGE_SOURCE_CURRENT_ACTIVITY));
         launchSubActivity(TaskRootActivity.class);
         // Usage should be attributed to the test app package
