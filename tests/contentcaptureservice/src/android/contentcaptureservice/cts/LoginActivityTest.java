@@ -38,6 +38,7 @@ import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatche
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
@@ -59,6 +60,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+@AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<LoginActivity> {
 
     private static final String TAG = LoginActivityTest.class.getSimpleName();

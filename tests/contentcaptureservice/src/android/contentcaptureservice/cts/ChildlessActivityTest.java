@@ -43,6 +43,7 @@ import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatche
 import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
@@ -66,6 +67,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+@AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class ChildlessActivityTest
         extends AbstractContentCaptureIntegrationTest<ChildlessActivity> {
 
