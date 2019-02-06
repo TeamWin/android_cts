@@ -16,11 +16,6 @@
 
 package com.android.cts.useslibrary;
 
-import android.content.pm.PackageManager;
-import android.os.Environment;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 
 import dalvik.system.BaseDexClassLoader;
