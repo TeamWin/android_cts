@@ -1485,9 +1485,9 @@
     <string name="wifi_test_network_suggestion">Network Suggestion tests</string>
     <string name="wifi_test_network_suggestion_ssid">Network suggestion with SSID.</string>
     <string name="wifi_test_network_suggestion_ssid_info">Tests whether the API can be used to suggest a network with SSID to the device and the device connects to it.</string>
-    <string name="wifi_test_network_suggestion_ssid_bssid">Network Request with a specific SSID and BSSID.</string>
+    <string name="wifi_test_network_suggestion_ssid_bssid">Network suggestion with SSID and BSSID.</string>
     <string name="wifi_test_network_suggestion_ssid_bssid_info">Tests whether the API can be used to suggest a network with SSID and specific BSSID to the device and the device connects to it.</string>
-    <string name="wifi_test_network_suggestion_ssid_post_connect">Network Request with a specific SSID and BSSID.</string>
+    <string name="wifi_test_network_suggestion_ssid_post_connect">Network suggestion with SSID and post connection broadcast.</string>
     <string name="wifi_test_network_suggestion_ssid_post_connect_info">Tests whether the API can be used to suggest a network with SSID to the device and the device connects to it and sends the post connect broadcast back to the app.</string>
 
     <!-- Strings for P2pTestActivity -->

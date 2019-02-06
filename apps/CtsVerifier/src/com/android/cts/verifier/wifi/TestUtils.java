@@ -111,7 +111,7 @@ public class TestUtils {
             throws InterruptedException {
         // Start scan and wait for new results.
         if (!startScanAndWaitForResults()) {
-            return null;
+            Log.e(TAG,"Failed to initiate a new scan. Using cached results from device");
         }
         // Filter results to find an open network.
         List<ScanResult> scanResults = mWifiManager.getScanResults();
