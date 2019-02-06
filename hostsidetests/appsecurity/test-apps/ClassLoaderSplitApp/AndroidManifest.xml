@@ -16,7 +16,8 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.cts.classloadersplitapp"
-    android:isolatedSplits="true">
+    android:isolatedSplits="true"
+    android:targetSandboxVersion="2">
 
     <application android:label="ClassloaderSplitApp"
                  android:classLoader="dalvik.system.PathClassLoader">

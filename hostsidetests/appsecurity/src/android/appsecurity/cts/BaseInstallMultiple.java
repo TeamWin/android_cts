@@ -78,6 +78,11 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         return (T) this;
     }
 
+    T allowTest() {
+        addArg("-t");
+        return (T) this;
+    }
+
     T locationAuto() {
         addArg("--install-location 0");
         return (T) this;
@@ -98,15 +103,24 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         return (T) this;
     }
 
+    T forUser(int userId) {
+        addArg("--user " + userId);
+        return (T) this;
+    }
+
     void run() throws DeviceNotAvailableException {
-        run(true);
+        run(true, null);
     }
 
     void runExpectingFailure() throws DeviceNotAvailableException {
-        run(false);
+        run(false, null);
     }
 
-    private void run(boolean expectingSuccess) throws DeviceNotAvailableException {
+    void runExpectingFailure(String failure) throws DeviceNotAvailableException {
+        run(false, failure);
+    }
+
+    private void run(boolean expectingSuccess, String failure) throws DeviceNotAvailableException {
         final ITestDevice device = mDevice;
 
         // Create an install session
@@ -159,11 +173,15 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         cmd.append("pm install-commit");
         cmd.append(' ').append(sessionId);
 
-        result = device.executeShellCommand(cmd.toString());
-        if (expectingSuccess) {
-            TestCase.assertTrue(result, result.startsWith("Success"));
+        result = device.executeShellCommand(cmd.toString()).trim();
+        if (failure == null) {
+            if (expectingSuccess) {
+                TestCase.assertTrue(result, result.startsWith("Success"));
+            } else {
+                TestCase.assertFalse(result, result.startsWith("Success"));
+            }
         } else {
-            TestCase.assertFalse(result, result.startsWith("Success"));
+            TestCase.assertTrue(result, result.contains(failure));
         }
     }
 }

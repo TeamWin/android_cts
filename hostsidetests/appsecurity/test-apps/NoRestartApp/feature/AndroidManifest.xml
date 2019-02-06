@@ -17,11 +17,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.android.cts.norestart"
     split="feature"
+    android:targetSandboxVersion="2"
     tools:ignore="MissingVersion" >
-
-    <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="23" />
 
     <application
         android:allowBackup="false"

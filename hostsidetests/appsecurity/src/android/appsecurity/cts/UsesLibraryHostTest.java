@@ -16,72 +16,67 @@
 
 package android.appsecurity.cts;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
+
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Set of tests that verify behavior of runtime permissions, including both
  * dynamic granting and behavior of legacy apps.
  */
-public class UsesLibraryHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+@AppModeFull(reason = "TODO verify whether or not these should run in instant mode")
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class UsesLibraryHostTest extends BaseAppSecurityTest {
     private static final String PKG = "com.android.cts.useslibrary";
 
     private static final String APK = "CtsUsesLibraryApp.apk";
     private static final String APK_COMPAT = "CtsUsesLibraryAppCompat.apk";
 
-    private IAbi mAbi;
-    private CompatibilityBuildHelper mBuildHelper;
 
-    @Override
-    public void setAbi(IAbi abi) {
-        mAbi = abi;
-    }
-
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mBuildHelper = new CompatibilityBuildHelper(buildInfo);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         Utils.prepareSingleUser(getDevice());
-        assertNotNull(mAbi);
-        assertNotNull(mBuildHelper);
-
         getDevice().uninstallPackage(PKG);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
+    @After
+    public void tearDown() throws Exception {
         getDevice().uninstallPackage(PKG);
     }
 
-    public void testUsesLibrary() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        runDeviceTests(PKG, ".UsesLibraryTest", "testUsesLibrary");
+    @Test
+    @AppModeFull
+    public void testUsesLibrary_full() throws Exception {
+        testUsesLibrary(false);
+    }
+    private void testUsesLibrary(boolean instant) throws Exception {
+        new InstallMultiple(instant).addApk(APK).run();
+        Utils.runDeviceTests(getDevice(), PKG, ".UsesLibraryTest", "testUsesLibrary");
     }
 
-    public void testMissingLibrary() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        runDeviceTests(PKG, ".UsesLibraryTest", "testMissingLibrary");
+    @Test
+    @AppModeFull
+    public void testMissingLibrary_full() throws Exception {
+        testMissingLibrary(false);
+    }
+    public void testMissingLibrary(boolean instant) throws Exception {
+        new InstallMultiple(instant).addApk(APK).run();
+        Utils.runDeviceTests(getDevice(), PKG, ".UsesLibraryTest", "testMissingLibrary");
     }
 
-    public void testDuplicateLibrary() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
-        runDeviceTests(PKG, ".UsesLibraryTest", "testDuplicateLibrary");
+    @Test
+    @AppModeFull
+    public void testDuplicateLibrary_full() throws Exception {
+        testDuplicateLibrary(false);
     }
-
-    private void runDeviceTests(String packageName, String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    public void testDuplicateLibrary(boolean instant) throws Exception {
+        new InstallMultiple(instant).addApk(APK).run();
+        Utils.runDeviceTests(getDevice(), PKG, ".UsesLibraryTest", "testDuplicateLibrary");
     }
 }
