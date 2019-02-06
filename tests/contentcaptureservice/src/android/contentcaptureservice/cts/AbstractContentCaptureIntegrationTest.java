@@ -67,8 +67,24 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
 
+
+    /**
+     * Watcher set on {@link #enableService()} and used to wait until it's gone after the test
+     * finishes.
+     */
+    private ServiceWatcher mServiceWatcher;
+
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
+            .run(() -> {
+                Log.v(mTag, "@SafeCleaner: resetDefaultService()");
+                resetService();
+
+                if (mServiceWatcher != null) {
+                    mServiceWatcher.waitOnDestroy();
+                }
+
+            })
             .add(() -> {
                 return CtsContentCaptureService.getExceptions();
             });
@@ -92,12 +108,6 @@ public abstract class AbstractContentCaptureIntegrationTest
             //
             // Finally, let subclasses set their ActivityTestRule
             .around(getActivityTestRule());
-
-    /**
-     * Watcher set on {@link #enableService()} and used to wait until it's gone after the test
-     * finishes.
-     */
-    private ServiceWatcher mServiceWatcher;
 
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
@@ -137,18 +147,6 @@ public abstract class AbstractContentCaptureIntegrationTest
         if (mActivitiesWatcher != null) {
             final Application app = (Application) sContext.getApplicationContext();
             app.unregisterActivityLifecycleCallbacks(mActivitiesWatcher);
-        }
-    }
-
-    // TODO(b/123539404): this method should be called from the SafeCleaner, but we'll need to
-    // add a run() method that takes an object that can throw an exception
-    @After
-    public void restoreDefaultService() throws InterruptedException {
-        Log.v(mTag, "@After: restoreDefaultService()");
-        resetService();
-
-        if (mServiceWatcher != null) {
-            mServiceWatcher.waitOnDestroy();
         }
     }
 
