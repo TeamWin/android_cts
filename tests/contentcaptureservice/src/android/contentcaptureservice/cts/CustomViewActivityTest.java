@@ -15,7 +15,11 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewDisappeared;
@@ -34,6 +38,7 @@ import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewStructure;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -41,7 +46,6 @@ import android.view.contentcapture.ContentCaptureSession;
 
 import androidx.annotation.NonNull;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -91,7 +95,6 @@ public class CustomViewActivityTest extends
      * the session notification methods instead - this is wrong because the main view will be
      * notified last, but we cannot prevent the apps from doing so...
      */
-    @Ignore("current broken, will be fixed by b/123777277")
     @Test
     public void testVirtualView_wrongWay() throws Exception {
         final CtsContentCaptureService service = enableService();
@@ -125,24 +128,36 @@ public class CustomViewActivityTest extends
 
         assertRightActivity(session, session.id, activity);
 
-
-        final int additionalEvents = 3;
-        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
-                additionalEvents);
-
+        final View grandpa1 = (View) activity.mCustomView.getParent();
+        final View grandpa2 = (View) grandpa1.getParent();
+        final View decorView = activity.getDecorView();
         final AutofillId customViewId = activity.mCustomView.getAutofillId();
+        Log.v(TAG, "assertJustInitialViewsAppeared(): grandpa1=" + grandpa1.getAutofillId()
+                + ", grandpa2=" + grandpa2.getAutofillId() + ", decor="
+                + decorView.getAutofillId() + "customView=" + customViewId);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+        final int additionalEvents = 2;
+
+        assertThat(events.size()).isAtLeast(CustomViewActivity.MIN_EVENTS + additionalEvents);
+
+        // Assert just the relevant events
+        assertViewHierarchyStarted(events, 0);
+        assertDecorViewAppeared(events, 1, decorView);
+        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
+
         final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
-
-        final int i = CustomViewActivity.MIN_EVENTS;
-
-        assertVirtualViewAppeared(events, i, mainSession, customViewId, 1, "child");
-        assertVirtualViewDisappeared(events, i + 1, customViewId, mainSession, 1);
+        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 1, "child");
+        assertVirtualViewDisappeared(events, 5, customViewId, mainSession, 1);
 
         // This is the "wrong" part - the parent is notified last
-        assertViewWithUnknownParentAppeared(events, i + 2, session.id, activity.mCustomView);
+        assertViewWithUnknownParentAppeared(events, 6, session.id, activity.mCustomView);
+
+        assertViewHierarchyFinished(events, 7);
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
-        // TODO(b/122315042): assert views disappeared
     }
 
     /**
