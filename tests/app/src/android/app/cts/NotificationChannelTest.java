@@ -159,15 +159,11 @@ public class NotificationChannelTest extends AndroidTestCase {
         NotificationChannel channel =
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setAllowBubbles(true);
-        assertEquals("Only HIGH channels can have bubbles", false, channel.canBubble());
+        assertEquals(true, channel.canBubble());
 
-        channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
+        channel = new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setAllowBubbles(false);
         assertEquals(false, channel.canBubble());
-
-        channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
-        channel.setAllowBubbles(true);
-        assertEquals(true, channel.canBubble());
     }
 
     public void testIsImportanceLockedByOEM() {
