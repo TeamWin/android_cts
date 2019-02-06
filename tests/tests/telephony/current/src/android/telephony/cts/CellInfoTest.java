@@ -43,6 +43,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Test TelephonyManager.getAllCellInfo()
@@ -124,7 +125,16 @@ public class CellInfoTest extends AndroidTestCase{
     // 3gpp 36.101 Sec 5.7.2
     private static final int CHANNEL_RASTER_EUTRAN = 100; //kHz
 
+    private static final int MAX_CELLINFO_WAIT_MILLIS = 5000;
+
     private PackageManager mPm;
+
+    private Executor mSimpleExecutor = new Executor() {
+        @Override
+        public void execute(Runnable r) {
+            r.run();
+        }
+    };
 
     private boolean isCamped() {
         ServiceState ss = mTm.getServiceState();
@@ -140,8 +150,23 @@ public class CellInfoTest extends AndroidTestCase{
         mPm = getContext().getPackageManager();
     }
 
-    public void testCellInfo() throws Throwable {
+    private static class CellInfoResultsCallback extends TelephonyManager.CellInfoCallback {
+        List<CellInfo> cellInfo;
 
+        @Override
+        public synchronized void onCellInfo(List<CellInfo> cellInfo) {
+            this.cellInfo = cellInfo;
+            notifyAll();
+        }
+
+        public synchronized void wait(int millis) throws InterruptedException {
+            if (cellInfo == null) {
+                super.wait(millis);
+            }
+        }
+    }
+
+    public void testCellInfo() throws Throwable {
         if(!(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
             return;
@@ -149,9 +174,12 @@ public class CellInfoTest extends AndroidTestCase{
 
         if (!isCamped()) fail("Device is not camped to a cell");
 
-        // getAllCellInfo should never return null, and there should
-        // be at least one entry.
-        List<CellInfo> allCellInfo = mTm.getAllCellInfo();
+        // Make a blocking call to requestCellInfoUpdate for results (for simplicity of test).
+        CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
+        mTm.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);
+        resultsCallback.wait(MAX_CELLINFO_WAIT_MILLIS);
+        List<CellInfo> allCellInfo = resultsCallback.cellInfo;
+
         assertNotNull("TelephonyManager.getAllCellInfo() returned NULL!", allCellInfo);
         assertTrue("TelephonyManager.getAllCellInfo() returned zero-length list!",
             allCellInfo.size() > 0);
@@ -726,7 +754,7 @@ public class CellInfoTest extends AndroidTestCase{
 
         CellInfoTdscdma newCi = CellInfoTdscdma.CREATOR.createFromParcel(p);
         assertTrue(tdscdma.equals(newCi));
-        assertEquals("hashCode() did not get right hasdCode", tdscdma.hashCode(), newCi.hashCode());
+        assertEquals("hashCode() did not get right hashCode", tdscdma.hashCode(), newCi.hashCode());
     }
 
     private void verifyCellIdentityTdscdma(CellIdentityTdscdma tdscdma) {
