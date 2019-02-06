@@ -39,6 +39,7 @@ my_bionic_testlib_files := \
   libdlext_test_different_soname.so \
   libdlext_test_fd/libdlext_test_fd.so \
   libdlext_test_norelro.so \
+  libdlext_test_recursive.so \
   libdlext_test_runpath_zip/libdlext_test_runpath_zip_zipaligned.zip \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
