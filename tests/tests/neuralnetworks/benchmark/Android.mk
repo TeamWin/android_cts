@@ -29,7 +29,7 @@ LOCAL_MULTILIB := both
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test androidx.test.rules \
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test \
     compatibility-device-util ctstestrunner junit NeuralNetworksApiBenchmark_Lib
 LOCAL_JNI_SHARED_LIBRARIES := libnnbenchmark_jni
 
