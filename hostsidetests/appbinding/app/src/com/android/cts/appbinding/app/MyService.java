@@ -15,12 +15,12 @@
  */
 package com.android.cts.appbinding.app;
 
-import android.app.SmsAppService;
+import android.service.carrier.CarrierMessagingClientService;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 
-public class MyService extends SmsAppService {
+public class MyService extends CarrierMessagingClientService {
     @Override
     protected void dump(FileDescriptor fd, PrintWriter writer, String[] args) {
 
@@ -31,6 +31,6 @@ public class MyService extends SmsAppService {
             return;
         }
         writer.print("Package=[" + getPackageName() + "]");
-        writer.println("Class=[" + this.getClass().getName() + "]");
+        writer.println(" Class=[" + this.getClass().getName() + "]");
     }
 }
