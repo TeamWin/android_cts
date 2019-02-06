@@ -17,11 +17,9 @@
 #define LOG_TAG "DYNAMIC-DEPTH-JNI"
 #include <jni.h>
 #include <log/log.h>
-#include <dlfcn.h>
+#include <dynamic_depth/depth_jpeg.h>
 
-typedef int32_t (*validate_dynamic_depth_buffer) (const char *, size_t);
-static const char *kDynamicDepthLibraryName = "libdynamic_depth.so";
-static const char *kDynamicDepthValidateFunction = "ValidateAndroidDynamicDepthBuffer";
+using namespace dynamic_depth;
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_ImageReaderTest_validateDynamicDepthNative(
@@ -34,23 +32,8 @@ Java_android_hardware_camera2_cts_ImageReaderTest_validateDynamicDepthNative(
         return JNI_FALSE;
     }
 
-    void* depthLibHandle = dlopen(kDynamicDepthLibraryName, RTLD_NOW | RTLD_LOCAL);
-    if (depthLibHandle == nullptr) {
-        ALOGE("Failed to load dynamic depth library!");
-        return JNI_FALSE;
-    }
-
-    validate_dynamic_depth_buffer validate = reinterpret_cast<validate_dynamic_depth_buffer> (
-            dlsym(depthLibHandle, kDynamicDepthValidateFunction));
-    if (validate == nullptr) {
-        ALOGE("Failed to link to dynamic depth validate function!");
-        dlclose(depthLibHandle);
-        return JNI_FALSE;
-    }
-
-    auto ret = (validate(reinterpret_cast<const char *> (buffer), bufferLength) == 0) ?
-            JNI_TRUE : JNI_FALSE;
-    dlclose(depthLibHandle);
+    auto ret = (ValidateAndroidDynamicDepthBuffer(reinterpret_cast<const char *> (buffer),
+                bufferLength) == 0) ? JNI_TRUE : JNI_FALSE;
 
     return ret;
 }
