@@ -16,8 +16,6 @@
 
 package com.android.compatibility.common.util;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import android.os.Build;
 import android.support.test.InstrumentationRegistry;
 
