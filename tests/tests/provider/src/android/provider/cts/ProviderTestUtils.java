@@ -225,14 +225,14 @@ public class ProviderTestUtils {
         }
     }
 
-    static Uri scanFile(File file) throws Exception {
+    static Uri scanFile(File file, boolean originatedFromShell) throws Exception {
         final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
                 .getContentResolver();
         try (ContentProviderClient cpc = resolver
                 .acquireContentProviderClient(MediaStore.AUTHORITY)) {
             final Bundle in = new Bundle();
             in.putParcelable(Intent.EXTRA_STREAM, Uri.fromFile(file));
-            in.putBoolean(Intent.EXTRA_LOCAL_ONLY, true);
+            in.putBoolean(MediaStore.EXTRA_ORIGINATED_FROM_SHELL, originatedFromShell);
             final Bundle out = cpc.call(MediaStore.AUTHORITY, MediaStore.SCAN_FILE_CALL, null, in);
             return out.getParcelable(Intent.EXTRA_STREAM);
         }

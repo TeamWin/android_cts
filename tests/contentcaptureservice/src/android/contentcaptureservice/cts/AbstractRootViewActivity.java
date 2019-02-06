@@ -58,10 +58,9 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
 
         mRootView = findViewById(R.id.root_view);
 
-        Log.d(TAG, "Parents for " + getClass() + ": rootView=" + mRootView
+        Log.d(TAG, "onCreate(): parents for " + getClass() + ": rootView=" + mRootView
                 + "\ngrandParent=" + getGrandParent()
-                + "\ngrandGrandParent=" + getGrandGrandParent()
-                + "\ndecorView=" + getDecorView());
+                + "\ngrandGrandParent=" + getGrandGrandParent());
 
         if (sRootViewVisitor != null) {
             Log.d(TAG, "Applying visitor to " + this + "/" + mRootView);
@@ -80,8 +79,7 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
         Log.d(TAG, "AutofillIds for " + getClass() + ": "
                 + " rootView=" + getRootView().getAutofillId()
                 + ", grandParent=" + getGrandParent().getAutofillId()
-                + ", grandGrandParent=" + getGrandGrandParent().getAutofillId()
-                + ", decorView=" + getDecorView().getAutofillId());
+                + ", grandGrandParent=" + getGrandGrandParent().getAutofillId());
     }
 
     @Override
@@ -112,12 +110,6 @@ abstract class AbstractRootViewActivity extends AbstractContentCaptureActivity {
     @NonNull
     public ViewGroup getGrandGrandParent() {
         return (ViewGroup) getGrandParent().getParent();
-    }
-
-    // TODO(b/122315042): remove this method when not needed anymore
-    @NonNull
-    public ViewGroup getDecorView() {
-        return (ViewGroup) getGrandGrandParent().getParent();
     }
 
     /**

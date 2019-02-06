@@ -315,6 +315,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         mActivityRule.runOnUiThread(() -> {
             mActivity.getWindow().setExitTransition(new Fade());
             Intent intent = new Intent(mActivity, TargetActivity.class);
+            intent.putExtra(TargetActivity.EXTRA_USE_ANIMATOR, true);
             ActivityOptions activityOptions =
                     ActivityOptions.makeSceneTransitionAnimation(mActivity);
             mActivity.startActivity(intent, activityOptions.toBundle());
@@ -379,7 +380,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
         TargetActivity targetActivity = waitForTargetActivity();
 
-        assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
+        assertTrue(targetActivity.transitionComplete.await(5, TimeUnit.SECONDS));
         assertEquals(View.VISIBLE, targetActivity.startVisibility);
         assertEquals(View.VISIBLE, targetActivity.endVisibility);
 
@@ -392,11 +393,11 @@ public class ActivityTransitionTest extends BaseTransitionTest {
             targetActivity.finishAfterTransition();
         });
 
-        assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
+        assertTrue(targetActivity.transitionComplete.await(5, TimeUnit.SECONDS));
         assertEquals(View.VISIBLE, targetActivity.startVisibility);
         assertEquals(View.VISIBLE, targetActivity.endVisibility);
 
-        assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
+        assertTrue(targetActivity.transitionComplete.await(5, TimeUnit.SECONDS));
         verify(mReenterListener, within(5000)).onTransitionStart(any());
         verify(mReenterListener, within(5000)).onTransitionEnd(any());
     }

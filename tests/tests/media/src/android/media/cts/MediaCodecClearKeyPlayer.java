@@ -115,6 +115,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             "  \"track_types\": [ ]                              " +
             "}                                                   " ;
 
+    // ClearKey private data (0-bytes of length 4)
+    private static final byte[] sCasPrivateInfo = hexStringToByteArray("00000000");
+
     /**
      * Convert a hex string into byte array.
      */
@@ -309,6 +312,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     MediaFormat.MIMETYPE_AUDIO_SCRAMBLED.equals(mime)) {
                 MediaExtractor.CasInfo casInfo = extractor.getCasInfo(trackId);
                 if (casInfo != null) {
+                    if (!Arrays.equals(sCasPrivateInfo, casInfo.getPrivateData())) {
+                        throw new Error("Cas private data mismatch");
+                    }
                     mMediaCas = new MediaCas(casInfo.getSystemId());
                     mMediaCas.provision(sProvisionStr);
                     extractor.setMediaCas(mMediaCas);

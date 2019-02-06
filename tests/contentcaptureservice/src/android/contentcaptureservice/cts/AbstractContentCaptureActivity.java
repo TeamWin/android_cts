@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.contentcapture.ContentCaptureManager;
 
 import androidx.annotation.NonNull;
@@ -48,39 +49,44 @@ abstract class AbstractContentCaptureActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mRealTaskId = getTaskId();
+        Log.d(mTag, "onCreate(): taskId=" + mRealTaskId + ", decorView=" + getDecorView());
 
-        Log.i(mTag, "onCreate(): taskId= " + mRealTaskId);
         super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onStart() {
-        Log.i(mTag, "onStart()");
+        Log.d(mTag, "onStart()");
         super.onStart();
     }
 
     @Override
     protected void onResume() {
-        Log.i(mTag, "onResume()");
+        Log.d(mTag, "onResume(): decorViewId=" + getDecorView().getAutofillId());
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        Log.i(mTag, "onPause()");
+        Log.d(mTag, "onPause()");
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        Log.i(mTag, "onStop()");
+        Log.d(mTag, "onStop()");
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        Log.i(mTag, "onDestroy()");
+        Log.d(mTag, "onDestroy()");
         super.onDestroy();
+    }
+
+    @NonNull
+    public final View getDecorView() {
+        return getWindow().getDecorView();
     }
 
     /**

@@ -218,6 +218,15 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name="android.content.pm.cts.LauncherMockActivity"
+                  android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Used for PackageManager test, don't delete this MockContentProvider provider -->
         <provider android:name="android.content.cts.MockContentProvider" android:authorities="ctstest"
             android:multiprocess="false" />

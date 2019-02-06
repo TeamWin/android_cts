@@ -18,12 +18,14 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.LifecycleOrder.CREATION;
 import static android.contentcaptureservice.cts.Assertions.LifecycleOrder.DESTRUCTION;
 import static android.contentcaptureservice.cts.Assertions.assertChildSessionContext;
+import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertLifecycleOrder;
 import static android.contentcaptureservice.cts.Assertions.assertMainSessionContext;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared;
-import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
@@ -50,6 +52,7 @@ import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -206,7 +209,7 @@ public class ChildlessActivityTest
         // Should be empty because the root view is not important for content capture without a
         // child that is important.
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
+        Log.v(TAG, "events(" + events.size() + "): " + events);
         assertThat(events).isEmpty();
     }
 
@@ -229,8 +232,9 @@ public class ChildlessActivityTest
         watcher.waitFor(RESUMED);
 
         // Remove view
+        final LinearLayout rootView = activity.getRootView();
         final TextView child = childRef.get();
-        activity.syncRunOnUiThread(() -> activity.getRootView().removeView(child));
+        activity.syncRunOnUiThread(() -> rootView.removeView(child));
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -242,19 +246,24 @@ public class ChildlessActivityTest
         assertRightActivity(session, sessionId, activity);
 
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/119638528): ideally it should be 3 so it reflects just the views defined
-        // in the layout - right now it's generating events for 2 intermediate parents
-        // (android:action_mode_bar_stub and android:content), we should try to create an
-        // activity without them
-        assertThat(events.size()).isAtLeast(5);
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+
+        final AutofillId rootId = rootView.getAutofillId();
+
+        final View grandpa1 = activity.getGrandParent();
+        final View grandpa2 = activity.getGrandGrandParent();
+        final View decorView = activity.getDecorView();
 
         // Assert just the relevant events
-        final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(events, 0, sessionId, child, rootId);
-        assertViewWithUnknownParentAppeared(events, 1, sessionId, activity.getRootView());
-        // Ignore events 2 and 3 (intermediate parents appeared)
-        assertViewDisappeared(events, 4, child.getAutofillId());
+        assertThat(events.size()).isAtLeast(8);
+        assertViewHierarchyStarted(events, 0);
+        assertDecorViewAppeared(events, 1, decorView);
+        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 4, sessionId, rootView, grandpa1.getAutofillId());
+        assertViewAppeared(events, 5, sessionId, child, rootId);
+        assertViewHierarchyFinished(events, 6);
+        assertViewDisappeared(events, 7, child.getAutofillId());
     }
 
     @Test
@@ -265,8 +274,10 @@ public class ChildlessActivityTest
         final ChildlessActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
+        // Add View
+        final LinearLayout rootView = activity.getRootView();
         final TextView child = newImportantView(activity, "Important I am");
-        activity.runOnUiThread(() -> activity.getRootView().addView(child));
+        activity.runOnUiThread(() -> rootView.addView(child));
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -278,16 +289,18 @@ public class ChildlessActivityTest
         assertRightActivity(session, sessionId, activity);
 
         final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events: " + events);
-        // TODO(b/123540067): ideally it should be 3 so it reflects just the views defined
-        // in the layout - right now it's generating events for 2 intermediate parents
-        // (android:action_mode_bar_stub and android:content), we should try to create an
-        // activity without them
-        assertThat(events.size()).isAtLeast(4);
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+
+        final View grandpa = activity.getGrandParent();
 
         // Assert just the relevant events
-        final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(events, 0, sessionId, child, rootId);
+
+        // NOTE: there's no TYPE_INITIAL_VIEW_HIERARCHY_XXX events because there was no important
+        // view initially
+        assertThat(events.size()).isAtLeast(2);
+        // TODO(b/122959591): figure out the child is coming first
+        assertViewAppeared(events, 0, sessionId, child, rootView.getAutofillId());
+        assertViewAppeared(events, 1, sessionId, rootView, grandpa.getAutofillId());
     }
 
     @Test
@@ -298,7 +311,10 @@ public class ChildlessActivityTest
         final ChildlessActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
-        final ContentCaptureSession mainSession = activity.getRootView().getContentCaptureSession();
+        final LinearLayout rootView = activity.getRootView();
+        final View grandpa = activity.getGrandParent();
+
+        final ContentCaptureSession mainSession = rootView.getContentCaptureSession();
         final ContentCaptureSessionId mainSessionId = mainSession.getContentCaptureSessionId();
         Log.v(TAG, "main session id: " + mainSessionId);
 
@@ -309,8 +325,10 @@ public class ChildlessActivityTest
         Log.v(TAG, "child session id: " + childSessionId);
 
         final TextView child = newImportantView(activity, "Important I am");
+        final AutofillId childId = child.getAutofillId();
+        Log.v(TAG, "childId: " + childId);
         child.setContentCaptureSession(childSession);
-        activity.runOnUiThread(() -> activity.getRootView().addView(child));
+        activity.runOnUiThread(() -> rootView.addView(child));
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -318,25 +336,26 @@ public class ChildlessActivityTest
         final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
         assertThat(sessionIds).containsExactly(mainSessionId, childSessionId).inOrder();
 
+
         // Assert sessions
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
         final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
-        // TODO(b/123540067): ideally it should have only one event for the root view ,
-        // right now it's generating events for 2 intermediate parents
-        // (android:action_mode_bar_stub and android:content), we should try to create an
-        // activity without them
-        assertThat(mainEvents.size()).isAtLeast(3);
-        assertViewWithUnknownParentAppeared(mainEvents, 0, mainSessionId, activity.getRootView());
+        Log.v(TAG, "mainEvents(" + mainEvents.size() + "): " + mainEvents);
+
+        // NOTE: there's no TYPE_INITIAL_VIEW_HIERARCHY_XXX events because there was no important
+        // view initially
+        assertThat(mainEvents.size()).isAtLeast(1);
+        assertViewAppeared(mainEvents, 0, mainSessionId, rootView, grandpa.getAutofillId());
 
         final Session childTestSession = service.getFinishedSession(childSessionId);
         assertChildSessionContext(childTestSession, "http://child");
         final List<ContentCaptureEvent> childEvents = childTestSession.getEvents();
+        Log.v(TAG, "childEvents(" + childEvents.size() + "): " + childEvents);
         final int minEvents = 1;
         assertThat(mainEvents.size()).isAtLeast(minEvents);
-        assertViewAppeared(childEvents, 0, childSessionId, child,
-                activity.getRootView().getAutofillId());
-        assertViewsOptionallyDisappeared(childEvents, minEvents, child.getAutofillId());
+        assertViewAppeared(childEvents, 0, childSessionId, child, rootView.getAutofillId());
+        assertViewsOptionallyDisappeared(childEvents, minEvents, childId);
     }
 
     /**
@@ -408,23 +427,36 @@ public class ChildlessActivityTest
         // Assert main sessions info
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
-        assertThat(mainTestSession.getEvents()).isEmpty();
 
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
         assertChildSessionContext(childTestSession1, "http://session1");
-        assertThat(childTestSession1.getEvents()).isEmpty();
 
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
         assertChildSessionContext(childTestSession2, "http://session2");
-        assertThat(childTestSession2.getEvents()).isEmpty();
 
         final Session childTestSession3 = service.getFinishedSession(childSessionId3);
         assertChildSessionContext(childTestSession3, "http://session3");
-        assertThat(childTestSession3.getEvents()).isEmpty();
 
         final Session childTestSession4 = service.getFinishedSession(childSessionId4);
         assertChildSessionContext(childTestSession4, "http://session4");
-        assertThat(childTestSession4.getEvents()).isEmpty();
+
+        // Gets all events first so they're all logged before the assertions
+        final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
+        final List<ContentCaptureEvent> events1 = childTestSession1.getEvents();
+        final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
+        final List<ContentCaptureEvent> events3 = childTestSession3.getEvents();
+        final List<ContentCaptureEvent> events4 = childTestSession4.getEvents();
+        Log.v(TAG, "mainEvents(" + mainEvents.size() + "): " + mainEvents);
+        Log.v(TAG, "events1(" + events1.size() + "): " + events1);
+        Log.v(TAG, "events2(" + events2.size() + "): " + events2);
+        Log.v(TAG, "events3(" + events3.size() + "): " + events3);
+        Log.v(TAG, "events4(" + events4.size() + "): " + events4);
+
+        assertThat(mainEvents).isEmpty();
+        assertThat(events1).isEmpty();
+        assertThat(events2).isEmpty();
+        assertThat(events3).isEmpty();
+        assertThat(events4).isEmpty();
 
         // Assert lifecycle methods were called in the right order
         assertLifecycleOrder(1, mainTestSession,   CREATION);
@@ -580,27 +612,35 @@ public class ChildlessActivityTest
         // Assert main sessions info
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
+        final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
+        Log.v(TAG, "main session events(" + mainEvents.size() + "): " + mainEvents);
 
+        // Gets all events first so they're all logged before the assertions
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
         assertChildSessionContext(childTestSession1, "http://session1");
         final List<ContentCaptureEvent> events1 = childTestSession1.getEvents();
-        Log.v(TAG, "events1: " + events1);
-        assertThat(events1.size()).isAtLeast(1);
-        final AutofillId rootId = activity.getRootView().getAutofillId();
-        assertViewAppeared(events1, 0, s1c1, rootId);
+        Log.v(TAG, "events1(" + events1.size() + "): " + events1);
 
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
         final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
         assertChildSessionContext(childTestSession2, "http://session2");
-        Log.v(TAG, "events2: " + events2);
+        Log.v(TAG, "events2(" + events2.size() + "): " + events2);
+        final Session childTestSession3 = service.getFinishedSession(childSessionId3);
+        assertChildSessionContext(childTestSession3, "http://session3");
+        List<ContentCaptureEvent> events3 = childTestSession3.getEvents();
+        Log.v(TAG, "events3(" + events3.size() + "): " + events3);
+
+        // TODO(b/123540067): ideally should be empty, but it has 2 grandparents
+        assertThat(mainEvents).hasSize(2);
+
+        assertThat(events1.size()).isAtLeast(1);
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+        assertViewAppeared(events1, 0, s1c1, rootId);
+
         assertThat(events2.size()).isAtLeast(2);
         assertViewAppeared(events2, 0, s2c1, rootId);
         assertViewAppeared(events2, 1, s2c2, rootId);
 
-        final Session childTestSession3 = service.getFinishedSession(childSessionId3);
-        assertChildSessionContext(childTestSession3, "http://session3");
-        List<ContentCaptureEvent> events3 = childTestSession3.getEvents();
-        Log.v(TAG, "events3: " + events3);
         assertThat(events3.size()).isAtLeast(4);
         assertViewAppeared(events3, 0, s3c1, rootId);
         assertViewAppeared(events3, 1, s3c2, rootId);
@@ -847,20 +887,25 @@ public class ChildlessActivityTest
         // Assert main sessions info
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
+        final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
+        Log.v(TAG, "mainEvents(" + mainEvents.size() + "): " + mainEvents);
 
+        // Logs events before asserting
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
         assertChildSessionContext(childTestSession1, "http://session1");
         final List<ContentCaptureEvent> events1 = childTestSession1.getEvents();
-        Log.v(TAG, "events1: " + events1);
+        Log.v(TAG, "events1(" + events1.size() + "): " + events1);
+        final Session childTestSession2 = service.getFinishedSession(childSessionId2);
+        final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
+        assertChildSessionContext(childTestSession2, "http://session2");
+        Log.v(TAG, "events2(" + events2.size() + "): " + events2);
+
+        // Assert children
         assertThat(events1.size()).isAtLeast(2);
         final AutofillId rootId = activity.getRootView().getAutofillId();
         assertViewAppeared(events1, 0, s1c1, rootId);
         assertViewDisappeared(events1, 1, s1c1Id);
 
-        final Session childTestSession2 = service.getFinishedSession(childSessionId2);
-        final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
-        assertChildSessionContext(childTestSession2, "http://session2");
-        Log.v(TAG, "events2: " + events2);
         assertThat(events2.size()).isAtLeast(3);
         assertViewAppeared(events2, 0, s2c1, rootId);
         assertViewAppeared(events2, 1, s2c2, rootId);
@@ -887,39 +932,30 @@ public class ChildlessActivityTest
     }
 
     private void setContentCaptureFeatureEnabledTest_disabled(boolean bySettings) throws Exception {
-        // TODO(b/123429736): remove try/finally once we use a StateChangerRule
-        try {
-            final ContentCaptureManager mgr = getContentCaptureManagerHack();
+        final ContentCaptureManager mgr = getContentCaptureManagerHack();
 
-            final CtsContentCaptureService service = enableService();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
-            final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
+        final CtsContentCaptureService service = enableService();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+        final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
 
-            if (bySettings) {
-                setFeatureEnabled("false");
-            } else {
-                mgr.setContentCaptureFeatureEnabled(false);
-            }
-
-            disconnectedListener.waitForOnDisconnected();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
-            assertThat(mgr.isContentCaptureEnabled()).isFalse();
-
-            final ActivityWatcher watcher = startWatcher();
-            final ChildlessActivity activity = launchActivity();
-
-            watcher.waitFor(RESUMED);
-            activity.finish();
-            watcher.waitFor(DESTROYED);
-
-            assertThat(service.getAllSessionIds()).isEmpty();
-        } finally {
-            try {
-                Helper.resetService();
-            } finally {
-                setFeatureEnabled("true");
-            }
+        if (bySettings) {
+            setFeatureEnabled("false");
+        } else {
+            mgr.setContentCaptureFeatureEnabled(false);
         }
+
+        disconnectedListener.waitForOnDisconnected();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+        assertThat(mgr.isContentCaptureEnabled()).isFalse();
+
+        final ActivityWatcher watcher = startWatcher();
+        final ChildlessActivity activity = launchActivity();
+
+        watcher.waitFor(RESUMED);
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        assertThat(service.getAllSessionIds()).isEmpty();
     }
 
     @Test
@@ -930,60 +966,51 @@ public class ChildlessActivityTest
 
     private void setContentCaptureFeatureEnabledTest_disabledThenReEnabled(boolean bySettings)
             throws Exception {
-        // TODO(b/123429736): remove try/finally once we use a StateChangerRule
-        try {
-            final ContentCaptureManager mgr = getContentCaptureManagerHack();
+        final ContentCaptureManager mgr = getContentCaptureManagerHack();
 
-            final CtsContentCaptureService service1 = enableService();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
-            final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
+        final CtsContentCaptureService service1 = enableService();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+        final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
 
-            if (bySettings) {
-                setFeatureEnabled("false");
-            } else {
-                mgr.setContentCaptureFeatureEnabled(false);
-            }
-            disconnectedListener.waitForOnDisconnected();
-
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
-            assertThat(mgr.isContentCaptureEnabled()).isFalse();
-
-            // Launch and finish 1st activity while it's disabled
-            final ActivityWatcher watcher1 = startWatcher();
-            final ChildlessActivity activity1 = launchActivity();
-            watcher1.waitFor(RESUMED);
-            activity1.finish();
-            watcher1.waitFor(DESTROYED);
-
-            // Re-enable feature
-            final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
-            if (bySettings) {
-                setFeatureEnabled("true");
-            } else {
-                mgr.setContentCaptureFeatureEnabled(true);
-            }
-            final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
-            assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
-
-            // Launch and finish 2nd activity while it's enabled
-            final ActivityLauncher<CustomViewActivity> launcher2 = new ActivityLauncher<>(
-                    sContext, mActivitiesWatcher, CustomViewActivity.class);
-            final ActivityWatcher watcher2 = launcher2.getWatcher();
-            final CustomViewActivity activity2 = launcher2.launchActivity();
-            watcher2.waitFor(RESUMED);
-            activity2.finish();
-            watcher2.waitFor(DESTROYED);
-
-            assertThat(service1.getAllSessionIds()).isEmpty();
-            final Session session = service2.getOnlyFinishedSession();
-            activity2.assertDefaultEvents(session);
-        } finally {
-            try {
-                Helper.resetService();
-            } finally {
-                setFeatureEnabled("true");
-            }
+        if (bySettings) {
+            setFeatureEnabled("false");
+        } else {
+            mgr.setContentCaptureFeatureEnabled(false);
         }
+        disconnectedListener.waitForOnDisconnected();
+
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
+        assertThat(mgr.isContentCaptureEnabled()).isFalse();
+
+        // Launch and finish 1st activity while it's disabled
+        final ActivityWatcher watcher1 = startWatcher();
+        final ChildlessActivity activity1 = launchActivity();
+        watcher1.waitFor(RESUMED);
+        activity1.finish();
+        watcher1.waitFor(DESTROYED);
+
+        // Re-enable feature
+        final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
+        if (bySettings) {
+            setFeatureEnabled("true");
+        } else {
+            mgr.setContentCaptureFeatureEnabled(true);
+        }
+        final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
+        assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
+
+        // Launch and finish 2nd activity while it's enabled
+        final ActivityLauncher<CustomViewActivity> launcher2 = new ActivityLauncher<>(
+                sContext, mActivitiesWatcher, CustomViewActivity.class);
+        final ActivityWatcher watcher2 = launcher2.getWatcher();
+        final CustomViewActivity activity2 = launcher2.launchActivity();
+        watcher2.waitFor(RESUMED);
+        activity2.finish();
+        watcher2.waitFor(DESTROYED);
+
+        assertThat(service1.getAllSessionIds()).isEmpty();
+        final Session session = service2.getOnlyFinishedSession();
+        activity2.assertDefaultEvents(session);
     }
 
     @Test

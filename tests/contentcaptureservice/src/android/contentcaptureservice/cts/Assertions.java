@@ -17,6 +17,8 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.MY_EPOCH;
 import static android.contentcaptureservice.cts.Helper.TAG;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_INITIAL_VIEW_TREE_APPEARED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_INITIAL_VIEW_TREE_APPEARING;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED;
@@ -136,16 +138,28 @@ final class Assertions {
     }
 
     /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event for a decor view.
+     *
+     * <P>The decor view is typically internal, so there isn't much we can assert, other than its
+     * autofill id.
+     */
+    public static void assertDecorViewAppeared(@NonNull List<ContentCaptureEvent> events,
+            int index, @NonNull View expectedDecorView) {
+        final ContentCaptureEvent event = assertViewAppeared(events, index);
+        assertWithMessage("wrong autofill id on %s (%s)", event, index)
+                .that(event.getViewNode().getAutofillId())
+                .isEqualTo(expectedDecorView.getAutofillId());
+    }
+
+    /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
      */
     public static ViewNode assertViewWithUnknownParentAppeared(
             @NonNull List<ContentCaptureEvent> events, int index, @NonNull View expectedView,
             @Nullable String expectedText) {
-        final ViewNode node = assertViewAppeared(events, index);
-        final ContentCaptureEvent event = events.get(index);
+        final ContentCaptureEvent event = assertViewAppeared(events, index);
+        final ViewNode node = event.getViewNode();
 
-        assertWithMessage("invalid time on %s (%s)", event, index).that(event.getEventTime())
-                .isAtLeast(MY_EPOCH);
         assertWithMessage("wrong class on %s (%s)", event, index).that(node.getClassName())
                 .isEqualTo(expectedView.getClass().getName());
         assertWithMessage("wrong autofill id on %s (%s)", event, index).that(node.getAutofillId())
@@ -162,14 +176,12 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
      */
-    public static ViewNode assertViewAppeared(@NonNull List<ContentCaptureEvent> events,
+    public static ContentCaptureEvent assertViewAppeared(@NonNull List<ContentCaptureEvent> events,
             int index) {
-        final ContentCaptureEvent event = getEvent(events, index);
-        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
-                .isEqualTo(TYPE_VIEW_APPEARED);
+        final ContentCaptureEvent event = getEvent(events, index, TYPE_VIEW_APPEARED);
         final ViewNode node = event.getViewNode();
         assertThat(node).isNotNull();
-        return node;
+        return event;
     }
 
     /**
@@ -203,6 +215,38 @@ final class Assertions {
     }
 
     /**
+     * Asserts the contents of a {@link #TYPE_INITIAL_VIEW_TREE_APPEARING} event.
+     */
+    public static void assertViewHierarchyStarted(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertViewHierarchyEvent(events, index, /* started= */ true);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_INITIAL_VIEW_TREE_APPEARED} event.
+     */
+    public static void assertViewHierarchyFinished(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertViewHierarchyEvent(events, index, /* started= */ false);
+    }
+
+    private static void assertViewHierarchyEvent(@NonNull List<ContentCaptureEvent> events,
+            int index, boolean started) {
+        final int expectedType = started
+                ? TYPE_INITIAL_VIEW_TREE_APPEARING
+                : TYPE_INITIAL_VIEW_TREE_APPEARED;
+        final ContentCaptureEvent event = getEvent(events, index, expectedType);
+        assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
+                .that(event.getViewNode()).isNull();
+        assertWithMessage("event %s (index %s) should not have text", event, index)
+                .that(event.getViewNode()).isNull();
+        assertWithMessage("event %s (index %s) should not have an autofillId", event, index)
+                .that(event.getId()).isNull();
+        assertWithMessage("event %s (index %s) should not have autofillIds", event, index)
+                .that(event.getIds()).isNull();
+    }
+
+    /**
      * Asserts that a session for the given activity has no events.
      */
     public static void assertNoEvents(@NonNull Session session,
@@ -223,7 +267,8 @@ final class Assertions {
      * @param minimumSize size of events received if activity stopped before views disappeared
      * @param expectedIds ids of views that might have disappeared.
      */
-    // TODO(b/123540067): remove this method if we could make it deterministic
+    // TODO(b/123540067, 122315042): remove this method if we could make it deterministic, and
+    // inline the assertions (or rename / change its logic)
     public static void assertViewsOptionallyDisappeared(@NonNull List<ContentCaptureEvent> events,
             int minimumSize, @NonNull AutofillId... expectedIds) {
         final int actualSize = events.size();
@@ -233,6 +278,7 @@ final class Assertions {
         }
         assertThat(events).hasSize(minimumSize + 1);
         final ContentCaptureEvent batchDisappearEvent = events.get(minimumSize);
+
         final List<AutofillId> actualIds = batchDisappearEvent.getIds();
         assertThat(actualIds).containsExactly((Object[]) expectedIds);
     }
@@ -276,17 +322,11 @@ final class Assertions {
 
     private static ContentCaptureEvent assertCommonViewDisappearedProperties(
             @NonNull List<ContentCaptureEvent> events, int index) {
-        final ContentCaptureEvent event = getEvent(events, index);
-        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
-                .isEqualTo(TYPE_VIEW_DISAPPEARED);
-        assertWithMessage("invalid time on %s (index %s)", event, index).that(event.getEventTime())
-            .isAtLeast(MY_EPOCH);
+        final ContentCaptureEvent event = getEvent(events, index, TYPE_VIEW_DISAPPEARED);
         assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
                 .that(event.getViewNode()).isNull();
         assertWithMessage("event %s (index %s) should not have text", event, index)
-            .that(event.getText()).isNull();
-        assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
-            .that(event.getViewNode()).isNull();
+                .that(event.getText()).isNull();
         return event;
     }
 
@@ -296,13 +336,9 @@ final class Assertions {
     public static void assertVirtualViewAppeared(@NonNull List<ContentCaptureEvent> events,
             int index, @NonNull ContentCaptureSession session, @NonNull AutofillId parentId,
             int childId, @Nullable String expectedText) {
-        final ContentCaptureEvent event = getEvent(events, index);
-        assertWithMessage("wrong event type at index %s: %s", index, event).that(event.getType())
-            .isEqualTo(TYPE_VIEW_APPEARED);
+        final ContentCaptureEvent event = getEvent(events, index, TYPE_VIEW_APPEARED);
         final ViewNode node = event.getViewNode();
         assertThat(node).isNotNull();
-        assertWithMessage("invalid time on %s (index %s)", event, index).that(event.getEventTime())
-            .isAtLeast(MY_EPOCH);
         final AutofillId expectedId = session.newAutofillId(parentId, childId);
         assertWithMessage("wrong autofill id on %s (index %s)", event, index)
             .that(node.getAutofillId()).isEqualTo(expectedId);
@@ -355,9 +391,7 @@ final class Assertions {
      */
     public static void assertViewTextChanged(@NonNull List<ContentCaptureEvent> events, int index,
             @NonNull AutofillId expectedId, @NonNull String expectedText) {
-        final ContentCaptureEvent event = getEvent(events, index);
-        assertWithMessage("wrong event at index %s: %s", index, event).that(event.getType())
-                .isEqualTo(TYPE_VIEW_TEXT_CHANGED);
+        final ContentCaptureEvent event = getEvent(events, index, TYPE_VIEW_TEXT_CHANGED);
         assertWithMessage("Wrong id on %s (%s)", event, index).that(event.getId())
                 .isEqualTo(expectedId);
         assertWithMessage("Wrong text on %s (%s)", event, index).that(event.getText().toString())
@@ -387,13 +421,49 @@ final class Assertions {
      * Gets the event at the given index, failing with the user-friendly message if necessary...
      */
     @NonNull
-    public static ContentCaptureEvent getEvent(@NonNull List<ContentCaptureEvent> events,
-            int index) {
+    private static ContentCaptureEvent getEvent(@NonNull List<ContentCaptureEvent> events,
+            int index, int expectedType) {
         assertWithMessage("events is null").that(events).isNotNull();
         final ContentCaptureEvent event = events.get(index);
         assertWithMessage("no event at index %s (size %s): %s", index, events.size(), events)
                 .that(event).isNotNull();
+        final int actualType = event.getType();
+        if (actualType != expectedType) {
+            throw new AssertionError(String.format(
+                    "wrong event type (expected %s, actual is %s) at index %s: %s",
+                    eventTypeAsString(expectedType), eventTypeAsString(actualType), index, event));
+        }
+        assertWithMessage("invalid time on %s (index %s)", event, index).that(event.getEventTime())
+                 .isAtLeast(MY_EPOCH);
         return event;
+    }
+
+    /**
+     * Gets an user-friendly description of the given event type.
+     */
+    @NonNull
+    public static String eventTypeAsString(int type) {
+        final String string;
+        switch (type) {
+            case TYPE_VIEW_APPEARED:
+                string = "APPEARED";
+                break;
+            case TYPE_VIEW_DISAPPEARED:
+                string = "DISAPPEARED";
+                break;
+            case TYPE_VIEW_TEXT_CHANGED:
+                string = "TEXT_CHANGED";
+                break;
+            case TYPE_INITIAL_VIEW_TREE_APPEARING:
+                string = "HIERARCHY_STARTED";
+                break;
+            case TYPE_INITIAL_VIEW_TREE_APPEARED:
+                string = "HIERARCHY_FINISHED";
+                break;
+            default:
+                return "UNKNOWN-" + type;
+        }
+        return String.format("%s-%d", string, type);
     }
 
     private Assertions() {

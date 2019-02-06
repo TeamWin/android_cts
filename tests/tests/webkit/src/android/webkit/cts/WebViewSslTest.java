@@ -756,20 +756,20 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         mOnUiThread.setWebViewClient(webViewClient);
         clearClientCertPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
 
         // Test that the user's response for this server is kept in cache. Load a different
         // page from the same server and make sure we don't receive a client cert request callback.
         int callCount = webViewClient.getClientCertRequestCount();
         url = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HTML_URL1_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
         assertEquals(callCount, webViewClient.getClientCertRequestCount());
 
         // Now clear the cache and reload the page. We should receive a new callback.
         clearClientCertPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HTML_URL1_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
         assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
     }
 
@@ -786,20 +786,20 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         mOnUiThread.setWebViewClient(webViewClient);
         clearClientCertPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
 
         // Test that the user's response for this server is kept in cache. Load a different
         // page from the same server and make sure we don't receive a client cert request callback.
         int callCount = webViewClient.getClientCertRequestCount();
         url = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HTML_URL1_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
         assertEquals(callCount, webViewClient.getClientCertRequestCount());
 
         // Now clear the cache and reload the page. We should receive a new callback.
         clearClientCertPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HTML_URL1_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
         assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
     }
 
@@ -831,7 +831,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         webViewClient.setAction(ClientCertWebViewClient.PROCEED);
         url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
+        assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
     }
 
     public void testCancelClientCertRequest() throws Throwable {

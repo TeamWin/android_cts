@@ -17,9 +17,9 @@
 
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.processor.view.inspector.cts">
+    package="android.processor.view.inspector.cts"
+    android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <application>
         <uses-library android:name="android.test.runner" />
     </application>

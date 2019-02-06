@@ -19,6 +19,7 @@ import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.setService;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
+import static android.provider.Settings.Secure.CONTENT_CAPTURE_ENABLED;
 
 import android.app.Application;
 import android.content.Context;
@@ -27,8 +28,6 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.Visitor;
-import android.os.SystemClock;
-import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -39,6 +38,8 @@ import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
+import com.android.compatibility.common.util.SettingsStateChangerRule;
+import com.android.compatibility.common.util.SettingsUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -63,9 +64,8 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     private final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule("content_capture");
-    private final ContentCaptureLoggingTestRule mLoggingRule =
-            new ContentCaptureLoggingTestRule(mTag);
 
+    private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
 
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
@@ -73,11 +73,16 @@ public abstract class AbstractContentCaptureIntegrationTest
                 return CtsContentCaptureService.getExceptions();
             });
 
+    private final SettingsStateChangerRule mFeatureEnablerRule = new SettingsStateChangerRule(
+            sContext, CONTENT_CAPTURE_ENABLED, "true");
+
     @Rule
     public final RuleChain mLookAllTheseRules = RuleChain
             //
             // mRequiredServiceRule should be first so the test can be skipped right away
             .outerRule(mRequiredServiceRule)
+            // enable it as soon as possible, as it have to wait for the listener
+            .around(mFeatureEnablerRule)
             //
             // mLoggingRule wraps the test but doesn't interfere with it
             .around(mLoggingRule)
@@ -147,16 +152,13 @@ public abstract class AbstractContentCaptureIntegrationTest
         }
     }
 
-    // TODO(b/123429736): temporary method until Autofill's StateChangerRule is moved to common
     @Nullable
     public static void setFeatureEnabled(@Nullable String enabled) {
-        final String property = Settings.Secure.CONTENT_CAPTURE_ENABLED;
         if (enabled == null) {
-            runShellCommand("settings delete secure %s", property);
+            SettingsUtils.syncDelete(sContext, CONTENT_CAPTURE_ENABLED);
         } else {
-            runShellCommand("settings put secure %s %s", property, enabled);
+            SettingsUtils.syncSet(sContext, CONTENT_CAPTURE_ENABLED, enabled);
         }
-        SystemClock.sleep(1000); // We need to sleep as we're not waiting for the listener callback
     }
 
     /**

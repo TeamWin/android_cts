@@ -33,7 +33,6 @@ import com.android.compatibility.common.util.CddTest;
 import java.util.stream.IntStream;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,7 +54,6 @@ public class CarSensorManagerTest extends CarApiTestBase {
 
     @CddTest(requirement="2.5.1")
     @Test
-    @Ignore // Enable when b/120125891 is fixed
     public void testRequiredSensorsForDrivingState() throws Exception {
         boolean foundSpeed = false;
         boolean foundGear = false;
