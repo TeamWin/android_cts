@@ -17,30 +17,20 @@ package android.autofillservice.cts.augmented;
 
 import static android.autofillservice.cts.Helper.allowOverlays;
 import static android.autofillservice.cts.Helper.disallowOverlays;
-import static android.provider.Settings.Global.AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS;
 
 import android.autofillservice.cts.AbstractAutoFillActivity;
 import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
 import android.view.autofill.AutofillManager;
 
-import com.android.compatibility.common.util.SettingsStateChangerRule;
-import com.android.compatibility.common.util.SettingsUtils;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 
 // Must be public because of the @ClassRule
 public abstract class AugmentedAutofillAutoActivityLaunchTestCase
         <A extends AbstractAutoFillActivity> extends AutoFillServiceTestCase.AutoActivityLaunch<A> {
-
-    @ClassRule
-    public static final SettingsStateChangerRule sFeatureEnabler = new SettingsStateChangerRule(
-            sContext, SettingsUtils.NAMESPACE_GLOBAL, AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
-            Integer.toString(AutofillManager.FLAG_SMART_SUGGESTION_SYSTEM));
 
     protected static AugmentedReplier sAugmentedReplier;
     protected AugmentedUiBot mAugmentedUiBot;
@@ -68,6 +58,11 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
     @After
     public void resetService() {
         AugmentedHelper.resetAugmentedService();
+    }
+
+    @Override
+    protected int getSmartSuggestionMode() {
+        return AutofillManager.FLAG_SMART_SUGGESTION_SYSTEM;
     }
 
     protected void enableAugmentedService() {
