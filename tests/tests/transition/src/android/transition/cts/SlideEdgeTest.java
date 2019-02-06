@@ -72,7 +72,7 @@ public class SlideEdgeTest extends BaseTransitionTest  {
         for (int i = 0; i < sSlideEdgeArray.length; i++) {
             final int slideEdge = (Integer) (sSlideEdgeArray[i][0]);
             final Slide slide = new Slide(slideEdge);
-            slide.setDuration(500);
+            slide.setDuration(1000);
             final Transition.TransitionListener listener =
                     mock(Transition.TransitionListener.class);
             slide.addListener(listener);
@@ -107,7 +107,7 @@ public class SlideEdgeTest extends BaseTransitionTest  {
                         });
             });
             verify(listener, within(1000)).onTransitionStart(any());
-            verify(listener, within(1000)).onTransitionEnd(any());
+            verify(listener, within(2000)).onTransitionEnd(any());
 
             verifyMovement(redPoints, slideEdge, false);
             verifyMovement(greenPoints, slideEdge, false);
@@ -128,7 +128,7 @@ public class SlideEdgeTest extends BaseTransitionTest  {
         for (int i = 0; i < sSlideEdgeArray.length; i++) {
             final int slideEdge = (Integer) (sSlideEdgeArray[i][0]);
             final Slide slide = new Slide(slideEdge);
-            slide.setDuration(500);
+            slide.setDuration(1000);
             final Transition.TransitionListener listener =
                     mock(Transition.TransitionListener.class);
             slide.addListener(listener);
@@ -172,7 +172,7 @@ public class SlideEdgeTest extends BaseTransitionTest  {
                         });
             });
             verify(listener, within(1000)).onTransitionStart(any());
-            verify(listener, within(1000)).onTransitionEnd(any());
+            verify(listener, within(2000)).onTransitionEnd(any());
 
             verifyMovement(redPoints, slideEdge, true);
             verifyMovement(greenPoints, slideEdge, true);
