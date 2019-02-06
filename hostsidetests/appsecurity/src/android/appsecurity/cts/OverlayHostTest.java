@@ -15,38 +15,38 @@
  */
 package android.appsecurity.cts;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
+import static org.junit.Assert.assertFalse;
 
-public class OverlayHostTest extends DeviceTestCase implements IBuildReceiver {
+import android.platform.test.annotations.AppModeFull;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull(reason = "Overlays cannot be instant apps")
+public class OverlayHostTest extends BaseAppSecurityTest {
     private static final String PKG = "com.android.cts.overlayapp";
     private static final String APK = "CtsOverlayApp.apk";
-    private CompatibilityBuildHelper mBuildHelper;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         getDevice().uninstallPackage(PKG);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         getDevice().uninstallPackage(PKG);
-        super.tearDown();
     }
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mBuildHelper = new CompatibilityBuildHelper(buildInfo);
-    }
-
+    @Test
     public void testInstallingOverlayHasNoEffect() throws Exception {
         assertFalse(getDevice().getInstalledPackageNames().contains(PKG));
 
         // Try to install the overlay, but expect an error.
-        assertNotNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
+        new InstallMultiple().addApk(APK).runExpectingFailure();
 
         // The install should have failed.
         assertFalse(getDevice().getInstalledPackageNames().contains(PKG));
