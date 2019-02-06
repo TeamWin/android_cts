@@ -800,6 +800,22 @@ public class ScrollViewTest {
         assertTrue(myScrollView.getBottomFadingEdgeStrength() >= 0.0f);
     }
 
+    @Test
+    public void testScrollDescendant() throws Throwable {
+        assertEquals(0, mScrollViewCustom.getScrollX());
+        assertEquals(0, mScrollViewCustom.getScrollY());
+
+        View lastChild = mScrollViewCustom.findViewById(R.id.last_child);
+        int lastChildTop = (ITEM_COUNT - 1) * mItemHeight;
+
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.scrollToDescendant(lastChild));
+        // smoothScrollBy doesn't scroll in X
+        pollingCheckSmoothScrolling(0, 0, 0, lastChildTop);
+
+        assertEquals(0, mScrollViewCustom.getScrollX());
+        assertEquals(lastChildTop, mScrollViewCustom.getScrollY());
+    }
+
     private boolean isInRange(int current, int from, int to) {
         if (from < to) {
             return current >= from && current <= to;
