@@ -31,6 +31,7 @@ import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatche
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.ViewStructure;
@@ -47,6 +48,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+@AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class CustomViewActivityTest extends
         AbstractContentCaptureIntegrationTest<CustomViewActivity> {
 

@@ -21,6 +21,7 @@ import static android.contentcaptureservice.cts.common.ActivitiesWatcher.Activit
 import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 
@@ -60,6 +61,7 @@ public class BlankWithTitleActivityTest
         activity.assertDefaultEvents(session);
     }
 
+    @AppModeFull(reason = "testSimpleSessionLifecycle() is enough")
     @Test
     public void testSimpleSessionLifecycle_noAnimation() throws Exception {
         final CtsContentCaptureService service = enableService();
