@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony4.cts;
 
 import android.content.Context;
 import android.telephony.SmsManager;
@@ -206,7 +206,7 @@ public class SimRestrictedApisTest extends AndroidTestCase {
     public void testNvResetConfig() {
         try {
             if (isSimCardPresent()) {
-                TelephonyManager.getDefault().nvResetConfig(0);
+                TelephonyManager.getDefault().nvResetConfig(1);
                 fail("Expected SecurityException. App doesn't have carrier privileges.");
             }
         } catch (SecurityException expected) {
