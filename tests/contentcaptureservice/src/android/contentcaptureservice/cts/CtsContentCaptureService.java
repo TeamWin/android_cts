@@ -58,11 +58,6 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private static ServiceWatcher sServiceWatcher;
 
-    // TODO(b/123421324): reuse with allSessions
-    /** Used by {@link #getOnlyFinishedSession()}. */
-    private static ContentCaptureSessionId sFirstSessionId;
-
-
     private final int mId = ++sIdCounter;
 
     private static final ArrayList<Throwable> sExceptions = new ArrayList<>();
@@ -118,7 +113,6 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
 
     public static void resetStaticState() {
-        sFirstSessionId = null;
         sExceptions.clear();
         // TODO(b/123540602): should probably set sInstance to null as well, but first we would need
         // to make sure each test unbinds the service.
@@ -202,11 +196,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
     public void onCreateContentCaptureSession(ContentCaptureContext context,
             ContentCaptureSessionId sessionId) {
         Log.i(TAG, "onCreateContentCaptureSession(id=" + mId + ", ctx=" + context
-                + ", session=" + sessionId + ", firstId=" + sFirstSessionId + ")");
+                + ", session=" + sessionId);
         mAllSessions.add(sessionId);
-        if (sFirstSessionId == null) {
-            sFirstSessionId = sessionId;
-        }
 
         safeRun(() -> {
             final Session session = mOpenSessions.get(sessionId);
@@ -289,9 +280,11 @@ public class CtsContentCaptureService extends ContentCaptureService {
      */
     @NonNull
     public Session getOnlyFinishedSession() throws InterruptedException {
-        // TODO(b/123421324): add some assertions to make sure There Can Be Only One!
-        assertWithMessage("No session yet").that(sFirstSessionId).isNotNull();
-        return getFinishedSession(sFirstSessionId);
+        final ArrayList<ContentCaptureSessionId> allSessions = mAllSessions;
+        assertWithMessage("Wrong number of sessions").that(allSessions).hasSize(1);
+        final ContentCaptureSessionId id = allSessions.get(0);
+        Log.d(TAG, "getOnlyFinishedSession(): id=" + id);
+        return getFinishedSession(id);
     }
 
     /**
@@ -319,7 +312,6 @@ public class CtsContentCaptureService extends ContentCaptureService {
         super.dump(fd, pw, args);
 
         pw.print("sServiceWatcher: "); pw.println(sServiceWatcher);
-        pw.print("sFirstSessionId: "); pw.println(sFirstSessionId);
         pw.print("sExceptions: "); pw.println(sExceptions);
         pw.print("sIdCounter: "); pw.println(sIdCounter);
         pw.print("mId: "); pw.println(mId);
