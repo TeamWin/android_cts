@@ -559,6 +559,38 @@ public class ProgressBarTest {
         assertEquals(oldSecondaryProgress, mProgressBarHorizontal.getSecondaryProgress());
     }
 
+    @UiThreadTest
+    @Test
+    public void testGetAndSetMinWidth() {
+        final int minWidth = 20;
+        mProgressBar.setMinWidth(minWidth);
+        assertEquals(minWidth, mProgressBar.getMinWidth());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testGetAndSetMaxWidth() {
+        final int maxWidth = 20;
+        mProgressBar.setMaxWidth(maxWidth);
+        assertEquals(maxWidth, mProgressBar.getMaxWidth());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testGetAndSetMinHeight() {
+        final int minHeight = 20;
+        mProgressBar.setMinHeight(minHeight);
+        assertEquals(minHeight, mProgressBar.getMinHeight());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testGetAndSetMaxHeight() {
+        final int maxHeight = 20;
+        mProgressBar.setMaxHeight(maxHeight);
+        assertEquals(maxHeight, mProgressBar.getMaxHeight());
+    }
+
     /*
      * Mock class for ProgressBar to test protected methods
      */
