@@ -313,7 +313,7 @@ public class ConversationActionsTest {
         assertThat(request.getConversation().get(0).getText().toString()).isEqualTo(TEXT);
         assertThat(request.getConversation().get(0).getAuthor()).isEqualTo(PERSON);
         assertThat(request.getHints()).isEmpty();
-        assertThat(request.getMaxSuggestions()).isEqualTo(0);
+        assertThat(request.getMaxSuggestions()).isEqualTo(-1);
         assertThat(request.getTypeConfig()).isNotNull();
         assertThat(request.getConversationId()).isNull();
     }
