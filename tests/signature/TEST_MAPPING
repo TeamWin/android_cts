@@ -46,9 +46,6 @@
       "name": "CtsSystemApiAnnotationTestCases"
     },
     {
-      "name": "CtsSystemApiSignatureTestCases"
-    },
-    {
       "name": "CtsHiddenApiBlacklistApi28TestCases"
     },
     {
