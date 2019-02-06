@@ -861,6 +861,19 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetDefaultSmsApplication_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetDefaultSmsApplication_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.setDefaultSmsApplication(mComponent, "android.admin.cts");
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
     public void testCreateAdminSupportIntent_returnNullIfRestrictionIsNotSet() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testCreateAdminSupportIntent");
