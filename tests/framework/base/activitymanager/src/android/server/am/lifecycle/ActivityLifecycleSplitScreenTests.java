@@ -50,6 +50,7 @@ import android.support.test.filters.MediumTest;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 state(firstActivity, ON_STOP));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(secondActivity.getTaskId());
+        moveTaskToPrimarySplitScreenAndVerify(secondActivity);
 
         // CLear logs so we can capture just the destroy sequence
         getLifecycleLog().clear();
@@ -111,8 +112,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
         mAmWmState.computeState(firstActivityName);
@@ -142,7 +142,9 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
-        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(), "moveToSide");
+        LifecycleVerifier.assertSequenceMatchesOneOf(ThirdActivity.class, getLifecycleLog(),
+                Arrays.asList(new ArrayList<>(), LifecycleVerifier.getRelaunchSequence(ON_RESUME)),
+                "moveToSide");
         LifecycleVerifier.assertRestartAndResumeSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_PAUSE, ON_STOP), "moveToSide");
@@ -156,8 +158,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
         mAmWmState.computeState(firstActivityName);
@@ -208,16 +209,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitAndAssertActivityStates(state(callbackTrackingActivity, ON_TOP_POSITION_GAINED));
 
         // Enter split screen, the activity will be relaunched.
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId());
-        // Wait for multi-window mode change that will come after activity relaunch and resume.
-        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_PAUSE));
-        final List<LifecycleLog.ActivityCallback> splitScreenMoveSequence = Arrays.asList(
-                ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
-                ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST, ON_PAUSE);
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                splitScreenMoveSequence, "moveToPrimarySplitScreen");
+        moveTaskToPrimarySplitScreenAndVerify(callbackTrackingActivity);
         getLifecycleLog().clear();
 
         // Launch second activity
@@ -268,12 +260,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(), Arrays.asList(
-                ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
-                ON_PAUSE), "enterSplitScreen");
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Start an activity in separate task (will be placed in secondary stack)
         final Activity newTaskActivity = mThirdActivityTestRule.launchActivity(
@@ -353,8 +340,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         // Wait for the activity to resume
         waitAndAssertActivityStates(state(testActivity, ON_TOP_POSITION_GAINED));
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
 
         // Enter split screen
         getLifecycleLog().clear();
@@ -402,7 +388,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         // Wait for the activity to resume
         waitAndAssertActivityStates(state(testActivity, ON_TOP_POSITION_GAINED));
         LifecycleVerifier.assertLaunchSequence(ConfigChangeHandlingActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
+                getLifecycleLog());
 
         // Enter split screen
         getLifecycleLog().clear();

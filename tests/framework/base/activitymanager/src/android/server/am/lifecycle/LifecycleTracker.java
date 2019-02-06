@@ -40,7 +40,8 @@ public class LifecycleTracker implements ActivityLifecycleCallback {
         mLifecycleLog = lifecycleLog;
     }
 
-    void waitAndAssertActivityStates(Pair<Activity, ActivityCallback>[] activityCallbacks) {
+    void waitAndAssertActivityStates(
+            Pair<Class<? extends Activity>, ActivityCallback>[] activityCallbacks) {
         final boolean waitResult = waitForConditionWithTimeout(
                 () -> pendingCallbacks(activityCallbacks).isEmpty(), 5 * 1000);
 
@@ -68,19 +69,20 @@ public class LifecycleTracker implements ActivityLifecycleCallback {
     }
 
     /** Get a list of activity states that were not reached yet. */
-    private List<Pair<Activity, ActivityCallback>> pendingCallbacks(Pair<Activity,
-            ActivityCallback>[] activityCallbacks) {
-        final List<Pair<Activity, ActivityCallback>> notReachedActivityCallbacks = new ArrayList<>();
+    private List<Pair<Class<? extends Activity>, ActivityCallback>> pendingCallbacks(
+            Pair<Class<? extends Activity>, ActivityCallback>[] activityCallbacks) {
+        final List<Pair<Class<? extends Activity>, ActivityCallback>> notReachedActivityCallbacks =
+                new ArrayList<>();
 
-        for (Pair<Activity, ActivityCallback> activityCallback : activityCallbacks) {
-            final Activity activity = activityCallback.first;
+        for (Pair<Class<? extends Activity>, ActivityCallback> callbackPair : activityCallbacks) {
+            final Class<? extends Activity> activityClass = callbackPair.first;
             final List<ActivityCallback> transitionList =
-                    mLifecycleLog.getActivityLog(activity.getClass());
+                    mLifecycleLog.getActivityLog(activityClass);
             if (transitionList.isEmpty()
-                    || transitionList.get(transitionList.size() - 1) != activityCallback.second) {
+                    || transitionList.get(transitionList.size() - 1) != callbackPair.second) {
                 // The activity either hasn't got any state transitions yet or the current state is
                 // not the one we expect.
-                notReachedActivityCallbacks.add(activityCallback);
+                notReachedActivityCallbacks.add(callbackPair);
             }
         }
         return notReachedActivityCallbacks;
