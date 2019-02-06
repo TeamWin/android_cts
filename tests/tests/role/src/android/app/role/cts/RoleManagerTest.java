@@ -206,7 +206,7 @@ public class RoleManagerTest {
         boolean[] successful = new boolean[1];
         CountDownLatch latch = new CountDownLatch(1);
         runWithShellPermissionIdentity(() -> sRoleManager.addRoleHolderAsUser(roleName,
-                packageName, user, executor, new RoleManagerCallback() {
+                packageName, 0, user, executor, new RoleManagerCallback() {
                     @Override
                     public void onSuccess() {
                         successful[0] = true;
@@ -229,7 +229,7 @@ public class RoleManagerTest {
         boolean[] successful = new boolean[1];
         CountDownLatch latch = new CountDownLatch(1);
         runWithShellPermissionIdentity(() -> sRoleManager.removeRoleHolderAsUser(roleName,
-                packageName, user, executor, new RoleManagerCallback() {
+                packageName, 0, user, executor, new RoleManagerCallback() {
                     @Override
                     public void onSuccess() {
                         successful[0] = true;
