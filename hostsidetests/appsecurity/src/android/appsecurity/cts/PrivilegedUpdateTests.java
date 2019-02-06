@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
@@ -31,6 +32,7 @@ import com.android.tradefed.util.AbiUtils;
 /**
  * Tests that verify intent filters.
  */
+@AppModeFull(reason="Instant applications can never be system or privileged")
 public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
     private static final String TAG = "PrivilegedUpdateTests";
     private static final String SHIM_PKG = "com.android.cts.priv.ctsshim";

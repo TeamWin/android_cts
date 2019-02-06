@@ -35,10 +35,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.StatFs;
+import android.support.test.InstrumentationRegistry;
 import android.system.Os;
 import android.system.OsConstants;
 import android.system.StructStat;
@@ -236,8 +238,10 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals("base", getXmlTestValue(r.getXml(R.xml.my_activity_meta)));
 
         // And that we can access resources from feature
-        assertEquals("red", r.getString(r.getIdentifier("feature_string", "string", PKG)));
-        assertEquals(123, r.getInteger(r.getIdentifier("feature_integer", "integer", PKG)));
+        assertEquals("red", r.getString(r.getIdentifier(
+                "com.android.cts.splitapp.feature:feature_string", "string", PKG)));
+        assertEquals(123, r.getInteger(r.getIdentifier(
+                "com.android.cts.splitapp.feature:feature_integer", "integer", PKG)));
 
         final Class<?> featR = Class.forName("com.android.cts.splitapp.FeatureR");
         final int boolId = (int) featR.getDeclaredField("feature_receiver_enabled").get(null);
@@ -308,6 +312,23 @@ public class SplitAppTest extends AndroidTestCase {
         }
     }
 
+    private Intent createLaunchIntent() {
+        final boolean isInstant = Boolean.parseBoolean(
+                InstrumentationRegistry.getArguments().getString("is_instant", "false"));
+        if (isInstant) {
+            final Intent i = new Intent(Intent.ACTION_VIEW);
+            i.addCategory(Intent.CATEGORY_BROWSABLE);
+            i.setData(Uri.parse("https://cts.android.com/norestart"));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return i;
+        } else {
+            final Intent i = new Intent("com.android.cts.norestart.START");
+            i.addCategory(Intent.CATEGORY_DEFAULT);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return i;
+        }
+    }
+
     public void testBaseInstalled() throws Exception {
         final ConditionVariable cv = new ConditionVariable();
         final BroadcastReceiver r = new BroadcastReceiver() {
@@ -319,10 +340,8 @@ public class SplitAppTest extends AndroidTestCase {
             }
         };
         final IntentFilter filter = new IntentFilter("com.android.cts.norestart.BROADCAST");
-        getContext().registerReceiver(r, filter);
-        final Intent i = new Intent("com.android.cts.norestart.START");
-        i.addCategory(Intent.CATEGORY_DEFAULT);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().registerReceiver(r, filter, Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
+        final Intent i = createLaunchIntent();
         getContext().startActivity(i);
         assertTrue(cv.block(2000L));
         getContext().unregisterReceiver(r);
@@ -345,10 +364,8 @@ public class SplitAppTest extends AndroidTestCase {
             }
         };
         final IntentFilter filter = new IntentFilter("com.android.cts.norestart.BROADCAST");
-        getContext().registerReceiver(r, filter);
-        final Intent i = new Intent("com.android.cts.norestart.START");
-        i.addCategory(Intent.CATEGORY_DEFAULT);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().registerReceiver(r, filter, Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
+        final Intent i = createLaunchIntent();
         getContext().startActivity(i);
         assertTrue(cv.block(2000L));
         getContext().unregisterReceiver(r);
@@ -362,7 +379,8 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(false, r.getBoolean(R.bool.my_receiver_enabled));
 
         // And that we can access resources from feature
-        assertEquals(321, r.getInteger(r.getIdentifier("feature_integer", "integer", PKG)));
+        assertEquals(321, r.getInteger(r.getIdentifier(
+                "com.android.cts.splitapp.feature:feature_integer", "integer", PKG)));
 
         final Class<?> featR = Class.forName("com.android.cts.splitapp.FeatureR");
         final int boolId = (int) featR.getDeclaredField("feature_receiver_enabled").get(null);

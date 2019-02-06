@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -135,12 +136,14 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         }
     }
 
+    @AppModeFull(reason = "Instant applications must be at least SDK 26")
     public void testCompatDefault22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testCompatDefault");
     }
 
+    @AppModeFull(reason = "Instant applications must be at least SDK 26")
     public void testCompatRevoked22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
         boolean didThrow = false;
@@ -157,6 +160,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testCompatRevoked_part2");
     }
 
+    @AppModeFull(reason = "Instant applications must be at least SDK 26")
     public void testNoRuntimePrompt22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",

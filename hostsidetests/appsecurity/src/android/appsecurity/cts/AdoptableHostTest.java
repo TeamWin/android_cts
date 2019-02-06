@@ -25,6 +25,8 @@ import static android.appsecurity.cts.SplitTests.PKG;
 
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -42,6 +44,7 @@ import java.util.concurrent.TimeUnit;
  * Set of tests that verify behavior of adopted storage media, if supported.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull(reason = "Instant applications can only be installed on internal storage")
 public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     public static final String FEATURE_ADOPTABLE_STORAGE = "feature:android.software.adoptable_storage";

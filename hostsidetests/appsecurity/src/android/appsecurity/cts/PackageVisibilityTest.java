@@ -19,7 +19,8 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -66,7 +67,16 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testUninstalledPackageVisibility() throws Exception {
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testUninstalledPackageVisibility_full() throws Exception {
+        testUninstalledPackageVisibility(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testUninstalledPackageVisibility_instant() throws Exception {
+        testUninstalledPackageVisibility(true);
+    }
+    private void testUninstalledPackageVisibility(boolean instant) throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
@@ -135,8 +145,7 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
         getDevice().uninstallPackage(TEST_PKG);
     }
 
-    protected void uninstallWithKeepDataForUser(String packageName, int userId)
-            throws DeviceNotAvailableException {
+    private void uninstallWithKeepDataForUser(String packageName, int userId) throws Exception {
         final String command = "pm uninstall -k --user " + userId + " " + packageName;
         getDevice().executeShellCommand(command);
     }
