@@ -167,7 +167,7 @@ public class SubscriptionManagerTest {
     @Test
     public void testIsUsableSubscriptionId() throws Exception {
         if (!isSupported()) return;
-        assertTrue(SubscriptionManager.isUsableSubIdValue(mSubId));
+        assertTrue(SubscriptionManager.isUsableSubscriptionId(mSubId));
     }
 
     @Test
