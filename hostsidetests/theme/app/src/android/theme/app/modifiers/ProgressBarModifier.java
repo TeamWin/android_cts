@@ -16,7 +16,6 @@
 
 package android.theme.app.modifiers;
 
-import android.animation.ValueAnimator;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.ProgressBar;
