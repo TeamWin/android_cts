@@ -101,6 +101,8 @@ libGLES_glesLayer1 \
 libGLES_glesLayer2 \
 libGLES_glesLayer3
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))

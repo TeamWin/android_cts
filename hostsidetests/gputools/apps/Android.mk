@@ -45,7 +45,8 @@ LOCAL_AAPT_FLAGS := \
 --rename-manifest-package android.rootlessgpudebug.DEBUG.app \
 --debug-mode
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 
@@ -68,6 +69,8 @@ libGLES_glesLayer3
 LOCAL_AAPT_FLAGS := \
 --rename-manifest-package android.rootlessgpudebug.RELEASE.app
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
