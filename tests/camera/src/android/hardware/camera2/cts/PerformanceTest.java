@@ -363,7 +363,8 @@ public class PerformanceTest extends Camera2AndroidTestCase {
 
                     readers = prepareStillCaptureAndStartPreview(previewBuilder, captureBuilder,
                             mOrderedPreviewSizes.get(0), imageSizes, formats,
-                            previewResultListener, NUM_MAX_IMAGES, imageListeners);
+                            previewResultListener, NUM_MAX_IMAGES, imageListeners,
+                            false /*isHeic*/);
 
                     if (addPreviewDelay) {
                         Thread.sleep(500);
@@ -1141,11 +1142,13 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      * @param resultListener Capture result listener
      * @param maxNumImages The max number of images set to the image reader
      * @param imageListeners The single capture capture image listeners
+     * @param isHeic Capture HEIC image if true, JPEG image if false
      */
     private ImageReader[] prepareStillCaptureAndStartPreview(
             CaptureRequest.Builder previewRequest, CaptureRequest.Builder stillRequest,
             Size previewSz, Size[] captureSizes, int[] formats, CaptureCallback resultListener,
-            int maxNumImages, ImageReader.OnImageAvailableListener[] imageListeners)
+            int maxNumImages, ImageReader.OnImageAvailableListener[] imageListeners,
+            boolean isHeic)
             throws Exception {
 
         if ((captureSizes == null) || (formats == null) || (imageListeners == null) &&

@@ -100,7 +100,46 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
                 openDevice(mCameraIds[i]);
-                jpegExifTestByCamera();
+                Size maxJpegSize = mOrderedStillSizes.get(0);
+                stillExifTestByCamera(ImageFormat.JPEG, maxJpegSize);
+            } finally {
+                closeDevice();
+                closeImageReader();
+            }
+        }
+    }
+
+    /**
+     * Test HEIC capture exif fields for each camera.
+     */
+    @Test
+    public void testHeicExif() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                Log.i(TAG, "Testing HEIC exif for Camera " + mCameraIds[i]);
+                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                if (!mAllStaticInfo.get(mCameraIds[i]).isHeicSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support HEIC, skipping");
+                    continue;
+                }
+
+                openDevice(mCameraIds[i]);
+
+                // Test maximum Heic size capture
+                List<Size> orderedHeicSizes = CameraTestUtils.getSupportedHeicSizes(
+                        mCameraIds[i], mCameraManager, null/*bound*/);
+                Size maxHeicSize = orderedHeicSizes.get(0);
+                stillExifTestByCamera(ImageFormat.HEIC, maxHeicSize);
+
+                // Test preview size Heic capture
+                Size previewSize = mOrderedPreviewSizes.get(0);
+                stillExifTestByCamera(ImageFormat.HEIC, previewSize);
+
             } finally {
                 closeDevice();
                 closeImageReader();
@@ -318,7 +357,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * Test all combination of available preview sizes and still sizes.
      * <p>
      * For each still capture, Only the jpeg buffer is validated, capture
-     * result validation is covered by {@link #jpegExifTestByCamera} test.
+     * result validation is covered by {@link #stillExifTestByCamera} test.
      * </p>
      */
     @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
@@ -585,7 +624,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
 
         // Set the max number of images to number of focal lengths supported
         prepareStillCaptureAndStartPreview(previewRequest, stillRequest, maxPreviewSz,
-                maxStillSz, resultListener, focalLengths.length, imageListener);
+                maxStillSz, resultListener, focalLengths.length, imageListener, false /*isHeic*/);
 
         for(float focalLength : focalLengths) {
 
@@ -613,7 +652,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
 
             validateJpegCapture(image, maxStillSz);
             verifyJpegKeys(image, result, maxStillSz, thumbnailSize, exifTestData,
-                    mStaticInfo, mCollector, mDebugFileNameBase);
+                    mStaticInfo, mCollector, mDebugFileNameBase, ImageFormat.JPEG);
         }
     }
 
@@ -633,7 +672,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         CaptureRequest.Builder stillRequest =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         prepareStillCaptureAndStartPreview(previewRequest, stillRequest, maxPreviewSz,
-                maxStillSz, resultListener, imageListener);
+                maxStillSz, resultListener, imageListener, false /*isHeic*/);
 
         // make sure preview is actually running
         waitForNumResults(resultListener, NUM_FRAMES_WAITED);
@@ -719,7 +758,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             stillRequest = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         }
         prepareStillCaptureAndStartPreview(previewRequest, stillRequest, maxPreviewSz,
-                maxStillSz, resultListener, imageListener);
+                maxStillSz, resultListener, imageListener, false /*isHeic*/);
 
         // Set AE mode to ON_AUTO_FLASH if flash is available.
         if (mStaticInfo.hasFlash()) {
@@ -930,7 +969,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                 CaptureRequest.Builder stillRequest =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 prepareStillCaptureAndStartPreview(previewRequest, stillRequest, previewSz,
-                        stillSz, resultListener, imageListener);
+                        stillSz, resultListener, imageListener, false /*isHeic*/);
                 mSession.capture(stillRequest.build(), resultListener, mHandler);
                 Image image = imageListener.getImage((mStaticInfo.isHardwareLevelLegacy()) ?
                         RELAXED_CAPTURE_IMAGE_TIMEOUT_MS : CAPTURE_IMAGE_TIMEOUT_MS);
@@ -1049,7 +1088,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             CaptureResult result = resultListener.getCaptureResultForRequest(multiRequest,
                     NUM_RESULTS_WAIT_TIMEOUT);
             Image jpegImage = jpegListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
-            basicValidateJpegImage(jpegImage, maxStillSz);
+            basicValidateBlobImage(jpegImage, maxStillSz, ImageFormat.JPEG);
             Image rawImage = rawListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
             validateRaw16Image(rawImage, size);
             verifyRawCaptureResult(multiRequest, result);
@@ -1188,17 +1227,19 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Issue a Jpeg capture and validate the exif information.
+     * Issue a still capture and validate the exif information.
      * <p>
      * TODO: Differentiate full and limited device, some of the checks rely on
      * per frame control and synchronization, most of them don't.
      * </p>
      */
-    private void jpegExifTestByCamera() throws Exception {
+    private void stillExifTestByCamera(int format, Size stillSize) throws Exception {
+        assertTrue(format == ImageFormat.JPEG || format == ImageFormat.HEIC);
+        boolean isHeic = (format == ImageFormat.HEIC);
+
         Size maxPreviewSz = mOrderedPreviewSizes.get(0);
-        Size maxStillSz = mOrderedStillSizes.get(0);
         if (VERBOSE) {
-            Log.v(TAG, "Testing JPEG exif with jpeg size " + maxStillSz.toString()
+            Log.v(TAG, "Testing exif with size " + stillSize.toString()
                     + ", preview size " + maxPreviewSz);
         }
 
@@ -1209,8 +1250,8 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
         SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
-        prepareStillCaptureAndStartPreview(previewBuilder, stillBuilder, maxPreviewSz, maxStillSz,
-                resultListener, imageListener);
+        prepareStillCaptureAndStartPreview(previewBuilder, stillBuilder, maxPreviewSz, stillSize,
+                resultListener, imageListener, isHeic);
 
         // Set the jpeg keys, then issue a capture
         Size[] thumbnailSizes = mStaticInfo.getAvailableThumbnailSizesChecked();
@@ -1223,15 +1264,15 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (int i = 0; i < EXIF_TEST_DATA.length; i++) {
             setJpegKeys(stillBuilder, EXIF_TEST_DATA[i], testThumbnailSizes[i], mCollector);
 
-            // Capture a jpeg image.
+            // Capture a jpeg/heic image.
             CaptureRequest request = stillBuilder.build();
             mSession.capture(request, resultListener, mHandler);
             CaptureResult stillResult =
                     resultListener.getCaptureResultForRequest(request, NUM_RESULTS_WAIT_TIMEOUT);
             Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
 
-            verifyJpegKeys(image, stillResult, maxStillSz, testThumbnailSizes[i], EXIF_TEST_DATA[i],
-                    mStaticInfo, mCollector, mDebugFileNameBase);
+            verifyJpegKeys(image, stillResult, stillSize, testThumbnailSizes[i], EXIF_TEST_DATA[i],
+                    mStaticInfo, mCollector, mDebugFileNameBase, format);
 
             // Free image resources
             image.close();
@@ -1292,7 +1333,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         // Set the max number of images to be same as the burst count, as the verification
         // could be much slower than producing rate, and we don't want to starve producer.
         prepareStillCaptureAndStartPreview(previewRequest, stillRequest, maxPreviewSz,
-                maxStillSz, resultListener, numSteps, imageListener);
+                maxStillSz, resultListener, numSteps, imageListener, false /*isHeic*/);
 
         for (int i = 0; i <= numSteps; i++) {
             int exposureCompensation = i * stepsPerEv + compensationRange.getLower();

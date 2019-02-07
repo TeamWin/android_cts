@@ -1035,11 +1035,12 @@ public class CameraTestUtils extends Assert {
 
         ByteBuffer buffer = null;
         // JPEG doesn't have pixelstride and rowstride, treat it as 1D buffer.
-        // Same goes for DEPTH_POINT_CLOUD and DEPTH_JPEG
+        // Same goes for DEPTH_POINT_CLOUD, RAW_PRIVATE, DEPTH_JPEG, and HEIC
         if (format == ImageFormat.JPEG || format == ImageFormat.DEPTH_POINT_CLOUD ||
-                format == ImageFormat.RAW_PRIVATE || format == ImageFormat.DEPTH_JPEG) {
+                format == ImageFormat.RAW_PRIVATE || format == ImageFormat.DEPTH_JPEG ||
+                format == ImageFormat.HEIC) {
             buffer = planes[0].getBuffer();
-            assertNotNull("Fail to get jpeg or depth ByteBuffer", buffer);
+            assertNotNull("Fail to get jpeg/depth/heic ByteBuffer", buffer);
             data = new byte[buffer.remaining()];
             buffer.get(data);
             buffer.rewind();
@@ -1122,6 +1123,7 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.DEPTH_POINT_CLOUD:
             case ImageFormat.DEPTH_JPEG:
             case ImageFormat.Y8:
+            case ImageFormat.HEIC:
                 assertEquals("JPEG/RAW/depth/Y8 Images should have one plane", 1, planes.length);
                 break;
             default:
@@ -1364,6 +1366,11 @@ public class CameraTestUtils extends Assert {
         return getSortedSizesForFormat(cameraId, cameraManager, ImageFormat.JPEG, bound);
     }
 
+    static public List<Size> getSupportedHeicSizes(String cameraId,
+            CameraManager cameraManager, Size bound) throws CameraAccessException {
+        return getSortedSizesForFormat(cameraId, cameraManager, ImageFormat.HEIC, bound);
+    }
+
     static public Size getMinPreviewSize(String cameraId, CameraManager cameraManager)
             throws CameraAccessException {
         List<Size> sizes = getSupportedPreviewSizes(cameraId, cameraManager, null);
@@ -1551,6 +1558,9 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.Y8:
                 validateY8Data(data, width, height, format, image.getTimestamp(), filePath);
                 break;
+            case ImageFormat.HEIC:
+                validateHeicData(data, width, height, filePath);
+                break;
             default:
                 throw new UnsupportedOperationException("Unsupported format for validation: "
                         + format);
@@ -1731,6 +1741,26 @@ public class CameraTestUtils extends Assert {
 
         return;
 
+    }
+
+    private static void validateHeicData(byte[] heicData, int width, int height, String filePath) {
+        BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
+        // DecodeBound mode: only parse the frame header to get width/height.
+        // it doesn't decode the pixel.
+        bmpOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(heicData, 0, heicData.length, bmpOptions);
+        assertEquals(width, bmpOptions.outWidth);
+        assertEquals(height, bmpOptions.outHeight);
+
+        // Pixel decoding mode: decode whole image. check if the image data
+        // is decodable here.
+        assertNotNull("Decoding heic failed",
+                BitmapFactory.decodeByteArray(heicData, 0, heicData.length));
+        if (DEBUG && filePath != null) {
+            String fileName =
+                    filePath + "/" + width + "x" + height + ".heic";
+            dumpFile(fileName, heicData);
+        }
     }
 
     public static <T> T getValueNotNull(CaptureResult result, CaptureResult.Key<T> key) {
@@ -2047,49 +2077,54 @@ public class CameraTestUtils extends Assert {
      * continue the test if the jpeg image captured has some serious failures.
      * </p>
      *
-     * @param image The captured jpeg image
-     * @param expectedSize Expected capture jpeg size
+     * @param image The captured JPEG/HEIC image
+     * @param expectedSize Expected capture JEPG/HEIC size
+     * @param format JPEG/HEIC image format
      */
-    public static void basicValidateJpegImage(Image image, Size expectedSize) {
+    public static void basicValidateBlobImage(Image image, Size expectedSize, int format) {
         Size imageSz = new Size(image.getWidth(), image.getHeight());
         assertTrue(
                 String.format("Image size doesn't match (expected %s, actual %s) ",
                         expectedSize.toString(), imageSz.toString()), expectedSize.equals(imageSz));
-        assertEquals("Image format should be JPEG", ImageFormat.JPEG, image.getFormat());
+        assertEquals("Image format should be " + ((format == ImageFormat.HEIC) ? "HEIC" : "JPEG"),
+                format, image.getFormat());
         assertNotNull("Image plane shouldn't be null", image.getPlanes());
         assertEquals("Image plane number should be 1", 1, image.getPlanes().length);
 
-        // Jpeg decoding validate was done in ImageReaderTest, no need to duplicate the test here.
+        // Jpeg/Heic decoding validate was done in ImageReaderTest,
+        // no need to duplicate the test here.
     }
 
     /**
-     * Verify the JPEG EXIF and JPEG related keys in a capture result are expected.
+     * Verify the EXIF and JPEG related keys in a capture result are expected.
      * - Capture request get values are same as were set.
      * - capture result's exif data is the same as was set by
      *   the capture request.
      * - new tags in the result set by the camera service are
      *   present and semantically correct.
      *
-     * @param image The output JPEG image to verify.
+     * @param image The output JPEG/HEIC image to verify.
      * @param captureResult The capture result to verify.
-     * @param expectedSize The expected JPEG size.
+     * @param expectedSize The expected JPEG/HEIC size.
      * @param expectedThumbnailSize The expected thumbnail size.
      * @param expectedExifData The expected EXIF data
      * @param staticInfo The static metadata for the camera device.
-     * @param jpegFilename The filename to dump the jpeg to.
+     * @param blobFilename The filename to dump the jpeg/heic to.
      * @param collector The camera error collector to collect errors.
+     * @param format JPEG/HEIC format
      */
     public static void verifyJpegKeys(Image image, CaptureResult captureResult, Size expectedSize,
             Size expectedThumbnailSize, ExifTestData expectedExifData, StaticMetadata staticInfo,
-            CameraErrorCollector collector, String debugFileNameBase) throws Exception {
+            CameraErrorCollector collector, String debugFileNameBase, int format) throws Exception {
 
-        basicValidateJpegImage(image, expectedSize);
+        basicValidateBlobImage(image, expectedSize, format);
 
-        byte[] jpegBuffer = getDataFromImage(image);
+        byte[] blobBuffer = getDataFromImage(image);
         // Have to dump into a file to be able to use ExifInterface
-        String jpegFilename = debugFileNameBase + "/verifyJpegKeys.jpeg";
-        dumpFile(jpegFilename, jpegBuffer);
-        ExifInterface exif = new ExifInterface(jpegFilename);
+        String filePostfix = (format == ImageFormat.HEIC ? ".heic" : ".jpeg");
+        String blobFilename = debugFileNameBase + "/verifyJpegKeys" + filePostfix;
+        dumpFile(blobFilename, blobBuffer);
+        ExifInterface exif = new ExifInterface(blobFilename);
 
         if (expectedThumbnailSize.equals(new Size(0,0))) {
             collector.expectTrue("Jpeg shouldn't have thumbnail when thumbnail size is (0, 0)",

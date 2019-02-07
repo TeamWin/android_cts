@@ -1347,6 +1347,16 @@ public class StaticMetadata {
     }
 
     /**
+     * Get supported heic output sizes and do the check.
+     *
+     * @return Empty size array if heic output is not supported
+     */
+    public Size[] getHeicOutputSizesChecked() {
+        return getAvailableSizesForFormatChecked(ImageFormat.HEIC,
+                StreamDirection.Output);
+    }
+
+    /**
      * Used to determine the stream direction for various helpers that look up
      * format or size information.
      */
@@ -2358,6 +2368,14 @@ public class StaticMetadata {
      */
     public boolean isOpticalBlackRegionSupported() {
         return areKeysAvailable(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS);
+    }
+
+    /**
+     * Check if HEIC format is supported
+     */
+    public boolean isHeicSupported() {
+        int[] formats = getAvailableFormats(StaticMetadata.StreamDirection.Output);
+        return CameraTestUtils.contains(formats, ImageFormat.HEIC);
     }
 
     /**

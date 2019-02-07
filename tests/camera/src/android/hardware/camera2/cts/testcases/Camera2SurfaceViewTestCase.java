@@ -285,9 +285,10 @@ public class Camera2SurfaceViewTestCase {
     protected void prepareStillCaptureAndStartPreview(CaptureRequest.Builder previewRequest,
             CaptureRequest.Builder stillRequest, Size previewSz, Size stillSz,
             CaptureCallback resultListener,
-            ImageReader.OnImageAvailableListener imageListener) throws Exception {
+            ImageReader.OnImageAvailableListener imageListener, boolean isHeic) throws Exception {
         prepareCaptureAndStartPreview(previewRequest, stillRequest, previewSz, stillSz,
-                ImageFormat.JPEG, resultListener, MAX_READER_IMAGES, imageListener);
+                isHeic ? ImageFormat.HEIC : ImageFormat.JPEG, resultListener, MAX_READER_IMAGES,
+                imageListener);
     }
 
     /**
@@ -304,9 +305,9 @@ public class Camera2SurfaceViewTestCase {
     protected void prepareStillCaptureAndStartPreview(CaptureRequest.Builder previewRequest,
             CaptureRequest.Builder stillRequest, Size previewSz, Size stillSz,
             CaptureCallback resultListener, int maxNumImages,
-            ImageReader.OnImageAvailableListener imageListener) throws Exception {
+            ImageReader.OnImageAvailableListener imageListener, boolean isHeic) throws Exception {
         prepareCaptureAndStartPreview(previewRequest, stillRequest, previewSz, stillSz,
-                ImageFormat.JPEG, resultListener, maxNumImages, imageListener);
+                isHeic ? ImageFormat.HEIC : ImageFormat.JPEG, resultListener, maxNumImages, imageListener);
     }
 
     /**
@@ -573,11 +574,13 @@ public class Camera2SurfaceViewTestCase {
      * @param resultListener Capture result listener
      * @param maxNumImages The max number of images set to the image reader
      * @param imageListeners The single capture capture image listeners
+     * @param isHeic HEIC still capture if true, JPEG still capture if false
      */
     protected ImageReader[] prepareStillCaptureAndStartPreview(
             CaptureRequest.Builder previewRequest, CaptureRequest.Builder stillRequest,
             Size previewSz, Size[] captureSizes, int[] formats, CaptureCallback resultListener,
-            int maxNumImages, ImageReader.OnImageAvailableListener[] imageListeners)
+            int maxNumImages, ImageReader.OnImageAvailableListener[] imageListeners,
+            boolean isHeic)
             throws Exception {
 
         if ((captureSizes == null) || (formats == null) || (imageListeners == null) &&
