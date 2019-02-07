@@ -62,7 +62,7 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
             "android.telecom.cts.screeningtestapp/"
                     + "android.telecom.cts.screeningtestapp.CtsCallScreeningService";
     private static final int ASYNC_TIMEOUT = 10000;
-    private static final String ROLE_CALL_SCREENING = "android.app.role.CALL_SCREENING_APP";
+    private static final String ROLE_CALL_SCREENING = "android.app.role.CALL_SCREENING";
     private static final CallIdentification SAMPLE_CALL_ID = new CallIdentification.Builder()
             .setName("Joe's Laundromat")
             .setDescription("1234 Dirtysocks Lane, Cleanville, USA")

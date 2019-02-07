@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 public class CtsRoleManagerAdapter {
 
     private static final String TAG = CtsRoleManagerAdapter.class.getSimpleName();
-    private static final String ROLE_COMPANION_APP = "android.app.role.CALL_COMPANION_APP";
-    private static final String ROLE_CAR_MODE_DIALER_APP = "android.app.role.CAR_MODE_DIALER_APP";
+    private static final String ROLE_COMPANION_APP = "android.app.role.CALL_COMPANION";
+    private static final String ROLE_CAR_MODE_DIALER_APP = "android.app.role.CAR_MODE_DIALER";
     private static final String COMMAND_ADD_OR_REMOVE_CALL_COMPANION_APP =
             "telecom add-or-remove-call-companion-app";
     private static final String COMMAND_SET_AUTO_MODE_APP = "telecom set-test-auto-mode-app";
