@@ -180,19 +180,15 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         final Activity translucentActivity = mTranslucentActivityTestRule.launchActivity(
                 new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
-        waitAndAssertActivityStates(state(translucentActivity, ON_RESUME));
-        // Second activity should stay resumed, because it's in a separate stack below the
-        // translucent activity.
-        LifecycleVerifier.assertEmptySequence(SecondActivity.class, getLifecycleLog(),
-                "moveToSide");
+        waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),
+                state(secondActivity, ON_PAUSE));
 
         // Move translucent activity to side, it will be on top of the first now
         getLifecycleLog().clear();
         moveActivityToStack(getComponentName(TranslucentActivity.class), primarySplitStack);
 
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
-        LifecycleVerifier.assertEmptySequence(SecondActivity.class, getLifecycleLog(),
-                "moveToSide");
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE),
+                state(secondActivity, ON_RESUME));
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_PAUSE), "moveToSide");
         // Translucent activity can be either relaunched or preserved depending on whether the split
