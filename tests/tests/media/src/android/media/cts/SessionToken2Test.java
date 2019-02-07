@@ -16,7 +16,7 @@
 
 package android.media.cts;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.media.SessionToken2;
@@ -36,7 +36,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@Ignore
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class SessionToken2Test {
     private Context mContext;
@@ -47,6 +46,7 @@ public class SessionToken2Test {
     }
 
     @Test
+    @Ignore
     public void testConstructor_sessionService() {
         SessionToken2 token = new SessionToken2(mContext, mContext.getPackageName(),
                 MockMediaSessionService2.class.getCanonicalName());
@@ -57,6 +57,7 @@ public class SessionToken2Test {
     }
 
     @Test
+    @Ignore
     public void testConstructor_libraryService() {
         SessionToken2 token = new SessionToken2(mContext, mContext.getPackageName(),
                 MockMediaLibraryService2.class.getCanonicalName());
