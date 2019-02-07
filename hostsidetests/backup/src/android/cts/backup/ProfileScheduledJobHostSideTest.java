@@ -126,6 +126,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
                 mProfileUserId);
 
         // Force run k/v job.
+        String startLog = mLogcatInspector.mark(TAG);
         int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, mProfileUserId);
         mBackupUtils.executeShellCommandSync(JOB_SCHEDULER_RUN_COMMAND + " " + jobId);
 
@@ -133,7 +134,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
         mLogcatInspector.assertLogcatContainsInOrder(
                 LOGCAT_FILTER,
                 TIMEOUT_FOR_KEY_VALUE_SECONDS,
-                mLogcatInspector.mark(TAG),
+                startLog,
                 KEY_VALUE_SUCCESS_LOG);
 
         // Check job rescheduled.
@@ -176,6 +177,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
         mBackupUtils.backupNowAndAssertSuccessForUser(PACKAGE_MANAGER_SENTINEL, mProfileUserId);
 
         // Force run full backup job.
+        String startLog = mLogcatInspector.mark(TAG);
         int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, mProfileUserId);
         mBackupUtils.executeShellCommandSync(JOB_SCHEDULER_RUN_COMMAND + " " + jobId);
 
@@ -183,7 +185,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
         mLogcatInspector.assertLogcatContainsInOrder(
                 LOGCAT_FILTER,
                 TIMEOUT_FOR_FULL_BACKUP_SECONDS,
-                mLogcatInspector.mark(TAG),
+                startLog,
                 FULL_BACKUP_SUCCESS_LOG);
 
         // Check job rescheduled.
