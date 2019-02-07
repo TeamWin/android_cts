@@ -45,6 +45,7 @@ import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
@@ -58,6 +59,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -921,6 +923,28 @@ public class ChildlessActivityTest
      * - etc
      */
 
+    private enum DisabledReason {
+        BY_API,
+        BY_SETTINGS,
+        BY_DEVICE_CONFIG
+    }
+
+    private void setFeatureEnabled(@NonNull ContentCaptureManager mgr,
+            @NonNull DisabledReason reason, boolean enabled) {
+        switch (reason) {
+            case BY_API:
+                mgr.setContentCaptureFeatureEnabled(enabled);
+                break;
+            case BY_SETTINGS:
+                setFeatureEnabled(Boolean.toString(enabled));
+                break;
+            case BY_DEVICE_CONFIG:
+                setFeatureEnabledByDeviceConfig(enabled ? "default" : null);
+                break;
+            default:
+                throw new IllegalArgumentException("invalid reason: " + reason);
+        }
+    }
     @Test
     public void testIsContentCaptureFeatureEnabled_notService() throws Exception {
         final ContentCaptureManager mgr = getContentCaptureManagerHack();
@@ -929,21 +953,18 @@ public class ChildlessActivityTest
 
     @Test
     public void testSetContentCaptureFeatureEnabled_disabledBySettings() throws Exception {
-        setContentCaptureFeatureEnabledTest_disabled(/* bySettings= */ true);
+        setContentCaptureFeatureEnabledTest_disabled(DisabledReason.BY_SETTINGS);
     }
 
-    private void setContentCaptureFeatureEnabledTest_disabled(boolean bySettings) throws Exception {
+    private void setContentCaptureFeatureEnabledTest_disabled(@NonNull DisabledReason reason)
+            throws Exception {
         final ContentCaptureManager mgr = getContentCaptureManagerHack();
 
         final CtsContentCaptureService service = enableService();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
         final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
 
-        if (bySettings) {
-            setFeatureEnabled("false");
-        } else {
-            mgr.setContentCaptureFeatureEnabled(false);
-        }
+        setFeatureEnabled(mgr, reason, /* enabled= */ false);
 
         disconnectedListener.waitForOnDisconnected();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -962,22 +983,18 @@ public class ChildlessActivityTest
     @Test
     public void testSetContentCaptureFeatureEnabled_disabledThenReEnabledBySettings()
             throws Exception {
-        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(/* bySettings= */ true);
+        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(DisabledReason.BY_SETTINGS);
     }
 
-    private void setContentCaptureFeatureEnabledTest_disabledThenReEnabled(boolean bySettings)
-            throws Exception {
+    private void setContentCaptureFeatureEnabledTest_disabledThenReEnabled(
+            @NonNull DisabledReason reason) throws Exception {
         final ContentCaptureManager mgr = getContentCaptureManagerHack();
 
         final CtsContentCaptureService service1 = enableService();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
         final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
 
-        if (bySettings) {
-            setFeatureEnabled("false");
-        } else {
-            mgr.setContentCaptureFeatureEnabled(false);
-        }
+        setFeatureEnabled(mgr, reason, /* enabled= */ false);
         disconnectedListener.waitForOnDisconnected();
 
         assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -992,11 +1009,7 @@ public class ChildlessActivityTest
 
         // Re-enable feature
         final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
-        if (bySettings) {
-            setFeatureEnabled("true");
-        } else {
-            mgr.setContentCaptureFeatureEnabled(true);
-        }
+        setFeatureEnabled(mgr, reason, /* enabled= */ true);
         final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
 
@@ -1022,13 +1035,30 @@ public class ChildlessActivityTest
 
     @Test
     public void testSetContentCaptureFeatureEnabled_disabledByApi() throws Exception {
-        setContentCaptureFeatureEnabledTest_disabled(/* bySettings= */ false);
+        setContentCaptureFeatureEnabledTest_disabled(DisabledReason.BY_API);
     }
 
     @Test
     public void testSetContentCaptureFeatureEnabled_disabledThenReEnabledByApi()
             throws Exception {
-        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(/* bySettings= */ false);
+        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(DisabledReason.BY_API);
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_disabledByDeviceConfig() throws Exception {
+        setContentCaptureFeatureEnabledTest_disabled(DisabledReason.BY_DEVICE_CONFIG);
+        // Reset service, otherwise it will reconnect when the deviceConfig value is reset
+        // on cleanup, which will cause the test to fail
+        Helper.resetService();
+    }
+
+    @Test
+    public void testSetContentCaptureFeatureEnabled_disabledThenReEnabledByDeviceConfig()
+            throws Exception {
+        setContentCaptureFeatureEnabledTest_disabledThenReEnabled(DisabledReason.BY_DEVICE_CONFIG);
+        // Reset service, otherwise it will reconnect when the deviceConfig value is reset
+        // on cleanup, which will cause the test to fail
+        Helper.resetService();
     }
 
     // TODO(b/123406031): add tests that mix feature_enabled with user_restriction_enabled (and
@@ -1085,4 +1115,34 @@ public class ChildlessActivityTest
 
         return mgr;
     }
+
+    // TODO(b/124006095): should use a @Rule instead
+    private String mEnabledBefore;
+    @Before
+    public void saveDeviceConfig() {
+        mEnabledBefore = DeviceConfig.getProperty(DeviceConfig.ContentCapture.NAMESPACE,
+                DeviceConfig.ContentCapture.PROPERTY_CONTENTCAPTURE_ENABLED);
+        Log.d(TAG, "@Before saveDeviceConfig(): " + mEnabledBefore);
+
+        setFeatureEnabledByDeviceConfig("default");
+
+    }
+    @After
+    // TODO(b/124006095): should use a @Rule instead
+    public void restoreDeviceConfig() {
+        Log.d(TAG, "@After restoreDeviceConfig(): " + mEnabledBefore);
+        setFeatureEnabledByDeviceConfig(mEnabledBefore);
+
+    }
+    // TODO(b/124006095): should use a DeviceConfigUtils instead
+    private void setFeatureEnabledByDeviceConfig(@Nullable String value) {
+        Log.d(TAG, "setFeatureEnabledByDeviceConfig(): " + value);
+
+        DeviceConfig.setProperty(DeviceConfig.ContentCapture.NAMESPACE,
+                DeviceConfig.ContentCapture.PROPERTY_CONTENTCAPTURE_ENABLED,
+                value, /* makeDefault= */ false);
+
+        android.os.SystemClock.sleep(1000); // Wait a little bit since we're not using a listener
+    }
+
 }
