@@ -124,6 +124,7 @@ public class CallbackUtils {
      */
     public static class NetworkCb extends ConnectivityManager.NetworkCallback {
         private CountDownLatch mBlocker = new CountDownLatch(1);
+        private Network mNetwork = null;
         private NetworkCapabilities mNetworkCapabilities = null;
 
         @Override
@@ -135,18 +136,20 @@ public class CallbackUtils {
         @Override
         public void onCapabilitiesChanged(Network network,
                 NetworkCapabilities networkCapabilities) {
+            mNetwork = network;
             mNetworkCapabilities = networkCapabilities;
             mBlocker.countDown();
         }
 
         /**
-         * Wait (blocks) for Available or Unavailable callbacks - or timesout.
+         * Wait (blocks) for Capabilities Changed callback - or timesout.
          *
-         * @return true if Available, false otherwise (Unavailable or timeout).
+         * @return Network + NetworkCapabilities (pair) if occurred, null otherwise.
          */
-        public NetworkCapabilities waitForNetwork() throws InterruptedException {
+        public Pair<Network, NetworkCapabilities> waitForNetworkCapabilities()
+                throws InterruptedException {
             if (mBlocker.await(CALLBACK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
-                return mNetworkCapabilities;
+                return Pair.create(mNetwork, mNetworkCapabilities);
             }
             return null;
         }

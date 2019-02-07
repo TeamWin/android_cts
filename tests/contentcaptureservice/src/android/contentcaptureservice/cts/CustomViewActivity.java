@@ -101,13 +101,16 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
     @NonNull
     private List<ContentCaptureEvent> assertJustInitialViewsAppeared(@NonNull Session session,
             int additionalEvents) {
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events(" + events.size() + "): " + events);
-        assertThat(events.size()).isAtLeast(MIN_EVENTS + additionalEvents);
-
         final View grandpa1 = (View) mCustomView.getParent();
         final View grandpa2 = (View) grandpa1.getParent();
         final View decorView = getDecorView();
+        Log.v(TAG, "assertJustInitialViewsAppeared(): grandpa1=" + grandpa1.getAutofillId()
+                + ", grandpa2=" + grandpa2.getAutofillId() + ", decor="
+                + decorView.getAutofillId());
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+        assertThat(events.size()).isAtLeast(MIN_EVENTS + additionalEvents);
 
         // Assert just the relevant events
         assertViewHierarchyStarted(events, 0);

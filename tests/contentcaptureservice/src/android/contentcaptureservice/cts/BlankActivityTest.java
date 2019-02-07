@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.ComponentName;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 
@@ -33,6 +34,7 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+@AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<BlankActivity> {
 
     private static final String TAG = BlankActivityTest.class.getSimpleName();

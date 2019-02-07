@@ -163,7 +163,7 @@ public class CtsRoleManagerAdapter {
         Executor executor = mContext.getMainExecutor();
         LinkedBlockingQueue<String> q = new LinkedBlockingQueue<>(1);
         runWithShellPermissionIdentity(() -> {
-            mRoleManager.addRoleHolderAsUser(roleName, packageName, user, executor,
+            mRoleManager.addRoleHolderAsUser(roleName, packageName, 0, user, executor,
                     new RoleManagerCallback() {
                         @Override
                         public void onSuccess() {
@@ -186,7 +186,7 @@ public class CtsRoleManagerAdapter {
         Executor executor = mContext.getMainExecutor();
         LinkedBlockingQueue<String> q = new LinkedBlockingQueue<>(1);
         runWithShellPermissionIdentity(() -> {
-            mRoleManager.removeRoleHolderAsUser(roleName, packageName, user, executor,
+            mRoleManager.removeRoleHolderAsUser(roleName, packageName, 0, user, executor,
                     new RoleManagerCallback() {
                         @Override
                         public void onSuccess() {

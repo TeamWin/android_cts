@@ -321,7 +321,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
      */
     public void testSimpleNotBound3() throws Throwable {
         installAndCheckNotBound(APK_3, PACKAGE_A, USER_SYSTEM,
-                "must be protected with android.permission.BIND_SMS_APP_SERVICE");
+                "must be protected with android.permission.BIND_CARRIER_MESSAGING_CLIENT_SERVICE");
     }
 
     /**
@@ -336,7 +336,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
      */
     public void testSimpleNotBound5() throws Throwable {
         installAndCheckNotBound(APK_5, PACKAGE_A, USER_SYSTEM,
-                "Service with android.telephony.action.SMS_APP_SERVICE not found");
+                "Service with android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE not found");
     }
 
     /**
@@ -355,7 +355,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
         installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
         installAndCheckBound(APK_2, PACKAGE_A, SERVICE_2, USER_SYSTEM);
         installAndCheckNotBound(APK_3, PACKAGE_A, USER_SYSTEM,
-                "must be protected with android.permission.BIND_SMS_APP_SERVICE");
+                "must be protected with android.permission.BIND_CARRIER_MESSAGING_CLIENT_SERVICE");
         installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
         installAndCheckNotBound(APK_4, PACKAGE_A, USER_SYSTEM, "More than one");
     }
@@ -398,7 +398,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
 
             // Replace the app on the primary user with an invalid one.
             installAndCheckNotBound(APK_3, PACKAGE_A, USER_SYSTEM,
-                    "must be protected with android.permission.BIND_SMS_APP_SERVICE");
+                    "must be protected with android.permission.BIND_CARRIER_MESSAGING_CLIENT_SERVICE");
 
             // Secondary user should still have a valid connection.
             checkBound(PACKAGE_B, SERVICE_1, userId);

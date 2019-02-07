@@ -279,8 +279,18 @@ final class Assertions {
         assertThat(events).hasSize(minimumSize + 1);
         final ContentCaptureEvent batchDisappearEvent = events.get(minimumSize);
 
-        final List<AutofillId> actualIds = batchDisappearEvent.getIds();
-        assertThat(actualIds).containsExactly((Object[]) expectedIds);
+        if (expectedIds.length == 1) {
+            assertWithMessage("Should have just one deleted id on %s", batchDisappearEvent)
+                    .that(batchDisappearEvent.getIds()).isNull();
+            assertWithMessage("wrong deleted id on %s", batchDisappearEvent)
+                    .that(batchDisappearEvent.getId()).isEqualTo(expectedIds[0]);
+        } else {
+            assertWithMessage("Should not have individual deleted id on %s", batchDisappearEvent)
+                    .that(batchDisappearEvent.getId()).isNull();
+            final List<AutofillId> actualIds = batchDisappearEvent.getIds();
+            assertWithMessage("wrong deleteds id on %s", batchDisappearEvent)
+                    .that(actualIds).containsExactly((Object[]) expectedIds);
+        }
     }
 
     /**

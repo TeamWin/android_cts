@@ -20,6 +20,7 @@ import static com.android.cts.verifier.wifiaware.CallbackUtils.CALLBACK_TIMEOUT_
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.aware.DiscoverySession;
@@ -284,14 +285,14 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
         cm.requestNetwork(nr, networkCb, CALLBACK_TIMEOUT_SEC * 1000);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestResponder: requested network");
-        NetworkCapabilities nc = networkCb.waitForNetwork();
+        Pair<Network, NetworkCapabilities> info = networkCb.waitForNetworkCapabilities();
         cm.unregisterNetworkCallback(networkCb);
-        if (nc == null) {
+        if (info == null) {
             setFailureReason(mContext.getString(R.string.aware_status_network_failed));
             Log.e(TAG, "executeTestResponder: network request rejected - ON_UNAVAILABLE");
             return false;
         }
-        if (nc.getNetworkSpecifier() != null) {
+        if (info.second.getNetworkSpecifier() != null) {
             setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
             Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
             return false;
@@ -423,14 +424,14 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
         cm.requestNetwork(nr, networkCb, CALLBACK_TIMEOUT_SEC * 1000);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
         if (DBG) Log.d(TAG, "executeTestInitiator: requested network");
-        NetworkCapabilities nc = networkCb.waitForNetwork();
+        Pair<Network, NetworkCapabilities> info = networkCb.waitForNetworkCapabilities();
         cm.unregisterNetworkCallback(networkCb);
-        if (nc == null) {
+        if (info == null) {
             setFailureReason(mContext.getString(R.string.aware_status_network_failed));
             Log.e(TAG, "executeTestInitiator: network request rejected - ON_UNAVAILABLE");
             return false;
         }
-        if (nc.getNetworkSpecifier() != null) {
+        if (info.second.getNetworkSpecifier() != null) {
             setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
             Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
             return false;

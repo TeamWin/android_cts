@@ -35,8 +35,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 public class ExifInterfaceTest extends AndroidTestCase {
@@ -53,6 +56,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     private static final String EXIF_BYTE_ORDER_II_JPEG = "image_exif_byte_order_ii.jpg";
     private static final String EXIF_BYTE_ORDER_MM_JPEG = "image_exif_byte_order_mm.jpg";
     private static final String LG_G4_ISO_800_DNG = "lg_g4_iso_800.dng";
+    private static final String LG_G4_ISO_800_JPG = "lg_g4_iso_800.jpg";
     private static final String SONY_RX_100_ARW = "sony_rx_100.arw";
     private static final String CANON_G7X_CR2 = "canon_g7x.cr2";
     private static final String FUJI_X20_RAF = "fuji_x20.raf";
@@ -128,6 +132,11 @@ public class ExifInterfaceTest extends AndroidTestCase {
         public final int orientation;
         public final int whiteBalance;
 
+        // XMP information.
+        public final boolean hasXmp;
+        public final int xmpOffset;
+        public final int xmpLength;
+
         private static String getString(TypedArray typedArray, int index) {
             String stringValue = typedArray.getString(index);
             if (stringValue == null || stringValue.equals("")) {
@@ -177,6 +186,11 @@ public class ExifInterfaceTest extends AndroidTestCase {
             iso = getString(typedArray, index++);
             orientation = typedArray.getInt(index++, 0);
             whiteBalance = typedArray.getInt(index++, 0);
+
+            // Reads XMP information.
+            hasXmp = typedArray.getBoolean(index++, false);
+            xmpOffset = typedArray.getInt(index++, 0);
+            xmpLength = typedArray.getInt(index++, 0);
 
             typedArray.recycle();
         }
@@ -254,6 +268,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         // Checks a thumbnail image.
         assertEquals(expectedValue.hasThumbnail, exifInterface.hasThumbnail());
         if (expectedValue.hasThumbnail) {
+            assertNotNull(exifInterface.getThumbnailRange());
             if (assertRanges) {
                 final long[] thumbnailRange = exifInterface.getThumbnailRange();
                 assertEquals(expectedValue.thumbnailOffset, thumbnailRange[0]);
@@ -268,6 +283,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
             assertEquals(expectedValue.isThumbnailCompressed,
                     exifInterface.isThumbnailCompressed());
         } else {
+            assertNull(exifInterface.getThumbnailRange());
             assertNull(exifInterface.getThumbnail());
         }
 
@@ -275,6 +291,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         float[] latLong = new float[2];
         assertEquals(expectedValue.hasLatLong, exifInterface.getLatLong(latLong));
         if (expectedValue.hasLatLong) {
+            assertNotNull(exifInterface.getAttributeRange(ExifInterface.TAG_GPS_LATITUDE));
             if (assertRanges) {
                 final long[] latitudeRange = exifInterface
                         .getAttributeRange(ExifInterface.TAG_GPS_LATITUDE);
@@ -286,6 +303,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
             assertTrue(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LATITUDE));
             assertTrue(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LONGITUDE));
         } else {
+            assertNull(exifInterface.getAttributeRange(ExifInterface.TAG_GPS_LATITUDE));
             assertFalse(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LATITUDE));
             assertFalse(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LONGITUDE));
         }
@@ -318,6 +336,26 @@ public class ExifInterfaceTest extends AndroidTestCase {
         assertStringTag(exifInterface, ExifInterface.TAG_ISO_SPEED_RATINGS, expectedValue.iso);
         assertIntTag(exifInterface, ExifInterface.TAG_ORIENTATION, expectedValue.orientation);
         assertIntTag(exifInterface, ExifInterface.TAG_WHITE_BALANCE, expectedValue.whiteBalance);
+
+        if (expectedValue.hasXmp) {
+            assertNotNull(exifInterface.getAttributeRange(ExifInterface.TAG_XMP));
+            if (assertRanges) {
+                final long[] xmpRange = exifInterface.getAttributeRange(ExifInterface.TAG_XMP);
+                assertEquals(expectedValue.xmpOffset, xmpRange[0]);
+                assertEquals(expectedValue.xmpLength, xmpRange[1]);
+            }
+            final String xmp = new String(exifInterface.getAttributeBytes(ExifInterface.TAG_XMP),
+                    StandardCharsets.UTF_8);
+            // We're only interested in confirming that we were able to extract
+            // valid XMP data, which must always include this XML tag; a full
+            // XMP parser is beyond the scope of ExifInterface. See XMP
+            // Specification Part 1, Section C.2.2 for additional details.
+            if (!xmp.contains("<rdf:RDF")) {
+                fail("Invalid XMP: " + xmp);
+            }
+        } else {
+            assertNull(exifInterface.getAttributeRange(ExifInterface.TAG_XMP));
+        }
     }
 
     private void testExifInterfaceCommon(String fileName, ExpectedValue expectedValue)
@@ -453,6 +491,12 @@ public class ExifInterfaceTest extends AndroidTestCase {
         testExifInterfaceForRaw(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
     }
 
+    public void testReadExifDataFromLgG4Iso800Jpg() throws Throwable {
+        stageFile(R.raw.lg_g4_iso_800, new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + LG_G4_ISO_800_JPG));
+        testExifInterfaceForJpeg(LG_G4_ISO_800_JPG, R.array.lg_g4_iso_800_jpg);
+    }
+
     public void testDoNotFailOnCorruptedImage() throws Throwable {
         // To keep the compatibility with old versions of ExifInterface, even on a corrupted image,
         // it shouldn't raise any exceptions except an IOException when unable to open a file.
@@ -534,5 +578,12 @@ public class ExifInterfaceTest extends AndroidTestCase {
         exif = new ExifInterface(imageFile.getAbsolutePath());
         assertEquals(dateTimeOriginalValue, exif.getAttribute(ExifInterface.TAG_DATETIME));
         imageFile.delete();
+    }
+
+    private void stageFile(int resId, File file) throws IOException {
+        try (InputStream source = getContext().getResources().openRawResource(resId);
+                OutputStream target = new FileOutputStream(file)) {
+            FileUtils.copy(source, target);
+        }
     }
 }

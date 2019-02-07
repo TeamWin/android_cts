@@ -965,6 +965,57 @@ public class NotificationManagerTest extends AndroidTestCase {
         mListener.resetData();
     }
 
+    public void testCanBubble_ranking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        assertEquals(1, Settings.Secure.getInt(
+                mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BUBBLES));
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        try {
+            sendNotification(1, R.drawable.black);
+            Thread.sleep(500); // wait for notification listener to receive notification
+            NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+            NotificationListenerService.Ranking outRanking =
+                    new NotificationListenerService.Ranking();
+            for (String key : rankingMap.getOrderedKeys()) {
+                if (key.contains(mListener.getPackageName())) {
+                    rankingMap.getRanking(key, outRanking);
+                    // by default everything can bubble
+                    assertTrue(outRanking.canBubble());
+                }
+            }
+
+            // turn off bubbles globally
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    Settings.Secure.putInt(mContext.getContentResolver(),
+                            Settings.Secure.NOTIFICATION_BUBBLES, 0));
+
+            Thread.sleep(500); // wait for ranking update
+
+            rankingMap = mListener.mRankingMap;
+            outRanking = new NotificationListenerService.Ranking();
+            for (String key : rankingMap.getOrderedKeys()) {
+                if (key.contains(mListener.getPackageName())) {
+                    assertFalse(outRanking.canBubble());
+                }
+            }
+
+            mListener.resetData();
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    Settings.Secure.putInt(mContext.getContentResolver(),
+                            Settings.Secure.NOTIFICATION_BUBBLES, 1));
+        }
+    }
+
     public void testNotify_blockedChannel() throws Exception {
         mNotificationManager.cancelAll();
 
