@@ -127,6 +127,15 @@ public class LauncherAppsTest {
         }
     }
 
+    @Test
+    public void testGetAppUsageLimit_allowsZeroLimit() {
+        registerObserver(DEFAULT_OBSERVER_ID, 0);
+        final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
+                SETTINGS_PACKAGE, USER_HANDLE);
+        assertNotNull("An observer with a time limit of 0 was not registered.", limit);
+        assertEquals("Usage remaining expected to be 0.", 0, limit.getUsageRemaining());
+    }
+
     @After
     public void tearDown() throws Exception {
         unregisterObserver(DEFAULT_OBSERVER_ID);
