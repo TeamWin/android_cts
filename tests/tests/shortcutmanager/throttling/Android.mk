@@ -38,5 +38,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ShortcutManagerTestUtils
 
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 25
 
 include $(BUILD_CTS_PACKAGE)
