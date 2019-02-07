@@ -720,7 +720,8 @@ public class MediaCodecListTest extends AndroidTestCase {
                 } else {
                     for (VideoCapabilities.PerformancePoint p : pps) {
                         Log.d(TAG, "got performance point "
-                                + p.width + " x " + p.height + " x " + p.frameRate);
+                                + p.macroBlocks + "block @ " + p.macroBlockRate / p.macroBlocks
+                                + "fps (max " + p.frameRate + "fps)");
                     }
                 }
             }
