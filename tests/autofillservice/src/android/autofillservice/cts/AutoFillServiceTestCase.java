@@ -19,7 +19,6 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.content.Context.CLIPBOARD_SERVICE;
-import static android.provider.Settings.Global.AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -39,9 +38,7 @@ import androidx.annotation.NonNull;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
-import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.TestNameUtils;
 
 import org.junit.Before;
@@ -205,10 +202,11 @@ public final class AutoFillServiceTestCase {
                 // mRetryRule should be closest to the main test as possible
                 .around(mRetryRule)
                 //
-                // Augmented Autofill should be disabled by default
-                .around(new SettingsStateChangerRule(sContext, SettingsUtils.NAMESPACE_GLOBAL,
-                        AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
-                        Integer.toString(getSmartSuggestionMode())))
+                // TODO(b/124006095): must use DeviceConfig rule
+//                // Augmented Autofill should be disabled by default
+//                .around(new SettingsStateChangerRule(sContext, SettingsUtils.NAMESPACE_GLOBAL,
+//                        AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
+//                        Integer.toString(getSmartSuggestionMode())))
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
