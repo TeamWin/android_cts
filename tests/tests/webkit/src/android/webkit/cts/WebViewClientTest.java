@@ -20,6 +20,7 @@ import android.app.ActivityManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Message;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
+@AppModeFull
 public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000;
     private static final String TEST_URL = "http://www.example.com/";

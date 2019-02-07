@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Message;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
@@ -52,6 +53,7 @@ import java.util.regex.Pattern;
 /**
  * Tests for {@link android.webkit.WebSettings}
  */
+@AppModeFull
 public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
     private static final int WEBVIEW_TIMEOUT = 5000;
