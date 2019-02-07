@@ -23,9 +23,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.InstrumentationRegistry;
 import android.util.Pair;
-
-import androidx.test.InstrumentationRegistry;
 
 import com.android.nn.benchmark.core.BenchmarkException;
 import com.android.nn.benchmark.core.BenchmarkResult;
