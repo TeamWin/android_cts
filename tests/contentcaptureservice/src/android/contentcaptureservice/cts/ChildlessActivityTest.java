@@ -60,7 +60,6 @@ import androidx.annotation.NonNull;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -108,7 +107,6 @@ public class ChildlessActivityTest
         activity.assertDefaultEvents(session);
     }
 
-    @Ignore("not implemented yet, pending on b/123658889")
     @Test
     public void testGetContentCapture_disabledWhenNoService() throws Exception {
 
