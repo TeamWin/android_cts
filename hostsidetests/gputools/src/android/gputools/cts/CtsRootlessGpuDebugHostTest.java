@@ -207,6 +207,10 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
             apkIn.close();
         }
 
+        // If this assert fires , try increasing the timeout
+        Assert.assertTrue("Log scanning did not complete before timout (" +
+                LOG_SEARCH_TIMEOUT_MS + "ms)", scanComplete);
+
         return result;
     }
 
