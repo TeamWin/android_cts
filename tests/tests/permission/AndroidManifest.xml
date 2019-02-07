@@ -32,33 +32,8 @@
                 android:permissionGroup="android.permission.cts.groupC"
                 android:description="@string/perm_c" />
 
-    <!-- for android.permission.cts.PermissionUsage -->
-    <permission android:name="android.permission.cts.D"
-                android:usageInfoRequired="true" />
-
-    <!-- for android.permission.cts.PermissionUsage and LocationAccessCheckTest -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
-      android:dataSentOffDevice="no"
-      android:dataSharedWithThirdParty="no"
-      android:dataUsedForMonetization="no"
-      android:dataRetentionTime="notRetained" />
-
-    <!-- for android.permission.cts.PermissionUsage -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"
-      android:dataSentOffDevice="yes"
-      android:dataSharedWithThirdParty="yes"
-      android:dataUsedForMonetization="yes"
-      android:dataRetentionTime="32" />
-
-    <!-- for android.permission.cts.PermissionUsage -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"
-      android:dataSentOffDevice="userTriggered"
-      android:dataSharedWithThirdParty="userTriggered"
-      android:dataUsedForMonetization="userTriggered"
-      android:dataRetentionTime="unlimited" />
-
-    <!-- for android.permission.cts.PermissionUsage -->
-    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <!-- for android.permission.cts.LocationAccessCheckTest -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- for android.permission.cts.PermissionGroupChange -->
     <permission-group android:description="@string/perm_group_b"
