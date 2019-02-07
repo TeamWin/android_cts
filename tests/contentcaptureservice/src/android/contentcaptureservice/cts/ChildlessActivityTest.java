@@ -939,7 +939,7 @@ public class ChildlessActivityTest
                 setFeatureEnabled(Boolean.toString(enabled));
                 break;
             case BY_DEVICE_CONFIG:
-                setFeatureEnabledByDeviceConfig(enabled ? "default" : null);
+                setFeatureEnabledByDeviceConfig(Boolean.toString(enabled));
                 break;
             default:
                 throw new IllegalArgumentException("invalid reason: " + reason);
@@ -1120,11 +1120,11 @@ public class ChildlessActivityTest
     private String mEnabledBefore;
     @Before
     public void saveDeviceConfig() {
-        mEnabledBefore = DeviceConfig.getProperty(DeviceConfig.ContentCapture.NAMESPACE,
-                DeviceConfig.ContentCapture.PROPERTY_CONTENTCAPTURE_ENABLED);
+        mEnabledBefore = DeviceConfig.getProperty(DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
         Log.d(TAG, "@Before saveDeviceConfig(): " + mEnabledBefore);
 
-        setFeatureEnabledByDeviceConfig("default");
+        setFeatureEnabledByDeviceConfig(null);
 
     }
     @After
@@ -1138,8 +1138,8 @@ public class ChildlessActivityTest
     private void setFeatureEnabledByDeviceConfig(@Nullable String value) {
         Log.d(TAG, "setFeatureEnabledByDeviceConfig(): " + value);
 
-        DeviceConfig.setProperty(DeviceConfig.ContentCapture.NAMESPACE,
-                DeviceConfig.ContentCapture.PROPERTY_CONTENTCAPTURE_ENABLED,
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED,
                 value, /* makeDefault= */ false);
 
         android.os.SystemClock.sleep(1000); // Wait a little bit since we're not using a listener
