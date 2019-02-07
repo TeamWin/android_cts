@@ -464,9 +464,8 @@ public class MediaMuxerTest extends AndroidTestCase {
                 verifyAttributesMatch(srcMedia, outputMediaFile, degrees);
                 verifyLocationInFile(outputMediaFile);
             }
-            // Check the sample on 1s and 0.5s.
-            verifySamplesMatch(srcMedia, outputMediaFile, 1000000);
-            verifySamplesMatch(srcMedia, outputMediaFile, 500000);
+            // Verify timestamp of all samples.
+            verifyTimestampsWithSamplesDropSet(srcMedia, outputMediaFile, null, null);
         } finally {
             new File(outputMediaFile).delete();
         }
@@ -1003,15 +1002,12 @@ public class MediaMuxerTest extends AndroidTestCase {
                 }
                 extractorSrc.selectTrack(videoTrackIndex);
                 extractorTest.selectTrack(videoTrackIndex);
+                checkVideoSamplesTimeStamps(extractorSrc, extractorTest, samplesDropSet,
+                    videoStartOffsetUs);
+                extractorSrc.unselectTrack(videoTrackIndex);
+                extractorTest.unselectTrack(videoTrackIndex);
             }
         }
-        if (videoTrackIndex != -1) {
-            checkVideoSamplesTimeStamps(extractorSrc, extractorTest, samplesDropSet,
-                videoStartOffsetUs);
-        }
-
-        extractorSrc.unselectTrack(videoTrackIndex);
-        extractorTest.unselectTrack(videoTrackIndex);
 
         int audioTrackIndex = -1;
         int audioSampleCount = 0;
@@ -1026,12 +1022,8 @@ public class MediaMuxerTest extends AndroidTestCase {
                 }
                 extractorSrc.selectTrack(audioTrackIndex);
                 extractorTest.selectTrack(audioTrackIndex);
+                checkAudioSamplesTimestamps(extractorSrc, extractorTest, audioStartOffsetUs);
             }
-        }
-
-        if (audioTrackIndex != -1) {
-           // No audio track
-            checkAudioSamplesTimestamps(extractorSrc, extractorTest, audioStartOffsetUs);
         }
 
         extractorSrc.release();
@@ -1057,10 +1049,10 @@ public class MediaMuxerTest extends AndroidTestCase {
             srcSampleTimeUs = extractorSrc.getSampleTime();
             testSampleTimeUs = extractorTest.getSampleTime();
             if (VERBOSE) {
-                Log.d(TAG, "videoSampleCount:" + videoSampleCount);
-                Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
+                Log.i(TAG, "videoSampleCount:" + videoSampleCount);
+                Log.i(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
                             "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
-                Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+                Log.i(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
             }
             if (samplesDropSet == null || !samplesDropSet.contains(videoSampleCount)) {
                 if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
@@ -1114,6 +1106,7 @@ public class MediaMuxerTest extends AndroidTestCase {
             srcSampleTimeUs = extractorSrc.getSampleTime();
             testSampleTimeUs = extractorTest.getSampleTime();
             if(VERBOSE) {
+                Log.d(TAG, "audioSampleCount:" + audioSampleCount);
                 Log.v(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
                             "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
                 Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
@@ -1137,22 +1130,12 @@ public class MediaMuxerTest extends AndroidTestCase {
             else if ((audioSampleCount > 1 &&
                 (srcSampleTimeUs + audioStartOffsetUs) != testSampleTimeUs) ||
                 (audioSampleCount == 1 && srcSampleTimeUs != testSampleTimeUs)) {
-                    if (VERBOSE) {
-                        Log.d(TAG, "Fail:audio timestamps didn't match");
-                        Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
-                            "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
-                        Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
-                        Log.d(TAG, "audioSampleCount:" + audioSampleCount);
-                    }
                     fail("audio timestamps didn't match");
                 }
             testAdvance = extractorTest.advance();
             srcAdvance = extractorSrc.advance();
         } while(srcAdvance && testAdvance);
         if (srcAdvance != testAdvance) {
-            if (VERBOSE) {
-                Log.d(TAG, "audioSampleCount:" + audioSampleCount);
-            }
             fail("either audio track has not reached its last sample");
         }
     }
