@@ -35,4 +35,6 @@ LOCAL_MANIFEST_FILE := AndroidManifest.xml
 # Jarjar to make WrapTest unique.
 LOCAL_JARJAR_RULES := $(LOCAL_PATH)/jarjar-rules.txt
 
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
+
 include $(BUILD_PACKAGE)
