@@ -39,6 +39,7 @@ import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class NotificationTest extends AndroidTestCase {
@@ -346,16 +347,24 @@ public class NotificationTest extends AndroidTestCase {
 
 
     public void testMessagingStyle_historicMessages() {
+        Message referenceMessage = new Message("historic text", 0, "historic sender");
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle("self name")
+                .addMessage("text", 0, "sender")
+                .addMessage(new Message("image", 0, "sender")
+                        .setData("image/png", Uri.parse("http://example.com/image.png")))
+                .addHistoricMessage(referenceMessage)
+                .setConversationTitle("title");
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
-                .setStyle(new Notification.MessagingStyle("self name")
-                        .addMessage("text", 0, "sender")
-                        .addMessage(new Message("image", 0, "sender")
-                                .setData("image/png", Uri.parse("http://example.com/image.png")))
-                        .addHistoricMessage(new Message("historic text", 0, "historic sender"))
-                        .setConversationTitle("title")
-                ).build();
+                .setStyle(messagingStyle)
+                .build();
+
+        List<Message> historicMessages = messagingStyle.getHistoricMessages();
+        assertNotNull(historicMessages);
+        assertEquals(1, historicMessages.size());
+        Message message = historicMessages.get(0);
+        assertEquals(referenceMessage, message);
 
         assertNotNull(
                 mNotification.extras.getParcelableArray(Notification.EXTRA_HISTORIC_MESSAGES));
@@ -431,8 +440,24 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(user, messagingStyle.getUser());
     }
 
+    public void testMessagingStyle_getConversationTitle() {
+        final String title = "test conversation title";
+        Person user = new Person.Builder().setName("Test name").build();
+        MessagingStyle messagingStyle = new MessagingStyle(user).setConversationTitle(title);
+
+        Notification notification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setSmallIcon(1)
+                .setContentTitle(CONTENT_TITLE)
+                .setStyle(messagingStyle)
+                .build();
+
+        assertEquals(title, messagingStyle.getConversationTitle());
+        assertEquals(title, notification.extras.getString(Notification.EXTRA_CONVERSATION_TITLE));
+    }
+
     public void testMessage() {
-        Person sender = new Person.Builder().setName("Test name").build();
+        String senderName = "Test name";
+        Person sender = new Person.Builder().setName(senderName).build();
         String text = "Test message";
         long timestamp = 400;
 
@@ -441,6 +466,21 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(text, message.getText());
         assertEquals(timestamp, message.getTimestamp());
         assertEquals(sender, message.getSenderPerson());
+        assertEquals(senderName, message.getSender());
+    }
+
+    public void testMessageData() {
+        Person sender = new Person.Builder().setName("Test name").build();
+        String text = "Test message";
+        long timestamp = 400;
+        Message message = new Message(text, timestamp, sender);
+
+        String mimeType = "image/png";
+        Uri uri = Uri.parse("http://example.com/image.png");
+        message.setData(mimeType, uri);
+
+        assertEquals(mimeType, message.getDataMimeType());
+        assertEquals(uri, message.getDataUri());
     }
 
     public void testToString() {
