@@ -81,7 +81,7 @@
         </service>
 
         <service
-                android:name=".AccessibilityGestureDetectorTest$StubService"
+                android:name=".GestureDetectionStubAccessibilityService"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
