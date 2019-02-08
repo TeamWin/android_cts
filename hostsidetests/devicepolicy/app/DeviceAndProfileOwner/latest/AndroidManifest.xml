@@ -74,6 +74,8 @@
 
         <activity android:name="com.android.cts.deviceandprofileowner.AutofillActivity"/>
 
+        <activity android:name="com.android.cts.deviceandprofileowner.ContentCaptureActivity"/>
+
         <activity android:name=".PrintActivity"/>
 
         <activity
