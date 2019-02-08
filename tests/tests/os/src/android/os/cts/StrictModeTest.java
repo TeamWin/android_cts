@@ -46,6 +46,7 @@ import android.os.strictmode.NetworkViolation;
 import android.os.strictmode.NonSdkApiUsedViolation;
 import android.os.strictmode.UntaggedSocketViolation;
 import android.os.strictmode.Violation;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.system.Os;
@@ -79,6 +80,7 @@ import java.util.function.Consumer;
 
 /** Tests for {@link StrictMode} */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class StrictModeTest {
     private static final String TAG = "StrictModeTest";
     private static final String REMOTE_SERVICE_ACTION = "android.app.REMOTESERVICE";

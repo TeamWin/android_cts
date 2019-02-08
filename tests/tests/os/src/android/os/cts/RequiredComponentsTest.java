@@ -25,6 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
@@ -42,6 +43,7 @@ import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
  * as APKs for various reasons are present.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class RequiredComponentsTest {
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 

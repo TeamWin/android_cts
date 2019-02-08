@@ -20,6 +20,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings.Global;
 import android.test.AndroidTestCase;
 import com.android.compatibility.common.util.BatteryUtils;
@@ -27,6 +28,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 
+@AppModeFull
 public class PowerManagerTest extends AndroidTestCase {
     private static final String TAG = "PowerManagerTest";
     public static final long TIME = 3000;
