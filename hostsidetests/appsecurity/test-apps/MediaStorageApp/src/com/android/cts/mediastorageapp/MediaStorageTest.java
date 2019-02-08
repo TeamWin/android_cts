@@ -16,6 +16,8 @@
 
 package com.android.cts.mediastorageapp;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -45,7 +47,6 @@ import org.junit.runner.RunWith;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
 
@@ -53,11 +54,13 @@ import java.util.HashSet;
 public class MediaStorageTest {
     private Context mContext;
     private ContentResolver mContentResolver;
+    private int mUserId;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
+        mUserId = mContext.getUserId();
     }
 
     @Test
@@ -65,7 +68,7 @@ public class MediaStorageTest {
         final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        clearMediaOwner(blue);
+        clearMediaOwner(blue, mUserId);
 
         // Since we have no permissions, we should only be able to see media
         // that we've contributed
@@ -97,7 +100,7 @@ public class MediaStorageTest {
         final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        clearMediaOwner(blue);
+        clearMediaOwner(blue, mUserId);
 
         // Holding read permission we can see items we don't own
         final HashSet<Long> seen = new HashSet<>();
@@ -126,7 +129,7 @@ public class MediaStorageTest {
         final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        clearMediaOwner(blue);
+        clearMediaOwner(blue, mUserId);
 
         // Holding read permission we can see items we don't own
         final HashSet<Long> seen = new HashSet<>();
@@ -151,7 +154,7 @@ public class MediaStorageTest {
     @Test
     public void testMediaEscalation() throws Exception {
         final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        clearMediaOwner(red);
+        clearMediaOwner(red, mUserId);
 
         // Confirm that we get can take action to get write access
         RecoverableSecurityException exception = null;
@@ -204,12 +207,10 @@ public class MediaStorageTest {
         }
     }
 
-    private static void clearMediaOwner(Uri uri) throws IOException {
-        try (InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(
-                InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                        "content update --uri " + uri + " --bind owner_package_name:n:"))) {
-            while (is.read() != -1) {
-            }
-        }
+    private static void clearMediaOwner(Uri uri, int userId) throws IOException {
+        final String cmd = String.format(
+                "content update --uri %s --user %d --bind owner_package_name:n:",
+                uri, userId);
+        runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
     }
 }
