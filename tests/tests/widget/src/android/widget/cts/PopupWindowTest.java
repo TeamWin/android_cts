@@ -72,6 +72,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -901,6 +902,74 @@ public class PopupWindowTest {
                 () -> mPopupWindow.showAtLocation(anchorView, Gravity.BOTTOM, 0, 0), false);
     }
 
+    @Test
+    public void testEnterExitTransitionAsDropDownWithCustomBounds() throws Throwable {
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        final Rect epicenter = new Rect(20, 50, 22, 80);
+        verifyTransitionEpicenterChange(
+                () -> mPopupWindow.showAsDropDown(anchorView, 0, 0), epicenter);
+    }
+
+    private void verifyTransitionEpicenterChange(Runnable showRunnable, Rect epicenterBounds)
+            throws Throwable {
+        TransitionListener enterListener = mock(TransitionListener.class);
+        Transition enterTransition = new BaseTransition();
+        enterTransition.addListener(enterListener);
+
+        TransitionListener exitListener = mock(TransitionListener.class);
+        Transition exitTransition = new BaseTransition();
+        exitTransition.addListener(exitListener);
+
+        OnDismissListener dismissListener = mock(OnDismissListener.class);
+
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        mPopupWindow.setEnterTransition(enterTransition);
+        mPopupWindow.setExitTransition(exitTransition);
+        mPopupWindow.setOnDismissListener(dismissListener);
+
+        ArgumentCaptor<Transition> captor = ArgumentCaptor.forClass(Transition.class);
+
+        mActivityRule.runOnUiThread(showRunnable);
+        mInstrumentation.waitForIdleSync();
+
+        verify(enterListener, times(1)).onTransitionStart(captor.capture());
+        final Rect oldEpicenterStart = new Rect(captor.getValue().getEpicenter());
+
+        mActivityRule.runOnUiThread(mPopupWindow::dismiss);
+        mInstrumentation.waitForIdleSync();
+
+        verify(exitListener, times(1)).onTransitionStart(captor.capture());
+        final Rect oldEpicenterExit = new Rect(captor.getValue().getEpicenter());
+
+        mPopupWindow.setEpicenterBounds(epicenterBounds);
+        mActivityRule.runOnUiThread(showRunnable);
+        mInstrumentation.waitForIdleSync();
+
+        verify(enterListener, times(2)).onTransitionStart(captor.capture());
+        final Rect newEpicenterStart = new Rect(captor.getValue().getEpicenter());
+
+        mActivityRule.runOnUiThread(mPopupWindow::dismiss);
+        mInstrumentation.waitForIdleSync();
+
+        verify(exitListener, times(2)).onTransitionStart(captor.capture());
+
+        final Rect newEpicenterExit = new Rect(captor.getValue().getEpicenter());
+
+        verifyEpicenters(oldEpicenterStart, newEpicenterStart, epicenterBounds);
+        verifyEpicenters(oldEpicenterExit, newEpicenterExit, epicenterBounds);
+
+    }
+
+    private void verifyEpicenters(Rect actualOld, Rect actualNew, Rect passed) {
+        Rect oldCopy = new Rect(actualOld);
+        int left = oldCopy.left;
+        int top = oldCopy.top;
+        oldCopy.set(passed);
+        oldCopy.offset(left, top);
+
+        assertEquals(oldCopy, actualNew);
+    }
+
     private void verifyEnterExitTransition(Runnable showRunnable, boolean showAgain)
             throws Throwable {
         TransitionListener enterListener = mock(TransitionListener.class);
@@ -1136,6 +1205,47 @@ public class PopupWindowTest {
 
         mPopupWindow.setClippingEnabled(false);
         assertFalse(mPopupWindow.isClippingEnabled());
+    }
+
+    @Test
+    public void testAccessClippingToScreenEnabled() {
+        mPopupWindow = new PopupWindow(mActivity);
+        assertFalse(mPopupWindow.isClipToScreenEnabled());
+
+        mPopupWindow.setClipToScreenEnabled(true);
+        assertTrue(mPopupWindow.isClipToScreenEnabled());
+    }
+
+    @Test
+    public void testAccessLayoutInScreenEnabled() {
+        mPopupWindow = new PopupWindow(mActivity);
+        assertFalse(mPopupWindow.isLayoutInScreenEnabled());
+
+        mPopupWindow.setLayoutInScreenEnabled(true);
+        assertTrue(mPopupWindow.isLayoutInScreenEnabled());
+    }
+
+    @Test
+    public void testAccessTouchModal() {
+        mPopupWindow = new PopupWindow(mActivity);
+        assertTrue(mPopupWindow.isTouchModal());
+
+        mPopupWindow.setTouchModal(false);
+        assertFalse(mPopupWindow.isTouchModal());
+    }
+
+    @Test
+    public void testAccessEpicenterBounds() {
+        mPopupWindow = new PopupWindow(mActivity);
+        assertNull(mPopupWindow.getEpicenterBounds());
+
+        final Rect epicenter = new Rect(5, 10, 15, 20);
+
+        mPopupWindow.setEpicenterBounds(epicenter);
+        assertEquals(mPopupWindow.getEpicenterBounds(), epicenter);
+
+        mPopupWindow.setEpicenterBounds(null);
+        assertNull(mPopupWindow.getEpicenterBounds());
     }
 
     @Test
