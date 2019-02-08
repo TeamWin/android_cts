@@ -45,8 +45,8 @@ import java.util.concurrent.TimeUnit;
 public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices {
 
     private static final String TAG = ThirdPartyInCallServiceTest.class.getSimpleName();
-    private static final String ROLE_COMPANION_APP = "android.app.role.CALL_COMPANION_APP";
-    private static final String ROLE_CAR_MODE_DIALER_APP = "android.app.role.CAR_MODE_DIALER_APP";
+    private static final String ROLE_COMPANION_APP = "android.app.role.CALL_COMPANION";
+    private static final String ROLE_CAR_MODE_DIALER_APP = "android.app.role.CAR_MODE_DIALER";
     private static final Uri sTestUri = Uri.parse("tel:555-TEST");
     private Context mContext;
     private UiModeManager mUiModeManager;

@@ -53,7 +53,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
     private static final String TEST_APP_PACKAGE = "android.telecom.cts.redirectiontestapp";
     private static final String TEST_APP_COMPONENT = TEST_APP_PACKAGE
                     + "/android.telecom.cts.redirectiontestapp.CtsCallRedirectionService";
-    private static final String ROLE_CALL_REDIRECTION = "android.app.role.PROXY_CALLING_APP";
+    private static final String ROLE_CALL_REDIRECTION = "android.app.role.CALL_REDIRECTION";
 
     private static final Uri SAMPLE_HANDLE = Uri.fromParts(PhoneAccount.SCHEME_TEL, "0001112222",
             null);
