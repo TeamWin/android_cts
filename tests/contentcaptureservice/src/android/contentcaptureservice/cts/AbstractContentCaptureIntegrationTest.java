@@ -20,8 +20,9 @@ import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.Helper.setService;
-import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 import static android.provider.Settings.Secure.CONTENT_CAPTURE_ENABLED;
+
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.Application;
 import android.content.Intent;

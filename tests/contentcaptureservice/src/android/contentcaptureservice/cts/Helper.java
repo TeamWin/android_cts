@@ -15,7 +15,7 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.content.ComponentName;
 import android.content.Context;
