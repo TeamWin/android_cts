@@ -60,7 +60,6 @@ import java.util.List;
 /**
  * Test {@link VideoView2}.
  */
-@Ignore
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class VideoView2Test {
@@ -143,6 +142,7 @@ public class VideoView2Test {
 
     @UiThreadTest
     @Test
+    @Ignore
     public void testConstructor() {
         new VideoView2(mActivity);
         new VideoView2(mActivity, null);
@@ -150,6 +150,7 @@ public class VideoView2Test {
     }
 
     @Test
+    @Ignore
     public void testPlayVideo() throws Throwable {
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
@@ -173,6 +174,7 @@ public class VideoView2Test {
     }
 
     @Test
+    @Ignore
     public void testPlayVideoOnTextureView() throws Throwable {
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
