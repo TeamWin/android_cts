@@ -34,7 +34,7 @@ LOCAL_PACKAGE_NAME := CtsGpuToolsRootlessGpuDebugApp-DEBUG
 LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts cts_instant
 
 LOCAL_MULTILIB := both
 
