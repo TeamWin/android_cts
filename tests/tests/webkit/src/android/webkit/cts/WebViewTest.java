@@ -1408,15 +1408,15 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     private static class WaitForFindResultsListener
             implements WebView.FindListener {
         private final SettableFuture<Integer> mFuture;
-        private final WebViewOnUiThread mWebViewOnUiThread;
+        private final WebView mWebView;
         private final int mMatchesWanted;
         private final String mStringWanted;
         private final boolean mRetry;
 
         public WaitForFindResultsListener(
-                WebViewOnUiThread wv, String wanted, int matches, boolean retry) {
+                WebView wv, String wanted, int matches, boolean retry) {
             mFuture = SettableFuture.create();
-            mWebViewOnUiThread = wv;
+            mWebView = wv;
             mMatchesWanted = matches;
             mStringWanted = wanted;
             mRetry = retry;
@@ -1429,10 +1429,16 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         @Override
         public void onFindResultReceived(int activeMatchOrdinal, int numberOfMatches,
                 boolean isDoneCounting) {
+            try {
+                assertEquals("WebView.FindListener callbacks should occur on the UI thread",
+                        Looper.myLooper(), Looper.getMainLooper());
+            } catch (Throwable t) {
+                mFuture.setException(t);
+            }
             if (isDoneCounting) {
                 //If mRetry set to true and matches aren't equal, call findAll again
                 if (mRetry && numberOfMatches != mMatchesWanted) {
-                    mWebViewOnUiThread.findAll(mStringWanted);
+                    mWebView.findAll(mStringWanted);
                 }
                 else {
                     mFuture.set(numberOfMatches);
@@ -1457,7 +1463,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
 
-        WaitForFindResultsListener l = new WaitForFindResultsListener(mOnUiThread, "find", 2, true);
+        WaitForFindResultsListener l = new WaitForFindResultsListener(mWebView, "find", 2, true);
         mOnUiThread.setFindListener(l);
         mOnUiThread.findAll("find");
         assertEquals(2, (int)WebkitUtils.waitForFuture(l.future()));
@@ -1477,7 +1483,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 "Find all instances of a word on the page and highlight them.</p>";
 
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p + p + "</body></html>", "text/html", null);
-        WaitForFindResultsListener l = new WaitForFindResultsListener(mOnUiThread, "all", 2, true);
+        WaitForFindResultsListener l = new WaitForFindResultsListener(mWebView, "all", 2, true);
         mOnUiThread.setFindListener(l);
 
         // highlight all the strings found and wait for all the matches to be found
