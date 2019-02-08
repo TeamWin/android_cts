@@ -85,6 +85,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+/* This tests NotificationListenerService together with NotificationManager, as you need to have
+ * notifications to manipulate in order to test the listener service. */
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
@@ -1713,5 +1715,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         peopleExtras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST, personList);
         SystemUtil.runWithShellPermissionIdentity(() ->
                 assertTrue(mNotificationManager.matchesCallFilter(peopleExtras)));
+    }
+
+    /* Confirm that the optional methods of TestNotificationListener still exist and
+     * don't fail. */
+    public void testNotificationListenerMethods() {
+        NotificationListenerService listener = new TestNotificationListener();
+        listener.onStatusBarIconsBehaviorChanged(false);
     }
 }
