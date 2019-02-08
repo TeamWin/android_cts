@@ -18,7 +18,7 @@ package android.autofillservice.cts;
 
 import android.platform.test.annotations.AppModeFull;
 
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class DatePickerSpinnerActivityTest extends DatePickerTestCase<DatePickerSpinnerActivity> {
 
     @Override

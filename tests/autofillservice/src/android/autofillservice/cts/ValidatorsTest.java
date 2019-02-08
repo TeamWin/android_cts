@@ -38,7 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class ValidatorsTest {
 
     @Mock private Validator mInvalidValidator;

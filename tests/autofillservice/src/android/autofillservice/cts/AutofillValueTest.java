@@ -51,7 +51,7 @@ import org.junit.Test;
  *  redundant tests and add more tests (like triggering autofill using different views) to
  *  CheckoutActivityTest.
  */
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class AutofillValueTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<AllAutofillableViewsActivity> {
 

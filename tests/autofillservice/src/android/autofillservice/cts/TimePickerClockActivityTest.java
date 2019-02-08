@@ -17,7 +17,7 @@ package android.autofillservice.cts;
 
 import android.platform.test.annotations.AppModeFull;
 
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class TimePickerClockActivityTest extends TimePickerTestCase<TimePickerClockActivity> {
 
     @Override

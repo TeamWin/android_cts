@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class ViewAttributesTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<ViewAttributesTestActivity> {
 

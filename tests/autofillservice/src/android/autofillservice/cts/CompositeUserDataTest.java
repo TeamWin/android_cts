@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class CompositeUserDataTest {
 
     private final String mShortValue = Strings.repeat("k", UserData.getMinValueLength() - 1);

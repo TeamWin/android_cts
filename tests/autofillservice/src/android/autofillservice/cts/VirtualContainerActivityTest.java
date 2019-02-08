@@ -113,7 +113,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofillSync() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillSync() is enough")
     public void testAutofillAsync() throws Exception {
         skipTestOnCompatMode();
 
@@ -251,7 +251,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofillSync() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillSync() is enough")
     public void testAutofillTwoDatasets() throws Exception {
         // Set service.
         enableService();
@@ -324,13 +324,13 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
         autofillManuallyTwoDatasets(true);
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
         autofillManuallyTwoDatasets(false);
     }
@@ -402,7 +402,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackDisabled() throws Throwable {
         // Set service.
         disableService();
@@ -416,7 +416,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackNoDatasets() throws Throwable {
         // Set service.
         enableService();
@@ -437,7 +437,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackNoDatasetsButSaveInfo() throws Throwable {
         // Set service.
         enableService();
@@ -628,7 +628,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testSaveNotShown_noUserInput() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSaveNotShown_noUserInput() is enough")
     public void testSaveNotShown_initialValues_noUserInput() throws Throwable {
         // Prepare activitiy.
         mActivity.mUsername.setText("foo");
@@ -653,7 +653,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testSaveNotShown_noUserInput() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSaveNotShown_noUserInput() is enough")
     public void testSaveNotShown_initialValues_noUserInput_serviceDatasets() throws Throwable {
         // Prepare activitiy.
         mActivity.mUsername.setText("foo");
@@ -684,7 +684,7 @@ public class VirtualContainerActivityTest
     }
 
     @Test
-    @AppModeFull // testSaveNotShown_noUserInput() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSaveNotShown_noUserInput() is enough")
     public void testSaveNotShown_userInputMatchesDatasets() throws Throwable {
         // Prepare activitiy.
         mActivity.mUsername.setText("foo");

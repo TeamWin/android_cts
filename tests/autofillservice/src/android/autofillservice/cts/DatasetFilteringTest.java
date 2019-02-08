@@ -159,7 +159,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testFilter() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_nullValuesAlwaysMatched() throws Exception {
         final String aa = "Two A's";
         final String ab = "A and B";
@@ -212,7 +212,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testFilter() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_differentPrefixes() throws Exception {
         final String a = "aaa";
         final String b = "bra";
@@ -254,7 +254,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testFilter() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_usingRegex() throws Exception {
         // Dataset presentations.
         final String aa = "Two A's";
@@ -310,7 +310,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testFilter() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_disabledUsingNullRegex() throws Exception {
         // Dataset presentations.
         final String unfilterable = "Unfilterabled";
@@ -373,7 +373,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testFilter() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_mixPlainAndRegex() throws Exception {
         final String plain = "Plain";
         final String regexPlain = "RegexPlain";
@@ -425,7 +425,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testFilter_usingKeyboard() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testFilter_usingKeyboard() is enough")
     public void testFilter_mixPlainAndRegex_usingKeyboard() throws Exception {
         final String plain = "Plain";
         final String regexPlain = "RegexPlain";
@@ -477,16 +477,19 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_resetFilter_chooseFirst() throws Exception {
         resetFilterTest(1);
     }
 
     @Test
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_resetFilter_chooseSecond() throws Exception {
         resetFilterTest(2);
     }
 
     @Test
+    @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_resetFilter_chooseThird() throws Exception {
         resetFilterTest(3);
     }

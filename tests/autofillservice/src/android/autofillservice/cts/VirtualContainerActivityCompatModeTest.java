@@ -121,7 +121,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
-    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testMultipleUrlBars_firstDoesNotExist() is enough")
     public void testMultipleUrlBars_bothExist() throws Exception {
         SettingsUtils.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[my_url_bar,my_url_bar2]");
@@ -148,7 +148,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
-    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testMultipleUrlBars_firstDoesNotExist() is enough")
     public void testFocusOnUrlBarIsIgnored() throws Throwable {
         // Set service.
         enableService();
@@ -170,7 +170,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
-    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testMultipleUrlBars_firstDoesNotExist() is enough")
     public void testUrlBarChangeIgnoredWhenServiceCanSave() throws Throwable {
         // Set service.
         enableService();
@@ -223,7 +223,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
-    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testMultipleUrlBars_firstDoesNotExist() is enough")
     public void testUrlBarChangeCancelSessionWhenServiceCannotSave() throws Throwable {
         // Set service.
         enableService();
@@ -263,7 +263,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
-    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testMultipleUrlBars_firstDoesNotExist() is enough")
     public void testUrlBarChangeCancelSessionWhenServiceReturnsNullResponse() throws Throwable {
         // Set service.
         enableService();
