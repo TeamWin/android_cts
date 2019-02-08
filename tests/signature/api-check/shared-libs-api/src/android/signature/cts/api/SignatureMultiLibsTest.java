@@ -18,7 +18,6 @@ package android.signature.cts.api;
 
 import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.ApiDocumentParser;
-import android.signature.cts.JDiffClassDescription;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,9 +25,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
-import org.xmlpull.v1.XmlPullParserException;
 
-import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 /**
@@ -70,10 +67,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
 
     private boolean checkLibrary (String name) {
         String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
-        if (getLibraries().filter(lib -> lib.equals(libraryName)).findAny().isPresent()) {
-            return true;
-        }
-        return false;
+        return getLibraries().anyMatch(libraryName::equals);
     }
 
     protected Stream<InputStream> readFile(File file) {
@@ -92,21 +86,5 @@ public class SignatureMultiLibsTest extends SignatureTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    protected Stream<JDiffClassDescription> parseApiFilesAsStream(
-            ApiDocumentParser apiDocumentParser, String[] apiFiles)
-            throws XmlPullParserException, IOException {
-        return Stream.of(apiFiles)
-                .map(name -> new File(API_FILE_DIRECTORY + "/" + name))
-                .flatMap(file -> readFile(file))
-                .flatMap(stream -> {
-                    try {
-                        return apiDocumentParser.parseAsStream(stream)
-                              .filter(AbstractApiTest::isAccessibleClass);
-                    } catch (IOException | XmlPullParserException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
     }
 }
