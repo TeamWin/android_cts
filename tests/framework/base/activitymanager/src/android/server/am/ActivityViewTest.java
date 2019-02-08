@@ -63,8 +63,10 @@ public class ActivityViewTest extends ActivityManagerTestBase {
     @Before
     public void setup() {
         mInstrumentation = getInstrumentation();
-        ActivityViewTestActivity activity = mActivityRule.launchActivity(null);
-        mActivityView = activity.getActivityView();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ActivityViewTestActivity activity = mActivityRule.launchActivity(null);
+            mActivityView = activity.getActivityView();
+        });
         separateTestJournal();
     }
 
