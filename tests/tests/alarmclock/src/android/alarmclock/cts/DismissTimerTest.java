@@ -3,7 +3,6 @@ package android.alarmclock.cts;
 import android.alarmclock.common.Utils;
 import android.content.Context;
 import android.media.AudioManager;
-import android.support.test.filters.Suppress;
 
 public class DismissTimerTest extends AlarmClockTestBase {
 
@@ -28,7 +27,6 @@ public class DismissTimerTest extends AlarmClockTestBase {
         audioManager.setStreamVolume(AudioManager.STREAM_ALARM, mSavedVolume, 0);
     }
 
-    @Suppress // b/122662463 - Flaky on AOSP
     public void testAll() throws Exception {
         assertEquals(Utils.COMPLETION_RESULT, runTest(Utils.TestcaseType.SET_TIMER_FOR_DISMISSAL));
         try {
