@@ -15,7 +15,7 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.Activity;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;

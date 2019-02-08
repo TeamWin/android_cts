@@ -18,7 +18,8 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.TAG;
-import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
+
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.util.Log;
 
