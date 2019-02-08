@@ -17,6 +17,8 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -62,6 +64,8 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      */
     @Test
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
+        assumeTrue("Screen rotation not supported", sUiBot.isScreenRotationSupported());
+
         sUiBot.setScreenResolution();
 
         sUiBot.setScreenOrientation(UiBot.PORTRAIT);
