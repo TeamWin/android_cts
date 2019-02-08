@@ -28,6 +28,8 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
@@ -168,6 +170,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
     @Test
     public void testSave_afterRotation() throws Exception {
+        assumeTrue("Screen rotation not supported", sUiBot.isScreenRotationSupported());
         sUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
             saveTest(true);

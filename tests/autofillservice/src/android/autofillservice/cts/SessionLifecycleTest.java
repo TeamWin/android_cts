@@ -34,6 +34,8 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
 import android.content.Intent;
@@ -101,6 +103,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDatasetAuthResponseWhileAutofilledAppIsLifecycled() throws Exception {
+        assumeTrue("Screen rotation not supported", sUiBot.isScreenRotationSupported());
         // Set service.
         enableService();
 

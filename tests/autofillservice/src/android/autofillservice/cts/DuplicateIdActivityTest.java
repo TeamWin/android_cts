@@ -24,6 +24,8 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilD
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.assist.AssistStructure;
 import android.util.Log;
 import android.view.autofill.AutofillId;
@@ -79,6 +81,7 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDoNotRestoreDuplicateAutofillIds() throws Exception {
+        assumeTrue("Screen rotation not supported", sUiBot.isScreenRotationSupported());
         enableService();
 
         sReplier.addResponse(new CannedFillResponse.Builder()
