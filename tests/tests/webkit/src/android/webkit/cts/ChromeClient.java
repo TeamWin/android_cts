@@ -18,33 +18,25 @@ package android.webkit.cts;
 import android.webkit.ConsoleMessage;
 import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 // A chrome client for listening webview chrome events.
 class ChromeClient extends WaitForProgressClient {
-
-    private boolean mIsMessageLevelAvailable;
-    private ConsoleMessage.MessageLevel mMessageLevel;
+    private final SettableFuture<ConsoleMessage.MessageLevel> mMessageLevel =
+            SettableFuture.create();
 
     public ChromeClient(WebViewOnUiThread onUiThread) {
         super(onUiThread);
     }
 
     @Override
-    public synchronized boolean onConsoleMessage(ConsoleMessage message) {
-        mMessageLevel = message.messageLevel();
-        mIsMessageLevelAvailable = true;
-        notify();
+    public boolean onConsoleMessage(ConsoleMessage message) {
+        mMessageLevel.set(message.messageLevel());
         // return false for default handling; i.e. printing the message.
         return false;
     }
 
-    public synchronized ConsoleMessage.MessageLevel getMessageLevel(int timeout) {
-        for(; timeout > 0; timeout -= 1000) {
-            if( mIsMessageLevelAvailable ) break;
-            try {
-                wait(1000);
-            } catch (InterruptedException e) {
-            }
-        }
-        return mMessageLevel;
+    public ConsoleMessage.MessageLevel getMessageLevel() {
+        return WebkitUtils.waitForFuture(mMessageLevel);
     }
 }

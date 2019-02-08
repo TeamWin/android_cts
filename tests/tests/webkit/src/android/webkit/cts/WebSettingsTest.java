@@ -913,7 +913,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         String iframeUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.HELLO_WORLD_URL);
         assertFalse(iframeUrl.equals(mOnUiThread.getTitle()));
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
+        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
     }
 
     // Verify that enabling file access from file URLs enable XmlHttpRequest (XHR) across files
@@ -933,7 +933,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
         mOnUiThread.setWebChromeClient(webChromeClient);
         verifyFileXHR(false);
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
+        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
     }
 
     // verify XHR across files matches the allowFileAccessFromFileURLs setting

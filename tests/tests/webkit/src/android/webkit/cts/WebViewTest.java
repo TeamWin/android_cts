@@ -1237,17 +1237,15 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         startWebServer(false);
         final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
         final String crossOriginUrl = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        WebkitUtils.onMainThreadSync(() -> {
-            mWebView.getSettings().setJavaScriptEnabled(true);
-            mWebView.setWebChromeClient(webChromeClient);
-            mOnUiThread.loadDataAndWaitForCompletion(
-                    "<html><head></head><body onload=\"" +
-                    "document.title = " +
-                    "document.getElementById('frame').contentWindow.location.href;" +
-                    "\"><iframe id=\"frame\" src=\"" + crossOriginUrl + "\"></body></html>",
-                    "text/html", null);
-        });
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        mOnUiThread.setWebChromeClient(webChromeClient);
+        mOnUiThread.loadDataAndWaitForCompletion(
+                "<html><head></head><body onload=\"" +
+                "document.title = " +
+                "document.getElementById('frame').contentWindow.location.href;" +
+                "\"><iframe id=\"frame\" src=\"" + crossOriginUrl + "\"></body></html>",
+                "text/html", null);
+        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
     }
 
     public void testLoadDataWithBaseUrl_resolvesRelativeToBaseUrl() throws Throwable {
