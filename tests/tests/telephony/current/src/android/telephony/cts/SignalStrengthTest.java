@@ -86,28 +86,38 @@ public class SignalStrengthTest extends AndroidTestCase {
 
         Set<Class<?>> types = new HashSet<Class<?>>();
 
-        Class<?> type = getSignalStrengthTypeForNetworkType(mTm.getDataNetworkType());
-        if (type != null) types.add(type);
+        Class<?> dataType = getSignalStrengthTypeForNetworkType(mTm.getDataNetworkType());
+        if (dataType != null) types.add(dataType);
 
-        type = getSignalStrengthTypeForNetworkType(mTm.getNetworkType());
-        if (type != null) types.add(type);
+        Class<?> voiceType = getSignalStrengthTypeForNetworkType(mTm.getNetworkType());
 
-        // Blocked by b/123096279
-        /*
+        // Check if camped for Voice-Only
+        if (dataType == null && voiceType != null) {
+            types.add(voiceType);
+        }
+
+        // Check for SRLTE
+        if (dataType != null && voiceType != null
+                && dataType.equals(CellSignalStrengthLte.class)
+                && voiceType.equals(CellSignalStrengthCdma.class)) {
+            types.add(voiceType);
+        }
+
+        // Check for NR
+        if (isUsingEnDc()) {
+            types.add(CellSignalStrengthNr.class);
+        }
+
         for (CellSignalStrength css : signalStrengths) {
             assertTrue("Invalid SignalStrength type detected" + css.getClass(),
-                    types.contains(css.getClass())
-                            || css instanceof CellSignalStrengthNr && isUsingEnDc());
+                    types.contains(css.getClass()));
         }
-        */
     }
 
     /** Check whether the device is LTE + NR dual connected */
     private boolean isUsingEnDc() {
         ServiceState ss = mTm.getServiceState();
-        return false;
-        // blocked by b/123096279
-        // return ss != null && ss.getNrStatus() == NR_STATUS_CONNECTED;
+        return ss != null && ss.getNrStatus() == NR_STATUS_CONNECTED;
     }
 
     /** Get the CellSignalStrength class type that should be returned when using a network type */
