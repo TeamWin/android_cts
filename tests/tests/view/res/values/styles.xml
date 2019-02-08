@@ -188,7 +188,7 @@
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 
-    <style name="ViewStyleTestTheme" parent="@android:Theme.Material">
+    <style name="ViewAttributeTestTheme" parent="@android:Theme.Material">
         <item name="android:buttonStyle">@style/MyButtonStyle</item>
     </style>
 

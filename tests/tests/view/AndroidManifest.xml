@@ -33,7 +33,7 @@
 
         <activity android:name="android.app.Activity"
                   android:label="Empty Activity"
-                  android:theme="@style/ViewStyleTestTheme">
+                  android:theme="@style/ViewAttributeTestTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
