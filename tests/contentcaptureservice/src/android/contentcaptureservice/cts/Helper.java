@@ -19,6 +19,7 @@ import static android.contentcaptureservice.cts.common.ShellHelper.runShellComma
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
@@ -43,6 +44,10 @@ public final class Helper {
     public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
 
     public static final long MY_EPOCH = SystemClock.uptimeMillis();
+
+    public static final String SYSTEM_SERVICE_NAME = "content_capture";
+
+    public static final String RESOURCE_STRING_SERVICE_NAME = "config_defaultContentCaptureService";
 
     public static final Context sContext = InstrumentationRegistry.getTargetContext();
 
@@ -100,6 +105,15 @@ public final class Helper {
         child.setText(text);
         child.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_YES);
         return child;
+    }
+
+    /**
+     * Gets a string from the Android resources.
+     */
+    public static String getInternalString(@NonNull String id) {
+        final Resources resources = sContext.getResources();
+        final int stringId = resources.getIdentifier(id, "string", "android");
+        return resources.getString(stringId);
     }
 
     private Helper() {
