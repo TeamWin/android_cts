@@ -21,24 +21,25 @@ import android.os.Parcel;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
+import android.telephony.CellIdentityNr;
 import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
+import android.telephony.CellInfoNr;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthNr;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Test TelephonyManager.getAllCellInfo()
@@ -163,6 +164,8 @@ public class CellInfoTest extends AndroidTestCase{
                 verifyGsmInfo((CellInfoGsm) cellInfo);
             } else if (cellInfo instanceof CellInfoCdma) {
                 verifyCdmaInfo((CellInfoCdma) cellInfo);
+            } else if (cellInfo instanceof CellInfoNr) {
+                verifyNrInfo((CellInfoNr) cellInfo);
             }
         }
 
@@ -189,7 +192,7 @@ public class CellInfoTest extends AndroidTestCase{
 
         CellInfoCdma newCi = CellInfoCdma.CREATOR.createFromParcel(p);
         assertTrue(cdma.equals(newCi));
-        assertEquals("hashCode() did not get right hasdCode", cdma.hashCode(), newCi.hashCode());
+        assertEquals("hashCode() did not get right hashCode", cdma.hashCode(), newCi.hashCode());
     }
 
     private void verifyCellIdentityCdma(CellIdentityCdma cdma) {
@@ -298,7 +301,6 @@ public class CellInfoTest extends AndroidTestCase{
         // mncStr must either be null or match mnc integer.
         assertTrue("MncString must match Mnc Integer, str=" + mncStr + " int=" + mnc,
                 mncStr == null || mnc == Integer.parseInt(mncStr));
-
     }
 
     // Verify lte cell information is within correct range.
@@ -311,6 +313,81 @@ public class CellInfoTest extends AndroidTestCase{
         verifyCellSignalStrengthLteParcel(lte.getCellSignalStrength());
     }
 
+    // Verify NR 5G cell information is within correct range.
+    private void verifyNrInfo(CellInfoNr nr) {
+        verifyCellConnectionStatus(nr.getCellConnectionStatus());
+        verifyCellIdentityNr((CellIdentityNr) nr.getCellIdentity());
+        verifyCellIdentityNrParcel((CellIdentityNr) nr.getCellIdentity());
+        verifyCellSignalStrengthNr((CellSignalStrengthNr) nr.getCellSignalStrength());
+        verifyCellSignalStrengthNrParcel((CellSignalStrengthNr) nr.getCellSignalStrength());
+    }
+
+    private void verifyCellSignalStrengthNrParcel(CellSignalStrengthNr nr) {
+        Parcel p = Parcel.obtain();
+        nr.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        CellSignalStrengthNr newCss = CellSignalStrengthNr.CREATOR.createFromParcel(p);
+        assertEquals(nr, newCss);
+    }
+
+    private void verifyCellIdentityNrParcel(CellIdentityNr nr) {
+        Parcel p = Parcel.obtain();
+        nr.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        CellIdentityNr newCi = CellIdentityNr.CREATOR.createFromParcel(p);
+        assertEquals(nr, newCi);
+    }
+
+    private void verifyCellIdentityNr(CellIdentityNr nr) {
+        int pci = nr.getPci();
+        assertTrue("getPci() out of range [0, 1007], pci = " + pci, 0 <= pci && pci <= 1007);
+
+        int tac = nr.getTac();
+        assertTrue("getTac() out of range [0, 65536], tac = " + tac, 0 <= tac && tac <= 65536);
+
+        int channelNumber = nr.getChannelNumber();
+        assertTrue("getChannelNumber() out of range [0, 3279165], channelNumber = " + channelNumber,
+                0 <= channelNumber && channelNumber <= 3279165);
+
+        String mccStr = nr.getMccString();
+        String mncStr = nr.getMncString();
+        // mccStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMccString() out of range [0, 999], mcc=" + mccStr,
+                mccStr == null || mccStr.matches("^[0-9]{3}$"));
+
+        // mncStr is set as NULL if empty, unknown or invalid.
+        assertTrue("getMncString() out of range [0, 999], mnc=" + mncStr,
+                mncStr == null || mncStr.matches("^[0-9]{2,3}$"));
+
+        assertNotNull("getOperatorAlphaLong() returns NULL!", nr.getOperatorAlphaLong());
+        assertNotNull("getOperatorAlphaShort() returns NULL!", nr.getOperatorAlphaShort());
+    }
+
+    private void verifyCellSignalStrengthNr(CellSignalStrengthNr nr) {
+        int csiRsrp = nr.getCsiRsrp();
+        int csiRsrq = nr.getCsiRsrq();
+        int csiSinr = nr.getSsSinr();
+        int ssRsrp = nr.getSsRsrp();
+        int ssRsrq = nr.getSsRsrq();
+        int ssSinr = nr.getSsSinr();
+
+        assertTrue("getCsiRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, csiRsrp = "
+                        + csiRsrp, -140 <= csiRsrp && csiRsrp <= -44
+                || csiRsrp == Integer.MAX_VALUE);
+        assertTrue("getCsiRsrq() out of range [-20, -3] | Integer.MAX_INTEGER, csiRsrq = "
+                + csiRsrq, -20 <= csiRsrq && csiRsrq <= -3 || csiRsrq == Integer.MAX_VALUE);
+        assertTrue("getCsiSinr() out of range [-23, 40] | Integer.MAX_INTEGER, csiSinr = "
+                + csiSinr, -23 <= csiSinr && csiSinr <= 40 || csiSinr == Integer.MAX_VALUE);
+        assertTrue("getSsRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, ssRsrp = "
+                        + ssRsrp, -140 <= ssRsrp && ssRsrp <= -44 || ssRsrp == Integer.MAX_VALUE);
+        assertTrue("getSsRsrq() out of range [-20, -3] | Integer.MAX_INTEGER, ssRsrq = "
+                + ssRsrq, -20 <= ssRsrq && ssRsrq <= -3 || ssRsrq == Integer.MAX_VALUE);
+        assertTrue("getSsSinr() out of range [-23, 40] | Integer.MAX_INTEGER, ssSinr = "
+                + ssSinr, -23 <= ssSinr && ssSinr <= 40 || ssSinr == Integer.MAX_VALUE);
+    }
+
     private void verifyCellInfoLteParcelandHashcode(CellInfoLte lte) {
         Parcel p = Parcel.obtain();
         lte.writeToParcel(p, 0);
@@ -318,7 +395,7 @@ public class CellInfoTest extends AndroidTestCase{
 
         CellInfoLte newCi = CellInfoLte.CREATOR.createFromParcel(p);
         assertTrue(lte.equals(newCi));
-        assertEquals("hashCode() did not get right hasdCode", lte.hashCode(), newCi.hashCode());
+        assertEquals("hashCode() did not get right hashCode", lte.hashCode(), newCi.hashCode());
     }
 
     private void verifyCellIdentityLte(CellIdentityLte lte) {
@@ -458,7 +535,7 @@ public class CellInfoTest extends AndroidTestCase{
 
         CellInfoWcdma newCi = CellInfoWcdma.CREATOR.createFromParcel(p);
         assertTrue(wcdma.equals(newCi));
-        assertEquals("hashCode() did not get right hasdCode", wcdma.hashCode(), newCi.hashCode());
+        assertEquals("hashCode() did not get right hashCode", wcdma.hashCode(), newCi.hashCode());
     }
 
     private void verifyCellIdentityWcdma(CellIdentityWcdma wcdma) {
@@ -548,7 +625,7 @@ public class CellInfoTest extends AndroidTestCase{
 
         CellInfoGsm newCi = CellInfoGsm.CREATOR.createFromParcel(p);
         assertTrue(gsm.equals(newCi));
-        assertEquals("hashCode() did not get right hasdCode", gsm.hashCode(), newCi.hashCode());
+        assertEquals("hashCode() did not get right hashCode", gsm.hashCode(), newCi.hashCode());
     }
 
     private void verifyCellIdentityGsm(CellIdentityGsm gsm) {
