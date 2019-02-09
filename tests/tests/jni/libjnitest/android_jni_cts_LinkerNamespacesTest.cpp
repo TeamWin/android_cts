@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include <queue>
+#include <regex>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -39,37 +40,44 @@
 #include <nativehelper/ScopedUtfChars.h>
 
 #if defined(__LP64__)
-static const std::string kSystemLibraryPath = "/system/lib64";
-static const std::string kVendorLibraryPath = "/vendor/lib64";
-static const std::string kProductLibraryPath = "/product/lib64";
+#define LIB_DIR "lib64"
 #else
-static const std::string kSystemLibraryPath = "/system/lib";
-static const std::string kVendorLibraryPath = "/vendor/lib";
-static const std::string kProductLibraryPath = "/product/lib";
+#define LIB_DIR "lib"
 #endif
+
+static const std::string kSystemLibraryPath = "/system/" LIB_DIR;
+static const std::string kRuntimeApexLibraryPath = "/apex/com.android.runtime/" LIB_DIR;
+static const std::string kVendorLibraryPath = "/vendor/" LIB_DIR;
+static const std::string kProductLibraryPath = "/product/" LIB_DIR;
+
+static const std::vector<std::regex> kSystemPathRegexes = {
+    std::regex("/system/lib(64)?"),
+    std::regex("/apex/com\\.android\\.[^/]*/lib(64)?"),
+};
 
 static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_support.so";
 
-// This is not the complete list - just a small subset
-// of the libraries that should reside in /system/lib
-// for app-compatibility reasons.
-// (in addition to kSystemPublicLibraries)
+// This is not the complete list - just a small subset of the libraries that
+// should not be loaded from vendor locations.
+//
+// TODO(b/124049505): Do not hardcode expected paths here, to allow libraries to
+// migrate between /system and APEXes.
 static std::vector<std::string> kSystemLibraries = {
-    "libart.so",
-    "libandroid_runtime.so",
-    "libbinder.so",
-    "libcrypto.so",
-    "libcutils.so",
-    "libexpat.so",
-    "libgui.so",
-    "libmedia.so",
-    "libnativehelper.so",
-    "libstagefright.so",
-    "libsqlite.so",
-    "libui.so",
-    "libutils.so",
-    "libvorbisidec.so",
-  };
+    kRuntimeApexLibraryPath + "/libart.so",
+    kRuntimeApexLibraryPath + "/libnativehelper.so",
+    kSystemLibraryPath + "/libandroid_runtime.so",
+    kSystemLibraryPath + "/libbinder.so",
+    kSystemLibraryPath + "/libcrypto.so",
+    kSystemLibraryPath + "/libcutils.so",
+    kSystemLibraryPath + "/libexpat.so",
+    kSystemLibraryPath + "/libgui.so",
+    kSystemLibraryPath + "/libmedia.so",
+    kSystemLibraryPath + "/libsqlite.so",
+    kSystemLibraryPath + "/libstagefright.so",
+    kSystemLibraryPath + "/libui.so",
+    kSystemLibraryPath + "/libutils.so",
+    kSystemLibraryPath + "/libvorbisidec.so",
+};
 
 static bool is_directory(const char* path) {
   struct stat sb;
@@ -107,7 +115,8 @@ static bool is_library_on_path(const std::unordered_set<std::string>& library_se
 
 // Tests if a file can be loaded or not. Returns empty string on success. On any failure
 // returns the error message from dlerror().
-static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path) {
+static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path,
+                                bool test_system_load_library) {
   // try to load the lib using dlopen().
   void *handle = dlopen(path.c_str(), RTLD_NOW);
   std::string error;
@@ -127,16 +136,40 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
 
   // try to load the same lib using System.load() in Java to see if it gives consistent
   // result with dlopen.
-  static jmethodID load_library = env->GetStaticMethodID(clazz, "loadSharedLibrary",
-                                            "(Ljava/lang/String;)Z");
-  jstring jpath = env->NewStringUTF(path.c_str());
-  bool loaded_in_java = env->CallStaticBooleanMethod(clazz, load_library, jpath) == JNI_TRUE;
-  env->DeleteLocalRef(jpath);
-  if (loaded_in_native != loaded_in_java) {
-    error = "Inconsistent result for library \"" + path + "\":" +
-                      " dlopen() was " + (loaded_in_native ? "success" : "failure") +
-                      ", System.loadLibrary() was " + (loaded_in_java ? "success" : "failure");
-  } else if (loaded_in_java) {
+  static jmethodID java_load =
+      env->GetStaticMethodID(clazz, "loadWithSystemLoad", "(Ljava/lang/String;)Ljava/lang/String;");
+  ScopedLocalRef<jstring> jpath(env, env->NewStringUTF(path.c_str()));
+  jstring java_load_errmsg = jstring(env->CallStaticObjectMethod(clazz, java_load, jpath.get()));
+  bool java_load_ok = env->GetStringLength(java_load_errmsg) == 0;
+
+  jstring java_load_lib_errmsg;
+  bool java_load_lib_ok = java_load_ok;
+  if (test_system_load_library && java_load_ok) {
+    // If System.load() works then test System.loadLibrary() too. Cannot test
+    // the other way around since System.loadLibrary() might very well find the
+    // library somewhere else and hence work when System.load() fails.
+    std::string baselib = basename(path.c_str());
+    ScopedLocalRef<jstring> jname(env, env->NewStringUTF(baselib.c_str()));
+    static jmethodID java_load_lib = env->GetStaticMethodID(
+        clazz, "loadWithSystemLoadLibrary", "(Ljava/lang/String;)Ljava/lang/String;");
+    java_load_lib_errmsg = jstring(env->CallStaticObjectMethod(clazz, java_load_lib, jname.get()));
+    java_load_lib_ok = env->GetStringLength(java_load_lib_errmsg) == 0;
+  }
+
+  if (loaded_in_native != java_load_ok || java_load_ok != java_load_lib_ok) {
+    const std::string java_load_error(ScopedUtfChars(env, java_load_errmsg).c_str());
+    error = "Inconsistent result for library \"" + path + "\": dlopen() " +
+            (loaded_in_native ? "succeeded" : "failed (" + error + ")") +
+            ", System.load() " +
+            (java_load_ok ? "succeeded" : "failed (" + java_load_error + ")");
+    if (test_system_load_library) {
+      const std::string java_load_lib_error(ScopedUtfChars(env, java_load_lib_errmsg).c_str());
+      error += ", System.loadLibrary() " +
+               (java_load_lib_ok ? "succeeded" : "failed (" + java_load_lib_error + ")");
+    }
+  }
+
+  if (loaded_in_native && java_load_ok) {
     // Unload the shared lib loaded in Java. Since we don't have a method in Java for unloading a
     // lib other than destroying the classloader, here comes a trick; we open the same library
     // again with dlopen to get the handle for the lib and then calls dlclose twice (since we have
@@ -144,7 +177,7 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
     // the same handle for the same shared lib object.
     handle = dlopen(path.c_str(), RTLD_NOW);
     dlclose(handle);
-    dlclose(handle); // don't delete this line. it's not a mistake.
+    dlclose(handle); // don't delete this line. it's not a mistake (see comment above).
   }
 
   return error;
@@ -156,7 +189,7 @@ static bool check_lib(JNIEnv* env,
                       const std::unordered_set<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& libraries,
                       std::vector<std::string>* errors) {
-  std::string err = load_library(env, clazz, path);
+  std::string err = load_library(env, clazz, path, /*test_system_load_library=*/true);
   bool loaded = err.empty();
 
   // The current restrictions on public libraries:
@@ -329,33 +362,38 @@ extern "C" JNIEXPORT jstring JNICALL
 
   std::vector<std::string> library_search_paths = android::base::Split(default_search_paths, ":");
 
-  // Remove everything pointing outside of /system/lib*
+  // Remove everything pointing outside of /system/lib* and
+  // /apex/com.android.*/lib*.
   std::unordered_set<std::string> system_library_search_paths;
 
   for (const auto& path : library_search_paths) {
-    if (android::base::StartsWith(path, "/system/lib")) {
-      system_library_search_paths.insert(path);
+    for (const auto& regex : kSystemPathRegexes) {
+      if (std::regex_match(path, regex)) {
+        system_library_search_paths.insert(path);
+        break;
+      }
     }
   }
 
-  // This path should be tested too - this is because apps may rely on some
-  // libraries being available in /system/${LIB}/
+  // These paths should be tested too - this is because apps may rely on some
+  // libraries being available there.
   system_library_search_paths.insert(kSystemLibraryPath);
+  system_library_search_paths.insert(kRuntimeApexLibraryPath);
 
   if (!check_path(env, clazz, kSystemLibraryPath, system_library_search_paths,
                   system_public_libraries, &errors)) {
     success = false;
   }
 
-  // Check that the mandatory system libraries are present - the grey list
-  for (const auto& name : kSystemLibraries) {
-    std::string library = kSystemLibraryPath + "/" + name;
-    std::string err = load_library(env, clazz, library);
+  // Check that the mandatory system + APEX libraries are present - the grey list
+  for (const auto& library : kSystemLibraries) {
+    std::string err = load_library(env, clazz, library, /*test_system_load_library=*/false);
     if (!err.empty()) {
       // The libraries should be present and produce specific dlerror when inaccessible.
       if (!not_accessible(err)) {
-          errors.push_back("Mandatory system library \"" + library + "\" failed to load with unexpected error: " + err);
-          success = false;
+        errors.push_back("Mandatory system library \"" + library +
+                         "\" failed to load with unexpected error: " + err);
+        success = false;
       }
     }
   }
@@ -384,4 +422,3 @@ extern "C" JNIEXPORT jstring JNICALL
 
   return nullptr;
 }
-

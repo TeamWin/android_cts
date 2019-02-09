@@ -225,26 +225,39 @@ class LinkerNamespacesHelper {
         return nativePath;
     }
 
-    private static boolean loadSharedLibrary(String libFilePath) {
+    private static boolean isAlreadyOpenedError(UnsatisfiedLinkError e, String libFilePath) {
+        // If one of the public system libraries are already opened in the bootclassloader, consider
+        // this try as success, because dlopen to the lib is successful.
         String baseName = new File(libFilePath).getName();
+        return e.getMessage().contains("Shared library \"" + libFilePath +
+            "\" already opened by ClassLoader") &&
+            Arrays.asList(PUBLIC_SYSTEM_LIBRARIES).contains(baseName);
+    }
+
+    private static String loadWithSystemLoad(String libFilePath) {
         try {
             System.load(libFilePath);
-            // Also ensure that the lib is also accessible via its libname.
-            // Drop 'lib' and '.so' from the name
-            System.loadLibrary(baseName.substring(3, baseName.length()-3));
-            return true;
         } catch (UnsatisfiedLinkError e) {
             // all other exceptions are just thrown
-            if (e.getMessage().contains("Shared library \"" + libFilePath +
-                    "\" already opened by ClassLoader") &&
-                    Arrays.asList(PUBLIC_SYSTEM_LIBRARIES).contains(baseName)) {
-                // If one of the public system libraries are already opened in the
-                // bootclassloader, consider this try as success, because dlopen to the lib
-                // is successful.
-                return true;
+            if (!isAlreadyOpenedError(e, libFilePath)) {
+                return "System.load() UnsatisfiedLinkError: " + e.getMessage();
             }
-            return false;
         }
+        return "";
+    }
+
+    private static String loadWithSystemLoadLibrary(String libFileName) {
+        // Drop 'lib' and '.so' from the base name
+        String libName = libFileName.substring(3, libFileName.length()-3);
+        try {
+            System.loadLibrary(libName);
+        } catch (UnsatisfiedLinkError e) {
+            if (!isAlreadyOpenedError(e, libFileName)) {
+                return "System.loadLibrary(\"" + libName + "\") UnsatisfiedLinkError: " +
+                    e.getMessage();
+            }
+        }
+        return "";
     }
 
     // Verify the behaviour of native library loading in class loaders.
