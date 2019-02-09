@@ -22,6 +22,10 @@
     <!-- Not testing features backed by native code, so only need to run against one ABI -->
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
 
+    <target_preparer class="com.android.tradefed.targetprep.SwitchUserTargetPreparer">
+        <option name="user-type" value="system" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="install-arg" value="-t" />
