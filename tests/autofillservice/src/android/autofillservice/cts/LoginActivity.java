@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -55,6 +56,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public static final String BACKDOOR_USERNAME = "LemmeIn";
     public static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
+    private static final String TEST_MARKER_PREFIX = "android.autofillservice.cts.LoginActivity";
+
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -71,11 +74,21 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private CountDownLatch mLoginLatch;
     private String mLoginMessage;
 
+    private final String mTestMarker = TEST_MARKER_PREFIX + "/"
+            + SystemClock.elapsedRealtimeNanos();
+
     /**
      * Gets the expected welcome message for a given username.
      */
     public static String getWelcomeMessage(String username) {
         return String.format(WELCOME_TEMPLATE,  username);
+    }
+
+    /**
+     * Gets the marker used on MockIME-based tests.
+     */
+    String getMarker() {
+        return mTestMarker;
     }
 
     @Override
@@ -90,6 +103,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
         mCancelButton = findViewById(R.id.cancel);
         mUsernameLabel = findViewById(R.id.username_label);
         mUsernameEditText = findViewById(R.id.username);
+        Log.d(TAG, "marker: " + mTestMarker);
+        mUsernameEditText.setPrivateImeOptions(mTestMarker);
         mPasswordLabel = findViewById(R.id.password_label);
         mPasswordEditText = findViewById(R.id.password);
         mOutput = findViewById(R.id.output);

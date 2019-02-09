@@ -24,6 +24,16 @@
     <option name="test-file-name" value="CtsAutoFillServiceTestCases.apk" />
   </target_preparer>
 
+  <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+    <option name="cleanup-apks" value="true" />
+      <!--
+          MockIME always needs to be installed as a full package, even when CTS is running
+          for instant apps.
+      -->
+    <option name="force-install-mode" value="FULL"/>
+    <option name="test-file-name" value="CtsMockInputMethod.apk" />
+  </target_preparer>
+
   <!--  TODO: preparer below should be enabled only when running as cts-instant -->
   <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
     <option name="run-command" value="cmd autofill set bind-instant-service-allowed true" />
