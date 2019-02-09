@@ -216,6 +216,9 @@ class ItsSession(object):
                 break
         proc.kill()
 
+    def __init__(self, camera_id=None):
+        self._camera_id = camera_id
+
     def __enter__(self):
         # Initialize device id and adb command.
         self.device_id = get_device_id()
@@ -225,7 +228,7 @@ class ItsSession(object):
         self.__init_socket_port()
 
         self.__close_camera()
-        self.__open_camera()
+        self.__open_camera(self._camera_id)
         return self
 
     def __exit__(self, type, value, traceback):
@@ -258,12 +261,17 @@ class ItsSession(object):
             buf = numpy.frombuffer(buf, dtype=numpy.uint8)
         return jobj, buf
 
-    def __open_camera(self):
-        # Get the camera ID to open as an argument.
-        camera_id = 0
-        for s in sys.argv[1:]:
-            if s[:7] == "camera=" and len(s) > 7:
-                camera_id = int(s[7:])
+    def __open_camera(self, camera_id):
+        # Get the camera ID to open if it is an argument as a single camera.
+        # This allows passing camera=# to individual tests at command line
+        # and camera=#,#,# or an no camera argv with tools/run_all_tests.py.
+        if not camera_id:
+            camera_id = 0
+            for s in sys.argv[1:]:
+                if s[:7] == "camera=" and len(s) > 7:
+                    camera_ids = s[7:].split(",")
+                    if len(camera_ids) == 1:
+                        camera_id = camera_ids[0]
         cmd = {"cmdName":"open", "cameraId":camera_id}
         self.sock.send(json.dumps(cmd) + "\n")
         data,_ = self.__read_response_from_socket()

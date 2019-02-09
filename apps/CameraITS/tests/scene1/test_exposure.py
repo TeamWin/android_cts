@@ -33,7 +33,7 @@ THRESHOLD_MAX_LEVEL_DIFF_WIDE_RANGE = 0.06
 THRESH_ROUND_DOWN_GAIN = 0.1
 THRESH_ROUND_DOWN_EXP = 0.03
 THRESH_ROUND_DOWN_EXP0 = 1.00  # tol at 0ms exp; theoretical limit @ 4-line exp
-THRESH_EXP_KNEE = 1E6  # exposures less than 1ms have relaxed tol
+THRESH_EXP_KNEE = 6E6  # exposures less than knee have relaxed tol
 
 
 def get_raw_active_array_size(props):
@@ -67,9 +67,7 @@ def main():
         its.caps.skip_unless(its.caps.compute_target_exposure(props) and
                              its.caps.per_frame_control(props))
 
-        process_raw = (its.caps.compute_target_exposure(props) and
-                       its.caps.per_frame_control(props) and
-                       its.caps.raw16(props) and
+        process_raw = (its.caps.raw16(props) and
                        its.caps.manual_sensor(props))
 
         debug = its.caps.debug_mode()
@@ -112,7 +110,7 @@ def main():
             assert 0 <= e_test - e_res < e_test * thresh_round_down_exp, e_msg
             s_e_product_res = s_res * e_res
             request_result_ratio = s_e_product / s_e_product_res
-            print 'Capture result s:', s_test, 'e:', e_test
+            print 'Capture result s:', s_res, 'e:', e_res
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(img, '%s_mult=%3.2f.jpg' % (NAME, m))
             tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)

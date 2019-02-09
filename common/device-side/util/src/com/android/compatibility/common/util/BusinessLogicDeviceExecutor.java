@@ -17,6 +17,7 @@
 package com.android.compatibility.common.util;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.lang.reflect.Method;
@@ -50,6 +51,22 @@ public class BusinessLogicDeviceExecutor extends BusinessLogicExecutor {
     @Override
     public void logInfo(String format, Object... args) {
         Log.i(LOG_TAG, String.format(format, args));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void logDebug(String format, Object... args) {
+        Log.d(LOG_TAG, String.format(format, args));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String formatExecutionString(String method, String... args) {
+        return String.format("%s(%s)", method, TextUtils.join(", ", args));
     }
 
     /**

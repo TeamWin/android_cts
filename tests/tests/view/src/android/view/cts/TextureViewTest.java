@@ -45,6 +45,7 @@ import android.view.Window;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -118,6 +119,7 @@ public class TextureViewTest {
     }
 
     @Test
+    @Ignore // Temporary, see b/111801626
     public void testRotateScale() throws Throwable {
         final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
         final TextureView textureView = activity.getTextureView();
@@ -157,6 +159,7 @@ public class TextureViewTest {
     }
 
     @Test
+    @Ignore // Temporary, see b/111801626
     public void testTransformScale() throws Throwable {
         final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
         final TextureView textureView = activity.getTextureView();

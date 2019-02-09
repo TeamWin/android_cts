@@ -30,7 +30,7 @@
         <option name="instrumentation-arg" key="filter"
                 value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
-        <option name="runtime-hint" value="10m"/>
-        <option name="test-timeout" value="600000" />
+        <option name="runtime-hint" value="16m"/>
+        <option name="test-timeout" value="3600000" />
     </test>
 </configuration>

@@ -54,7 +54,7 @@ class SwapchainInfo {
 public:
     SwapchainInfo(const DeviceInfo* const deviceInfo);
     ~SwapchainInfo();
-    int32_t init(bool setPreTransform);
+    int32_t init(bool setPreTransform, int* outPreTransformHint);
     VkFormat format() const { return mFormat; }
     VkExtent2D displaySize() const { return mDisplaySize; }
     VkSwapchainKHR swapchain() const { return mSwapchain; }

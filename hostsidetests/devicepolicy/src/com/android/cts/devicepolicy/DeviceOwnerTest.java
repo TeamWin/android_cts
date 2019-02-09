@@ -408,34 +408,42 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        // Backup stay awake setting because testGenerateLogs() will turn it off.
+        final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
+        try {
+            // Turn logging on.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            rebootAndWaitUntilReady();
 
-        // Turn logging on.
-        executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
-        // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
-        rebootAndWaitUntilReady();
-
-        // Generate various types of events on device side and check that they are logged.
-        executeDeviceTestMethod(".SecurityLoggingTest", "testGenerateLogs");
-        getDevice().executeShellCommand("dpm force-security-logs");
-        executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyGeneratedLogs");
-
-        // Reboot the device, so the security event ids are reset.
-        rebootAndWaitUntilReady();
-
-        // Verify event ids are consistent across a consecutive batch.
-        for (int batchNumber = 0; batchNumber < 3; batchNumber++) {
-            generateDummySecurityLogs();
+            // Generate various types of events on device side and check that they are logged.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testGenerateLogs");
             getDevice().executeShellCommand("dpm force-security-logs");
-            executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyLogIds",
-                    Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
-                            Integer.toString(batchNumber)));
-        }
+            executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyGeneratedLogs");
 
-        // Immediately attempting to fetch events again should fail.
-        executeDeviceTestMethod(".SecurityLoggingTest",
-                "testSecurityLoggingRetrievalRateLimited");
-        // Turn logging off.
-        executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+            // Reboot the device, so the security event ids are reset.
+            rebootAndWaitUntilReady();
+
+            // Verify event ids are consistent across a consecutive batch.
+            for (int batchNumber = 0; batchNumber < 3; batchNumber++) {
+                generateDummySecurityLogs();
+                getDevice().executeShellCommand("dpm force-security-logs");
+                executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyLogIds",
+                        Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
+                                Integer.toString(batchNumber)));
+            }
+
+            // Immediately attempting to fetch events again should fail.
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testSecurityLoggingRetrievalRateLimited");
+            // Turn logging off.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        } finally {
+            // Restore stay awake setting.
+            if (stayAwake != null) {
+                getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
+            }
+        }
     }
 
     private void generateDummySecurityLogs() throws DeviceNotAvailableException {

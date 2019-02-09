@@ -1483,7 +1483,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         final double TEST_SWEEP = 100;
         final int TEST_LOOPS = 1;
         final double TEST_FREQUENCY = 400;
-        final long WAIT_TIME_MS = 50; // compensate for cold start when run in isolation.
+        final long WAIT_TIME_MS = 150; // compensate for cold start when run in isolation.
         final double TEST_LOOP_DURATION = 0.25;
 
         playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,

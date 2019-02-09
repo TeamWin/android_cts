@@ -23,6 +23,7 @@
 
 #include "android-base/logging.h"
 #include "android-base/macros.h"
+#include "jni_binder.h"
 #include "jni_helper.h"
 #include "jvmti_helper.h"
 #include "jvmti.h"
@@ -170,6 +171,41 @@ JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiRedefineClassesTest_pushTrans
   memcpy(dex_data.data(), redef_bytes, env->GetArrayLength(dex_bytes));
   data.PushRedefinition(std::move(name_str), std::move(dex_data));
   env->ReleaseByteArrayElements(dex_bytes, redef_bytes, 0);
+}
+
+static JNINativeMethod gMethods[] = {
+  { "redefineClass", "(Ljava/lang/Class;[B)I",
+          (void*)Java_android_jvmti_cts_JvmtiRedefineClassesTest_redefineClass },
+
+  { "retransformClass", "(Ljava/lang/Class;)I",
+          (void*)Java_android_jvmti_cts_JvmtiRedefineClassesTest_retransformClass },
+
+  { "setTransformationEvent", "(Z)V",
+          (void*)Java_android_jvmti_cts_JvmtiRedefineClassesTest_setTransformationEvent },
+
+  { "clearTransformations", "()V",
+          (void*)Java_android_jvmti_cts_JvmtiRedefineClassesTest_clearTransformations },
+
+  { "setPopTransformations", "(Z)V",
+          (void*)Java_android_jvmti_cts_JvmtiRedefineClassesTest_setPopTransformations },
+
+  { "pushTransformationResult", "(Ljava/lang/String;[B)V",
+          (void*)Java_android_jvmti_cts_JvmtiRedefineClassesTest_pushTransformationResult },
+};
+
+void register_android_jvmti_cts_JvmtiRedefineClassesTest(jvmtiEnv* jenv, JNIEnv* env) {
+  ScopedLocalRef<jclass> klass(env, GetClass(jenv, env,
+          "android/jvmti/cts/JvmtiRedefineClassesTest", nullptr));
+  if (klass.get() == nullptr) {
+    env->ExceptionClear();
+    return;
+  }
+
+  env->RegisterNatives(klass.get(), gMethods, sizeof(gMethods) / sizeof(JNINativeMethod));
+  if (env->ExceptionCheck()) {
+    env->ExceptionClear();
+    LOG(ERROR) << "Could not register natives for JvmtiRedefineClassesTest class";
+  }
 }
 
 }  // namespace art

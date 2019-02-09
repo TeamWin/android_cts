@@ -126,6 +126,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     public void testGetAudioPresentations() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.testvideo);
         List<AudioPresentation> presentations = mExtractor.getAudioPresentations(0 /*trackIndex*/);
         assertNotNull(presentations);
         assertTrue(presentations.isEmpty());

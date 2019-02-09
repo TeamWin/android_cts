@@ -502,29 +502,14 @@ const char* kVertexShaderEs3x = R"glsl(
     }
 )glsl";
 
-const char* kSsboVertexShaderEs31 = R"glsl(#version 310 es
-    in vec2 aPosition;
-    in float aDepth;
-    uniform mediump float uScale;
+const char* kSsboComputeShaderEs31 = R"glsl(#version 310 es
+    layout(local_size_x = 1) in;
     layout(std430, binding=0) buffer Output {
-        vec2 data[];
+        uint data[];
     } bOutput;
-    out mediump vec2 vTexCoords;
     void main() {
-        bOutput.data[gl_VertexID] = aPosition;
-        vTexCoords = (vec2(1.0) + aPosition) * 0.5;
-        gl_Position.xy = aPosition * uScale;
-        gl_Position.z = aDepth;
-        gl_Position.w = 1.0;
-    }
-)glsl";
-
-const char* kColorFragmentShaderEs3x = R"glsl(
-    precision mediump float;
-    uniform lowp vec4 uColor;
-    out mediump vec4 color;
-    void main() {
-        color = uColor;
+        bOutput.data[gl_GlobalInvocationID.x] =
+            gl_GlobalInvocationID.x * 3u;
     }
 )glsl";
 
@@ -702,32 +687,41 @@ void AHardwareBufferGLTest::SetUp() {
     mDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(mDisplay, NULL, NULL);
 
+    // Try creating an OpenGL ES 3.x context and fall back to 2.x if that fails.
+    // Create two contexts for cross-context image sharing tests.
     EGLConfig first_config;
-    EGLint const config_attrib_list[] = {
+    EGLint config_attrib_list[] = {
         EGL_RED_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
         EGL_NONE
     };
     EGLint num_config = 0;
     eglChooseConfig(mDisplay, config_attrib_list, &first_config, 1, &num_config);
-    ASSERT_LT(0, num_config);
+    if (num_config == 0) {
+        // There are no configs with the ES 3.0 bit, fall back to ES 2.0.
+        config_attrib_list[8] = EGL_NONE;
+        config_attrib_list[9] = EGL_NONE;
+        eglChooseConfig(mDisplay, config_attrib_list, &first_config, 1, &num_config);
+    }
+    ASSERT_GT(num_config, 0);
 
-    // Try creating an OpenGL ES 3.x context and fall back to 2.x if that fails.
-    // Create two contexts for cross-context image sharing tests.
     EGLint context_attrib_list[] = {
         EGL_CONTEXT_CLIENT_VERSION, 3,
         EGL_NONE
     };
-    mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
+    // Try creating an ES 3.0 context, but don't bother if there were no ES 3.0 compatible configs.
+    if (config_attrib_list[9] != EGL_NONE) {
+        mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
+    }
+    // If we don't have a context yet, fall back to ES 2.0.
     if (mContext[0] == EGL_NO_CONTEXT) {
         context_attrib_list[1] = 2;
         mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
-        mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
-    } else {
-        mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
     }
+    mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
     ASSERT_NE(EGL_NO_CONTEXT, mContext[0]);
     ASSERT_NE(EGL_NO_CONTEXT, mContext[1]);
 
@@ -844,6 +838,12 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP &&
         !HasGLExtension("GL_EXT_EGL_image_storage")) {
         ALOGI("Test skipped: cube map array hardware buffers require "
+              "GL_EXT_EGL_image_storage");
+        return false;
+    }
+    if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE &&
+        !HasGLExtension("GL_EXT_EGL_image_storage")) {
+        ALOGI("Test skipped: mipmapped hardware buffers require "
               "GL_EXT_EGL_image_storage");
         return false;
     }
@@ -983,6 +983,7 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                     internal_format = GL_DEPTH_STENCIL_OES;
                     format = GL_DEPTH_STENCIL;
                     type = GL_UNSIGNED_INT_24_8;
+                    break;
                 default:
                     FAIL() << "Unrecognized GL format"; break;
             }
@@ -1217,8 +1218,9 @@ TEST_P(BlobTest, GpuDataBufferCpuRead) {
               mGLVersion / 10, mGLVersion % 10);
         return;
     }
+    const int kBufferElements = 16;
     AHardwareBuffer_Desc desc = GetParam();
-    desc.width = sizeof kQuadPositions;
+    desc.width = kBufferElements * sizeof(int);
     desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
     if (!SetUpBuffer(desc)) return;
 
@@ -1229,30 +1231,44 @@ TEST_P(BlobTest, GpuDataBufferCpuRead) {
     }
 
     // Clear the buffer to zero
-    std::vector<float> zero_data(desc.width / sizeof(float), 0.f);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, desc.width, zero_data.data());
+    std::vector<unsigned int> expected_data(kBufferElements, 0U);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, desc.width, expected_data.data());
     glFinish();
 
-    // Write into the buffer with a shader
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
-    SetUpProgram(kSsboVertexShaderEs31, std::string("#version 310 es") + kColorFragmentShaderEs3x,
-                 kQuadPositions, 0.5f);
+    // Write into the buffer with a compute shader
+    GLint status = 0;
+    mProgram = glCreateProgram();
+    GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(shader, 1, &kSsboComputeShaderEs31, nullptr);
+    glCompileShader(shader);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    ASSERT_EQ(GL_TRUE, status) << "Compute shader compilation failed";
+    glAttachShader(mProgram, shader);
+    glLinkProgram(mProgram);
+    glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
+    ASSERT_EQ(GL_TRUE, status) << "Shader program linking failed";
+    glDetachShader(mProgram, shader);
+    glDeleteShader(shader);
+    glUseProgram(mProgram);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mBufferObjects[mWhich]);
-    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    glDispatchCompute(kBufferElements, 1, 1);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
     glFinish();
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Inspect the data written into the buffer using CPU access.
     MakeCurrent(0);
-    float* data = nullptr;
+    unsigned int* data = nullptr;
     int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
                                       -1, nullptr, reinterpret_cast<void**>(&data));
     ASSERT_EQ(NO_ERROR, result);
     std::ostringstream s;
-    for (int i = 0; i < 12; ++i) {
+    for (int i = 0; i < kBufferElements; ++i) {
+		expected_data[i] = static_cast<unsigned int>(i * 3);
         s << data[i] << ", ";
     }
-    EXPECT_EQ(0, memcmp(kQuadPositions, data, desc.width)) << s.str();
+    EXPECT_EQ(0, memcmp(expected_data.data(), data, desc.width)) << s.str();
     AHardwareBuffer_unlock(mBuffer, nullptr);
 }
 

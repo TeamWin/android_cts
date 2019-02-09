@@ -554,6 +554,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
+        mSettings.setTextSize(TextSize.NORMAL);
         assertEquals(TextSize.NORMAL, mSettings.getTextSize());
 
         mSettings.setTextSize(TextSize.LARGER);

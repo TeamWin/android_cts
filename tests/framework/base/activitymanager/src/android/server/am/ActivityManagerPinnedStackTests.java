@@ -565,7 +565,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Launch first PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        waitForEnterPip(PIP_ACTIVITY);
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
 
         // Launch second PIP activity
         launchActivity(PIP_ACTIVITY2, EXTRA_ENTER_PIP, "true");

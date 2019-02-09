@@ -914,10 +914,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that the foreground service app op does prevent the foreground state.
      */
     public void testForegroundServiceAppOp() throws Exception {
+        // Use default timeout value 5000
         final ServiceProcessController controller = new ServiceProcessController(mContext,
-                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
+                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses);
+        // Use default timeout value 5000
         final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
-                mServiceIntent, WAIT_TIME);
+                mServiceIntent);
         final WatchUidRunner uidWatcher = controller.getUidWatcher();
 
         try {
@@ -1007,7 +1009,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
             uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
-
+            // Remove tempwhitelist avoid temp white list block idle command and app crash occur.
+            executeShellCmd("cmd deviceidle tempwhitelist -r " + SIMPLE_PACKAGE_NAME);
             // Good, now stop the service and wait for it to go away.
             mContext.stopService(mServiceStartForegroundIntent);
             conn.waitForDisconnect();

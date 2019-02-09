@@ -348,7 +348,7 @@ class ImageReaderTestCase {
             // Verity that outFenceFd's value will be changed by
             // AImageReader_acquireNextImageAsync.
             ret = AImageReader_acquireNextImageAsync(reader, &outImage, &outFenceFd);
-            if (ret != AMEDIA_OK || outImage == nullptr || outFenceFd != kDummyFenceFd) {
+            if (ret != AMEDIA_OK || outImage == nullptr || outFenceFd == 0) {
                 ALOGE("Failed to acquire image, ret=%d, outIamge=%p, outFenceFd=%d.", ret, outImage,
                       outFenceFd);
                 return;

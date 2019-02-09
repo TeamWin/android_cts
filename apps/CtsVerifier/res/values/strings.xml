@@ -2177,9 +2177,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_admin_notification">This is device admin notification</string>
     <string name="device_admin_keyguard_disable_camera">Disable camera</string>
     <string name="device_admin_keyguard_disable_camera_instruction">
-        Please press the Go button to lock the screen. Then try to open the camera
-        from the lower right corner of the screen. Expected result is you cannot
-        open the camera from lock screen and it will ask for password instead.\n
+        Please press the Go button to lock the screen. Expected result is you cannot
+        see the camera icon on the lower right corner of the screen, or if there is one, you cannot
+        open the camera using it before you are asked for a password.\n
         Also, it shouldn\'t be possible to open the camera on the lockscreen by
         any other device specific gesture (such as double press on power button).
     </string>
@@ -2690,7 +2690,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="negative_device_owner">No Device Owner Tests</string>
     <string name="device_owner_negative_category">No Device Owner Tests</string>
     <string name="device_owner_provisioning_negative">Device owner provisioning</string>
-    <string name="device_owner_provisioning_negative_info">The device owner provisioning test verifies that setting up a corporate owned device can only be done on a factory reset device.\n\nPlease click the "Start provisioning" button, and when you see a warning dialog telling the device can\'t be set up, select "pass". Otherwise, select "fail".</string>
+    <string name="device_owner_provisioning_negative_info">The device owner provisioning test verifies that setting up a corporate owned device can only be done on a factory reset device.\n\nPlease click the "Start provisioning" button, and when you see a warning dialog telling the device is already set up, select "pass". Otherwise, select "fail".</string>
     <string name="start_device_owner_provisioning_button">Start provisioning</string>
     <string name="enterprise_privacy_quick_settings_negative">Quick settings disclosure</string>
     <string name="enterprise_privacy_quick_settings_negative_info">
@@ -2975,8 +2975,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_usb_file_transfer_test_info">
             Please press below button to set the \"disallow USB file transfer\" restriction.\n
             If a USB notification appears, open the notification and check that the
-            \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and trigger a
-            support message when trying to select them.\n
+            \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" options either are not displayed,
+            or they trigger a support message when trying to select them.\n
             Check if you can mount the device as a USB drive on your desktop computer. The test is
             successful if you cannot mount the device, and files from your phone cannot be
             downloaded through USB.\n
@@ -3260,7 +3260,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_mobile_networks">Disallow config mobile networks</string>
     <string name="disallow_config_mobile_networks_action">Configuring mobile networks</string>
     <string name="disallow_config_tethering">Disallow config tethering</string>
-    <string name="disallow_config_tethering_action">Configuring tethering and portable hotspots</string>
+    <string name="disallow_config_tethering_action">
+        Configuring tethering and portable hotspots.\n
+        NOTE: If the device does not support tethering please skip this test and mark it as passing.\n
+    </string>
     <string name="disallow_config_wifi">Disallow config Wi-Fi</string>
     <string name="disallow_config_wifi_action">Modifying Wi-Fi configuration</string>
     <string name="disallow_debugging_features">Disallow debugging features</string>
@@ -3278,13 +3281,37 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
-    <string name="disallow_remove_user_action">Removing other users (please create a user and attempt to remove it to verify)</string>
+    <string name="device_owner_disallow_remove_user_info">
+        Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
+        \'Set restriction\' button to set the user restriction. Then press \'Go\' to open \'Settings\',
+        and manually find and open \'Multiple users\' setting. \n\n
+
+        Mark this test as passed if:\n\n
+        - The uninitialized user cannot be removed.\n
+        - \'Remove user\' option is disabled with an info icon on it. Clicking on it triggers a support dialog.\n\n
+
+        Use the Back button to return to this page.
+    </string>
+    <string name="managed_user_disallow_remove_user_info">
+        Please press the \'Set restriction\' button to set the user restriction.
+        Then press \'Go\' to open \'Settings\', and manually find and open \'Multiple users\' setting. \n\n
+
+        Mark this test as passed if one of the following conditions is met:\n\n
+        - \'Remove user\' option is disabled with an info icon on it. Clicking on it triggers a support dialog.\n
+        - \'Remove user\' option cannot be found.\n \n
+
+        Use the Back button to return to this page.
+    </string>
+    <string name="device_owner_disallow_remove_user_create_user">Create uninitialized user</string>
     <string name="disallow_remove_managed_profile">Disallow remove managed profile</string>
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>
     <string name="disallow_share_location_action">Turning on location sharing</string>
     <string name="disallow_uninstall_apps">Disallow uninstall apps</string>
-    <string name="disallow_uninstall_apps_action">Uninstalling applications from the work profile (badged applications) other than CtsVerifier</string>
+    <string name="disallow_uninstall_apps_action">
+        a. If testing in work profile: uninstall applications from the work profile (badged applications) other than CtsVerifier and system apps. \n
+        b. Otherwise: uninstall applications other than CtsVerifier and system apps
+    </string>
     <string name="disallow_unified_challenge">Disallow unified challenge</string>
     <string name="disallow_unified_challenge_action">Setting one lock for both personal and work profiles. IMPORTANT: Separate work lock should be set prior to this test in Set work lock test</string>
     <string name="disallow_keyguard_unredacted_notifications">Disallow lockscreen unredacted notification</string>
@@ -4389,14 +4416,14 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- USB Audio Peripheral Play Test -->
     <string name="usbaudio_play_test"> USB Audio Peripheral Play Test</string>
     <string name="usbaudio_play_info">
-        This test requires that you have connected a mandated USB Audio Interface peripheral and
+        This test requires that you have connected a USB Audio Interface peripheral and
         some way to monitor the output. Press the \"Play\" button and verify that a tone is produced.
        </string>
 
     <!-- USB Audio Peripheral Record Test -->
     <string name="usbaudio_record_test"> USB Audio Peripheral Record Test</string>
     <string name="usbaudio_record_info">
-        This test requires that you have connected a mandated USB Audio Interface peripheral.
+        This test requires that you have connected a USB Audio Interface peripheral.
         Connect the outputs to the inputs (with patch cables). Start playback by pressing the
         \"Record Loopback\" button and verify that the recorded signal is displayed in the wave
         display view. (It may be necessary to adjust the input controls on the peripheral).
@@ -4405,9 +4432,11 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- USB Audio Peripheral Buttons Test -->
     <string name="usbaudio_buttons_test"> USB Audio Peripheral Buttons Test</string>
     <string name="usbaudio_buttons_info">
-        This test requires that you have connected a mandated USB Audio headset. Press each
-        \"transport\" button and verify that it is recognized by the test.
-       </string>
+        This test requires that you have connected a USB Audio headset that supports the
+        Android USB audio headset buttons specification. Press each
+        \"transport\" button and verify that it is recognized by the test. When each of the
+        buttons has been recognized the \"pass\" button will be enabled.
+    </string>
 
     <!-- Telecom tests -->
     <string name="telecom_enable_phone_account_test"> Telecom Enable Phone Account Test</string>

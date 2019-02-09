@@ -51,7 +51,7 @@ class Chart(object):
     """
 
     def __init__(self, chart_file, height, distance, scale_start, scale_stop,
-                 scale_step):
+                 scale_step, camera_id=None):
         """Initial constructor for class.
 
         Args:
@@ -61,6 +61,7 @@ class Chart(object):
             scale_start:    float; start value for scaling for chart search
             scale_stop:     float; stop value for scaling for chart search
             scale_step:     float; step value for scaling for chart search
+            camera_id:      int; camera used for extractor
         """
         self._file = chart_file
         self._height = height
@@ -70,7 +71,7 @@ class Chart(object):
         self._scale_step = scale_step
         self.xnorm, self.ynorm, self.wnorm, self.hnorm, self.scale = its.image.chart_located_per_argv()
         if not self.xnorm:
-            with its.device.ItsSession() as cam:
+            with its.device.ItsSession(camera_id) as cam:
                 props = cam.get_camera_properties()
                 if its.caps.read_3a(props):
                     self.locate(cam, props)

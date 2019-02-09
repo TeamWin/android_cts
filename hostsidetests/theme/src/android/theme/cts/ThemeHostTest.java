@@ -89,7 +89,7 @@ public class ThemeHostTest extends DeviceTestCase {
         super.setUp();
 
         mDevice = getDevice();
-
+        mDevice.executeShellCommand("settings put system font_scale 1.0");
         final String density = getDensityBucketForDevice(mDevice);
         final String referenceZipAssetPath = String.format("/%s.zip", density);
         mReferences = extractReferenceImages(referenceZipAssetPath);
@@ -273,7 +273,8 @@ public class ThemeHostTest extends DeviceTestCase {
         final Pattern p = Pattern.compile("Override density: (\\d+)");
         final Matcher m = p.matcher(output);
         if (m.find()) {
-            return Integer.parseInt(m.group(1));
+            throw new RuntimeException("Cannot test device running at non-default density: "
+                    + Integer.parseInt(m.group(1)));
         }
 
         final String densityProp;

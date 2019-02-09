@@ -226,6 +226,11 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
                     | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
             session.setCallback(callback, handler);
+            PlaybackState state = new PlaybackState.Builder()
+                    .setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
+            // Fake the media session service so this session can take the media key events.
+            session.setPlaybackState(state);
+            session.setActive(true);
 
             // A media playback is also needed to receive media key events.
             Utils.assertMediaPlaybackStarted(context);

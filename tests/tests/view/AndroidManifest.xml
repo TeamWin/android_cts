@@ -297,7 +297,7 @@
         </activity>
 
         <activity android:name="android.view.cts.DragDropActivity"
-                  android:screenOrientation="portrait"
+                  android:screenOrientation="locked"
                   android:label="DragDropActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
