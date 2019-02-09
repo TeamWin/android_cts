@@ -44,12 +44,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -145,6 +147,58 @@ public class MediaStore_DownloadsTest {
                 null, null, null, null)) {
             assertEquals(mInitialDownloadsCount, cursor.getCount());
         }
+    }
+
+    @Test
+    public void testInsertDownload() throws Exception {
+        final String content = "<html><body>Content</body></html>";
+        final String displayName = "cts" + System.nanoTime();
+        final String mimeType = "text/html";
+        final Uri downloadUri = Uri.parse("https://developer.android.com/overview.html");
+        final Uri refererUri = Uri.parse("https://www.android.com");
+
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                Downloads.EXTERNAL_CONTENT_URI, displayName, mimeType);
+        params.setDownloadUri(downloadUri);
+        params.setRefererUri(refererUri);
+
+        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        assertNotNull(pendingUri);
+        mAddedUris.add(pendingUri);
+        final Uri publishUri;
+        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+            try (PrintWriter pw = new PrintWriter(session.openOutputStream())) {
+                pw.print(content);
+            }
+            try (OutputStream out = session.openOutputStream()) {
+                out.write(content.getBytes(StandardCharsets.UTF_8));
+            }
+            publishUri = session.publish();
+        }
+
+        try (Cursor cursor = mContentResolver.query(publishUri, null, null, null, null)) {
+            assertEquals(1, cursor.getCount());
+
+            cursor.moveToNext();
+            assertEquals(mimeType,
+                    cursor.getString(cursor.getColumnIndex(Downloads.MIME_TYPE)));
+            assertEquals(displayName,
+                    cursor.getString(cursor.getColumnIndex(Downloads.DISPLAY_NAME)));
+            assertEquals(downloadUri.toString(),
+                    cursor.getString(cursor.getColumnIndex(Downloads.DOWNLOAD_URI)));
+            assertEquals(refererUri.toString(),
+                    cursor.getString(cursor.getColumnIndex(Downloads.REFERER_URI)));
+        }
+
+        final ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        try (InputStream in = mContentResolver.openInputStream(publishUri)) {
+            final byte[] buf = new byte[512];
+            int bytesRead;
+            while ((bytesRead = in.read(buf)) != -1) {
+                actual.write(buf, 0, bytesRead);
+            }
+        }
+        assertEquals(content, actual.toString(StandardCharsets.UTF_8.name()));
     }
 
     @Test
@@ -268,7 +322,7 @@ public class MediaStore_DownloadsTest {
     private Uri insertImage(String displayName, String description,
             File file, String mimeType, int resourceId) throws Exception {
         file.createNewFile();
-        try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
+        try (InputStream in = mContext.getResources().openRawResource(resourceId);
              OutputStream out = new FileOutputStream(file)) {
             FileUtils.copy(in, out);
         }
