@@ -192,7 +192,7 @@ public class MediaCodecListTest extends AndroidTestCase {
             MediaCodec codec = MediaCodec.createByCodecName(info.getName());
 
             assertEquals(codec.getName(), info.getName());
-
+            assertEquals(codec.getCanonicalName(), info.getCanonicalName());
             assertEquals(codec.getCodecInfo(), info);
 
             codec.release();
