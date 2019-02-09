@@ -33,7 +33,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api.android_test_runner_current" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="class" value="android.signature.cts.api.SignatureTest" />
+        <option name="class" value="android.signature.cts.api.current.runner.SignatureTest" />
         <option name="instrumentation-arg" key="expected-api-files" value="android-test-mock-current.api,android-test-runner-current.api" />
         <option name="runtime-hint" value="5s" />
     </test>
