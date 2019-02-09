@@ -25,6 +25,8 @@ import androidx.annotation.NonNull;
 
 /**
  * Helper used to launch an activity and watch for its lifecycle events.
+ *
+ * @param <A> activity type
  */
 public final class ActivityLauncher<A extends Activity> {
 
@@ -39,11 +41,17 @@ public final class ActivityLauncher<A extends Activity> {
         mLaunchIntent = new Intent(context, activityClass);
     }
 
+    /**
+     * Gets a watcher for the activity lifecycle events.
+     */
     @NonNull
     public ActivityWatcher getWatcher() {
         return mWatcher;
     }
 
+    /**
+     * Launches the activity.
+     */
     @NonNull
     public A launchActivity() {
         return mActivityTestRule.launchActivity(mLaunchIntent);
