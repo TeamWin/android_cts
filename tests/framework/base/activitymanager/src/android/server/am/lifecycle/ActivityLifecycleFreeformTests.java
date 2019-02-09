@@ -77,10 +77,8 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         // Wait and assert resume
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity should be resumed after launch");
-        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
     }
 
     @Test
@@ -112,14 +110,10 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         waitAndAssertActivityState(getComponentName(ThirdActivity.class), STATE_RESUMED, message);
 
         // Assert lifecycle
-        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
     }
 
     @Test
@@ -152,12 +146,9 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
 
         // Assert lifecycle
         LifecycleVerifier.assertLaunchAndStopSequence(FirstActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
 
         // Finish the activity that was occluding the first one
         getLifecycleLog().clear();
@@ -213,12 +204,9 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
 
         // Assert lifecycle
         LifecycleVerifier.assertLaunchAndPauseSequence(FirstActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertLaunchSequence(TranslucentActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(TranslucentActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
 
         // Finish the activity that was occluding the first one
         getLifecycleLog().clear();

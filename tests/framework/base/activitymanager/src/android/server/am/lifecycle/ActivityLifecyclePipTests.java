@@ -154,8 +154,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
         // Wait and verify the sequence
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
                 "launchBelowPip");
     }
@@ -225,17 +224,10 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                         .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
 
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
 
         // Enter split screen
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                        ON_RESUME, ON_PAUSE), "moveToSplitScreen");
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
         // TODO(b/123013403): will fail with callback tracking enabled - delivers extra
         // MULTI_WINDOW_MODE_CHANGED
         LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
@@ -248,8 +240,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
         // Wait for activities to resume and verify lifecycle
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
-        LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "launchToSide");
         LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
@@ -263,7 +254,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 mFirstActivityTestRule.launchActivity(new Intent());
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         final Activity secondActivity = mSecondActivityTestRule.launchActivity(
