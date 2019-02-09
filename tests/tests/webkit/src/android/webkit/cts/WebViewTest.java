@@ -124,6 +124,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     private static final String X_REQUESTED_WITH = "X-Requested-With";
     private static final String PRINTER_TEST_FILE = "print.pdf";
     private static final String PDF_PREAMBLE = "%PDF-1";
+    // Snippet of HTML that will prevent favicon requests to the test server.
+    private static final String HTML_HEADER =
+            "<html><head><link rel=\"shortcut icon\" href=\"%23\" /></head>";
+    private static final String SIMPLE_HTML = "<html><body>simple html</body></html>";
 
     /**
      * This is the minimum number of milliseconds to wait for scrolling to
@@ -1125,75 +1129,119 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
     }
 
-    @UiThreadTest
-    public void testLoadDataWithBaseUrl() throws Throwable {
+    public void testLoadDataWithBaseUrl_resolvesRelativeToBaseUrl() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        assertNull(mWebView.getUrl());
+        assertNull(mOnUiThread.getUrl());
         String imgUrl = TestHtmlConstants.SMALL_IMG_URL; // relative
-        // Snippet of HTML that will prevent favicon requests to the test server.
-        final String HTML_HEADER = "<html><head><link rel=\"shortcut icon\" href=\"%23\" /></head>";
 
         // Trying to resolve a relative URL against a data URL without a base URL
         // will fail and we won't make a request to the test web server.
         // By using the test web server as the base URL we expect to see a request
         // for the relative URL in the test server.
         startWebServer(false);
-        String baseUrl = mWebServer.getAssetUrl("foo.html");
-        String historyUrl = "http://www.example.com/";
+        final String baseUrl = mWebServer.getAssetUrl("foo.html");
         mWebServer.resetRequestState();
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(baseUrl,
                 HTML_HEADER + "<body><img src=\"" + imgUrl + "\"/></body></html>",
-                "text/html", "UTF-8", historyUrl);
+                "text/html", "UTF-8", null);
         // Verify that the resource request makes it to the server.
         assertTrue(mWebServer.wasResourceRequested(imgUrl));
-        assertEquals(historyUrl, mWebView.getUrl());
+    }
 
+    public void testLoadDataWithBaseUrl_historyUrl() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        final String baseUrl = "http://www.baseurl.com/";
+        final String historyUrl = "http://www.example.com/";
+        mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(baseUrl,
+                SIMPLE_HTML,
+                "text/html", "UTF-8", historyUrl);
+        assertEquals(historyUrl, mOnUiThread.getUrl());
+    }
+
+    public void testLoadDataWithBaseUrl_nullHistoryUrlShowsAsAboutBlank() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         // Check that reported URL is "about:blank" when supplied history URL
         // is null.
-        imgUrl = TestHtmlConstants.LARGE_IMG_URL;
+        final String baseUrl = "http://www.baseurl.com/";
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(baseUrl,
-                HTML_HEADER + "<body><img src=\"" + imgUrl + "\"/></body></html>",
+                SIMPLE_HTML,
                 "text/html", "UTF-8", null);
-        assertTrue(mWebServer.wasResourceRequested(imgUrl));
-        assertEquals("about:blank", mWebView.getUrl());
+        assertEquals("about:blank", mOnUiThread.getUrl());
+    }
 
+    public void testLoadDataWithBaseUrl_javascriptCanAccessOrigin() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         // Test that JavaScript can access content from the same origin as the base URL.
-        mWebView.getSettings().setJavaScriptEnabled(true);
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        startWebServer(false);
+        final String baseUrl = mWebServer.getAssetUrl("foo.html");
         final String crossOriginUrl = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(baseUrl,
                 HTML_HEADER + "<body onload=\"" +
                 "document.title = document.getElementById('frame').contentWindow.location.href;" +
                 "\"><iframe id=\"frame\" src=\"" + crossOriginUrl + "\"></body></html>",
                 "text/html", "UTF-8", null);
-        assertEquals(crossOriginUrl, mWebView.getTitle());
+        assertEquals(crossOriginUrl, mOnUiThread.getTitle());
+    }
 
+    public void testLoadDataWithBaseUrl_dataBaseUrlIgnoresHistoryUrl() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         // Check that when the base URL uses the 'data' scheme, a 'data' scheme URL is used and the
         // history URL is ignored.
-        mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("data:foo",
-                HTML_HEADER + "<body>bar</body></html>", "text/html", "UTF-8",
-                historyUrl);
-        assertTrue("URL: " + mWebView.getUrl(), mWebView.getUrl().indexOf("data:text/html") == 0);
-        assertTrue("URL: " + mWebView.getUrl(), mWebView.getUrl().indexOf("bar") > 0);
+        final String baseUrl = "data:foo";
+        final String historyUrl = "http://www.example.com/";
+        mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(baseUrl,
+                SIMPLE_HTML,
+                "text/html", "UTF-8", historyUrl);
 
+        final String currentUrl = mOnUiThread.getUrl();
+        assertEquals("Current URL (" + currentUrl + ") should be a data URI", 0,
+                mOnUiThread.getUrl().indexOf("data:text/html"));
+        assertTrue("Current URL (" + currentUrl + ") should contain the simple HTML we loaded",
+                mOnUiThread.getUrl().indexOf("simple html") > 0);
+    }
+
+    public void testLoadDataWithBaseUrl_unencodedContentHttpBaseUrl() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         // Check that when a non-data: base URL is used, we treat the String to load as
         // a raw string and just dump it into the WebView, i.e. not decoding any URL entities.
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("http://www.foo.com",
                 HTML_HEADER + "<title>Hello World%21</title><body>bar</body></html>",
                 "text/html", "UTF-8", null);
-        assertEquals("Hello World%21", mWebView.getTitle());
+        assertEquals("Hello World%21", mOnUiThread.getTitle());
+    }
 
+    public void testLoadDataWithBaseUrl_urlEncodedContentDataBaseUrl() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         // Check that when a data: base URL is used, we treat the String to load as a data: URL
         // and run load steps such as decoding URL entities (i.e., contrary to the test case
         // above.)
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion("data:foo",
                 HTML_HEADER + "<title>Hello World%21</title></html>", "text/html", "UTF-8", null);
-        assertEquals("Hello World!", mWebView.getTitle());
+        assertEquals("Hello World!", mOnUiThread.getTitle());
+    }
 
-        // Check the method is null input safe.
+    public void testLoadDataWithBaseUrl_nullSafe() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(null, null, null, null, null);
-        assertEquals("about:blank", mWebView.getUrl());
+        assertEquals("about:blank", mOnUiThread.getUrl());
     }
 
     private void deleteIfExists(File file) throws IOException {
