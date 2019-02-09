@@ -715,15 +715,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-    private void assertGranted(String alias, boolean expected) throws InterruptedException {
-        boolean granted = false;
-        try {
-            granted = (KeyChain.getPrivateKey(mActivity, alias) != null);
-        } catch (KeyChainException e) {
-            if (expected) {
-                e.printStackTrace();
-            }
-        }
+    private void assertGranted(String alias, boolean expected)
+            throws InterruptedException, KeyChainException {
+        boolean granted = (KeyChain.getPrivateKey(mActivity, alias) != null);
         assertWithMessage("Grant for alias: \"" + alias + "\"").that(granted).isEqualTo(expected);
     }
 

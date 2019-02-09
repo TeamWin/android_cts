@@ -184,8 +184,7 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
 
         // Test cleaning up the key.
         assertThat(mDpm.removeKeyPair(null, alias)).isTrue();
-        assertThrows(
-                KeyChainException.class, () -> KeyChain.getPrivateKey(getContext(), alias));
+        assertThat(KeyChain.getPrivateKey(getContext(), alias)).isNull();
     }
 
     // Test that a key generation request succeeds when device identifiers are not requested.
