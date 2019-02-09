@@ -66,6 +66,8 @@ libVkLayer_nullLayerA \
 libVkLayer_nullLayerB \
 libVkLayer_nullLayerC
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
