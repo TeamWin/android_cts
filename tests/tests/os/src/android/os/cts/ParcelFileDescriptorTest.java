@@ -188,8 +188,8 @@ public class ParcelFileDescriptorTest {
     }
 
     @Test
-    public void testToString() {
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.fromSocket(new Socket());
+    public void testToString() throws Exception {
+        ParcelFileDescriptor pfd = makeParcelFileDescriptor(getContext());
         assertNotNull(pfd.toString());
     }
 
@@ -243,8 +243,8 @@ public class ParcelFileDescriptorTest {
     }
 
     @Test
-    public void testGetFileDescriptor() {
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.fromSocket(new Socket());
+    public void testGetFileDescriptor() throws Exception {
+        ParcelFileDescriptor pfd = makeParcelFileDescriptor(getContext());
         assertNotNull(pfd.getFileDescriptor());
 
         ParcelFileDescriptor p = new ParcelFileDescriptor(pfd);
@@ -252,8 +252,8 @@ public class ParcelFileDescriptorTest {
     }
 
     @Test
-    public void testDescribeContents() {
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.fromSocket(new Socket());
+    public void testDescribeContents() throws Exception{
+        ParcelFileDescriptor pfd = makeParcelFileDescriptor(getContext());
         assertTrue((Parcelable.CONTENTS_FILE_DESCRIPTOR & pfd.describeContents()) != 0);
     }
 
