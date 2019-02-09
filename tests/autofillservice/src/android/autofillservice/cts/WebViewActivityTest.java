@@ -67,7 +67,7 @@ public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity
     }
 
     @Test
-    @AppModeFull // testAutofillOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillOneDataset() is enough")
     public void testAutofillNoDatasets() throws Exception {
         // Set service.
         enableService();
@@ -93,7 +93,7 @@ public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity
 
     @Ignore("blocked on b/74793485")
     @Test
-    @AppModeFull // testAutofillOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillOneDataset() is enough")
     public void testAutofillOneDataset_usingAppContext() throws Exception {
         autofillOneDatasetTest(true);
     }
@@ -297,7 +297,7 @@ public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity
     }
 
     @Test
-    @AppModeFull // testAutofillAndSave() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillAndSave() is enough")
     public void testAutofillAndSave_withExternalViews_loadWebViewFirst() throws Exception {
         // Set service.
         enableService();
@@ -423,7 +423,7 @@ public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity
 
     @Test
     @Ignore("blocked on b/69461853")
-    @AppModeFull // testAutofillAndSave() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillAndSave() is enough")
     public void testAutofillAndSave_withExternalViews_loadExternalViewsFirst() throws Exception {
         // Set service.
         enableService();

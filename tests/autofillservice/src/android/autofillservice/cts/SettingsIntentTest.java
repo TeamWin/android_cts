@@ -29,7 +29,7 @@ import android.support.test.uiautomator.UiObject2;
 import org.junit.After;
 import org.junit.Test;
 
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class SettingsIntentTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<TrampolineForResultActivity> {
 

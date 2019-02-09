@@ -62,7 +62,7 @@ import java.util.concurrent.Callable;
 /**
  * Test the lifecycle of a autofill session
  */
-@AppModeFull // This test requires android.permission.WRITE_EXTERNAL_STORAGE
+@AppModeFull(reason = "This test requires android.permission.WRITE_EXTERNAL_STORAGE")
 public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivityLaunch {
     private static final String TAG = "SessionLifecycleTest";
 

@@ -115,7 +115,7 @@ public class CheckoutActivityTest
     }
 
     @Test
-    @AppModeFull // testAutofill() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofill() is enough")
     public void testAutofillDynamicAdapter() throws Exception {
         // Set activity.
         mActivity.onCcExpiration((v) -> v.setAdapter(new ArrayAdapter<String>(getContext(),
@@ -158,7 +158,7 @@ public class CheckoutActivityTest
     // TODO: this should be a pure unit test exercising onProvideAutofillStructure(),
     // but that would require creating a custom ViewStructure.
     @Test
-    @AppModeFull // Unit test
+    @AppModeFull(reason = "Unit test")
     public void testGetAutofillOptionsSorted() throws Exception {
         // Set service.
         enableService();
@@ -248,13 +248,13 @@ public class CheckoutActivityTest
     }
 
     @Test
-    @AppModeFull // Service-specific test
+    @AppModeFull(reason = "Service-specific test")
     public void testCustomizedSaveUi() throws Exception {
         customizedSaveUi(false);
     }
 
     @Test
-    @AppModeFull // Service-specific test
+    @AppModeFull(reason = "Service-specific test")
     public void testCustomizedSaveUiWithContentDescription() throws Exception {
         customizedSaveUi(true);
     }

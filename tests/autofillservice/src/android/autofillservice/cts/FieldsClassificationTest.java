@@ -44,7 +44,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
     @ClassRule

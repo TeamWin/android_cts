@@ -137,6 +137,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testAutoFillOneDatasetAndSave_largeAssistStructure() throws Exception {
         startActivity();
 
@@ -249,7 +250,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSave() throws Exception {
         saveTest(false);
     }
@@ -312,7 +313,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Emulates an app dyanmically adding the password field after username is typed.
      */
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testPartitionedSave() throws Exception {
         startActivity();
 
@@ -369,7 +370,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Emulates an app using fragments to display username and password in 2 steps.
      */
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testDelayedSave() throws Exception {
         startActivity();
 
@@ -941,7 +942,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // Service-specific test
+    @AppModeFull(reason = "Service-specific test")
     public void testSelectedDatasetsAreSentOnSaveRequest() throws Exception {
         startActivity();
 
@@ -1098,7 +1099,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSanitizeOnSaveWhenAppChangeValues() is enough")
     public void testSanitizeOnSaveNoChange() throws Exception {
         startActivity();
 
@@ -1136,7 +1137,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSanitizeOnSaveWhenAppChangeValues() is enough")
     public void testDontSaveWhenSanitizedValueForRequiredFieldDidntChange() throws Exception {
         startActivity();
 
@@ -1174,7 +1175,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSanitizeOnSaveWhenAppChangeValues() is enough")
     public void testDontSaveWhenSanitizedValueForOptionalFieldDidntChange() throws Exception {
         startActivity();
 
@@ -1208,7 +1209,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSanitizeOnSaveWhenAppChangeValues() is enough")
     public void testDontSaveWhenRequiredFieldFailedSanitization() throws Exception {
         startActivity();
 
@@ -1243,7 +1244,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSanitizeOnSaveWhenAppChangeValues() is enough")
     public void testDontSaveWhenOptionalFieldFailedSanitization() throws Exception {
         startActivity();
 
@@ -1279,7 +1280,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testSanitizeOnSaveWhenAppChangeValues() is enough")
     public void testDontSaveWhenInitialValueAndNoUserInputAndServiceDatasets() throws Throwable {
         // Prepare activitiy.
         startActivity();

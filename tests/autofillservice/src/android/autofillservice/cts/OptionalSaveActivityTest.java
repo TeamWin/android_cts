@@ -46,7 +46,7 @@ import org.junit.Test;
  *   <li>Favorite Color: don't care - LOL
  * </ul>
  */
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class OptionalSaveActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<OptionalSaveActivity> {
 

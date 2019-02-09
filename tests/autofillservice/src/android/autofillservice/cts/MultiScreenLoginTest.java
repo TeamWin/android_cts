@@ -33,6 +33,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
@@ -47,6 +48,7 @@ import java.util.regex.Pattern;
 /**
  * Test case for the senario where a login screen is split in multiple activities.
  */
+@AppModeFull(reason = "Service-specific test")
 public class MultiScreenLoginTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<UsernameOnlyActivity> {
 

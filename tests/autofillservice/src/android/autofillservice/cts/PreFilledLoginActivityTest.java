@@ -35,7 +35,7 @@ import org.junit.Test;
 /**
  * Covers scenarios where the behavior is different because some fields were pre-filled.
  */
-@AppModeFull // LoginActivityTest is enough to test ephemeral apps support
+@AppModeFull(reason = "LoginActivityTest is enough")
 public class PreFilledLoginActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<PreFilledLoginActivity> {
 

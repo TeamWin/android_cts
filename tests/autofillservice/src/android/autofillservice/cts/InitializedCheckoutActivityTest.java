@@ -35,7 +35,7 @@ import org.junit.Test;
 /**
  * Test case for an activity containing non-TextField views with initial values set on XML.
  */
-@AppModeFull // CheckoutActivityTest() is enough to test ephemeral apps support
+@AppModeFull(reason = "CheckoutActivityTest() is enough")
 public class InitializedCheckoutActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<InitializedCheckoutActivity> {
 

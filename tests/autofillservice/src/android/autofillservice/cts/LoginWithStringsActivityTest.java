@@ -42,7 +42,7 @@ import android.view.View;
 
 import org.junit.Test;
 
-@AppModeFull // LoginActivityTest is enough to test ephemeral apps support
+@AppModeFull(reason = "LoginActivityTest is enough")
 public class LoginWithStringsActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<LoginWithStringsActivity> {
 

@@ -207,7 +207,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
     }
 
     @Test
-    @AppModeFull // testDisableApp() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testDisableApp() is enough")
     public void testDisableAppThenWaitToReenableIt() throws Exception {
         // Set service.
         enableService();
@@ -233,7 +233,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
     }
 
     @Test
-    @AppModeFull // testDisableApp() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testDisableApp() is enough")
     public void testDisableAppThenResetServiceToReenableIt() throws Exception {
         enableService();
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -277,7 +277,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
     }
 
     @Test
-    @AppModeFull // testDisableActivity() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testDisableActivity() is enough")
     public void testDisableActivityThenWaitToReenableIt() throws Exception {
         // Set service.
         enableService();
@@ -306,7 +306,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
     }
 
     @Test
-    @AppModeFull // testDisableActivity() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testDisableActivity() is enough")
     public void testDisableActivityThenResetServiceToReenableIt() throws Exception {
         enableService();
         sReplier.addResponse(new CannedFillResponse.Builder()

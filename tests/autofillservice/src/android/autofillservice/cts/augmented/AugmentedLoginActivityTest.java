@@ -26,6 +26,7 @@ import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.LoginActivity;
 import android.autofillservice.cts.OneTimeCancellationSignalListener;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillId;
@@ -52,6 +53,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAutoFill_neitherServiceCanAutofill() throws Exception {
         // Set services
         enableService();
@@ -118,6 +120,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAutoFill_mainServiceReturnedNull_augmentedAutofillTwoFields() throws Exception {
         // Set services
         enableService();
@@ -158,6 +161,7 @@ public class AugmentedLoginActivityTest
 
     @Ignore("blocked on b/122728762")
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testCancellationSignalCalledAfterTimeout() throws Exception {
         // Set services
         enableService();

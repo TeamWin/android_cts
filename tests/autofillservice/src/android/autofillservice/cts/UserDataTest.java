@@ -42,7 +42,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class UserDataTest {
 
     private static final Context sContext = InstrumentationRegistry.getContext();
