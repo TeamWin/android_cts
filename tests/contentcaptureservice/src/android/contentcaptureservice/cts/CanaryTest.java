@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 import android.provider.DeviceConfig;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.contentcapture.ContentCaptureManager;
 
 import com.android.compatibility.common.util.RequiredServiceRule;
 
@@ -49,8 +50,8 @@ public class CanaryTest {
     public void assertHasService() {
         final String serviceName = getInternalString(RESOURCE_STRING_SERVICE_NAME);
         final String enableSettings = DeviceConfig.getProperty(
-                DeviceConfig.ContentCapture.NAMESPACE,
-                DeviceConfig.ContentCapture.PROPERTY_CONTENTCAPTURE_ENABLED);
+                DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
         final boolean hasService = RequiredServiceRule.hasService(SYSTEM_SERVICE_NAME);
         Log.d(TAG, "Service resource: '" + serviceName + "' Settings: '" + enableSettings
                 + "' Has '" + SYSTEM_SERVICE_NAME + "': " + hasService);
