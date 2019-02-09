@@ -135,4 +135,26 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
                 DUMMY_PRIVATE_DNS_HOST,
                 DevicePolicyManager.PRIVATE_DNS_SET_ERROR_HOST_NOT_SERVING);
     }
+
+    public void testCanSetModeDespiteUserRestriction() {
+        // First set a specific host and assert that applied.
+        callSetGlobalPrivateDnsExpectingResult(PRIVATE_DNS_MODE_PROVIDER_HOSTNAME,
+                VALID_PRIVATE_DNS_HOST,
+                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+        assertThat(
+                mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
+                PRIVATE_DNS_MODE_PROVIDER_HOSTNAME);
+
+        // Set a user restriction
+        setUserRestriction(UserManager.DISALLOW_CONFIG_PRIVATE_DNS, true);
+
+        // Next, set the mode to automatic and confirm that has applied.
+        callSetGlobalPrivateDnsExpectingResult(PRIVATE_DNS_MODE_OPPORTUNISTIC, null,
+                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+
+        assertThat(
+                mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
+                PRIVATE_DNS_MODE_OPPORTUNISTIC);
+        assertThat(mDevicePolicyManager.getGlobalPrivateDnsHost(getWho())).isNull();
+    }
 }
