@@ -470,6 +470,8 @@ public class DownloadManagerTest {
             receiver.waitForDownloadComplete(SHORT_TIMEOUT, downloadId);
             assertSuccessfulDownload(downloadId, downloadLocation);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
+            mContext.grantUriPermission("com.android.shell", downloadUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
             final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
             final ContentResolver contentResolver = mContext.getContentResolver();
             assertArrayEquals(hash(contentResolver.openInputStream(downloadUri)),
@@ -502,6 +504,8 @@ public class DownloadManagerTest {
                 "text/plain", downloadFile.getPath(), fileContents.getBytes().length, true);
         assertTrue(downloadId >= 0);
         final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
+        mContext.grantUriPermission("com.android.shell", downloadUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
         final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
         assertArrayEquals(hash(new FileInputStream(downloadFile)),
                 hash(mContext.getContentResolver().openInputStream(mediaStoreUri)));
@@ -555,6 +559,8 @@ public class DownloadManagerTest {
             assertEquals(testTitle, cursor.getString(0));
         }
 
+        mContext.grantUriPermission("com.android.shell", downloadUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
         final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
         final String newTitle = "New_title";
         updateUri(mediaStoreUri, "_display_name", newTitle);
