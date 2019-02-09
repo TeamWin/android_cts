@@ -17,6 +17,7 @@
 package com.android.cts.verifier.biometrics;
 
 import android.Manifest;
+import android.app.KeyguardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -49,17 +50,29 @@ public class BiometricTest extends PassFailButtons.Activity {
     private static final String BIOMETRIC_ENROLL = "android.settings.BIOMETRIC_ENROLL";
     private static final int BIOMETRIC_PERMISSION_REQUEST_CODE = 0;
 
-    private static final int TEST_NONE_ENROLLED = 1;
-    private static final int TEST_ENROLLED = 2;
+    // Test that BiometricPrompt setAllowDeviceCredentials returns ERROR_NO_DEVICE_CREDENTIAL when
+    // pin, pattern, password is not set.
+    private static final int TEST_NOT_SECURED = 1;
+    // Test that BiometricPrompt returns BIOMETRIC_ERROR_NO_BIOMETRICS when BiometricManager
+    // states BIOMETRIC_ERROR_NONE_ENROLLED.
+    private static final int TEST_NONE_ENROLLED = 2;
+    // Test that BiometricPrompt setAllowDeviceCredentials can authenticate when no biometrics are
+    // enrolled.
+    private static final int TEST_DEVICE_CREDENTIAL = 3;
+    // Test that authentication can succeed when biometrics are enrolled.
+    private static final int TEST_AUTHENTICATE = 4;
 
     private BiometricManager mBiometricManager;
+    private KeyguardManager mKeyguardManager;
     private Handler mHandler = new Handler(Looper.getMainLooper());
     private CancellationSignal mCancellationSignal;
-    private int mExpectedError;
     private int mCurrentTest;
+
     private Button mButtonEnroll;
-    private Button mButtonTest1;
-    private Button mButtonTest2;
+    private Button mButtonTestNotSecured;
+    private Button mButtonTestNoneEnrolled;
+    private Button mButtonTestCredential;
+    private Button mButtonTestAuthenticate;
 
     private Executor mExecutor = (runnable) -> {
         mHandler.post(runnable);
@@ -69,27 +82,45 @@ public class BiometricTest extends PassFailButtons.Activity {
             new BiometricPrompt.AuthenticationCallback() {
         @Override
         public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
-            if (mCurrentTest == TEST_NONE_ENROLLED) {
-                showToastAndLog("This should be impossible, please capture a bug report");
-            } else if (mCurrentTest == TEST_ENROLLED) {
-                showToastAndLog("Authenticated. You passed the test.");
+            if (mCurrentTest == TEST_NOT_SECURED) {
+                showToastAndLog("This should be impossible, please capture a bug report "
+                        + mCurrentTest);
+            } else if (mCurrentTest == TEST_NONE_ENROLLED) {
+                showToastAndLog("This should be impossible, please capture a bug report"
+                        + mCurrentTest);
+            } else if (mCurrentTest == TEST_DEVICE_CREDENTIAL) {
+                showToastAndLog("Please enroll a biometric and start the next test");
+                mButtonTestCredential.setEnabled(false);
+                mButtonEnroll.setVisibility(View.VISIBLE);
+                mButtonTestAuthenticate.setVisibility(View.VISIBLE);
+            } else if (mCurrentTest == TEST_AUTHENTICATE) {
+                showToastAndLog("You have passed the test!");
+                mButtonTestAuthenticate.setEnabled(false);
                 getPassButton().setEnabled(true);
             }
         }
 
         @Override
         public void onAuthenticationError(int errorCode, CharSequence errString) {
-            if (mCurrentTest == TEST_NONE_ENROLLED) {
-                if (errorCode == mExpectedError) {
-                    mButtonTest1.setVisibility(View.INVISIBLE);
-                    mButtonTest2.setVisibility(View.VISIBLE);
-                    mButtonEnroll.setVisibility(View.VISIBLE);
-                    showToastAndLog("Please enroll a biometric and start the next test");
+            if (mCurrentTest == TEST_NOT_SECURED) {
+                if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL) {
+                    showToastAndLog("Please start the next test");
+                    mButtonTestNotSecured.setEnabled(false);
+                    mButtonTestNoneEnrolled.setVisibility(View.VISIBLE);
                 } else {
-                    showToastAndLog("Expected: " + mExpectedError +
-                            " Actual: " + errorCode + " " + errString);
+                    showToastAndLog("Error: " + errorCode + " " + errString);
                 }
-            } else if (mCurrentTest == TEST_ENROLLED) {
+            } else if (mCurrentTest == TEST_NONE_ENROLLED) {
+                if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS) {
+                    mButtonTestNoneEnrolled.setEnabled(false);
+                    mButtonTestCredential.setVisibility(View.VISIBLE);
+                    showToastAndLog("Please start the next test");
+                } else {
+                    showToastAndLog("Error: " + errorCode + " " + errString);
+                }
+            } else if (mCurrentTest == TEST_DEVICE_CREDENTIAL) {
+                showToastAndLog(errString.toString() + " Please try again");
+            } else if (mCurrentTest == TEST_AUTHENTICATE) {
                 showToastAndLog(errString.toString() + " Please try again");
             }
         }
@@ -108,11 +139,12 @@ public class BiometricTest extends PassFailButtons.Activity {
         getPassButton().setEnabled(false);
 
         mBiometricManager = getApplicationContext().getSystemService(BiometricManager.class);
+        mKeyguardManager = getApplicationContext().getSystemService(KeyguardManager.class);
         mButtonEnroll = findViewById(R.id.biometric_enroll_button);
-        mButtonEnroll.setVisibility(View.INVISIBLE);
-        mButtonTest1 = findViewById(R.id.biometric_start_test1_button);
-        mButtonTest2 = findViewById(R.id.biometric_start_test2_button);
-        mButtonTest2.setVisibility(View.INVISIBLE);
+        mButtonTestNoneEnrolled = findViewById(R.id.biometric_start_test_none_enrolled);
+        mButtonTestNotSecured = findViewById(R.id.biometric_start_test_not_secured);
+        mButtonTestAuthenticate = findViewById(R.id.biometric_start_test_authenticate_button);
+        mButtonTestCredential = findViewById(R.id.biometric_start_test_credential_button);
 
         PackageManager pm = getApplicationContext().getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
@@ -120,21 +152,28 @@ public class BiometricTest extends PassFailButtons.Activity {
                 || pm.hasSystemFeature(PackageManager.FEATURE_FACE)) {
             requestPermissions(new String[]{Manifest.permission.USE_BIOMETRIC},
                     BIOMETRIC_PERMISSION_REQUEST_CODE);
-            mButtonTest1.setEnabled(false);
-            mButtonTest1.setOnClickListener((view) -> {
+
+            mButtonTestNotSecured.setEnabled(false);
+            mButtonTestNotSecured.setOnClickListener((view) -> {
+                startTest(TEST_NOT_SECURED);
+            });
+            mButtonTestNoneEnrolled.setOnClickListener((view) -> {
                 startTest(TEST_NONE_ENROLLED);
             });
-            mButtonTest2.setOnClickListener((view) -> {
-                startTest(TEST_ENROLLED);
+            mButtonTestAuthenticate.setOnClickListener((view) -> {
+                startTest(TEST_AUTHENTICATE);
             });
             mButtonEnroll.setOnClickListener((view) -> {
                 final Intent intent = new Intent();
                 intent.setAction(BIOMETRIC_ENROLL);
                 startActivity(intent);
             });
+            mButtonTestCredential.setOnClickListener((view) -> {
+                startTest(TEST_DEVICE_CREDENTIAL);
+            });
         } else {
             // NO biometrics available
-            mButtonTest1.setEnabled(false);
+            mButtonTestNoneEnrolled.setEnabled(false);
             getPassButton().setEnabled(true);
         }
     }
@@ -143,7 +182,7 @@ public class BiometricTest extends PassFailButtons.Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] state) {
         if (requestCode == BIOMETRIC_PERMISSION_REQUEST_CODE &&
                 state[0] == PackageManager.PERMISSION_GRANTED) {
-            mButtonTest1.setEnabled(true);
+            mButtonTestNotSecured.setEnabled(true);
         }
     }
 
@@ -151,17 +190,29 @@ public class BiometricTest extends PassFailButtons.Activity {
         mCurrentTest = testType;
         int result = mBiometricManager.canAuthenticate();
 
-        if (testType == TEST_NONE_ENROLLED) {
+        if (testType == TEST_NOT_SECURED) {
+            if (mKeyguardManager.isDeviceSecure()) {
+                showToastAndLog("Please remove your pin/pattern/password and try again");
+            } else {
+                showBiometricPrompt(true /* allowCredential */);
+            }
+        } else if (testType == TEST_NONE_ENROLLED) {
             if (result == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
-                mExpectedError = BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS;
-                showBiometricPrompt();
+                showBiometricPrompt(false /* allowCredential */);
             } else {
                 showToastAndLog("Error: " + result + " Please remove all biometrics and try again");
             }
-        } else if (testType == TEST_ENROLLED) {
+        } else if (testType == TEST_DEVICE_CREDENTIAL) {
+            if (!mKeyguardManager.isDeviceSecure()) {
+                showToastAndLog("Please set up a pin, pattern, or password and try again");
+            } else if (result != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+                showToastAndLog("Error: " + result + " Please remove all biometrics and try again");
+            } else {
+                showBiometricPrompt(true /* allowCredential */);
+            }
+        } else if (testType == TEST_AUTHENTICATE) {
             if (result == BiometricManager.BIOMETRIC_SUCCESS) {
-                mExpectedError = 0;
-                showBiometricPrompt();
+                showBiometricPrompt(false /* allowCredential */);
             } else {
                 showToastAndLog("Error: " + result +
                         " Please ensure at least one biometric is enrolled and try again");
@@ -171,10 +222,14 @@ public class BiometricTest extends PassFailButtons.Activity {
         }
     }
 
-    private void showBiometricPrompt() {
+    private void showBiometricPrompt(boolean allowCredential) {
         BiometricPrompt.Builder builder = new BiometricPrompt.Builder(getApplicationContext())
-            .setTitle("Please authenticate")
-            .setNegativeButton("Cancel", mExecutor, mBiometricPromptButtonListener);
+            .setTitle("Please authenticate");
+        if (allowCredential) {
+            builder.setAllowDeviceCredential(true);
+        } else {
+            builder.setNegativeButton("Cancel", mExecutor, mBiometricPromptButtonListener);
+        }
         BiometricPrompt bp = builder.build();
         mCancellationSignal = new CancellationSignal();
         bp.authenticate(mCancellationSignal, mExecutor, mAuthenticationCallback);

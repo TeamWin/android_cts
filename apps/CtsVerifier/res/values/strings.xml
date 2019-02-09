@@ -157,6 +157,8 @@
     <string name="biometric_enroll">Enroll</string>
     <string name="biometric_start_test1">Start Test 1</string>
     <string name="biometric_start_test2">Start Test 2</string>
+    <string name="biometric_start_test3">Start Test 3</string>
+    <string name="biometric_start_test4">Start Test 4</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
