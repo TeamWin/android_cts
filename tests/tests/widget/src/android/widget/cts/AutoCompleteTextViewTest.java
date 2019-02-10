@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static com.android.compatibility.common.util.WidgetTestUtils.sameCharSequence;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -70,11 +72,16 @@ import android.widget.cts.util.TestUtils;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.common.collect.ImmutableList;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -418,6 +425,232 @@ public class AutoCompleteTextViewTest {
         TestUtils.assertAllPixelsOfColor("Drop down should be yellow", dropDownBackground,
                 dropDownBackground.getBounds().width(), dropDownBackground.getBounds().height(),
                 false, Color.YELLOW, 1, true);
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_addItem() throws Throwable {
+        List<String> suggestions = new ArrayList<>(ImmutableList.of("testOne", "testTwo"));
+        mAdapter = new ArrayAdapter<String>(
+                mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setText("testT");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
+
+        mActivityRule.runOnUiThread(() -> {
+            mAdapter.add("testThree");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_removeItem() throws Throwable {
+        List<String> suggestions = new ArrayList<>(
+                ImmutableList.of("testOne", "testTwo", "testThree"));
+        mAdapter = new ArrayAdapter<String>(
+                mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setText("testT");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
+
+        mActivityRule.runOnUiThread(() -> {
+            mAdapter.remove("testThree");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_threshold_changeText() throws Throwable {
+        List<String> suggestions = new ArrayList<>(
+                ImmutableList.of("testOne", "testTwo", "testThree"));
+        mAdapter = new ArrayAdapter<String>(
+                mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(3);
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setText("tes");
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Above Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setText("test");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
+
+        // At Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setText("tes");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
+
+        // Below Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setText("te");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_changeThreshold() throws Throwable {
+        List<String> suggestions = new ArrayList<>(
+                ImmutableList.of("testOne", "testTwo", "testThree"));
+        mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
+                suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setText("test");
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Above Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(3);
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
+
+        // At Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(4);
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
+
+        // Below Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(5);
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_dropDownAlwaysVisible() throws Throwable {
+        List<String> suggestions = new ArrayList<>(
+                ImmutableList.of("testOne", "testTwo", "testThree"));
+        mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
+                suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setDropDownAlwaysVisible(true);
+            mAutoCompleteTextView.setText("test");
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Below Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(5);
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_dropDownNotAlwaysVisible() throws Throwable {
+        List<String> suggestions = new ArrayList<>(
+                ImmutableList.of("testOne", "testTwo", "testThree"));
+        mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
+                suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setDropDownAlwaysVisible(false);
+            mAutoCompleteTextView.setText("test");
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Below Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(5);
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
+    }
+
+    @Test
+    public void refreshAutoCompleteResults_popupCanBeUpdated() throws Throwable {
+        List<String> suggestions = new ArrayList<>(
+                ImmutableList.of("testOne", "testTwo", "testThree"));
+        mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
+                suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setDropDownAlwaysVisible(false);
+            mAutoCompleteTextView.setText("test");
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Below Threshold.
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setThreshold(5);
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+        assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
+    }
+
+    @Test
+    public void refreshAutoCompleteResults() throws Throwable {
+        List<String> suggestions = new ArrayList<>(ImmutableList.of("testOne", "testTwo"));
+        mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
+                suggestions);
+
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setText("testT");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
+
+        mActivityRule.runOnUiThread(() -> {
+            mAdapter.add("testThree");
+            mAutoCompleteTextView.refreshAutoCompleteResults();
+        });
+
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
     }
 
     @UiThreadTest
@@ -801,6 +1034,15 @@ public class AutoCompleteTextViewTest {
 
         mAutoCompleteTextView.setDropDownWidth(ViewGroup.LayoutParams.MATCH_PARENT);
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, mAutoCompleteTextView.getDropDownWidth());
+    }
+
+    private List<Object> getAutoCompleteSuggestions() {
+        int count = mAutoCompleteTextView.getAdapter().getCount();
+        List<Object> autoCompleteSuggestions = new ArrayList<>(count);
+        for (int index = 0; index < count; index++) {
+            autoCompleteSuggestions.add(mAutoCompleteTextView.getAdapter().getItem(index));
+        }
+        return autoCompleteSuggestions;
     }
 
     private class MockValidator implements AutoCompleteTextView.Validator {
