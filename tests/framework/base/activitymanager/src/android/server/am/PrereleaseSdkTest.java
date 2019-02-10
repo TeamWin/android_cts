@@ -19,6 +19,7 @@ package android.server.am;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.prerelease.Components.MAIN_ACTIVITY;
 
+import android.platform.test.annotations.Presubmit;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -31,6 +32,7 @@ import org.junit.Test;
  * <p>Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:PrereleaseSdkTest
  */
+@Presubmit
 public class PrereleaseSdkTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.wm.UnsupportedCompileSdkDialog */

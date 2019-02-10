@@ -27,12 +27,14 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 
+import android.platform.test.annotations.Presubmit;
 import org.junit.Test;
 
 /**
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:SplashscreenTests
  */
+@Presubmit
 public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test

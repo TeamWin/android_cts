@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.Presubmit;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,6 +41,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:KeyguardTransitionTests
  */
+@Presubmit
 public class KeyguardTransitionTests extends ActivityManagerTestBase {
 
     @Before

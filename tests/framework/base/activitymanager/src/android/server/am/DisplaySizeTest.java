@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.Build;
 
+import android.platform.test.annotations.Presubmit;
 import org.junit.After;
 import org.junit.Test;
 
@@ -38,6 +39,7 @@ import org.junit.Test;
  * <p>Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:DisplaySizeTest
  */
+@Presubmit
 public class DisplaySizeTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.am.UnsupportedDisplaySizeDialog */

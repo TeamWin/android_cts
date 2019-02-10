@@ -58,6 +58,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerConfigChangeTests
  */
+@Presubmit
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private static final float EXPECTED_FONT_SIZE_SP = 10.0f;
@@ -102,7 +103,6 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @FlakyTest(bugId = 73701185)
-    @Presubmit
     @Test
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
@@ -110,7 +110,6 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @FlakyTest(bugId = 73812451)
-    @Presubmit
     @Test
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
