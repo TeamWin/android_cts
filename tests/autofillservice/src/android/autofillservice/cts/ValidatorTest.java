@@ -37,7 +37,7 @@ import org.junit.Test;
 /**
  * Simple integration test to verify that the UI is only shown if the validator passes.
  */
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class ValidatorTest extends AbstractLoginActivityTestCase {
 
     @Test

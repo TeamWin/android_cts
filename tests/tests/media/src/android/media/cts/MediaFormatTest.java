@@ -585,4 +585,54 @@ public class MediaFormatTest extends AndroidTestCase {
         } catch (IllegalArgumentException e) {
         }
     }
+
+    public void testMediaFormatConstructors() {
+        MediaFormat format;
+        {
+            format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 6);
+            assertEquals(MediaFormat.MIMETYPE_AUDIO_AAC, format.getString(MediaFormat.KEY_MIME));
+            assertEquals(48000, format.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+            assertEquals(6, format.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+            assertEquals(3, format.getKeys().size());
+            assertEquals(0, format.getFeatures().size());
+        }
+
+        {
+            format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080);
+            assertEquals(MediaFormat.MIMETYPE_VIDEO_AVC, format.getString(MediaFormat.KEY_MIME));
+            assertEquals(1920, format.getInteger(MediaFormat.KEY_WIDTH));
+            assertEquals(1080, format.getInteger(MediaFormat.KEY_HEIGHT));
+            assertEquals(3, format.getKeys().size());
+            assertEquals(0, format.getFeatures().size());
+        }
+
+        {
+            format = MediaFormat.createSubtitleFormat(MediaFormat.MIMETYPE_TEXT_VTT, "und");
+            assertEquals(MediaFormat.MIMETYPE_TEXT_VTT, format.getString(MediaFormat.KEY_MIME));
+            assertEquals("und", format.getString(MediaFormat.KEY_LANGUAGE));
+            assertEquals(2, format.getKeys().size());
+            assertEquals(0, format.getFeatures().size());
+
+            format.setFeatureEnabled("feature1", false);
+
+            // also test dup
+            MediaFormat other = new MediaFormat(format);
+            format.setString(MediaFormat.KEY_LANGUAGE, "un");
+            other.setInteger(MediaFormat.KEY_IS_DEFAULT, 1);
+            other.setFeatureEnabled("feature1", true);
+
+            assertEquals(MediaFormat.MIMETYPE_TEXT_VTT, format.getString(MediaFormat.KEY_MIME));
+            assertEquals("un", format.getString(MediaFormat.KEY_LANGUAGE));
+            assertEquals(2, format.getKeys().size());
+            assertFalse(format.getFeatureEnabled("feature1"));
+            assertEquals(1, format.getFeatures().size());
+
+            assertEquals(MediaFormat.MIMETYPE_TEXT_VTT, other.getString(MediaFormat.KEY_MIME));
+            assertEquals("und", other.getString(MediaFormat.KEY_LANGUAGE));
+            assertEquals(1, other.getInteger(MediaFormat.KEY_IS_DEFAULT));
+            assertEquals(3, other.getKeys().size());
+            assertTrue(other.getFeatureEnabled("feature1"));
+            assertEquals(1, other.getFeatures().size());
+        }
+    }
 }

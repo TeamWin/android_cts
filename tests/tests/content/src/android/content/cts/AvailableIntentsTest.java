@@ -30,7 +30,6 @@ import android.provider.AlarmClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
-import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
 
@@ -340,6 +339,13 @@ public class AvailableIntentsTest extends AndroidTestCase {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
             assertCanBeHandled(new Intent(Settings.ACTION_FINGERPRINT_ENROLL));
+        }
+    }
+
+    public void testUsageAccessSettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
         }
     }
 

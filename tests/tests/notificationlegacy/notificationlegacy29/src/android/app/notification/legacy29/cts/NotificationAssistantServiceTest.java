@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.Telephony;
 import android.service.notification.Adjustment;
+import android.service.notification.NotificationAssistantService;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.support.test.InstrumentationRegistry;
@@ -248,6 +249,52 @@ public class NotificationAssistantServiceTest {
             replyFound = replyFound || reply.equals(smartReply);
         }
         assertTrue(replyFound);
+    }
+
+    @Test
+    public void testOnActionInvoked_methodExists() throws Exception {
+        setUpListeners();
+        final Intent intent = new Intent(Intent.ACTION_MAIN, Telephony.Threads.CONTENT_URI);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setAction(Intent.ACTION_MAIN);
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        Notification.Action action = new Notification.Action.Builder(null, "",
+                pendingIntent).build();
+        // This method has to exist and the call cannot fail
+        mNotificationAssistantService.onActionInvoked("", action,
+                NotificationAssistantService.SOURCE_FROM_APP);
+    }
+
+    @Test
+    public void testOnNotificationDirectReplied_methodExists() throws Exception {
+        setUpListeners();
+        // This method has to exist and the call cannot fail
+        mNotificationAssistantService.onNotificationDirectReplied("");
+    }
+
+    @Test
+    public void testOnNotificationExpansionChanged_methodExists() throws Exception {
+        setUpListeners();
+        // This method has to exist and the call cannot fail
+        mNotificationAssistantService.onNotificationExpansionChanged("", true, true);
+    }
+
+    @Test
+    public void testOnNotificationsSeen_methodExists() throws Exception {
+        setUpListeners();
+        // This method has to exist and the call cannot fail
+        mNotificationAssistantService.onNotificationsSeen(new ArrayList<String>());
+    }
+
+    @Test
+    public void testOnSuggestedReplySent_methodExists() throws Exception {
+        setUpListeners();
+        // This method has to exist and the call cannot fail
+        mNotificationAssistantService.onSuggestedReplySent("", "",
+                NotificationAssistantService.SOURCE_FROM_APP);
     }
 
     private StatusBarNotification getFirstNotificationFromPackage(String PKG)

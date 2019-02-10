@@ -91,7 +91,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         final Activity secondActivity = mSecondActivityTestRule.launchActivity(

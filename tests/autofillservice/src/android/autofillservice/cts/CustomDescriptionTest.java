@@ -46,7 +46,7 @@ import org.junit.Test;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class CustomDescriptionTest extends AbstractLoginActivityTestCase {
 
     /**

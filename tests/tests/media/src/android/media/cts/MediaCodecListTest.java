@@ -34,9 +34,13 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback;
 
 @SmallTest
 @RequiresDevice
@@ -188,7 +192,7 @@ public class MediaCodecListTest extends AndroidTestCase {
             MediaCodec codec = MediaCodec.createByCodecName(info.getName());
 
             assertEquals(codec.getName(), info.getName());
-
+            assertEquals(codec.getCanonicalName(), info.getCanonicalName());
             assertEquals(codec.getCodecInfo(), info);
 
             codec.release();
@@ -452,11 +456,274 @@ public class MediaCodecListTest extends AndroidTestCase {
                 CodecCapabilities cap = info.getCapabilitiesForType(types[j]);
                 AudioCapabilities audioCap = cap.getAudioCapabilities();
                 if (audioCap == null) {
+                    assertFalse("no audio capabilities for audio media type " + types[j] + " of "
+                                    + info.getName(),
+                                types[j].toLowerCase().startsWith("audio/"));
                     continue;
                 }
                 int n = audioCap.getMaxInputChannelCount();
                 Log.d(TAG, info.getName() + ": " + n);
                 assertTrue(info.getName() + " max input channel not positive: " + n, n > 0);
+            }
+        }
+    }
+
+    private void testCanonicalCodecIsNotAnAlias(String canonicalName) {
+        // canonical name must point to a non-alias
+        for (MediaCodecInfo canonical : mAllInfos) {
+            if (canonical.getName().equals(canonicalName)) {
+                assertFalse(canonical.isAlias());
+                return;
+            }
+        }
+        fail("could not find info to canonical name '" + canonicalName + "'");
+    }
+
+    private String getCustomPartOfComponentName(MediaCodecInfo info) {
+        String name = info.getName();
+        if (name.startsWith("OMX.") || name.startsWith("c2.")) {
+            // strip off OMX.<vendor_name>.
+            return name.replaceFirst("^OMX\\.([^.]+)\\.", "");
+        }
+        return name;
+    }
+
+    private void testKindInCodecNamesIsMeaningful(MediaCodecInfo info) {
+        String name = getCustomPartOfComponentName(info);
+        // codec names containing 'encoder' or 'enc' must be encoders, 'decoder' or 'dec' must
+        // be decoders
+        if (name.matches("(?i)\\b(encoder|enc)\\b")) {
+            assertTrue(info.isEncoder());
+        }
+        if (name.matches("(?i)\\b(decoder|dec)\\b")) {
+            assertFalse(info.isEncoder());
+        }
+    }
+
+    private void testMediaTypeInCodecNamesIsMeaningful(MediaCodecInfo info) {
+        // Codec names containing media type names must support that media type
+        String name = getCustomPartOfComponentName(info);
+
+        Set<String> supportedTypes = new HashSet<String>(Arrays.asList(info.getSupportedTypes()));
+
+        // video types
+        if (name.matches("(?i)\\b(mp(eg)?2)\\b")) {
+            // this may refer to audio mpeg1-layer2 or video mpeg2
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_MPEG2)
+                        || supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_MPEG + "-L2"));
+        }
+        if (name.matches("(?i)\\b(h\\.?263)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_H263));
+        }
+        if (name.matches("(?i)\\b(mp(eg)?4)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_MPEG4));
+        }
+        if (name.matches("(?i)\\b(h\\.?264|avc)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_AVC));
+        }
+        if (name.matches("(?i)\\b(vp8)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_VP8));
+        }
+        if (name.matches("(?i)\\b(h\\.?265|hevc)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        }
+        if (name.matches("(?i)\\b(vp9)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_VP9));
+        }
+        if (name.matches("(?i)\\b(av0?1)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_AV1));
+        }
+
+        // audio types
+        if (name.matches("(?i)\\b(mp(eg)?3)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_MPEG));
+        }
+        if (name.matches("(?i)\\b(x?aac)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AAC));
+        }
+        if (name.matches("(?i)\\b(pcm)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_RAW));
+        }
+        if (name.matches("(?i)\\b(raw)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_RAW)
+                        || supportedTypes.contains(MediaFormat.MIMETYPE_VIDEO_RAW));
+        }
+        if (name.matches("(?i)\\b(amr)\\b")) {
+            if (name.matches("(?i)\\b(nb)\\b")) {
+                assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AMR_NB));
+            } else if (name.matches("(?i)\\b(wb)\\b")) {
+                assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AMR_WB));
+            } else {
+                assertTrue(
+                    supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AMR_NB)
+                            || supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AMR_WB));
+            }
+        }
+        if (name.matches("(?i)\\b(opus)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_OPUS));
+        }
+        if (name.matches("(?i)\\b(vorbis)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+        }
+        if (name.matches("(?i)\\b(flac)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_FLAC));
+        }
+        if (name.matches("(?i)\\b(ac3)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AC3));
+        }
+        if (name.matches("(?i)\\b(ac4)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_AC4));
+        }
+        if (name.matches("(?i)\\b(eac3)\\b")) {
+            assertTrue(supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_EAC3)
+                        || supportedTypes.contains(MediaFormat.MIMETYPE_AUDIO_EAC3_JOC));
+        }
+    }
+
+    public void testCodecCharacterizations() {
+        for (MediaCodecInfo info : mAllInfos) {
+            Log.d(TAG, "codec: " + info.getName() + " canonical: " + info.getCanonicalName());
+
+            // AOSP codecs must not be marked as vendor or hardware accelerated
+            if (info.getName().startsWith("OMX.google.")) {
+                assertFalse(info.isVendor());
+                assertFalse(info.isHardwareAccelerated());
+            }
+
+            // Codec 2.0 based AOSP codecs must run in a software-only process
+            if (info.getName().startsWith("c2.android.")) {
+                assertTrue(info.isSoftwareOnly());
+                assertFalse(info.isVendor());
+                assertFalse(info.isHardwareAccelerated());
+            }
+
+            // validate aliases
+            if (info.isAlias()) {
+                assertFalse(info.getName().equals(info.getCanonicalName()));
+                testCanonicalCodecIsNotAnAlias(info.getCanonicalName());
+            } else {
+                // validate codec names: (Canonical) codec names must be meaningful.
+                // We only test this on canonical infos as we allow aliases to support
+                // existing codec names that do not fit this.
+                assertEquals(info.getName(), info.getCanonicalName());
+                testKindInCodecNamesIsMeaningful(info);
+                testMediaTypeInCodecNamesIsMeaningful(info);
+            }
+
+            // hardware accelerated codecs cannot be software only
+            assertFalse(info.isHardwareAccelerated() && info.isSoftwareOnly());
+        }
+    }
+
+    public void testVideoPerformancePointsSanity() {
+        MediaFormat hd25Format =
+            MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720);
+        hd25Format.setFloat(MediaFormat.KEY_FRAME_RATE, 25.f);
+
+        MediaFormat portraitHd240Format =
+            MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 720, 1280);
+        portraitHd240Format.setInteger(MediaFormat.KEY_FRAME_RATE, 240);
+
+        assertTrue(VideoCapabilities.PerformancePoint.HD_30.covers(hd25Format));
+        assertTrue(VideoCapabilities.PerformancePoint.HD_25.covers(hd25Format));
+        assertFalse(VideoCapabilities.PerformancePoint.HD_24.covers(hd25Format));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_30.covers(hd25Format));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_25.covers(hd25Format));
+        assertFalse(VideoCapabilities.PerformancePoint.FHD_24.covers(hd25Format));
+
+        assertTrue(VideoCapabilities.PerformancePoint.HD_240.covers(portraitHd240Format));
+        assertFalse(VideoCapabilities.PerformancePoint.HD_200.covers(portraitHd240Format));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_240.covers(portraitHd240Format));
+        assertFalse(VideoCapabilities.PerformancePoint.FHD_200.covers(portraitHd240Format));
+    }
+
+    public void verifyPerformancePoints(
+            MediaCodecInfo info, String mediaType,
+            List<VideoCapabilities.PerformancePoint> points) {
+        // TODO: verify performance points listed conform to the requirements ... once those
+        // requirements are agreed upon.
+    }
+
+    public void testAllHardwareAcceleratedVideoCodecsPublishPerformancePoints() {
+        List<String> mandatoryTypes = Arrays.asList(
+                MediaFormat.MIMETYPE_VIDEO_AVC,
+                MediaFormat.MIMETYPE_VIDEO_VP8,
+                MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION,
+                MediaFormat.MIMETYPE_VIDEO_HEVC,
+                MediaFormat.MIMETYPE_VIDEO_VP9,
+                MediaFormat.MIMETYPE_VIDEO_AV1);
+
+        String[] featuresToConfig = new String[] {
+            FEATURE_SecurePlayback,
+            FEATURE_TunneledPlayback,
+        };
+
+        for (MediaCodecInfo info : mAllInfos) {
+            String[] types = info.getSupportedTypes();
+            for (int j = 0; j < types.length; ++j) {
+                CodecCapabilities cap = info.getCapabilitiesForType(types[j]);
+                MediaFormat defaultFormat = cap.getDefaultFormat();
+                VideoCapabilities videoCap = cap.getVideoCapabilities();
+
+                Log.d(TAG, "codec: " + info.getName() + " canonical: " + info.getCanonicalName()
+                        + " type: " + types[j]);
+
+                if (videoCap == null) {
+                    assertFalse("no video capabilities for video media type " + types[j] + " of "
+                                    + info.getName(),
+                                types[j].toLowerCase().startsWith("video/"));
+                    continue;
+                }
+
+                List<VideoCapabilities.PerformancePoint> pps =
+                    videoCap.getSupportedPerformancePoints();
+
+                // see which feature combinations are supported by this codec
+                // we do this by counting in binary up to a number of bits
+                List<Integer> supportedFeatureConfigs = new ArrayList<Integer>();
+                for (int cfg_ix = 1 << featuresToConfig.length; --cfg_ix >= 0; ) {
+                    boolean supported = true;
+                    for (int f_ix = 0; supported && f_ix < featuresToConfig.length; ++f_ix) {
+                        if (((cfg_ix >> f_ix) & 1) != 0) {
+                            // feature is to be enabled
+                            supported = supported && cap.isFeatureSupported(featuresToConfig[f_ix]);
+                        } else {
+                            // feature is not to be enabled
+                            supported = supported && !cap.isFeatureRequired(featuresToConfig[f_ix]);
+                        }
+                    }
+                    if (supported) {
+                        supportedFeatureConfigs.add(cfg_ix);
+                    }
+                }
+                int[] supportedFeatureConfigsArray =
+                    supportedFeatureConfigs.stream().mapToInt(Integer::intValue).toArray();
+
+                Log.d(TAG, "codec supports configs "
+                        + Arrays.toString(supportedFeatureConfigsArray));
+                if (pps == null) {
+                    // Hardware-accelerated video components must publish performance points,
+                    // even if it is an empty list.
+                    assertFalse("HW-accelerated codec '" + info.getName()
+                            + "' must publish performance points", info.isHardwareAccelerated());
+
+                    continue;
+                }
+
+                // At least one hardware accelerated codec for each media type (including secure
+                // codecs) must publish valid performance points for AVC/VP8/VP9/HEVC/AV1.
+                if (pps.size() == 0) {
+                    if (mandatoryTypes.contains(types[j])) {
+                        Log.d(TAG, "empty performance points list published by HW accelerated" +
+                                   "component " + info.getName() + " for " + types[j]);
+                    }
+                } else {
+                    for (VideoCapabilities.PerformancePoint p : pps) {
+                        Log.d(TAG, "got performance point "
+                                + p.macroBlocks + "block @ " + p.macroBlockRate / p.macroBlocks
+                                + "fps (max " + p.frameRate + "fps)");
+                    }
+                }
             }
         }
     }

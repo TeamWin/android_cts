@@ -85,6 +85,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+/* This tests NotificationListenerService together with NotificationManager, as you need to have
+ * notifications to manipulate in order to test the listener service. */
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
@@ -1016,6 +1018,189 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testShowBadging_ranking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        final int originalBadging = Settings.Secure.getInt(
+                mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BADGING);
+
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                Settings.Secure.putInt(mContext.getContentResolver(),
+                        Settings.Secure.NOTIFICATION_BADGING, 1));
+        assertEquals(1, Settings.Secure.getInt(
+                mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BADGING));
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        try {
+            sendNotification(1, R.drawable.black);
+            Thread.sleep(500); // wait for notification listener to receive notification
+            NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+            NotificationListenerService.Ranking outRanking =
+                    new NotificationListenerService.Ranking();
+            for (String key : rankingMap.getOrderedKeys()) {
+                if (key.contains(mListener.getPackageName())) {
+                    rankingMap.getRanking(key, outRanking);
+                    assertTrue(outRanking.canShowBadge());
+                }
+            }
+
+            // turn off badging globally
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    Settings.Secure.putInt(mContext.getContentResolver(),
+                            Settings.Secure.NOTIFICATION_BADGING, 0));
+
+            Thread.sleep(500); // wait for ranking update
+
+            rankingMap = mListener.mRankingMap;
+            outRanking = new NotificationListenerService.Ranking();
+            for (String key : rankingMap.getOrderedKeys()) {
+                if (key.contains(mListener.getPackageName())) {
+                    assertFalse(outRanking.canShowBadge());
+                }
+            }
+
+            mListener.resetData();
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    Settings.Secure.putInt(mContext.getContentResolver(),
+                            Settings.Secure.NOTIFICATION_BADGING, originalBadging));
+        }
+    }
+
+    public void testGetSuppressedVisualEffectsOff_ranking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        final int notificationId = 1;
+        sendNotification(notificationId, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+        NotificationListenerService.Ranking outRanking =
+                new NotificationListenerService.Ranking();
+
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+
+                // check notification key match
+                assertEquals(0, outRanking.getSuppressedVisualEffects());
+            }
+        }
+    }
+
+    public void testGetSuppressedVisualEffects_ranking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
+        try {
+            toggleListenerAccess(TestNotificationListener.getId(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+            Thread.sleep(500); // wait for listener to be allowed
+
+            mListener = TestNotificationListener.getInstance();
+            assertNotNull(mListener);
+
+            toggleNotificationPolicyAccess(mContext.getPackageName(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+            if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+                mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0,
+                        SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_PEEK));
+            } else {
+                mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0,
+                        SUPPRESSED_EFFECT_SCREEN_ON));
+            }
+            mNotificationManager.setInterruptionFilter(
+                    NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+
+            final int notificationId = 1;
+            // update notification
+            sendNotification(notificationId, R.drawable.black);
+            Thread.sleep(500); // wait for notification listener to receive notification
+
+            NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+            NotificationListenerService.Ranking outRanking =
+                    new NotificationListenerService.Ranking();
+
+            for (String key : rankingMap.getOrderedKeys()) {
+                if (key.contains(mListener.getPackageName())) {
+                    rankingMap.getRanking(key, outRanking);
+
+                    if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+                        assertEquals(SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_PEEK,
+                                outRanking.getSuppressedVisualEffects());
+                    } else {
+                        assertEquals(SUPPRESSED_EFFECT_SCREEN_ON,
+                                outRanking.getSuppressedVisualEffects());
+                    }
+                }
+            }
+        } finally {
+            // reset notification policy
+            mNotificationManager.setInterruptionFilter(originalFilter);
+        }
+
+    }
+
+    public void testKeyChannelGroupOverrideImportanceExplanation_ranking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        final int notificationId = 1;
+        sendNotification(notificationId, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+        NotificationListenerService.Ranking outRanking =
+                new NotificationListenerService.Ranking();
+
+        StatusBarNotification sbn = findPostedNotification(notificationId);
+
+        // check that the key and channel ids are the same in the ranking as the posted notification
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+
+                // check notification key match
+                assertEquals(sbn.getKey(), outRanking.getKey());
+
+                // check notification channel ids match
+                assertEquals(sbn.getNotification().getChannelId(), outRanking.getChannel().getId());
+
+                // check override group key match
+                assertEquals(sbn.getOverrideGroupKey(), outRanking.getOverrideGroupKey());
+
+                // check importance explanation isn't null
+                assertNotNull(outRanking.getImportanceExplanation());
+            }
+        }
+    }
+
     public void testNotify_blockedChannel() throws Exception {
         mNotificationManager.cancelAll();
 
@@ -1713,5 +1898,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         peopleExtras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST, personList);
         SystemUtil.runWithShellPermissionIdentity(() ->
                 assertTrue(mNotificationManager.matchesCallFilter(peopleExtras)));
+    }
+
+    /* Confirm that the optional methods of TestNotificationListener still exist and
+     * don't fail. */
+    public void testNotificationListenerMethods() {
+        NotificationListenerService listener = new TestNotificationListener();
+        listener.onStatusBarIconsBehaviorChanged(false);
     }
 }

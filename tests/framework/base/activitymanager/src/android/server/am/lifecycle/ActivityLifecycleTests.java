@@ -71,8 +71,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
         waitAndAssertActivityStates(state(activity, ON_RESUME));
 
-        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
-                false /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
     }
 
     @Test
@@ -654,8 +653,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Wait for the activity to resume
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
-        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog());
 
         // Try to launch again
         getLifecycleLog().clear();
@@ -680,8 +678,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Wait for the activity to resume
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
-        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog());
 
         // Launch something on top
         final Intent newTaskIntent = new Intent();
@@ -724,8 +721,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Wait for the activity to resume
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
-        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog());
 
         // Launch translucent activity, which will make the first one paused.
         mTranslucentActivityTestRule.launchActivity(new Intent());

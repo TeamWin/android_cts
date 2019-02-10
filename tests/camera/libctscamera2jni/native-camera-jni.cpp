@@ -653,22 +653,46 @@ class StaticInfo {
     }
 
     int64_t getMinFrameDurationFor(int64_t format, int64_t width, int64_t height) {
-        return getDurationFor(ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS, format, width, height);
+        int32_t minFrameDurationTag = (format == AIMAGE_FORMAT_HEIC) ?
+                ACAMERA_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS :
+                ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS;
+        return getDurationFor(minFrameDurationTag, format, width, height);
     }
 
     int64_t getStallDurationFor(int64_t format, int64_t width, int64_t height) {
-        return getDurationFor(ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS, format, width, height);
+        int32_t stallDurationTag = (format == AIMAGE_FORMAT_HEIC) ?
+                ACAMERA_HEIC_AVAILABLE_HEIC_STALL_DURATIONS :
+                ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS;
+        return getDurationFor(stallDurationTag, format, width, height);
     }
 
     bool getMaxSizeForFormat(int32_t format, int32_t *width, int32_t *height) {
         ACameraMetadata_const_entry entry;
-        ACameraMetadata_getConstEntry(mChars,
-                ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry);
+
+        int32_t streamConfigTag, streamConfigOutputTag;
+        switch (format) {
+            case AIMAGE_FORMAT_HEIC:
+                streamConfigTag = ACAMERA_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS;
+                streamConfigOutputTag = ACAMERA_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS_OUTPUT;
+                break;
+            case AIMAGE_FORMAT_JPEG:
+            case AIMAGE_FORMAT_Y8:
+            default:
+                streamConfigTag = ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS;
+                streamConfigOutputTag = ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
+                break;
+        }
+
         bool supported = false;
-        int32_t w = 0, h = 0;
+        camera_status_t status = ACameraMetadata_getConstEntry(mChars, streamConfigTag, &entry);
+        if (status == ACAMERA_ERROR_METADATA_NOT_FOUND) {
+            return supported;
+        }
+
+       int32_t w = 0, h = 0;
         for (uint32_t i = 0; i < entry.count; i += 4) {
             if (entry.data.i32[i] == format &&
-                    entry.data.i32[i+3] == ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
+                    entry.data.i32[i+3] == streamConfigOutputTag &&
                     entry.data.i32[i+1] * entry.data.i32[i+2] > w * h) {
                 w = entry.data.i32[i+1];
                 h = entry.data.i32[i+2];
@@ -685,11 +709,25 @@ class StaticInfo {
 
     bool isSizeSupportedForFormat(int32_t format, int32_t width, int32_t height) {
         ACameraMetadata_const_entry entry;
-        ACameraMetadata_getConstEntry(mChars,
-                ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry);
+
+        int32_t streamConfigTag, streamConfigOutputTag;
+        switch (format) {
+            case AIMAGE_FORMAT_HEIC:
+                streamConfigTag = ACAMERA_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS;
+                streamConfigOutputTag = ACAMERA_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS_OUTPUT;
+                break;
+            case AIMAGE_FORMAT_JPEG:
+            case AIMAGE_FORMAT_Y8:
+            default:
+                streamConfigTag = ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS;
+                streamConfigOutputTag = ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
+                break;
+        }
+
+        ACameraMetadata_getConstEntry(mChars, streamConfigTag, &entry);
         for (uint32_t i = 0; i < entry.count; i += 4) {
             if (entry.data.i32[i] == format &&
-                    entry.data.i32[i+3] == ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
+                    entry.data.i32[i+3] == streamConfigOutputTag &&
                     entry.data.i32[i+1] == width &&
                     entry.data.i32[i+2] == height) {
                 return true;
@@ -702,7 +740,9 @@ class StaticInfo {
         if (tag != ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS &&
                 tag != ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS &&
                 tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_MIN_FRAME_DURATIONS &&
-                tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_STALL_DURATIONS) {
+                tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_STALL_DURATIONS &&
+                tag != ACAMERA_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS &&
+                tag != ACAMERA_HEIC_AVAILABLE_HEIC_STALL_DURATIONS) {
             return -1;
         }
         ACameraMetadata_const_entry entry;
@@ -2860,6 +2900,7 @@ bool nativeImageReaderTestBase(
                 testHeight = TEST_HEIGHT;
                 break;
             case AIMAGE_FORMAT_Y8:
+            case AIMAGE_FORMAT_HEIC:
                 if (!staticInfo.getMaxSizeForFormat(format, &testWidth, &testHeight)) {
                     // This isn't an error condition: device does't support this
                     // format.
@@ -2956,13 +2997,13 @@ bool nativeImageReaderTestBase(
         }
 
         int64_t minFrameDurationNs = staticInfo.getMinFrameDurationFor(
-                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+                format, testWidth, testHeight);
         if (minFrameDurationNs < 0) {
             LOG_ERROR(errorString, "Get camera %s minFrameDuration failed", cameraId);
             goto cleanup;
         }
-        int64_t stallDurationNs = staticInfo.getStallDurationFor(
-                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+        int64_t stallDurationNs = (format == AIMAGE_FORMAT_Y8) ? 0 :
+                staticInfo.getStallDurationFor(format, testWidth, testHeight);
         if (stallDurationNs < 0) {
             LOG_ERROR(errorString, "Get camera %s stallDuration failed", cameraId);
             goto cleanup;
@@ -3048,6 +3089,15 @@ testY8Native(
         JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_Y8,
+            ImageReaderListener::validateImageCb);
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeImageReaderTest_\
+testHeicNative(
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+    ALOGV("%s", __FUNCTION__);
+    return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_HEIC,
             ImageReaderListener::validateImageCb);
 }
 

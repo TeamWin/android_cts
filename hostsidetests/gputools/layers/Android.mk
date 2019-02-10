@@ -89,7 +89,7 @@ LOCAL_PACKAGE_NAME := CtsGpuToolsRootlessGpuDebugApp-LAYERS
 LOCAL_SDK_VERSION := current
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts cts_instant
 
 LOCAL_MULTILIB := both
 
@@ -101,6 +101,8 @@ libGLES_glesLayer1 \
 libGLES_glesLayer2 \
 libGLES_glesLayer3
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))

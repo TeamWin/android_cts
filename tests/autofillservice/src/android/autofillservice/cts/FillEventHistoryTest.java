@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
  */
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
     @Test

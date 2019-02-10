@@ -22,6 +22,7 @@ import static android.autofillservice.cts.OnCreateServiceStatusVerifierActivity.
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.autofill.AutofillManager;
 
@@ -31,6 +32,7 @@ import org.junit.Test;
 /**
  * Test case that guarantee the service is disabled before the activity launches.
  */
+@AppModeFull(reason = "Service-specific test")
 public class ServiceDisabledForSureTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<OnCreateServiceStatusVerifierActivity> {
 

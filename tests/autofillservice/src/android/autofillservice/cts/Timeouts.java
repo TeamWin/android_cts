@@ -26,6 +26,8 @@ final class Timeouts {
     private static final long ONE_TIMEOUT_TO_RULE_THEN_ALL_MS = 20_000;
     private static final long ONE_NAPTIME_TO_RULE_THEN_ALL_MS = 2_000;
 
+    static final long MOCK_IME_TIMEOUT_MS = 5_000;
+
     /**
      * Timeout until framework binds / unbinds from service.
      */

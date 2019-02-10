@@ -148,7 +148,8 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
      * Blocking call that will wait for activities to reach expected states with timeout.
      */
     @SafeVarargs
-    final void waitAndAssertActivityStates(Pair<Activity, ActivityCallback>... activityCallbacks) {
+    final void waitAndAssertActivityStates(
+            Pair<Class<? extends Activity>, ActivityCallback>... activityCallbacks) {
         log("Start waitAndAssertActivityCallbacks");
         mLifecycleTracker.waitAndAssertActivityStates(activityCallbacks);
     }
@@ -181,15 +182,16 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
         return mLifecycleLog;
     }
 
-    static Pair<Activity, ActivityCallback> state(Activity activity, ActivityCallback stage) {
-        return new Pair<>(activity, stage);
+    static Pair<Class<? extends Activity>, ActivityCallback> state(Activity activity,
+            ActivityCallback stage) {
+        return new Pair<>(activity.getClass(), stage);
     }
 
     /**
      * Returns a pair of the activity and the state it should be in based on the configuration of
      * occludingActivity.
      */
-    static Pair<Activity, ActivityCallback> occludedActivityState(
+    static Pair<Class<? extends Activity>, ActivityCallback> occludedActivityState(
             Activity activity, Activity occludingActivity) {
         return occludedActivityState(activity, isTranslucent(occludingActivity));
     }
@@ -198,11 +200,11 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
      * Returns a pair of the activity and the state it should be in based on
      * occludingActivityIsTranslucent.
      */
-    static Pair<Activity, ActivityCallback> occludedActivityState(
+    static Pair<Class<? extends Activity>, ActivityCallback> occludedActivityState(
             Activity activity, boolean occludingActivityIsTranslucent) {
         // Activities behind a translucent activity should be in the paused state since they are
         // still visible. Otherwise, they should be in the stopped state.
-        return new Pair<>(activity, occludedActivityState(occludingActivityIsTranslucent));
+        return state(activity, occludedActivityState(occludingActivityIsTranslucent));
     }
 
     static ActivityCallback occludedActivityState(boolean occludingActivityIsTranslucent) {
@@ -351,5 +353,16 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
 
     static ComponentName getComponentName(Class<? extends Activity> activity) {
         return new ComponentName(getInstrumentation().getContext(), activity);
+    }
+
+    void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
+        getLifecycleLog().clear();
+
+        moveTaskToPrimarySplitScreen(activity.getTaskId());
+
+        final Class<? extends Activity> activityClass = activity.getClass();
+        waitAndAssertActivityTransitions(activityClass,
+                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass),
+                "enterSplitScreen");
     }
 }

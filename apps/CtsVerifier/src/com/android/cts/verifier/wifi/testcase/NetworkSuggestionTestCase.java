@@ -20,7 +20,6 @@ import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
 
 import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -32,7 +31,6 @@ import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
@@ -54,7 +52,6 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     private static final boolean DBG = true;
 
     private static final int CALLBACK_TIMEOUT_MS = 40_000;
-    private static final int SCAN_TIMEOUT_MS = 30_000;
 
     private final Object mLock = new Object();
     private final List<WifiNetworkSuggestion> mNetworkSuggestions = new ArrayList<>();
@@ -88,73 +85,6 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         return builder.build();
     }
 
-    private boolean startScanAndWaitForResults() throws InterruptedException {
-        IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        // Scan Results available broadcast receiver.
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (DBG) Log.v(TAG, "Broadcast onReceive " + intent);
-                if (!intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) return;
-                if (!intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)) return;
-                if (DBG) Log.v(TAG, "Scan results received");
-                countDownLatch.countDown();
-            }
-        };
-        // Register the receiver for scan results broadcast.
-        mContext.registerReceiver(mBroadcastReceiver, intentFilter);
-
-        // Start scan.
-        if (DBG) Log.v(TAG, "Starting scan");
-        mListener.onTestMsgReceived(mContext.getString(R.string.wifi_status_initiating_scan));
-        if (!mWifiManager.startScan()) {
-            Log.e(TAG, "Failed to start scan");
-            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
-            return false;
-        }
-        // Wait for scan results.
-        if (DBG) Log.v(TAG, "Wait for scan results");
-        if (!countDownLatch.await(SCAN_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            Log.e(TAG, "No new scan results available");
-            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
-            return false;
-        }
-        // Unregister the scan receiver.
-        mContext.unregisterReceiver(mBroadcastReceiver);
-        mBroadcastReceiver = null;
-        return true;
-    }
-
-    // Helper to check if the scan result corresponds to an open network.
-    private static boolean isScanResultForOpenNetwork(@NonNull ScanResult scanResult) {
-        String capabilities = scanResult.capabilities;
-        return !capabilities.contains("PSK") && !capabilities.contains("EAP")
-                && !capabilities.contains("WEP") && !capabilities.contains("SAE")
-                && !capabilities.contains("SUITE-B-192") && !capabilities.contains("OWE");
-    }
-
-    private @Nullable ScanResult startScanAndFindAnyOpenNetworkInResults()
-            throws InterruptedException {
-        // Start scan and wait for new results.
-        if (!startScanAndWaitForResults()) {
-            return null;
-        }
-        // Filter results to find an open network.
-        List<ScanResult> scanResults = mWifiManager.getScanResults();
-        for (ScanResult scanResult : scanResults) {
-            if (!TextUtils.isEmpty(scanResult.SSID)
-                    && !TextUtils.isEmpty(scanResult.BSSID)
-                    && isScanResultForOpenNetwork(scanResult)) {
-                if (DBG) Log.v(TAG, "Found open network " + scanResult);
-                return scanResult;
-            }
-        }
-        Log.e(TAG, "No open networks found in scan results");
-        setFailureReason(mContext.getString(R.string.wifi_status_open_network_not_found));
-        return null;
-    }
-
     private void setFailureReason(String reason) {
         synchronized (mLock) {
             mFailureReason = reason;
@@ -165,8 +95,11 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     protected boolean executeTest() throws InterruptedException {
         // Step 1: Scan and find any open network around.
         if (DBG) Log.v(TAG, "Scan and find an open network");
-        ScanResult openNetwork = startScanAndFindAnyOpenNetworkInResults();
-        if (openNetwork == null) return false;
+        ScanResult openNetwork = mTestUtils.startScanAndFindAnyOpenNetworkInResults();
+        if (openNetwork == null) {
+            setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
+            return false;
+        }
 
         // Step 1.a (Optional): Register for the post connection broadcast.
         final CountDownLatch countDownLatchForPostConnectionBcast = new CountDownLatch(1);
@@ -225,7 +158,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
         // Step 6: Ensure that we connected to the suggested network (optionally, the correct
         // BSSID).
-        if (!isConnected("\"" + openNetwork.SSID + "\"",
+        if (!mTestUtils.isConnected("\"" + openNetwork.SSID + "\"",
                 // TODO: This might fail if there are other BSSID's for the same network & the
                 //  device decided to connect/roam to a different BSSID. We don't turn off roaming
                 //  for suggestions.

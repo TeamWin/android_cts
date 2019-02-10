@@ -49,6 +49,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 /**
  * Tests for {@link android.webkit.WebSettings}
  */
@@ -214,10 +217,14 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals(TestHtmlConstants.WEBPAGE_NOT_AVAILABLE_TITLE, mOnUiThread.getTitle());
     }
 
-    public void testAccessCacheMode() throws Throwable {
+    public void testAccessCacheMode_defaultValue() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
+        assertEquals(WebSettings.LOAD_DEFAULT, mSettings.getCacheMode());
+    }
+
+    private void openIconDatabase() throws InterruptedException {
         WebkitUtils.onMainThreadSync(() -> {
             // getInstance must run on the UI thread
             WebIconDatabase iconDb = WebIconDatabase.getInstance();
@@ -226,64 +233,81 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         });
         getInstrumentation().waitForIdleSync();
         Thread.sleep(100); // Wait for open to be received on the icon db thread.
-        assertEquals(WebSettings.LOAD_DEFAULT, mSettings.getCacheMode());
+    }
+
+    public void testAccessCacheMode_cacheElseNetwork() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        openIconDatabase();
+        final IconListenerClient iconListener = new IconListenerClient();
+        mOnUiThread.setWebChromeClient(iconListener);
+        startWebServer();
 
         mSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         assertEquals(WebSettings.LOAD_CACHE_ELSE_NETWORK, mSettings.getCacheMode());
+        int initialRequestCount = mWebServer.getRequestCount();
+        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        iconListener.waitForNextIcon();
+        int requestCountAfterFirstLoad = mWebServer.getRequestCount();
+        assertTrue("Must fetch non-cached resource from server",
+                requestCountAfterFirstLoad > initialRequestCount);
+        iconListener.drainIconQueue();
+        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        iconListener.waitForNextIcon();
+        int requestCountAfterSecondLoad = mWebServer.getRequestCount();
+        assertEquals("Expected to use cache instead of re-fetching resource",
+                requestCountAfterSecondLoad, requestCountAfterFirstLoad);
+    }
+
+    public void testAccessCacheMode_noCache() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        openIconDatabase();
         final IconListenerClient iconListener = new IconListenerClient();
         mOnUiThread.setWebChromeClient(iconListener);
-        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        int firstFetch = mWebServer.getRequestCount();
-        iconListener.mReceivedIcon = false;
-        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        assertEquals(firstFetch, mWebServer.getRequestCount());
+        startWebServer();
 
         mSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         assertEquals(WebSettings.LOAD_NO_CACHE, mSettings.getCacheMode());
-        iconListener.mReceivedIcon = false;
+        int initialRequestCount = mWebServer.getRequestCount();
         loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        int secondFetch = mWebServer.getRequestCount();
-        iconListener.mReceivedIcon = false;
+        iconListener.waitForNextIcon();
+        int requestCountAfterFirstLoad = mWebServer.getRequestCount();
+        assertTrue("Must fetch non-cached resource from server",
+                requestCountAfterFirstLoad > initialRequestCount);
+        iconListener.drainIconQueue();
         loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        int thirdFetch = mWebServer.getRequestCount();
-        assertTrue(firstFetch < secondFetch);
-        assertTrue(secondFetch < thirdFetch);
+        iconListener.waitForNextIcon();
+        int requestCountAfterSecondLoad = mWebServer.getRequestCount();
+        assertTrue("Expected to re-fetch resource instead of caching",
+                requestCountAfterSecondLoad > requestCountAfterFirstLoad);
+    }
+
+    public void testAccessCacheMode_cacheOnly() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        openIconDatabase();
+        final IconListenerClient iconListener = new IconListenerClient();
+        mOnUiThread.setWebChromeClient(iconListener);
+        startWebServer();
+
+        // As a precondition, get the icon in the cache.
+        mSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        iconListener.waitForNextIcon();
 
         mSettings.setCacheMode(WebSettings.LOAD_CACHE_ONLY);
         assertEquals(WebSettings.LOAD_CACHE_ONLY, mSettings.getCacheMode());
-        iconListener.mReceivedIcon = false;
+        iconListener.drainIconQueue();
+        int initialRequestCount = mWebServer.getRequestCount();
         loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        assertEquals(thirdFetch, mWebServer.getRequestCount());
+        iconListener.waitForNextIcon();
+        int requestCountAfterFirstLoad = mWebServer.getRequestCount();
+        assertEquals("Expected to use cache instead of fetching resource",
+                requestCountAfterFirstLoad, initialRequestCount);
     }
 
     public void testAccessCursiveFontFamily() throws Exception {
@@ -754,29 +778,65 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
     }
 
-    public void testLoadsImagesAutomatically() throws Throwable {
+    public void testLoadsImagesAutomatically_default() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
         assertTrue(mSettings.getLoadsImagesAutomatically());
+    }
 
+    public void testLoadsImagesAutomatically_httpImagesLoaded() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         startWebServer();
         mSettings.setJavaScriptEnabled(true);
+        mSettings.setLoadsImagesAutomatically(true);
 
-        // Check that by default network and data url images are loaded.
         mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
         assertEquals(NETWORK_IMAGE_HEIGHT, mOnUiThread.getTitle());
+    }
+
+    public void testLoadsImagesAutomatically_dataUriImagesLoaded() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        startWebServer();
+        mSettings.setJavaScriptEnabled(true);
+        mSettings.setLoadsImagesAutomatically(true);
+
         mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);
         assertEquals(DATA_URL_IMAGE_HEIGHT, mOnUiThread.getTitle());
+    }
 
-        // Check that with auto-loading turned off no images are loaded.
-        // Also check that images are loaded automatically once we enable the setting,
-        // without reloading the page.
+    public void testLoadsImagesAutomatically_blockLoadingImages() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        startWebServer();
+        mSettings.setJavaScriptEnabled(true);
         mSettings.setLoadsImagesAutomatically(false);
-        mOnUiThread.clearCache(true);
+
+        mOnUiThread.clearCache(true); // in case of side-effects from other tests
         mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
         assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
-        mSettings.setLoadsImagesAutomatically(true);
+
+        mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);
+        assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
+    }
+
+    public void testLoadsImagesAutomatically_loadImagesWithoutReload() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        startWebServer();
+        mSettings.setJavaScriptEnabled(true);
+        mSettings.setLoadsImagesAutomatically(false);
+
+        mOnUiThread.clearCache(true); // in case of side-effects from other tests
+        mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
+        assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
+        mSettings.setLoadsImagesAutomatically(true); // load images, without calling #reload()
         waitForNonEmptyImage();
         assertEquals(NETWORK_IMAGE_HEIGHT, mOnUiThread.getTitle());
 
@@ -784,7 +844,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread.clearCache(true);
         mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);
         assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
-        mSettings.setLoadsImagesAutomatically(true);
+        mSettings.setLoadsImagesAutomatically(true); // load images, without calling #reload()
         waitForNonEmptyImage();
         assertEquals(DATA_URL_IMAGE_HEIGHT, mOnUiThread.getTitle());
     }
@@ -913,7 +973,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         String iframeUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.HELLO_WORLD_URL);
         assertFalse(iframeUrl.equals(mOnUiThread.getTitle()));
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
+        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
     }
 
     // Verify that enabling file access from file URLs enable XmlHttpRequest (XHR) across files
@@ -933,7 +993,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
         mOnUiThread.setWebChromeClient(webChromeClient);
         verifyFileXHR(false);
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
+        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
     }
 
     // verify XHR across files matches the allowFileAccessFromFileURLs setting
@@ -1115,7 +1175,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
     }
 
     private class IconListenerClient extends WaitForProgressClient {
-        public boolean mReceivedIcon;
+        private final BlockingQueue<Bitmap> mReceivedIconQueue = new LinkedBlockingQueue<>();
 
         public IconListenerClient() {
             super(mOnUiThread);
@@ -1123,7 +1183,20 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         @Override
         public void onReceivedIcon(WebView view, Bitmap icon) {
-            mReceivedIcon = true;
+            mReceivedIconQueue.add(icon);
+        }
+
+        /**
+         * Exposed as a precaution, in case for some reason we get multiple calls to
+         * {@link #onReceivedIcon}.
+         */
+        public void drainIconQueue() {
+            while (mReceivedIconQueue.poll() != null) {}
+        }
+
+        public void waitForNextIcon() {
+            // TODO(ntfschr): consider exposing the Bitmap, if we want to make assertions.
+            WebkitUtils.waitForNextQueueElement(mReceivedIconQueue);
         }
     }
 }

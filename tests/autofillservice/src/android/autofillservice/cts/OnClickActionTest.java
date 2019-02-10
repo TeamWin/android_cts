@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 /**
  * Integration tests for the {@link OnClickAction} implementations.
  */
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class OnClickActionTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<SimpleSaveActivity> {
 

@@ -55,7 +55,7 @@ import org.junit.Test;
 /**
  * Test case for an activity containing multiple partitions.
  */
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class PartitionedActivityTest extends AbstractGridActivityTestCase {
 
     @Test

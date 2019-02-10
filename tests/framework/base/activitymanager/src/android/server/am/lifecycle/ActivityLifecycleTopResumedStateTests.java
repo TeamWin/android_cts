@@ -9,7 +9,6 @@ import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
-import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
@@ -59,8 +58,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
         waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
 
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
     }
 
     @Test
@@ -73,7 +71,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         mAmWmState.waitForActivityRemoved(getComponentName(CallbackTrackingActivity.class));
 
         LifecycleVerifier.assertResumeToDestroySequence(CallbackTrackingActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
+                getLifecycleLog());
     }
 
     @Test
@@ -88,7 +86,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class,
                 CallbackTrackingActivity.class, getLifecycleLog(),
-                false /* launchingIsTranslucent */, true /* includingCallbacks */);
+                false /* launchingIsTranslucent */);
     }
 
     @Test
@@ -104,7 +102,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         LifecycleVerifier.assertLaunchSequence(TranslucentCallbackTrackingActivity.class,
                 CallbackTrackingActivity.class, getLifecycleLog(),
-                true /* launchingIsTranslucent */, true /* includingCallbacks */);
+                true /* launchingIsTranslucent */);
     }
 
     @Test
@@ -209,14 +207,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
 
         // Enter split screen
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
-                        ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                        ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST, ON_PAUSE),
-                "moveToDocked");
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
     }
 
     @Test
@@ -229,9 +220,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
 
         // Enter split screen
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
@@ -245,8 +234,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "unminimizeDockedStack");
         // Second activity must be on top now
-        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog());
     }
 
     @Test
@@ -259,9 +247,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
 
         // Enter split screen
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
@@ -396,7 +382,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(topActivity, ON_STOP));
 
         LifecycleVerifier.assertResumeToStopSequence(CallbackTrackingActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
+                getLifecycleLog());
     }
 
     @Test
@@ -409,9 +395,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
 
         // Enter split screen
-        getLifecycleLog().clear();
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
@@ -480,7 +464,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                     new Intent());
             waitAndAssertActivityStates(state(activity, ON_STOP));
             LifecycleVerifier.assertLaunchAndStopSequence(CallbackTrackingActivity.class,
-                    getLifecycleLog(), true /* includeCallbacks */, false /* onTop */);
+                    getLifecycleLog(), false /* onTop */);
 
             getLifecycleLog().clear();
         }
@@ -488,7 +472,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Lock screen removed - activity should be on top now
         waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
         LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
+                getLifecycleLog());
     }
 
     @Test
@@ -504,7 +488,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
             waitAndAssertActivityStates(state(activity, ON_STOP));
             LifecycleVerifier.assertResumeToStopSequence(CallbackTrackingActivity.class,
-                    getLifecycleLog(), true /* includeCallbacks */);
+                    getLifecycleLog());
 
             getLifecycleLog().clear();
         }
@@ -512,7 +496,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Lock screen removed - activity should be on top now
         waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
         LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
+                getLifecycleLog());
     }
 
     @Test
@@ -540,8 +524,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Wait for something here, but don't expect anything to happen.
         waitAndAssertActivityStates(state(showWhenLockedActivity, ON_DESTROY));
         LifecycleVerifier.assertResumeToDestroySequence(
-                ShowWhenLockedCallbackTrackingActivity.class, getLifecycleLog(),
-                true /* includeCallbacks */);
+                ShowWhenLockedCallbackTrackingActivity.class, getLifecycleLog());
     }
 
     @Test
@@ -558,7 +541,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
         waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
-                LifecycleVerifier.getLaunchSequence(true /* includeCallbacks */), "launch");
+                LifecycleVerifier.getLaunchSequence(CallbackTrackingActivity.class), "launch");
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display
@@ -575,7 +558,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 
             waitAndAssertActivityTransitions(SingleTopActivity.class,
-                    LifecycleVerifier.getLaunchSequence(true /* includeCallbacks */), "launch");
+                    LifecycleVerifier.getLaunchSequence(SingleTopActivity.class), "launch");
             LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                     transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
                     transition(SingleTopActivity.class, ON_TOP_POSITION_GAINED)),
@@ -586,7 +569,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Secondary display was removed - activity will be moved to the default display
         waitAndAssertActivityTransitions(SingleTopActivity.class,
-                LifecycleVerifier.getResumeToDestroySequence(true /* includeCallbacks */),
+                LifecycleVerifier.getResumeToDestroySequence(SingleTopActivity.class),
                 "hostingDisplayRemoved");
         waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
                 Arrays.asList(ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP),
@@ -734,7 +717,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(alwaysFocusableActivity, ON_DESTROY),
                 state(activity, ON_TOP_POSITION_GAINED), state(pipActivity, ON_PAUSE));
         LifecycleVerifier.assertResumeToDestroySequence(AlwaysFocusablePipActivity.class,
-                getLifecycleLog(), true /* includeCallbacks */);
+                getLifecycleLog());
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(AlwaysFocusablePipActivity.class, ON_TOP_POSITION_LOST),
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED)),

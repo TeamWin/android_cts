@@ -59,7 +59,10 @@ public class RequiredServiceRule implements TestRule {
         };
     }
 
-    private static boolean hasService(@NonNull String service) {
+    /**
+     * Checks if the device has the given service.
+     */
+    public static boolean hasService(@NonNull String service) {
         // TODO: ideally should call SystemServiceManager directly, but we would need to open
         // some @Testing APIs for that.
         String command = "service check " + service;

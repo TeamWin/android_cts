@@ -134,13 +134,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillManuallyAfterServiceReturnedNoDatasets() throws Exception {
         autofillAfterServiceReturnedNoDatasets(true);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillAutomaticallyAfterServiceReturnedNoDatasets() throws Exception {
         autofillAfterServiceReturnedNoDatasets(false);
     }
@@ -187,13 +187,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillManuallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
         autofillAndSaveAfterServiceReturnedNoDatasets(true);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillAutomaticallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
         autofillAndSaveAfterServiceReturnedNoDatasets(false);
     }
@@ -227,7 +227,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
      * workflow was requested.
      */
     @Test
-    @AppModeFull // testAutoFillNoDatasets() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutoFillNoDatasets() is enough")
     public void testMultipleIterationsAfterServiceReturnedNoDatasets() throws Exception {
         // Set service.
         enableService();
@@ -270,7 +270,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyAlwaysCallServiceAgain() throws Exception {
         // Set service.
         enableService();
@@ -304,13 +304,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset_withHeaderAndFooter() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset_withHeaderAndFooter() is enough")
     public void testAutoFillOneDataset_withHeader() throws Exception {
         autofillOneDatasetTest(BorderType.HEADER_ONLY);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset_withHeaderAndFooter() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset_withHeaderAndFooter() is enough")
     public void testAutoFillOneDataset_withFooter() throws Exception {
         autofillOneDatasetTest(BorderType.FOOTER_ONLY);
     }
@@ -382,6 +382,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
 
     @Test
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillAgainAfterOnFailure() throws Exception {
         // Set service.
         enableService();
@@ -416,9 +417,10 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testDatasetPickerPosition() throws Exception {
-        // TODO: currently disabled because the screenshot contains elements external to the
-        // activity that can change (for exmaple, clock), which causes flakiness to the test.
+        // TODO(b/75281985): currently disabled because the screenshot contains elements external to
+        // the activity that can change (for exmaple, clock), which causes flakiness to the test.
         final boolean compareBitmaps = false;
+
         final boolean pickerAndViewBoundsMatches = !isAutofillWindowFullScreen(mContext);
 
         // Set service.
@@ -500,7 +502,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillTwoDatasetsSameNumberOfFields() throws Exception {
         // Set service.
         enableService();
@@ -539,13 +541,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillTwoDatasetsUnevenNumberOfFieldsFillsAll() throws Exception {
         autoFillTwoDatasetsUnevenNumberOfFieldsTest(true);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillTwoDatasetsUnevenNumberOfFieldsFillsOne() throws Exception {
         autoFillTwoDatasetsUnevenNumberOfFieldsTest(false);
     }
@@ -597,7 +599,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillDatasetWithoutFieldIsIgnored() throws Exception {
         // Set service.
         enableService();
@@ -791,7 +793,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackDisabled() throws Exception {
         // Set service.
         disableService();
@@ -807,13 +809,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackNoDatasets() throws Exception {
         callbackUnavailableTest(NO_RESPONSE);
     }
 
     @Test
-    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillCallbacks() is enough")
     public void testAutofillCallbackNoDatasetsButSaveInfo() throws Exception {
         callbackUnavailableTest(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
@@ -1030,19 +1032,19 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillMultipleDatasetsPickFirst() throws Exception {
         multipleDatasetsTest(1);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillMultipleDatasetsPickSecond() throws Exception {
         multipleDatasetsTest(2);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDataset() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillMultipleDatasetsPickThird() throws Exception {
         multipleDatasetsTest(3);
     }
@@ -1146,7 +1148,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
      * and password) and the dataset itself, and each dataset has the same number of fields.
      */
     @Test
-    @AppModeFull // testAutofillOneDatasetCustomPresentation() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillOneDatasetCustomPresentation() is enough")
     public void testAutofillMultipleDatasetsCustomPresentations() throws Exception {
         // Set service.
         enableService();
@@ -1191,7 +1193,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
      * and password), and each dataset has the same number of fields.
      */
     @Test
-    @AppModeFull // testAutofillOneDatasetCustomPresentation() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillOneDatasetCustomPresentation() is enough")
     public void testAutofillMultipleDatasetsCustomPresentationSameFields() throws Exception {
         // Set service.
         enableService();
@@ -1235,7 +1237,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
      * and password), but each dataset has a different number of fields.
      */
     @Test
-    @AppModeFull // testAutofillOneDatasetCustomPresentation() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillOneDatasetCustomPresentation() is enough")
     public void testAutofillMultipleDatasetsCustomPresentationFirstDatasetMissingSecondField()
             throws Exception {
         // Set service.
@@ -1278,7 +1280,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
      * and password), but each dataset has a different number of fields.
      */
     @Test
-    @AppModeFull // testAutofillOneDatasetCustomPresentation() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutofillOneDatasetCustomPresentation() is enough")
     public void testAutofillMultipleDatasetsCustomPresentationSecondDatasetMissingFirstField()
             throws Exception {
         // Set service.
@@ -1317,13 +1319,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveOnly() throws Exception {
         saveOnlyTest(false);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveOnlyTriggeredManually() throws Exception {
         saveOnlyTest(false);
     }
@@ -1441,13 +1443,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveOnlyPreFilled() throws Exception {
         saveOnlyTestPreFilled(false);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveOnlyTriggeredManuallyPreFilled() throws Exception {
         saveOnlyTestPreFilled(true);
     }
@@ -1506,7 +1508,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveOnlyTwoRequiredFieldsOnePrefilled() throws Exception {
         enableService();
 
@@ -1553,7 +1555,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveOnlyOptionalField() throws Exception {
         enableService();
 
@@ -1596,19 +1598,19 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveNoRequiredField_NoneFilled() throws Exception {
         optionalOnlyTest(FilledFields.NONE);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveNoRequiredField_OneFilled() throws Exception {
         optionalOnlyTest(FilledFields.USERNAME_ONLY);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testSaveNoRequiredField_BothFilled() throws Exception {
         optionalOnlyTest(FilledFields.BOTH);
     }
@@ -1677,37 +1679,37 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testGenericSave() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_GENERIC);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testCustomizedSavePassword() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_PASSWORD);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testCustomizedSaveAddress() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_ADDRESS);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testCustomizedSaveCreditCard() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_CREDIT_CARD);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testCustomizedSaveUsername() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_USERNAME);
     }
 
     @Test
-    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
     public void testCustomizedSaveEmailAddress() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_EMAIL_ADDRESS);
     }
@@ -1796,7 +1798,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // Service-specific test
+    @AppModeFull(reason = "Service-specific test")
     public void testDisableSelf() throws Exception {
         enableService();
 
@@ -1903,7 +1905,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // Unit test
+    @AppModeFull(reason = "Unit test")
     public void testGetTextInputType() throws Exception {
         // Set service.
         enableService();
@@ -1926,7 +1928,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // Unit test
+    @AppModeFull(reason = "Unit test")
     public void testNoContainers() throws Exception {
         // Set service.
         enableService();
@@ -1994,6 +1996,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillManuallyOneDatasetWhenClipboardFull() throws Exception {
         // Set service.
         enableService();
@@ -2030,13 +2033,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
         autofillManuallyTwoDatasets(true);
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
         autofillManuallyTwoDatasets(false);
     }
@@ -2080,7 +2083,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyPartialField() throws Exception {
         // Set service.
         enableService();
@@ -2115,7 +2118,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyAgainAfterAutomaticallyAutofilledBefore() throws Exception {
         // Set service.
         enableService();
@@ -2176,7 +2179,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
+    @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyAgainAfterManuallyAutofilledBefore() throws Exception {
         // Set service.
         enableService();
@@ -2449,13 +2452,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
     // TODO(b/70682223): add a new test to make sure service with BIND_AUTOFILL permission works
     @Test
-    @AppModeFull // Service-specific test
+    @AppModeFull(reason = "Service-specific test")
     public void testServiceIsDisabledWhenNewServiceInfoIsInvalid() throws Exception {
         serviceIsDisabledWhenNewServiceIsInvalid(BadAutofillService.SERVICE_NAME);
     }
 
     @Test
-    @AppModeFull // Service-specific test
+    @AppModeFull(reason = "Service-specific test")
     public void testServiceIsDisabledWhenNewServiceNameIsInvalid() throws Exception {
         serviceIsDisabledWhenNewServiceIsInvalid("Y_U_NO_VALID");
     }
@@ -2587,7 +2590,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull // Unit test
+    @AppModeFull(reason = "Unit test")
     public void testNewTextAttributes() throws Exception {
         enableService();
         sReplier.addResponse(NO_RESPONSE);

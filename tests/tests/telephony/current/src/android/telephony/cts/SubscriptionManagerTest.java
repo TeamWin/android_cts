@@ -41,6 +41,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
+import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
@@ -167,7 +168,7 @@ public class SubscriptionManagerTest {
     @Test
     public void testIsUsableSubscriptionId() throws Exception {
         if (!isSupported()) return;
-        assertTrue(SubscriptionManager.isUsableSubIdValue(mSubId));
+        assertTrue(SubscriptionManager.isUsableSubscriptionId(mSubId));
     }
 
     @Test
@@ -402,6 +403,15 @@ public class SubscriptionManagerTest {
         String mnc = info.getMncString();
         assertTrue(mcc == null || mcc.length() <= 3);
         assertTrue(mnc == null || mnc.length() <= 3);
+    }
+
+    @Test
+    public void testSubscriptionInfoCarrierId() {
+        if (!isSupported()) return;
+
+        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
+        int carrierId = info.getCarrierId();
+        assertTrue(carrierId >= TelephonyManager.UNKNOWN_CARRIER_ID);
     }
 
     @Test

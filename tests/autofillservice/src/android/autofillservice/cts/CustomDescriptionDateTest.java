@@ -37,7 +37,7 @@ import org.junit.Test;
 
 import java.util.Calendar;
 
-@AppModeFull // Service-specific test
+@AppModeFull(reason = "Service-specific test")
 public class CustomDescriptionDateTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<DatePickerSpinnerActivity> {
 

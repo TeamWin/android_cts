@@ -846,7 +846,7 @@ public class ObjectAnimatorTest {
     public void testCachedValues() throws Throwable {
         final AnimTarget target = new AnimTarget();
         final ObjectAnimator anim = ObjectAnimator.ofFloat(target, "testValue", 100);
-        anim.setDuration(200);
+        anim.setDuration(100);
         final CountDownLatch twoFramesLatch = new CountDownLatch(2);
         mActivityRule.runOnUiThread(() -> {
             anim.start();
@@ -865,7 +865,7 @@ public class ObjectAnimatorTest {
         });
 
         assertTrue("Animation didn't start in a reasonable time",
-                twoFramesLatch.await(200, TimeUnit.MILLISECONDS));
+                twoFramesLatch.await(800, TimeUnit.MILLISECONDS));
 
         mActivityRule.runOnUiThread(() -> {
             assertTrue("Start value should readjust to current position",

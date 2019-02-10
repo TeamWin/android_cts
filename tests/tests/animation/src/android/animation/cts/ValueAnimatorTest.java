@@ -32,8 +32,10 @@ import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.animation.TimeInterpolator;
 import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
+import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.os.SystemClock;
@@ -480,43 +482,76 @@ public class ValueAnimatorTest {
 
     @Test
     public void testGetAnimatedFraction() throws Throwable {
-        ValueAnimator objAnimator = getAnimator();
-        objAnimator.setRepeatCount(0);
-        startAnimation(objAnimator);
-        assertNotNull(objAnimator);
-        float[] fractions = getValue(objAnimator, 5, "getAnimatedFraction()", 100L, null);
-        for (int j = 0; j < fractions.length - 1; j++) {
-            assertTrue(fractions[j] >= 0.0);
-            assertTrue(fractions[j] <= 1.0);
-            assertTrue(errorMessage(fractions), fractions[j + 1] >= fractions[j]);
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        assertNotNull(animator);
+        animator.setDuration(200);
+        animator.addUpdateListener(new AnimatorUpdateListener() {
+            public float lastFraction = 0;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float currentFraction = animation.getAnimatedFraction();
+                assertTrue(
+                        "Last fraction = " + lastFraction + "current fraction = " + currentFraction,
+                        animation.getAnimatedFraction() >= lastFraction);
+                lastFraction = currentFraction;
+                assertTrue(currentFraction <= 1f);
+            }
+        });
+        CountDownLatch latch = new CountDownLatch(1);
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                latch.countDown();
+            }
+        });
+        mActivityRule.runOnUiThread(() -> {
+            animator.start();
+        });
+
+        latch.await(1000, TimeUnit.MILLISECONDS);
+
+        assertEquals(1.0f, animator.getAnimatedFraction(), EPSILON);
+    }
+
+    class TestInterpolator implements TimeInterpolator {
+
+        @Override
+        public float getInterpolation(float input) {
+            return input * input;
         }
     }
 
     @Test
-    public void testGetAnimatedValue() throws Throwable {
-        ValueAnimator objAnimator = getAnimator();
-        objAnimator.setRepeatCount(0);
-        startAnimation(objAnimator);
-        assertNotNull(objAnimator);
-        float[] animatedValues = getValue(objAnimator, 5, "getAnimatedValue()", 100L, null);
+    public void testGetAnimatedValue() {
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        assertNotNull(animator);
+        TimeInterpolator myInterpolator = new TestInterpolator();
+        animator.setInterpolator(myInterpolator);
+        int sliceNum = 10;
+        for (int i = 0; i <= sliceNum; i++) {
+            float fraction = i / (float) sliceNum;
+            animator.setCurrentFraction(fraction);
+            assertEquals(myInterpolator.getInterpolation(fraction),
+                    (float) animator.getAnimatedValue(), EPSILON);
 
-        for (int j = 0; j < animatedValues.length - 1; j++) {
-            assertTrue(errorMessage(animatedValues), animatedValues[j + 1] >= animatedValues[j]);
         }
     }
 
     @Test
-    public void testGetAnimatedValue_PropertyName() throws Throwable {
-        String property = "y";
+    public void testGetAnimatedValue_PropertyName() {
+        PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat("x", 100f, -100f);
+        PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat("y", 0f, 1f);
+        ValueAnimator animator = ValueAnimator.ofPropertyValuesHolder(pvhX, pvhY);
+        assertNotNull(animator);
+        TimeInterpolator myInterpolator = new TestInterpolator();
+        animator.setInterpolator(myInterpolator);
+        int sliceNum = 10;
+        for (int i = 0; i <= sliceNum; i++) {
+            float fraction = i / (float) sliceNum;
+            animator.setCurrentFraction(fraction);
+            assertEquals(myInterpolator.getInterpolation(fraction),
+                    (float) animator.getAnimatedValue("y"), EPSILON);
 
-        ValueAnimator objAnimator = getAnimator();
-        objAnimator.setRepeatCount(0);
-        startAnimation(objAnimator);
-        assertNotNull(objAnimator);
-        float[] animatedValues = getValue(objAnimator, 5, "getAnimatedValue(property)", 100L,
-            property);
-        for (int j = 0; j < animatedValues.length - 1; j++) {
-            assertTrue(errorMessage(animatedValues), animatedValues[j + 1] >= animatedValues[j]);
         }
     }
 
@@ -701,24 +736,6 @@ public class ValueAnimatorTest {
         objAnimator.setInterpolator(new AccelerateInterpolator());
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
         return objAnimator;
-    }
-
-    private float[] getValue(ValueAnimator animator, int n, String methodName,
-            long sleepTime, String property) throws InterruptedException {
-        float[] values = new float[n];
-        for(int i = 0; i < n; i++){
-            SystemClock.sleep(sleepTime);
-            float value = 0.0f;
-            if(methodName.equals("getAnimatedFraction()")) {
-                value = animator.getAnimatedFraction();
-            }else if(methodName.equals("getAnimatedValue()")) {
-              value = ((Float)animator.getAnimatedValue()).floatValue();
-            }else if(methodName.equals("getAnimatedValue(property)")) {
-              value = ((Float)animator.getAnimatedValue(property)).floatValue();
-            }
-            values[i] = value;
-        }
-        return values;
     }
 
     private void startAnimation(final ValueAnimator animator) throws Throwable {

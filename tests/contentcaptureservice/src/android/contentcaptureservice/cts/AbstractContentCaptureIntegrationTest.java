@@ -16,19 +16,20 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
+import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
+import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.Helper.setService;
-import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 import static android.provider.Settings.Secure.CONTENT_CAPTURE_ENABLED;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.Visitor;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -60,14 +61,12 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     private final String mTag = getClass().getSimpleName();
 
-    protected static final Context sContext = InstrumentationRegistry.getTargetContext();
-
     protected ActivitiesWatcher mActivitiesWatcher;
 
     private final Class<A> mActivityClass;
 
     private final RequiredServiceRule mRequiredServiceRule =
-            new RequiredServiceRule("content_capture");
+            new RequiredServiceRule(SYSTEM_SERVICE_NAME);
 
     private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
 

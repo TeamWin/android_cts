@@ -17,7 +17,6 @@ package android.telephony.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
 import android.os.Parcel;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
@@ -35,6 +34,7 @@ import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
 import android.telephony.CellSignalStrengthWcdma;
+import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -49,8 +49,7 @@ import java.util.List;
  */
 public class CellInfoTest extends AndroidTestCase{
     private final Object mLock = new Object();
-    private TelephonyManager mTelephonyManager;
-    private static ConnectivityManager mCm;
+    private TelephonyManager mTm;
     private static final String TAG = "android.telephony.cts.CellInfoTest";
     // Maximum and minimum possible RSSI values(in dbm).
     private static final int MAX_RSSI = -10;
@@ -122,12 +121,17 @@ public class CellInfoTest extends AndroidTestCase{
 
     private PackageManager mPm;
 
+    private boolean isCamped() {
+        ServiceState ss = mTm.getServiceState();
+        if (ss == null) return false;
+        return (ss.getState() == ServiceState.STATE_IN_SERVICE
+                || ss.getState() == ServiceState.STATE_EMERGENCY_ONLY);
+    }
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mTelephonyManager =
-                (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
     }
 
@@ -138,14 +142,11 @@ public class CellInfoTest extends AndroidTestCase{
             return;
         }
 
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
+        if (!isCamped()) fail("Device is not camped to a cell");
 
         // getAllCellInfo should never return null, and there should
         // be at least one entry.
-        List<CellInfo> allCellInfo = mTelephonyManager.getAllCellInfo();
+        List<CellInfo> allCellInfo = mTm.getAllCellInfo();
         assertNotNull("TelephonyManager.getAllCellInfo() returned NULL!", allCellInfo);
         assertTrue("TelephonyManager.getAllCellInfo() returned zero-length list!",
             allCellInfo.size() > 0);

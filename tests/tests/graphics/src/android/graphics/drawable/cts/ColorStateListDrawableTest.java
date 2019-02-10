@@ -18,15 +18,21 @@ package android.graphics.drawable.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.R;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.ColorStateListDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -78,6 +84,15 @@ public class ColorStateListDrawableTest {
     }
 
     @Test
+    public void testHasFocusStateSpecified() {
+        assertFalse(mDrawable.hasFocusStateSpecified());
+        final int[][] state = new int[][]{new int[]{1}, new int[]{2, R.attr.state_focused}};
+        final int[] colors = new int[]{Color.MAGENTA, Color.CYAN};
+        mDrawable.setColorStateList(new ColorStateList(state, colors));
+        assertTrue(mDrawable.hasFocusStateSpecified());
+    }
+
+    @Test
     public void testAlpha() {
         int transBlue = (Color.BLUE & 0xFFFFFF) | 127 << 24;
         mDrawable.setColorStateList(ColorStateList.valueOf(transBlue));
@@ -99,6 +114,31 @@ public class ColorStateListDrawableTest {
     }
 
     @Test
+    public void testColorFilter() {
+        final ColorDrawable colorDrawable = (ColorDrawable) mDrawable.getCurrent();
+        final ColorFilter colorFilter = new LightingColorFilter(Color.GRAY, Color.GREEN);
+
+        assertNull(mDrawable.getColorFilter());
+        mDrawable.setColorFilter(colorFilter);
+        assertEquals(colorFilter, mDrawable.getColorFilter());
+    }
+
+    @Test
+    public void testColorStateListAccess() {
+        final ColorStateListDrawable cslDrawable = new ColorStateListDrawable();
+        final ColorDrawable colorDrawable = (ColorDrawable) cslDrawable.getCurrent();
+        assertNotNull(cslDrawable.getColorStateList());
+        assertEquals(
+                colorDrawable.getColor(),
+                cslDrawable
+                        .getColorStateList()
+                        .getColorForState(cslDrawable.getState(), Color.YELLOW));
+
+        cslDrawable.setColorStateList(mColorStateList);
+        assertEquals(mColorStateList, cslDrawable.getColorStateList());
+    }
+
+    @Test
     public void testSetState() {
         ColorDrawable colorDrawable = (ColorDrawable) mDrawable.getCurrent();
         assertEquals(colorDrawable.getColor(), mColorStateList.getDefaultColor());
@@ -113,5 +153,80 @@ public class ColorStateListDrawableTest {
         Drawable.ConstantState oldState = mDrawable.getConstantState();
         assertEquals(mDrawable.mutate(), mDrawable);
         assertNotEquals(mDrawable.getConstantState(), oldState);
+    }
+
+    @Test
+    public void testInvalidationCallbackProxy() {
+        final TestCallback callback = new TestCallback();
+        mDrawable.setCallback(callback);
+
+        callback.mInvalidatedDrawable = null;
+        mDrawable.invalidateSelf();
+        assertEquals(mDrawable, callback.mInvalidatedDrawable);
+
+        callback.mInvalidatedDrawable = null;
+        mDrawable.getCurrent().invalidateSelf();
+        assertEquals(mDrawable, callback.mInvalidatedDrawable);
+    }
+
+    @Test
+    public void testScheduleCallbackProxy() {
+        final Runnable runnable = new NoOpRunnable();
+        final long scheduledTime = SystemClock.uptimeMillis() + 100;
+        final TestCallback callback = new TestCallback();
+        mDrawable.setCallback(callback);
+
+        mDrawable.getCurrent().scheduleSelf(runnable, scheduledTime);
+        assertEquals(mDrawable, callback.mScheduledDrawable);
+        assertEquals(runnable, callback.mScheduledRunnable);
+        assertEquals(scheduledTime, callback.mScheduledTime);
+    }
+
+    @Test
+    public void testUnscheduleCallbackProxy() {
+        final Runnable runnable = new NoOpRunnable();
+        final TestCallback callback = new TestCallback();
+        mDrawable.setCallback(callback);
+
+        mDrawable.getCurrent().unscheduleSelf(runnable);
+
+        assertEquals(mDrawable, callback.mUnscheduledDrawable);
+        assertEquals(runnable, callback.mUnscheduledRunnable);
+    }
+
+    private final class TestCallback implements Drawable.Callback {
+        private Drawable mInvalidatedDrawable;
+        private Drawable mScheduledDrawable;
+        private Drawable mUnscheduledDrawable;
+
+        private Runnable mScheduledRunnable;
+        private Runnable mUnscheduledRunnable;
+
+        private long mScheduledTime;
+
+        @Override
+        public void invalidateDrawable(Drawable who) {
+            mInvalidatedDrawable = who;
+        }
+
+        @Override
+        public void scheduleDrawable(Drawable who, Runnable what, long when) {
+            mScheduledDrawable = who;
+            mScheduledRunnable = what;
+            mScheduledTime = when;
+        }
+
+        @Override
+        public void unscheduleDrawable(Drawable who, Runnable what) {
+            mUnscheduledDrawable = who;
+            mUnscheduledRunnable = what;
+        }
+    }
+
+    private final class NoOpRunnable implements Runnable {
+        @Override
+        public void run() {
+
+        }
     }
 }

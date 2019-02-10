@@ -74,6 +74,12 @@ endif
 LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
+
+ifneq (,$(wildcard $(LOCAL_PATH)/src))
+  LOCAL_SRC_FILES := $(call all-java-files-under, src)
+endif
+
 include $(BUILD_CTS_PACKAGE)
 
 LOCAL_SIGNATURE_API_FILES :=

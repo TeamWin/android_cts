@@ -16,12 +16,11 @@
 
 package android.theme.app.modifiers;
 
-import android.theme.app.LayoutModifier;
 import android.view.View;
 import android.widget.DatePicker;
 
 /**
- * {@link LayoutModifier} that sets a precise date on a {@link DatePicker}.
+ * {@link AbstractLayoutModifier} that sets a precise date on a {@link DatePicker}.
  */
 public class DatePickerModifier extends AbstractLayoutModifier {
 

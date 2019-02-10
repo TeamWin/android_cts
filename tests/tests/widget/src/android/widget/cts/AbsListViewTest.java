@@ -69,6 +69,7 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EdgeEffect;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -1125,6 +1126,27 @@ public class AbsListViewTest {
             verifyCheckedState(new long[] { firstVisiblePosition, positionForInitialSelection,
                     lastListPosition });
         }
+    }
+
+    @SmallTest
+    @UiThreadTest
+    @Test
+    public void testEdgeEffectColors() {
+        int defaultColor = new EdgeEffect(mListView.getContext()).getColor();
+        assertEquals(mListView.getTopEdgeEffectColor(), defaultColor);
+        assertEquals(mListView.getBottomEdgeEffectColor(), defaultColor);
+
+        mListView.setEdgeEffectColor(Color.BLUE);
+        assertEquals(mListView.getTopEdgeEffectColor(), Color.BLUE);
+        assertEquals(mListView.getBottomEdgeEffectColor(), Color.BLUE);
+
+        mListView.setTopEdgeEffectColor(Color.RED);
+        assertEquals(mListView.getTopEdgeEffectColor(), Color.RED);
+        assertEquals(mListView.getBottomEdgeEffectColor(), Color.BLUE);
+
+        mListView.setBottomEdgeEffectColor(Color.GREEN);
+        assertEquals(mListView.getTopEdgeEffectColor(), Color.RED);
+        assertEquals(mListView.getBottomEdgeEffectColor(), Color.GREEN);
     }
 
     // Helper method that emulates fast scroll by dragging along the right edge of our ListView.
