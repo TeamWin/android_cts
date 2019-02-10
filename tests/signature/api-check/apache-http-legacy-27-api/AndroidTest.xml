@@ -33,7 +33,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api.apache_http_legacy_27" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="class" value="android.signature.cts.api.SignatureTest" />
+        <option name="class" value="android.signature.cts.api.api27.http.SignatureTest" />
         <option name="instrumentation-arg" key="base-api-files" value="current.api" />
         <option name="instrumentation-arg" key="expected-api-files" value="apache-http-legacy-minus-current.api" />
         <option name="runtime-hint" value="5s" />
