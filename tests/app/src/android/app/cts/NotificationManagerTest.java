@@ -1906,4 +1906,44 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationListenerService listener = new TestNotificationListener();
         listener.onStatusBarIconsBehaviorChanged(false);
     }
+
+    public void testNotificationManagerPolicy_priorityCategoriesToString() {
+        String zeroString = NotificationManager.Policy.priorityCategoriesToString(0);
+        assertEquals("priorityCategories of 0 produces empty string", "", zeroString);
+
+        String oneString = NotificationManager.Policy.priorityCategoriesToString(1);
+        assertNotNull("priorityCategories of 1 returns a string", oneString);
+        boolean lengthGreaterThanZero = oneString.length() > 0;
+        assertTrue("priorityCategories of 1 returns a string with length greater than 0",
+                lengthGreaterThanZero);
+
+        String badNumberString = NotificationManager.Policy.priorityCategoriesToString(1234567);
+        assertNotNull("priorityCategories with a non-relevant int returns a string", oneString);
+    }
+
+    public void testNotificationManagerPolicy_prioritySendersToString() {
+        String zeroString = NotificationManager.Policy.prioritySendersToString(0);
+        assertNotNull("prioritySenders of 1 returns a string", zeroString);
+        boolean lengthGreaterThanZero = zeroString.length() > 0;
+        assertTrue("prioritySenders of 1 returns a string with length greater than 0",
+                lengthGreaterThanZero);
+
+        String badNumberString = NotificationManager.Policy.prioritySendersToString(1234567);
+        assertNotNull("prioritySenders with a non-relevant int returns a string", badNumberString);
+    }
+
+    public void testNotificationManagerPolicy_suppressedEffectsToString() {
+        String zeroString = NotificationManager.Policy.suppressedEffectsToString(0);
+        assertEquals("suppressedEffects of 0 produces empty string", "", zeroString);
+
+        String oneString = NotificationManager.Policy.suppressedEffectsToString(1);
+        assertNotNull("suppressedEffects of 1 returns a string", oneString);
+        boolean lengthGreaterThanZero = oneString.length() > 0;
+        assertTrue("suppressedEffects of 1 returns a string with length greater than 0",
+                lengthGreaterThanZero);
+
+        String badNumberString = NotificationManager.Policy.suppressedEffectsToString(1234567);
+        assertNotNull("suppressedEffects with a non-relevant int returns a string",
+                badNumberString);
+    }
 }
