@@ -42,11 +42,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
+import android.view.Display;
 
 import androidx.test.filters.FlakyTest;
 import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
@@ -129,6 +131,7 @@ public class CrossAppDragAndDropTests {
     protected Context mContext;
     protected ActivityManager mAm;
     protected ActivityTaskManager mAtm;
+    protected DisplayManager mDm;
 
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
@@ -195,6 +198,7 @@ public class CrossAppDragAndDropTests {
         mContext = getInstrumentation().getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mAtm = mContext.getSystemService(ActivityTaskManager.class);
+        mDm = mContext.getSystemService(DisplayManager.class);
 
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
@@ -344,9 +348,9 @@ public class CrossAppDragAndDropTests {
     }
 
     private Point getDisplaySize() throws Exception {
-        final String output = executeShellCommand("wm size");
-        final String[] sizes = output.split(" ")[2].split("x");
-        return new Point(Integer.valueOf(sizes[0].trim()), Integer.valueOf(sizes[1].trim()));
+        final Point displaySize = new Point();
+        mDm.getDisplay(Display.DEFAULT_DISPLAY).getRealSize(displaySize);
+        return displaySize;
     }
 
     private Point getWindowCenter(String name) throws Exception {
