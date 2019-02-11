@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
+import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
@@ -214,6 +215,14 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                 overrideDensity = null;
             }
         }
+    }
+
+    protected void tapOnDisplayCenter(int displayId) {
+        final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(displayId);
+        final int x = displayMetrics.getSize().getWidth() / 2;
+        final int y = displayMetrics.getSize().getHeight() / 2;
+
+        tapOnDisplay(x, y, displayId);
     }
 
     public class VirtualDisplaySession implements AutoCloseable {

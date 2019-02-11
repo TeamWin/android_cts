@@ -45,6 +45,12 @@ public abstract class AbstractLifecycleLogActivity extends BasicTestActivity {
     }
 
     @Override
+    public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
+        super.onTopResumedActivityChanged(isTopResumedActivity);
+        Log.i(getTag(), "onTopResumedActivityChanged: " + isTopResumedActivity);
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Log.i(getTag(), "onConfigurationChanged");
