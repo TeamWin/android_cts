@@ -769,6 +769,10 @@ public class CellInfoTest extends AndroidTestCase{
         int asuLevel = gsm.getAsuLevel();
         assertTrue("getLevel() out of range [0,31] (or 99 is unknown), level=" + asuLevel,
                 asuLevel == 99 || (asuLevel >=0 && asuLevel <= 31));
+
+        int ber = gsm.getBitErrorRate();
+        assertTrue("getBitErrorRate out of range [0,7], 99, or CellInfo.UNAVAILABLE, ber=" + ber,
+                ber == 99 || ber == CellInfo.UNAVAILABLE || (ber >= 0 && ber <= 7));
     }
 
     private void verifyCellSignalStrengthGsmParcel(CellSignalStrengthGsm gsm) {
