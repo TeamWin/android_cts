@@ -38,14 +38,6 @@
                 <data android:scheme="tel" />
             </intent-filter>
         </activity>
-        <service
-            android:name=".DialerInCallService"
-            android:permission="android.permission.BIND_INCALL_SERVICE">
-            <intent-filter>
-                <action android:name="android.telecom.InCallService" />
-            </intent-filter>
-            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
-        </service>
 
         <!-- Sms -->
         <activity android:name=".SmsSendToActivity">
