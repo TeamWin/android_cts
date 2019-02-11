@@ -173,6 +173,8 @@ public class CellInfoTest extends AndroidTestCase{
                 verifyTdscdmaInfo((CellInfoTdscdma) cellInfo);
             } else if (cellInfo instanceof CellInfoNr) {
                 verifyNrInfo((CellInfoNr) cellInfo);
+            } else {
+                fail("Unknown CellInfo Type reported.");
             }
         }
 
