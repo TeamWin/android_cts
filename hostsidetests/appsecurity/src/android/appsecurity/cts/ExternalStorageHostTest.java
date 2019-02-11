@@ -37,6 +37,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -515,7 +516,9 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         Assume.assumeTrue(hasIsolatedStorage());
 
         installPackage(MEDIA_APK);
-        for (int user : mUsers) {
+
+        // TODO: extend test to exercise secondary users
+        for (int user : Arrays.copyOf(mUsers, 1)) {
             updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 

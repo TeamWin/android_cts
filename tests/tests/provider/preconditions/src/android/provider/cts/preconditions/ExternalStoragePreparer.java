@@ -28,9 +28,12 @@ import com.android.tradefed.targetprep.TargetSetupError;
  * Creates secondary external storage for use during a test suite.
  */
 public class ExternalStoragePreparer implements ITargetPreparer, ITargetCleaner {
+    private static final boolean ENABLED = false;
+
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo)
             throws TargetSetupError, BuildError, DeviceNotAvailableException {
+        if (!ENABLED) return;
         if (!hasIsolatedStorage(device)) return;
 
         device.executeShellCommand("sm set-virtual-disk false");
@@ -44,6 +47,7 @@ public class ExternalStoragePreparer implements ITargetPreparer, ITargetCleaner 
     @Override
     public void tearDown(ITestDevice device, IBuildInfo buildInfo, Throwable throwable)
             throws DeviceNotAvailableException {
+        if (!ENABLED) return;
         if (!hasIsolatedStorage(device)) return;
 
         device.executeShellCommand("sm set-virtual-disk false");
