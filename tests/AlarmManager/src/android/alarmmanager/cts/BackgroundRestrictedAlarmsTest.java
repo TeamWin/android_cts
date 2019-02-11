@@ -19,8 +19,8 @@ package android.alarmmanager.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
+import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -45,6 +46,7 @@ import java.io.IOException;
  * Tests that apps put in forced app standby by the user do not get to run alarms while in the
  * background
  */
+@AppModeFull
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class BackgroundRestrictedAlarmsTest {
