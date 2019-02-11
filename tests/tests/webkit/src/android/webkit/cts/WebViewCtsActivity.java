@@ -30,6 +30,7 @@ import com.android.compatibility.common.util.NullWebViewUtils;
 
 public class WebViewCtsActivity extends Activity {
     private WebView mWebView;
+    private Exception mInflationException;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,8 +38,13 @@ public class WebViewCtsActivity extends Activity {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.webview_layout);
             mWebView = (WebView) findViewById(R.id.web_page);
+            mInflationException = null;
         } catch (Exception e) {
             NullWebViewUtils.determineIfWebViewAvailable(this, e);
+            // If WebView is available, then the exception we just caught should be propagated.
+            if (NullWebViewUtils.isWebViewAvailable()) {
+                mInflationException = e;
+           }
         }
     }
 
@@ -50,6 +56,9 @@ public class WebViewCtsActivity extends Activity {
     }
 
     public WebView getWebView() {
+        if (mInflationException != null) {
+            throw new RuntimeException("Exception caught in onCreate", mInflationException);
+        }
         return mWebView;
     }
 
