@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.theme.cts;
-
-import static org.junit.Assert.assertEquals;
+package android.ui.cts;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.DisplayMetrics;
-
+import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,13 +60,13 @@ public class WatchPercentageScreenDimenTest {
         float expectedDelta = getMaxErrorRatio() * expected;
 
         TypedArray attrs = mContext.obtainStyledAttributes(new int[] {
-                android.R.attr.listPreferredItemPaddingEnd
+            android.R.attr.listPreferredItemPaddingEnd
         });
-        assertEquals("invalid number of attributes", 1, attrs.length());
+        Assert.assertEquals("invalid number of attributes", 1, attrs.length());
 
         for (int i = 0; i < attrs.length(); ++i) {
             float actual = attrs.getDimension(i, -1);
-            assertEquals("screen_percentage_10 is not 10% of screen width",
+            Assert.assertEquals("screen_percentage_10 is not 10% of screen width",
                     expected, actual, expectedDelta + 0.01f);
         }
     }
@@ -82,16 +81,16 @@ public class WatchPercentageScreenDimenTest {
         float expectedDelta = getMaxErrorRatio() * expected;
 
         TypedArray attrs = mContext.obtainStyledAttributes(new int[] {
-                android.R.attr.dialogPreferredPadding,
-                android.R.attr.listPreferredItemPaddingLeft,
-                android.R.attr.listPreferredItemPaddingRight,
-                android.R.attr.listPreferredItemPaddingStart
+            android.R.attr.dialogPreferredPadding,
+            android.R.attr.listPreferredItemPaddingLeft,
+            android.R.attr.listPreferredItemPaddingRight,
+            android.R.attr.listPreferredItemPaddingStart
         });
-        assertEquals("invalid number of attributes", 4, attrs.length());
+        Assert.assertEquals("invalid number of attributes", 4, attrs.length());
 
         for (int i = 0; i < attrs.length(); ++i) {
             float actual = attrs.getDimension(i, -1);
-            assertEquals("screen_percentage_15 is not 15% of screen width",
+            Assert.assertEquals("screen_percentage_15 is not 15% of screen width",
                     expected, actual, expectedDelta + 0.01f);
         }
     }
