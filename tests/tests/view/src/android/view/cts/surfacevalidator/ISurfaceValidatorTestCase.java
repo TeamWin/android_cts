@@ -24,4 +24,8 @@ public interface ISurfaceValidatorTestCase {
     void start(Context context, FrameLayout parent);
 
     void end();
+
+    default boolean hasAnimation() {
+        return true;
+    }
 }
