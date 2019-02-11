@@ -24,6 +24,7 @@
 #include <cinttypes>
 #include <string>
 
+#include <android/data_space.h>
 #include <android/hardware_buffer.h>
 #include <android/log.h>
 #include <android/native_window_jni.h>
@@ -212,6 +213,10 @@ jlong SurfaceTransaction_setSolidBuffer(JNIEnv* /*env*/, jclass,
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
             reinterpret_cast<ASurfaceControl*>(surfaceControl), buffer, fence);
 
+    ASurfaceTransaction_setBufferDataSpace(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+            reinterpret_cast<ASurfaceControl*>(surfaceControl), ADATASPACE_UNKNOWN);
+
     return reinterpret_cast<jlong>(buffer);
 }
 
@@ -232,6 +237,10 @@ jlong SurfaceTransaction_setQuadrantBuffer(
     ASurfaceTransaction_setBuffer(
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
             reinterpret_cast<ASurfaceControl*>(surfaceControl), buffer, fence);
+
+    ASurfaceTransaction_setBufferDataSpace(
+            reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+            reinterpret_cast<ASurfaceControl*>(surfaceControl), ADATASPACE_UNKNOWN);
 
     return reinterpret_cast<jlong>(buffer);
 }
