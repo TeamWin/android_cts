@@ -29,6 +29,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
+import android.view.Display;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -50,6 +51,8 @@ class VirtualDisplayHelper {
 
     private static final Pattern DISPLAY_DEVICE_PATTERN = Pattern.compile(
             ".*DisplayDeviceInfo\\{\"([^\"]+)\":.*, state (\\S+),.*\\}.*");
+    private static final Pattern DEFAULT_DISPLAY_PATTERN = Pattern.compile(
+            "(mDisplayId=" + Display.DEFAULT_DISPLAY + ")([\\s\\S]*?)(mPrimaryDisplayDevice=)(.*)");
     private static final int DENSITY = 160;
     private static final int HEIGHT = 480;
     private static final int WIDTH = 800;
@@ -122,9 +125,20 @@ class VirtualDisplayHelper {
     @Nullable
     private static Boolean getDisplayState(boolean defaultDisplay) {
         final String dump = executeShellCommand("dumpsys display");
-        final Predicate<Matcher> displayNameMatcher = defaultDisplay
-                ? m -> m.group(0).contains("FLAG_DEFAULT_DISPLAY")
-                : m -> m.group(1).equals(VIRTUAL_DISPLAY_NAME);
+        String defaultDisplayName = null;
+        // Finds the corresponding physical display among current multiple default logical displays
+        // and read the proper display state.
+        if (defaultDisplay) {
+            final Matcher matcher = DEFAULT_DISPLAY_PATTERN.matcher(dump);
+            if (matcher.find()) {
+                defaultDisplayName = matcher.group(4);
+            }
+            if (defaultDisplayName == null) {
+                return null;
+            }
+        }
+        final String displayName = defaultDisplay ? defaultDisplayName : VIRTUAL_DISPLAY_NAME;
+        final Predicate<Matcher> displayNameMatcher = m -> m.group(1).equals(displayName);
         for (final String line : dump.split("\\n")) {
             final Matcher matcher = DISPLAY_DEVICE_PATTERN.matcher(line);
             if (matcher.matches() && displayNameMatcher.test(matcher)) {
