@@ -26,6 +26,7 @@ import static android.server.am.Components.TEST_ACTIVITY;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
 import android.view.Display;
@@ -36,6 +37,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerFreeformStackTests
  */
+@Presubmit
 public class ActivityManagerFreeformStackTests extends ActivityManagerDisplayTestBase {
 
     private static final int TEST_TASK_OFFSET = 20;

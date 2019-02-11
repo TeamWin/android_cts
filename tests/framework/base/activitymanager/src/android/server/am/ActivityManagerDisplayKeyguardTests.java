@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 
 import org.junit.Before;
@@ -35,6 +36,7 @@ import org.junit.Test;
  * <p>Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayKeyguardTests
  */
+@Presubmit
 public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayTestBase {
 
     @Before

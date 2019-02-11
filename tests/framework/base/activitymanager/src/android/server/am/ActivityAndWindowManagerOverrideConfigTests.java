@@ -23,6 +23,7 @@ import static android.view.Surface.ROTATION_180;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.Presubmit;
 import android.server.am.CommandSession.ActivityCallback;
 
 import org.junit.Test;
@@ -31,6 +32,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityAndWindowManagerOverrideConfigTests
  */
+@Presubmit
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
 
     @Test

@@ -19,6 +19,7 @@ package android.server.am;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.deprecatedsdk.Components.MAIN_ACTIVITY;
 
+import android.platform.test.annotations.Presubmit;
 import org.junit.After;
 import org.junit.Test;
 
@@ -28,6 +29,7 @@ import org.junit.Test;
  * <p>Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:DeprecatedTargetSdkTest
  */
+@Presubmit
 public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.wm.DeprecatedTargetSdkVersionDialog */

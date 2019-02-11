@@ -26,6 +26,7 @@ import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 
 import org.junit.Before;
@@ -37,6 +38,7 @@ import org.junit.Test;
  * <p>Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayLockedKeyguardTests
  */
+@Presubmit
 public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDisplayTestBase {
 
     @Before

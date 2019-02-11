@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
 
+import android.platform.test.annotations.Presubmit;
 import org.junit.Test;
 
 /**
@@ -35,6 +36,7 @@ import org.junit.Test;
  *
  * Please talk to Android Studio team first if you want to modify or delete these tests.
  */
+@Presubmit
 public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
 
     private static final String OUTPUT_FILE_PATH = "/data/local/tmp/profile.trace";
