@@ -52,6 +52,7 @@ import java.util.function.Predicate;
 public class TestUtils {
     static final String TAG = "TelecomCTSTests";
     static final boolean HAS_TELECOM = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+    static final long WAIT_FOR_NUISANCE_REPORT_TIMEOUT_MS = 1000;
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_MS = 10000;
     static final long WAIT_FOR_CALL_ADDED_TIMEOUT_S = 15;
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK = 50;
