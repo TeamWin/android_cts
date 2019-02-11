@@ -388,6 +388,20 @@ public class ListPopupWindowTest {
     }
 
     @Test
+    public void testAccessEpicenterBounds() {
+        mPopupWindow = new ListPopupWindow(mActivity);
+        assertNull(mPopupWindow.getEpicenterBounds());
+
+        final Rect epicenter = new Rect(5, 10, 15, 20);
+
+        mPopupWindow.setEpicenterBounds(epicenter);
+        assertEquals(mPopupWindow.getEpicenterBounds(), epicenter);
+
+        mPopupWindow.setEpicenterBounds(null);
+        assertNull(mPopupWindow.getEpicenterBounds());
+    }
+
+    @Test
     public void testAccessInputMethodMode() throws Throwable {
         mPopupWindowBuilder = new Builder().withDismissListener();
         mActivityRule.runOnUiThread(mPopupWindowBuilder::show);

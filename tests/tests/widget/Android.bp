@@ -24,6 +24,7 @@ android_test {
         "compatibility-device-util",
         "ctstestrunner",
         "platform-test-annotations",
+        "truth-prebuilt",
     ],
 
     libs: ["android.test.runner.stubs"],
