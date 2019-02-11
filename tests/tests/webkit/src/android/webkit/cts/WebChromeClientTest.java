@@ -19,6 +19,7 @@ package android.webkit.cts;
 import android.graphics.Bitmap;
 import android.os.Message;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -32,6 +33,7 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
+@AppModeFull
 public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000L;
 
