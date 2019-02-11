@@ -272,4 +272,112 @@ public class WearableExtenderTest extends AndroidTestCase {
     private static Notification.Action.Builder newActionBuilder() {
         return new Notification.Action.Builder(0, "title", null);
     }
+
+    /** Notification.Action.WearableExtender functions */
+
+    public void testActionWearableExtender_constructor() {
+        // should not throw exception
+        Action.WearableExtender extender = new Action.WearableExtender();
+    }
+
+    public void testActionWearableExtender_constructor_copy() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        // set a flag to ensure flags are copied correctly
+        extender.setAvailableOffline(false);
+
+        // deprecated setters
+        extender.setInProgressLabel("inProgress");
+        extender.setConfirmLabel("confirm");
+        extender.setCancelLabel("cancel");
+
+        Action action = extender.extend(newActionBuilder()).build();
+
+        Action.WearableExtender copiedExtender = new Action.WearableExtender(action);
+
+        assertEquals("available offline set via flags", false, copiedExtender.isAvailableOffline());
+
+        // deprecated getters
+        assertEquals("has correct progress label", "inProgress", copiedExtender.getInProgressLabel());
+        assertEquals("has correct confirm label", "confirm", copiedExtender.getConfirmLabel());
+        assertEquals("has correct cancel label", "cancel", copiedExtender.getCancelLabel());
+    }
+
+    public void testActionWearableExtender_clone() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        // set a flag to make sure flags are copied correctly
+        extender.setAvailableOffline(false);
+
+        // deprecated setters
+        extender.setInProgressLabel("inProgress");
+        extender.setConfirmLabel("confirm");
+        extender.setCancelLabel("cancel");
+
+        Action.WearableExtender copiedExtender = extender.clone();
+
+        assertEquals("available offline set via flags", false, copiedExtender.isAvailableOffline());
+
+        // deprecated getters
+        assertEquals("has correct progress label", "inProgress", copiedExtender.getInProgressLabel());
+        assertEquals("has correct confirm label", "confirm", copiedExtender.getConfirmLabel());
+        assertEquals("has correct cancel label", "cancel", copiedExtender.getCancelLabel());
+    }
+
+    public void testActionWearableExtender_setAvailableOffline() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        assertEquals("available offline", true, extender.isAvailableOffline());
+
+        extender.setAvailableOffline(false);
+
+        assertEquals("not available offline", false, extender.isAvailableOffline());
+    }
+
+    public void testActionWearableExtender_setHintLaunchesActivity() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        assertEquals("action will not launch activity", false, extender.getHintLaunchesActivity());
+
+        extender.setHintLaunchesActivity(true);
+
+        assertEquals("action will launch activity", true, extender.getHintLaunchesActivity());
+    }
+
+    public void testActionWearableExtender_setHintDisplayActionInline() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        assertEquals("action not displayed inline", false, extender.getHintDisplayActionInline());
+
+        extender.setHintDisplayActionInline(true);
+
+        assertEquals("action will display inline", true, extender.getHintDisplayActionInline());
+    }
+
+    // deprecated
+    public void testActionWearableExtender_setInProgressLabel() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        extender.setInProgressLabel("progressing");
+
+        assertEquals("has progress label", "progressing", extender.getInProgressLabel());
+    }
+
+    // deprecated
+    public void testActionWearableExtender_setCancelLabel() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        extender.setCancelLabel("cancelled");
+
+        assertEquals("has cancel label", "cancelled", extender.getCancelLabel());
+    }
+
+    // deprecated
+    public void testActionWearableExtender_setConfirmLabel() {
+        Action.WearableExtender extender = new Action.WearableExtender();
+
+        extender.setConfirmLabel("confirmed");
+
+        assertEquals("has confirm label", "confirmed", extender.getConfirmLabel());
+    }
 }
