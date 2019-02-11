@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.compilation;
+package android.compilation.cts;
 
 import android.app.Activity;
 import android.os.AsyncTask;
