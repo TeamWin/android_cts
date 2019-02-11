@@ -118,5 +118,9 @@ public class GnssMeasurementTest extends GnssTestCase {
         assertTrue(measurement.hasSnrInDb());
         measurement.resetSnrInDb();
         assertFalse(measurement.hasSnrInDb());
+
+        assertTrue(measurement.hasCodeType());
+        measurement.resetCodeType();
+        assertFalse(measurement.hasCodeType());
     }
 }
