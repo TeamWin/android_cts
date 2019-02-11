@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.compilation;
+package android.compilation.cts;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -51,7 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * </ul>
  */
 public class AdbRootDependentCompilationTest extends DeviceTestCase {
-    private static final String APPLICATION_PACKAGE = "android.cts.compilation";
+    private static final String APPLICATION_PACKAGE = "android.compilation.cts";
 
     enum ProfileLocation {
         CUR("/data/misc/profiles/cur/0/" + APPLICATION_PACKAGE),
@@ -320,13 +320,13 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
      * been created by the compiler.
      */
     private String getOdexFilePath() throws DeviceNotAvailableException {
-        // Something like "package:/data/app/android.cts.compilation-1/base.apk"
+        // Something like "package:/data/app/android.compilation.cts-1/base.apk"
         String pathSpec = executeSuShellAdbCommand(1, "pm", "path", APPLICATION_PACKAGE)[0];
         Matcher matcher = Pattern.compile("^package:(.+/)base\\.apk$").matcher(pathSpec);
         boolean found = matcher.find();
         assertTrue("Malformed spec: " + pathSpec, found);
         String apkDir = matcher.group(1);
-        // E.g. /data/app/android.cts.compilation-1/oat/arm64/base.odex
+        // E.g. /data/app/android.compilation.cts-1/oat/arm64/base.odex
         String result = executeSuShellAdbCommand(1, "find", apkDir, "-name", "base.odex")[0];
         assertTrue("odex file not found: " + result, doesFileExist(result));
         return result;
@@ -405,7 +405,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
 
         // For directories, it will print many outputs. Filter to first line which contains '.'
         // The target line will look like
-        //      "u:object_r:shell_data_file:s0 /data/local/tmp/android.cts.compilation.primary.prof"
+        //      "u:object_r:shell_data_file:s0 /data/local/tmp/android.compilation.cts.primary.prof"
         // Remove the second word to only return "u:object_r:shell_data_file:s0".
 
         return res[0].replaceAll("\\s+.*","");  // remove everything following the first whitespace
