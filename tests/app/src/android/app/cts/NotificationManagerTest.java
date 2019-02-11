@@ -40,6 +40,7 @@ import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
+import android.companion.CompanionDeviceManager;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Context;
@@ -56,11 +57,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.ContactsContract;
-import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.Data;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.Condition;
@@ -79,6 +81,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1904,6 +1907,205 @@ public class NotificationManagerTest extends AndroidTestCase {
      * don't fail. */
     public void testNotificationListenerMethods() {
         NotificationListenerService listener = new TestNotificationListener();
+        listener.onListenerConnected();
+
         listener.onStatusBarIconsBehaviorChanged(false);
+
+        listener.onNotificationPosted(null);
+        listener.onNotificationPosted(null, null);
+
+        listener.onNotificationRemoved(null);
+        listener.onNotificationRemoved(null, null);
+
+        listener.onNotificationChannelGroupModified("", UserHandle.CURRENT, null,
+                NotificationListenerService.NOTIFICATION_CHANNEL_OR_GROUP_ADDED);
+        listener.onNotificationChannelModified("", UserHandle.CURRENT, null,
+                NotificationListenerService.NOTIFICATION_CHANNEL_OR_GROUP_ADDED);
+
+        listener.onListenerDisconnected();
+    }
+
+    public void testNotificationListener_setNotificationsShown() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        final int notificationId1 = 1;
+        final int notificationId2 = 2;
+
+        sendNotification(notificationId1, R.drawable.black);
+        sendNotification(notificationId2, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn1 = findPostedNotification(notificationId1);
+        StatusBarNotification sbn2 = findPostedNotification(notificationId2);
+        mListener.setNotificationsShown(new String[]{ sbn1.getKey() });
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
+        Thread.sleep(500); // wait for listener to be disallowed
+        try {
+            mListener.setNotificationsShown(new String[]{ sbn2.getKey() });
+            fail("Should not be able to set shown if listener access isn't granted");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_getNotificationChannels() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        try {
+            mListener.getNotificationChannels(mContext.getPackageName(), UserHandle.CURRENT);
+            fail("Shouldn't be able get channels without CompanionDeviceManager#getAssociations()");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_getNotificationChannelGroups() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        try {
+            mListener.getNotificationChannelGroups(mContext.getPackageName(), UserHandle.CURRENT);
+            fail("Should not be able get groups without CompanionDeviceManager#getAssociations()");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_updateNotificationChannel() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        NotificationChannel channel = new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        try {
+            mListener.updateNotificationChannel(mContext.getPackageName(), UserHandle.CURRENT,
+                    channel);
+            fail("Shouldn't be able to update channel without "
+                    + "CompanionDeviceManager#getAssociations()");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_getActiveNotifications() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        final int notificationId1 = 1;
+        final int notificationId2 = 2;
+
+        sendNotification(notificationId1, R.drawable.black);
+        sendNotification(notificationId2, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn1 = findPostedNotification(notificationId1);
+        StatusBarNotification sbn2 = findPostedNotification(notificationId2);
+        StatusBarNotification[] notifs =
+                mListener.getActiveNotifications(new String[]{ sbn2.getKey(), sbn1.getKey() });
+        assertEquals(sbn2.getKey(), notifs[0].getKey());
+        assertEquals(sbn2.getId(), notifs[0].getId());
+        assertEquals(sbn2.getPackageName(), notifs[0].getPackageName());
+
+        assertEquals(sbn1.getKey(), notifs[1].getKey());
+        assertEquals(sbn1.getId(), notifs[1].getId());
+        assertEquals(sbn1.getPackageName(), notifs[1].getPackageName());
+    }
+
+
+    public void testNotificationListener_getCurrentRanking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        sendNotification(1, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
+    }
+
+    public void testNotificationListener_cancelNotifications() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        final int notificationId = 1;
+
+        sendNotification(notificationId, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn = findPostedNotification(notificationId);
+
+        mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
+        if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP) {
+            if (!checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
+                fail("Notification shouldn't have been cancelled. "
+                        + "cancelNotification(String, String, int) shouldn't cancel notif for L+");
+            }
+        } else {
+            // Tested in LegacyNotificationManager20Test
+            if (checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
+                fail("Notification should have been cancelled for targetSdk below L.  targetSdk="
+                    + mContext.getApplicationInfo().targetSdkVersion);
+            }
+        }
+
+        mListener.cancelNotifications(new String[]{ sbn.getKey() });
+        if (!checkNotificationExistence(notificationId, /*shouldExist=*/ false)) {
+            fail("Failed to cancel notification id=" + notificationId);
+        }
     }
 }
