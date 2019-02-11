@@ -115,6 +115,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String AUTOFILL_APP_PKG = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_APP_APK = "CtsDevicePolicyAutofillApp.apk";
 
+    private static final String CONTENT_CAPTURE_APP_PKG =
+            "com.android.cts.devicepolicy.contentcaptureapp";
+    private static final String CONTENT_CAPTURE_APP_APK = "CtsDevicePolicyContentCaptureApp.apk";
+
     protected static final String ASSIST_APP_PKG = "com.android.cts.devicepolicy.assistapp";
     protected static final String ASSIST_APP_APK = "CtsDevicePolicyAssistApp.apk";
 
@@ -855,14 +859,43 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        boolean mHasAutofill = hasDeviceFeature("android.software.autofill");
-        if (!mHasAutofill) {
+        boolean hasAutofill = hasDeviceFeature("android.software.autofill");
+        if (!hasAutofill) {
           return;
         }
         installAppAsUser(AUTOFILL_APP_APK, mUserId);
 
         executeDeviceTestMethod(".AutofillRestrictionsTest",
                 "testDisallowAutofill_allowed");
+    }
+
+    // TODO(b/124127364): currently disabled becase ContentCaptureManager.isContentCaptureEnabled()
+    // doesn't return right value when the service is disabled after the activity already launched
+    public void disabledtestDisallowContentCapture_allowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        boolean hasContentCapture = hasService("content_capture");
+        if (!hasContentCapture) {
+            return;
+        }
+        installAppAsUser(CONTENT_CAPTURE_APP_APK, mUserId);
+
+        setDefaultContentCaptureServiceEnabled(false);
+        try {
+            executeDeviceTestMethod(".ContentCaptureRestrictionsTest",
+                    "testDisallowContentCapture_allowed");
+        } finally {
+            setDefaultContentCaptureServiceEnabled(true);
+        }
+    }
+
+    private void setDefaultContentCaptureServiceEnabled(boolean enabled)
+            throws Exception {
+        CLog.d("setDefaultServiceEnabled(" + mUserId + "): " + enabled);
+        getDevice().executeShellCommand(
+                "cmd content_capture set default-service-enabled " + mUserId + " " + enabled);
     }
 
     public void testSetMeteredDataDisabledPackages() throws Exception {
@@ -1845,5 +1878,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void restoreRestrictBackgroundPolicyTo(boolean restricted) throws Exception {
         getDevice().executeShellCommand(
                 restricted ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
+    }
+
+    // TODO: copied from RequiredServiceRule, which is on compatibility-device-util
+    // (and we use compatibility-host-util)
+    public boolean hasService(String service) {
+        // TODO: ideally should call SystemServiceManager directly, but we would need to open
+        // some @Testing APIs for that.
+        String command = "service check " + service;
+        try {
+            String commandOutput = getDevice().executeShellCommand(command);
+            return !commandOutput.contains("not found");
+        } catch (Exception e) {
+            CLog.w("Exception running '" + command + "': " + e);
+            return false;
+        }
     }
 }
