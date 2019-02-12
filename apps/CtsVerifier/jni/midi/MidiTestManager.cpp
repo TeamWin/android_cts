@@ -17,8 +17,6 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <midi.h>
-
 #define TAG "MidiTestManager"
 #include <android/log.h>
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)

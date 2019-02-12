@@ -18,7 +18,7 @@
 #include <android/log.h>
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
-#include <midi.h>
+#include <amidi/AMidi.h>
 
 #include "MidiTestManager.h"
 
