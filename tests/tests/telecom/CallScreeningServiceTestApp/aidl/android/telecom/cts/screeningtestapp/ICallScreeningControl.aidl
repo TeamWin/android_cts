@@ -26,4 +26,10 @@ interface ICallScreeningControl {
             in Icon icon, int confidence);
     void setCallResponse(boolean shouldDisallowCall, boolean shouldRejectCall,
             boolean shouldSkipCallLog, boolean shouldSkipNotification);
+    void waitForNuisanceReport(long timeoutMillis);
+    boolean getIsNuisance();
+    Uri getNuisanceCallHandle();
+    int getNuisanceCallType();
+    int getNuisanceCallDuration();
+    boolean isNuisanceReportReceived();
 }

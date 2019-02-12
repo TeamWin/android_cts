@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.os.SystemClock;
 
+import android.platform.test.annotations.Presubmit;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerReplaceWindowTests
  */
+@Presubmit
 public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
     @Before

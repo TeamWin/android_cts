@@ -19,7 +19,6 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.content.Context.CLIPBOARD_SERVICE;
-import static android.provider.Settings.Global.AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -28,20 +27,21 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
 
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
-import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.TestNameUtils;
 
 import org.junit.Before;
@@ -206,8 +206,8 @@ public final class AutoFillServiceTestCase {
                 .around(mRetryRule)
                 //
                 // Augmented Autofill should be disabled by default
-                .around(new SettingsStateChangerRule(sContext, SettingsUtils.NAMESPACE_GLOBAL,
-                        AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillManager.DEVICE_CONFIG_AUTOFILL_SMART_SUGGESTION_SUPPORTED_MODES,
                         Integer.toString(getSmartSuggestionMode())))
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
@@ -225,7 +225,7 @@ public final class AutoFillServiceTestCase {
         }
 
         protected int getSmartSuggestionMode() {
-            return 0;
+            return AutofillManager.FLAG_SMART_SUGGESTION_OFF;
         }
 
         /**

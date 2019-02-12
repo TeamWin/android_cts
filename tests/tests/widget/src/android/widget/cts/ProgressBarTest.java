@@ -220,6 +220,20 @@ public class ProgressBarTest {
 
     @UiThreadTest
     @Test
+    public void testAccessCurrentDrawable() {
+        final Drawable progressDrawable = new ColorDrawable(Color.BLUE);
+        final Drawable indeterminateDrawable = new ColorDrawable(Color.RED);
+        mProgressBarHorizontal.setProgressDrawable(progressDrawable);
+        mProgressBarHorizontal.setIndeterminateDrawable(indeterminateDrawable);
+
+        mProgressBarHorizontal.setIndeterminate(false);
+        assertSame(progressDrawable, mProgressBarHorizontal.getCurrentDrawable());
+        mProgressBarHorizontal.setIndeterminate(true);
+        assertSame(indeterminateDrawable, mProgressBarHorizontal.getCurrentDrawable());
+    }
+
+    @UiThreadTest
+    @Test
     public void testAccessProgress() {
         assertEquals(0, mProgressBarHorizontal.getProgress());
 

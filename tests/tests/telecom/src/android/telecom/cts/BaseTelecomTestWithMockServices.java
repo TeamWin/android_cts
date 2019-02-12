@@ -695,7 +695,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
      * @return Randomized phone number.
      */
     Uri createRandomTestNumber() {
-        return Uri.fromParts("tel", String.format("%06d", new Random().nextInt(999999))
+        return Uri.fromParts("tel", String.format("16%05d", new Random().nextInt(99999))
                 + String.format("%04d", new Random().nextInt(9999)), null);
     }
 

@@ -38,6 +38,7 @@ import android.opengl.GLES10;
 import android.os.Build;
 import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -64,6 +65,7 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
+@Presubmit
 public class ActivityManagerGetConfigTests {
     Context mContext;
     ActivityManager mAm;

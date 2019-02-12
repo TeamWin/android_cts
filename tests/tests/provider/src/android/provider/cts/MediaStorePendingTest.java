@@ -18,6 +18,8 @@ package android.provider.cts;
 
 import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.containsId;
+import static android.provider.cts.ProviderTestUtils.getRawFile;
+import static android.provider.cts.ProviderTestUtils.getRawFileHash;
 import static android.provider.cts.ProviderTestUtils.hash;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -55,7 +57,6 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 @RunWith(Parameterized.class)
 public class MediaStorePendingTest {
@@ -423,29 +424,6 @@ public class MediaStorePendingTest {
                 FileUtils.copy(in, out);
             }
             return session.publish();
-        }
-    }
-
-    private static File getRawFile(Uri uri) throws Exception {
-        final String res = ProviderTestUtils.executeShellCommand(
-                "content query --uri " + uri + " --projection _data",
-                InstrumentationRegistry.getInstrumentation().getUiAutomation());
-        final int i = res.indexOf("_data=");
-        if (i >= 0) {
-            return new File(res.substring(i + 6));
-        } else {
-            throw new FileNotFoundException("Failed to find _data for " + uri + "; found " + res);
-        }
-    }
-
-    private static String getRawFileHash(File file) throws Exception {
-        final String res = ProviderTestUtils.executeShellCommand(
-                "sha1sum " + file.getAbsolutePath(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation());
-        if (Pattern.matches("[0-9a-fA-F]{40}.+", res)) {
-            return res.substring(0, 40);
-        } else {
-            throw new FileNotFoundException("Failed to find hash for " + file + "; found " + res);
         }
     }
 }

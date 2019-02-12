@@ -16,6 +16,7 @@
 
 package android.webkit.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.HttpAuthHandler;
 import android.webkit.WebView;
@@ -25,6 +26,7 @@ import com.android.compatibility.common.util.NullWebViewUtils;
 
 import org.apache.http.HttpStatus;
 
+@AppModeFull
 public class HttpAuthHandlerTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
     private static final long TIMEOUT = 10000;

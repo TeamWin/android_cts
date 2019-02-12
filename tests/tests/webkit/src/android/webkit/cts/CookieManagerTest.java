@@ -16,6 +16,7 @@
 
 package android.webkit.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
@@ -33,6 +34,7 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@AppModeFull
 public class CookieManagerTest extends
         ActivityInstrumentationTestCase2<CookieSyncManagerCtsActivity> {
 

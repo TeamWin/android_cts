@@ -30,5 +30,10 @@
                 <action android:name="android.telecom.cts.screeningtestapp.ACTION_CONTROL_CALL_SCREENING_SERVICE" />
             </intent-filter>
         </service>
+        <receiver android:name=".NuisanceCallStateReceiver">
+            <intent-filter>
+                <action android:name="android.telecom.action.NUISANCE_CALL_STATUS_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

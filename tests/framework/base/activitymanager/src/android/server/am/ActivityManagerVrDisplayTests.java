@@ -30,6 +30,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.content.ComponentName;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.settings.SettingsSession;
@@ -44,6 +45,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerVrDisplayTests
  */
+@Presubmit
 public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBase {
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 700;
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;

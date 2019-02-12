@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -54,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Tests that app standby imposes the appropriate restrictions on alarms
  */
+@AppModeFull
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class AppStandbyTests {

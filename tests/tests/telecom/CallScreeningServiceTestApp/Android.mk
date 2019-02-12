@@ -22,10 +22,10 @@ include $(CLEAR_VARS)
 
 src_dirs := src
 
+LOCAL_AIDL_INCLUDES := $(call all-Iaidl-files-under, aidl)
+
 LOCAL_SRC_FILES := $(call all-java-files-under, $(src_dirs)) \
                    $(call all-Iaidl-files-under, aidl)
-
-LOCAL_AIDL_INCLUDES := aidl/
 
 LOCAL_PACKAGE_NAME := CallScreeningServiceTestApp
 

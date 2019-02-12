@@ -18,6 +18,7 @@ package android.webkit.cts;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
@@ -28,6 +29,7 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.Future;
 
+@AppModeFull
 public class WebViewRendererTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private WebViewOnUiThread mOnUiThread;
 

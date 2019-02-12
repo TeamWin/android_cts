@@ -20,13 +20,18 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.os.IBinder;
 import android.telecom.CallIdentification;
 import android.telecom.CallScreeningService;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 public class CallScreeningServiceControl extends Service {
+    private static final int ASYNC_TIMEOUT = 10000;
     private static final String TAG = CallScreeningServiceControl.class.getSimpleName();
     public static final String CONTROL_INTERFACE_ACTION =
             "android.telecom.cts.screeningtestapp.ACTION_CONTROL_CALL_SCREENING_SERVICE";
@@ -41,6 +46,8 @@ public class CallScreeningServiceControl extends Service {
                 @Override
                 public void reset() {
                     mCallIdentification = null;
+                    mNuisanceCallUri = null;
+                    mIsNuisanceReportReceived = false;
                     mCallResponse = new CallScreeningService.CallResponse.Builder()
                             .setDisallowCall(false)
                             .setRejectCall(false)
@@ -79,10 +86,43 @@ public class CallScreeningServiceControl extends Service {
                             .setRejectCall(shouldRejectCall)
                             .build();
                 }
+
+                @Override
+                public void waitForNuisanceReport(long timeoutMillis) {
+                    try {
+                        mNuisanceLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public boolean getIsNuisance() {
+                    return mIsNuisanceCall;
+                }
+
+                @Override
+                public Uri getNuisanceCallHandle() {
+                    return mNuisanceCallUri;
+                }
+
+                @Override
+                public int getNuisanceCallType() {
+                    return mNuisanceCallType;
+                }
+
+                @Override
+                public int getNuisanceCallDuration() {
+                    return mNuisanceCallDuration;
+                }
+
+                @Override
+                public boolean isNuisanceReportReceived() {
+                    return mIsNuisanceReportReceived;
+                }
             };
 
     private CallIdentification mCallIdentification = null;
-    private boolean mIsAcceptingCall = true;
     private CallScreeningService.CallResponse mCallResponse =
             new CallScreeningService.CallResponse.Builder()
                     .setDisallowCall(false)
@@ -90,6 +130,12 @@ public class CallScreeningServiceControl extends Service {
                     .setSkipCallLog(false)
                     .setSkipNotification(false)
                     .build();
+    private CountDownLatch mNuisanceLatch = new CountDownLatch(1);
+    private boolean mIsNuisanceCall;
+    private int mNuisanceCallType;
+    private int mNuisanceCallDuration;
+    private Uri mNuisanceCallUri;
+    private boolean mIsNuisanceReportReceived = false;
 
     public static CallScreeningServiceControl getInstance() {
         return sCallScreeningServiceControl;
@@ -119,4 +165,16 @@ public class CallScreeningServiceControl extends Service {
     public CallScreeningService.CallResponse getCallResponse() {
         return mCallResponse;
     }
+
+    public void handleNuisanceStatusChanged(Uri handle, int callDuration, int callType,
+            boolean isNuisance) {
+        mNuisanceCallUri = handle;
+        mIsNuisanceCall = isNuisance;
+        mNuisanceCallDuration = callDuration;
+        mNuisanceCallType = callType;
+        mIsNuisanceReportReceived = true;
+        Log.i(TAG, "handleNuisanceStatusChanged - got nuisance report");
+        mNuisanceLatch.countDown();
+    }
+
 }

@@ -39,6 +39,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.print.PageRange;
 import android.print.PrintAttributes;
@@ -118,6 +119,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.util.EncodingUtils;
 import org.apache.http.util.EntityUtils;
 
+@AppModeFull
 public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     public static final long TEST_TIMEOUT = 20000L;
     private static final int INITIAL_PROGRESS = 100;

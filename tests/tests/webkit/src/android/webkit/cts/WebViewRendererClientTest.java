@@ -16,6 +16,7 @@
 
 package android.webkit.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
 import android.webkit.JavascriptInterface;
@@ -30,6 +31,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@AppModeFull
 public class WebViewRendererClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private WebViewOnUiThread mOnUiThread;
 

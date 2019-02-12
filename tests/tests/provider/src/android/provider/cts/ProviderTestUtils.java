@@ -68,6 +68,9 @@ public class ProviderTestUtils {
     private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
             "^Backup Manager currently (enabled|disabled)$");
 
+    private static final Pattern PATTERN_STORAGE_PATH = Pattern.compile(
+            "(?i)^/storage/[^/]+/(?:[0-9]+/)?");
+
     static Iterable<String> getSharedVolumeNames() {
         if (StorageManager.hasIsolatedStorage()) {
             final Set<String> volumeNames = MediaStore
@@ -314,5 +317,38 @@ public class ProviderTestUtils {
             }
         }
         return false;
+    }
+
+    public static File getRawFile(Uri uri) throws Exception {
+        final String res = ProviderTestUtils.executeShellCommand(
+                "content query --uri " + uri + " --projection _data",
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        final int i = res.indexOf("_data=");
+        if (i >= 0) {
+            return new File(res.substring(i + 6));
+        } else {
+            throw new FileNotFoundException("Failed to find _data for " + uri + "; found " + res);
+        }
+    }
+
+    public static String getRawFileHash(File file) throws Exception {
+        final String res = ProviderTestUtils.executeShellCommand(
+                "sha1sum " + file.getAbsolutePath(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        if (Pattern.matches("[0-9a-fA-F]{40}.+", res)) {
+            return res.substring(0, 40);
+        } else {
+            throw new FileNotFoundException("Failed to find hash for " + file + "; found " + res);
+        }
+    }
+
+    public static File getRelativeFile(Uri uri) throws Exception {
+        final String path = getRawFile(uri).getAbsolutePath();
+        final Matcher matcher = PATTERN_STORAGE_PATH.matcher(path);
+        if (matcher.find()) {
+            return new File(path.substring(matcher.end()));
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 }

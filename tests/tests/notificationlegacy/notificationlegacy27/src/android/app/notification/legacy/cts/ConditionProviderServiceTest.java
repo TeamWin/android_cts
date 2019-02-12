@@ -33,6 +33,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.service.notification.Condition;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.ArraySet;
@@ -238,6 +239,26 @@ public class ConditionProviderServiceTest {
         } catch (Exception e) {
             fail("Service should've been able to rebind");
         }
+    }
+
+    @Test
+    public void testMethodsExistAndDoNotThrow() throws Exception {
+        // behavior is covered in cts verifier
+
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        // make sure it gets bound
+        pollForConnection(LegacyConditionProviderService.class, true);
+
+        // request unbind
+        LegacyConditionProviderService.getInstance().onConnected();
+        LegacyConditionProviderService.getInstance().onRequestConditions(
+                Condition.FLAG_RELEVANT_NOW);
+        LegacyConditionProviderService.getInstance().onSubscribe(Uri.EMPTY);
+        LegacyConditionProviderService.getInstance().onUnsubscribe(Uri.EMPTY);
+
     }
 
     private void addRule(ComponentName cn, int filter, boolean enabled) {

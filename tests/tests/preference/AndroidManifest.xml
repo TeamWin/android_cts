@@ -26,6 +26,28 @@
             <meta-data android:name="android.preference"
                     android:resource="@xml/preferences_from_intent" />
         </activity>
+        <activity
+            android:name="PreferenceFragmentActivity" >
+        </activity>
+        <activity
+            android:name="android.preference2.cts.PreferenceStubActivity" >
+        </activity>
+        <activity
+            android:name="PreferenceFromCodeActivity" >
+        </activity>
+        <activity android:name="PreferencesFromXml" />
+        <activity android:name="PreferencesFromXmlNested" />
+        <activity android:name="PreferencesFromXmlRecycle" />
+        <activity android:name="PreferenceWithHeaders" />
+        <!-- Landscape setup of PreferenceWithHeaders -->
+        <activity
+            android:name="PreferenceWithHeadersLandscape"
+            android:screenOrientation="landscape"/>
+        <!-- Portrait setup of PreferenceWithHeaders -->
+        <activity
+            android:name="PreferenceWithHeadersPortrait"
+            android:screenOrientation="portrait"/>
+        <activity android:name="FragmentPreferences" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

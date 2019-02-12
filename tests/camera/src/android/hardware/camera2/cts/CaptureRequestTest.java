@@ -1520,6 +1520,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             assertTrue("Scene flicker is invalid", flicker >= STATISTICS_SCENE_FLICKER_NONE &&
                     flicker <= STATISTICS_SCENE_FLICKER_60HZ);
 
+            Integer antiBandMode = result.get(CaptureResult.CONTROL_AE_ANTIBANDING_MODE);
+            assertNotNull("antiBanding mode shouldn't be null", antiBandMode);
+            assertTrue("antiBanding Mode invalid, should be == " + mode + ", is: " + antiBandMode,
+                    antiBandMode == mode);
             if (isAeManual) {
                 // First, round down not up, second, need close enough.
                 validateExposureTime(requestExpTime, resultExpTime);

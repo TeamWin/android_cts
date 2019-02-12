@@ -18,7 +18,6 @@ package android.provider.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,8 +35,6 @@ import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
-import libcore.util.HexEncoding;
-
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -48,8 +45,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
-import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
