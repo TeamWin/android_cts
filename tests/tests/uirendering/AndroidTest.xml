@@ -26,6 +26,7 @@
         <option name="package" value="android.uirendering.cts" />
         <option name="runtime-hint" value="11m55s" />
         <option name="runner" value="android.uirendering.cts.runner.UiRenderingRunner" />
+        <option name="isolated-storage" value="false" />
     </test>
 
     <!-- Collect the files in the dump directory for debugging -->
