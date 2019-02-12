@@ -90,7 +90,7 @@ pipe2: 1
 ppoll: 1
 
 # prctl: PR_SET_VMA=0x53564d41, PR_SET_TIMERSLACK_PID={41,43,127} depending on kernel version
-prctl: arg0 == PR_GET_NAME || arg0 == PR_SET_NAME || arg0 == PR_GET_DUMPABLE || arg0 == PR_SET_DUMPABLE || arg0 == PR_SET_PTRACER || arg0 == 0x53564d41 || arg0 == 41 || arg0 == 43 || arg0 == 127
+prctl: arg0 == PR_GET_NAME || arg0 == PR_SET_NAME || arg0 == PR_GET_DUMPABLE || arg0 == PR_SET_DUMPABLE || arg0 == PR_SET_PTRACER || arg0 == PR_SET_TIMERSLACK || arg0 == 0x53564d41 || arg0 == 41 || arg0 == 43 || arg0 == 127
 
 pread64: 1
 pselect6: 1
