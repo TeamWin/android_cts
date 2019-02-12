@@ -339,7 +339,7 @@ public class CustomViewActivityTest extends
         // TODO(b/122315042): assert other views disappeared
     }
 
-    // TODO(b/119638528): add tests for multiple sessions
+    // TODO(b/123540602): add tests for multiple sessions
 
     @Test
     public void testVirtualView_batchDisappear() throws Exception {
