@@ -15,7 +15,9 @@
 java_test_host {
   name: "signature-host-tests",
   srcs: ["src/**/*.java"],
-  static_libs: ["signature-hostside"],
-  libs: ["tradefed", "cts-tradefed"],
+  static_libs: [
+    "junit",
+    "signature-hostside",
+  ],
   test_suites: ["general-tests"],
 }
