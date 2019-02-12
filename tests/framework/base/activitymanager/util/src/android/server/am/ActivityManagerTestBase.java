@@ -459,6 +459,12 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    protected ComponentName getDefaultSecondaryHomeComponent() {
+        int resId = Resources.getSystem().getIdentifier(
+                "config_secondaryHomeComponent", "string", "android");
+        return ComponentName.unflattenFromString(mContext.getResources().getString(resId));
+    }
+
     protected void tapOnDisplay(int x, int y, int displayId) {
         final long downTime = SystemClock.uptimeMillis();
         injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId);
