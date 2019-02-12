@@ -43,6 +43,8 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
             "/data/local/tmp/cts/deviceowner/";
     public static final int TIMEOUT = 5;
 
+    private int callbackErrorCode;
+
     public void testInstallUpdate_failFileNotFound() throws InterruptedException {
         assertUpdateError(
                 "random",
@@ -140,14 +142,12 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
                 Runnable::run, new DevicePolicyManager.InstallUpdateCallback() {
                     @Override
                     public void onInstallUpdateError(int errorCode, String errorMessage) {
-                        try {
-                            assertEquals(expectedErrorCode, errorCode);
-                        } finally {
-                            latch.countDown();
-                        }
+                        callbackErrorCode = errorCode;
+                        latch.countDown();
                     }
                 });
         assertTrue(latch.await(TIMEOUT, TimeUnit.MINUTES));
+        assertEquals(expectedErrorCode, callbackErrorCode);
     }
 
     private void setNonChargingBatteryThreshold(int threshold) {
