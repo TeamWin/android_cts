@@ -69,6 +69,7 @@ import android.service.notification.StatusBarNotification;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -1306,6 +1307,57 @@ public class NotificationManagerTest extends AndroidTestCase {
             // pass
         }
         checkNotificationExistence(id, false);
+    }
+
+    public void testStyle() throws Exception {
+        Notification.Style style = new Notification.Style() {
+            public boolean areNotificationsVisiblyDifferent(Notification.Style other) {
+                return false;
+            }
+        };
+
+        Notification.Builder builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
+        style.setBuilder(builder);
+
+        Notification notification = null;
+        try {
+            notification = style.build();
+        } catch (IllegalArgumentException e) {
+            fail(e.getMessage());
+        }
+
+        assertNotNull(notification);
+
+        Notification builderNotification = builder.build();
+        assertEquals(builderNotification, notification);
+    }
+
+    public void testStyle_getStandardView() throws Exception {
+        Notification.Builder builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
+        int layoutId = 0;
+
+        TestStyle overrideStyle = new TestStyle();
+        overrideStyle.setBuilder(builder);
+        RemoteViews result = overrideStyle.testGetStandardView(layoutId);
+
+        assertNotNull(result);
+        assertEquals(layoutId, result.getLayoutId());
+    }
+
+    private class TestStyle extends Notification.Style {
+        public boolean areNotificationsVisiblyDifferent(Notification.Style other) {
+            return false;
+        }
+
+        public RemoteViews testGetStandardView(int layoutId) {
+            // Wrapper method, since getStandardView is protected and otherwise unused in Android
+            return getStandardView(layoutId);
+        }
+    }
+
+    public void testMediaStyle_empty() throws Exception {
+        Notification.MediaStyle style = new Notification.MediaStyle();
+        assertNotNull(style);
     }
 
     public void testMediaStyle() throws Exception {
