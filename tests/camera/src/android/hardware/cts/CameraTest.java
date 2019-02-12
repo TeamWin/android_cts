@@ -1219,14 +1219,14 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         Camera.Parameters parameters = mCamera.getParameters();
         SurfaceHolder surfaceHolder;
         surfaceHolder = getActivity().getSurfaceView().getHolder();
-        CamcorderProfile profile = CamcorderProfile.get(cameraId,
-                CamcorderProfile.QUALITY_LOW);
+        CamcorderProfile profile = null; // Used for built-in camera
         Camera.Size videoSize = null; // Used for external camera
 
         // Set the preview size.
         if (mIsExternalCamera) {
             videoSize = setupExternalCameraRecord(parameters);
         } else {
+            profile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
             setPreviewSizeByProfile(parameters, profile);
         }
 
@@ -2729,13 +2729,13 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         Parameters parameters = mCamera.getParameters();
 
         SurfaceHolder holder = getActivity().getSurfaceView().getHolder();
-        CamcorderProfile profile = CamcorderProfile.get(cameraId,
-                CamcorderProfile.QUALITY_LOW);
+        CamcorderProfile profile = null; // for built-in camera
         Camera.Size videoSize = null; // for external camera
 
         if (mIsExternalCamera) {
             videoSize = setupExternalCameraRecord(parameters);
         } else {
+            profile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
             setPreviewSizeByProfile(parameters, profile);
         }
 
