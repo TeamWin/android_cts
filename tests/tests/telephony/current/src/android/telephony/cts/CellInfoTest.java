@@ -833,13 +833,12 @@ public class CellInfoTest extends AndroidTestCase{
                 mobileNetworkOperator == null
                         || mobileNetworkOperator.matches("^[0-9]{5,6}$"));
 
-        // b/123957505
-        // int uarfcn = tdscdma.getUarfcn();
+        int uarfcn = tdscdma.getUarfcn();
         // Reference 3GPP 25.101 Table 5.2
         // From Appendix E.1, even though UARFCN is numbered from 400, the minumum
         // usable channel is 412 due to the fixed bandwidth of 5Mhz
-        // assertTrue("getUarfcn() out of range [412,11000], uarfcn=" + uarfcn,
-        //        uarfcn >= 412 && uarfcn <= 11000);
+        assertTrue("getUarfcn() out of range [412,11000], uarfcn=" + uarfcn,
+                uarfcn >= 412 && uarfcn <= 11000);
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
