@@ -27,14 +27,17 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
 
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
@@ -202,11 +205,10 @@ public final class AutoFillServiceTestCase {
                 // mRetryRule should be closest to the main test as possible
                 .around(mRetryRule)
                 //
-                // TODO(b/124006095): must use DeviceConfig rule
-//                // Augmented Autofill should be disabled by default
-//                .around(new SettingsStateChangerRule(sContext, SettingsUtils.NAMESPACE_GLOBAL,
-//                        AUTOFILL_SMART_SUGGESTION_EMULATION_FLAGS,
-//                        Integer.toString(getSmartSuggestionMode())))
+                // Augmented Autofill should be disabled by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillManager.DEVICE_CONFIG_AUTOFILL_SMART_SUGGESTION_SUPPORTED_MODES,
+                        Integer.toString(getSmartSuggestionMode())))
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
@@ -223,7 +225,7 @@ public final class AutoFillServiceTestCase {
         }
 
         protected int getSmartSuggestionMode() {
-            return 0;
+            return AutofillManager.FLAG_SMART_SUGGESTION_OFF;
         }
 
         /**
