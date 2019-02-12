@@ -69,6 +69,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAppConfigurationTests
  */
+@Presubmit
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
 
     private static final int SMALL_WIDTH_DP = 426;
@@ -102,7 +103,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenResizedFromFullscreen()} but resizing
      * from docked state to fullscreen (reverse).
      */
-    @Presubmit
     @Test
     @FlakyTest(bugId = 71792393)
     public void testConfigurationUpdatesWhenResizedFromDockedStack() {
@@ -142,7 +142,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileFullscreen()} but when the Activity
      * is in the docked stack.
      */
-    @Presubmit
     @Test
     @FlakyTest(bugId = 121165130)
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
@@ -169,7 +168,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testConfigurationUpdatesWhenRotatingWhileDocked()} but when the Activity
      * is launched to side from docked stack.
      */
-    @Presubmit
     @Test
     @FlakyTest(bugId = 121165130)
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
@@ -226,7 +224,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Same as {@link #testSameConfigurationFullSplitFullRelaunch} but without relaunch.
      */
-    @Presubmit
     @Test
     public void testSameConfigurationFullSplitFullNoRelaunch() {
         moveActivityFullSplitFull(RESIZEABLE_ACTIVITY);
@@ -281,6 +278,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * relaunched twice and it should have same config as initial one.
      */
     @Test
+    @FlakyTest
     public void testSameConfigurationSplitFullSplitRelaunch() {
         moveActivitySplitFullSplit(TEST_ACTIVITY);
     }
@@ -289,6 +287,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Same as {@link #testSameConfigurationSplitFullSplitRelaunch} but without relaunch.
      */
     @Test
+    @FlakyTest
     public void testSameConfigurationSplitFullSplitNoRelaunch() {
         moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY);
     }
@@ -297,7 +296,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Tests that an activity with the DialogWhenLarge theme can transform properly when in split
      * screen.
      */
-    @Presubmit
     @Test
     @FlakyTest(bugId = 110276714)
     public void testDialogWhenLargeSplitSmall() {
@@ -323,7 +321,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device handles consequent requested orientations and displays the activities.
      */
-    @Presubmit
     @Test
     @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() {
@@ -379,6 +376,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * change to an invisible activity.
      */
     @Test
+    @FlakyTest
     public void testAppOrientationRequestConfigChanges() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
@@ -569,6 +567,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Also verify that occluded activity will not get config changes.
      */
     @Test
+    @FlakyTest
     public void testAppOrientationWhenRotating() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
@@ -656,7 +655,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device handles moving between two tasks with different orientations.
      */
-    @Presubmit
     @Test
     @FlakyTest(bugId = 71792393)
     public void testTaskMoveToBackOrientation() {
@@ -688,7 +686,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
-    @Presubmit
     @FlakyTest(bugId = 71918731)
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
@@ -704,7 +701,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
-    @Presubmit
     @Test
     public void testSplitscreenLandscapeAppOrientationRequests() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());

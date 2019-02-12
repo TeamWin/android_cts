@@ -64,7 +64,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAssistantStackTests
  */
-//@Presubmit b/67706642
+@Presubmit
 @FlakyTest(bugId = 71875631)
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
@@ -83,7 +83,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
-    @Presubmit
     public void testLaunchingAssistantActivityIntoAssistantStack() throws Exception {
         // Enable the assistant and launch an assistant activity
         try (final AssistantSession assistantSession = new AssistantSession()) {
@@ -101,7 +100,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @FlakyTest(bugId = 69573940)
-    @Presubmit
     @Test
     public void testAssistantStackZOrder() throws Exception {
         assumeTrue(assistantRunsOnPrimaryDisplay());
@@ -140,13 +138,11 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
-    @Presubmit
     public void testAssistantStackLaunchNewTask() throws Exception {
         assertAssistantStackCanLaunchAndReturnFromNewTask(WINDOWING_MODE_FULLSCREEN);
     }
 
     @Test
-    @Presubmit
     @Ignore("b/77272253#comment10")
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
         assumeTrue(assistantRunsOnPrimaryDisplay());
@@ -194,7 +190,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
-    @Presubmit
     @FlakyTest(bugId = 71875631)
     public void testAssistantStackFinishToPreviousApp() throws Exception {
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
@@ -220,7 +215,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @Test
-    @Presubmit
     @FlakyTest(bugId = 71875631)
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
@@ -235,7 +229,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     }
 
     @FlakyTest(bugId = 69573940)
-    @Presubmit
     @Test
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
@@ -310,7 +303,6 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @FlakyTest(bugId = 69229402)
     @Test
-    @Presubmit
     public void testLaunchIntoSameTask() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);

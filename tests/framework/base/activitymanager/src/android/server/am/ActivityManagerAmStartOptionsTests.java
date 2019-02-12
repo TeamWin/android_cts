@@ -30,6 +30,8 @@ import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 
+import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 import java.util.regex.Matcher;
@@ -39,6 +41,7 @@ import java.util.regex.Pattern;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAmStartOptionsTests
  */
+@Presubmit
 public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase {
 
     @Test
@@ -66,6 +69,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     }
 
     @Test
+    @FlakyTest
     public void testDashW_Indirect() throws Exception {
         testDashW(ENTRY_POINT_ALIAS_ACTIVITY, SINGLE_TASK_ACTIVITY);
     }
