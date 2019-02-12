@@ -57,28 +57,6 @@ static const std::vector<std::regex> kSystemPathRegexes = {
 
 static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_support.so";
 
-// This is not the complete list - just a small subset of the libraries that
-// should not be loaded from vendor locations.
-//
-// TODO(b/124049505): Do not hardcode expected paths here, to allow libraries to
-// migrate between /system and APEXes.
-static std::vector<std::string> kSystemLibraries = {
-    kRuntimeApexLibraryPath + "/libart.so",
-    kRuntimeApexLibraryPath + "/libnativehelper.so",
-    kSystemLibraryPath + "/libandroid_runtime.so",
-    kSystemLibraryPath + "/libbinder.so",
-    kSystemLibraryPath + "/libcrypto.so",
-    kSystemLibraryPath + "/libcutils.so",
-    kSystemLibraryPath + "/libexpat.so",
-    kSystemLibraryPath + "/libgui.so",
-    kSystemLibraryPath + "/libmedia.so",
-    kSystemLibraryPath + "/libsqlite.so",
-    kSystemLibraryPath + "/libstagefright.so",
-    kSystemLibraryPath + "/libui.so",
-    kSystemLibraryPath + "/libutils.so",
-    kSystemLibraryPath + "/libvorbisidec.so",
-};
-
 static bool is_directory(const char* path) {
   struct stat sb;
   if (stat(path, &sb) != -1) {
@@ -115,8 +93,7 @@ static bool is_library_on_path(const std::unordered_set<std::string>& library_se
 
 // Tests if a file can be loaded or not. Returns empty string on success. On any failure
 // returns the error message from dlerror().
-static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path,
-                                bool test_system_load_library) {
+static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path) {
   // try to load the lib using dlopen().
   void *handle = dlopen(path.c_str(), RTLD_NOW);
   std::string error;
@@ -144,7 +121,7 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
 
   jstring java_load_lib_errmsg;
   bool java_load_lib_ok = java_load_ok;
-  if (test_system_load_library && java_load_ok) {
+  if (java_load_ok) {
     // If System.load() works then test System.loadLibrary() too. Cannot test
     // the other way around since System.loadLibrary() might very well find the
     // library somewhere else and hence work when System.load() fails.
@@ -158,15 +135,13 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
 
   if (loaded_in_native != java_load_ok || java_load_ok != java_load_lib_ok) {
     const std::string java_load_error(ScopedUtfChars(env, java_load_errmsg).c_str());
+    const std::string java_load_lib_error(ScopedUtfChars(env, java_load_lib_errmsg).c_str());
     error = "Inconsistent result for library \"" + path + "\": dlopen() " +
             (loaded_in_native ? "succeeded" : "failed (" + error + ")") +
             ", System.load() " +
-            (java_load_ok ? "succeeded" : "failed (" + java_load_error + ")");
-    if (test_system_load_library) {
-      const std::string java_load_lib_error(ScopedUtfChars(env, java_load_lib_errmsg).c_str());
-      error += ", System.loadLibrary() " +
-               (java_load_lib_ok ? "succeeded" : "failed (" + java_load_lib_error + ")");
-    }
+            (java_load_ok ? "succeeded" : "failed (" + java_load_error + ")") +
+            ", System.loadLibrary() " +
+             (java_load_lib_ok ? "succeeded" : "failed (" + java_load_lib_error + ")");
   }
 
   if (loaded_in_native && java_load_ok) {
@@ -189,7 +164,7 @@ static bool check_lib(JNIEnv* env,
                       const std::unordered_set<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& libraries,
                       std::vector<std::string>* errors) {
-  std::string err = load_library(env, clazz, path, /*test_system_load_library=*/true);
+  std::string err = load_library(env, clazz, path);
   bool loaded = err.empty();
 
   // The current restrictions on public libraries:
@@ -383,19 +358,6 @@ extern "C" JNIEXPORT jstring JNICALL
   if (!check_path(env, clazz, kSystemLibraryPath, system_library_search_paths,
                   system_public_libraries, &errors)) {
     success = false;
-  }
-
-  // Check that the mandatory system + APEX libraries are present - the grey list
-  for (const auto& library : kSystemLibraries) {
-    std::string err = load_library(env, clazz, library, /*test_system_load_library=*/false);
-    if (!err.empty()) {
-      // The libraries should be present and produce specific dlerror when inaccessible.
-      if (!not_accessible(err)) {
-        errors.push_back("Mandatory system library \"" + library +
-                         "\" failed to load with unexpected error: " + err);
-        success = false;
-      }
-    }
   }
 
   // Check the product libraries, if /product/lib exists.
