@@ -54,8 +54,7 @@ cc_library_shared {
     ],
 
     // This define controls the behavior of OSFeatures.needsSeccompSupport().
-    // TODO(b/124189460): This was reset before use in Android.mk
-    //cflags: ["-DARCH_SUPPORTS_SECCOMP"],
+    cflags: ["-DARCH_SUPPORTS_SECCOMP"],
 }
 
 cc_library_static {
