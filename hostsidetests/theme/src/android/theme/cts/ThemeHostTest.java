@@ -59,7 +59,8 @@ public class ThemeHostTest extends DeviceTestCase {
 
     /** The command to launch the main instrumentation test. */
     private static final String START_CMD = String.format(
-            "am instrument -w --no-window-animation %s/%s", APP_PACKAGE_NAME, TEST_CLASS);
+            "am instrument -w --no-isolated-storage --no-window-animation %s/%s",
+            APP_PACKAGE_NAME, TEST_CLASS);
 
     private static final String CLEAR_GENERATED_CMD = "rm -rf %s/*.png";
     private static final String STOP_CMD = String.format("am force-stop %s", APP_PACKAGE_NAME);

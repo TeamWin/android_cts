@@ -16,6 +16,7 @@
 
 package android.media.cts;
 
+import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -30,6 +31,7 @@ import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
@@ -42,14 +44,19 @@ import android.util.Log;
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.PollingCheck;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaScannerTest extends AndroidTestCase {
-
     private static final String MEDIA_TYPE = "audio/mpeg";
     private File mMediaFile;
     private static final int TIME_OUT = 10000;
@@ -62,7 +69,9 @@ public class MediaScannerTest extends AndroidTestCase {
         super.setUp();
         // prepare the media file.
 
-        mFileDir = Environment.getExternalStorageDirectory() + "/" + getClass().getCanonicalName();
+        mFileDir = Environment.buildPath(MediaStore.getVolumePath(MediaStore.VOLUME_EXTERNAL),
+                "Android", "media", "android.media.cts").getAbsolutePath();
+
         cleanup();
         String fileName = mFileDir + "/test" + System.currentTimeMillis() + ".mp3";
         writeFile(R.raw.testmp3, fileName);
@@ -270,7 +279,7 @@ public class MediaScannerTest extends AndroidTestCase {
         checkConnectionState(false);
     }
 
-    public void testWildcardPaths() throws InterruptedException, IOException {
+    public void testWildcardPaths() throws Exception {
         mMediaScannerConnectionClient = new MockMediaScannerConnectionClient();
         mMediaScannerConnection = new MockMediaScannerConnection(getContext(),
                                     mMediaScannerConnectionClient);
@@ -323,17 +332,11 @@ public class MediaScannerTest extends AndroidTestCase {
         assertTrue("same parent", parent1id != parent2id);
 
         // check the parent paths are correct
-        c = res.query(MediaStore.Files.getContentUri("external", parent1id),
-                new String[] { "_data" }, null, null, null);
-        c.moveToFirst();
-        assertEquals(dir1, c.getString(0));
-        c.close();
 
-        c = res.query(MediaStore.Files.getContentUri("external", parent2id),
-                new String[] { "_data" }, null, null, null);
-        c.moveToFirst();
-        assertEquals(dir2, c.getString(0));
-        c.close();
+        assertEquals(dir1, getRawFile(MediaStore.Files.getContentUri("external", parent1id))
+                .getAbsolutePath());
+        assertEquals(dir2, getRawFile(MediaStore.Files.getContentUri("external", parent2id))
+                .getAbsolutePath());
 
         // clean up
         new File(file1).delete();
@@ -376,8 +379,7 @@ public class MediaScannerTest extends AndroidTestCase {
                 null, null);
 
         // write file and scan to insert into database
-        String fileDir = Environment.getExternalStorageDirectory() + "/"
-                + getClass().getCanonicalName() + "/canonicaltest-" + System.currentTimeMillis();
+        String fileDir = mFileDir + "/canonicaltest-" + System.currentTimeMillis();
         String fileName = fileDir + "/test.mp3";
         writeFile(resId, fileName);
         mMediaScannerConnection.scanFile(fileName, MEDIA_TYPE);
@@ -702,4 +704,39 @@ public class MediaScannerTest extends AndroidTestCase {
         }
     }
 
+    static File getRawFile(Uri uri) throws Exception {
+        final String res = executeShellCommand(
+                "content query --uri " + uri + " --projection _data",
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        final int i = res.indexOf("_data=");
+        if (i >= 0) {
+            return new File(res.substring(i + 6));
+        } else {
+            throw new FileNotFoundException("Failed to find _data for " + uri + "; found " + res);
+        }
+    }
+
+    static String executeShellCommand(String command) throws IOException {
+        return executeShellCommand(command,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+    }
+
+    static String executeShellCommand(String command, UiAutomation uiAutomation)
+            throws IOException {
+        ParcelFileDescriptor pfd = uiAutomation.executeShellCommand(command.toString());
+        BufferedReader br = null;
+        try (InputStream in = new FileInputStream(pfd.getFileDescriptor());) {
+            br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            String str = null;
+            StringBuilder out = new StringBuilder();
+            while ((str = br.readLine()) != null) {
+                out.append(str);
+            }
+            return out.toString();
+        } finally {
+            if (br != null) {
+                br.close();
+            }
+        }
+    }
 }
