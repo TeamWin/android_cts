@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.app.stubs;
+package android.app.notification.legacy20.cts;
 
 import android.content.ComponentName;
 import android.service.notification.NotificationListenerService;
@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 public class TestNotificationListener extends NotificationListenerService {
     public static final String TAG = "TestNotificationListener";
-    public static final String PKG = "android.app.stubs";
+    public static final String PKG = "android.app.notification.legacy.cts";
 
     private ArrayList<String> mTestPackages = new ArrayList<>();
 
@@ -74,14 +74,14 @@ public class TestNotificationListener extends NotificationListenerService {
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
-        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) { return; }
+        if (!mTestPackages.contains(sbn.getPackageName())) { return; }
         mRankingMap = rankingMap;
         mPosted.add(sbn);
     }
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap) {
-        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) { return; }
+        if (!mTestPackages.contains(sbn.getPackageName())) { return; }
         mRankingMap = rankingMap;
         mRemoved.add(sbn);
     }
