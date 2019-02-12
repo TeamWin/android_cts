@@ -61,9 +61,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+import com.android.compatibility.common.util.DeviceConfigStateManager;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -78,6 +83,14 @@ public class ChildlessActivityTest
     private static final ActivityTestRule<ChildlessActivity> sActivityRule = new ActivityTestRule<>(
             ChildlessActivity.class, false, false);
 
+    private static final DeviceConfigStateManager sDeviceConfigManager =
+            new DeviceConfigStateManager(sContext, DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+            ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
+
+    private static final RuleChain sMyRules = RuleChain
+            .outerRule(new DeviceConfigStateChangerRule(sDeviceConfigManager, "true"))
+            .around(sActivityRule);
+
     public ChildlessActivityTest() {
         super(ChildlessActivity.class);
     }
@@ -85,6 +98,11 @@ public class ChildlessActivityTest
     @Override
     protected ActivityTestRule<ChildlessActivity> getActivityTestRule() {
         return sActivityRule;
+    }
+
+    @Override
+    protected TestRule getMainTestRule() {
+        return sMyRules;
     }
 
     @Before
@@ -1116,33 +1134,10 @@ public class ChildlessActivityTest
         return mgr;
     }
 
-    // TODO(b/124006095): should use a @Rule instead
-    private String mEnabledBefore;
-    @Before
-    public void saveDeviceConfig() {
-        mEnabledBefore = DeviceConfig.getProperty(DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
-                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
-        Log.d(TAG, "@Before saveDeviceConfig(): " + mEnabledBefore);
-
-        setFeatureEnabledByDeviceConfig(null);
-
-    }
-    @After
-    // TODO(b/124006095): should use a @Rule instead
-    public void restoreDeviceConfig() {
-        Log.d(TAG, "@After restoreDeviceConfig(): " + mEnabledBefore);
-        setFeatureEnabledByDeviceConfig(mEnabledBefore);
-
-    }
-    // TODO(b/124006095): should use a DeviceConfigUtils instead
     private void setFeatureEnabledByDeviceConfig(@Nullable String value) {
         Log.d(TAG, "setFeatureEnabledByDeviceConfig(): " + value);
 
-        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
-                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED,
-                value, /* makeDefault= */ false);
-
-        android.os.SystemClock.sleep(1000); // Wait a little bit since we're not using a listener
+        sDeviceConfigManager.set(value);
     }
 
 }
