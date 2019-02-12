@@ -29,8 +29,6 @@ import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
 
-import static org.junit.Assume.assumeTrue;
-
 import org.junit.Test;
 
 /**
@@ -90,8 +88,6 @@ abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActiv
     @Test
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
-
-        mUiBot.setScreenResolution();
 
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
