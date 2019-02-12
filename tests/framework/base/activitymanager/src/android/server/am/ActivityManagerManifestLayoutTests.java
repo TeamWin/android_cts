@@ -45,6 +45,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerManifestLayoutTests
  */
+@Presubmit
 public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase {
 
     // Test parameters
