@@ -423,6 +423,7 @@
 
     <style name="MyToolbarStyle" parent="@style/MyToolbarStyleParent">
         <item name="android:titleMarginEnd">3dp</item>
+        <item name="android:padding">8dp</item>
     </style>
 
     <style name="MyToolbarStyleParent">
