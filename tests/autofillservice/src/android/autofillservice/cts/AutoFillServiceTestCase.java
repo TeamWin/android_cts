@@ -43,6 +43,7 @@ import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.TestNameUtils;
+import com.android.cts.mockime.MockImeSessionRule;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -149,7 +150,8 @@ public final class AutoFillServiceTestCase {
     }
 
     @RunWith(AndroidJUnit4.class)
-    private abstract static class BaseTestCase {
+    // Must be public because of @ClassRule
+    public abstract static class BaseTestCase {
 
         private static final String TAG = "AutoFillServiceTestCase";
 
@@ -170,6 +172,9 @@ public final class AutoFillServiceTestCase {
                 TestNameUtils.setCurrentTestClass(null);
             }
         };
+
+        @ClassRule
+        public static final MockImeSessionRule sMockImeSessionRule = new MockImeSessionRule();
 
         private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 

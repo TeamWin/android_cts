@@ -29,13 +29,11 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
 import android.view.View;
 import android.widget.EditText;
 
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.AfterClass;
@@ -177,6 +175,8 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         final String ab = "A and B";
         final String b = "Only B";
 
+        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
+
         enableService();
 
         // Set expectations.
@@ -197,49 +197,45 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
         final String marker = mActivity.getMarker();
 
-        try (MockImeSession mockImeSession = MockImeSession.create(
-                mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
-            final ImeEventStream stream = mockImeSession.openEventStream();
+        final ImeEventStream stream = mockImeSession.openEventStream();
 
-            // Trigger auto-fill.
-            mActivity.onUsername(View::requestFocus);
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
 
-            // Wait until the MockIme gets bound to the TestActivity.
-            expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-            expectEvent(stream, editorMatcher("onStartInput", marker), MOCK_IME_TIMEOUT_MS);
+        // Wait until the MockIme gets bound to the TestActivity.
+        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
+        expectEvent(stream, editorMatcher("onStartInput", marker), MOCK_IME_TIMEOUT_MS);
 
-            sReplier.getNextFillRequest();
+        sReplier.getNextFillRequest();
 
-            // With no filter text all datasets should be shown
-            mUiBot.assertDatasets(aa, ab, b);
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(aa, ab, b);
 
-            // Only two datasets start with 'a'
-            final ImeCommand cmd1 = mockImeSession.callCommitText("a", 1);
-            expectCommand(stream, cmd1, MOCK_IME_TIMEOUT_MS);
+        // Only two datasets start with 'a'
+        final ImeCommand cmd1 = mockImeSession.callCommitText("a", 1);
+        expectCommand(stream, cmd1, MOCK_IME_TIMEOUT_MS);
 
-            mUiBot.assertDatasets(aa, ab);
+        mUiBot.assertDatasets(aa, ab);
 
-            // Only one dataset start with 'aa'
-            final ImeCommand cmd2 = mockImeSession.callCommitText("a", 1);
-            expectCommand(stream, cmd2, MOCK_IME_TIMEOUT_MS);
+        // Only one dataset start with 'aa'
+        final ImeCommand cmd2 = mockImeSession.callCommitText("a", 1);
+        expectCommand(stream, cmd2, MOCK_IME_TIMEOUT_MS);
 
-            mUiBot.assertDatasets(aa);
+        mUiBot.assertDatasets(aa);
 
-            // Only two datasets start with 'a'
-            sendKeyEvent("KEYCODE_DEL"); // TODO: add new method on MockIme for it
-            mUiBot.assertDatasets(aa, ab);
-            // With no filter text all datasets should be shown
-            sendKeyEvent("KEYCODE_DEL"); // TODO: add new method on MockIme for it
-            mUiBot.assertDatasets(aa, ab, b);
+        // Only two datasets start with 'a'
+        sendKeyEvent("KEYCODE_DEL"); // TODO: add new method on MockIme for it
+        mUiBot.assertDatasets(aa, ab);
+        // With no filter text all datasets should be shown
+        sendKeyEvent("KEYCODE_DEL"); // TODO: add new method on MockIme for it
+        mUiBot.assertDatasets(aa, ab, b);
 
-            // No dataset start with 'aaa'
-            final MyAutofillCallback callback = mActivity.registerCallback();
-            final ImeCommand cmd3 = mockImeSession.callCommitText("aaa", 1);
-            expectCommand(stream, cmd3, MOCK_IME_TIMEOUT_MS);
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-            mUiBot.assertNoDatasets();
-        }
+        // No dataset start with 'aaa'
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final ImeCommand cmd5 = mockImeSession.callCommitText("aaa", 1);
+        expectCommand(stream, cmd5, MOCK_IME_TIMEOUT_MS);
+        callback.assertUiHiddenEvent(mActivity.getUsername());
+        mUiBot.assertNoDatasets();
     }
 
     @Test
