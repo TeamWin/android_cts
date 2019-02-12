@@ -655,13 +655,16 @@ class StaticInfo {
     int64_t getMinFrameDurationFor(int64_t format, int64_t width, int64_t height) {
         int32_t minFrameDurationTag = (format == AIMAGE_FORMAT_HEIC) ?
                 ACAMERA_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS :
+                (format == AIMAGE_FORMAT_DEPTH_JPEG) ?
+                ACAMERA_DEPTH_AVAILABLE_DYNAMIC_DEPTH_MIN_FRAME_DURATIONS :
                 ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS;
         return getDurationFor(minFrameDurationTag, format, width, height);
     }
 
     int64_t getStallDurationFor(int64_t format, int64_t width, int64_t height) {
         int32_t stallDurationTag = (format == AIMAGE_FORMAT_HEIC) ?
-                ACAMERA_HEIC_AVAILABLE_HEIC_STALL_DURATIONS :
+                ACAMERA_HEIC_AVAILABLE_HEIC_STALL_DURATIONS : (format == AIMAGE_FORMAT_DEPTH_JPEG) ?
+                ACAMERA_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STALL_DURATIONS :
                 ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS;
         return getDurationFor(stallDurationTag, format, width, height);
     }
@@ -674,6 +677,11 @@ class StaticInfo {
             case AIMAGE_FORMAT_HEIC:
                 streamConfigTag = ACAMERA_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS;
                 streamConfigOutputTag = ACAMERA_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS_OUTPUT;
+                break;
+            case AIMAGE_FORMAT_DEPTH_JPEG:
+                streamConfigTag = ACAMERA_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS;
+                streamConfigOutputTag =
+                        ACAMERA_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS_OUTPUT;
                 break;
             case AIMAGE_FORMAT_JPEG:
             case AIMAGE_FORMAT_Y8:
@@ -742,7 +750,9 @@ class StaticInfo {
                 tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_MIN_FRAME_DURATIONS &&
                 tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_STALL_DURATIONS &&
                 tag != ACAMERA_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS &&
-                tag != ACAMERA_HEIC_AVAILABLE_HEIC_STALL_DURATIONS) {
+                tag != ACAMERA_HEIC_AVAILABLE_HEIC_STALL_DURATIONS &&
+                tag != ACAMERA_DEPTH_AVAILABLE_DYNAMIC_DEPTH_MIN_FRAME_DURATIONS &&
+                tag != ACAMERA_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STALL_DURATIONS) {
             return -1;
         }
         ACameraMetadata_const_entry entry;
@@ -2901,6 +2911,7 @@ bool nativeImageReaderTestBase(
                 break;
             case AIMAGE_FORMAT_Y8:
             case AIMAGE_FORMAT_HEIC:
+            case AIMAGE_FORMAT_DEPTH_JPEG:
                 if (!staticInfo.getMaxSizeForFormat(format, &testWidth, &testHeight)) {
                     // This isn't an error condition: device does't support this
                     // format.
@@ -3098,6 +3109,15 @@ testHeicNative(
         JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_HEIC,
+            ImageReaderListener::validateImageCb);
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeImageReaderTest_\
+testDepthJpegNative(
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+    ALOGV("%s", __FUNCTION__);
+    return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_DEPTH_JPEG,
             ImageReaderListener::validateImageCb);
 }
 
