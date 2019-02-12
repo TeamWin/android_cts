@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.LocusId;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -38,10 +39,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ContentCaptureContextTest {
 
-    private static final Uri URI = Uri.parse("file:/dev/null");
-    private static final String ACTION = "Jackson";
+    private static final Uri URI = Uri.parse("file://dev/null");
 
-    private final ContentCaptureContext.Builder mBuilder = new ContentCaptureContext.Builder();
+    private static final LocusId ID = new LocusId(URI);
+
+    private final ContentCaptureContext.Builder mBuilder = new ContentCaptureContext.Builder(ID);
 
     private final Bundle mExtras = new Bundle();
 
@@ -51,13 +53,8 @@ public class ContentCaptureContextTest {
     }
 
     @Test
-    public void testBuilder_invalidUri() {
-        assertThrows(NullPointerException.class, () -> mBuilder.setUri(null));
-    }
-
-    @Test
-    public void testBuilder_invalidAction() {
-        assertThrows(NullPointerException.class, () -> mBuilder.setAction(null));
+    public void testBuilder_invalidId() {
+        assertThrows(NullPointerException.class, () -> new Builder(null));
     }
 
     @Test
@@ -67,20 +64,8 @@ public class ContentCaptureContextTest {
 
     @Test
     public void testAfterBuild_setExtras() {
-        assertThat(mBuilder.setUri(URI).build()).isNotNull();
+        assertThat(mBuilder.build()).isNotNull();
         assertThrows(IllegalStateException.class, () -> mBuilder.setExtras(mExtras));
-    }
-
-    @Test
-    public void testAfterBuild_setAction() {
-        assertThat(mBuilder.setUri(URI).build()).isNotNull();
-        assertThrows(IllegalStateException.class, () -> mBuilder.setAction(ACTION));
-    }
-
-    @Test
-    public void testAfterBuild_setUri() {
-        assertThat(mBuilder.setExtras(mExtras).build()).isNotNull();
-        assertThrows(IllegalStateException.class, () -> mBuilder.setUri(URI));
     }
 
     @Test
@@ -91,29 +76,18 @@ public class ContentCaptureContextTest {
 
     @Test
     public void testBuild_empty() {
-        assertThrows(IllegalStateException.class, () -> mBuilder.build());
+        assertThat(mBuilder.build()).isNotNull();
     }
 
     @Test
-    public void testSetGetUri() {
-        final Builder builder = mBuilder.setUri(URI);
-        assertThat(builder).isSameAs(mBuilder);
-        final ContentCaptureContext context = builder.build();
+    public void testGetId() {
+        final ContentCaptureContext context = mBuilder.build();
         assertThat(context).isNotNull();
-        assertThat(context.getUri()).isEqualTo(URI);
+        assertThat(context.getLocusId()).isEqualTo(ID);
     }
 
     @Test
-    public void testSetGetAction() {
-        final Builder builder = mBuilder.setAction(ACTION);
-        assertThat(builder).isSameAs(mBuilder);
-        final ContentCaptureContext context = builder.build();
-        assertThat(context).isNotNull();
-        assertThat(context.getAction()).isEqualTo(ACTION);
-    }
-
-    @Test
-    public void testGetSetBundle() {
+    public void testSetGetBundle() {
         final Builder builder = mBuilder.setExtras(mExtras);
         assertThat(builder).isSameAs(mBuilder);
         final ContentCaptureContext context = builder.build();
@@ -124,8 +98,6 @@ public class ContentCaptureContextTest {
     @Test
     public void testParcel() {
         final Builder builder = mBuilder
-                .setUri(URI)
-                .setAction(ACTION)
                 .setExtras(mExtras);
         assertThat(builder).isSameAs(mBuilder);
         final ContentCaptureContext context = builder.build();
@@ -135,10 +107,24 @@ public class ContentCaptureContextTest {
         assertEverything(clone);
     }
 
+    @Test
+    public void testForLocus_null() {
+        assertThrows(NullPointerException.class, () -> ContentCaptureContext.forLocusId(null));
+    }
+
+    @Test
+    public void testForLocus_valid() {
+        final ContentCaptureContext context = ContentCaptureContext.forLocusId(URI);
+        assertThat(context).isNotNull();
+        assertThat(context.getExtras()).isNull();
+        final LocusId locusId = context.getLocusId();
+        assertThat(locusId).isNotNull();
+        assertThat(locusId.getUri()).isEqualTo(URI);
+    }
+
     private void assertEverything(@NonNull ContentCaptureContext context) {
         assertThat(context).isNotNull();
-        assertThat(context.getUri()).isEqualTo(URI);
-        assertThat(context.getAction()).isEqualTo(ACTION);
+        assertThat(context.getLocusId()).isEqualTo(ID);
         assertExtras(context.getExtras());
     }
 
