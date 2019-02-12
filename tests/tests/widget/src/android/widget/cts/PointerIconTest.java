@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
 import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.FlakyTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -112,6 +113,7 @@ public class PointerIconTest {
         assertDefaultWidgetPointerIconBehavior(mActivity.findViewById(R.id.spinner));
     }
 
+    @FlakyTest(bugId = 124009655)
     @Test
     public void testTabWidget() throws Throwable {
         final TabHost tabHost = (TabHost) mActivity.findViewById(android.R.id.tabhost);
