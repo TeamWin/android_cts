@@ -17,6 +17,7 @@
 package android.os.cts;
 
 import android.os.Environment;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import java.io.File;
@@ -44,6 +45,7 @@ import java.io.IOException;
  *
  * TODO: Combine this file with {@link android.permission.cts.FileSystemPermissionTest}
  */
+@AppModeFull
 public class FileAccessPermissionTest extends AndroidTestCase {
 
     /**

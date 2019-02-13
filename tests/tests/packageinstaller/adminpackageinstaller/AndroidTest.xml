@@ -20,6 +20,10 @@
     <!-- Device Owner-specific tests are not applicable to instant apps. -->
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
 
+    <target_preparer class="com.android.tradefed.targetprep.SwitchUserTargetPreparer">
+        <option name="user-type" value="system"/>
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/packageinstaller/" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>

@@ -23,6 +23,7 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.support.test.filters.RequiresDevice;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -1115,6 +1116,7 @@ public class ASurfaceControlTest {
     }
 
     @Test
+    @RequiresDevice // emulators can't support sync fences
     public void testSurfaceTransaction_setDesiredPresentTime_now() throws Throwable {
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -1148,6 +1150,7 @@ public class ASurfaceControlTest {
     }
 
     @Test
+    @RequiresDevice // emulators can't support sync fences
     public void testSurfaceTransaction_setDesiredPresentTime_30ms() throws Throwable {
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -1181,6 +1184,7 @@ public class ASurfaceControlTest {
     }
 
     @Test
+    @RequiresDevice // emulators can't support sync fences
     public void testSurfaceTransaction_setDesiredPresentTime_100ms() throws Throwable {
         verifyTest(
                 new BasicSurfaceHolderCallback() {

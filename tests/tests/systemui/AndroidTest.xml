@@ -25,6 +25,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.systemui.cts" />
         <option name="runtime-hint" value="10m19s" />
+        <option name="isolated-storage" value="false" />
     </test>
 
     <!-- Collect the files in the dump directory for debugging -->

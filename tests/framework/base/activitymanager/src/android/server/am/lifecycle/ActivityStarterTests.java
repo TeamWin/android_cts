@@ -36,14 +36,17 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityLauncher;
 
+import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 /**
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityStarterTests
  */
+@Presubmit
 public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     private static final ComponentName STANDARD_ACTIVITY
@@ -309,6 +312,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
      * A top activity is finished when an activity is launched with FLAG_ACTIVITY_CLEAR_TOP.
      */
     @Test
+    @FlakyTest
     public void testLaunchActivityWithFlagClearTop() {
         // Launch a standard activity
         getLaunchActivityBuilder()

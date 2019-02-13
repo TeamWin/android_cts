@@ -32,7 +32,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.FlakyTest;
@@ -42,6 +44,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.EditText;
 import android.widget.NumberPicker;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -449,5 +452,25 @@ public class NumberPickerTest {
         final int newValue = 8;
         numberPicker.setSelectionDividerHeight(newValue);
         assertEquals(newValue, numberPicker.getSelectionDividerHeight());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSetGetTextColor() {
+        EditText inputText = (EditText) mNumberPicker.getChildAt(0);
+
+        mNumberPicker.setTextColor(Color.RED);
+        assertEquals(Color.RED, mNumberPicker.getTextColor());
+        assertEquals(ColorStateList.valueOf(Color.RED), inputText.getTextColors());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSetGetTextSize() {
+        EditText inputText = (EditText) mNumberPicker.getChildAt(0);
+
+        mNumberPicker.setTextSize(20f);
+        assertEquals(20f, mNumberPicker.getTextSize(), 0.01f);
+        assertEquals(20f, inputText.getTextSize(), 0.01f);
     }
 }

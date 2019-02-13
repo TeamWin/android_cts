@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
+import android.support.test.filters.FlakyTest;
 import android.util.Size;
 
 import org.junit.Test;
@@ -35,12 +36,14 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayTests
  */
+@Presubmit
 public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase {
 
     /**
      * Tests that the global configuration is equal to the default display's override configuration.
      */
     @Test
+    @FlakyTest
     public void testDefaultDisplayOverrideConfiguration() throws Exception {
         final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
         final ActivityDisplay primaryDisplay = getDisplayState(reportedDisplays, DEFAULT_DISPLAY);
@@ -113,7 +116,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * This sets overrides to display size and density, initiates a display changed event by locking
      * and unlocking the phone and verifies that overrides are kept.
      */
-    @Presubmit
     @Test
     public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();

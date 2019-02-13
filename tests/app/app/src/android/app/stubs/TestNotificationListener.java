@@ -74,14 +74,14 @@ public class TestNotificationListener extends NotificationListenerService {
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
-        if (!mTestPackages.contains(sbn.getPackageName())) { return; }
+        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) { return; }
         mRankingMap = rankingMap;
         mPosted.add(sbn);
     }
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap) {
-        if (!mTestPackages.contains(sbn.getPackageName())) { return; }
+        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) { return; }
         mRankingMap = rankingMap;
         mRemoved.add(sbn);
     }

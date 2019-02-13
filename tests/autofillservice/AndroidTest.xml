@@ -44,6 +44,7 @@
     <option name="package" value="android.autofillservice.cts" />
     <!-- 20x default timeout of 600sec -->
     <option name="shell-timeout" value="12000000"/>
+    <option name="isolated-storage" value="false" />
   </test>
 
   <!-- Collect the files generated on error -->

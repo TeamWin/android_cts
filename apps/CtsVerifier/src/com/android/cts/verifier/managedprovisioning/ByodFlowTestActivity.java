@@ -594,8 +594,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 }
             };
             adapter.add(mDisableNfcBeamTest);
-            adapter.add(mKeyChainTest);
         }
+
+        adapter.add(mKeyChainTest);
 
         /* If there is an application that handles RECORD_SOUND_ACTION, test that it handles it
          * well.

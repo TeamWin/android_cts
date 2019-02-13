@@ -65,12 +65,12 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerActivityVisibilityTests
  */
+@Presubmit
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
 
-    @Presubmit
     @Test
     @FlakyTest(bugId = 110276714)
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
@@ -122,7 +122,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      * Assert that the home activity is visible if a task that was launched from home is pinned
      * and also assert the next task in the fullscreen stack isn't visible.
      */
-    @Presubmit
     @Test
     public void testHomeVisibleOnActivityTaskPinned() throws Exception {
         if (!supportsPip()) {
@@ -149,7 +148,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertHomeActivityVisible(true);
     }
 
-    @Presubmit
     @Test
     public void testTranslucentActivityOverDockedStack() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
@@ -174,7 +172,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
 
-    @Presubmit
     @Test
     @FlakyTest(bugId = 110276714)
     public void testTurnScreenOnActivity() throws Exception {
@@ -187,7 +184,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         }
     }
 
-    @Presubmit
     @Test
     @FlakyTest(bugId = 110276714)
     public void testFinishActivityInNonFocusedStack() throws Exception {
@@ -218,11 +214,13 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Test
+    @FlakyTest
     public void testFinishActivityWithMoveTaskToBackAfterPause() throws Exception {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_PAUSE);
     }
 
     @Test
+    @FlakyTest
     public void testFinishActivityWithMoveTaskToBackAfterStop() throws Exception {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_STOP);
     }
@@ -410,6 +408,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Test
+    @FlakyTest
     public void testTurnScreenOnAttrRemove() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
@@ -431,7 +430,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Test
-    @Presubmit
     public void testTurnScreenOnSingleTask() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();

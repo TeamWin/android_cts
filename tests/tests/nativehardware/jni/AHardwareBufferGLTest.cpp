@@ -42,8 +42,20 @@ namespace {
 // The 'stride' field is ignored by AHardwareBuffer_allocate, so we can use it
 // to pass these flags.
 enum TestFlags {
-    kGlFormat = 0x1,  // The 'format' field specifies a GL format.
-    kUseSrgb = 0x2,  // Whether to use the sRGB transfer function.
+    kGlFormat = 0x1,            // The 'format' field specifies a GL format.
+    kUseSrgb = 0x2,             // Whether to use the sRGB transfer function.
+    kExplicitYuvSampling = 0x4, // Whether to do explicit YUV conversion sampling,
+                                // if false, GL will do conversions implicitly.
+};
+
+// Conversion from YUV to RGB used by GPU. This assumes BT.601 (partial) format.
+// The matrix M is multiplied in (Y,U,V) = M * (R, G, B, 1) to obtain the final YUV value s.
+// TODO(b/123041714): Assumes ITU_601 color space is used. Can we count on this? Spec is unclear for
+//                    glReadPixels YUV -> RGB conversion.
+const double kYuvToRgb[] = {
+    0.25678823529411765,  0.50412941176470580,  0.09790588235294118, 16.00,
+   -0.14822352941176470, -0.29099215686274510,  0.43921568627450980, 128.0,
+    0.43921568627450980, -0.36778823529411764, -0.07142745098039215, 128.0
 };
 
 #define FORMAT_CASE(x) case AHARDWAREBUFFER_FORMAT_##x: return #x; break
@@ -63,6 +75,7 @@ const char* AHBFormatAsString(int32_t format) {
         FORMAT_CASE(D32_FLOAT);
         FORMAT_CASE(D32_FLOAT_S8_UINT);
         FORMAT_CASE(S8_UINT);
+        FORMAT_CASE(Y8Cb8Cr8_420);
         GL_FORMAT_CASE(GL_RGB8);
         GL_FORMAT_CASE(GL_RGBA8);
         GL_FORMAT_CASE(GL_RGB565);
@@ -86,6 +99,9 @@ std::string GetTestName(const ::testing::TestParamInfo<AHardwareBuffer_Desc>& in
         if (info.param.stride & kUseSrgb) {
             name << "_sRGB";
         }
+        if (info.param.stride & kExplicitYuvSampling) {
+            name << "_explicitYuvSampling";
+        }
     }
     return name.str();
 }
@@ -96,6 +112,7 @@ union IntFloat {
 };
 
 // Copied from android.util.Half
+// Used for reading directly from half-float buffers
 float FloatFromHalf(uint16_t bits) {
     uint32_t s = bits & 0x8000;
     uint32_t e = (bits & 0x7C00) >> 10;
@@ -125,6 +142,53 @@ float FloatFromHalf(uint16_t bits) {
     return result.f;
 }
 
+// Copied from android.util.Half
+// Used for writing directly into half-float buffers.
+uint16_t HalfFromFloat(float value) {
+    uint32_t bits = *reinterpret_cast<uint32_t*>(&value); // convert to int bits
+    int32_t s = (bits >> 31);
+    int32_t e = (bits >> 23) & 0xFF;
+    int32_t m = bits & 0x7FFFFF;
+
+    int32_t outE = 0;
+    int32_t outM = 0;
+
+    if (e == 0xff) { // Infinite or NaN
+        outE = 0x1f;
+        outM = m != 0 ? 0x200 : 0;
+    } else {
+        e = e - 127 + 15;
+        if (e >= 0x1f) { // Overflow
+            outE = 0x31;
+        } else if (e <= 0) { // Underflow
+            if (e < -10) {
+                // The absolute fp32 value is less than MIN_VALUE, flush to +/-0
+            } else {
+                // The fp32 value is a normalized float less than MIN_NORMAL,
+                // we convert to a denorm fp16
+                m = (m | 0x800000) >> (1 - e);
+                if ((m & 0x1000) != 0) m += 0x2000;
+                outM = m >> 13;
+            }
+        } else {
+            outE = e;
+            outM = m >> 13;
+            if ((m & 0x1000) != 0) {
+                // Round to nearest "0.5" up
+                int out = (outE << 10) | outM;
+                out++;
+                return static_cast<uint16_t>(out | (s << 15));
+            }
+        }
+    }
+    return static_cast<uint16_t>((s << 15) | (outE << 10) | outM);
+}
+
+// Utility function to ensure converted values are clamped to [0...255].
+uint8_t ClampToUInt8(float value) {
+    return static_cast<uint8_t>(value <= 0.0 ? 0 : (value >= 255.0 ? 255 : value));
+}
+
 int MipLevelCount(uint32_t width, uint32_t height) {
     return 1 + static_cast<int>(std::floor(std::log2(static_cast<float>(std::max(width, height)))));
 }
@@ -133,6 +197,7 @@ uint32_t RoundUpToPowerOf2(uint32_t value) {
     return value == 0u ? value : 1u << (32 - __builtin_clz(value - 1));
 }
 
+// Returns true only if the format has a dedicated alpha channel
 bool FormatHasAlpha(uint32_t format) {
     switch (format) {
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
@@ -149,8 +214,15 @@ bool FormatHasAlpha(uint32_t format) {
     }
 }
 
+// Returns true only if the format has its components specified in some floating point format.
 bool FormatIsFloat(uint32_t format) {
     return format == AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT || format == GL_RGBA16F;
+}
+
+// Returns true only if the format is a YUV format.
+bool FormatIsYuv(uint32_t format) {
+    // Update with more YUV cases here if more formats become available
+    return format == AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420;
 }
 
 void UploadData(const AHardwareBuffer_Desc& desc, GLenum format, GLenum type, const void* data) {
@@ -230,49 +302,7 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
     }
 }
 
-// Draws the following checkerboard pattern using glScissor and glClear.
-// The number after the color is the stencil value and the floating point number is the depth value.
-// The pattern is asymmetric to detect coordinate system mixups.
-//        +-----+-----+ (W, H)
-//        | OR1 | OB2 |
-//        | 0.5 | 0.0 |
-//        +-----+-----+  Tb = transparent black
-//        | Tb0 | OG3 |  OR = opaque red
-//        | 1.0 | 1.0 |  OG = opaque green
-// (0, 0) +-----+-----+  OB = opaque blue
-//
-void DrawCheckerboard(int width, int height) {
-    glEnable(GL_SCISSOR_TEST);
-    const GLbitfield all_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    glClearDepthf(1.0f);
-    glClearStencil(0);
-    glScissor(0, 0, width, height);
-    glClear(all_bits);
-
-    glClearColor(1.f, 0.f, 0.f, 1.f);
-    glClearDepthf(0.5f);
-    glClearStencil(1);
-    glScissor(0, height / 2, width / 2, height / 2);
-    glClear(all_bits);
-
-    glClearColor(0.f, 1.f, 0.f, 1.f);
-    glClearDepthf(1.0f);
-    glClearStencil(3);
-    glScissor(width / 2, 0, width / 2, height / 2);
-    glClear(all_bits);
-
-    glClearColor(0.f, 0.f, 1.f, 1.f);
-    glClearDepthf(0.f);
-    glClearStencil(2);
-    glScissor(width / 2, height / 2, width / 2, height / 2);
-    glClear(all_bits);
-
-    glDisable(GL_SCISSOR_TEST);
-    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-}
-
+// A pre-defined list of colors that will be used for testing
 enum GoldenColor {
     kZero,  // all zero, i.e., transparent black
     kBlack,  // opaque black
@@ -285,12 +315,15 @@ enum GoldenColor {
     kRed50Alpha100,  // Opaque 50% red
 };
 
+// A golden color at a specified position (given in pixel coordinates)
 struct GoldenPixel {
     int x;
     int y;
     GoldenColor color;
 };
 
+// Compares a golden pixel against an actual pixel given the 4 color values. The values must
+// match exactly.
 template <typename T>
 void CheckGoldenPixel(int x, int y, const std::array<T, 4>& golden,
                       const std::array<T, 4>& actual) {
@@ -298,6 +331,8 @@ void CheckGoldenPixel(int x, int y, const std::array<T, 4>& golden,
     EXPECT_EQ(golden, actual) << "Pixel doesn't match at X=" << x << ", Y=" << y;
 }
 
+// Compares an actual pixel against a range of pixel values specified by a minimum and maximum
+// 4-component pixel value.
 template <typename T>
 void CheckGoldenPixel(int x, int y, const std::array<T, 4>& minimum,
                       const std::array<T, 4>& maximum, const std::array<T, 4>& actual) {
@@ -309,20 +344,32 @@ void CheckGoldenPixel(int x, int y, const std::array<T, 4>& minimum,
             break;
         }
     }
+    // Prefix with '+' so that uint8_t values are printed out as integers
     EXPECT_TRUE(in_range) << "Pixel out of acceptable range at X=" << x << ", Y=" << y
-        << "; actual value: {" << actual[0] << ", " << actual[1] << ", " << actual[2] << ", " << actual[3]
-        << "}, minimum: {" << minimum[0] << ", " << minimum[1] << ", " << minimum[2] << ", " << minimum[3]
-        << "}, maximum: {" << maximum[0] << ", " << maximum[1] << ", " << maximum[2] << ", " << maximum[3]
+        << "; actual value: {" << +actual[0] << ", " << +actual[1] << ", "
+                               << +actual[2] << ", " << +actual[3]
+        << "}, minimum: {" << +minimum[0] << ", " << +minimum[1] << ", "
+                           << +minimum[2] << ", " << +minimum[3]
+        << "}, maximum: {" << +maximum[0] << ", " << +maximum[1] << ", "
+                           << +maximum[2] << ", " << +maximum[3]
         << "}";
 }
 
-void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
-                      uint32_t format) {
-    std::array<uint8_t, 4> golden_pixel = {0, 0, 0, 255};
-    std::array<uint8_t, 4> golden_max = {0, 0, 0, 255};
+// Given a golden color, format, and maximum allowed error, returns a 4-component pixel (as well as
+// a maximum where it makes sense). Returns true, if the golden_max_out parameter was set, and
+// the return values indicate a range.
+bool GetGoldenColor(const GoldenColor& golden, uint32_t format, int32_t max_err,
+                    std::array<uint8_t, 4>* golden_pixel_out,
+                    std::array<uint8_t, 4>* golden_max_out) {
     bool use_range = false;
     // Adjust color values.
-    switch (golden.color) {
+    std::array<uint8_t, 4>& golden_pixel = *golden_pixel_out;
+    std::array<uint8_t, 4>& golden_max = *golden_max_out;
+    golden_pixel[0] = golden_pixel[1] = golden_pixel[2] = 0;
+    golden_max[0] = golden_max[1] = golden_max[2] = 0;
+    golden_pixel[3] = 255;
+    golden_max[3] = 255;
+    switch (golden) {
         case kRed: golden_pixel[0] = 255; break;
         case kRed50:
         case kRed50Alpha100:
@@ -340,10 +387,12 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& p
         case kZero: if (FormatHasAlpha(format)) golden_pixel[3] = 0; break;
         case kWhite: golden_pixel[0] = 255; golden_pixel[1] = 255; golden_pixel[2] = 255; break;
         case kBlack: break;
-        default: FAIL() << "Unrecognized golden pixel color";
+        default:
+            ADD_FAILURE() << "Unrecognized golden pixel color";
+            return false;
     }
     // Adjust alpha.
-    if (golden.color == kRed50 || golden.color == kRed50Srgb) {
+    if (golden == kRed50 || golden == kRed50Srgb) {
         if (format == GL_RGB10_A2 || format == AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM) {
             golden_pixel[3] = 85;
             golden_max[3] = 170;
@@ -353,22 +402,47 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& p
         }
     }
     // Adjust color range for RGB565.
-    if ((golden.color == kRed50 || golden.color == kRed50Alpha100) &&
+    if ((golden == kRed50 || golden == kRed50Alpha100) &&
         (format == GL_RGB565 || format == AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM)) {
         golden_pixel[0] = 123;
         golden_max[0] = 132;
     }
-
-    if (use_range) {
-        CheckGoldenPixel(golden.x, golden.y, golden_pixel, golden_max, pixel);
-    } else {
-        CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
+    // Convert to YUV if this is a YUV format
+    if (FormatIsYuv(format)) {
+        const uint8_t r = golden_pixel[0];
+        const uint8_t g = golden_pixel[1];
+        const uint8_t b = golden_pixel[2];
+        const float y = kYuvToRgb[0] * r + kYuvToRgb[1] * g + kYuvToRgb[2]   * b + kYuvToRgb[3];
+        const float u = kYuvToRgb[4] * r + kYuvToRgb[5] * g + kYuvToRgb[6]   * b + kYuvToRgb[7];
+        const float v = kYuvToRgb[8] * r + kYuvToRgb[9] * g + kYuvToRgb[10]  * b + kYuvToRgb[11];
+        golden_pixel[0] = ClampToUInt8(y);
+        golden_pixel[1] = ClampToUInt8(u);
+        golden_pixel[2] = ClampToUInt8(v);
     }
+    // Apply error bounds
+    if (max_err != 0) {
+        for (int i = 0; i < 4; ++i) {
+            golden_pixel[i] = ClampToUInt8(golden_pixel[i] - max_err);
+            golden_max[i] = ClampToUInt8(golden_pixel[i] + max_err);
+        }
+        use_range = true;
+    }
+    return use_range;
 }
 
-void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pixel) {
-    std::array<float, 4> golden_pixel = {0.f, 0.f, 0.f, 1.f};
-    switch (golden.color) {
+// Get a golden color for range-less values.
+void GetGoldenColor(const GoldenColor& golden, uint32_t format,
+                    std::array<uint8_t, 4>* golden_pixel_out) {
+    std::array<uint8_t, 4> ignore;
+    GetGoldenColor(golden, format, 0, golden_pixel_out, &ignore);
+}
+
+// Get a golden color for floating point values.
+void GetGoldenColor(const GoldenColor& golden, std::array<float, 4>* golden_pixel_out) {
+    std::array<float, 4>& golden_pixel = *golden_pixel_out;
+    golden_pixel[0] = golden_pixel[1] = golden_pixel[2] = 0.f;
+    golden_pixel[3] = 1.f;
+    switch (golden) {
         case kRed: golden_pixel[0] = 1.f; break;
         case kRed50: golden_pixel[0] = 0.5f; golden_pixel[3] = 0.5f; break;
         case kGreen: golden_pixel[1] = 1.f; break;
@@ -378,12 +452,45 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pix
         case kBlack: break;
         default: FAIL() << "Unrecognized golden pixel color";
     }
+}
+
+// Checks a pixel against a golden pixel of the specified format with the given error bounds.
+void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
+                      uint32_t format, int32_t max_err) {
+    std::array<uint8_t, 4> golden_pixel;
+    std::array<uint8_t, 4> golden_max;
+    if (GetGoldenColor(golden.color, format, max_err, &golden_pixel, &golden_max)) {
+        CheckGoldenPixel(golden.x, golden.y, golden_pixel, golden_max, pixel);
+    } else {
+        CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
+    }
+}
+
+// Checks a pixel against a golden pixel of the specified format with no room for error.
+void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
+                      uint32_t format) {
+    CheckGoldenPixel(golden, pixel, format, 0);
+}
+
+// Checks a floating point pixel against a golden pixel.
+void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pixel) {
+    std::array<float, 4> golden_pixel;
+    GetGoldenColor(golden.color, &golden_pixel);
     CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
 }
 
-void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, uint32_t format) {
+// Using glReadPixels, reads out the individual pixel values of each golden pixel location, and
+// compares each against the golden color.
+void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens,
+                       uint32_t format,
+                       int16_t max_err = 0) {
     // We currently do not test any float formats that don't have alpha.
     EXPECT_TRUE(FormatIsFloat(format) ? FormatHasAlpha(format) : true);
+    if (FormatIsYuv(format)) {
+        format = GL_RGB8;   // YUV formats are read out as RGB for glReadPixels
+        max_err = 255;      // Conversion method is unknown, so we cannot assume
+                            // anything about the actual colors
+    }
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     // In OpenGL, Y axis grows up, so bottom = minimum Y coordinate.
     int bottom = INT_MAX, left = INT_MAX, right = 0, top = 0;
@@ -395,11 +502,12 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, uint32_t format)
         if (FormatIsFloat(format)) {
             std::array<float, 4> pixel = {0.5f, 0.5f, 0.5f, 0.5f};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_FLOAT, pixel.data());
+            ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "Could not read pixel at " << golden.x << "," << golden.y;
             CheckGoldenPixel(golden, pixel);
         } else {
             std::array<uint8_t, 4> pixel = {127, 127, 127, 127};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
-            CheckGoldenPixel(golden, pixel, format);
+            CheckGoldenPixel(golden, pixel, format, max_err);
         }
     }
     // Repeat the test, but read back all the necessary pixels in a single glReadPixels call.
@@ -423,8 +531,342 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, uint32_t format)
             uint8_t* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
             std::array<uint8_t, 4> pixel_array;
             memcpy(pixel_array.data(), pixel, 4);
-            CheckGoldenPixel(golden, pixel_array, format);
+            CheckGoldenPixel(golden, pixel_array, format, max_err);
         }
+    }
+}
+
+// Using direct memory access by locking the buffer, accesses the individual pixel values of each
+// golden pixel location, and compares each against the golden color. This variant works for RGBA
+// layouts only.
+void CheckCpuGoldenPixelsRgba(const std::vector<GoldenPixel>& goldens,
+                              AHardwareBuffer* buffer,
+                              const AHardwareBuffer_Desc& desc) {
+    void* data = nullptr;
+    int result = AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1, nullptr,
+                                      &data);
+    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
+    for (const GoldenPixel& golden : goldens) {
+        ptrdiff_t row_offset = golden.y * desc.stride;
+        switch (desc.format) {
+            case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
+            case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM: {
+                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4;
+                std::array<uint8_t, 4> pixel_to_check;
+                memcpy(pixel_to_check.data(), pixel, 4);
+                if (desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM) {
+                    pixel_to_check[3] = 255;
+                }
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM: {
+                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 3;
+                std::array<uint8_t, 4> pixel_to_check;
+                memcpy(pixel_to_check.data(), pixel, 3);
+                pixel_to_check[3] = 255;
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM: {
+                uint16_t* pixel = reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 2);
+                std::array<uint8_t, 4> pixel_to_check = {
+                    static_cast<uint8_t>(((*pixel & 0xF800) >> 11) * (255./31.)),
+                    static_cast<uint8_t>(((*pixel & 0x07E0) >> 5) * (255./63.)),
+                    static_cast<uint8_t>((*pixel & 0x001F) * (255./31.)),
+                    255,
+                };
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
+                uint16_t* pixel = reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 8);
+                std::array<float, 4> pixel_to_check;
+                for (int i = 0; i < 4; ++i) {
+                    pixel_to_check[i] = FloatFromHalf(pixel[i]);
+                }
+                CheckGoldenPixel(golden, pixel_to_check);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
+                uint32_t* pixel = reinterpret_cast<uint32_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4);
+                std::array<uint8_t, 4> pixel_to_check = {
+                    static_cast<uint8_t>((*pixel & 0x000003FF) * (255./1023.)),
+                    static_cast<uint8_t>(((*pixel & 0x000FFC00) >> 10) * (255./1023.)),
+                    static_cast<uint8_t>(((*pixel & 0x3FF00000) >> 20) * (255./1023.)),
+                    static_cast<uint8_t>(((*pixel & 0xC0000000) >> 30) * (255./3.)),
+                };
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
+                break;
+            }
+            default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
+        }
+    }
+    AHardwareBuffer_unlock(buffer, nullptr);
+}
+
+// Using direct memory access by locking the buffer, accesses the individual pixel values of each
+// golden pixel location, and compares each against the golden color. This variant works for YUV
+// layouts only.
+void CheckCpuGoldenPixelsYuv(const std::vector<GoldenPixel>& goldens,
+                             AHardwareBuffer* buffer,
+                             const AHardwareBuffer_Desc& desc) {
+    AHardwareBuffer_Planes planes_info;
+    int result = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1,
+                                            nullptr, &planes_info);
+    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
+    for (const GoldenPixel& golden : goldens) {
+        switch (desc.format) {
+            case AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420: {
+                ASSERT_EQ(3U, planes_info.planeCount) << "Unexpected number of planes in YUV data: "
+                                                      << planes_info.planeCount;
+                AHardwareBuffer_Plane* planes = planes_info.planes;
+                ptrdiff_t y_offset = golden.y * planes[0].rowStride
+                                   + golden.x * planes[0].pixelStride;
+                ptrdiff_t u_offset = (golden.y / 2) * planes[1].rowStride
+                                   + (golden.x / 2) * planes[1].pixelStride;
+                ptrdiff_t v_offset = (golden.y / 2) * planes[2].rowStride
+                                   + (golden.x / 2) * planes[2].pixelStride;
+                // Check colors in YUV space (which desc.format is)
+                std::array<uint8_t, 4> pixel_to_check = {
+                    *(reinterpret_cast<uint8_t*>(planes[0].data) + y_offset),
+                    *(reinterpret_cast<uint8_t*>(planes[1].data) + u_offset),
+                    *(reinterpret_cast<uint8_t*>(planes[2].data) + v_offset),
+                    255
+                };
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
+            }
+            break;
+            default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
+        }
+    }
+    AHardwareBuffer_unlock(buffer, nullptr);
+}
+
+// Using direct memory access by locking the buffer, accesses the individual pixel values of each
+// golden pixel location, and compares each against the golden color. This variant forwards to the
+// appropriate RGBA or YUV variants.
+void CheckCpuGoldenPixels(const std::vector<GoldenPixel>& goldens,
+                          AHardwareBuffer* buffer) {
+    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_describe(buffer, &desc);
+    if (FormatIsYuv(desc.format)) {
+        CheckCpuGoldenPixelsYuv(goldens, buffer, desc);
+    } else {
+        CheckCpuGoldenPixelsRgba(goldens, buffer, desc);
+    }
+}
+
+// Draws the following checkerboard pattern using glScissor and glClear.
+// The number after the color is the stencil value and the floating point number is the depth value.
+// The pattern is asymmetric to detect coordinate system mixups.
+//        +-----+-----+ (W, H)
+//        | OR1 | OB2 |
+//        | 0.5 | 0.0 |
+//        +-----+-----+  Tb = transparent black
+//        | Tb0 | OG3 |  OR = opaque red
+//        | 1.0 | 1.0 |  OG = opaque green
+// (0, 0) +-----+-----+  OB = opaque blue
+//
+void DrawCheckerboard(int width, int height, uint32_t format) {
+    glEnable(GL_SCISSOR_TEST);
+    const GLbitfield all_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+    std::array<uint8_t, 4> color;
+
+    GetGoldenColor(kZero, format, &color);
+    glClearColor(color[0] / 255.f, color[1] / 255.f, color[2] / 255.f, color[3] / 255.f);
+    glClearDepthf(1.0f);
+    glClearStencil(0);
+    glScissor(0, 0, width, height);
+    glClear(all_bits);
+
+    GetGoldenColor(kRed, format, &color);
+    glClearColor(color[0] / 255.f, color[1] / 255.f, color[2] / 255.f, color[3] / 255.f);
+    glClearDepthf(0.5f);
+    glClearStencil(1);
+    glScissor(0, height / 2, width / 2, height / 2);
+    glClear(all_bits);
+
+    GetGoldenColor(kGreen, format, &color);
+    glClearColor(color[0] / 255.f, color[1] / 255.f, color[2] / 255.f, color[3] / 255.f);
+    glClearDepthf(1.0f);
+    glClearStencil(3);
+    glScissor(width / 2, 0, width / 2, height / 2);
+    glClear(all_bits);
+
+    GetGoldenColor(kBlue, format, &color);
+    glClearColor(color[0] / 255.f, color[1] / 255.f, color[2] / 255.f, color[3] / 255.f);
+    glClearDepthf(0.f);
+    glClearStencil(2);
+    glScissor(width / 2, height / 2, width / 2, height / 2);
+    glClear(all_bits);
+
+    glDisable(GL_SCISSOR_TEST);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+}
+
+// Using direct memory access, writes each specified golden pixel to the correct memory address
+// inside the given buffer. This variant is compatible with RGBA color buffers only.
+void WriteGoldenPixelsRgba(AHardwareBuffer* buffer,
+                           const AHardwareBuffer_Desc& desc,
+                           const std::vector<GoldenPixel>& goldens) {
+    void* data = nullptr;
+    int result = AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY, -1, nullptr,
+                                      &data);
+    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
+    std::array<uint8_t, 4> golden_color;
+    std::array<float, 4> golden_float;
+    for (const GoldenPixel& golden : goldens) {
+        ptrdiff_t row_offset = golden.y * desc.stride;
+        switch (desc.format) {
+            case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
+            case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM: {
+                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4;
+                GetGoldenColor(golden.color, desc.format, &golden_color);
+                memcpy(pixel, golden_color.data(), 4);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM: {
+                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 3;
+                GetGoldenColor(golden.color, desc.format, &golden_color);
+                memcpy(pixel, golden_color.data(), 3);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM: {
+                uint16_t* pixel = reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 2);
+                GetGoldenColor(golden.color, desc.format, &golden_color);
+                uint16_t golden_565 =
+                    static_cast<uint8_t>(golden_color[0] * (31./255.)) << 11
+                    | static_cast<uint8_t>(golden_color[1] * (63./255.)) << 5
+                    | static_cast<uint8_t>(golden_color[2] * (31./255.));
+                *pixel = golden_565;
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
+                uint16_t* pixel = reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 8);
+                GetGoldenColor(golden.color, &golden_float);
+                for (int i = 0; i < 4; ++i) {
+                    pixel[i] = HalfFromFloat(golden_float[i]);
+                }
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
+                uint32_t* pixel = reinterpret_cast<uint32_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4);
+                GetGoldenColor(golden.color, desc.format, &golden_color);
+                uint32_t golden_10102 =
+                    static_cast<uint16_t>(golden_color[0] * (1023./255.))
+                    | static_cast<uint16_t>(golden_color[1] * (1023./255.)) << 10
+                    | static_cast<uint16_t>(golden_color[2] * (1023./255.)) << 20
+                    | static_cast<uint16_t>(golden_color[3] * (3./255.)) << 30;
+                *pixel = golden_10102;
+                break;
+            }
+            default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
+        }
+    }
+    AHardwareBuffer_unlock(buffer, nullptr);
+}
+
+// Using direct memory access, writes each specified golden pixel to the correct memory address
+// inside the given buffer. This variant is compatible with YUV color buffers only.
+void WriteGoldenPixelsYuv(AHardwareBuffer* buffer,
+                          const AHardwareBuffer_Desc& desc,
+                          const std::vector<GoldenPixel>& goldens) {
+    AHardwareBuffer_Planes planes_info;
+    int result = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1,
+                                            nullptr, &planes_info);
+    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
+    std::array<uint8_t, 4> golden_color;
+    for (const GoldenPixel& golden : goldens) {
+        switch (desc.format) {
+            case AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420: {
+                ASSERT_EQ(3U, planes_info.planeCount) << "Unexpected number of planes in YUV data: "
+                                                      << planes_info.planeCount;
+                AHardwareBuffer_Plane* planes = planes_info.planes;
+
+                ptrdiff_t y_offset = golden.y * planes[0].rowStride
+                                   + golden.x * planes[0].pixelStride;
+                ptrdiff_t u_offset = (golden.y / 2) * planes[1].rowStride
+                                   + (golden.x / 2) * planes[1].pixelStride;
+                ptrdiff_t v_offset = (golden.y / 2) * planes[2].rowStride
+                                   + (golden.x / 2) * planes[2].pixelStride;
+
+                GetGoldenColor(golden.color, desc.format, &golden_color);
+                uint8_t* const y_ptr = reinterpret_cast<uint8_t*>(planes[0].data) + y_offset;
+                uint8_t* const u_ptr = reinterpret_cast<uint8_t*>(planes[1].data) + u_offset;
+                uint8_t* const v_ptr = reinterpret_cast<uint8_t*>(planes[2].data) + v_offset;
+                *y_ptr = golden_color[0];
+                *u_ptr = golden_color[1];
+                *v_ptr = golden_color[2];
+            }
+            break;
+            default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
+        }
+    }
+    AHardwareBuffer_unlock(buffer, nullptr);
+}
+
+// Writes the following checkerboard pattern directly to a buffer.
+// The pattern is asymmetric to detect coordinate system mixups.
+//        +-----+-----+ (W, H)
+//        | OR  | OB  |
+//        |     |     |
+//        +-----+-----+  Tb = transparent black
+//        | Tb  | OG  |  OR = opaque red
+//        |     |     |  OG = opaque green
+// (0, 0) +-----+-----+  OB = opaque blue
+//
+void WriteCheckerBoard(AHardwareBuffer* buffer) {
+    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_describe(buffer, &desc);
+
+    // Write golden values in same manner as checkerboard on GPU
+    std::vector<GoldenPixel> goldens(desc.width * desc.height);
+    const uint32_t h2 = desc.height / 2;
+    const uint32_t w2 = desc.width / 2;
+    for (uint32_t y = h2; y < desc.height; ++y) {
+        for (uint32_t x = 0; x < w2; ++x) {
+            const uint32_t offset = y * desc.width + x;
+            goldens[offset].x = x;
+            goldens[offset].y = y;
+            goldens[offset].color = kRed;
+        }
+    }
+    for (uint32_t y = h2; y < desc.height; ++y) {
+        for (uint32_t x = w2; x < desc.width; ++x) {
+            const uint32_t offset = y * desc.width + x;
+            goldens[offset].x = x;
+            goldens[offset].y = y;
+            goldens[offset].color = kBlue;
+        }
+    }
+    for (uint32_t y = 0; y < h2; ++y) {
+        for (uint32_t x = 0; x < w2; ++x) {
+            const uint32_t offset = y * desc.width + x;
+            goldens[offset].x = x;
+            goldens[offset].y = y;
+            goldens[offset].color = kZero;
+        }
+    }
+    for (uint32_t y = 0; y < h2; ++y) {
+        for (uint32_t x = w2; x < desc.width; ++x) {
+            const uint32_t offset = y * desc.width + x;
+            goldens[offset].x = x;
+            goldens[offset].y = y;
+            goldens[offset].color = kGreen;
+        }
+    }
+
+    if (FormatIsYuv(desc.format)) {
+        WriteGoldenPixelsYuv(buffer, desc, goldens);
+    } else {
+        WriteGoldenPixelsRgba(buffer, desc, goldens);
     }
 }
 
@@ -447,6 +889,28 @@ const char* kTextureFragmentShader = R"glsl(#version 100
     uniform lowp sampler2D uTexture;
     void main() {
         gl_FragColor = texture2D(uTexture, vTexCoords);
+    }
+)glsl";
+
+const char* kExternalTextureFragmentShader = R"glsl(#version 100
+    #extension GL_OES_EGL_image_external : require
+    precision mediump float;
+    varying mediump vec2 vTexCoords;
+    uniform samplerExternalOES uTexture;
+    void main() {
+        gl_FragColor = texture2D(uTexture, vTexCoords);
+    }
+)glsl";
+
+const char* kYuvTextureFragmentShader = R"glsl(#version 300 es
+    #extension GL_EXT_YUV_target : require
+    precision mediump float;
+    uniform __samplerExternal2DY2YEXT uTexture;
+    in vec2 vTexCoords;
+    out vec4 outColor;
+    void main() {
+        vec3 srcYuv = texture(uTexture, vTexCoords).xyz;
+        outColor = vec4(yuv_2_rgb(srcYuv, itu_601), 1.0);
     }
 )glsl";
 
@@ -596,6 +1060,33 @@ const char* kStencilArrayFragmentShaderEs30 = R"glsl(#version 300 es
     }
 )glsl";
 
+std::string GetTextureVertexShader(uint32_t format, uint32_t flags) {
+    return FormatIsYuv(format) && (flags & kExplicitYuvSampling)
+        ? std::string("#version 300 es") + kVertexShaderEs3x
+        : kVertexShader;
+}
+
+std::string GetTextureFragmentShader(uint32_t format, uint32_t flags) {
+    return FormatIsYuv(format)
+        ? ((flags & kExplicitYuvSampling)
+            ? kYuvTextureFragmentShader
+            : kExternalTextureFragmentShader)
+        : kTextureFragmentShader;
+}
+
+uint32_t GetMaxExpectedColorError(uint32_t format, uint32_t flags) {
+    // If format is YUV, and we have no explicit sampling, then we do not
+    // know how the color will be converted (spec is not specific), and the
+    // maximum error allows for any value. We do not want to abort the test
+    // as we still want to ensure rendering and read-outs succeed.
+    // If we use explicit sampling, then we know the conversion method
+    // (BT.601), but account for some imprecision (2).
+    // Otherwise, we do not allow any deviation from the expected value.
+    return FormatIsYuv(format)
+        ? ((flags & kExplicitYuvSampling) ? 2 : 255)
+        : 0;
+}
+
 // Interleaved X and Y coordinates for 2 triangles forming a quad with CCW
 // orientation.
 const float kQuadPositions[] = {
@@ -647,6 +1138,9 @@ public:
         if (GetParam().stride & kGlFormat) return;
         mWhich = which;
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[mWhich]);
+    }
+    void MakeCurrentNone() {
+        eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     }
     bool HasEGLExtension(const std::string& s) {
         return mEGLExtensions.find(s) != mEGLExtensions.end();
@@ -786,7 +1280,11 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
             }
             mTexTarget = GL_TEXTURE_2D_ARRAY;
         } else {
-            mTexTarget = GL_TEXTURE_2D;
+            if (FormatIsYuv(desc.format)) {
+                mTexTarget = GL_TEXTURE_EXTERNAL_OES;
+            } else {
+                mTexTarget = GL_TEXTURE_2D;
+            }
         }
     }
     if ((desc.format == GL_RGB8 || desc.format == GL_RGBA8) &&
@@ -826,6 +1324,20 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
               "GL_OES_packed_depth_stencil, but neither were found.");
         return false;
     }
+    if (mTexTarget == GL_TEXTURE_EXTERNAL_OES &&
+        (desc.usage & AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE) &&
+        !HasGLExtension("GL_OES_EGL_image_external")) {
+        ALOGI("Test skipped: External textures are not supported but required "
+              "by this test.");
+        return false;
+    }
+    if (FormatIsYuv(desc.format) &&
+        (desc.stride & kExplicitYuvSampling) &&
+        !HasGLExtension("GL_EXT_YUV_target")) {
+        ALOGI("Test skipped: Explicit YUV sampling not supported but required "
+              " by this test. ");
+        return false;
+    }
     // For control cases using GL formats, the test should be run in a single
     // context, without using AHardwareBuffer. This simplifies verifying that
     // the test behaves as expected even if the AHardwareBuffer format under
@@ -854,6 +1366,10 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     }
 
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
+
+    ALOGI("Attempting to allocate format=%s width=%d height=%d layers=%d result=%d",
+        AHBFormatAsString(desc.format), desc.width, desc.height, desc.layers, result);
+
     // Skip if this format cannot be allocated.
     if (result != NO_ERROR) {
         EXPECT_FALSE(AHardwareBuffer_isSupported(&desc)) <<
@@ -1042,7 +1558,10 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             }
         }
     } else {
-        if (HasGLExtension("GL_EXT_EGL_image_storage")) {
+        // TODO(b/123042748): The fact that glEGLImageTargetTexStorageEXT does not work for YUV
+        //                    textures is a bug. The condition for the target should be removed
+        //                    once the bug is fixed.
+        if (HasGLExtension("GL_EXT_EGL_image_storage") && mTexTarget != GL_TEXTURE_EXTERNAL_OES) {
             glEGLImageTargetTexStorageEXT(mTexTarget, static_cast<GLeglImageOES>(mEGLImage),
                                           nullptr);
         } else {
@@ -1083,7 +1602,7 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 break;
             case kBufferAsTexture:
                 ASSERT_NE(0U, mTextures[mWhich]);
-                if (mTexTarget == GL_TEXTURE_2D) {
+                if (mTexTarget == GL_TEXTURE_2D || mTexTarget == GL_TEXTURE_EXTERNAL_OES) {
                     glFramebufferTexture2D(GL_FRAMEBUFFER, attachment_points[i], mTexTarget,
                                            mTextures[mWhich], level);
                 } else if (mTexTarget == GL_TEXTURE_CUBE_MAP) {
@@ -1131,7 +1650,7 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
 }
 
 void AHardwareBufferGLTest::TearDown() {
-    eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    MakeCurrentNone();
     for (int i = 0; i < 2; ++i) {
         // All GL objects will be deleted along with the context.
         eglDestroyContext(mDisplay, mContext[i]);
@@ -1349,7 +1868,7 @@ TEST_P(ColorTest, GpuColorOutputIsRenderable) {
 
     // Draw a simple checkerboard pattern in the second context, which will
     // be current after the loop above, then read it in the first.
-    DrawCheckerboard(desc.width, desc.height);
+    DrawCheckerboard(desc.width, desc.height, desc.format);
     glFinish();
 
     MakeCurrent(0);
@@ -1362,14 +1881,18 @@ TEST_P(ColorTest, GpuColorOutputIsRenderable) {
     CheckGoldenPixels(goldens, desc.format);
 }
 
-// Verifies that the content of GPU_COLOR_OUTPUT buffers can be read on the CPU.
+// Verifies that the content of GPU_COLOR_OUTPUT buffers can be read on the CPU directly by
+// locking the HardwareBuffer.
 TEST_P(ColorTest, GpuColorOutputCpuRead) {
     AHardwareBuffer_Desc desc = GetParam();
-    desc.width = 10;
-    desc.height = 10;
+    desc.width = 16;
+    desc.height = 16;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
     // This test does not make sense for GL formats. Layered buffers do not support CPU access.
-    if ((desc.stride & kGlFormat) || desc.layers > 1) return;
+    if ((desc.stride & kGlFormat) || desc.layers > 1) {
+        ALOGI("Test skipped: Test is for single-layer HardwareBuffer formats only.");
+        return;
+    }
     if (!SetUpBuffer(desc)) return;
 
     MakeCurrent(1);
@@ -1377,83 +1900,72 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
         SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
     // Draw a simple checkerboard pattern in the second context, which will
     // be current after the loop above, then read it in the first.
-    DrawCheckerboard(desc.width, desc.height);
+    DrawCheckerboard(desc.width, desc.height, desc.format);
     glFinish();
 
     MakeCurrent(0);
-    // Retrieve the stride and lock the buffer for CPU access.
-    AHardwareBuffer_describe(mBuffer, &desc);
-    void* data = nullptr;
-    int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
-                                      -1, nullptr, &data);
-    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
-
     std::vector<GoldenPixel> goldens{
-        {0, 9, kRed},  {4, 9, kRed},  {5, 9, kBlue},  {9, 9, kBlue},
-        {0, 5, kRed},  {4, 5, kRed},  {5, 5, kBlue},  {9, 5, kBlue},
-        {0, 4, kZero}, {4, 4, kZero}, {5, 4, kGreen}, {9, 4, kGreen},
-        {0, 0, kZero}, {4, 0, kZero}, {5, 0, kGreen}, {9, 0, kGreen},
+        {0, 15, kRed},  {7, 15, kRed},  {8, 15, kBlue},  {15, 15, kBlue},
+        {0,  8, kRed},  {7,  8, kRed},  {8,  8, kBlue},  {15,  8, kBlue},
+        {0,  7, kZero}, {7,  7, kZero}, {8,  7, kGreen}, {15,  7, kGreen},
+        {0,  0, kZero}, {7,  0, kZero}, {8,  0, kGreen}, {15,  0, kGreen},
     };
-    for (const GoldenPixel& golden : goldens) {
-        ptrdiff_t row_offset = golden.y * desc.stride;
-        switch (desc.format) {
-            case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
-            case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM: {
-                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4;
-                std::array<uint8_t, 4> pixel_to_check;
-                memcpy(pixel_to_check.data(), pixel, 4);
-                if (desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM) {
-                    pixel_to_check[3] = 255;
-                }
-                CheckGoldenPixel(golden, pixel_to_check, desc.format);
-                break;
-            }
-            case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM: {
-                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 3;
-                std::array<uint8_t, 4> pixel_to_check;
-                memcpy(pixel_to_check.data(), pixel, 3);
-                pixel_to_check[3] = 255;
-                CheckGoldenPixel(golden, pixel_to_check, desc.format);
-                break;
-            }
-            case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM: {
-                uint16_t* pixel = reinterpret_cast<uint16_t*>(
-                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 2);
-                std::array<uint8_t, 4> pixel_to_check = {
-                    static_cast<uint8_t>(((*pixel & 0xF800) >> 11) * (255./31.)),
-                    static_cast<uint8_t>(((*pixel & 0x07E0) >> 5) * (255./63.)),
-                    static_cast<uint8_t>((*pixel & 0x001F) * (255./31.)),
-                    255,
-                };
-                CheckGoldenPixel(golden, pixel_to_check, desc.format);
-                break;
-            }
-            case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
-                uint16_t* pixel = reinterpret_cast<uint16_t*>(
-                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 8);
-                std::array<float, 4> pixel_to_check;
-                for (int i = 0; i < 4; ++i) {
-                    pixel_to_check[i] = FloatFromHalf(pixel[i]);
-                }
-                CheckGoldenPixel(golden, pixel_to_check);
-                break;
-            }
-            case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
-                uint32_t* pixel = reinterpret_cast<uint32_t*>(
-                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4);
-                std::array<uint8_t, 4> pixel_to_check = {
-                    static_cast<uint8_t>((*pixel & 0x000003FF) * (255./1023.)),
-                    static_cast<uint8_t>(((*pixel & 0x000FFC00) >> 10) * (255./1023.)),
-                    static_cast<uint8_t>(((*pixel & 0x3FF00000) >> 20) * (255./1023.)),
-                    static_cast<uint8_t>(((*pixel & 0xC0000000) >> 30) * (255./3.)),
-                };
-                CheckGoldenPixel(golden, pixel_to_check, desc.format);
-                break;
-            }
-            default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
-        }
+
+    // As we glCleared the colors, the YUV colors will simply be the RGB values
+    CheckCpuGoldenPixels(goldens, mBuffer);
+}
+
+// Verifies that the CPU can write directly to a HardwareBuffer, and the GPU can then read from
+// that buffer.
+TEST_P(ColorTest, CpuWriteColorGpuRead) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.width = 16;
+    desc.height = 16;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY;
+    // This test does not make sense for GL formats. Layered buffers do not support CPU access.
+    if ((desc.stride & kGlFormat) || desc.layers > 1) {
+        ALOGI("Test skipped: Test is for single-layer HardwareBuffer formats only.");
+        return;
     }
-    AHardwareBuffer_unlock(mBuffer, nullptr);
+
+    if (!SetUpBuffer(desc)) return;
+
+    // Write into buffer when no context is active
+    MakeCurrentNone();
+    WriteCheckerBoard(mBuffer);
+
+    // Now setup a texture in a context to sample from this buffer
+    MakeCurrent(0);
+    const int kTextureUnit = 6 % mMaxTextureUnits;
+    ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
+    glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Draw a quad that samples from the texture.
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(16, 16, 0, kRenderbuffer));
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    std::string vertex_shader = GetTextureVertexShader(desc.format, desc.stride);
+    std::string fragment_shader = GetTextureFragmentShader(desc.format, desc.stride);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(vertex_shader, fragment_shader, kQuadPositions,
+            1.0f, kTextureUnit));
+
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    // Check the rendered pixels.
+    // Non-alpha formats will render black instead of zero
+    GoldenColor dark = FormatHasAlpha(desc.format) ? kZero : kBlack;
+    std::vector<GoldenPixel> goldens{
+        {0, 15, kRed},  {7, 15, kRed},  {8, 15, kBlue},  {15, 15, kBlue},
+        {0,  8, kRed},  {7,  8, kRed},  {8,  8, kBlue},  {15,  8, kBlue},
+        {0,  7, dark},  {7,  7, dark},  {8,  7, kGreen}, {15,  7, kGreen},
+        {0,  0, dark},  {7,  0, dark},  {8,  0, kGreen}, {15,  0, kGreen},
+    };
+    // If source was YUV, there may be some conversion imprecision, so we allow some error
+    CheckGoldenPixels(goldens, GL_RGBA8, GetMaxExpectedColorError(desc.format, desc.stride));
 }
 
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_SAMPLED_IMAGE,
@@ -1462,6 +1974,14 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
 TEST_P(ColorTest, GpuSampledImageCanBeSampled) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+
+    // This test requires using glTexImage2d to assign image data. YUV formats do not
+    // support this. Other tests using glClear and CPU access test the YUV variants.
+    if (FormatIsYuv(desc.format)) {
+        ALOGI("Test Skipped: YUV formats do not support glTexImage2d and variants.");
+        return;
+    }
+
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to textures in both contexts.
@@ -1487,8 +2007,10 @@ TEST_P(ColorTest, GpuSampledImageCanBeSampled) {
             SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
                          kArrayFragmentShaderEs30, kQuadPositions, 0.5f, kTextureUnit));
     } else {
+        std::string vertex_shader = GetTextureVertexShader(desc.format, desc.stride);
+        std::string fragment_shader = GetTextureFragmentShader(desc.format, desc.stride);
         ASSERT_NO_FATAL_FAILURE(
-            SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions,
+            SetUpProgram(vertex_shader, fragment_shader, kQuadPositions,
                          0.5f, kTextureUnit));
     }
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
@@ -1527,7 +2049,7 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
     // In the second context, draw a checkerboard pattern.
     ASSERT_NO_FATAL_FAILURE(
         SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kBufferAsTexture));
-    DrawCheckerboard(desc.width, desc.height);
+    DrawCheckerboard(desc.width, desc.height, desc.format);
     glFinish();
 
     // In the first context, draw a quad that samples from the texture.
@@ -1541,8 +2063,10 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
             SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
                          kArrayFragmentShaderEs30, kQuadPositions, 0.5f, kTextureUnit));
     } else {
+        std::string vertex_shader = GetTextureVertexShader(desc.format, desc.stride);
+        std::string fragment_shader = GetTextureFragmentShader(desc.format, desc.stride);
         ASSERT_NO_FATAL_FAILURE(
-            SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions,
+            SetUpProgram(vertex_shader, fragment_shader, kQuadPositions,
                          0.5f, kTextureUnit));
     }
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
@@ -1558,7 +2082,7 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
         {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kGreen}, {35, 15, kZero},
         {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero},  {35, 5,  kZero},
     };
-    CheckGoldenPixels(goldens, GL_RGBA8);
+    CheckGoldenPixels(goldens, GL_RGBA8, GetMaxExpectedColorError(desc.format, desc.stride));
 }
 
 TEST_P(ColorTest, MipmapComplete) {
@@ -1632,7 +2156,7 @@ TEST_P(ColorTest, CubemapSampling) {
     for (int i = 0; i < 6; ++i) {
         ASSERT_NO_FATAL_FAILURE(
             SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kBufferAsTexture));
-        DrawCheckerboard(desc.width, desc.height);
+        DrawCheckerboard(desc.width, desc.height, desc.format);
     }
     glFinish();
 
@@ -1736,7 +2260,10 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
-        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}),
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 1, AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 1, AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420, 0,
+                                        kExplicitYuvSampling, 0, 0}),
     &GetTestName);
 
 INSTANTIATE_TEST_CASE_P(
@@ -1782,7 +2309,7 @@ TEST_P(DepthTest, DepthAffectsDrawAcrossContexts) {
     }
 
     // In the second context, clear the depth buffer to a checkerboard pattern.
-    DrawCheckerboard(40, 40);
+    DrawCheckerboard(40, 40, desc.format);
     glFinish();
 
     // In the first context, clear the color buffer only, then draw a red pyramid.
@@ -1839,8 +2366,10 @@ TEST_P(DepthTest, DepthCanBeSampled) {
             SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x, kArrayFragmentShaderEs30,
                          kQuadPositions, 0.5f, kTextureUnit));
     } else {
+        std::string vertex_shader = GetTextureVertexShader(desc.format, desc.stride);
+        std::string fragment_shader = GetTextureFragmentShader(desc.format, desc.stride);
         ASSERT_NO_FATAL_FAILURE(
-            SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions, 0.5f, kTextureUnit));
+            SetUpProgram(vertex_shader, fragment_shader, kQuadPositions, 0.5f, kTextureUnit));
     }
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     glFinish();
@@ -1969,7 +2498,7 @@ TEST_P(StencilTest, StencilAffectsDrawAcrossContexts) {
     }
 
     // In the second context, clear the stencil buffer to a checkerboard pattern.
-    DrawCheckerboard(40, 40);
+    DrawCheckerboard(40, 40, desc.format);
     glFinish();
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
@@ -2033,7 +2562,7 @@ TEST_P(StencilTest, StencilTexture) {
     ASSERT_NO_FATAL_FAILURE(
         SetUpFramebuffer(desc.width, desc.height, desc.layers - 1,
                          kNone, kNone, kBufferAsTexture));
-    DrawCheckerboard(desc.width, desc.height);
+    DrawCheckerboard(desc.width, desc.height, desc.format);
     glFinish();
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 

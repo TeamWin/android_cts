@@ -458,6 +458,85 @@ public class GradientDrawableTest {
     }
 
     @Test
+    public void testGradientPadding() {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setPadding(1, 2, 3, 4);
+
+        Rect padding = new Rect();
+        drawable.getPadding(padding);
+
+        assertEquals(1, padding.left);
+        assertEquals(2, padding.top);
+        assertEquals(3, padding.right);
+        assertEquals(4, padding.bottom);
+    }
+
+    @Test
+    public void testGradientThickness() {
+        GradientDrawable drawable = new GradientDrawable();
+        int thickness = 17;
+
+        drawable.setThickness(thickness);
+        assertEquals(thickness, drawable.getThickness());
+    }
+
+    @Test
+    public void testGradientThicknessRatio() {
+        GradientDrawable drawable = new GradientDrawable();
+
+        float thicknessRatio = 3.9f;
+
+        drawable.setThicknessRatio(thicknessRatio);
+        assertEquals(0, Float.compare(thicknessRatio, drawable.getThicknessRatio()));
+    }
+
+    @Test
+    public void testGradientInnerRadius() {
+        GradientDrawable drawable = new GradientDrawable();
+        int innerRadius = 12;
+        drawable.setInnerRadius(innerRadius);
+
+        assertEquals(innerRadius, drawable.getInnerRadius());
+    }
+
+    @Test
+    public void testGradientInnerRadiusRatio() {
+        GradientDrawable drawable = new GradientDrawable();
+        float innerRadiusRatio = 3.8f;
+        drawable.setInnerRadiusRatio(innerRadiusRatio);
+
+        assertEquals(0, Float.compare(innerRadiusRatio, drawable.getInnerRadiusRatio()));
+    }
+
+    @Test
+    public void testGradientPositions() throws XmlPullParserException, IOException {
+        GradientDrawable gradientDrawable = new GradientDrawable();
+        XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable);
+        AttributeSet attrs = Xml.asAttributeSet(parser);
+
+        // find the START_TAG
+        int type;
+        while ((type = parser.next()) != XmlPullParser.START_TAG
+                && type != XmlPullParser.END_DOCUMENT) {
+            // Empty loop
+        }
+        assertEquals(XmlPullParser.START_TAG, type);
+
+        // padding is set in gradientdrawable.xml
+        gradientDrawable.inflate(mResources, parser, attrs);
+
+        gradientDrawable.setColors(new int[]{ Color.RED, Color.BLUE});
+
+        Canvas canvas = new Canvas(Bitmap.createBitmap(100, 100,
+                Bitmap.Config.ARGB_8888));
+
+        gradientDrawable.setBounds(0, 0, 100, 100);
+        // Verify that calling draw does not crash
+        gradientDrawable.draw(canvas);
+
+    }
+
+    @Test
     public void testInflateGradientRadius() throws XmlPullParserException, IOException {
         Rect parentBounds = new Rect(0, 0, 100, 100);
 

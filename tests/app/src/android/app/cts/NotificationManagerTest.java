@@ -40,6 +40,7 @@ import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
+import android.companion.CompanionDeviceManager;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Context;
@@ -56,11 +57,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.ContactsContract;
-import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.Data;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.Condition;
@@ -69,6 +71,7 @@ import android.service.notification.StatusBarNotification;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -79,6 +82,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1308,6 +1312,57 @@ public class NotificationManagerTest extends AndroidTestCase {
         checkNotificationExistence(id, false);
     }
 
+    public void testStyle() throws Exception {
+        Notification.Style style = new Notification.Style() {
+            public boolean areNotificationsVisiblyDifferent(Notification.Style other) {
+                return false;
+            }
+        };
+
+        Notification.Builder builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
+        style.setBuilder(builder);
+
+        Notification notification = null;
+        try {
+            notification = style.build();
+        } catch (IllegalArgumentException e) {
+            fail(e.getMessage());
+        }
+
+        assertNotNull(notification);
+
+        Notification builderNotification = builder.build();
+        assertEquals(builderNotification, notification);
+    }
+
+    public void testStyle_getStandardView() throws Exception {
+        Notification.Builder builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
+        int layoutId = 0;
+
+        TestStyle overrideStyle = new TestStyle();
+        overrideStyle.setBuilder(builder);
+        RemoteViews result = overrideStyle.testGetStandardView(layoutId);
+
+        assertNotNull(result);
+        assertEquals(layoutId, result.getLayoutId());
+    }
+
+    private class TestStyle extends Notification.Style {
+        public boolean areNotificationsVisiblyDifferent(Notification.Style other) {
+            return false;
+        }
+
+        public RemoteViews testGetStandardView(int layoutId) {
+            // Wrapper method, since getStandardView is protected and otherwise unused in Android
+            return getStandardView(layoutId);
+        }
+    }
+
+    public void testMediaStyle_empty() throws Exception {
+        Notification.MediaStyle style = new Notification.MediaStyle();
+        assertNotNull(style);
+    }
+
     public void testMediaStyle() throws Exception {
         mNotificationManager.cancelAll();
         final int id = 99;
@@ -1904,6 +1959,245 @@ public class NotificationManagerTest extends AndroidTestCase {
      * don't fail. */
     public void testNotificationListenerMethods() {
         NotificationListenerService listener = new TestNotificationListener();
+        listener.onListenerConnected();
+
         listener.onStatusBarIconsBehaviorChanged(false);
+
+        listener.onNotificationPosted(null);
+        listener.onNotificationPosted(null, null);
+
+        listener.onNotificationRemoved(null);
+        listener.onNotificationRemoved(null, null);
+
+        listener.onNotificationChannelGroupModified("", UserHandle.CURRENT, null,
+                NotificationListenerService.NOTIFICATION_CHANNEL_OR_GROUP_ADDED);
+        listener.onNotificationChannelModified("", UserHandle.CURRENT, null,
+                NotificationListenerService.NOTIFICATION_CHANNEL_OR_GROUP_ADDED);
+
+        listener.onListenerDisconnected();
+    }
+
+    public void testNotificationListener_setNotificationsShown() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        final int notificationId1 = 1;
+        final int notificationId2 = 2;
+
+        sendNotification(notificationId1, R.drawable.black);
+        sendNotification(notificationId2, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn1 = findPostedNotification(notificationId1);
+        StatusBarNotification sbn2 = findPostedNotification(notificationId2);
+        mListener.setNotificationsShown(new String[]{ sbn1.getKey() });
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
+        Thread.sleep(500); // wait for listener to be disallowed
+        try {
+            mListener.setNotificationsShown(new String[]{ sbn2.getKey() });
+            fail("Should not be able to set shown if listener access isn't granted");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_getNotificationChannels() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        try {
+            mListener.getNotificationChannels(mContext.getPackageName(), UserHandle.CURRENT);
+            fail("Shouldn't be able get channels without CompanionDeviceManager#getAssociations()");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_getNotificationChannelGroups() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        try {
+            mListener.getNotificationChannelGroups(mContext.getPackageName(), UserHandle.CURRENT);
+            fail("Should not be able get groups without CompanionDeviceManager#getAssociations()");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_updateNotificationChannel() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        NotificationChannel channel = new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        try {
+            mListener.updateNotificationChannel(mContext.getPackageName(), UserHandle.CURRENT,
+                    channel);
+            fail("Shouldn't be able to update channel without "
+                    + "CompanionDeviceManager#getAssociations()");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNotificationListener_getActiveNotifications() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        final int notificationId1 = 1;
+        final int notificationId2 = 2;
+
+        sendNotification(notificationId1, R.drawable.black);
+        sendNotification(notificationId2, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn1 = findPostedNotification(notificationId1);
+        StatusBarNotification sbn2 = findPostedNotification(notificationId2);
+        StatusBarNotification[] notifs =
+                mListener.getActiveNotifications(new String[]{ sbn2.getKey(), sbn1.getKey() });
+        assertEquals(sbn2.getKey(), notifs[0].getKey());
+        assertEquals(sbn2.getId(), notifs[0].getId());
+        assertEquals(sbn2.getPackageName(), notifs[0].getPackageName());
+
+        assertEquals(sbn1.getKey(), notifs[1].getKey());
+        assertEquals(sbn1.getId(), notifs[1].getId());
+        assertEquals(sbn1.getPackageName(), notifs[1].getPackageName());
+    }
+
+
+    public void testNotificationListener_getCurrentRanking() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        sendNotification(1, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
+    }
+
+    public void testNotificationListener_cancelNotifications() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+        final int notificationId = 1;
+
+        sendNotification(notificationId, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn = findPostedNotification(notificationId);
+
+        mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
+        if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP) {
+            if (!checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
+                fail("Notification shouldn't have been cancelled. "
+                        + "cancelNotification(String, String, int) shouldn't cancel notif for L+");
+            }
+        } else {
+            // Tested in LegacyNotificationManager20Test
+            if (checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
+                fail("Notification should have been cancelled for targetSdk below L.  targetSdk="
+                    + mContext.getApplicationInfo().targetSdkVersion);
+            }
+        }
+
+        mListener.cancelNotifications(new String[]{ sbn.getKey() });
+        if (!checkNotificationExistence(notificationId, /*shouldExist=*/ false)) {
+            fail("Failed to cancel notification id=" + notificationId);
+        }
+    }
+
+    public void testNotificationManagerPolicy_priorityCategoriesToString() {
+        String zeroString = NotificationManager.Policy.priorityCategoriesToString(0);
+        assertEquals("priorityCategories of 0 produces empty string", "", zeroString);
+
+        String oneString = NotificationManager.Policy.priorityCategoriesToString(1);
+        assertNotNull("priorityCategories of 1 returns a string", oneString);
+        boolean lengthGreaterThanZero = oneString.length() > 0;
+        assertTrue("priorityCategories of 1 returns a string with length greater than 0",
+                lengthGreaterThanZero);
+
+        String badNumberString = NotificationManager.Policy.priorityCategoriesToString(1234567);
+        assertNotNull("priorityCategories with a non-relevant int returns a string", oneString);
+    }
+
+    public void testNotificationManagerPolicy_prioritySendersToString() {
+        String zeroString = NotificationManager.Policy.prioritySendersToString(0);
+        assertNotNull("prioritySenders of 1 returns a string", zeroString);
+        boolean lengthGreaterThanZero = zeroString.length() > 0;
+        assertTrue("prioritySenders of 1 returns a string with length greater than 0",
+                lengthGreaterThanZero);
+
+        String badNumberString = NotificationManager.Policy.prioritySendersToString(1234567);
+        assertNotNull("prioritySenders with a non-relevant int returns a string", badNumberString);
+    }
+
+    public void testNotificationManagerPolicy_suppressedEffectsToString() {
+        String zeroString = NotificationManager.Policy.suppressedEffectsToString(0);
+        assertEquals("suppressedEffects of 0 produces empty string", "", zeroString);
+
+        String oneString = NotificationManager.Policy.suppressedEffectsToString(1);
+        assertNotNull("suppressedEffects of 1 returns a string", oneString);
+        boolean lengthGreaterThanZero = oneString.length() > 0;
+        assertTrue("suppressedEffects of 1 returns a string with length greater than 0",
+                lengthGreaterThanZero);
+
+        String badNumberString = NotificationManager.Policy.suppressedEffectsToString(1234567);
+        assertNotNull("suppressedEffects with a non-relevant int returns a string",
+                badNumberString);
     }
 }
