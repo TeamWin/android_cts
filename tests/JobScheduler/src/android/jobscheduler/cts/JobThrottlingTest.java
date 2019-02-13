@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.AppOpsManager;
 import android.app.job.JobParameters;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -47,6 +48,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.ThermalUtils;
@@ -82,7 +84,6 @@ public class JobThrottlingTest {
     private Context mContext;
     private UiDevice mUiDevice;
     private PowerManager mPowerManager;
-    private long mTempWhitelistExpiryElapsed;
     private int mTestJobId;
     private int mTestPackageUid;
     private boolean mDeviceInDoze;
@@ -136,7 +137,6 @@ public class JobThrottlingTest {
         mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
         mTestJobId = (int) (SystemClock.uptimeMillis() / 1000);
         mTestJobStatus.reset();
-        mTempWhitelistExpiryElapsed = -1;
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_JOB_STARTED);
         intentFilter.addAction(ACTION_JOB_STOPPED);
@@ -201,6 +201,35 @@ public class JobThrottlingTest {
         Thread.sleep(BACKGROUND_JOBS_EXPECTED_DELAY - DEFAULT_WAIT_TIMEOUT);
         assertTrue("Job for background app did not start after the expected delay of "
                 + BACKGROUND_JOBS_EXPECTED_DELAY + "ms", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testJobStoppedWhenRestricted() throws Exception {
+        sendScheduleJobBroadcast(false);
+        assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        setTestPackageRestricted(true);
+        assertTrue("Job did not stop after test app was restricted",
+                awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testRestrictedJobStartedWhenUnrestricted() throws Exception {
+        setTestPackageRestricted(true);
+        sendScheduleJobBroadcast(false);
+        assertFalse("Job started for restricted app", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        setTestPackageRestricted(false);
+        assertTrue("Job did not start when app was unrestricted",
+                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testRestrictedJobAllowedWhenUidActive() throws Exception {
+        setTestPackageRestricted(true);
+        sendScheduleJobBroadcast(false);
+        assertFalse("Job started for restricted app", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        startAndKeepTestActivity();
+        assertTrue("Job did not start when app had an activity",
+                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
@@ -293,6 +322,7 @@ public class JobThrottlingTest {
 
     @After
     public void tearDown() throws Exception {
+        AppOpsUtils.reset(TEST_APP_PACKAGE);
         // Lock thermal service to not throttling
         ThermalUtils.overrideThermalNotThrottling();
         if (mDeviceIdleEnabled) {
@@ -305,9 +335,7 @@ public class JobThrottlingTest {
         mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
         mContext.unregisterReceiver(mReceiver);
         BatteryUtils.runDumpsysBatteryReset();
-
-        Thread.sleep(500); // To avoid any race between unregister and the next register in setUp
-        waitUntilTestAppNotInTempWhitelist();
+        removeTestAppFromTempWhitelist();
 
         // Ensure that we leave WiFi in its previous state.
         if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
@@ -315,10 +343,15 @@ public class JobThrottlingTest {
         }
     }
 
+    private void setTestPackageRestricted(boolean restricted) throws Exception {
+        AppOpsUtils.setOpMode(TEST_APP_PACKAGE, "RUN_ANY_IN_BACKGROUND",
+                restricted ? AppOpsManager.MODE_IGNORED : AppOpsManager.MODE_ALLOWED);
+    }
+
     private boolean isTestAppTempWhitelisted() throws Exception {
         final String output = mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist").trim();
         for (String line : output.split("\n")) {
-            if (line.contains("UID="+mTestPackageUid)) {
+            if (line.contains("UID=" + mTestPackageUid)) {
                 return true;
             }
         }
@@ -360,7 +393,6 @@ public class JobThrottlingTest {
     private void tempWhitelistTestApp(long duration) throws Exception {
         mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -d " + duration
                 + " " + TEST_APP_PACKAGE);
-        mTempWhitelistExpiryElapsed = SystemClock.elapsedRealtime() + duration;
     }
 
     private void makeTestPackageIdle() throws Exception {
@@ -370,11 +402,21 @@ public class JobThrottlingTest {
     private void setTestPackageStandbyBucket(Bucket bucket) throws Exception {
         final String bucketName;
         switch (bucket) {
-            case ACTIVE: bucketName = "active"; break;
-            case WORKING_SET: bucketName = "working"; break;
-            case FREQUENT: bucketName = "frequent"; break;
-            case RARE: bucketName = "rare"; break;
-            case NEVER: bucketName = "never"; break;
+            case ACTIVE:
+                bucketName = "active";
+                break;
+            case WORKING_SET:
+                bucketName = "working";
+                break;
+            case FREQUENT:
+                bucketName = "frequent";
+                break;
+            case RARE:
+                bucketName = "rare";
+                break;
+            case NEVER:
+                bucketName = "never";
+                break;
             default:
                 throw new IllegalArgumentException("Requested unknown bucket " + bucket);
         }
@@ -382,19 +424,8 @@ public class JobThrottlingTest {
                 + " " + bucketName);
     }
 
-    private boolean waitUntilTestAppNotInTempWhitelist() throws Exception {
-        long now;
-        boolean interrupted = false;
-        while ((now = SystemClock.elapsedRealtime()) < mTempWhitelistExpiryElapsed) {
-            try {
-                Thread.sleep(mTempWhitelistExpiryElapsed - now);
-            } catch (InterruptedException iexc) {
-                interrupted = true;
-            }
-        }
-        if (interrupted) {
-            Thread.currentThread().interrupt();
-        }
+    private boolean removeTestAppFromTempWhitelist() throws Exception {
+        mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
         return waitUntilTrue(SHELL_TIMEOUT, () -> !isTestAppTempWhitelisted());
     }
 
@@ -425,6 +456,7 @@ public class JobThrottlingTest {
     private static final class TestJobStatus {
         int jobId;
         boolean running;
+
         private void reset() {
             running = false;
         }
