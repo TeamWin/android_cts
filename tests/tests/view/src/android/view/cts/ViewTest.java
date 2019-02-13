@@ -4856,6 +4856,57 @@ public class ViewTest {
     }
 
     @Test
+    public void testSetVerticalScrollbarTrack() {
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setVerticalScrollbarTrackDrawable(colorDrawable);
+
+        Drawable verticalTrackDrawable = view.getVerticalScrollbarTrackDrawable();
+        assertTrue(verticalTrackDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) verticalTrackDrawable).getColor());
+    }
+
+    @Test
+    public void testSetVerticalScrollbarThumb() {
+
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setVerticalScrollbarThumbDrawable(colorDrawable);
+
+        Drawable verticalThumbDrawable = view.getVerticalScrollbarThumbDrawable();
+        assertTrue(verticalThumbDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) verticalThumbDrawable).getColor());
+    }
+
+    @Test
+    public void testSetHorizontalScrollbarTrack() {
+
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setHorizontalScrollbarTrackDrawable(colorDrawable);
+
+        Drawable horizontalTrackDrawable = view.getHorizontalScrollbarTrackDrawable();
+        assertTrue(horizontalTrackDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) horizontalTrackDrawable).getColor());
+    }
+
+    @Test
+    public void testSetHorizontalScrollbarThumb() {
+
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setHorizontalScrollbarThumbDrawable(colorDrawable);
+
+        Drawable horizontalThumbDrawable = view.getHorizontalScrollbarThumbDrawable();
+        assertTrue(horizontalThumbDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) horizontalThumbDrawable).getColor());
+    }
+
+    @Test
     public void testSetTransitionVisibility() {
         MockView view = new MockView(mContext);
         view.setVisibility(View.GONE);
