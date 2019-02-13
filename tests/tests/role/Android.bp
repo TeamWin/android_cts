@@ -21,9 +21,9 @@ android_test {
     ],
 
     static_libs: [
-        "android-support-test",
-        "compatibility-device-util",
-        "ctstestrunner",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
         "truth-prebuilt"
     ],
 
