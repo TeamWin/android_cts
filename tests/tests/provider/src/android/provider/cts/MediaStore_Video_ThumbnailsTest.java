@@ -42,9 +42,10 @@ import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.Thumbnails;
 import android.provider.MediaStore.Video.VideoColumns;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Size;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.MediaUtils;
 
