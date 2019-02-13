@@ -48,6 +48,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 /**
@@ -109,8 +110,8 @@ public abstract class AbstractContentCaptureIntegrationTest
             // mSafeCleanerRule will catch errors
             .around(mSafeCleanerRule)
             //
-            // Finally, let subclasses set their ActivityTestRule
-            .around(getActivityTestRule());
+            // Finally, let subclasses set their own rule
+            .around(getMainTestRule());
 
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
@@ -195,6 +196,17 @@ public abstract class AbstractContentCaptureIntegrationTest
      * {@code null} when used it in this class' {@code @Rule}
      */
     protected abstract ActivityTestRule<A> getActivityTestRule();
+
+    /**
+     * Gets the test-specific {@link Rule}.
+     *
+     * <p>By default it returns {@link #getActivityTestRule()}, but subclasses with more than one
+     * rule can override it to return a {@link RuleChain}.
+     */
+    @NonNull
+    protected TestRule getMainTestRule() {
+        return getActivityTestRule();
+    }
 
     protected A launchActivity() {
         Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
