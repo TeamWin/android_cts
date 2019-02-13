@@ -24,7 +24,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import com.google.common.util.concurrent.AbstractFuture;
@@ -33,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-@AppModeFull
 public class CrossProcessExceptionTest extends AndroidTestCase {
 
     private Intent greenIntent;
@@ -84,9 +82,12 @@ public class CrossProcessExceptionTest extends AndroidTestCase {
         context.unbindService(greenConn);
         context.stopService(greenIntent);
 
-        final ActivityManager am = (ActivityManager) mContext.getSystemService(
-                Context.ACTIVITY_SERVICE);
-        am.killBackgroundProcesses(context.getPackageName());
+        // Instant Apps don't have the KILL_BACKGROUND_PROCESSES permission
+        if (!context.getPackageManager().isInstantApp()) {
+            final ActivityManager am = (ActivityManager) mContext.getSystemService(
+                    Context.ACTIVITY_SERVICE);
+            am.killBackgroundProcesses(context.getPackageName());
+        }
     }
 
     public void testNone() throws Exception {
