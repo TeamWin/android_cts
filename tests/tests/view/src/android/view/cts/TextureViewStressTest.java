@@ -16,8 +16,12 @@
 
 package android.view.cts;
 
+import android.support.test.filters.LargeTest;
+import android.support.test.filters.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
 
+@RequiresDevice
+@LargeTest
 public class TextureViewStressTest extends
         ActivityInstrumentationTestCase2<TextureViewStressTestActivity> {
 
