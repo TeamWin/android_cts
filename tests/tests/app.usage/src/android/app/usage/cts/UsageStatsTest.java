@@ -41,6 +41,7 @@ import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -180,7 +181,7 @@ public class UsageStatsTest {
         }
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testOrderedActivityLaunchSequenceInEventLog() throws Exception {
         @SuppressWarnings("unchecked")
@@ -234,11 +235,13 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testActivityOnBackButton() throws Exception {
         testActivityOnButton(mUiDevice::pressBack);
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testActivityOnHomeButton() throws Exception {
         testActivityOnButton(mUiDevice::pressHome);
@@ -269,7 +272,7 @@ public class UsageStatsTest {
         assertEquals(Event.ACTIVITY_STOPPED, eventList.get(2).getEventType());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testAppLaunchCount() throws Exception {
         long endTime = System.currentTimeMillis();
@@ -296,7 +299,7 @@ public class UsageStatsTest {
         assertEquals(startingCount + 2, stats.getAppLaunchCount());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testStandbyBucketChangeLog() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -458,7 +461,7 @@ public class UsageStatsTest {
         assertEquals(events.hasNextEvent(), reparceledEvents.hasNextEvent());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testPackageUsageStatsIntervals() throws Exception {
         final long beforeTime = System.currentTimeMillis();
@@ -521,7 +524,7 @@ public class UsageStatsTest {
         assertTrue(stats.isEmpty());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -811,7 +814,7 @@ public class UsageStatsTest {
         }
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testInteractiveEvents() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
@@ -964,6 +967,7 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testForegroundService() throws Exception {
         // This test start a foreground service then stop it. The event list should have one
@@ -1018,7 +1022,7 @@ public class UsageStatsTest {
         assertLessThan(sleepTime, totalTimeUsed);
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testTaskRootEventField() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
@@ -1052,6 +1056,7 @@ public class UsageStatsTest {
         fail("Did not find nested activity name in usage events");
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testUsageSourceAttribution() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
@@ -1080,6 +1085,56 @@ public class UsageStatsTest {
         launchSubActivity(TaskRootActivity.class);
         // Usage should be attributed to this package
         assertAppOrTokenUsed(mTargetPackage, true);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testInstantAppUsageEventsObfuscated() throws Exception {
+        @SuppressWarnings("unchecked")
+        final Class<? extends Activity>[] activitySequence = new Class[] {
+                Activities.ActivityOne.class,
+                Activities.ActivityTwo.class,
+                Activities.ActivityThree.class,
+        };
+        mUiDevice.wakeUp();
+
+        final long startTime = System.currentTimeMillis();
+        // Launch the series of Activities.
+        launchSubActivities(activitySequence);
+        final long endTime = System.currentTimeMillis();
+        final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int resumes = 0;
+        int pauses = 0;
+        int stops = 0;
+
+        // Only look at events belongs to mTargetPackage.
+        ArrayList<UsageEvents.Event> eventList = new ArrayList<>();
+        while (events.hasNextEvent()) {
+            final UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            // There should be no events with this packages name
+            assertFalse("Instant app package name found in usage event list",
+                    mTargetPackage.equals(event.getPackageName()));
+
+            // Look for the obfuscated instant app string instead
+            if(UsageEvents.INSTANT_APP_PACKAGE_NAME.equals(event.getPackageName())) {
+                switch (event.mEventType) {
+                    case Event.ACTIVITY_RESUMED:
+                        resumes++;
+                        break;
+                    case Event.ACTIVITY_PAUSED:
+                        pauses++;
+                        break;
+                    case Event.ACTIVITY_STOPPED:
+                        stops++;
+                        break;
+                }
+            }
+        }
+        assertEquals("Unexpected number of activity resumes", 3, resumes);
+        assertEquals("Unexpected number of activity pauses", 3, pauses);
+        assertEquals("Unexpected number of activity stops", 3, stops);
     }
 
     private void pressWakeUp() {
