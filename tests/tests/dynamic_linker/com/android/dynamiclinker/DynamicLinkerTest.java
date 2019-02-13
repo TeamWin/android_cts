@@ -16,8 +16,9 @@
 
 package com.android.dynamiclinker;
 
+import androidx.test.InstrumentationRegistry;
+
 import junit.framework.TestCase;
-import android.support.test.InstrumentationRegistry;
 
 import java.io.File;
 
