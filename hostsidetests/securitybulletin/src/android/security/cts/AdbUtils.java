@@ -20,18 +20,17 @@ import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.log.LogUtil.CLog;
-
-import android.platform.test.annotations.RootPermissionTest;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.util.Scanner;
+
+import static org.junit.Assert.*;
 
 import static org.junit.Assert.*;
 
