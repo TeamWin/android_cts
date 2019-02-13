@@ -39,7 +39,7 @@
         <activity android:name="android.mediastress.cts.NativeMediaActivity"
                   android:label="NativeMedia" />
     </application>
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.mediastress.cts"
             android:label="Media stress tests InstrumentationRunner" >
         <meta-data android:name="listener"
