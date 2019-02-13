@@ -19,6 +19,8 @@ import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
