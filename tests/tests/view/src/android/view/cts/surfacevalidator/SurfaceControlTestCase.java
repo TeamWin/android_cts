@@ -104,6 +104,10 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
         mParent.removeAllViews();
     }
 
+    public boolean hasAnimation() {
+        return mAnimationFactory != null;
+    }
+
     private class SurfaceViewFactory implements ViewFactory {
         private SurfaceHolder.Callback mCallback;
 

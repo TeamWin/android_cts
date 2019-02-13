@@ -313,12 +313,14 @@ public class CapturedActivity extends Activity {
                         + " incorrect frames observed - incorrect positioning",
                 result.failFrames == 0);
 
-        float framesPerSecond = 1.0f * result.passFrames
+        if (testCase.hasAnimation()) {
+            float framesPerSecond = 1.0f * result.passFrames
                 / TimeUnit.MILLISECONDS.toSeconds(getCaptureDurationMs());
-        assertTrue("Error, only " + result.passFrames
-                        + " frames observed, virtual display only capturing at "
-                        + framesPerSecond + " frames per second",
-                result.passFrames > 100);
+            assertTrue("Error, only " + result.passFrames
+                    + " frames observed, virtual display only capturing at "
+                    + framesPerSecond + " frames per second",
+                    result.passFrames > 100);
+        }
     }
 
     private class MediaProjectionCallback extends MediaProjection.Callback {
