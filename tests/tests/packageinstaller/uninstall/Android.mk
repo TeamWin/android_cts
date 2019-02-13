@@ -23,8 +23,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_PACKAGE_NAME := CtsPackageUninstallTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator \
-    android-support-test \
-    compatibility-device-util \
+    androidx.test.rules \
+    compatibility-device-util-axt \
     platform-test-annotations \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)

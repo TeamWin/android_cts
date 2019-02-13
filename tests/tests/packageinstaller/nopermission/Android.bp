@@ -20,8 +20,8 @@ java_library_static {
 
     static_libs: [
         "ub-uiautomator",
-        "android-support-test",
-        "compatibility-device-util",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
         "androidx.legacy_legacy-support-v4",
         "platform-test-annotations",
     ],

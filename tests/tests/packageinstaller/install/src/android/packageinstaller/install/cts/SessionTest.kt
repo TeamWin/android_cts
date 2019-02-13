@@ -26,8 +26,8 @@ import android.content.pm.PackageInstaller.STATUS_FAILURE_ABORTED
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.STATUS_SUCCESS
 import android.content.pm.PackageManager
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until

@@ -19,9 +19,9 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.platform.test.annotations.AppModeInstant
-import android.support.test.InstrumentationRegistry
-import android.support.test.filters.SmallTest
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.InstrumentationRegistry
+import androidx.test.filters.SmallTest
+import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.After
 import org.junit.Assert.assertFalse
