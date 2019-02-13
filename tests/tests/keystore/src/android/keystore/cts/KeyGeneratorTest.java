@@ -83,7 +83,7 @@ public class KeyGeneratorTest extends AndroidTestCase {
     }
 
     static final int[] AES_SUPPORTED_KEY_SIZES = new int[] {128, 192, 256};
-    static final int[] DES_SUPPORTED_KEY_SIZES = new int[] {112, 168};
+    static final int[] DES_SUPPORTED_KEY_SIZES = new int[] {168};
 
     public void testAlgorithmList() {
         // Assert that Android Keystore Provider exposes exactly the expected KeyGenerator
