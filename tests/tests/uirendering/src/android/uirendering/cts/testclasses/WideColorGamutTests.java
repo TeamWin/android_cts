@@ -22,8 +22,6 @@ import android.graphics.BlendMode;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Point;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
@@ -31,6 +29,9 @@ import android.uirendering.cts.bitmapverifiers.SamplePointWideGamutVerifier;
 import android.uirendering.cts.testclasses.view.BitmapView;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.view.View;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
 import org.junit.Before;
