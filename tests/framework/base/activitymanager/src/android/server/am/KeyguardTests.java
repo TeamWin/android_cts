@@ -18,6 +18,8 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -31,6 +33,7 @@ import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
+import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY;
@@ -49,7 +52,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.res.Configuration;
 import android.platform.test.annotations.Presubmit;
+import android.server.am.CommandSession.ActivitySession;
+import android.server.am.CommandSession.ActivitySessionClient;
 import android.server.am.WindowManagerState.WindowState;
 import android.support.test.filters.FlakyTest;
 
@@ -306,6 +312,46 @@ public class KeyguardTests extends KeyguardTestBase {
             assertTrue(mKeyguardManager.isKeyguardLocked());
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
             mAmWmState.assertVisibility(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+        }
+    }
+
+    @Test
+    public void testNoTransientConfigurationWhenShowWhenLockedRequestsOrientation() {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+                final ActivitySessionClient activitySession = new ActivitySessionClient(mContext)) {
+            final ActivitySession showWhenLockedActivitySession =
+                    activitySession.startActivity(getLaunchActivityBuilder()
+                            .setUseInstrumentation()
+                            .setTargetActivity(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY));
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY, true);
+
+            lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
+
+            separateTestJournal();
+
+            final int displayId = mAmWmState.getAmState()
+                    .getDisplayByActivity(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
+            ActivityManagerState.ActivityDisplay display = mAmWmState.getAmState()
+                    .getDisplay(displayId);
+            final int origDisplayOrientation = display.mFullConfiguration.orientation;
+            final int orientation = origDisplayOrientation == Configuration.ORIENTATION_LANDSCAPE
+                    ? SCREEN_ORIENTATION_PORTRAIT
+                    : SCREEN_ORIENTATION_LANDSCAPE;
+            showWhenLockedActivitySession.requestOrientation(orientation);
+
+            mAmWmState.waitForActivityOrientation(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY,
+                    orientation == SCREEN_ORIENTATION_LANDSCAPE
+                            ? Configuration.ORIENTATION_LANDSCAPE
+                            : Configuration.ORIENTATION_PORTRAIT);
+
+            display = mAmWmState.getAmState().getDisplay(displayId);
+
+            // If the window is a non-fullscreen window (e.g. a freeform window) or the display is
+            // squared, there won't be activity lifecycle.
+            if (display.mFullConfiguration.orientation != origDisplayOrientation) {
+                assertActivityLifecycle(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY,
+                        false /* relaunched */);
+            }
         }
     }
 
