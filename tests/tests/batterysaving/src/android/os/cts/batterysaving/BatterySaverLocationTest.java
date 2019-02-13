@@ -36,8 +36,10 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.RequiredFeatureRule;
