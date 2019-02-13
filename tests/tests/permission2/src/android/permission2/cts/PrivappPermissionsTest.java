@@ -29,11 +29,12 @@ import static com.google.common.collect.Sets.newHashSet;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
