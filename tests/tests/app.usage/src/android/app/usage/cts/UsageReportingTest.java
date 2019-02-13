@@ -15,19 +15,21 @@
  */
 package android.app.usage.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.server.am.ActivityManagerTestBase;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test the UsageStats API around usage reporting against tokens
