@@ -23,11 +23,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import android.graphics.PointF;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.Explode;
 import android.transition.TransitionManager;
 import android.view.View;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 
