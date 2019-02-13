@@ -27,8 +27,6 @@ import static org.mockito.Mockito.verify;
 
 import android.animation.TimeInterpolator;
 import android.graphics.Rect;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.ArcMotion;
 import android.transition.ChangeBounds;
 import android.transition.Fade;
@@ -41,6 +39,9 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
