@@ -17,7 +17,9 @@
 package android.security;
 
 import android.test.AndroidTestCase;
+import com.android.compatibility.common.util.PropertyUtil;
 import java.io.IOException;
+
 
 /**
  * Verify the selinux domain for apps running with current targetSdkVersion
@@ -67,6 +69,13 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
     }
 
     public void testDex2oat() throws Exception {
-        checkDex2oatAccess(false);
+        /*
+         * Apps with a vendor image older than Q may access the dex2oat executable through
+         * selinux policy on the vendor partition because the permission was granted in public
+         * policy for appdomain.
+         */
+        if (PropertyUtil.isVendorApiLevelNewerThan(28)) {
+            checkDex2oatAccess(false);
+        }
     }
 }
