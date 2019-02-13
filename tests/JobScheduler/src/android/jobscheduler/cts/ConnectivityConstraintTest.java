@@ -298,7 +298,11 @@ public class ConnectivityConstraintTest extends ConstraintTest {
             filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
             context.registerReceiver(receiver, filter);
 
-            assertTrue(wm.setWifiEnabled(enable));
+            if (enable) {
+                SystemUtil.runShellCommand("svc wifi enable");
+            } else {
+                SystemUtil.runShellCommand("svc wifi disable");
+            }
             assertTrue("Wifi must be configured to " + (enable ? "connect" : "disconnect")
                             + " to an access point for this test.",
                     receiver.waitForStateChange());
