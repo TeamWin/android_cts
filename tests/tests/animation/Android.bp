@@ -17,11 +17,11 @@ android_test {
     defaults: ["cts_defaults"],
 
     static_libs: [
-        "android-support-test",
+        "androidx.test.rules",
         "mockito-target-minus-junit4",
         "android-common",
-        "compatibility-device-util",
-        "ctstestrunner",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
         "platform-test-annotations",
     ],
 
