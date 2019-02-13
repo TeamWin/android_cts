@@ -29,9 +29,9 @@ LOCAL_SRC_FILES := $(call all-java-files-under, $(src_dirs)) \
                    $(call all-Iaidl-files-under, aidl)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-	compatibility-device-util \
-	ctstestrunner \
-	android-support-test
+	compatibility-device-util-axt \
+	ctstestrunner-axt \
+	androidx.test.rules
 
 LOCAL_AIDL_INCLUDES := aidl/
 
