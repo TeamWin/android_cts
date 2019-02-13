@@ -39,8 +39,9 @@ import android.provider.cts.MediaStoreAudioTestHelper.Audio3;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio4;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio5;
 import android.provider.cts.MediaStoreAudioTestHelper.MockAudioMediaInfo;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;

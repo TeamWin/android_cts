@@ -46,10 +46,11 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.provider.MediaStore.MediaColumns;
-import android.support.test.InstrumentationRegistry;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
+
+import androidx.test.InstrumentationRegistry;
 
 import junit.framework.AssertionFailedError;
 

@@ -35,11 +35,12 @@ import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
-import android.support.test.InstrumentationRegistry;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.io.BufferedReader;
 import java.io.File;
