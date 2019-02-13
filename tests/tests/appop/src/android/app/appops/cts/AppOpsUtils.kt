@@ -16,7 +16,7 @@
 
 package android.app.appops.cts
 
-import android.support.test.InstrumentationRegistry
+import androidx.test.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 
 import android.app.AppOpsManager.MODE_ALLOWED

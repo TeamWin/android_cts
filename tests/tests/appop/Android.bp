@@ -19,8 +19,8 @@ android_test {
     srcs: ["src/**/*.kt"],
 
     static_libs: [
-        "android-support-test",
-        "compatibility-device-util",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
         "androidx.legacy_legacy-support-v4",
         "platform-test-annotations",
         "truth-prebuilt"
