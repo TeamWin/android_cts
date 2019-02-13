@@ -15,34 +15,32 @@
  */
 package android.car.cts;
 
+import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
+import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static android.car.CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED;
-import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
-import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND;
-
 import android.car.Car;
 import android.car.CarAppFocusManager;
 import android.content.Context;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
-
 import android.util.Log;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RequiresDevice
