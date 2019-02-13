@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.content.ComponentName;
 import android.service.contentcapture.ContentCaptureService;
 import android.util.ArrayMap;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -415,6 +416,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
         private final CountDownLatch mCreated = new CountDownLatch(1);
         private final CountDownLatch mDestroyed = new CountDownLatch(1);
+        private final ArraySet<String> mWhitelistedPackages = new ArraySet<>();
 
         private CtsContentCaptureService mService;
 
@@ -426,6 +428,11 @@ public class CtsContentCaptureService extends ContentCaptureService {
                 throw new IllegalStateException("not created");
             }
 
+            if (!mWhitelistedPackages.isEmpty()) {
+                Log.d(TAG, "Whitelisting packages: " + mWhitelistedPackages);
+                mService.setContentCaptureWhitelist(mWhitelistedPackages, null);
+            }
+
             return mService;
         }
 
@@ -433,10 +440,18 @@ public class CtsContentCaptureService extends ContentCaptureService {
             await(mDestroyed, "not destroyed");
         }
 
+        /**
+         * Whitelist a package when the service connects.
+         */
+        public void whitelistPackage(@NonNull String packageName) {
+            mWhitelistedPackages.add(packageName);
+        }
+
         @Override
         public String toString() {
             return "mService: " + mService + " created: " + (mCreated.getCount() == 0)
-                    + " destroyed: " + (mDestroyed.getCount() == 0);
+                    + " destroyed: " + (mDestroyed.getCount() == 0)
+                    + " whitelisted: " + mWhitelistedPackages;
         }
     }
 
