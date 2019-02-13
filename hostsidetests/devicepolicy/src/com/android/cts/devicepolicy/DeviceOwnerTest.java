@@ -76,8 +76,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             "CtsNoLaunchableActivityApp.apk";
 
     /**
-     * Copied from {@link
-     * DevicePolicyManager.InstallUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID }
+     * Copied from {@link android.app.admin.DevicePolicyManager
+     * .InstallSystemUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID}
      */
     private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
 
