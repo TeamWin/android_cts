@@ -34,7 +34,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -48,6 +47,8 @@ import android.view.View;
 import android.view.cts.R;
 import android.widget.FrameLayout;
 
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -55,7 +56,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 
 public class CapturedActivity extends Activity {
     public static class TestResult {

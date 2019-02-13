@@ -33,13 +33,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.method.MetaKeyKeyListener;
 import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyCharacterMap.KeyData;
 import android.view.KeyEvent;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
 
