@@ -16,7 +16,7 @@ android_test {
     name: "CtsThemeDeviceTestCases",
     defaults: ["cts_defaults"],
 
-    static_libs: ["ctstestrunner"],
+    static_libs: ["ctstestrunner-axt"],
 
     libs: [
         "android.test.runner.stubs",
