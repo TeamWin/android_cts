@@ -107,7 +107,7 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
             return Integer.parseInt(userId);
         } catch (NumberFormatException e) {
             CLog.d("Failed to parse user id when creating a profile user");
-            throw new RuntimeException();
+            throw new RuntimeException(output, e);
         }
     }
 
@@ -177,6 +177,16 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     void uninstallPackageAsUser(String packageName, int userId) throws DeviceNotAvailableException {
         mDevice.executeShellCommand(
                 String.format("pm uninstall --user %d %s", userId, packageName));
+    }
+
+    /**
+     * Installs existing {@code packageName} for user {@code userId}. This fires off asynchronous
+     * restore and returns before the restore operation has finished.
+     */
+    void installExistingPackageAsUser(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(
+                String.format("pm install-existing --user %d %s", userId, packageName));
     }
 
     /** Run device side test as user {@code userId}. */

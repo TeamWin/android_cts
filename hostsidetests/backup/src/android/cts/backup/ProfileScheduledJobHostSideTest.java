@@ -68,14 +68,6 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     private ITestDevice mDevice;
     private int mProfileUserId;
 
-    private LogcatInspector mLogcatInspector =
-            new LogcatInspector() {
-                @Override
-                protected InputStream executeShellCommand(String command) throws IOException {
-                    return executeDeviceShellCommand(getDevice(), command);
-                }
-            };
-
     /** Create a profile user and switch to the local transport. */
     @Before
     @Override
