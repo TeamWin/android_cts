@@ -32,12 +32,13 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.LocaleList;
 import android.os.Parcel;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.TextPaint;
 import android.text.style.TextAppearanceSpan;
 import android.widget.TextView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -18,7 +18,6 @@ package android.text.cts;
 
 import static org.junit.Assert.assertEquals;
 
-import android.support.test.filters.SmallTest;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.SpannableString;
@@ -28,6 +27,8 @@ import android.text.TextDirectionHeuristic;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.style.LeadingMarginSpan;
+
+import androidx.test.filters.SmallTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
