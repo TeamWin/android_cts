@@ -19,10 +19,10 @@ java_library {
 
     static_libs: [
         "mockito-target-minus-junit4",
-        "ctstestrunner",
+        "ctstestrunner-axt",
         "ub-uiautomator",
-        "compatibility-device-util",
-        "android-support-test",
+        "compatibility-device-util-axt",
+        "androidx.test.rules",
         "platformprotosnano",
     ],
 
