@@ -142,7 +142,7 @@ public final class ImeEventStreamTestUtils {
     }
 
     /**
-     * Checks if {@param eventName} has occurred on the EditText(or TextView) of the current
+     * Checks if {@code eventName} has occurred on the EditText(or TextView) of the current
      * activity.
      * @param eventName event name to check
      * @param marker Test marker set to {@link android.widget.EditText#setPrivateImeOptions(String)}
@@ -156,6 +156,23 @@ public final class ImeEventStreamTestUtils {
             }
             final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
             return TextUtils.equals(marker, editorInfo.privateImeOptions);
+        };
+    }
+
+    /**
+    * Checks if {@code eventName} has occurred on the EditText(or TextView) of the current
+    * activity.
+    * @param eventName event name to check
+    * @param fieldId typically same as {@link android.view.View#getId()}.
+    * @return true if event occurred.
+    */
+    public static Predicate<ImeEvent> editorMatcher(@NonNull String eventName, int fieldId) {
+        return event -> {
+            if (!TextUtils.equals(eventName, event.getEventName())) {
+                return false;
+            }
+            final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+            return fieldId == editorInfo.fieldId;
         };
     }
 

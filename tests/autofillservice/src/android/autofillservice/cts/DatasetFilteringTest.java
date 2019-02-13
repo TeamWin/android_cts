@@ -195,8 +195,6 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
                         .build())
                 .build());
 
-        final String marker = mActivity.getMarker();
-
         final ImeEventStream stream = mockImeSession.openEventStream();
 
         // Trigger auto-fill.
@@ -204,7 +202,8 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
         // Wait until the MockIme gets bound to the TestActivity.
         expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-        expectEvent(stream, editorMatcher("onStartInput", marker), MOCK_IME_TIMEOUT_MS);
+        expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
+                MOCK_IME_TIMEOUT_MS);
 
         sReplier.getNextFillRequest();
 
