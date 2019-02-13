@@ -16,14 +16,14 @@
 package android.car.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.car.CarNotConnectedException;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.FeatureUtil;
 
