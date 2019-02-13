@@ -23,11 +23,11 @@ android_test {
     ],
 
     static_libs: [
-        "compatibility-device-util",
+        "compatibility-device-util-axt",
         "ctsdeviceutillegacy",
-        "ctstestrunner",
+        "ctstestrunner-axt",
         "mockito-target-minus-junit4",
-        "android-support-test",
+        "androidx.test.rules",
         "ub-uiautomator",
     ],
 
