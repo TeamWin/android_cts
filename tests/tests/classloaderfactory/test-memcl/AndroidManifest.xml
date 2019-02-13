@@ -26,7 +26,7 @@
         <activity android:name="android.app.classloaderfactory.cts.MyActivity" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.app.classloaderfactory.memcl.cts"
                      android:label="CTS tests of android.app">
         <meta-data android:name="listener"
