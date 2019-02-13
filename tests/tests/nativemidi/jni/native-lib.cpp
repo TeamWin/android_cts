@@ -28,7 +28,7 @@
 
 #include <jni.h>
 
-#include <amidi/midi.h>
+#include <amidi/AMidi.h>
 
 extern "C" {
 
