@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
+import com.android.compatibility.common.util.LogcatInspector;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -54,6 +55,13 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
             "com.android.localtransport/.LocalTransport";
 
     private BackupUtils mBackupUtils = new BackupUtils() {
+        @Override
+        protected InputStream executeShellCommand(String command) throws IOException {
+            return executeDeviceShellCommand(getDevice(), command);
+        }
+    };
+
+    protected final LogcatInspector mLogcatInspector = new LogcatInspector() {
         @Override
         protected InputStream executeShellCommand(String command) throws IOException {
             return executeDeviceShellCommand(getDevice(), command);

@@ -32,8 +32,16 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
+    private static final String TAG = "ProfileKeyValueBackupRestoreHostSideTest";
+    private static final String LOGCAT_FILTER = "BackupManagerService:* " + TAG + ":* *:S";
+    private static final String RESTOREATINSTALL_LOG = "restoreAtInstall pkg="
+        + KEY_VALUE_TEST_PACKAGE;
+    private static final String RESTORECOMPLETE_LOG = "Restore complete";
+    private static final int TIMEOUT_FOR_RESTOREATINSTALL_SECONDS = 30;
+
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
+    private int mParentUserId;
     private int mProfileUserId;
     private String mTransport;
 
@@ -45,8 +53,8 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         mDevice = getDevice();
 
         // Create profile user.
-        int parentUserId = mDevice.getCurrentUser();
-        mProfileUserId = createProfileUser(parentUserId, "Profile-KV");
+        mParentUserId = mDevice.getCurrentUser();
+        mProfileUserId = createProfileUser(mParentUserId, "Profile-KV");
         startUserAndInitializeForBackup(mProfileUserId);
 
         // Switch to local transport.
@@ -90,6 +98,48 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         installPackageAsUser(KEY_VALUE_APK, true, mProfileUserId);
 
         checkDeviceTest("assertSharedPrefsRestored");
+    }
+
+    /**
+     * Tests key-value app backup and restore in the profile user, when the app is already installed
+     * for another user. This test parses logcat to assert that the asynchronous restore-at-install
+     * operation has completed.
+     *
+     * <ol>
+     *   <li>App writes shared preferences.
+     *   <li>Force a backup.
+     *   <li>Uninstall the app.
+     *   <li>Install the app for parent user.
+     *   <li>Install the app, which now already exists in parent user, for profile user to perform a
+     *   restore-at-install operation. This fires off asynchronous restore and returns before the
+     *   restore operation has finished.
+     *   <li>Assert that restore has finished via logcat.
+     *   <li>Check that the shared preferences are restored.
+     * </ol>
+     */
+    @Test
+    public void testKeyValueBackupAndRestoreForInstallExistingPackage() throws Exception {
+        checkDeviceTest("assertSharedPrefsIsEmpty");
+        checkDeviceTest("writeSharedPrefsAndAssertSuccess");
+
+        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+
+        installPackageAsUser(KEY_VALUE_APK, true, mParentUserId);
+        String mark = mLogcatInspector.mark(TAG);
+        installExistingPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+
+         // Check logs for success.
+        mLogcatInspector.assertLogcatContainsInOrder(
+            LOGCAT_FILTER,
+            TIMEOUT_FOR_RESTOREATINSTALL_SECONDS,
+            mark,
+            RESTOREATINSTALL_LOG,
+            RESTORECOMPLETE_LOG);
+
+        checkDeviceTest("assertSharedPrefsRestored");
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId);
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
