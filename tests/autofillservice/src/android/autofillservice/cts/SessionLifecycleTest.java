@@ -161,8 +161,6 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
         // Set service.
         enableService();
 
-        mUiBot.setScreenResolution();
-
         try {
 
             // Start activity that is autofilled in a separate process so it can be killed
