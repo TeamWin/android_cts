@@ -18,7 +18,7 @@ package android.telephonyprovider.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
-import android.support.test.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
 
 class DefaultSmsAppHelper {
     static void setDefaultSmsApp(boolean setToSmsApp) {
