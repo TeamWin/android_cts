@@ -16,9 +16,8 @@
 
 package android.app.notification.legacy29.cts;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertNotNull;
 
 import static org.junit.Assert.assertNotEquals;
@@ -39,8 +38,9 @@ import android.service.notification.Adjustment;
 import android.service.notification.NotificationAssistantService;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
 
