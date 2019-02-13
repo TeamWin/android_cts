@@ -28,10 +28,10 @@ LOCAL_JAVA_LIBRARIES := \
 
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
+    compatibility-device-util-axt \
     ctsdeviceutillegacy \
     ctstestserver \
-    ctstestrunner
+    ctstestrunner-axt
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
