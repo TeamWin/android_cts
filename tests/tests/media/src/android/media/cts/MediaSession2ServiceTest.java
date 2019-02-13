@@ -33,13 +33,13 @@ import android.media.MediaSession2;
 import android.media.MediaSession2Service;
 import android.media.Session2CommandGroup;
 import android.media.Session2Token;
-import android.os.CountDownTimer;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Process;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.AfterClass;

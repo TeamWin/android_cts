@@ -16,18 +16,16 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
-
 import android.content.Context;
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.media.cts.R;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 

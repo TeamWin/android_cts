@@ -15,33 +15,29 @@
  */
 package android.media.cts;
 
-import android.media.cts.R;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaSync;
 import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
 import android.media.SyncParams;
+import android.media.cts.R;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.filters.SmallTest;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -49,9 +45,9 @@ import java.io.IOException;
 import java.lang.Long;
 import java.lang.Math;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tests for the MediaSync API and local video/audio playback.

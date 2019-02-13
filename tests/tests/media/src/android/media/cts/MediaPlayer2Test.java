@@ -15,23 +15,17 @@
  */
 package android.media.cts;
 
-import android.media.cts.R;
-
 import android.annotation.NonNull;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.CallbackDataSourceDesc;
+import android.media.DataSourceCallback;
 import android.media.DataSourceDesc;
 import android.media.FileDataSourceDesc;
-import android.media.UriDataSourceDesc;
-import android.media.MediaCodec;
-import android.media.DataSourceCallback;
-import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer2;
@@ -40,55 +34,45 @@ import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
 import android.media.SubtitleData;
 import android.media.SyncParams;
-import android.media.TimedText;
+import android.media.UriDataSourceDesc;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
+import android.media.cts.R;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
-import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.ServiceManager;
-import android.os.SystemClock;
 import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
 import android.webkit.cts.CtsTestServer;
 
+import androidx.test.filters.SmallTest;
+
 import com.android.compatibility.common.util.MediaUtils;
+
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import junit.framework.AssertionFailedError;
-import org.apache.http.Header;
-import org.apache.http.HttpRequest;
 
 /**
  * Tests for the MediaPlayer2 API and local video/audio playback.
