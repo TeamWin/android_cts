@@ -70,7 +70,7 @@ public class CapturedActivity extends Activity {
     private MediaProjection mMediaProjection;
     private VirtualDisplay mVirtualDisplay;
 
-    private SurfacePixelValidator mSurfacePixelValidator;
+    private SurfacePixelValidator2 mSurfacePixelValidator;
 
     private static final int PERMISSION_DIALOG_WAIT_MS = 1000;
     private static final int RETRY_COUNT = 2;
@@ -228,7 +228,7 @@ public class CapturedActivity extends Activity {
                 fail("capture bounds too small to be a fullscreen activity: " + boundsToCheck);
             }
 
-            mSurfacePixelValidator = new SurfacePixelValidator(CapturedActivity.this,
+            mSurfacePixelValidator = new SurfacePixelValidator2(CapturedActivity.this,
                     size, boundsToCheck, animationTestCase.getChecker());
             Log.d("MediaProjection", "Size is " + size.toString()
                     + ", bounds are " + boundsToCheck.toShortString());
