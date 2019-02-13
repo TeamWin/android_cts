@@ -69,6 +69,13 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
                 buildHelper.getTestFile(appFileName), true, grantPermissions, userId, "-t");
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
+
+        waitForBroadcastIdle();
+    }
+
+    private void waitForBroadcastIdle() throws Exception {
+        runCommand("am wait-for-broadcast-idle");
+        Thread.sleep(100); // Just wait a bit to make sure the system isn't too busy...
     }
 
     private String runCommand(String command) throws Exception {
@@ -155,6 +162,8 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
         }
         getDevice().uninstallPackage(PACKAGE_A);
         getDevice().uninstallPackage(PACKAGE_B);
+
+        waitForBroadcastIdle();
     }
 
     private void runWithRetries(int timeoutSeconds, ThrowingRunnable r) throws Throwable {
@@ -233,10 +242,10 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
         // Set as the default app
         setSmsApp(packageName, userId);
 
-        checkNotBound(packageName, userId, expectedErrorPattern);
+        checkNotBoundWithError(packageName, userId, expectedErrorPattern);
     }
 
-    private void checkNotBound(String packageName, int userId,
+    private void checkNotBoundWithError(String packageName, int userId,
             String expectedErrorPattern) throws Throwable {
         // This should contain:
         // "finder,0,[Default SMS app],PACKAGE,null,ERROR-MESSAGE"
@@ -245,6 +254,18 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
                     "^" + Pattern.quote("finder,[Default SMS app]," + userId + ","
                             + packageName + ",null,") + ".*"
                             + Pattern.quote(expectedErrorPattern) + ".*$");
+        });
+    }
+
+    private void checkPackageNotBound(String packageName, int userId) throws Throwable {
+        // This should contain:
+        // "finder,0,[Default SMS app],DIFFERENT-PACKAGE,..."
+        runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
+            runCommand("dumpsys app_binding -s",
+                    "^" + Pattern.quote("finder,[Default SMS app]," + userId + ",")
+                            + "(?!" // Negative look ahead
+                            + Pattern.quote(packageName + ",")
+                            + ")");
         });
     }
 
@@ -361,6 +382,25 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     }
 
     /**
+     * Make sure when the SMS app is uninstalled, the binding will be gone.
+     */
+    public void testUninstall() throws Throwable {
+        // Replace existing package without uninstalling.
+        installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
+        getDevice().uninstallPackage(PACKAGE_A);
+        checkPackageNotBound(PACKAGE_A, USER_SYSTEM);
+
+        // Try with different APKs, just to make sure.
+        installAndCheckBound(APK_B, PACKAGE_B, SERVICE_1, USER_SYSTEM);
+        getDevice().uninstallPackage(PACKAGE_B);
+        checkPackageNotBound(PACKAGE_B, USER_SYSTEM);
+
+        installAndCheckBound(APK_2, PACKAGE_A, SERVICE_2, USER_SYSTEM);
+        getDevice().uninstallPackage(PACKAGE_A);
+        checkPackageNotBound(PACKAGE_A, USER_SYSTEM);
+    }
+
+    /**
      * Make sure when the SMS app changes, the service still gets bound correctly.
      */
     public void testSwitchDefaultApp() throws Throwable {
@@ -403,6 +443,10 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
             // Secondary user should still have a valid connection.
             checkBound(PACKAGE_B, SERVICE_1, userId);
 
+            // Upgrade test: Try with apk 1, and then upgrade to apk 2.
+            installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, userId);
+            installAndCheckBound(APK_2, PACKAGE_A, SERVICE_2, userId);
+
             // Stop the secondary user, now the binding should be gone.
             getDevice().stopUser(userId);
 
@@ -414,7 +458,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
 
             // Now the binding should recover.
             runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
-                checkBound(PACKAGE_B, SERVICE_1, userId);
+                checkBound(PACKAGE_A, SERVICE_2, userId);
             });
 
         } finally {
@@ -508,7 +552,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
         updateConstants("sms_service_enabled=false");
 
         runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
-            checkNotBound("null", USER_SYSTEM, "feature disabled");
+            checkNotBoundWithError("null", USER_SYSTEM, "feature disabled");
         });
 
         updateConstants("sms_service_enabled=true");
