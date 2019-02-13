@@ -321,4 +321,28 @@ public class MockImeSession implements AutoCloseable {
         mContext.sendBroadcast(intent);
         return command;
     }
+
+    /**
+     * Lets {@link MockIme} call
+     * {@link android.inputmethodservice.InputMethodService#sendDownUpKeyEvents(int)} with the given
+     * {@code keyEventCode}.
+     *
+     * @param keyEventCode to be passed as the {@code keyEventCode} parameter.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSendDownUpKeyEvents(int keyEventCode) {
+        final Bundle params = new Bundle();
+        params.putInt("keyEventCode", keyEventCode);
+        final ImeCommand command = new ImeCommand(
+                "sendDownUpKeyEvents", SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = new Intent();
+        intent.setPackage(MockIme.getComponentName().getPackageName());
+        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
+        intent.putExtras(command.toBundle());
+        mContext.sendBroadcast(intent);
+        return command;
+    }
 }
