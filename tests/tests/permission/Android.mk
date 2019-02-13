@@ -28,10 +28,10 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
+    ctstestrunner-axt \
     guava \
     android-ex-camera2 \
-    compatibility-device-util \
+    compatibility-device-util-axt \
     truth-prebuilt \
     androidx.annotation_annotation \
     platformprotosnano

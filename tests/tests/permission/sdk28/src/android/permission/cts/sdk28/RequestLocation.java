@@ -16,14 +16,15 @@
 
 package android.permission.cts.sdk28;
 
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.telephony.TelephonyManager;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

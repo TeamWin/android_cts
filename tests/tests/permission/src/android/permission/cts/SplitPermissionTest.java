@@ -20,33 +20,24 @@ import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
-import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
-import static android.app.AppOpsManager.permissionToOp;
-import static android.app.AppOpsManager.permissionToOpCode;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
-import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.permission.cts.PermissionUtils.getAppOp;
 import static android.permission.cts.PermissionUtils.grantPermission;
 import static android.permission.cts.PermissionUtils.isGranted;
 import static android.permission.cts.PermissionUtils.setAppOp;
 import static android.permission.cts.PermissionUtils.uninstallApp;
 
-import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Ignore;
