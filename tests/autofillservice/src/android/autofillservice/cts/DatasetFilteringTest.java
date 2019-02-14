@@ -29,6 +29,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 
@@ -213,20 +214,21 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         // Only two datasets start with 'a'
         final ImeCommand cmd1 = mockImeSession.callCommitText("a", 1);
         expectCommand(stream, cmd1, MOCK_IME_TIMEOUT_MS);
-
         mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
         final ImeCommand cmd2 = mockImeSession.callCommitText("a", 1);
         expectCommand(stream, cmd2, MOCK_IME_TIMEOUT_MS);
-
         mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
-        sendKeyEvent("KEYCODE_DEL"); // TODO: add new method on MockIme for it
+        final ImeCommand cmd3 = mockImeSession.callSendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+        expectCommand(stream, cmd3, MOCK_IME_TIMEOUT_MS);
         mUiBot.assertDatasets(aa, ab);
+
         // With no filter text all datasets should be shown
-        sendKeyEvent("KEYCODE_DEL"); // TODO: add new method on MockIme for it
+        final ImeCommand cmd4 = mockImeSession.callSendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+        expectCommand(stream, cmd4, MOCK_IME_TIMEOUT_MS);
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
