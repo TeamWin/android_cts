@@ -16,9 +16,9 @@
 
 package android.systemui.cts;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -29,10 +29,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
 import org.junit.Test;
