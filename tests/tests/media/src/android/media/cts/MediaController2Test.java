@@ -28,6 +28,7 @@ import android.media.Session2CommandGroup;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -253,6 +254,9 @@ public class MediaController2Test {
         @Override
         public Session2CommandGroup onConnect(MediaSession2 session,
                 MediaSession2.ControllerInfo controller) {
+            if (controller.getUid() != Process.myUid()) {
+                return null;
+            }
             mControllerInfo = controller;
             return SESSION_ALLOWED_COMMANDS;
         }
@@ -308,7 +312,7 @@ public class MediaController2Test {
         }
 
         @Override
-        public void onCommandResult(MediaController2 controller,Object token,
+        public void onCommandResult(MediaController2 controller, Object token,
                 Session2Command command, Session2Command.Result result) {
             mController = controller;
             mCommand = command;
