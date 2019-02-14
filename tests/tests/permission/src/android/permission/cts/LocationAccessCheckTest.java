@@ -36,8 +36,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -58,12 +56,12 @@ import android.provider.DeviceConfig.Privacy;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
@@ -74,6 +72,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;

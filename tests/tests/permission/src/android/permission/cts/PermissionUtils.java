@@ -32,9 +32,9 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
 
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
 
 public class PermissionUtils {
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
