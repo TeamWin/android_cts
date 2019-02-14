@@ -1108,25 +1108,27 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
+        final String firstTitle = "Hello, World!";
         final String HTML_CONTENT =
-                "<html><head><title>Hello,World!</title></head><body></body>" +
+                "<html><head><title>" + firstTitle + "</title></head><body></body>" +
                 "</html>";
         mOnUiThread.loadDataAndWaitForCompletion(HTML_CONTENT,
                 "text/html", null);
-        assertEquals("Hello,World!", mOnUiThread.getTitle());
+        assertEquals(firstTitle, mOnUiThread.getTitle());
 
         startWebServer(false);
-        final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
         final String crossOriginUrl = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
-        mOnUiThread.setWebChromeClient(webChromeClient);
+        final String secondTitle = "Foo bar";
         mOnUiThread.loadDataAndWaitForCompletion(
-                "<html><head></head><body onload=\"" +
+                "<html><head><title>" + secondTitle + "</title></head><body onload=\"" +
                 "document.title = " +
                 "document.getElementById('frame').contentWindow.location.href;" +
                 "\"><iframe id=\"frame\" src=\"" + crossOriginUrl + "\"></body></html>",
                 "text/html", null);
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
+        assertEquals("Page title should not change, because it should be an error to access a "
+                + "cross-site frame's href.",
+                secondTitle, mOnUiThread.getTitle());
     }
 
     public void testLoadDataWithBaseUrl_resolvesRelativeToBaseUrl() throws Throwable {
