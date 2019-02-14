@@ -39,6 +39,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
 
         @Override
         public void onError(int errorCode, @Nullable String message) {
+            GroupCallCallback.super.onError(errorCode, message);
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = errorCode;
             args.arg2 = message;
@@ -47,6 +48,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
 
         @Override
         public void onGroupCallStateChanged(int state, int reason) {
+            GroupCallCallback.super.onGroupCallStateChanged(state, reason);
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = state;
             args.arg2 = reason;
@@ -55,6 +57,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
 
         @Override
         public void onBroadcastSignalStrengthUpdated(int signalStrength) {
+            GroupCallCallback.super.onBroadcastSignalStrengthUpdated(signalStrength);
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = signalStrength;
             mBroadcastSignalStrengthUpdatedCalls.add(args);

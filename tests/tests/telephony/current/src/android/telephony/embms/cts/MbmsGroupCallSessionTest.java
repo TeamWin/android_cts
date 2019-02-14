@@ -27,20 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
-    private class NoOpCallback implements GroupCallCallback {
-        @Override
-        public void onError(int errorCode, String message) {
-        }
-
-        @Override
-        public void onGroupCallStateChanged(int state, int reason) {
-        }
-
-        @Override
-        public void onBroadcastSignalStrengthUpdated(int signalStrength) {
-        }
-    }
-
     public void testDuplicateSession() throws Exception {
         try {
             MbmsGroupCallSession failure = MbmsGroupCallSession.create(
@@ -57,7 +43,7 @@ public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
         // Make sure we can't use it anymore
         try {
             mGroupCallSession.startGroupCall(0, Collections.emptyList(), Collections.emptyList(),
-                    mCallbackExecutor, new NoOpCallback());
+                    mCallbackExecutor, new GroupCallCallback() {});
             fail("GroupCall session should not be usable after close");
         } catch (IllegalStateException e) {
             // Succeed
@@ -72,7 +58,7 @@ public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);
         mGroupCallSession.startGroupCall(0, Collections.emptyList(), Collections.emptyList(),
-                mCallbackExecutor, new NoOpCallback());
+                mCallbackExecutor, new GroupCallCallback() {});
         assertEquals(MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE,
                 mCallback.waitOnError().arg1);
     }
