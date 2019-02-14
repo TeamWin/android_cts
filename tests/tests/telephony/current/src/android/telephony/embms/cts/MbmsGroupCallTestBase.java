@@ -37,6 +37,7 @@ public class MbmsGroupCallTestBase extends InstrumentationTestCase {
 
         @Override
         public void onError(int errorCode, @Nullable String message) {
+            MbmsGroupCallSessionCallback.super.onError(errorCode, message);
             mNumErrorCalls += 1;
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = errorCode;
@@ -46,12 +47,14 @@ public class MbmsGroupCallTestBase extends InstrumentationTestCase {
 
         @Override
         public void onMiddlewareReady() {
+            MbmsGroupCallSessionCallback.super.onMiddlewareReady();
             mMiddlewareReadyCalls.add(SomeArgs.obtain());
         }
 
         @Override
         public void onAvailableSaisUpdated(List<Integer> currentSais,
                 List<List<Integer>> availableSais) {
+            MbmsGroupCallSessionCallback.super.onAvailableSaisUpdated(currentSais, availableSais);
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = currentSais;
             args.arg2 = availableSais;
@@ -60,6 +63,7 @@ public class MbmsGroupCallTestBase extends InstrumentationTestCase {
 
         @Override
         public void onServiceInterfaceAvailable(String interfaceName, int index) {
+            MbmsGroupCallSessionCallback.super.onServiceInterfaceAvailable(interfaceName, index);
             SomeArgs args = SomeArgs.obtain();
             args.arg1 = interfaceName;
             args.arg2 = index;
