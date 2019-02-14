@@ -203,6 +203,6 @@
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSecurityBulletinHostTestCases.jar" />
-        <option name="runtime-hint" value="4m2s" />
+        <option name="runtime-hint" value="5m46s" />
     </test>
 </configuration>
