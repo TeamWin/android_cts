@@ -27,6 +27,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import org.xmlpull.v1.XmlPullParserException;
@@ -102,6 +109,32 @@ public class AbstractApiTest extends InstrumentationTestCase {
         return argument.split(",");
     }
 
+    Stream<Object> readFileOptimized(File file) {
+        try {
+            if (file.getName().endsWith(".zip")) {
+                ZipFile zip = new ZipFile(file);
+                return zip.stream().map(entry -> {
+                    try {
+                        return zip.getInputStream(entry);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            } else {
+                try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(),
+                        EnumSet.of(StandardOpenOption.READ))) {
+                    ByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0,
+                            fileChannel.size());
+                    if (mappedByteBuffer == null) {
+                        throw new IllegalStateException("Could not map " + file);
+                    }
+                    return Stream.of(mappedByteBuffer);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     Stream<InputStream> readFile(File file) {
         try {
             if (file.getName().endsWith(".zip")) {

@@ -73,40 +73,48 @@ public class HiddenApiTest extends AbstractApiTest {
                 @Override
                 public void fieldAccessibleViaReflection(boolean accessible, DexField field) {
                     if (accessible) {
-                        resultObserver.notifyFailure(
-                                FailureType.EXTRA_FIELD,
-                                field.toString(),
-                                "Hidden field accessible through reflection");
+                        synchronized(resultObserver) {
+                            resultObserver.notifyFailure(
+                                    FailureType.EXTRA_FIELD,
+                                    field.toString(),
+                                    "Hidden field accessible through reflection");
+                        }
                     }
                 }
 
                 @Override
                 public void fieldAccessibleViaJni(boolean accessible, DexField field) {
                     if (accessible) {
-                        resultObserver.notifyFailure(
-                                FailureType.EXTRA_FIELD,
-                                field.toString(),
-                                "Hidden field accessible through JNI");
+                        synchronized(resultObserver) {
+                            resultObserver.notifyFailure(
+                                    FailureType.EXTRA_FIELD,
+                                    field.toString(),
+                                    "Hidden field accessible through JNI");
+                        }
                     }
                 }
 
                 @Override
                 public void methodAccessibleViaReflection(boolean accessible, DexMethod method) {
                     if (accessible) {
-                        resultObserver.notifyFailure(
-                                FailureType.EXTRA_METHOD,
-                                method.toString(),
-                                "Hidden method accessible through reflection");
+                        synchronized(resultObserver) {
+                            resultObserver.notifyFailure(
+                                    FailureType.EXTRA_METHOD,
+                                    method.toString(),
+                                    "Hidden method accessible through reflection");
+                        }
                     }
                 }
 
                 @Override
                 public void methodAccessibleViaJni(boolean accessible, DexMethod method) {
                     if (accessible) {
-                        resultObserver.notifyFailure(
-                                FailureType.EXTRA_METHOD,
-                                method.toString(),
-                                "Hidden method accessible through JNI");
+                        synchronized(resultObserver) {
+                            resultObserver.notifyFailure(
+                                    FailureType.EXTRA_METHOD,
+                                    method.toString(),
+                                    "Hidden method accessible through JNI");
+                        }
                     }
                 }
             };
@@ -120,10 +128,21 @@ public class HiddenApiTest extends AbstractApiTest {
 
     private Stream<DexMember> parseDexApiFilesAsStream(String[] apiFiles) {
         DexApiDocumentParser dexApiDocumentParser = new DexApiDocumentParser();
-        return Stream.of(apiFiles)
+        // To allow parallelization with a DexMember output type, we need two
+        // pipes.
+        Stream<Stream<DexMember>> inputsAsStreams = Stream.of(apiFiles).parallel()
                 .map(name -> new File(API_FILE_DIRECTORY + "/" + name))
-                .flatMap(file -> readFile(file))
-                .flatMap(stream -> dexApiDocumentParser.parseAsStream(stream));
+                .flatMap(file -> readFileOptimized(file))
+                .map(obj -> dexApiDocumentParser.parseAsStream(obj));
+        // The flatMap inherently serializes the pipe. The number of inputs is
+        // still small here, so reduce by concatenating (note the caveats of
+        // concats).
+        return inputsAsStreams.reduce(null, (prev, stream) -> {
+            if (prev == null) {
+                return stream;
+            }
+            return Stream.concat(prev, stream);
+        });
     }
 
     private boolean shouldTestMember(DexMember member) {
