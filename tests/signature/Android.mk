@@ -22,7 +22,7 @@ include $(CLEAR_VARS)
 # don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_STATIC_JAVA_LIBRARIES := signature-android-javalib
 
 LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker
 
@@ -32,20 +32,5 @@ LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
-# signature-hostside java library (for testing)
-# ============================================================
-
-include $(CLEAR_VARS)
-
-# These files are for device-side only, so filter-out for host library
-LOCAL_DEVICE_ONLY_SOURCES := %/CurrentApi.java %/ApiDocumentParser.java %/DexMemberChecker.java
-
-LOCAL_SRC_FILES := $(filter-out $(LOCAL_DEVICE_ONLY_SOURCES), $(call all-java-files-under, src))
-
-LOCAL_MODULE := signature-hostside
-
-LOCAL_MODULE_TAGS := optional
-
-include $(BUILD_HOST_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

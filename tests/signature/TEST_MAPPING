@@ -38,6 +38,10 @@
     },
     {
       "name": "CtsSharedLibsApiSignatureTestCases"
+    },
+    {
+      "name": "signature-host-tests",
+      "host" : true
     }
   ]
 }
