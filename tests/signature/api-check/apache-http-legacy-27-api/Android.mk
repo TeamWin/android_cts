@@ -20,7 +20,7 @@ LOCAL_PACKAGE_NAME := CtsApacheHttpLegacy27ApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
     current.api \
-    apache-http-legacy-minus-current.api \
+    apache-http-legacy-current.api \
 
 LOCAL_MIN_SDK_VERSION := 22
 
