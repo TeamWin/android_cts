@@ -33,17 +33,18 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Debug;
 import android.os.Debug.MemoryInfo;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Half;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.Surface;
 import android.view.View;
 import android.view.Window;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
