@@ -48,6 +48,7 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
+import android.telephony.UiccCardInfo;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -942,6 +943,32 @@ public class TelephonyManagerTest {
             assertTrue(
                     "PLMNs must be strings of digits 0-9! plmn=" + plmn,
                     android.text.TextUtils.isDigitsOnly(plmn));
+        }
+    }
+
+    /**
+     * Verify that TelephonyManager.getCardIdForDefaultEuicc returns a positive value or either
+     * UNINITIALIZED_CARD_ID or UNSUPPORTED_CARD_ID.
+     */
+    @Test
+    public void testGetCardIdForDefaultEuicc() {
+        int cardId = mTelephonyManager.getCardIdForDefaultEuicc();
+        assertTrue("Card ID for default EUICC is not a valid value",
+                cardId == TelephonyManager.UNSUPPORTED_CARD_ID
+                || cardId == TelephonyManager.UNINITIALIZED_CARD_ID
+                || cardId >= 0);
+    }
+
+    /**
+     * Tests that a SecurityException is thrown when trying to access UiccCardsInfo.
+     */
+    @Test
+    public void testGetUiccCardsInfo() {
+        try {
+            // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
+            List<UiccCardInfo> infos = mTelephonyManager.getUiccCardsInfo();
+            fail("Expected SecurityException. App does not have carrier privileges");
+        } catch (SecurityException e) {
         }
     }
 
