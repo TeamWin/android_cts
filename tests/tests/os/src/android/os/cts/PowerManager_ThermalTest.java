@@ -18,20 +18,20 @@ package android.os.cts;
 
 import static junit.framework.TestCase.assertEquals;
 
-import android.content.Context;
-import android.os.PowerManager;
-import android.os.PowerManager.ThermalStatusCallback;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.uiautomator.UiDevice;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.content.Context;
+import android.os.PowerManager;
+import android.os.PowerManager.ThermalStatusCallback;
+import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ThermalUtils;
 
 import org.junit.After;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
