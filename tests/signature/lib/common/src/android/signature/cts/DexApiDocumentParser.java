@@ -16,12 +16,10 @@
 package android.signature.cts;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.Spliterator;
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -38,106 +36,54 @@ import java.text.ParseException;
  */
 public class DexApiDocumentParser {
 
+    // Regex patterns which match DEX signatures of methods and fields.
+    // See comment by next() for more details.
+    private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^>]*;)->(.*):(.*)$");
+    private static final Pattern REGEX_METHOD =
+            Pattern.compile("^(L[^>]*;)->(.*)(\\(.*\\).*)$");
+
+    private static final BiFunction<String, Integer, DexMember> DEX_MEMBER_LINE_NUM_CONVERTER = (
+            str, lineNum) -> {
+        try {
+            return parseLine(str, lineNum);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    };
+
     public Stream<DexMember> parseAsStream(InputStream inputStream) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        return StreamSupport.stream(new DexApiSpliterator(reader), false);
+        return StreamSupport.stream(
+                new BufferedReaderLineSpliterator<DexMember>(reader, DEX_MEMBER_LINE_NUM_CONVERTER),
+                false);
     }
 
-    private static class DexApiSpliterator implements Spliterator<DexMember> {
-        private final BufferedReader mReader;
-        private int mLineNum;
+    private static DexMember parseLine(String line, int lineNum) throws ParseException {
+        // Split the CSV line.
+        String[] splitLine = line.split(",");
+        String signature = splitLine[0];
+        String[] flags = Arrays.copyOfRange(splitLine, 1, splitLine.length);
 
-        // Regex patterns which match DEX signatures of methods and fields.
-        // See comment by next() for more details.
-        private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^>]*;)->(.*):(.*)$");
-        private static final Pattern REGEX_METHOD =
-                Pattern.compile("^(L[^>]*;)->(.*)(\\(.*\\).*)$");
+        // Match line against regex patterns.
+        Matcher matchField = REGEX_FIELD.matcher(signature);
+        Matcher matchMethod = REGEX_METHOD.matcher(signature);
 
-        DexApiSpliterator(BufferedReader reader) {
-            mReader = reader;
-            mLineNum = 0;
+        // Check that *exactly* one pattern matches.
+        int matchCount = (matchField.matches() ? 1 : 0) + (matchMethod.matches() ? 1 : 0);
+        if (matchCount == 0) {
+            throw new ParseException("Could not parse: \"" + line + "\"", lineNum);
+        } else if (matchCount > 1) {
+            throw new ParseException("Ambiguous parse: \"" + line + "\"", lineNum);
         }
 
-        @Override
-        public boolean tryAdvance(Consumer<? super DexMember> action) {
-            DexMember nextMember = null;
-            try {
-                nextMember = next();
-            } catch (IOException | ParseException ex) {
-                throw new RuntimeException(ex);
-            }
-            if (nextMember == null) {
-                return false;
-            }
-            action.accept(nextMember);
-            return true;
+        // Extract information from the signature.
+        if (matchField.matches()) {
+            return new DexField(
+                    matchField.group(1), matchField.group(2), matchField.group(3), flags);
+        } else if (matchMethod.matches()) {
+            return new DexMethod(
+                    matchMethod.group(1),matchMethod.group(2), matchMethod.group(3), flags);
         }
-
-        @Override
-        public Spliterator<DexMember> trySplit() {
-            return null;
-        }
-
-        @Override
-        public long estimateSize() {
-            return Long.MAX_VALUE;
-        }
-
-        @Override
-        public int characteristics() {
-            return ORDERED | DISTINCT | NONNULL | IMMUTABLE;
-        }
-
-        /**
-         * Parses lines of DEX signatures from `mReader`. The following two
-         * line formats are supported:
-         * 1) [class descriptor]->[field name]:[field type]
-         *      - e.g. Lcom/example/MyClass;->myField:I
-         *      - these lines are parsed as field signatures
-         * 2) [class descriptor]->[method name]([method parameter types])[method return type]
-         *      - e.g. Lcom/example/MyClass;->myMethod(Lfoo;Lbar;)J
-         *      - these lines are parsed as method signatures
-         */
-        private DexMember next() throws IOException, ParseException {
-            while (true) {
-                // Read the next line from the input.
-                String line = mReader.readLine();
-                if (line == null) {
-                    // End of stream.
-                    return null;
-                }
-
-                // Increment the line number.
-                mLineNum = mLineNum + 1;
-
-                // Split the CSV line.
-                String[] splitLine = line.split(",");
-                String signature = splitLine[0];
-                String[] flags = Arrays.copyOfRange(splitLine, 1, splitLine.length);
-
-                // Match line against regex patterns.
-                Matcher matchField = REGEX_FIELD.matcher(signature);
-                Matcher matchMethod = REGEX_METHOD.matcher(signature);
-
-                // Check that *exactly* one pattern matches.
-                int matchCount = (matchField.matches() ? 1 : 0) + (matchMethod.matches() ? 1 : 0);
-                if (matchCount == 0) {
-                    throw new ParseException("Could not parse: \"" + line + "\"", mLineNum);
-                } else if (matchCount > 1) {
-                    throw new ParseException("Ambiguous parse: \"" + line + "\"", mLineNum);
-                }
-
-                // Extract information from the signature.
-                if (matchField.matches()) {
-                    return new DexField(
-                            matchField.group(1), matchField.group(2), matchField.group(3), flags);
-                } else if (matchMethod.matches()) {
-                    return new DexMethod(
-                            matchMethod.group(1),matchMethod.group(2), matchMethod.group(3), flags);
-                } else {
-                    throw new IllegalStateException();
-                }
-            }
-        }
+        throw new IllegalStateException();
     }
 }
