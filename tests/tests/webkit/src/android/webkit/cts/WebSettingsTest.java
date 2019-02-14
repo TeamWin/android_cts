@@ -746,7 +746,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         // Verify that websql database does not work when disabled.
         startWebServer();
 
-        mOnUiThread.setWebChromeClient(new ChromeClient(mOnUiThread) {
+        mOnUiThread.setWebChromeClient(new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
             @Override
             public void onExceededDatabaseQuota(String url, String databaseId, long quota,
                 long estimatedSize, long total, WebStorage.QuotaUpdater updater) {
@@ -969,13 +969,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setAllowFileAccessFromFileURLs(false);
 
         // when cross file scripting is disabled, make sure cross domain requests fail
-        final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
-        mOnUiThread.setWebChromeClient(webChromeClient);
         String url = TestHtmlConstants.getFileUrl(TestHtmlConstants.IFRAME_ACCESS_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         String iframeUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        assertFalse(iframeUrl.equals(mOnUiThread.getTitle()));
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
+        assertFalse("Title should not have changed, because file URL access is disabled",
+                iframeUrl.equals(mOnUiThread.getTitle()));
     }
 
     // Verify that enabling file access from file URLs enable XmlHttpRequest (XHR) across files
@@ -992,10 +990,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
 
-        final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
-        mOnUiThread.setWebChromeClient(webChromeClient);
         verifyFileXHR(false);
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel());
     }
 
     // verify XHR across files matches the allowFileAccessFromFileURLs setting
@@ -1024,8 +1019,13 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         String localPath = mContext.getFileStreamPath("local.html").getAbsolutePath();
         // when cross file scripting is enabled, make sure cross domain requests succeed
         mOnUiThread.loadUrlAndWaitForCompletion("file://" + localPath);
-        if (enableXHR) assertEquals(target, mOnUiThread.getTitle());
-        else assertFalse(target.equals(mOnUiThread.getTitle()));
+        if (enableXHR) {
+            assertEquals("Expected title to change, because XHR should be enabled", target,
+                    mOnUiThread.getTitle());
+        } else {
+            assertFalse("Title should not have changed, because XHR should be disabled",
+                    target.equals(mOnUiThread.getTitle()));
+        }
     }
 
     // Create a private file on internal storage from the given string
