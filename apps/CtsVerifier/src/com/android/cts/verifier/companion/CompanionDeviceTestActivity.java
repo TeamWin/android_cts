@@ -25,6 +25,8 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+import android.content.Context;
+import android.content.pm.PackageManager;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -61,6 +63,14 @@ public class CompanionDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     private void test() {
+
+        if (!getApplicationContext().getPackageManager().
+                  hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+            Log.d(LOG_TAG, "PackageManager.FEATURE_BLUETOOTH not supported. This test case is not applicable");
+            getPassButton().setEnabled(true);
+            return;
+        }
+
         mInitialAssociations = mCompanionDeviceManager.getAssociations();
 
         AssociationRequest request = new AssociationRequest.Builder()
