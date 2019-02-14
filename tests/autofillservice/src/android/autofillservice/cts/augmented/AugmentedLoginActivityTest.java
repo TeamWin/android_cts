@@ -22,19 +22,25 @@ import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.DO_NOT_REPLY_AUGMENTED_RESPONSE;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
 
+import static org.testng.Assert.assertThrows;
+
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.LoginActivity;
 import android.autofillservice.cts.OneTimeCancellationSignalListener;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
+import android.content.ComponentName;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.Set;
 
 public class AugmentedLoginActivityTest
         extends AugmentedAutofillAutoActivityLaunchTestCase<LoginActivity> {
@@ -177,11 +183,28 @@ public class AugmentedLoginActivityTest
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        // TODO(b/122728762): might need to wait until connected
+        // TODO(b/124456706): might need to wait until connected
         sAugmentedReplier.getNextFillRequest().cancellationSignal.setOnCancelListener(listener);
 
         // Assert results
         listener.assertOnCancelCalled();
+    }
+
+    @Test
+    public void testSetAugmentedAutofillWhitelist_noStandardServiceSet() throws Exception {
+        final AutofillManager mgr = mActivity.getAutofillManager();
+        assertThrows(SecurityException.class,
+                () -> mgr.setAugmentedAutofillWhitelist((Set<String>) null,
+                        (Set<ComponentName>) null));
+    }
+
+    @Test
+    public void testSetAugmentedAutofillWhitelist_notAugmentedService() throws Exception {
+        enableService();
+        final AutofillManager mgr = mActivity.getAutofillManager();
+        assertThrows(SecurityException.class,
+                () -> mgr.setAugmentedAutofillWhitelist((Set<String>) null,
+                        (Set<ComponentName>) null));
     }
 
     /*

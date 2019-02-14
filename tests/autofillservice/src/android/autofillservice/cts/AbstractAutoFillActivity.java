@@ -72,7 +72,7 @@ public abstract class AbstractAutoFillActivity extends Activity {
         }
     }
 
-    protected AutofillManager getAutofillManager() {
+    public AutofillManager getAutofillManager() {
         return getSystemService(AutofillManager.class);
     }
 
