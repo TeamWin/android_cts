@@ -20,8 +20,9 @@ import static org.junit.Assert.fail;
 
 import android.print.PrintManager;
 import android.print.test.BasePrintTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObjectNotFoundException;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
