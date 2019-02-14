@@ -30,6 +30,8 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ColorUtils;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -129,13 +131,13 @@ public class BitmapRGBAF16Test {
         mOpaqueBitmap.setPixel(5, 5, 0x7f102030);
         int after = mOpaqueBitmap.getPixel(5, 5);
         assertTrue(before != after);
-        assertEquals(0x7f102030, after);
+        ColorUtils.verifyColor(0x7f102030, after, 1);
 
         before = mTransparentBitmap.getPixel(5, 5);
         mTransparentBitmap.setPixel(5, 5, 0x7f102030);
         after = mTransparentBitmap.getPixel(5, 5);
         assertTrue(before != after);
-        assertEquals(0x7f102030, after);
+        ColorUtils.verifyColor(0x7f102030, after, 1);
     }
 
     @Test

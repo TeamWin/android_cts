@@ -746,6 +746,10 @@ public class ColorSpaceTest {
         assertNotNull(colorSpace.getTransferParameters());
 
         colorSpace = (ColorSpace.Rgb) ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+        assertNotNull(colorSpace.getTransferParameters());
+
+        colorSpace = new ColorSpace.Rgb("Almost sRGB", SRGB_TO_XYZ,
+                x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f));
         assertNull(colorSpace.getTransferParameters());
     }
 

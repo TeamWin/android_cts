@@ -892,6 +892,7 @@ public class BitmapFactoryTest {
             // the reference.  We must do this manually because we are abusing ALPHA_8
             // in order to represent grayscale.
             compareBitmaps(reference, grayToARGB(alpha8), 0, true, true);
+            assertNull(alpha8.getColorSpace());
         }
 
         // Setting inPreferredConfig to nullptr will cause the default Config to be

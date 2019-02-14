@@ -16,6 +16,8 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BlendMode;
@@ -28,8 +30,11 @@ import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.bitmapverifiers.SamplePointWideGamutVerifier;
 import android.uirendering.cts.testclasses.view.BitmapView;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -160,5 +165,34 @@ public class WideColorGamutTests extends ActivityTestBase {
                             new Point[] { new Point(0, 0), new Point(50, 50) },
                             new Color[] { expected, expected },
                             0));
+    }
+
+    @Test
+    public void testProPhoto() {
+        Color blueProPhoto = Color.valueOf(0, 0, 1, 1,
+                ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB));
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        WindowManager window = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display defaultDisplay = window.getDefaultDisplay();
+        ColorSpace displaySpace = defaultDisplay.getPreferredWideGamutColorSpace();
+        final Color blueDisplay = blueProPhoto.convert(displaySpace == null
+                ? ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB) : displaySpace);
+        createTest()
+                .addCanvasClient("RGBA16F_ProPhoto", (canvas, width, height) -> {
+                    AssetManager assets = getActivity().getResources().getAssets();
+                    try (InputStream in = assets.open("blue-16bit-prophoto.png")) {
+                        Bitmap bitmap = BitmapFactory.decodeStream(in);
+                        canvas.scale(
+                                width / (float) bitmap.getWidth(),
+                                height / (float) bitmap.getHeight());
+                        canvas.drawBitmap(bitmap, 0, 0, null);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Test failed: ", e);
+                    }
+                }, true)
+                .runWithVerifier(getVerifier(
+                        new Point[] { new Point(0, 0) },
+                        new Color[] { blueDisplay },
+                0.6f));
     }
 }

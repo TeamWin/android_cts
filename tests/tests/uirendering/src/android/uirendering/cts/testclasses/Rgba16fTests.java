@@ -139,27 +139,4 @@ public class Rgba16fTests extends ActivityTestBase {
                         new int[] { 0xffbbbbbb }
                 ));
     }
-
-    @Test
-    public void testMirroredTransferFunctions() {
-        createTest()
-                .addCanvasClient("RGBA16F_TransferFunctions_Mirror", (canvas, width, height) -> {
-                    AssetManager assets = getActivity().getResources().getAssets();
-                    // Pure blue in ProPhoto RGB will yield negative R and G values in scRGB,
-                    // as well as a value > 1.0 for B
-                    try (InputStream in = assets.open("prophoto-rgba16f.png")) {
-                        Bitmap bitmap = BitmapFactory.decodeStream(in);
-                        canvas.scale(
-                                width / (float) bitmap.getWidth(),
-                                height / (float) bitmap.getHeight());
-                        canvas.drawBitmap(bitmap, 0, 0, null);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Test failed: ", e);
-                    }
-                }, true)
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] { new Point(0, 0) },
-                        new int[] { 0xff0000ff }
-                ));
-    }
 }
