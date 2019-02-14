@@ -136,6 +136,20 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetPlaybackSpeed() throws Exception {
+        synchronized (mWaitLock) {
+            mCallback.reset();
+
+            final float testSpeed = 2.0f;
+            mController.getTransportControls().setPlaybackSpeed(testSpeed);
+            mWaitLock.wait(TIME_OUT_MS);
+
+            assertTrue(mCallback.mOnSetPlaybackSpeedCalled);
+            assertEquals(testSpeed, mCallback.mSpeed, 0.0f);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+        }
+    }
+
     public void testAdjustVolumeWithIllegalDirection() {
         // Call the method with illegal direction. System should not reboot.
         mController.adjustVolume(37, 0);
@@ -367,6 +381,8 @@ public class MediaControllerTest extends AndroidTestCase {
                 callback.onPrepareFromMediaId(mCallback.mMediaId, mCallback.mExtras);
                 callback.onPrepareFromSearch(mCallback.mQuery, mCallback.mExtras);
                 callback.onPrepareFromUri(Uri.parse("http://d.android.com"), mCallback.mExtras);
+                callback.onCommand(mCallback.mCommand, mCallback.mExtras, null);
+                callback.onSetPlaybackSpeed(mCallback.mSpeed);
                 Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
                 mediaButtonIntent.putExtra(Intent.EXTRA_KEY_EVENT, event);
                 callback.onMediaButtonEvent(mediaButtonIntent);
@@ -409,6 +425,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private ResultReceiver mCommandCallback;
         private KeyEvent mKeyEvent;
         private RemoteUserInfo mCallerInfo;
+        private float mSpeed;
 
         private boolean mOnPlayCalled;
         private boolean mOnPauseCalled;
@@ -430,6 +447,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private boolean mOnPrepareFromSearchCalled;
         private boolean mOnPrepareFromUriCalled;
         private boolean mOnMediaButtonEventCalled;
+        private boolean mOnSetPlaybackSpeedCalled;
 
         public void reset() {
             mSeekPosition = -1;
@@ -444,6 +462,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mCommandCallback = null;
             mKeyEvent = null;
             mCallerInfo = null;
+            mSpeed = -1.0f;
 
             mOnPlayCalled = false;
             mOnPauseCalled = false;
@@ -465,6 +484,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mOnPrepareFromSearchCalled = false;
             mOnPrepareFromUriCalled = false;
             mOnMediaButtonEventCalled = false;
+            mOnSetPlaybackSpeedCalled = false;
         }
 
         @Override
@@ -667,6 +687,16 @@ public class MediaControllerTest extends AndroidTestCase {
                 mWaitLock.notify();
             }
             return super.onMediaButtonEvent(mediaButtonIntent);
+        }
+
+        @Override
+        public void onSetPlaybackSpeed(float speed) {
+            synchronized (mWaitLock) {
+                mOnSetPlaybackSpeedCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
+                mSpeed = speed;
+                mWaitLock.notify();
+            }
         }
     }
 }
