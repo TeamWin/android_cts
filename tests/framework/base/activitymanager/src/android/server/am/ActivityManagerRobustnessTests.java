@@ -19,12 +19,16 @@ package android.server.am;
 import static android.server.am.Components.RECURSIVE_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 
+import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 import org.junit.Test;
 
 /**
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerRobustnessTests
  */
+@Presubmit
+@FlakyTest
 public class ActivityManagerRobustnessTests extends ActivityManagerTestBase {
 
     /**

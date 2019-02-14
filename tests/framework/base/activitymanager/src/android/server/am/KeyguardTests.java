@@ -60,6 +60,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:KeyguardTests
  */
+@Presubmit
 public class KeyguardTests extends KeyguardTestBase {
     @Before
     @Override
@@ -160,6 +161,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * If we have a translucent SHOW_WHEN_LOCKED activity, the activity behind should not be shown.
      */
     @Test
+    @FlakyTest
     public void testTranslucentDoesntRevealBehind() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(TEST_ACTIVITY);
@@ -219,6 +221,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * SHOW_WHEN_LOCKED activity is visible if Keyguard is locked.
      */
     @Test
+    @FlakyTest
     public void testInheritShowWhenLockedAdd() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
@@ -243,6 +246,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * Keyguard is locked.
      */
     @Test
+    @FlakyTest
     public void testInheritShowWhenLockedRemove() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
@@ -267,6 +271,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * SHOW_WHEN_LOCKED activity is visible if Keyguard is locked.
      * */
     @Test
+    @FlakyTest
     public void testInheritShowWhenLockedAttr() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
@@ -290,6 +295,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * above a SHOW_WHEN_LOCKED activity is invisible if Keyguard is locked.
      * */
     @Test
+    @FlakyTest
     public void testNoInheritShowWhenLocked() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
@@ -314,6 +320,7 @@ public class KeyguardTests extends KeyguardTestBase {
      * becomes the top activity, it should be resumed.
      */
     @Test
+    @FlakyTest
     public void testResumeDismissKeyguardActivityFromBackground() {
         testResumeOccludingActivityFromBackground(DISMISS_KEYGUARD_ACTIVITY);
     }
@@ -505,6 +512,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testScreenOffWhileOccludedStopsActivity() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             separateTestJournal();
