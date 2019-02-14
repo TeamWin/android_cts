@@ -24,6 +24,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.TestCase.fail;
 
+import static java.lang.Thread.sleep;
+
 import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
@@ -81,7 +83,7 @@ public class ConditionProviderServiceTest {
                     if (!mNm.removeAutomaticZenRule(id)) {
                         throw new Exception("Could not remove rule " + id);
                     }
-
+                    sleep(100);
                     assertNull(mNm.getAutomaticZenRule(id));
                 }
             }
@@ -305,7 +307,7 @@ public class ConditionProviderServiceTest {
 
         while (tries-- > 0 && !service.subscribed) {
             try {
-                Thread.sleep(delayMs);
+                sleep(delayMs);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -327,7 +329,7 @@ public class ConditionProviderServiceTest {
 
         while (tries-- > 0 && (waitForConnection ? instance == null : instance != null)) {
             try {
-                Thread.sleep(delayMs);
+                sleep(delayMs);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
