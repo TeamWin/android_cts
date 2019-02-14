@@ -28,6 +28,7 @@ import android.signature.cts.tests.data.NormalClass;
 import android.signature.cts.tests.data.NormalInterface;
 import java.lang.reflect.Modifier;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.JUnit4;
 import org.junit.runner.RunWith;
@@ -336,6 +337,7 @@ public class ApiComplianceCheckerTest extends AbstractApiCheckerTest<ApiComplian
      * actually is.
      */
     @Test
+    @Ignore("b/124445655")
     public void testAddingSync() {
         ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
