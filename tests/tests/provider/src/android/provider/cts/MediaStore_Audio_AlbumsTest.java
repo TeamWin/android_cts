@@ -113,22 +113,6 @@ public class MediaStore_Audio_AlbumsTest {
             assertEquals(Audio1.YEAR, c.getInt(c.getColumnIndex(Albums.FIRST_YEAR)));
             assertEquals(Audio1.YEAR, c.getInt(c.getColumnIndex(Albums.LAST_YEAR)));
             assertEquals(1, c.getInt(c.getColumnIndex(Albums.NUMBER_OF_SONGS)));
-            // the ALBUM_ID column does not exist
-            try {
-                c.getColumnIndexOrThrow(Albums.ALBUM_ID);
-                fail("Should throw IllegalArgumentException because there is no column with name "
-                        + "\"Albums.ALBUM_ID\" in the table");
-            } catch (IllegalArgumentException e) {
-                // expected
-            }
-            // the NUMBER_OF_SONGS_FOR_ARTIST column does not exist
-            try {
-                c.getColumnIndexOrThrow(Albums.NUMBER_OF_SONGS_FOR_ARTIST);
-                fail("Should throw IllegalArgumentException because there is no column with name "
-                        + "\"Albums.NUMBER_OF_SONGS_FOR_ARTIST\" in the table");
-            } catch (IllegalArgumentException e) {
-                // expected
-            }
             c.close();
 
             // do not support update operation of the albums
