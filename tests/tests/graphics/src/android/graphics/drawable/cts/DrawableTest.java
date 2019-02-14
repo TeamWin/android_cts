@@ -385,6 +385,34 @@ public class DrawableTest {
     }
 
     @Test
+    public void testImageIntrinsicScaledForDensity() throws IOException {
+        try (InputStream is = mContext.getAssets().open("green-p3.png")) {
+            Drawable drawable = Drawable.createFromStream(is, null);
+            assertNotNull(drawable);
+
+            float density = mContext.getResources().getDisplayMetrics().density;
+            int densityAdjustedSize = Math.round(64 / density);
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicWidth());
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicHeight());
+        }
+    }
+
+    @Test
+    public void testImageIntrinsicScaledForDensityWithBitmapOptions() throws IOException {
+        try (InputStream is = mContext.getAssets().open("green-p3.png")) {
+            // Verify that providing BitmapFactory Options provides the same result
+            Drawable drawable = Drawable.createFromResourceStream(
+                    null, null, is, null, new BitmapFactory.Options());
+            assertNotNull(drawable);
+
+            float density = mContext.getResources().getDisplayMetrics().density;
+            int densityAdjustedSize = Math.round(64 / density);
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicWidth());
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicHeight());
+        }
+    }
+
+    @Test
     public void testCreateFromXml() throws XmlPullParserException, IOException {
         XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable);
         Drawable drawable = Drawable.createFromXml(mResources, parser);
