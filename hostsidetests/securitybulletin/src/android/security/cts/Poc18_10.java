@@ -22,6 +22,22 @@ import android.platform.test.annotations.SecurityTest;
 public class Poc18_10 extends SecurityTestCase {
 
     /**
+     *  b/111641492
+     */
+    @SecurityTest(minPatchLevel = "2018-10")
+    public void testPocCVE_2018_9515() throws Exception {
+        AdbUtils.runCommandLine("rm /sdcard/Android/data/CVE-2018-9515", getDevice());
+        AdbUtils.runCommandLine("mkdir /sdcard/Android/data/CVE-2018-9515", getDevice());
+        AdbUtils.runPocNoOutput("CVE-2018-9515", getDevice(), 300);
+        boolean vulnerableBecauseCrashed = getDevice().waitForDeviceNotAvailable(10_000);
+        if (vulnerableBecauseCrashed) {
+            // wait for device to come online so we can clean up
+            getDevice().waitForDeviceAvailable(120_000); // 2 minutes
+        }
+        AdbUtils.runCommandLine("rm -rf /sdcard/Android/data/CVE-2018-9515", getDevice());
+    }
+
+    /**
      *  b/111274046
      */
     @SecurityTest

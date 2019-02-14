@@ -22,8 +22,19 @@ public class Poc16_07 extends SecurityTestCase {
     /**
      *  b/28740702
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testPocCVE_2016_3818() throws Exception {
         AdbUtils.runPoc("CVE-2016-3818", getDevice(), 60);
+    }
+
+    /**
+     *  b/27532522
+     */
+    @SecurityTest(minPatchLevel = "2016-07")
+    public void testPocCVE_2016_3809() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2016-3809", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*CVE-2016-3809 test case failed[\\s\\n\\S]*", logcat);
     }
 }

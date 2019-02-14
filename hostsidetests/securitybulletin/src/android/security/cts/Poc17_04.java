@@ -24,7 +24,7 @@ public class Poc17_04 extends SecurityTestCase {
   /**
    * b/32342065
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-04")
   public void testPocCVE_2017_0553() throws Exception {
     // Error code of 139 represents segmentation fault
     getDevice().executeShellCommand("chmod +x /data/local/tmp/CVE-2017-0553");
@@ -35,7 +35,7 @@ public class Poc17_04 extends SecurityTestCase {
   /**
    * b/72460737
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-04")
   public void testPocCVE_2014_3145() throws Exception {
     assertFalse("VULNERABLE DEVICE DETECTED",
                 AdbUtils.runPocCheckExitCode("CVE-2014-3145", getDevice(), 60));
@@ -44,9 +44,24 @@ public class Poc17_04 extends SecurityTestCase {
   /**
    * b/32813456
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-04")
   public void testPocCVE_2016_10229() throws Exception {
     String out = AdbUtils.runPoc("CVE-2016-10229", getDevice());
     assertNotMatchesMultiLine(".*OVERWRITE.*", out);
   }
+
+    /**
+     * b/33621647
+     */
+    @SecurityTest(minPatchLevel = "2017-04")
+    public void testPocCVE_2017_0477() throws Exception {
+        AdbUtils.pushResource("/CVE-2017-0477.gif", "/data/local/tmp/CVE-2017-0477.gif",
+                getDevice());
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+
+        // because runPocGetExitCode() isn't a thing
+        AdbUtils.runCommandLine("chmod +x /data/local/tmp/CVE-2017-0477", getDevice());
+        int code = AdbUtils.runCommandGetExitCode("/data/local/tmp/CVE-2017-0477", getDevice());
+        assertTrue(code != 139); // 128 + signal 11
+    }
 }

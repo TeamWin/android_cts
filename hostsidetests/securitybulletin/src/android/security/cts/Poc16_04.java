@@ -23,7 +23,7 @@ public class Poc16_04 extends SecurityTestCase {
     /**
      * b/26323455
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-04")
     public void testPocCVE_2016_2419() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2016-2419", getDevice(), 60);
@@ -34,8 +34,20 @@ public class Poc16_04 extends SecurityTestCase {
     /**
     *  b/26324307
     */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-04")
     public void testPocCVE_2016_0844() throws Exception {
         AdbUtils.runPoc("CVE-2016-0844", getDevice(), 60);
+    }
+
+    /**
+     * b/26593930
+     */
+    @SecurityTest(minPatchLevel = "2016-04")
+    public void testPocCVE_2016_2412() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPoc("CVE-2016-2412", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> system_server <<<",
+            logcatOut);
     }
 }
