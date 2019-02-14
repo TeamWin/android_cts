@@ -443,11 +443,12 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkUserActivity(String[] parts) {
-        assertEquals(8, parts.length);
+        assertEquals(9, parts.length);
         assertInteger(parts[4]); // other
         assertInteger(parts[5]); // button
         assertInteger(parts[6]); // touch
         assertInteger(parts[7]); // accessibility
+        assertInteger(parts[8]); // attention
     }
 
     private void checkBattery(String[] parts) {
