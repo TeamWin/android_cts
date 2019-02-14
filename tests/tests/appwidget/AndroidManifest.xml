@@ -87,7 +87,7 @@
           android:label="TransitionActivity" />
   </application>
 
-  <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+  <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
       android:targetPackage="android.appwidget.cts"
       android:label="Tests for the app widget APIs.">
       <meta-data android:name="listener"

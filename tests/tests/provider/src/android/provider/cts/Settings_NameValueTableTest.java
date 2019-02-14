@@ -25,8 +25,9 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.provider.Settings.NameValueTable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

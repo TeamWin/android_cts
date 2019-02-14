@@ -180,7 +180,11 @@ public final class UiBot {
      * when the device is rotated to landscape.
      *
      * When called, test must call <p>{@link #resetScreenResolution()} in a {@code finally} block.
+     *
+     * @deprecated this method should not be necessarily anymore as we're using a MockIme.
      */
+    @Deprecated
+    // TODO: remove once we're sure no more OEM is getting failure due to screen size
     public void setScreenResolution() {
         assumeMinimumResolution(500);
 
@@ -192,7 +196,11 @@ public final class UiBot {
      * Resets the screen resolution.
      *
      * <p>Should always be called after {@link #setScreenResolution()}.
+     *
+     * @deprecated this method should not be necessarily anymore as we're using a MockIme.
      */
+    @Deprecated
+    // TODO: remove once we're sure no more OEM is getting failure due to screen size
     public void resetScreenResolution() {
         runShellCommand("wm density reset");
         runShellCommand("wm size reset");

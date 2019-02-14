@@ -18,7 +18,6 @@ package android.app.notification.legacy20.cts;
 
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertNotNull;
@@ -39,9 +38,10 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
 

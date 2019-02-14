@@ -37,9 +37,10 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Size;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FileUtils;
 

@@ -76,8 +76,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             "CtsNoLaunchableActivityApp.apk";
 
     /**
-     * Copied from {@link
-     * DevicePolicyManager.InstallUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID }
+     * Copied from {@link android.app.admin.DevicePolicyManager
+     * .InstallSystemUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID}
      */
     private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
 
@@ -89,6 +89,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final int TYPE_INSTALL_AUTOMATIC = 1;
     private static final int TYPE_INSTALL_WINDOWED = 2;
     private static final int TYPE_POSTPONE = 3;
+
+    /**
+     * Copied from {@link android.provider.Settings}
+     */
+    private static final String SETTINGS_SECURE = "secure";
+    private static final String LOCATION_MODE = "location_mode";
+    private static final String LOCATION_MODE_HIGH_ACCURACY = "3";
 
     /** CreateAndManageUser is available and an additional user can be created. */
     private boolean mHasCreateAndManageUserFeature;
@@ -697,11 +704,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void testWifiConfigLockdown() throws Exception {
         final boolean hasWifi = hasDeviceFeature("android.hardware.wifi");
         if (hasWifi && mHasFeature) {
+            String oldLocationSetting = getDevice().getSetting(SETTINGS_SECURE, LOCATION_MODE);
             try {
                 installAppAsUser(WIFI_CONFIG_CREATOR_APK, mPrimaryUserId);
+                getDevice().setSetting(SETTINGS_SECURE, LOCATION_MODE, LOCATION_MODE_HIGH_ACCURACY);
                 executeDeviceOwnerTest("WifiConfigLockdownTest");
             } finally {
                 getDevice().uninstallPackage(WIFI_CONFIG_CREATOR_PKG);
+                getDevice().setSetting(SETTINGS_SECURE, LOCATION_MODE, oldLocationSetting);
             }
         }
     }

@@ -28,7 +28,6 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 
 import org.junit.After;
@@ -92,37 +91,17 @@ public class ViewAttributeTest {
         LayoutInflater inflater = LayoutInflater.from(mActivityRule.getActivity());
         LinearLayout rootView =
                 (LinearLayout) inflater.inflate(R.layout.view_attribute_layout, null);
-        List<Integer> stackRootView = rootView.getAttributeResolutionStack();
+        List<Integer> stackRootView = rootView.getAttributeResolutionStack(android.R.attr.padding);
         assertEquals(1, stackRootView.size());
         assertEquals(R.layout.view_attribute_layout, stackRootView.get(0).intValue());
 
         // View that has an explicit style ExplicitStyle1 set via style = ...
         View view1 = rootView.findViewById(R.id.view1);
-        List<Integer> stackView1 = view1.getAttributeResolutionStack();
+        List<Integer> stackView1 = view1.getAttributeResolutionStack(android.R.attr.padding);
         assertEquals(3, stackView1.size());
         assertEquals(R.layout.view_attribute_layout, stackView1.get(0).intValue());
         assertEquals(R.style.ExplicitStyle1, stackView1.get(1).intValue());
         assertEquals(R.style.ParentOfExplicitStyle1, stackView1.get(2).intValue());
-
-        // Button that has the default style MyButtonStyle set in ViewStyleTestTheme Activity theme
-        // via android:buttonStyle
-        Button button1 = rootView.findViewById(R.id.button1);
-        List<Integer> stackButton1 = button1.getAttributeResolutionStack();
-        assertEquals(3, stackButton1.size());
-        assertEquals(R.layout.view_attribute_layout, stackButton1.get(0).intValue());
-        assertEquals(R.style.MyButtonStyle, stackButton1.get(1).intValue());
-        assertEquals(R.style.MyButtonStyleParent, stackButton1.get(2).intValue());
-
-        // Button that has the default style MyButtonStyle set in ViewStyleTestTheme Activity theme
-        // via android:buttonStyle and has an explicit style ExplicitStyle1 set via style = ...
-        Button button2 = rootView.findViewById(R.id.button2);
-        List<Integer> stackButton2 = button2.getAttributeResolutionStack();
-        assertEquals(5, stackButton2.size());
-        assertEquals(R.layout.view_attribute_layout, stackButton2.get(0).intValue());
-        assertEquals(R.style.ExplicitStyle1, stackButton2.get(1).intValue());
-        assertEquals(R.style.ParentOfExplicitStyle1, stackButton2.get(2).intValue());
-        assertEquals(R.style.MyButtonStyle, stackButton2.get(3).intValue());
-        assertEquals(R.style.MyButtonStyleParent, stackButton2.get(4).intValue());
     }
 
     @Test

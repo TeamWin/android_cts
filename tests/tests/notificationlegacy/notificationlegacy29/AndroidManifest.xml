@@ -42,7 +42,7 @@
 
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.app.notification.legacy29.cts"
                      android:label="CTS tests for notification behavior (API 29)">
         <meta-data android:name="listener"

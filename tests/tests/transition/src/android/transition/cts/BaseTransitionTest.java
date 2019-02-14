@@ -27,8 +27,6 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.Instrumentation;
 import android.graphics.PointF;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
 import android.transition.Scene;
 import android.transition.Transition;
 import android.transition.TransitionManager;
@@ -38,6 +36,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
 

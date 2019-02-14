@@ -15,7 +15,11 @@
 -->
 <configuration description="Config for CTS Incident host test cases">
     <option name="test-suite-tag" value="cts" />
+
     <option name="config-descriptor:metadata" key="component" value="framework" />
+    <!-- Instant apps can't be the default SMS app. -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="am wait-for-broadcast-idle" />

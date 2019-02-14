@@ -38,13 +38,4 @@
           android:layout_height="match_parent"
           android:id="@+id/view4"
           style="?android:attr/textAppearanceLarge"/>
-
-    <Button android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/button1" />
-
-    <Button android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/button2"
-            style="@style/ExplicitStyle1" />
 </LinearLayout>
