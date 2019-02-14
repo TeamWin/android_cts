@@ -19,6 +19,7 @@ package android.app.cts;
 
 import android.os.Bundle;
 import android.os.Parcel;
+import android.os.UserHandle;
 import android.service.notification.Adjustment;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -27,7 +28,7 @@ public class AdjustmentTest extends AndroidTestCase {
     private static final String ADJ_PACKAGE = "com.foo.bar";
     private static final String ADJ_KEY = "foo_key";
     private static final String ADJ_EXPLANATION = "I just feel like adjusting this";
-    private static final int ADJ_USER = 47;
+    private static final UserHandle ADJ_USER = UserHandle.CURRENT;
 
     private final Bundle mSignals = new Bundle();
 
@@ -55,7 +56,7 @@ public class AdjustmentTest extends AndroidTestCase {
     }
 
     public void testGetUser() {
-        assertEquals(ADJ_USER, mAdjustment.getUser());
+        assertEquals(ADJ_USER, mAdjustment.getUserHandle());
     }
 
     public void testGetSignals() {
@@ -77,7 +78,7 @@ public class AdjustmentTest extends AndroidTestCase {
         assertEquals(mAdjustment.getPackage(), unparceled.getPackage());
         assertEquals(mAdjustment.getKey(), unparceled.getKey());
         assertEquals(mAdjustment.getExplanation(), unparceled.getExplanation());
-        assertEquals(mAdjustment.getUser(), unparceled.getUser());
+        assertEquals(mAdjustment.getUserHandle(), unparceled.getUserHandle());
 
         assertEquals("Hello, world!", unparceled.getSignals().getString("foobar"));
         assertEquals(47, unparceled.getSignals().getInt("chirp"));
