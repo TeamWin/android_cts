@@ -130,10 +130,6 @@ public class ChildlessActivityTest
 
     @Test
     public void testGetContentCapture_disabledWhenNoService() throws Exception {
-
-        // TODO(b/123658889): must call a cmd that always disable the service, even if the OEM
-        // provides an implementation
-
         final ActivityWatcher watcher = startWatcher();
 
         final ChildlessActivity activity = launchActivity();
