@@ -32,11 +32,15 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.os.Process;
+import android.os.UserHandle;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
 public class PermissionUtils {
+    private static long TIMEOUT_MILLIS = 10000;
+
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -148,6 +152,75 @@ public class PermissionUtils {
             }
         } else {
             setAppOp(packageName, permission, MODE_ALLOWED);
+        }
+    }
+
+    /**
+     * Clear permission state (not app-op state) of package.
+     *
+     * @param packageName Package to clear
+     */
+    static void clearAppState(@NonNull String packageName) {
+        runShellCommand("pm clear " + packageName);
+    }
+
+    /**
+     * Get the flags of a permission.
+     *
+     * @param packageName Package the permission belongs to
+     * @param permission Name of the permission
+     *
+     * @return Permission flags
+     */
+    static int getPermissionFlags(@NonNull String packageName, @NonNull String permission)  {
+        try {
+            return callWithShellPermissionIdentity(
+                    () -> sContext.getPackageManager().getPermissionFlags(permission, packageName,
+                            UserHandle.getUserHandleForUid(Process.myUid())));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Set the flags of a permission.
+     *
+     * @param packageName Package the permission belongs to
+     * @param permission Name of the permission
+     * @param mask Mask of permissions to set
+     * @param flags Permissions to set
+     */
+    static void setPermissionFlags(@NonNull String packageName, @NonNull String permission,
+            int mask, int flags) {
+        runWithShellPermissionIdentity(
+                () -> sContext.getPackageManager().updatePermissionFlags(permission, packageName,
+                        mask, flags, UserHandle.getUserHandleForUid(Process.myUid())));
+    }
+
+    /**
+     * Make sure that a {@link Runnable} eventually finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param r The {@link Runnable} to run.
+     */
+    public static void eventually(@NonNull Runnable r) {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                r.run();
+                return;
+            } catch (Throwable e) {
+                if (System.currentTimeMillis() - start < TIMEOUT_MILLIS) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignored) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 }
