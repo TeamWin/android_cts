@@ -32,14 +32,14 @@ import android.graphics.ColorSpace;
 import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.os.Parcel;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.RequiresDevice;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.RequiresDevice;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ColorUtils;
 
