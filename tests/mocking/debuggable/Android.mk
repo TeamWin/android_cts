@@ -22,8 +22,8 @@ LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES = \
     mockito-target \
-    android-support-test \
-    ctstestrunner \
+    androidx.test.rules \
+    ctstestrunner-axt \
     dexmaker-mockmaker-tests
 LOCAL_COMPATIBILITY_SUITE := \
     cts vts general-tests
