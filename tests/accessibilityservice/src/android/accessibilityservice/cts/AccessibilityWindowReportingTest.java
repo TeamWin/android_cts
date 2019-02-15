@@ -43,9 +43,6 @@ import android.accessibilityservice.cts.activities.AccessibilityWindowReportingA
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -54,6 +51,10 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.AfterClass;
 import org.junit.Before;

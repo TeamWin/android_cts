@@ -31,7 +31,6 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.support.test.rule.ActivityTestRule;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.InputDevice;
@@ -40,6 +39,8 @@ import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
+
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.TestUtils;
 

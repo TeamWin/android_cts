@@ -62,7 +62,7 @@
 
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.view.accessibility.cts"
                      android:label="Tests for the accessibility APIs.">
         <meta-data android:name="listener"

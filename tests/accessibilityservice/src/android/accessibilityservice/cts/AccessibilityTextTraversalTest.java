@@ -29,9 +29,6 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.Selection;
 import android.text.TextUtils;
@@ -40,6 +37,10 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.AfterClass;
 import org.junit.Before;
