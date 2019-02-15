@@ -30,13 +30,16 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.Visitor;
+import android.provider.DeviceConfig;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.view.contentcapture.ContentCaptureManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
@@ -69,8 +72,13 @@ public abstract class AbstractContentCaptureIntegrationTest
     private final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule(SYSTEM_SERVICE_NAME);
 
-    private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
+    private final DeviceConfigStateChangerRule mVerboseLoggingRule =
+            new DeviceConfigStateChangerRule(
+            sContext, DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+            ContentCaptureManager.DEVICE_CONFIG_PROPERTY_LOGGING_LEVEL,
+            Integer.toString(ContentCaptureManager.LOGGING_LEVEL_VERBOSE));
 
+    private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
 
     /**
      * Watcher set on {@link #enableService()} and used to wait until it's gone after the test
@@ -101,6 +109,10 @@ public abstract class AbstractContentCaptureIntegrationTest
             //
             // mRequiredServiceRule should be first so the test can be skipped right away
             .outerRule(mRequiredServiceRule)
+
+            // log everything
+            .around(mVerboseLoggingRule)
+
             // enable it as soon as possible, as it have to wait for the listener
             .around(mFeatureEnablerRule)
             //

@@ -50,15 +50,12 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
 
             @Override
             public void evaluate() throws Throwable {
-                // TODO(b/121044306): set verbose logging once ContentCapture supports it
                 final String testName = description.getDisplayName();
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
                     dump(testName, t);
                     throw t;
-                } finally {
-                    // TODO(b/121044306): recover logging level
                 }
             }
         };
