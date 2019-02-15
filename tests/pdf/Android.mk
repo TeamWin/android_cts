@@ -23,10 +23,10 @@ LOCAL_MULTILIB := both
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
-    android-support-test \
+    androidx.test.rules \
     mockito-target-minus-junit4 \
-    compatibility-device-util \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     androidx.annotation_annotation \
     junit
 
