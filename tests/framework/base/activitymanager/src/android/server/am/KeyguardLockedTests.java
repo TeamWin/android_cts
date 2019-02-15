@@ -28,9 +28,10 @@ import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
@@ -44,9 +45,10 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+
+import androidx.test.filters.FlakyTest;
 
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;

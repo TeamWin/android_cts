@@ -20,9 +20,10 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
-import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
-import android.support.test.runner.lifecycle.Stage;
 import android.util.Pair;
+
+import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
+import androidx.test.runner.lifecycle.Stage;
 
 import java.util.ArrayList;
 import java.util.List;

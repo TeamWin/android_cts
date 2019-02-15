@@ -27,7 +27,6 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ALIAS_TEST_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
-import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -39,7 +38,8 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityLauncher;
 
-import android.support.test.filters.FlakyTest;
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 /**

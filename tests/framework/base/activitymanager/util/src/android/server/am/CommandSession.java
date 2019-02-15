@@ -16,7 +16,7 @@
 
 package android.server.am;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;

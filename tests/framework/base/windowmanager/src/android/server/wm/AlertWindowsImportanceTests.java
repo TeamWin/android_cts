@@ -27,7 +27,8 @@ import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Context.BIND_NOT_FOREGROUND;
 import static android.server.wm.alertwindowappsdk25.Components.SDK25_ALERT_WINDOW_TEST_ACTIVITY;
 import static android.server.wm.alertwindowservice.Components.ALERT_WINDOW_SERVICE;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 

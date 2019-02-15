@@ -83,17 +83,16 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import static java.lang.Integer.toHexString;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
@@ -124,7 +123,6 @@ import android.server.am.CommandSession.LaunchProxy;
 import android.server.am.CommandSession.SizeInfo;
 import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.settings.SettingsSession;
-import android.support.test.rule.ActivityTestRule;
 import android.util.EventLog;
 import android.util.EventLog.Event;
 import android.view.Display;
@@ -133,6 +131,7 @@ import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -142,6 +141,8 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import static java.lang.Integer.toHexString;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -19,8 +19,9 @@ package android.server.am;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.Components.TEST_ACTIVITY;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertTrue;
 
@@ -33,11 +34,12 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.FlakyTest;
-import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;
 

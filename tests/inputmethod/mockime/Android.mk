@@ -29,7 +29,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_LIBRARIES := junit
 LOCAL_STATIC_JAVA_LIBRARIES := \
    androidx.annotation_annotation \
-   compatibility-device-util
+   compatibility-device-util-axt
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 

@@ -17,31 +17,30 @@
 package android.app.cts;
 
 import static android.content.Context.ACTIVITY_SERVICE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RecentTaskInfo;
 import android.app.ActivityManager.TaskDescription;
+import android.app.stubs.MockActivity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import java.util.List;
-import java.util.function.BooleanSupplier;
-import org.junit.After;
-import org.junit.Before;
+
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import android.app.Activity;
-import android.app.stubs.MockActivity;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /**
  * Build & Run: atest android.app.cts.TaskDescriptionTest

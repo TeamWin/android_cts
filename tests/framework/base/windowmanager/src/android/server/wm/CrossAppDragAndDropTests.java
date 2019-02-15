@@ -26,7 +26,8 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.UiDeviceUtils.dragPointer;
 import static android.server.am.UiDeviceUtils.pressMenuButton;
 import static android.server.am.UiDeviceUtils.wakeUpDevice;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -45,11 +46,12 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
-import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
-import android.support.test.runner.lifecycle.Stage;
 import android.util.Log;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 
 import com.android.compatibility.common.util.SystemUtil;
 

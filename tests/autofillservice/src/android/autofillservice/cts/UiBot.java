@@ -43,7 +43,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.SearchCondition;
@@ -57,6 +56,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.RetryableException;
 import com.android.compatibility.common.util.Timeout;

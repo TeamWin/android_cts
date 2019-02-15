@@ -20,8 +20,9 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.am.lifecycle.LifecycleVerifier.transition;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
@@ -33,9 +34,10 @@ import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState;
 import android.server.am.ActivityManagerState.ActivityStack;
-import android.support.test.filters.FlakyTest;
-import android.support.test.filters.MediumTest;
 import android.util.Pair;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
 

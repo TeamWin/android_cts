@@ -23,8 +23,9 @@ import static org.junit.Assert.assertFalse;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.support.test.rule.ActivityTestRule;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
 import org.junit.Test;

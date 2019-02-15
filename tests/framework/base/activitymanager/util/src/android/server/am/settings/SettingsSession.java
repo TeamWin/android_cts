@@ -16,7 +16,7 @@
 
 package android.server.am.settings;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ContentResolver;
 import android.net.Uri;

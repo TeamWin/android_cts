@@ -34,11 +34,12 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.fail;
 
@@ -47,8 +48,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.support.test.filters.MediumTest;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.AmUtils;
 

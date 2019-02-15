@@ -23,9 +23,10 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.VisibilitySetterAction;
-import android.support.test.InstrumentationRegistry;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -17,11 +17,11 @@ package com.android.cts.mockime;
 
 import android.app.UiAutomation;
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.mockime.ImeSettings.Builder;
 

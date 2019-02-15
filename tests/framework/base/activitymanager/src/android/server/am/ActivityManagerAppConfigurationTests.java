@@ -41,6 +41,8 @@ import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
+import static com.android.compatibility.common.util.PackageUtil.supportsRotation;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
@@ -51,14 +53,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static com.android.compatibility.common.util.PackageUtil.supportsRotation;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.CommandSession.SizeInfo;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Ignore;
 import org.junit.Test;

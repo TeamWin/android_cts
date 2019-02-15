@@ -40,9 +40,6 @@ import android.app.UiAutomation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Process;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,6 +52,9 @@ import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.cts.mockime.ImeEventStream;
