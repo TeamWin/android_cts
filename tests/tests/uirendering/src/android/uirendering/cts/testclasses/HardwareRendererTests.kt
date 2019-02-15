@@ -40,6 +40,7 @@ import android.util.Log
 import androidx.test.filters.LargeTest
 import androidx.test.filters.MediumTest
 import androidx.test.runner.AndroidJUnit4
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
@@ -276,6 +277,7 @@ class HardwareRendererTests : ActivityTestBase() {
     }
 
     @Test
+    @Ignore // TODO: Re-enable, see b/124520175
     fun testNoSurface() {
         val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
             HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
