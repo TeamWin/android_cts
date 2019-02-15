@@ -22,11 +22,11 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
 import junit.framework.AssertionFailedError;
-import android.support.test.InstrumentationRegistry;
 
-
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

@@ -28,21 +28,19 @@ import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
-import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-
 import trebuchet.io.BufferProducer;
 import trebuchet.io.DataSlice;
 import trebuchet.model.Model;
 import trebuchet.task.ImportTask;
 import trebuchet.util.PrintlnImportFeedback;
 
+import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 public class AtraceHostTestBase extends DeviceTestCase implements IBuildReceiver {
-    private static final String TEST_RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
     private static final String TEST_APK = "CtsAtraceTestApp.apk";
     // TODO: Make private
     protected static final String TEST_PKG = "com.android.cts.atracetestapp";

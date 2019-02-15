@@ -16,37 +16,36 @@
 
 package android.seccomp.cts.app;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.AssetManager;
 import android.os.ConditionVariable;
-import android.os.IBinder;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import com.android.compatibility.common.util.CpuFeatures;
-import org.json.JSONObject;
-import org.json.JSONException;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
+import com.android.compatibility.common.util.CpuFeatures;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
 
 /**
  * Device-side tests for CtsSeccompHostTestCases

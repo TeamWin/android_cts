@@ -55,7 +55,7 @@ public class ThemeHostTest extends DeviceTestCase {
     private static final String GENERATED_ASSETS_ZIP = "/sdcard/cts-theme-assets.zip";
 
     /** The class name of the main activity in the APK. */
-    private static final String TEST_CLASS = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String TEST_CLASS = "androidx.test.runner.AndroidJUnitRunner";
 
     /** The command to launch the main instrumentation test. */
     private static final String START_CMD = String.format(

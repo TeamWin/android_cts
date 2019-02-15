@@ -16,17 +16,18 @@
 
 package android.cts.backup.othersoundssettingsapp;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
 
 import static org.junit.Assert.assertTrue;
 
-import android.platform.test.annotations.AppModeFull;
 import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BackupUtils;
 

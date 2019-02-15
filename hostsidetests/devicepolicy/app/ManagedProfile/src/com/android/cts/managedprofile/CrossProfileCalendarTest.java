@@ -16,7 +16,6 @@
 package com.android.cts.managedprofile;
 
 import static com.android.cts.managedprofile.BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -32,7 +31,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
 import android.provider.Settings.Secure;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -43,10 +41,10 @@ import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.ArraySet;
 
-import java.util.ArrayList;
+import androidx.test.InstrumentationRegistry;
+
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 /**

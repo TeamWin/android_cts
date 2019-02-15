@@ -28,10 +28,10 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs junit
 
 LOCAL_STATIC_JAVA_LIBRARIES = \
     androidx.legacy_legacy-support-v4 \
-    ctstestrunner \
-    compatibility-device-util \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
     ub-uiautomator \
-    android-support-test
+    androidx.test.rules
 
 LOCAL_SDK_VERSION := test_current
 

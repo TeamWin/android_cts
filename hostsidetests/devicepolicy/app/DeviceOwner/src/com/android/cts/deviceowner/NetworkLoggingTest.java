@@ -25,8 +25,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Parcel;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.InstrumentationRegistry;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,8 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 

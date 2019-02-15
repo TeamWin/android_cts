@@ -16,12 +16,14 @@
 
 package android.cts.backup.successnotificationapp;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
+
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

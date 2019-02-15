@@ -5,14 +5,15 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_LOW;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.uiautomator.UiDevice;
-
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
+
+import android.app.admin.DevicePolicyManager;
+import android.content.Context;
+import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import org.junit.After;
 import org.junit.Before;
