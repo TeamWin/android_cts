@@ -16,8 +16,9 @@
 
 package android.telephonyprovider.cts;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.telephonyprovider.cts.DefaultSmsAppHelper.setDefaultSmsApp;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -26,7 +27,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.AfterClass;
 import org.junit.Before;
