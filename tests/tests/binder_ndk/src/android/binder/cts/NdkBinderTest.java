@@ -18,12 +18,10 @@ package android.binder.cts;
 
 import android.os.IBinder;
 
-import android.support.test.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.gtestrunner.GtestRunner;
 import com.android.gtestrunner.TargetLibrary;
-
-import test_package.ITest;
 
 import org.junit.runner.RunWith;
 

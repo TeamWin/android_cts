@@ -17,36 +17,35 @@
 package android.binder.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
-
-import android.support.test.InstrumentationRegistry;
-
+import android.os.RemoteException;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import test_package.Bar;
+import test_package.Foo;
+import test_package.IEmpty;
+import test_package.ITest;
+import test_package.RegularPolygon;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-
-import test_package.IEmpty;
-import test_package.ITest;
-import test_package.RegularPolygon;
-import test_package.Foo;
-import test_package.Bar;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 @RunWith(Parameterized.class)
 public class JavaClientTest {

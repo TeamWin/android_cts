@@ -31,7 +31,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
+    ctstestrunner-axt \
     libbinder_ndk_test_interface-java \
     nativetesthelper
 
