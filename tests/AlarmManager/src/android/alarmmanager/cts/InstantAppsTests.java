@@ -23,8 +23,9 @@ import android.app.AlarmManager;
 import android.content.Context;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeInstant;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
