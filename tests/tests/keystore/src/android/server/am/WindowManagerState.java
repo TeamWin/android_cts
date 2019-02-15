@@ -16,7 +16,6 @@
 
 package android.server.am;
 
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ProtoExtractors.extract;
@@ -24,18 +23,16 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static org.junit.Assert.fail;
-
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.server.wm.nano.AppWindowTokenProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
-import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.PinnedStackControllerProto;

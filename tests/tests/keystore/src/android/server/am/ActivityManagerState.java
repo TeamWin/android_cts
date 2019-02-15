@@ -26,8 +26,9 @@ import android.content.ComponentName;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.util.SparseArray;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.server.am.nano.ActivityDisplayProto;
 import com.android.server.am.nano.ActivityManagerServiceDumpActivitiesProto;
