@@ -16,47 +16,40 @@
 
 package android.camera.cts;
 
-import android.graphics.ImageFormat;
-import android.graphics.SurfaceTexture;
-import android.hardware.camera2.cts.helpers.StaticMetadata;
-import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.params.OutputConfiguration;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaMetadataRetriever;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.SystemClock;
-import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
-import android.util.Size;
-import android.view.Surface;
-
 import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
 
 import static androidx.heifwriter.HeifWriter.INPUT_MODE_SURFACE;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.util.Log;
+import android.util.Size;
+import android.view.Surface;
+
 import androidx.heifwriter.HeifWriter;
 
 import com.android.compatibility.common.util.MediaUtils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class HeifWriterTest extends Camera2AndroidTestCase {

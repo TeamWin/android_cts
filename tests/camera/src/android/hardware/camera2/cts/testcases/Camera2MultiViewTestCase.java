@@ -17,6 +17,7 @@
 package android.hardware.camera2.cts.testcases;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
+
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
 import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
 
@@ -41,12 +42,13 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.WindowManager;
+
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.ex.camera2.blocking.BlockingCameraManager;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
@@ -54,13 +56,13 @@ import com.android.ex.camera2.blocking.BlockingStateCallback;
 
 import junit.framework.Assert;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.HashMap;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Camera2 test case base class by using mixed SurfaceView and TextureView as rendering target.

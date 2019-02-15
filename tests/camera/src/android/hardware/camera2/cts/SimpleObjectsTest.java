@@ -16,22 +16,15 @@
 
 package android.hardware.camera2.cts;
 
-import org.junit.Assert;
-import org.junit.runner.RunWith;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-
-import android.app.Activity;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.ActivityInstrumentationTestCase2;
-
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.CameraCharacteristics;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test CaptureRequest/Result/CameraCharacteristics.Key objects.

@@ -16,7 +16,6 @@
 
 package android.hardware.cts;
 
-import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -39,12 +38,21 @@ import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.test.rule.ActivityTestRule;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.SurfaceHolder;
+
+import androidx.test.rule.ActivityTestRule;
+
+import junit.framework.Assert;
+import junit.framework.AssertionFailedError;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,15 +66,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
-
-import junit.framework.Assert;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.Rule;
-
-import junit.framework.AssertionFailedError;
 
 /**
  * This test case must run with hardware. It can't be tested in emulator
