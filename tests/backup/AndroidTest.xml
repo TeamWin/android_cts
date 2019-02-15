@@ -26,6 +26,17 @@
         <option name="test-file-name" value="CtsKeyValueBackupApp.apk" />
         <option name="test-file-name" value="CtsBackupTestCases.apk" />
         <option name="test-file-name" value="CtsPermissionBackupApp.apk" />
+        <option name="test-file-name" value="CtsPermissionBackupApp22.apk" />
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="mkdir -p /data/local/tmp/cts/backup" />
+        <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
+    </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <!-- Also copy the test apks to the device -->
+        <option name="cleanup" value="true" />
+        <option name="push" value="CtsPermissionBackupApp.apk->/data/local/tmp/cts/backup/CtsPermissionBackupApp.apk" />
+        <option name="push" value="CtsPermissionBackupApp22.apk->/data/local/tmp/cts/backup/CtsPermissionBackupApp22.apk" />
     </target_preparer>
     <target_preparer class="android.cts.backup.BackupPreparer">
         <option name="enable-backup-if-needed" value="true" />
