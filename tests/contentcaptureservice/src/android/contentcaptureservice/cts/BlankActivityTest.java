@@ -26,8 +26,9 @@ import android.content.ComponentName;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
+
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Test;
 

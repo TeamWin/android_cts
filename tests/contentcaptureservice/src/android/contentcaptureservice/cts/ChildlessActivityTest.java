@@ -50,7 +50,6 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillId;
@@ -64,6 +63,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.DeviceConfigStateManager;
