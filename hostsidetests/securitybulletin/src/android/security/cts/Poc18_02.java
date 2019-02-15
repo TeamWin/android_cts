@@ -83,4 +83,16 @@ public class Poc18_02 extends SecurityTestCase {
         }
         AdbUtils.runCommandLine("setenforce 1",getDevice());
     }
+
+    /**
+     * CVE-2017-17767
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_17767() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2017-17767", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(
+                ">>> /system/bin/mediaserver <<<.*signal 11 \\(SIGSEGV\\)", logcat);
+    }
 }
