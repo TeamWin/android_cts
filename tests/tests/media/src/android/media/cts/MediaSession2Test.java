@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -48,6 +49,8 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Tests {@link android.media.MediaSession2}.
@@ -166,6 +169,50 @@ public class MediaSession2Test {
             assertNull(token.getServiceName());
             assertEquals(Session2Token.TYPE_SESSION, token.getType());
             assertEquals(0, token.describeContents());
+        }
+    }
+
+    @Test
+    public void testGetConnectedControllers_newController() throws Exception {
+        Session2Callback sessionCallback = new Session2Callback();
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .build()) {
+            Controller2Callback callback = new Controller2Callback();
+            MediaController2 controller = new MediaController2(mContext,
+                    session.getSessionToken(), sHandlerExecutor, callback);
+            assertTrue(callback.awaitOnConnected(WAIT_TIME_MS));
+
+            List<MediaSession2.ControllerInfo> controllers = session.getConnectedControllers();
+            boolean found = false;
+            for (MediaSession2.ControllerInfo controllerInfo : controllers) {
+                if (Objects.equals(sessionCallback.mController, controllerInfo)) {
+                    assertEquals(Process.myUid(), controllerInfo.getUid());
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue(found);
+        }
+    }
+
+    @Test
+    public void testGetConnectedControllers_closedController() throws Exception {
+        Session2Callback sessionCallback = new Session2Callback();
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .build()) {
+            Controller2Callback callback = new Controller2Callback();
+            MediaController2 controller = new MediaController2(mContext,
+                    session.getSessionToken(), sHandlerExecutor, callback);
+            assertTrue(callback.awaitOnConnected(WAIT_TIME_MS));
+            controller.close();
+            assertTrue(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS));
+
+            List<MediaSession2.ControllerInfo> controllers = session.getConnectedControllers();
+            for (MediaSession2.ControllerInfo controllerInfo : controllers) {
+                assertNotEquals(sessionCallback.mController, controllerInfo);
+            }
         }
     }
 
