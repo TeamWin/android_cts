@@ -509,6 +509,7 @@ public class MediaSession2Test {
         @Override
         public Session2CommandGroup onConnect(MediaSession2 session,
                 MediaSession2.ControllerInfo controller) {
+            super.onConnect(session, controller);
             if (controller.getUid() != Process.myUid()) {
                 return null;
             }
@@ -520,6 +521,7 @@ public class MediaSession2Test {
 
         @Override
         public void onDisconnected(MediaSession2 session, MediaSession2.ControllerInfo controller) {
+            super.onDisconnected(session, controller);
             if (controller.getUid() != Process.myUid()) {
                 return;
             }
@@ -531,6 +533,7 @@ public class MediaSession2Test {
         @Override
         public Session2Command.Result onSessionCommand(MediaSession2 session,
                 MediaSession2.ControllerInfo controller, Session2Command command, Bundle args) {
+            super.onSessionCommand(session, controller, command, args);
             if (controller.getUid() != Process.myUid()) {
                 return null;
             }
@@ -553,6 +556,7 @@ public class MediaSession2Test {
         @Override
         public void onCommandResult(MediaSession2 session, MediaSession2.ControllerInfo controller,
                 Object token, Session2Command command, Session2Command.Result result) {
+            super.onCommandResult(session, controller, token, command, result);
             if (controller.getUid() != Process.myUid()) {
                 return;
             }

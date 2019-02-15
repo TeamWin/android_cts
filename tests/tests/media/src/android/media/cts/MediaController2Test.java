@@ -130,6 +130,17 @@ public class MediaController2Test {
     }
 
     @Test
+    public void testConstructor_noCallbackVersion() throws Exception {
+        try (MediaController2 controller = new MediaController2(mContext,
+                mSession.getSessionToken())) {
+            assertTrue(mSessionCallback.mOnConnectedLatch.await(
+                    WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            assertEquals(mContext.getPackageName(),
+                    mSessionCallback.mControllerInfo.getPackageName());
+        }
+    }
+
+    @Test
     public void testGetConnectedToken() {
         Controller2Callback controllerCallback = new Controller2Callback();
         try (MediaController2 controller = new MediaController2(
@@ -250,6 +261,7 @@ public class MediaController2Test {
 
     class Session2Callback extends MediaSession2.SessionCallback {
         MediaSession2.ControllerInfo mControllerInfo;
+        CountDownLatch mOnConnectedLatch = new CountDownLatch(1);
 
         @Override
         public Session2CommandGroup onConnect(MediaSession2 session,
@@ -258,6 +270,7 @@ public class MediaController2Test {
                 return null;
             }
             mControllerInfo = controller;
+            mOnConnectedLatch.countDown();
             return SESSION_ALLOWED_COMMANDS;
         }
 
@@ -290,6 +303,7 @@ public class MediaController2Test {
 
         @Override
         public void onConnected(MediaController2 controller, Session2CommandGroup allowedCommands) {
+            super.onConnected(controller, allowedCommands);
             mController = controller;
             mAllowedCommands = allowedCommands;
             mOnConnectedLatch.countDown();
@@ -297,6 +311,7 @@ public class MediaController2Test {
 
         @Override
         public void onDisconnected(MediaController2 controller) {
+            super.onDisconnected(controller);
             mController = controller;
             mOnDisconnectedLatch.countDown();
         }
@@ -304,6 +319,7 @@ public class MediaController2Test {
         @Override
         public Session2Command.Result onSessionCommand(MediaController2 controller,
                 Session2Command command, Bundle args) {
+            super.onSessionCommand(controller, command, args);
             mController = controller;
             mCommand = command;
             mCommandArgs = args;
@@ -314,6 +330,7 @@ public class MediaController2Test {
         @Override
         public void onCommandResult(MediaController2 controller, Object token,
                 Session2Command command, Session2Command.Result result) {
+            super.onCommandResult(controller, token, command, result);
             mController = controller;
             mCommand = command;
             mCommandResult = result;
