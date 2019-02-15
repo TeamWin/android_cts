@@ -144,11 +144,11 @@ public class WideColorGamutTests extends ActivityTestBase {
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
                     canvas.drawColor(greenP3.pack());
-                })
+                }, true)
                 .runWithVerifier(getVerifier(
                             new Point[] { new Point(0, 0), new Point(50, 50) },
                             new Color[] { greenP3, greenP3 },
-                            0));
+                            .001f));
     }
 
     @Test
@@ -160,11 +160,11 @@ public class WideColorGamutTests extends ActivityTestBase {
                 .addCanvasClient((canvas, width, height) -> {
                     canvas.drawColor(greenP3.pack());
                     canvas.drawColor(redP3.pack(), BlendMode.PLUS);
-                })
+                }, true)
                 .runWithVerifier(getVerifier(
                             new Point[] { new Point(0, 0), new Point(50, 50) },
                             new Color[] { expected, expected },
-                            0));
+                            .002f));
     }
 
     @Test
