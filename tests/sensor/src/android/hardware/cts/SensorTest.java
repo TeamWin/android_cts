@@ -42,6 +42,7 @@ import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -157,17 +158,6 @@ public class SensorTest extends SensorTestCase {
             assertNull(sensor);
         }
 
-        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-        boolean hasHeartRate = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_HEART_RATE);
-        // heartrate sensor is optional
-        if (hasHeartRate) {
-            assertEquals(Sensor.TYPE_HEART_RATE, sensor.getType());
-            assertSensorValues(sensor);
-        } else {
-            assertNull(sensor);
-        }
-
         sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         boolean hasCompass = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SENSOR_COMPASS);
@@ -202,6 +192,20 @@ public class SensorTest extends SensorTestCase {
         if (sensor != null) {
             assertEquals(Sensor.TYPE_TEMPERATURE, sensor.getType());
             assertSensorValues(sensor);
+        }
+    }
+
+    @AppModeFull(reason = "Instant apps cannot access body sensors")
+    public void testBodySensorOperations() {
+        Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+        boolean hasHeartRate = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_HEART_RATE);
+        // heartrate sensor is optional
+        if (hasHeartRate) {
+            assertEquals(Sensor.TYPE_HEART_RATE, sensor.getType());
+            assertSensorValues(sensor);
+        } else {
+            assertNull(sensor);
         }
     }
 
