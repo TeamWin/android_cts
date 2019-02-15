@@ -25,11 +25,11 @@ android_test {
     },
 
     static_libs: [
-        "android-support-test",
+        "androidx.test.rules",
         "mockito-target-minus-junit4",
         "android-common",
-        "compatibility-device-util",
-        "ctstestrunner",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
     ],
     libs: ["android.test.base.stubs"],
 
