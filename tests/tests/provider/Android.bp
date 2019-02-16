@@ -23,6 +23,7 @@ android_test {
         "ctstestrunner-axt",
         "junit",
         "truth-prebuilt",
+        "mockito-target-minus-junit4",
     ],
 
     jni_libs: [
