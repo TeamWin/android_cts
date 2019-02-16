@@ -16,6 +16,7 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.sContext;
@@ -189,14 +190,23 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     /**
      * Sets {@link CtsContentCaptureService} as the service for the current user and waits until
-     * its created.
+     * its created, then whitelist the CTS test package.
      */
     public CtsContentCaptureService enableService() throws InterruptedException {
+        return enableService(/* whitelistSelf= */ true);
+    }
+
+    public CtsContentCaptureService enableService(boolean whitelistSelf)
+            throws InterruptedException {
         if (mServiceWatcher != null) {
             throw new IllegalStateException("There Can Be Only One!");
         }
         mServiceWatcher = CtsContentCaptureService.setServiceWatcher();
         setService(CtsContentCaptureService.SERVICE_NAME);
+
+        if (whitelistSelf) {
+            mServiceWatcher.whitelistPackage(MY_PACKAGE);
+        }
 
         return mServiceWatcher.waitOnCreate();
     }
