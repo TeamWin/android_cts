@@ -33,8 +33,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Audio.AudioColumns;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -47,6 +49,7 @@ import org.junit.runner.RunWith;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
 
@@ -65,6 +68,11 @@ public class MediaStorageTest {
 
     @Test
     public void testMediaNone() throws Exception {
+        doMediaNoneImage();
+        doMediaNoneAudio();
+    }
+
+    private void doMediaNoneImage() throws Exception {
         final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
@@ -92,6 +100,34 @@ public class MediaStorageTest {
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
             fail("Expected write access to be blocked");
         } catch (SecurityException | FileNotFoundException expected) {
+        }
+    }
+
+    private void doMediaNoneAudio() throws Exception {
+        final Uri red = createAudio(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+        final Uri blue = createAudio(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+
+        clearMediaOwner(blue, mUserId);
+
+        try (Cursor c = mContentResolver.query(red, null, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals("MyArtist", c.getString(c.getColumnIndex(AudioColumns.ARTIST)));
+            assertEquals("MyAlbum", c.getString(c.getColumnIndex(AudioColumns.ALBUM)));
+        }
+
+        // But since we don't hold the Music permission, we can't read the
+        // indexed metadata
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
+                null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+                null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
+                null, null, null)) {
+            assertEquals(0, c.getCount());
         }
     }
 
@@ -202,6 +238,21 @@ public class MediaStorageTest {
             try (OutputStream out = session.openOutputStream()) {
                 final Bitmap bitmap = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888);
                 bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+            }
+            return session.publish();
+        }
+    }
+
+    private static Uri createAudio(Uri collectionUri) throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String displayName = "cts" + System.nanoTime();
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                collectionUri, displayName, "audio/mpeg");
+        final Uri pendingUri = MediaStore.createPending(context, params);
+        try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
+            try (InputStream in = context.getResources().openRawResource(R.raw.testmp3);
+                    OutputStream out = session.openOutputStream()) {
+                FileUtils.copy(in, out);
             }
             return session.publish();
         }
