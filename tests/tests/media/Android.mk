@@ -45,10 +45,11 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
+    compatibility-device-util-axt \
     ctsdeviceutillegacy \
     ctsmediautil \
-    ctstestrunner \
+    ctstestrunner-axt \
+    hamcrest-library \
     ctstestserver \
     junit \
     ndkaudio \

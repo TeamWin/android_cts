@@ -29,8 +29,9 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.LargeTest;
 import android.util.Log;
+
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -40,8 +41,6 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
-import java.util.HashMap;
-import java.util.Locale;
 
 public class AudioTrackTest extends CtsAndroidTestCase {
     private String TAG = "AudioTrackTest";

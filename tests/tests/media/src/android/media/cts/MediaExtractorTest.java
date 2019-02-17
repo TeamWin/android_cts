@@ -18,8 +18,6 @@ package android.media.cts;
 
 import static org.junit.Assert.assertNotEquals;
 
-import android.media.cts.R;
-
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.icu.util.ULocale;
@@ -28,14 +26,19 @@ import android.media.AudioPresentation;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.R;
 import android.os.PersistableBundle;
-import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.filters.SmallTest;
+
+import java.io.BufferedReader;
 import java.io.Closeable;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StreamTokenizer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,10 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.Reader;
-import java.io.StreamTokenizer;
 
 public class MediaExtractorTest extends AndroidTestCase {
     private static final String TAG = "MediaExtractorTest";

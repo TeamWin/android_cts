@@ -16,23 +16,21 @@
 
 package android.media.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.media.Session2Command;
 import android.media.Session2CommandGroup;
-import android.os.Bundle;
 import android.os.Parcel;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 
-import java.util.Collection;
-import java.util.Set;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Set;
 
 /**
  * Tests {@link android.media.Session2CommandGroup}.
