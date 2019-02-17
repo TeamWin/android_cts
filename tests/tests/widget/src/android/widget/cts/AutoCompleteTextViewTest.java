@@ -16,6 +16,10 @@
 
 package android.widget.cts;
 
+import static android.widget.ListPopupWindow.INPUT_METHOD_FROM_FOCUSABLE;
+import static android.widget.ListPopupWindow.INPUT_METHOD_NEEDED;
+import static android.widget.ListPopupWindow.INPUT_METHOD_NOT_NEEDED;
+
 import static com.android.compatibility.common.util.WidgetTestUtils.sameCharSequence;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -651,6 +655,37 @@ public class AutoCompleteTextViewTest {
         mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
+    }
+
+    @Test
+    public void setInputMethodMode_fromFocussable() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_FROM_FOCUSABLE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(mAutoCompleteTextView.getInputMethodMode())
+                .isEqualTo(INPUT_METHOD_FROM_FOCUSABLE);
+    }
+
+    @Test
+    public void setInputMethodMode_Needed() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_NEEDED);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(mAutoCompleteTextView.getInputMethodMode()).isEqualTo(INPUT_METHOD_NEEDED);
+    }
+
+    @Test
+    public void setInputMethodMode_NotNeeded() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertThat(mAutoCompleteTextView.getInputMethodMode()).isEqualTo(INPUT_METHOD_NOT_NEEDED);
     }
 
     @UiThreadTest

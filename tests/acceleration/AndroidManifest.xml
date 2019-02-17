@@ -29,7 +29,7 @@
                 android:hardwareAccelerated="false" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.acceleration.cts"
             android:label="Tests for the Hardware Acceleration APIs." >
         <meta-data android:name="listener"

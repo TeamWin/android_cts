@@ -2628,12 +2628,15 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         long endPosMs = 7000;
         AssetFileDescriptor afd = mResources.openRawResourceFd(
                 R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz);
-        mPlayer.setDataSource(new FileDataSourceDesc.Builder()
+        FileDataSourceDesc fdsd = new FileDataSourceDesc.Builder()
                 .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
                     afd.getStartOffset(), afd.getLength())
                 .setStartPosition(startPosMs)
                 .setEndPosition(endPosMs)
-                .build());
+                .build();
+        assertEquals(afd.getStartOffset(), fdsd.getOffset());
+        assertEquals(afd.getLength(), fdsd.getLength());
+        mPlayer.setDataSource(fdsd);
         afd.close();
         mPlayer.setDisplay(mActivity.getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
@@ -2649,6 +2652,15 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     mOnCompletionCalled.signal();
                 } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_REPEAT) {
                     repeatCalled.signal();
+                }
+            }
+
+            @Override
+            public void onCallCompleted(
+                    MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
+                if (what == MediaPlayer2.CALL_COMPLETED_SET_DATA_SOURCE) {
+                    assertEquals(startPosMs, dsd.getStartPosition());
+                    assertEquals(endPosMs, dsd.getEndPosition());
                 }
             }
 

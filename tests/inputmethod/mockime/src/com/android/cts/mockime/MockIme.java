@@ -148,6 +148,11 @@ public final class MockIme extends InputMethodService {
                         requestShowSelf(flags);
                         break;
                     }
+                    case "sendDownUpKeyEvents": {
+                        final int keyEventCode = command.getExtras().getInt("keyEventCode");
+                        sendDownUpKeyEvents(keyEventCode);
+                        break;
+                    }
                 }
             }
         });

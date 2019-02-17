@@ -24,10 +24,11 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.ArraySet;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,7 +40,6 @@ import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 // As is the case with ArraySet itself, ArraySetTest borrows heavily from ArrayMapTest.
-
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ArraySetTest {

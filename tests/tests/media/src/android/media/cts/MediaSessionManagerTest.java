@@ -32,6 +32,7 @@ import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Process;
 import android.os.UserHandle;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
@@ -431,7 +432,10 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         @Override
         public Session2CommandGroup onConnect(MediaSession2 session,
                 MediaSession2.ControllerInfo controller) {
-            mCountDownLatch.countDown();
+            if (controller.getUid() == Process.SYSTEM_UID) {
+                // System server will try to connect here for monitor session.
+                mCountDownLatch.countDown();
+            }
             return new Session2CommandGroup.Builder().build();
         }
     }

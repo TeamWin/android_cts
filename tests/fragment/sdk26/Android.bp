@@ -20,7 +20,7 @@ android_test {
         enabled: false,
     },
 
-    static_libs: ["android-support-test"],
+    static_libs: ["androidx.test.rules"],
 
     srcs: ["src/**/*.java"],
 

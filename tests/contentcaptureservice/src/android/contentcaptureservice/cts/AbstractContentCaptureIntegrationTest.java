@@ -16,6 +16,7 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.sContext;
@@ -30,13 +31,16 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.Visitor;
+import android.provider.DeviceConfig;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.view.contentcapture.ContentCaptureManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
@@ -48,6 +52,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 /**
@@ -68,8 +73,13 @@ public abstract class AbstractContentCaptureIntegrationTest
     private final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule(SYSTEM_SERVICE_NAME);
 
-    private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
+    private final DeviceConfigStateChangerRule mVerboseLoggingRule =
+            new DeviceConfigStateChangerRule(
+            sContext, DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+            ContentCaptureManager.DEVICE_CONFIG_PROPERTY_LOGGING_LEVEL,
+            Integer.toString(ContentCaptureManager.LOGGING_LEVEL_VERBOSE));
 
+    private final ContentCaptureLoggingTestRule mLoggingRule = new ContentCaptureLoggingTestRule();
 
     /**
      * Watcher set on {@link #enableService()} and used to wait until it's gone after the test
@@ -100,6 +110,10 @@ public abstract class AbstractContentCaptureIntegrationTest
             //
             // mRequiredServiceRule should be first so the test can be skipped right away
             .outerRule(mRequiredServiceRule)
+
+            // log everything
+            .around(mVerboseLoggingRule)
+
             // enable it as soon as possible, as it have to wait for the listener
             .around(mFeatureEnablerRule)
             //
@@ -109,8 +123,8 @@ public abstract class AbstractContentCaptureIntegrationTest
             // mSafeCleanerRule will catch errors
             .around(mSafeCleanerRule)
             //
-            // Finally, let subclasses set their ActivityTestRule
-            .around(getActivityTestRule());
+            // Finally, let subclasses set their own rule
+            .around(getMainTestRule());
 
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
@@ -176,14 +190,23 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     /**
      * Sets {@link CtsContentCaptureService} as the service for the current user and waits until
-     * its created.
+     * its created, then whitelist the CTS test package.
      */
     public CtsContentCaptureService enableService() throws InterruptedException {
+        return enableService(/* whitelistSelf= */ true);
+    }
+
+    public CtsContentCaptureService enableService(boolean whitelistSelf)
+            throws InterruptedException {
         if (mServiceWatcher != null) {
             throw new IllegalStateException("There Can Be Only One!");
         }
         mServiceWatcher = CtsContentCaptureService.setServiceWatcher();
         setService(CtsContentCaptureService.SERVICE_NAME);
+
+        if (whitelistSelf) {
+            mServiceWatcher.whitelistPackage(MY_PACKAGE);
+        }
 
         return mServiceWatcher.waitOnCreate();
     }
@@ -195,6 +218,17 @@ public abstract class AbstractContentCaptureIntegrationTest
      * {@code null} when used it in this class' {@code @Rule}
      */
     protected abstract ActivityTestRule<A> getActivityTestRule();
+
+    /**
+     * Gets the test-specific {@link Rule}.
+     *
+     * <p>By default it returns {@link #getActivityTestRule()}, but subclasses with more than one
+     * rule can override it to return a {@link RuleChain}.
+     */
+    @NonNull
+    protected TestRule getMainTestRule() {
+        return getActivityTestRule();
+    }
 
     protected A launchActivity() {
         Log.d(mTag, "Launching " + mActivityClass.getSimpleName());

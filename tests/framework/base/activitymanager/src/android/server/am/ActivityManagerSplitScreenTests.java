@@ -67,6 +67,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerSplitScreenTests
  */
+@Presubmit
 public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     private static final int TASK_SIZE = 600;
@@ -93,7 +94,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     @FlakyTest(bugId = 71792393)
     public void testStackList() throws Exception {
         launchActivity(TEST_ACTIVITY);
@@ -107,7 +107,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testDockActivity() throws Exception {
         launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
         mAmWmState.assertContainsStack("Must contain home stack.",
@@ -117,7 +116,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testNonResizeableNotDocked() throws Exception {
         launchActivityInSplitScreenWithRecents(NON_RESIZEABLE_ACTIVITY);
 
@@ -130,7 +128,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testLaunchToSide() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
@@ -142,7 +139,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testLaunchToSideMultiWindowCallbacks() throws Exception {
         // Launch two activities in split-screen mode.
         launchActivitiesInSplitScreen(
@@ -162,7 +158,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     @FlakyTest(bugId = 72956284)
     public void testNoUserLeaveHintOnMultiWindowModeChanged() throws Exception {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -191,7 +186,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testLaunchToSideAndBringToFront() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
@@ -226,7 +220,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     @FlakyTest(bugId = 71792393)
     public void testLaunchToSideMultiple() throws Exception {
         launchActivitiesInSplitScreen(
@@ -253,7 +246,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     @FlakyTest(bugId = 73808815)
     public void testLaunchToSideSingleInstance() throws Exception {
         launchTargetToSide(SINGLE_INSTANCE_ACTIVITY, false);
@@ -264,7 +256,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         launchTargetToSide(SINGLE_TASK_ACTIVITY, false);
     }
 
-    @Presubmit
     @FlakyTest(bugId = 71792393)
     @Test
     public void testLaunchToSideMultipleWithDifferentIntent() throws Exception {
@@ -339,7 +330,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                         targetActivityName, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
     }
 
-    @Presubmit
     @Test
     public void testLaunchToSideMultipleWithFlag() throws Exception {
         launchActivitiesInSplitScreen(
@@ -398,7 +388,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testRotationWhenDockedWhileLocked() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
@@ -422,6 +411,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testMinimizedFromEachDockedSide() throws Exception {
         try (final RotationSession rotationSession = new RotationSession()) {
             for (int i = 0; i < 2; i++) {
@@ -439,7 +429,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testRotationWhileDockMinimized() throws Exception {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
 
@@ -505,7 +494,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @FlakyTest(bugId = 73813034)
     @Test
-    @Presubmit
     public void testFinishDockActivityWhileMinimized() throws Exception {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
 
@@ -517,7 +505,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
         launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
         mAmWmState.computeState(TEST_ACTIVITY);
@@ -555,7 +542,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
      * Verify split screen mode visibility after stack resize occurs.
      */
     @Test
-    @Presubmit
     @FlakyTest(bugId = 110276714)
     public void testResizeDockedStack() throws Exception {
         launchActivitiesInSplitScreen(
@@ -645,7 +631,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testStackListOrderLaunchDockedActivity() throws Exception {
         assumeTrue(!mIsHomeRecentsComponent);
 
@@ -658,7 +643,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @Presubmit
     public void testStackListOrderOnSplitScreenDismissed() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),

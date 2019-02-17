@@ -25,8 +25,6 @@ import static org.junit.Assert.fail;
 import android.R;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.inspector.InspectableNodeName;
 import android.view.inspector.InspectableProperty;
 import android.view.inspector.InspectableProperty.EnumMap;
@@ -36,12 +34,13 @@ import android.view.inspector.InspectionCompanion;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.ColorLong;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Random;

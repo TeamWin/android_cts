@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -38,12 +39,13 @@ import android.hardware.HardwareBuffer;
 import android.os.Debug;
 import android.os.Parcel;
 import android.os.StrictMode;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.view.Surface;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ColorUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
@@ -701,7 +703,7 @@ public class BitmapTest {
                         if (eraseColorSpace.equals(bitmapColorSpace)) {
                             final Color wideGamutColor = Color.valueOf(wideGamutLong);
                             ColorUtils.verifyColor("Erasing to Bitmap's ColorSpace "
-                                    + bitmapColorSpace, wideGamutColor, result, .0f);
+                                    + bitmapColorSpace, wideGamutColor, result, .001f);
 
                         } else {
                             Color convertedColor = Color.valueOf(
@@ -1018,9 +1020,7 @@ public class BitmapTest {
         mBitmap.reconfigure(1, 1, Bitmap.Config.ALPHA_8);
     }
 
-    // Used by testAlphaAndPremul. FIXME: Should we also test Index8? That would require decoding a
-    // Bitmap, since one cannot be created directly. It will also have a Config of null, since it
-    // has no Java equivalent.
+    // Used by testAlphaAndPremul.
     private static Config[] CONFIGS = new Config[] { Config.ALPHA_8, Config.ARGB_4444,
             Config.ARGB_8888, Config.RGB_565 };
 
@@ -1123,25 +1123,34 @@ public class BitmapTest {
                 new ARGB(0.5f, .2f, .8f, .7f) }) {
 
             int srgbColor = Color.argb(color.alpha, color.red, color.green, color.blue);
-            for (ColorSpace.Named e : ColorSpace.Named.values()) {
-                ColorSpace cs = ColorSpace.get(e);
-                if (cs.getModel() != ColorSpace.Model.RGB) {
-                    continue;
-                }
-                if (((ColorSpace.Rgb) cs).getTransferParameters() == null) {
-                    continue;
-                }
+            for (ColorSpace cs : getRgbColorSpaces()) {
+                for (Config config : new Config[] {
+                        // F16 is tested elsewhere, since it defaults to EXTENDED_SRGB, and
+                        // many of these calls to setColorSpace would reduce the range, resulting
+                        // in an Exception.
+                        Config.ARGB_8888,
+                        Config.RGB_565,
+                }) {
+                    mBitmap = Bitmap.createBitmap(10, 10, config);
+                    mBitmap.eraseColor(srgbColor);
+                    mBitmap.setColorSpace(cs);
+                    ColorSpace actual = mBitmap.getColorSpace();
+                    if (cs == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
+                        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
+                    } else if (cs == ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)) {
+                        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), actual);
+                    } else {
+                        assertSame(cs, actual);
+                    }
 
-                mBitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
-                mBitmap.eraseColor(srgbColor);
-                mBitmap.setColorSpace(cs);
-
-                // This tolerance was chosen by trial and error. It is expected that
-                // some conversions do not round-trip perfectly.
-                int tolerance = 2;
-                long newColor = Color.pack(color.red, color.green, color.blue, color.alpha, cs);
-                ColorUtils.verifyColor("Mismatch after setting the colorSpace to " + cs.getName(),
-                        Color.toArgb(newColor), mBitmap.getPixel(5, 5), tolerance);
+                    // This tolerance was chosen by trial and error. It is expected that
+                    // some conversions do not round-trip perfectly.
+                    int tolerance = 2;
+                    Color c = Color.valueOf(color.red, color.green, color.blue, color.alpha, cs);
+                    ColorUtils.verifyColor("Mismatch after setting the colorSpace to "
+                            + cs.getName(), c.convert(mBitmap.getColorSpace()),
+                            mBitmap.getColor(5, 5), tolerance);
+                }
             }
         }
     }
@@ -1166,10 +1175,60 @@ public class BitmapTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void testSetColorSpaceNoTransferParameters() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        ColorSpace cs = new ColorSpace.Rgb("NoTransferParams",
+                new float[]{ 0.640f, 0.330f, 0.300f, 0.600f, 0.150f, 0.060f },
+                ColorSpace.ILLUMINANT_D50,
+                x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f),
+                0, 1);
+        mBitmap.setColorSpace(cs);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetColorSpaceAlpha8() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.ALPHA_8);
+        assertNull(mBitmap.getColorSpace());
+        mBitmap.setColorSpace(ColorSpace.get(ColorSpace.Named.SRGB));
+    }
+
+    @Test
     public void testSetColorSpaceReducedRange() {
+        ColorSpace aces = ColorSpace.get(Named.ACES);
+        mBitmap = Bitmap.createBitmap(10, 10, Config.RGBA_F16, true, aces);
+        try {
+            mBitmap.setColorSpace(ColorSpace.get(Named.SRGB));
+            fail("Expected IllegalArgumentException!");
+        } catch (IllegalArgumentException e) {
+            assertSame(aces, mBitmap.getColorSpace());
+        }
+    }
+
+    @Test
+    public void testSetColorSpaceNotReducedRange() {
+        ColorSpace extended = ColorSpace.get(Named.EXTENDED_SRGB);
         mBitmap = Bitmap.createBitmap(10, 10, Config.RGBA_F16, true,
-                ColorSpace.get(Named.EXTENDED_SRGB));
-        mBitmap.setColorSpace(ColorSpace.get(Named.DISPLAY_P3));
+                extended);
+        mBitmap.setColorSpace(ColorSpace.get(Named.SRGB));
+        assertSame(mBitmap.getColorSpace(), extended);
+    }
+
+    @Test
+    public void testSetColorSpaceNotReducedRangeLinear() {
+        ColorSpace linearExtended = ColorSpace.get(Named.LINEAR_EXTENDED_SRGB);
+        mBitmap = Bitmap.createBitmap(10, 10, Config.RGBA_F16, true,
+                linearExtended);
+        mBitmap.setColorSpace(ColorSpace.get(Named.LINEAR_SRGB));
+        assertSame(mBitmap.getColorSpace(), linearExtended);
+    }
+
+    @Test
+    public void testSetColorSpaceIncreasedRange() {
+        mBitmap = Bitmap.createBitmap(10, 10, Config.RGBA_F16, true,
+                ColorSpace.get(Named.DISPLAY_P3));
+        ColorSpace linearExtended = ColorSpace.get(Named.LINEAR_EXTENDED_SRGB);
+        mBitmap.setColorSpace(linearExtended);
+        assertSame(mBitmap.getColorSpace(), linearExtended);
     }
 
     @Test
@@ -1537,6 +1596,26 @@ public class BitmapTest {
         assertTrue(expectedBitmap.sameAs(Bitmap.CREATOR.createFromParcel(p)));
 
         p.recycle();
+    }
+
+    @Test
+    public void testParcelF16ColorSpace() {
+        for (ColorSpace.Named e : new ColorSpace.Named[] {
+                ColorSpace.Named.EXTENDED_SRGB,
+                ColorSpace.Named.LINEAR_EXTENDED_SRGB,
+                ColorSpace.Named.PRO_PHOTO_RGB,
+                ColorSpace.Named.DISPLAY_P3
+        }) {
+            final ColorSpace cs = ColorSpace.get(e);
+            Bitmap b = Bitmap.createBitmap(10, 10, Config.RGBA_F16, true, cs);
+            assertSame(cs, b.getColorSpace());
+
+            Parcel p = Parcel.obtain();
+            b.writeToParcel(p, 0);
+            p.setDataPosition(0);
+            Bitmap unparceled = Bitmap.CREATOR.createFromParcel(p);
+            assertSame(cs, unparceled.getColorSpace());
+        }
     }
 
     @Test

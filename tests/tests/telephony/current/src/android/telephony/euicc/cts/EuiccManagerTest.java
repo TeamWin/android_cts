@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.telephony.TelephonyManager;
 import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccInfo;
 import android.telephony.euicc.EuiccManager;
@@ -88,6 +89,13 @@ public class EuiccManagerTest {
 
         // verify result is null
         assertNull(eid);
+    }
+
+    @Test
+    public void testCreateForCardId() {
+        // just verify that this does not crash
+        mEuiccManager = mEuiccManager.createForCardId(TelephonyManager.UNINITIALIZED_CARD_ID);
+        mEuiccManager = mEuiccManager.createForCardId(TelephonyManager.UNSUPPORTED_CARD_ID);
     }
 
     @Test

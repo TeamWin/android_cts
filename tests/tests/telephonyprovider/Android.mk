@@ -26,8 +26,8 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    android-support-test \
+    compatibility-device-util-axt \
+    androidx.test.rules \
     truth-prebuilt
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs

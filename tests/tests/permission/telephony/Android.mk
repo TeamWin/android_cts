@@ -28,8 +28,8 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util
+    ctstestrunner-axt \
+    compatibility-device-util-axt
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

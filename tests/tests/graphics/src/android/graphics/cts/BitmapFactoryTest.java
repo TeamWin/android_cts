@@ -34,13 +34,14 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -892,6 +893,7 @@ public class BitmapFactoryTest {
             // the reference.  We must do this manually because we are abusing ALPHA_8
             // in order to represent grayscale.
             compareBitmaps(reference, grayToARGB(alpha8), 0, true, true);
+            assertNull(alpha8.getColorSpace());
         }
 
         // Setting inPreferredConfig to nullptr will cause the default Config to be

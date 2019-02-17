@@ -16,7 +16,7 @@ android_test {
     name: "CtsPreconditions",
 
     static_libs: [
-        "android-support-test",
+        "androidx.test.rules",
         "compatibility-device-preconditions",
     ],
 

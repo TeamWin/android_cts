@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.server.am.ActivityManagerTestBase;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
@@ -33,6 +34,7 @@ import static org.junit.Assert.fail;
  * Test the UsageStats API around usage reporting against tokens
  * Run test: atest CtsUsageStatsTestCases:UsageReportingTest
  */
+@AppModeFull
 public class UsageReportingTest extends ActivityManagerTestBase {
 
     private UiDevice mUiDevice;

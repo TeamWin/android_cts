@@ -19,19 +19,18 @@ package android.os.cts;
 import android.content.res.AssetManager;
 import android.os.Build;
 import android.platform.test.annotations.RestrictedBuildTest;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
+import junit.framework.TestCase;
+
 import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.IOException;
-import java.util.Arrays;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import junit.framework.TestCase;
 
 public class BuildVersionTest extends TestCase {
 

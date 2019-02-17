@@ -16,6 +16,7 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertChildSessionContext;
+import static android.contentcaptureservice.cts.Assertions.assertContextUpdated;
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertMainSessionContext;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
@@ -32,6 +33,7 @@ import static android.contentcaptureservice.cts.common.ActivitiesWatcher.Activit
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
@@ -52,6 +54,8 @@ import android.view.contentcapture.UserDataRemovalRequest;
 import android.view.contentcapture.UserDataRemovalRequest.UriRequest;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import org.junit.After;
 import org.junit.Before;
@@ -105,11 +109,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        final Uri uri = Uri.parse("file://dev/null");
-        final Bundle bundle = new Bundle();
-        bundle.putString("DUDE", "SWEET");
-        final ContentCaptureContext clientContext = new ContentCaptureContext.Builder()
-                .setUri(uri).setExtras(bundle).build();
+        final ContentCaptureContext clientContext = newContentCaptureContext();
 
         final AtomicReference<ContentCaptureSession> mainSessionRef = new AtomicReference<>();
         final AtomicReference<ContentCaptureSession> childSessionRef = new AtomicReference<>();
@@ -187,9 +187,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         // Checks context
         assertChildSessionContext(childSession, "file://dev/null");
 
-        final Bundle extras = childSession.context.getExtras();
-        assertThat(extras.keySet()).containsExactly("DUDE");
-        assertThat(extras.getString("DUDE")).isEqualTo("SWEET");
+        assertContentCaptureContext(childSession.context);
 
         // Check events
         final List<ContentCaptureEvent> childEvents = childSession.getEvents();
@@ -208,6 +206,105 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                 activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
                 activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
         );
+    }
+
+    @Test
+    public void testSimpleLifecycle_changeContextAfterCreate() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureContext newContext1 = newContentCaptureContext();
+        final ContentCaptureContext newContext2 = null;
+
+        final View rootView = activity.getRootView();
+        final ContentCaptureSession mainSession = rootView.getContentCaptureSession();
+        assertThat(mainSession).isNotNull();
+        Log.i(TAG, "Updating root view (" + rootView + ") context to " + newContext1);
+        mainSession.setContentCaptureContext(newContext1);
+        assertContentCaptureContext(mainSession.getContentCaptureContext());
+
+        Log.i(TAG, "Updating root view (" + rootView + ") context to " + newContext2);
+        mainSession.setContentCaptureContext(newContext2);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+
+        final int additionalEvents = 2;
+        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
+                additionalEvents);
+
+        final ContentCaptureEvent event1 = assertContextUpdated(events, LoginActivity.MIN_EVENTS);
+        final ContentCaptureContext actualContext = event1.getContentCaptureContext();
+        assertContentCaptureContext(actualContext);
+
+        final ContentCaptureEvent event2 = assertContextUpdated(events,
+                LoginActivity.MIN_EVENTS + 1);
+        assertThat(event2.getContentCaptureContext()).isNull();
+    }
+
+    @Test
+    public void testSimpleLifecycle_changeContextOnCreate() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final ContentCaptureContext newContext = newContentCaptureContext();
+
+        LoginActivity.onRootView((activity, rootView) -> {
+            final ContentCaptureSession mainSession = rootView.getContentCaptureSession();
+            Log.i(TAG, "Setting root view (" + rootView + ") context to " + newContext);
+            mainSession.setContentCaptureContext(newContext);
+            assertContentCaptureContext(mainSession.getContentCaptureContext());
+        });
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+        final ContentCaptureSessionId sessionId = session.id;
+        assertRightActivity(session, sessionId, activity);
+
+        // Sanity check
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events(" + events.size() + "): " + events);
+        // TODO(b/123540067): ideally it should be X so it reflects just the views defined
+        // in the layout - right now it's generating events for 2 intermediate parents
+        // (android:action_mode_bar_stub and android:content), we should try to create an
+        // activity without them
+
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+
+        assertThat(events.size()).isAtLeast(10);
+
+        // TODO(b/123540067): get rid of those intermediated parents
+        final View grandpa1 = activity.getGrandParent();
+        final View grandpa2 = activity.getGrandGrandParent();
+        final View decorView = activity.getDecorView();
+        final View rootView = activity.getRootView();
+
+        final ContentCaptureEvent ctxUpdatedEvent = assertContextUpdated(events, 0);
+        final ContentCaptureContext actualContext = ctxUpdatedEvent.getContentCaptureContext();
+        assertContentCaptureContext(actualContext);
+
+        assertViewHierarchyStarted(events, 1);
+        assertDecorViewAppeared(events, 2, decorView);
+        assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 5, sessionId, rootView, grandpa1.getAutofillId());
+        assertViewAppeared(events, 6, sessionId, activity.mUsernameLabel, rootId);
+        assertViewAppeared(events, 7, sessionId, activity.mUsername, rootId);
+        assertViewAppeared(events, 8, sessionId, activity.mPasswordLabel, rootId);
+        assertViewAppeared(events, 9, sessionId, activity.mPassword, rootId);
     }
 
     @Test
@@ -575,13 +672,39 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         }
     }
 
+    /**
+     * Creates a context that can be assert by
+     * {@link #assertContentCaptureContext(ContentCaptureContext)}.
+     */
+    private ContentCaptureContext newContentCaptureContext() {
+        final Uri uri = Uri.parse("file://dev/null");
+        final Bundle bundle = new Bundle();
+        bundle.putString("DUDE", "SWEET");
+        return new ContentCaptureContext.Builder()
+                .setUri(uri).setExtras(bundle).build();
+    }
 
-    // TODO(b/119638528): add moar test cases for different sessions:
+    /**
+     * Asserts a context that can has been created by {@link #newContentCaptureContext()}.
+     */
+    private void assertContentCaptureContext(@NonNull ContentCaptureContext context) {
+        assertWithMessage("null context").that(context).isNotNull();
+        assertWithMessage("wrong URI on context %s", context).that(context.getUri())
+                .isEqualTo(Uri.parse("file://dev/null"));
+        final Bundle extras = context.getExtras();
+        assertWithMessage("no extras on context %s", context).that(extras).isNotNull();
+        assertWithMessage("wrong number of extras on context %s", context).that(extras.size())
+                .isEqualTo(1);
+        assertWithMessage("wrong extras on context %s", context).that(extras.getString("DUDE"))
+                .isEqualTo("SWEET");
+    }
+
+    // TODO(b/123540602): add moar test cases for different sessions:
     // - session1 on rootView, session2 on children
     // - session1 on rootView, session2 on child1, session3 on child2
     // - combination above where the CTS test explicitly finishes a session
 
-    // TODO(b/119638528): add moar test cases for different scenarios, like:
+    // TODO(b/123540602): add moar test cases for different scenarios, like:
     // - dynamically adding /
     // - removing views
     // - pausing / resuming activity / tapping home

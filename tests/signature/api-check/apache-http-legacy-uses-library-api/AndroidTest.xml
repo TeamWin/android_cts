@@ -24,7 +24,7 @@
         <option name="push" value="current.api->/data/local/tmp/signature-test/current.api" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="apache-http-legacy-minus-current.api->/data/local/tmp/signature-test/apache-http-legacy-minus-current.api" />
+        <option name="push" value="apache-http-legacy-current.api->/data/local/tmp/signature-test/apache-http-legacy-current.api" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
@@ -35,7 +35,7 @@
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.http_uses_library.SignatureTest" />
         <option name="instrumentation-arg" key="base-api-files" value="current.api" />
-        <option name="instrumentation-arg" key="expected-api-files" value="apache-http-legacy-minus-current.api" />
+        <option name="instrumentation-arg" key="expected-api-files" value="apache-http-legacy-current.api" />
         <option name="runtime-hint" value="5s" />
     </test>
 </configuration>

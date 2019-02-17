@@ -32,8 +32,8 @@ android_test {
     ],
 
     static_libs: [
-        "android-support-test",
-        "ctstestrunner",
+        "androidx.test.rules",
+        "ctstestrunner-axt",
         "platform-test-annotations",
     ],
 

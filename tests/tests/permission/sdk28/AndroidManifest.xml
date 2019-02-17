@@ -43,7 +43,7 @@
         package. That runner cannot be added to this package either, since it
         relies on hidden APIs.
     -->
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.permission.cts.sdk28"
                      android:label="CTS tests of legacy android permissions as of API 28">
         <meta-data android:name="listener"

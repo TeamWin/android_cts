@@ -171,4 +171,11 @@ public final class SettingsUtils {
         set(SettingsUtils.NAMESPACE_SECURE, key, value);
 
     }
+
+    /**
+     * Get a global setting for the current (foreground) user. Trims ending new line.
+     */
+    public static String getSecureSetting(String key) {
+        return SystemUtil.runShellCommand("settings --user current get secure " + key).trim();
+    }
 }

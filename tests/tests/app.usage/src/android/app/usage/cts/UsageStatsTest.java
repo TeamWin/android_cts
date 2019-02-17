@@ -23,13 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.Activity;
-import android.app.AppOpsManager;
-import android.app.KeyguardManager;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.app.*;
 import android.app.usage.EventStats;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
@@ -41,6 +35,7 @@ import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -55,6 +50,7 @@ import android.view.KeyEvent;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 
+import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -99,6 +95,9 @@ public class UsageStatsTest {
 
     private static final String USAGE_SOURCE_DELETE_SHELL_COMMAND = "settings delete global " +
             Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE;
+
+    private static final String TEST_APP_PKG = "android.app.usage.cts.test1";
+    private static final String TEST_APP_CLASS = "android.app.usage.cts.test1.SomeActivity";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -180,7 +179,7 @@ public class UsageStatsTest {
         }
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testOrderedActivityLaunchSequenceInEventLog() throws Exception {
         @SuppressWarnings("unchecked")
@@ -234,11 +233,13 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testActivityOnBackButton() throws Exception {
         testActivityOnButton(mUiDevice::pressBack);
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testActivityOnHomeButton() throws Exception {
         testActivityOnButton(mUiDevice::pressHome);
@@ -269,7 +270,7 @@ public class UsageStatsTest {
         assertEquals(Event.ACTIVITY_STOPPED, eventList.get(2).getEventType());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testAppLaunchCount() throws Exception {
         long endTime = System.currentTimeMillis();
@@ -296,7 +297,7 @@ public class UsageStatsTest {
         assertEquals(startingCount + 2, stats.getAppLaunchCount());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testStandbyBucketChangeLog() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -458,7 +459,7 @@ public class UsageStatsTest {
         assertEquals(events.hasNextEvent(), reparceledEvents.hasNextEvent());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testPackageUsageStatsIntervals() throws Exception {
         final long beforeTime = System.currentTimeMillis();
@@ -521,7 +522,7 @@ public class UsageStatsTest {
         assertTrue(stats.isEmpty());
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -811,7 +812,7 @@ public class UsageStatsTest {
         }
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testInteractiveEvents() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
@@ -964,6 +965,7 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testForegroundService() throws Exception {
         // This test start a foreground service then stop it. The event list should have one
@@ -1018,7 +1020,7 @@ public class UsageStatsTest {
         assertLessThan(sleepTime, totalTimeUsed);
     }
 
-    @AppModeFull // No usage events access in instant apps
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testTaskRootEventField() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
@@ -1052,6 +1054,7 @@ public class UsageStatsTest {
         fail("Did not find nested activity name in usage events");
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testUsageSourceAttribution() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
@@ -1080,6 +1083,120 @@ public class UsageStatsTest {
         launchSubActivity(TaskRootActivity.class);
         // Usage should be attributed to this package
         assertAppOrTokenUsed(mTargetPackage, true);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testInstantAppUsageEventsObfuscated() throws Exception {
+        @SuppressWarnings("unchecked")
+        final Class<? extends Activity>[] activitySequence = new Class[] {
+                Activities.ActivityOne.class,
+                Activities.ActivityTwo.class,
+                Activities.ActivityThree.class,
+        };
+        mUiDevice.wakeUp();
+
+        final long startTime = System.currentTimeMillis();
+        // Launch the series of Activities.
+        launchSubActivities(activitySequence);
+        final long endTime = System.currentTimeMillis();
+        final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int resumes = 0;
+        int pauses = 0;
+        int stops = 0;
+
+        // Only look at events belongs to mTargetPackage.
+        ArrayList<UsageEvents.Event> eventList = new ArrayList<>();
+        while (events.hasNextEvent()) {
+            final UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            // There should be no events with this packages name
+            assertFalse("Instant app package name found in usage event list",
+                    mTargetPackage.equals(event.getPackageName()));
+
+            // Look for the obfuscated instant app string instead
+            if(UsageEvents.INSTANT_APP_PACKAGE_NAME.equals(event.getPackageName())) {
+                switch (event.mEventType) {
+                    case Event.ACTIVITY_RESUMED:
+                        resumes++;
+                        break;
+                    case Event.ACTIVITY_PAUSED:
+                        pauses++;
+                        break;
+                    case Event.ACTIVITY_STOPPED:
+                        stops++;
+                        break;
+                }
+            }
+        }
+        assertEquals("Unexpected number of activity resumes", 3, resumes);
+        assertEquals("Unexpected number of activity pauses", 3, pauses);
+        assertEquals("Unexpected number of activity stops", 3, stops);
+    }
+
+
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testSuddenDestroy() throws Exception {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
+                .getContext().getSystemService(KeyguardManager.class);
+        mUiDevice.wakeUp();
+        // Also want to start out with the keyguard dismissed.
+        if (kmgr.isKeyguardLocked()) {
+            final long startTime = getEvents(KEYGUARD_EVENTS, 0, null) + 1;
+            mUiDevice.executeShellCommand("wm dismiss-keyguard");
+            ArrayList<Event> events = waitForEventCount(KEYGUARD_EVENTS, startTime, 1);
+            assertEquals(Event.KEYGUARD_HIDDEN, events.get(0).getEventType());
+            SystemClock.sleep(500);
+        }
+
+        mUiDevice.pressHome();
+
+        final long startTime = System.currentTimeMillis();
+        final ActivityManager mAm = context.getSystemService(ActivityManager.class);
+
+        Intent intent = new Intent();
+        intent.setClassName(TEST_APP_PKG, TEST_APP_CLASS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        mUiDevice.wait(Until.hasObject(By.clazz(TEST_APP_PKG, TEST_APP_CLASS)), TIMEOUT);
+        SystemClock.sleep(500);
+
+        // Destroy the activity
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
+        mUiDevice.wait(Until.gone(By.clazz(TEST_APP_PKG, TEST_APP_CLASS)), TIMEOUT);
+        SystemClock.sleep(500);
+
+        final long endTime = System.currentTimeMillis();
+        final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int resumes = 0;
+        int stops = 0;
+
+        while (events.hasNextEvent()) {
+            final UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+
+            if(TEST_APP_PKG.equals(event.getPackageName())) {
+                switch (event.mEventType) {
+                    case Event.ACTIVITY_RESUMED:
+                        assertNotNull("ACTIVITY_RESUMED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        resumes++;
+                        break;
+                    case Event.ACTIVITY_STOPPED:
+                        assertNotNull("ACTIVITY_STOPPED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        stops++;
+                        break;
+                }
+            }
+        }
+        assertEquals("Unexpected number of activity resumes", 1, resumes);
+        assertEquals("Unexpected number of activity stops", 1, stops);
     }
 
     private void pressWakeUp() {

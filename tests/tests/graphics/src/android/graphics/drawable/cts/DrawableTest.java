@@ -43,14 +43,15 @@ import android.graphics.cts.R;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.Callback;
 import android.net.Uri;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.StateSet;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.View;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -381,6 +382,34 @@ public class DrawableTest {
             if (imageFile.exists()) {
                 assertTrue(imageFile.delete());
             }
+        }
+    }
+
+    @Test
+    public void testImageIntrinsicScaledForDensity() throws IOException {
+        try (InputStream is = mContext.getAssets().open("green-p3.png")) {
+            Drawable drawable = Drawable.createFromStream(is, null);
+            assertNotNull(drawable);
+
+            float density = mContext.getResources().getDisplayMetrics().density;
+            int densityAdjustedSize = Math.round(64 / density);
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicWidth());
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicHeight());
+        }
+    }
+
+    @Test
+    public void testImageIntrinsicScaledForDensityWithBitmapOptions() throws IOException {
+        try (InputStream is = mContext.getAssets().open("green-p3.png")) {
+            // Verify that providing BitmapFactory Options provides the same result
+            Drawable drawable = Drawable.createFromResourceStream(
+                    null, null, is, null, new BitmapFactory.Options());
+            assertNotNull(drawable);
+
+            float density = mContext.getResources().getDisplayMetrics().density;
+            int densityAdjustedSize = Math.round(64 / density);
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicWidth());
+            assertEquals(densityAdjustedSize, drawable.getIntrinsicHeight());
         }
     }
 

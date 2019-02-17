@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package android.signature.cts.tests;
+package android.telephony.ims;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import android.app.IntentService;
+import android.content.Intent;
 
 /**
- * Finds all instrumentation and unit tests for this application.
+ * This service is used to provide the interface required for a default SMS application. It
+ * intentionally has no custom behavior.
  */
-public class AllTests extends TestSuite {
+public class SmsApplicationService extends IntentService {
+    private static final String TAG = "SmsApplicationService";
 
-    public AllTests() {
-        super();
-
-        addTestSuite(ApiComplianceCheckerTest.class);
+    public SmsApplicationService() {
+        super(TAG);
     }
 
-    public static Test suite() {
-        return new AllTests();
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        // Do nothing
     }
 }

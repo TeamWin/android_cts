@@ -22,8 +22,8 @@ import android.app.Instrumentation
 import android.content.Context
 import android.os.Process
 import android.os.SystemClock
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before

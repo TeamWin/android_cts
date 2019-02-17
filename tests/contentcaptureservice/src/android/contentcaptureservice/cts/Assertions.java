@@ -17,6 +17,7 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.MY_EPOCH;
 import static android.contentcaptureservice.cts.Helper.TAG;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_CONTEXT_UPDATED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_INITIAL_VIEW_TREE_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_INITIAL_VIEW_TREE_APPEARING;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_APPEARED;
@@ -406,6 +407,23 @@ final class Assertions {
                 .isEqualTo(expectedId);
         assertWithMessage("Wrong text on %s (%s)", event, index).that(event.getText().toString())
                 .isEqualTo(expectedText);
+    }
+
+    /**
+     * Asserts the basic contents of a {@link #TYPE_CONTEXT_UPDATED} event.
+     */
+    public static ContentCaptureEvent assertContextUpdated(
+            @NonNull List<ContentCaptureEvent> events, int index) {
+        final ContentCaptureEvent event = getEvent(events, index, TYPE_CONTEXT_UPDATED);
+        assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
+                .that(event.getViewNode()).isNull();
+        assertWithMessage("event %s (index %s) should not have text", event, index)
+                .that(event.getViewNode()).isNull();
+        assertWithMessage("event %s (index %s) should not have an autofillId", event, index)
+                .that(event.getId()).isNull();
+        assertWithMessage("event %s (index %s) should not have autofillIds", event, index)
+                .that(event.getIds()).isNull();
+        return event;
     }
 
     /**

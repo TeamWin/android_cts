@@ -66,7 +66,7 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
      * Verify that listen or get cell location requires permissions.
      * <p>
      * Requires Permission: {@link
-     * android.Manifest.permission#ACCESS_COARSE_LOCATION.}
+     * android.Manifest.permission#ACCESS_FINE_LOCATION}
      */
     @UiThreadTest
     public void testListenCellLocation() {
@@ -97,7 +97,7 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
      * Verify that get cell location requires permissions.
      * <p>
      * Requires Permission: {@link
-     * android.Manifest.permission#ACCESS_COARSE_LOCATION.}
+     * android.Manifest.permission#ACCESS_FINE_LOCATION}
      */
     @UiThreadTest
     public void testListenCellLocation2() {
@@ -112,6 +112,47 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
         try {
             telephonyManager.getAllCellInfo();
             fail("TelephonyManager.getAllCellInfo did not throw SecurityException as expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        try {
+            telephonyManager.requestCellInfoUpdate(null, null);
+            fail("TelephonyManager.requestCellInfoUpdate did not throw"
+                    + " SecurityException as expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Verify that getting the service state requires location permission
+     * <p>
+     * Requires Permission: {@link
+     * android.Manifest.permission#ACCESS_COARSE_LOCATION}
+     */
+    @UiThreadTest
+    public void testGetServiceState() {
+        if (!mHasTelephony) {
+            return;
+        }
+
+        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
+                Context.TELEPHONY_SERVICE);
+
+        PhoneStateListener phoneStateListener = new PhoneStateListener();
+        try {
+            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+            fail("TelephonyManager.listen(LISTEN_SERVICE_STATE) did not" +
+                    " throw SecurityException as expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        try {
+            telephonyManager.getServiceState();
+            fail("TelephonyManager.getServiceState did not throw"
+                    + " SecurityException as expected");
         } catch (SecurityException e) {
             // expected
         }

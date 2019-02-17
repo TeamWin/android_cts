@@ -25,7 +25,7 @@
       <uses-library android:name="org.apache.http.legacy" />
   </application>
 
-  <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+  <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                    android:targetPackage="android.netsecpolicy.usescleartext_unspecified.cts"
                    android:label="Tests for NetworkSecurityPolicy cleartext traffic policy when it is not specified.">
         <meta-data android:name="listener"

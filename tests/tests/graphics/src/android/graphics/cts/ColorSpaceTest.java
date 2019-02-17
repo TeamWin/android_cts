@@ -24,8 +24,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.ColorSpace;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -746,6 +747,10 @@ public class ColorSpaceTest {
         assertNotNull(colorSpace.getTransferParameters());
 
         colorSpace = (ColorSpace.Rgb) ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+        assertNotNull(colorSpace.getTransferParameters());
+
+        colorSpace = new ColorSpace.Rgb("Almost sRGB", SRGB_TO_XYZ,
+                x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f));
         assertNull(colorSpace.getTransferParameters());
     }
 

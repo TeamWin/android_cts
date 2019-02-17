@@ -16,21 +16,19 @@
 
 package android.content.om.cts;
 
+import static android.content.om.OverlayInfo.CREATOR;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static android.content.om.OverlayInfo.CREATOR;
-
-import org.junit.Assert;
-import org.junit.runner.RunWith;
-import org.junit.Test;
 
 import android.content.om.OverlayInfo;
-import android.content.om.OverlayManager;
 import android.os.Parcel;
-import android.os.RemoteException;
-import android.support.test.runner.AndroidJUnit4;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Verifies the member variables inside {@link OverlayInfo}

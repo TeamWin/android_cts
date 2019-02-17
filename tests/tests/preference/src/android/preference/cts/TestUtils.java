@@ -70,10 +70,16 @@ public class TestUtils {
         // Crop-out the right side for the scrollbar which may or may not be visible.
         // On wearable devices the scroll bar is a curve and occupies 20% of the right side.
         int xToCut = isOnWatchUiMode() ? bt.getWidth() / 5 : bt.getWidth() / 20;
+        int yToCut = statusBarHeight;
+
+        if (isLandscape()) {
+            xToCut += navigationBarHeight;
+        } else {
+            yToCut += navigationBarHeight;
+        }
 
         bt = Bitmap.createBitmap(
-                bt, 0, statusBarHeight, bt.getWidth() - xToCut,
-                bt.getHeight() - statusBarHeight - navigationBarHeight);
+            bt, 0, statusBarHeight, bt.getWidth() - xToCut, bt.getHeight() - yToCut);
 
         return bt;
     }
@@ -156,6 +162,11 @@ public class TestUtils {
             mNavigationBarHeight = 0;
         }
         return mNavigationBarHeight;
+    }
+
+    private boolean isLandscape() {
+        return mInstrumentation.getTargetContext().getResources().getConfiguration().orientation
+            == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     private UiObject2 getTextObject(String text) {

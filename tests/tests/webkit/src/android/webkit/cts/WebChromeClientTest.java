@@ -21,8 +21,10 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Base64;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
 import android.webkit.WebIconDatabase;
@@ -32,6 +34,9 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 @AppModeFull
 public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
@@ -312,6 +317,66 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
             }
         }.run();
         assertEquals(webChromeClient.getMessage(), "testOnJsPrompt");
+    }
+
+    public void testOnConsoleMessage() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        int numConsoleMessages = 4;
+        final BlockingQueue<ConsoleMessage> consoleMessageQueue =
+                new ArrayBlockingQueue<>(numConsoleMessages);
+        final MockWebChromeClient webChromeClient = new MockWebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage message) {
+                consoleMessageQueue.add(message);
+                // return false for default handling; i.e. printing the message.
+                return false;
+            }
+        };
+        mOnUiThread.setWebChromeClient(webChromeClient);
+
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        // Note: we assert line numbers, which are relative to the line in the HTML file. So, "\n"
+        // is significant in this test, and make sure to update consoleLineNumberOffset when
+        // editing the HTML.
+        final int consoleLineNumberOffset = 3;
+        final String unencodedHtml = "<html>\n"
+                + "<script>\n"
+                + "  console.log('message0');\n"
+                + "  console.warn('message1');\n"
+                + "  console.error('message2');\n"
+                + "  console.info('message3');\n"
+                + "</script>\n"
+                + "</html>\n";
+        final String mimeType = null;
+        final String encoding = "base64";
+        String encodedHtml = Base64.encodeToString(unencodedHtml.getBytes(), Base64.NO_PADDING);
+        mOnUiThread.loadDataAndWaitForCompletion(encodedHtml, mimeType, encoding);
+
+        // Expected message levels correspond to the order of the console messages defined above.
+        ConsoleMessage.MessageLevel[] expectedMessageLevels = {
+            ConsoleMessage.MessageLevel.LOG,
+            ConsoleMessage.MessageLevel.WARNING,
+            ConsoleMessage.MessageLevel.ERROR,
+            ConsoleMessage.MessageLevel.LOG,
+        };
+        for (int k = 0; k < numConsoleMessages; k++) {
+            final ConsoleMessage consoleMessage =
+                    WebkitUtils.waitForNextQueueElement(consoleMessageQueue);
+            final ConsoleMessage.MessageLevel expectedMessageLevel = expectedMessageLevels[k];
+            assertEquals("message " + k + " had wrong level",
+                    expectedMessageLevel,
+                    consoleMessage.messageLevel());
+            final String expectedMessage = "message" + k;
+            assertEquals("message " + k + " had wrong message",
+                    expectedMessage,
+                    consoleMessage.message());
+            final int expectedLineNumber = k + consoleLineNumberOffset;
+            assertEquals("message " + k + " had wrong line number",
+                    expectedLineNumber,
+                    consoleMessage.lineNumber());
+        }
     }
 
     /**

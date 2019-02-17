@@ -19,17 +19,16 @@ package android.jvmti.attaching.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Debug;
-import android.support.test.runner.AndroidJUnit4;
 
 import dalvik.system.BaseDexClassLoader;
 
 import org.junit.AfterClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,12 +37,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.Callable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.zip.ZipFile;
 
 @RunWith(Parameterized.class)

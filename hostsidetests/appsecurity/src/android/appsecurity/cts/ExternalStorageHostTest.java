@@ -72,6 +72,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String APK_B = "CtsStorageAppB.apk";
     private static final String CLASS = "com.android.cts.storageapp.StorageTest";
 
+    private static final String PERM_READ_MEDIA_AUDIO = "android.permission.READ_MEDIA_AUDIO";
+    private static final String PERM_READ_MEDIA_VIDEO = "android.permission.READ_MEDIA_VIDEO";
     private static final String PERM_READ_MEDIA_IMAGES = "android.permission.READ_MEDIA_IMAGES";
     private static final String ROLE_GALLERY = "android.app.role.GALLERY";
 
@@ -475,7 +477,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
         installPackage(MEDIA_APK);
         for (int user : mUsers) {
-            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, false);
+            updatePermissions(MEDIA_PKG, user, new String[] {
+                    PERM_READ_MEDIA_AUDIO,
+                    PERM_READ_MEDIA_VIDEO,
+                    PERM_READ_MEDIA_IMAGES,
+            }, false);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaNone", user);
@@ -489,7 +495,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
         installPackage(MEDIA_APK);
         for (int user : mUsers) {
-            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
+            updatePermissions(MEDIA_PKG, user, new String[] {
+                    PERM_READ_MEDIA_AUDIO,
+                    PERM_READ_MEDIA_VIDEO,
+                    PERM_READ_MEDIA_IMAGES,
+            }, true);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaRead", user);
@@ -503,7 +513,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
         installPackage(MEDIA_APK);
         for (int user : mUsers) {
-            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
+            updatePermissions(MEDIA_PKG, user, new String[] {
+                    PERM_READ_MEDIA_AUDIO,
+                    PERM_READ_MEDIA_VIDEO,
+                    PERM_READ_MEDIA_IMAGES,
+            }, true);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, true);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaWrite", user);
@@ -519,7 +533,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
         // TODO: extend test to exercise secondary users
         for (int user : Arrays.copyOf(mUsers, 1)) {
-            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
+            updatePermissions(MEDIA_PKG, user, new String[] {
+                    PERM_READ_MEDIA_AUDIO,
+                    PERM_READ_MEDIA_VIDEO,
+                    PERM_READ_MEDIA_IMAGES,
+            }, true);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaEscalation", user);
@@ -532,11 +550,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 .contains(Long.toString(nonce));
     }
 
-    private void updatePermission(String packageName, int userId, String permission, boolean grant)
-            throws Exception {
+    private void updatePermissions(String packageName, int userId, String[] permissions,
+            boolean grant) throws Exception {
         final String verb = grant ? "grant" : "revoke";
-        getDevice().executeShellCommand(
-                "cmd package " + verb + " --user " + userId + " " + packageName + " " + permission);
+        for (String permission : permissions) {
+            getDevice().executeShellCommand(
+                    "cmd package " + verb + " --user " + userId + " " + packageName + " "
+                            + permission);
+        }
     }
 
     private void updateAppOp(String packageName, int userId, String appOp, boolean allow)

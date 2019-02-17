@@ -107,6 +107,7 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  * atest CtsActivityManagerDeviceTestCases:ActivityManagerPinnedStackTests
  */
+@Presubmit
 @FlakyTest(bugId = 71792368)
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TAG = ActivityManagerPinnedStackTests.class.getSimpleName();
@@ -146,7 +147,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                         + " task size");
     }
 
-    @Presubmit
     @Test
     public void testEnterPictureInPictureMode() throws Exception {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"),
@@ -154,7 +154,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 false /* isFocusable */);
     }
 
-    @Presubmit
     @Test
     public void testMoveTopActivityToPinnedStack() throws Exception {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY), PIP_ACTIVITY, PIP_ACTIVITY,
@@ -172,7 +171,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     // This test is black-listed in cts-known-failures.xml (b/35314835).
     @Ignore
-    @Presubmit
     @Test
     public void testLaunchIntoPinnedStack() throws Exception {
         pinnedStackTester(getAmStartCmd(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY),
@@ -534,7 +532,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotExist();
     }
 
-    @Presubmit
     @Test
     public void testAutoEnterPictureInPictureAspectRatio() throws Exception {
         assumeTrue(supportsPip());
@@ -557,7 +554,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
     }
 
-    @Presubmit
     @Test
     public void testAutoEnterPictureInPictureOverPip() throws Exception {
         assumeTrue(supportsPip());
@@ -582,7 +578,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 pinnedStack.getTasks().get(0).mRealActivity);
     }
 
-    @Presubmit
     @Test
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         assumeTrue(supportsPip());
@@ -644,7 +639,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
 
-    @Presubmit
     @Test
     public void testRemovePipWithNoFullscreenStack() throws Exception {
         assumeTrue(supportsPip());
@@ -661,7 +655,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
-    @Presubmit
     @Test
     public void testRemovePipWithVisibleFullscreenStack() throws Exception {
         assumeTrue(supportsPip());
@@ -680,7 +673,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     @FlakyTest(bugId = 70746098)
-    @Presubmit
     @Test
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
         assumeTrue(supportsPip());
@@ -720,7 +712,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     @FlakyTest(bugId = 70906499)
-    @Presubmit
     @Test
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
         assumeTrue(supportsPip());
@@ -739,7 +730,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     @FlakyTest(bugId = 70906499)
-    @Presubmit
     @Test
     public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
         assumeTrue(supportsPip());
@@ -864,7 +854,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     @FlakyTest(bugId = 70328524)
-    @Presubmit
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         assumeTrue(supportsPip());
@@ -950,7 +939,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         }
     }
 
-    @Presubmit
     @Test
     public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
         assumeTrue(supportsPip());
@@ -1206,7 +1194,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */
     @FlakyTest
-    @Presubmit
     @Test
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());
@@ -1243,7 +1230,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 finalAppSize);
     }
 
-    @Presubmit
     @Test
     public void testEnterPictureInPictureSavePosition() throws Exception {
         assumeTrue(supportsPip());
@@ -1293,7 +1279,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 + getPinnedStackBounds(), initialBounds.equals(getPinnedStackBounds()));
     }
 
-    @Presubmit
     @Test
     @FlakyTest(bugId = 71792368)
     public void testEnterPictureInPictureDiscardSavedPositionOnFinish() throws Exception {

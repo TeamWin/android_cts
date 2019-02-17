@@ -16,12 +16,15 @@
 
 package android.security.cts;
 
-import android.system.ErrnoException;
-import android.system.Os;
 import static android.system.OsConstants.*;
-import android.support.test.runner.AndroidJUnit4;
 
 import static org.junit.Assert.fail;
+
+import android.system.ErrnoException;
+import android.system.Os;
+
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

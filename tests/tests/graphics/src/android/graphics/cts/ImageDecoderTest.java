@@ -44,14 +44,14 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
 
 import androidx.core.content.FileProvider;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
@@ -1648,7 +1648,8 @@ public class ImageDecoderTest {
                         src = f.apply(resId);
                         try {
                             Bitmap bm = ImageDecoder.decodeBitmap(src, l);
-                            assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
+                            assertEquals(Bitmap.Config.ALPHA_8, bm.getConfig());
+                            assertNull(bm.getColorSpace());
                         } catch (IOException e) {
                             fail("Failed with exception " + e);
                         }
@@ -2032,11 +2033,23 @@ public class ImageDecoderTest {
         }
 
         public void checkColorSpace(ColorSpace requested, ColorSpace actual) {
-            assertNotNull(actual);
-            if (this.isF16) {
-                assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), actual);
+            assertNotNull("Null ColorSpace for " + this.name, actual);
+            if (this.isF16 && requested != null) {
+                if (requested == ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)) {
+                    assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), actual);
+                } else if (requested == ColorSpace.get(ColorSpace.Named.SRGB)) {
+                    assertSame(ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB), actual);
+                } else {
+                    assertSame(requested, actual);
+                }
             } else if (requested != null) {
-                assertSame(requested, actual);
+                if (requested == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
+                    assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
+                } else if (requested == ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)) {
+                    assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), actual);
+                } else {
+                    assertSame(requested, actual);
+                }
             } else if (mColorSpace == null) {
                 assertEquals(this.name, "Unknown", actual.getName());
             } else {
@@ -2051,14 +2064,18 @@ public class ImageDecoderTest {
             new AssetRecord("green-p3.png", 64, 64, false,
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
             new AssetRecord("green-srgb.png", 64, 64, false, sSRGB),
-            new AssetRecord("prophoto-rgba16f.png", 64, 64, true,
-                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)),
+            new AssetRecord("blue-16bit-prophoto.png", 100, 100, true,
+                    ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB)),
+            new AssetRecord("blue-16bit-srgb.png", 64, 64, true,
+                    ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)),
             new AssetRecord("purple-cmyk.png", 64, 64, false, sSRGB),
             new AssetRecord("purple-displayprofile.png", 64, 64, false, null),
             new AssetRecord("red-adobergb.png", 64, 64, false,
                     ColorSpace.get(ColorSpace.Named.ADOBE_RGB)),
             new AssetRecord("translucent-green-p3.png", 64, 64, false,
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
+            new AssetRecord("grayscale-linearSrgb.png", 32, 32, false,
+                    ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)),
     };
 
     @Test
@@ -2103,9 +2120,8 @@ public class ImageDecoderTest {
                     ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB),
                     ColorSpace.get(ColorSpace.Named.ACES),
                     ColorSpace.get(ColorSpace.Named.ACESCG),
-                    // FIXME: This returns LINEAR_SRGB.
-                    // See b/117601185 and b/77276533
-                    //ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
+                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
+                    ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB),
             }) {
                 try {
                     Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
@@ -2125,12 +2141,16 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testTargetColorSpaceNonRGB() {
+    public void testTargetColorSpaceIllegal() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         for (ColorSpace cs : new ColorSpace[] {
-                ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB),
                 ColorSpace.get(ColorSpace.Named.CIE_LAB),
                 ColorSpace.get(ColorSpace.Named.CIE_XYZ),
+                new ColorSpace.Rgb("NoTransferParams",
+                        new float[]{ 0.640f, 0.330f, 0.300f, 0.600f, 0.150f, 0.060f },
+                        ColorSpace.ILLUMINANT_D50,
+                        x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f),
+                        0, 1),
         }) {
             try {
                 ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {

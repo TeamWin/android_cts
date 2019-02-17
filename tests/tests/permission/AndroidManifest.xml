@@ -34,6 +34,7 @@
 
     <!-- for android.permission.cts.LocationAccessCheckTest -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- for android.permission.cts.PermissionGroupChange -->
     <permission-group android:description="@string/perm_group_b"
@@ -75,7 +76,7 @@
         package. That runner cannot be added to this package either, since it
         relies on hidden APIs.
     -->
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.permission.cts"
                      android:label="CTS tests of android.permission">
         <meta-data android:name="listener"
