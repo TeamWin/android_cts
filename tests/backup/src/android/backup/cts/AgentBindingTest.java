@@ -16,9 +16,8 @@
 
 package android.backup.cts;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.expectThrows;
 
 import android.content.Context;
