@@ -38,9 +38,9 @@ import android.app.AppOpsManager;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
 
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.compatibility.common.util.ShellUtils;
