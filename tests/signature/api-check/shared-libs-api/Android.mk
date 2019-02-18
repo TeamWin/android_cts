@@ -47,7 +47,7 @@ LOCAL_SDK_VERSION := test_current
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
         cts-api-signature-test \
-        compatibility-device-util
+        compatibility-device-util-axt
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
