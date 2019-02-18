@@ -25,14 +25,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
@@ -75,12 +73,13 @@ public class MagnifierTest {
     private static final String TIME_LIMIT_EXCEEDED =
             "Completing the magnifier operation took too long";
     private static final float PIXEL_COMPARISON_DELTA = 1f;
+    private static final float WINDOW_ELEVATION = 10f;
 
     private Activity mActivity;
     private LinearLayout mLayout;
     private View mView;
-    private int[] mViewLocationInSurface;
     private Magnifier mMagnifier;
+    private DisplayMetrics mDisplayMetrics;
 
     @Rule
     public ActivityTestRule<MagnifierCtsActivity> mActivityRule =
@@ -90,6 +89,8 @@ public class MagnifierTest {
     public void setup() throws Throwable {
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
+
+        mDisplayMetrics = mActivity.getResources().getDisplayMetrics();
         // Do not run the tests, unless the device screen is big enough to fit a magnifier
         // having the default size.
         assumeTrue(isScreenBigEnough());
@@ -98,18 +99,19 @@ public class MagnifierTest {
         mView = mActivity.findViewById(R.id.magnifier_centered_view);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mLayout, null);
 
-        mViewLocationInSurface = new int[2];
-        mView.getLocationInSurface(mViewLocationInSurface);
         mMagnifier = new Magnifier.Builder(mView)
                 .setSize(mView.getWidth() / 2, mView.getHeight() / 2)
                 .build();
+        mActivityRule.runOnUiThread(() -> {
+            // Elevate the application window to have non-zero insets inside surface.
+            mActivityRule.getActivity().getWindow().setElevation(WINDOW_ELEVATION);
+        });
     }
 
     private boolean isScreenBigEnough() {
         // Get the size of the screen in dp.
-        final DisplayMetrics displayMetrics = mActivity.getResources().getDisplayMetrics();
-        final float dpScreenWidth = displayMetrics.widthPixels / displayMetrics.density;
-        final float dpScreenHeight = displayMetrics.heightPixels / displayMetrics.density;
+        final float dpScreenWidth = mDisplayMetrics.widthPixels / mDisplayMetrics.density;
+        final float dpScreenHeight = mDisplayMetrics.heightPixels / mDisplayMetrics.density;
         // Get the size of the magnifier window in dp.
         final PointF dpMagnifier = Magnifier.getMagnifierDefaultSize();
 
@@ -206,30 +208,29 @@ public class MagnifierTest {
 
     //***** Tests for default parameters *****//
 
+    private int dpToPixelSize(float dp) {
+        return (int) Math.ceil(dp * mDisplayMetrics.density);
+    }
+
+    private float dpToPixel(float dp) {
+        return dp * mDisplayMetrics.density;
+    }
+
     @Test
     public void testMagnifierDefaultParameters_withDeprecatedConstructor() {
         final Magnifier magnifier = new Magnifier(mView);
 
-        final Context context = mView.getContext();
-        final TypedArray a = context.obtainStyledAttributes(
-                null, com.android.internal.R.styleable.Magnifier,
-                com.android.internal.R.attr.magnifierStyle, 0);
-        final int width = a.getDimensionPixelSize(
-                com.android.internal.R.styleable.Magnifier_magnifierWidth, 0);
+        final int width = dpToPixelSize(100f);
         assertEquals(width, magnifier.getWidth());
-        final int height = a.getDimensionPixelSize(
-                com.android.internal.R.styleable.Magnifier_magnifierHeight, 0);
+        final int height = dpToPixelSize(48f);
         assertEquals(height, magnifier.getHeight());
-        final float elevation = a.getDimension(
-                com.android.internal.R.styleable.Magnifier_magnifierElevation, 0f);
+        final float elevation = dpToPixel(4f);
         assertEquals(elevation, magnifier.getElevation(), 0.01f);
-        final float zoom = a.getFloat(com.android.internal.R.styleable.Magnifier_magnifierZoom, 0f);
+        final float zoom = 1.25f;
         assertEquals(zoom, magnifier.getZoom(), 0.01f);
-        final int verticalOffset = a.getDimensionPixelSize(
-                com.android.internal.R.styleable.Magnifier_magnifierVerticalOffset, 0);
+        final int verticalOffset = dpToPixelSize(-42f);
         assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
-        final int horizontalOffset = a.getDimensionPixelSize(
-                com.android.internal.R.styleable.Magnifier_magnifierHorizontalOffset, 0);
+        final int horizontalOffset = dpToPixelSize(0f);
         assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
         final Context deviceDefaultContext = new ContextThemeWrapper(mView.getContext(),
                 android.R.style.Theme_DeviceDefault);
@@ -240,9 +241,7 @@ public class MagnifierTest {
         assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
         final boolean isClippingEnabled = true;
         assertEquals(isClippingEnabled, magnifier.isClippingEnabled());
-        final int overlayColor = a.getColor(
-                com.android.internal.R.styleable.Magnifier_magnifierColorOverlay,
-                Color.TRANSPARENT);
+        final int overlayColor = 0x0EFFFFFF;
         assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
     }
 
@@ -250,31 +249,23 @@ public class MagnifierTest {
     public void testMagnifierDefaultParameters_withBuilder() {
         final Magnifier magnifier = new Magnifier.Builder(mView).build();
 
-        final Resources resources = mView.getContext().getResources();
-        final int width = resources.getDimensionPixelSize(
-                com.android.internal.R.dimen.default_magnifier_width);
+        final int width = dpToPixelSize(100f);
         assertEquals(width, magnifier.getWidth());
-        final int height = resources.getDimensionPixelSize(
-                com.android.internal.R.dimen.default_magnifier_height);
+        final int height = dpToPixelSize(48f);
         assertEquals(height, magnifier.getHeight());
-        final float elevation = resources.getDimension(
-                com.android.internal.R.dimen.default_magnifier_elevation);
+        final float elevation = dpToPixel(4f);
         assertEquals(elevation, magnifier.getElevation(), 0.01f);
-        final float zoom = resources.getFloat(com.android.internal.R.dimen.default_magnifier_zoom);
+        final float zoom = 1.25f;
         assertEquals(zoom, magnifier.getZoom(), 0.01f);
-        final int verticalOffset = resources.getDimensionPixelSize(
-                com.android.internal.R.dimen.default_magnifier_vertical_offset);
+        final int verticalOffset = dpToPixelSize(-42f);
         assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
-        final int horizontalOffset = resources.getDimensionPixelSize(
-                com.android.internal.R.dimen.default_magnifier_horizontal_offset);
+        final int horizontalOffset = dpToPixelSize(0f);
         assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
-        final float dialogCornerRadius = resources.getDimension(
-                com.android.internal.R.dimen.default_magnifier_corner_radius);
+        final float dialogCornerRadius = dpToPixel(2f);
         assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
         final boolean isClippingEnabled = true;
         assertEquals(isClippingEnabled, magnifier.isClippingEnabled());
-        final int overlayColor = resources.getColor(
-                com.android.internal.R.color.default_magnifier_color_overlay, null);
+        final int overlayColor = 0x00FFFFFF;
         assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
     }
 
@@ -301,12 +292,15 @@ public class MagnifierTest {
         final float yCenter = mView.getHeight() / 2f;
         showMagnifier(xCenter, yCenter);
 
+        final int[] viewLocationInWindow = new int[2];
+        mView.getLocationInWindow(viewLocationInWindow);
+
         // Check the coordinates of the content being copied.
         final Point sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(xCenter + mViewLocationInSurface[0],
+        assertEquals(xCenter + viewLocationInWindow[0],
                 sourcePosition.x + mMagnifier.getSourceWidth() / 2f, PIXEL_COMPARISON_DELTA);
-        assertEquals(yCenter + mViewLocationInSurface[1],
+        assertEquals(yCenter + viewLocationInWindow[1],
                 sourcePosition.y + mMagnifier.getSourceHeight() / 2f, PIXEL_COMPARISON_DELTA);
 
         // Check the coordinates of the magnifier.
@@ -337,13 +331,15 @@ public class MagnifierTest {
         final int yMagnifier = -10;
         showMagnifier(xCenter, yCenter, xMagnifier, yMagnifier);
 
+        final int[] viewLocationInWindow = new int[2];
+        mView.getLocationInWindow(viewLocationInWindow);
         final Point magnifierPosition = mMagnifier.getPosition();
         assertNotNull(magnifierPosition);
         assertEquals(
-                mViewLocationInSurface[0] + xMagnifier - mMagnifier.getWidth() / 2,
+                viewLocationInWindow[0] + xMagnifier - mMagnifier.getWidth() / 2,
                 magnifierPosition.x, PIXEL_COMPARISON_DELTA);
         assertEquals(
-                mViewLocationInSurface[1] + yMagnifier - mMagnifier.getHeight() / 2,
+                viewLocationInWindow[1] + yMagnifier - mMagnifier.getHeight() / 2,
                 magnifierPosition.y, PIXEL_COMPARISON_DELTA);
     }
 
@@ -422,13 +418,10 @@ public class MagnifierTest {
         // The window should have been positioned to the top left of the activity,
         // such that it does not overlap system insets.
         final Insets systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
-        final Rect surfaceInsets = mLayout.getViewRootImpl().mWindowAttributes.surfaceInsets;
         final Point magnifierCoords = mMagnifier.getPosition();
         assertNotNull(magnifierCoords);
-        assertEquals(systemInsets.left + surfaceInsets.left, magnifierCoords.x,
-                PIXEL_COMPARISON_DELTA);
-        assertEquals(systemInsets.top + surfaceInsets.top, magnifierCoords.y,
-                PIXEL_COMPARISON_DELTA);
+        assertEquals(systemInsets.left, magnifierCoords.x, PIXEL_COMPARISON_DELTA);
+        assertEquals(systemInsets.top, magnifierCoords.y, PIXEL_COMPARISON_DELTA);
     }
 
     @Test
@@ -438,19 +431,18 @@ public class MagnifierTest {
 
         // Magnify the center of the activity in a magnifier outside bounds.
         showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
-                mLayout.getViewRootImpl().getWidth() + mMagnifier.getWidth(),
-                mLayout.getViewRootImpl().getHeight() + mMagnifier.getHeight());
+                mLayout.getRootView().getWidth() + mMagnifier.getWidth(),
+                mLayout.getRootView().getHeight() + mMagnifier.getHeight());
 
         // The window should have been positioned to the bottom right of the activity.
         final Insets systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
-        final Rect surfaceInsets = mLayout.getViewRootImpl().mWindowAttributes.surfaceInsets;
         final Point magnifierCoords = mMagnifier.getPosition();
         assertNotNull(magnifierCoords);
-        assertEquals(mLayout.getViewRootImpl().getWidth()
-                        - systemInsets.right - mMagnifier.getWidth() + surfaceInsets.left,
+        assertEquals(mLayout.getRootView().getWidth()
+                        - systemInsets.right - mMagnifier.getWidth(),
                 magnifierCoords.x, PIXEL_COMPARISON_DELTA);
-        assertEquals(mLayout.getViewRootImpl().getHeight()
-                        - systemInsets.bottom - mMagnifier.getHeight() + surfaceInsets.top,
+        assertEquals(mLayout.getRootView().getHeight()
+                        - systemInsets.bottom - mMagnifier.getHeight(),
                 magnifierCoords.y, PIXEL_COMPARISON_DELTA);
     }
 
@@ -468,7 +460,7 @@ public class MagnifierTest {
         // The window should have not been clamped.
         final Point magnifierCoords = mMagnifier.getPosition();
         final int[] magnifiedViewPosition = new int[2];
-        mLayout.getLocationInSurface(magnifiedViewPosition);
+        mLayout.getLocationInWindow(magnifiedViewPosition);
         assertNotNull(magnifierCoords);
         assertEquals(magnifiedViewPosition[0] - 3 * mMagnifier.getWidth() / 2, magnifierCoords.x,
                 PIXEL_COMPARISON_DELTA);
@@ -487,17 +479,17 @@ public class MagnifierTest {
 
         // Magnify the center of the activity in a magnifier outside bounds.
         showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
-                mLayout.getViewRootImpl().getWidth() + mMagnifier.getWidth(),
-                mLayout.getViewRootImpl().getHeight() + mMagnifier.getHeight());
+                mLayout.getRootView().getWidth() + mMagnifier.getWidth(),
+                mLayout.getRootView().getHeight() + mMagnifier.getHeight());
 
         // The window should have not been clamped.
         final Point magnifierCoords = mMagnifier.getPosition();
         final int[] magnifiedViewPosition = new int[2];
-        mLayout.getLocationInSurface(magnifiedViewPosition);
+        mLayout.getLocationInWindow(magnifiedViewPosition);
         assertNotNull(magnifierCoords);
-        assertEquals(magnifiedViewPosition[0] + mLayout.getViewRootImpl().getWidth()
+        assertEquals(magnifiedViewPosition[0] + mLayout.getRootView().getWidth()
                         + mMagnifier.getWidth() / 2, magnifierCoords.x, PIXEL_COMPARISON_DELTA);
-        assertEquals(magnifiedViewPosition[1] + mLayout.getViewRootImpl().getHeight()
+        assertEquals(magnifiedViewPosition[1] + mLayout.getRootView().getHeight()
                         + mMagnifier.getHeight() / 2, magnifierCoords.y, PIXEL_COMPARISON_DELTA);
     }
 
@@ -587,7 +579,7 @@ public class MagnifierTest {
         });
 
         final int[] containerPosition = new int[2];
-        container.getLocationInSurface(containerPosition);
+        container.getLocationInWindow(containerPosition);
 
         // Try to copy from an x to the left of the currently visible region.
         showMagnifier(view.getWidth() / 4, 0);
@@ -629,7 +621,7 @@ public class MagnifierTest {
         });
 
         final int[] containerPosition = new int[2];
-        container.getLocationInSurface(containerPosition);
+        container.getLocationInWindow(containerPosition);
 
         // Try to copy from an y above the currently visible region.
         showMagnifier(0, view.getHeight() / 4);
@@ -664,7 +656,7 @@ public class MagnifierTest {
         runOnUiThreadAndWaitForCompletion(() -> mMagnifier = builder.build());
 
         final int[] viewPosition = new int[2];
-        view.getLocationInSurface(viewPosition);
+        view.getLocationInWindow(viewPosition);
 
         // Copy content centered on relative position (0, 0) and expect the top left
         // corner of the source NOT to have been pulled to coincide with (0, 0) of the view.
@@ -686,29 +678,30 @@ public class MagnifierTest {
         assertEquals(viewPosition[1] + view.getHeight() - mMagnifier.getSourceHeight() / 2,
                 sourcePosition.y, PIXEL_COMPARISON_DELTA);
 
+        final int[] viewPositionInSurface = new int[2];
+        view.getLocationInSurface(viewPositionInSurface);
         // Copy content centered on the top left corner of the main app surface and expect the top
         // left corner of the source to have been pulled to the top left corner of the surface.
-        showMagnifier(-viewPosition[0], -viewPosition[1]);
+        showMagnifier(-viewPositionInSurface[0], -viewPositionInSurface[1]);
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(0, sourcePosition.x, PIXEL_COMPARISON_DELTA);
-        assertEquals(0, sourcePosition.y, PIXEL_COMPARISON_DELTA);
+        assertEquals(0, sourcePosition.x - viewPosition[0] + viewPositionInSurface[0],
+                PIXEL_COMPARISON_DELTA);
+        assertEquals(0, sourcePosition.y - viewPosition[1] + viewPositionInSurface[1],
+                PIXEL_COMPARISON_DELTA);
 
-        // Copy content centered on the bottom right corner of the main app surface and expect the
-        // source to have been pulled inside the surface at its bottom right.
-        final Rect surfaceInsets = view.getViewRootImpl().mWindowAttributes.surfaceInsets;
-        final int surfaceWidth = view.getViewRootImpl().getWidth() + surfaceInsets.left
-                + surfaceInsets.right;
-        final int surfaceHeight = view.getViewRootImpl().getHeight() + surfaceInsets.top
-                + surfaceInsets.bottom;
-        showMagnifier(surfaceWidth - viewPosition[0] + view.getWidth(),
-                surfaceHeight - viewPosition[1] + view.getHeight());
+        // Copy content below and to the right of the bottom right corner of the main app surface
+        // and expect the source to have been pulled inside the surface at its bottom right.
+        showMagnifier(2 * view.getRootView().getWidth(), 2 * view.getRootView().getHeight());
         sourcePosition = mMagnifier.getSourcePosition();
         assertNotNull(sourcePosition);
-        assertEquals(surfaceWidth - mMagnifier.getSourceWidth(), sourcePosition.x,
-                PIXEL_COMPARISON_DELTA);
-        assertEquals(surfaceHeight - mMagnifier.getSourceHeight(), sourcePosition.y,
-                PIXEL_COMPARISON_DELTA);
+        assertTrue(
+                sourcePosition.x < 2 * view.getRootView().getWidth() - mMagnifier.getSourceWidth());
+        assertTrue(sourcePosition.x > view.getRootView().getWidth() - mMagnifier.getSourceWidth());
+        assertTrue(sourcePosition.y
+                < 2 * view.getRootView().getHeight() - mMagnifier.getSourceHeight());
+        assertTrue(sourcePosition.y
+                > view.getRootView().getHeight() - mMagnifier.getSourceHeight());
     }
 
     @Test
@@ -777,7 +770,7 @@ public class MagnifierTest {
         runOnUiThreadAndWaitForCompletion(() -> mMagnifier = builder.build());
 
         final int[] viewPosition = new int[2];
-        view.getLocationInSurface(viewPosition);
+        view.getLocationInWindow(viewPosition);
 
         // Make sure that the left and top bounds are respected, since this is possible
         // for this source size, when the view is centered.
@@ -794,7 +787,7 @@ public class MagnifierTest {
             layout.setGravity(Gravity.TOP | Gravity.LEFT);
         });
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
-        view.getLocationInSurface(viewPosition);
+        view.getLocationInWindow(viewPosition);
 
         showMagnifier(0, 0);
         sourcePosition = mMagnifier.getSourcePosition();
