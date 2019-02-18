@@ -15,14 +15,13 @@
  */
 package android.media.cts;
 
-import android.Manifest;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.SdkSuppress;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.SdkSuppress;
 
 import java.io.File;
 

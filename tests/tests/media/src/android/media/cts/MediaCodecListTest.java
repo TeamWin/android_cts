@@ -16,20 +16,23 @@
 
 package android.media.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback;
+
 import android.content.pm.PackageManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
-import android.media.MediaCodecInfo.CodecProfileLevel;
-import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.AudioCapabilities;
-import android.media.MediaCodecInfo.VideoCapabilities;
+import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.EncoderCapabilities;
+import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +41,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
-import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback;
 
 @SmallTest
 @RequiresDevice

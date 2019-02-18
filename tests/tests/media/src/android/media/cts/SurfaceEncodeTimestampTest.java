@@ -16,14 +16,16 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
 import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaFormat;
 import android.opengl.GLES20;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,12 +33,10 @@ import android.os.HandlerThread;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import static org.junit.Assert.assertTrue;
+import androidx.test.filters.SmallTest;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
