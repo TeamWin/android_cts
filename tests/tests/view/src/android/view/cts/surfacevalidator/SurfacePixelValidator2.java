@@ -34,12 +34,6 @@ import java.nio.ByteBuffer;
 public class SurfacePixelValidator2 {
     private static final String TAG = "SurfacePixelValidator";
 
-    /**
-     * Observed that first few frames have errors with SurfaceView placement, so we skip for now.
-     * b/29603849 tracking that issue.
-     */
-    private static final int NUM_FIRST_FRAMES_SKIPPED = 8;
-
     private static final int MAX_CAPTURED_FAILURES = 5;
 
     private final int mWidth;
@@ -58,8 +52,6 @@ public class SurfacePixelValidator2 {
 
     private ImageReader.OnImageAvailableListener mOnImageAvailable =
             new ImageReader.OnImageAvailableListener() {
-
-        int mNumSkipped = 0;
 
         @Override
         public void onImageAvailable(ImageReader reader) {
@@ -114,26 +106,21 @@ public class SurfacePixelValidator2 {
 
             boolean success = mPixelChecker.checkPixels(blackishPixelCount, mWidth, mHeight);
             synchronized (mResultLock) {
-                if (mNumSkipped < NUM_FIRST_FRAMES_SKIPPED) {
-                    mNumSkipped++;
-                    Log.d(TAG, "skipped frame nr " + mNumSkipped + ", success = " + success);
+                if (success) {
+                    mResultSuccessFrames++;
                 } else {
-                    if (success) {
-                        mResultSuccessFrames++;
-                    } else {
-                        mResultFailureFrames++;
-                        int totalFramesSeen = mResultSuccessFrames + mResultFailureFrames;
-                        Log.d(TAG, "Failure (pixel count = " + blackishPixelCount
-                                + ") occurred on frame " + totalFramesSeen);
+                    mResultFailureFrames++;
+                    int totalFramesSeen = mResultSuccessFrames + mResultFailureFrames;
+                    Log.d(TAG, "Failure (pixel count = " + blackishPixelCount
+                            + ") occurred on frame " + totalFramesSeen);
 
-                        if (mFirstFailures.size() < MAX_CAPTURED_FAILURES) {
-                            Log.d(TAG, "Capturing bitmap #" + mFirstFailures.size());
-                            // error, worth looking at...
-                            Bitmap capture = Bitmap.wrapHardwareBuffer(
-                                    image.getHardwareBuffer(), null)
-                                    .copy(Bitmap.Config.ARGB_8888, false);
-                            mFirstFailures.put(totalFramesSeen, capture);
-                        }
+                    if (mFirstFailures.size() < MAX_CAPTURED_FAILURES) {
+                        Log.d(TAG, "Capturing bitmap #" + mFirstFailures.size());
+                        // error, worth looking at...
+                        Bitmap capture = Bitmap.wrapHardwareBuffer(
+                                image.getHardwareBuffer(), null)
+                            .copy(Bitmap.Config.ARGB_8888, false);
+                        mFirstFailures.put(totalFramesSeen, capture);
                     }
                 }
             }
