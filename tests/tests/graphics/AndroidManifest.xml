@@ -57,7 +57,7 @@
         </provider>
     </application>
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.graphics.cts"
                      android:label="CTS tests of android.graphics">
         <meta-data android:name="listener"

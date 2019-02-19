@@ -39,11 +39,10 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.text.LineBreaker;
 import android.graphics.text.MeasuredText;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Hyphenator;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

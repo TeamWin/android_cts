@@ -19,11 +19,10 @@ package android.graphics.cts;
 import android.content.res.AssetManager;
 import android.graphics.ImageFormat;
 import android.media.ImageReader;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.Surface;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

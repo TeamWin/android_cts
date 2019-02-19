@@ -25,14 +25,13 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.SurfaceView;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 

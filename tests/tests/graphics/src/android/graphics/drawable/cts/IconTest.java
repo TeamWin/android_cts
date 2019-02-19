@@ -36,10 +36,9 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcel;
-
-import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;
