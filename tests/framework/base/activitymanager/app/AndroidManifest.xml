@@ -401,6 +401,11 @@
                   android:showWhenLocked="true"
                   android:exported="true" />
 
+        <activity android:name=".ShowWhenLockedAttrRotationActivity"
+                  android:showWhenLocked="true"
+                  android:configChanges="orientation|screenSize"
+                  android:exported="true" />
+
         <activity android:name=".ToastActivity"
                   android:exported="true"/>
 

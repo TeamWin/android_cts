@@ -88,6 +88,8 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedAttrImeActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY =
+            component("ShowWhenLockedAttrRotationActivity");
     public static final ComponentName SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY =
             component("ShowWhenLockedAttrRemoveAttrActivity");
     public static final ComponentName INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY =
