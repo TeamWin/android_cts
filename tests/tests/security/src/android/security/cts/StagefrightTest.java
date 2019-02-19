@@ -918,6 +918,41 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2018-03")
+    public void testStagefright_cve_2017_17773() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_17773);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-04")
+    public void testStagefright_cve_2017_18074() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_18074);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-06")
+    public void testStagefright_cve_2018_5894() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5894);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5874() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5874);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5875() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5875);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5876() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5876);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5882() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5882);
+    }
+
     @SecurityTest(minPatchLevel = "2017-12")
     public void testBug_65186291() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_65186291_framelen);
