@@ -19,12 +19,11 @@ package android.view.cts;
 import static org.junit.Assert.fail;
 
 import android.os.SystemClock;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
-
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

@@ -33,7 +33,7 @@
 
     </application>
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.view.cts.sdk28"
                      android:label="CTS tests of android.view">
         <meta-data android:name="listener"

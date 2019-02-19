@@ -17,12 +17,11 @@
 package android.view.cts;
 
 import android.content.Context;
+import android.os.SystemProperties;
+import android.support.test.InstrumentationRegistry;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import androidx.test.InstrumentationRegistry;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

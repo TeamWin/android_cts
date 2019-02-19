@@ -23,6 +23,9 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.support.test.filters.RequiresDevice;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
@@ -35,10 +38,6 @@ import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
-
-import androidx.test.filters.RequiresDevice;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

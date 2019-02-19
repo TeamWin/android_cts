@@ -18,11 +18,11 @@ package android.view.cts;
 
 import static org.junit.Assert.fail;
 
-import androidx.test.annotation.UiThreadTest;
-import androidx.test.filters.FlakyTest;
-import androidx.test.filters.MediumTest;
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.FlakyTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

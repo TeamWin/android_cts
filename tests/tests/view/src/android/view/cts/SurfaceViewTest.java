@@ -24,17 +24,16 @@ import static org.junit.Assert.assertTrue;
 import android.app.Instrumentation;
 import android.graphics.PixelFormat;
 import android.graphics.Region;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 import android.view.cts.SurfaceViewCtsActivity.MockSurfaceView;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.annotation.UiThreadTest;
-import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;
