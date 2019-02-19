@@ -18,6 +18,7 @@ package android.provider.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -30,11 +31,10 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -49,6 +49,8 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import androidx.test.InstrumentationRegistry;
 
 @RunWith(Parameterized.class)
 public class MediaStoreTest {
@@ -110,6 +112,30 @@ public class MediaStoreTest {
         // At very least should contain these two volumes
         assertTrue(volumeNames.contains(MediaStore.VOLUME_INTERNAL));
         assertTrue(volumeNames.contains(MediaStore.VOLUME_EXTERNAL));
+    }
+
+    @Test
+    public void testGetStorageVolume() throws Exception {
+        final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
+
+        final StorageManager sm = mContext.getSystemService(StorageManager.class);
+        final StorageVolume sv = sm.getStorageVolume(uri);
+
+        // We should always have a volume for media we just created
+        assertNotNull(sv);
+
+        if (MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) {
+            assertEquals(sm.getPrimaryStorageVolume(), sv);
+        }
+    }
+
+    @Test
+    public void testGetStorageVolume_Unrelated() throws Exception {
+        final StorageManager sm = mContext.getSystemService(StorageManager.class);
+        try {
+            sm.getStorageVolume(Uri.parse("content://com.example/path/to/item/"));
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     @Test
