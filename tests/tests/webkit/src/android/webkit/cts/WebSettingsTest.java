@@ -107,10 +107,9 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
      * compatibility definition (tokens in angle brackets are variables, tokens in square
      * brackets are optional):
      * <p/>
-     * Mozilla/5.0 (Linux;[ U;] Android <version>;[ <language>-<country>;]
-     * [<devicemodel>;] Build/<buildID>; wv) AppleWebKit/<major>.<minor> (KHTML, like Gecko)
-     * Version/<major>.<minor> Chrome/<major>.<minor>.<branch>.<build>[ Mobile]
-     * Safari/<major>.<minor>
+     * Mozilla/5.0 (Linux; Android <version>; [<devicemodel>;] [Build/<buildID>;] wv)
+     * AppleWebKit/<major>.<minor> (KHTML, like Gecko) Version/<major>.<minor>
+     * Chrome/<major>.<minor>.<branch>.<build>[ Mobile] Safari/<major>.<minor>
      */
     @CddTest(requirement="3.4.1/C-1-3")
     public void testUserAgentString_default() {
@@ -119,43 +118,34 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
         final String actualUserAgentString = mSettings.getUserAgentString();
         Log.i(LOG_TAG, String.format("Checking user agent string %s", actualUserAgentString));
+
+        String expectedRelease, expectedModel;
+        if ("REL".equals(Build.VERSION.CODENAME)) {
+            expectedRelease = Pattern.quote(Build.VERSION.RELEASE);
+            expectedModel = Pattern.quote(Build.MODEL);
+        } else {
+            // Non-release builds don't include real release version/model, be lenient.
+            expectedRelease = expectedModel = "[^;]+";
+        }
+
+        // Build expected regex inserting the appropriate variables, as this is easier to
+        // understand and get right than matching any possible useragent and comparing the
+        // variables afterward.
         final String patternString =
-                "Mozilla/5\\.0 \\(Linux;( U;)? Android ([^;]+);( (\\w+)-(\\w+);)?" +
-                "\\s?(.*)\\sBuild/(.+); wv\\) AppleWebKit/(\\d+)\\.(\\d+) " +
-                "\\(KHTML, like Gecko\\) " +
-                "Version/\\d+\\.\\d+ Chrome/\\d+\\.\\d+\\.\\d+\\.\\d+( Mobile)? " +
-                "Safari/(\\d+)\\.(\\d+)";
-        // Groups used:
-        //  1 - SSL encryption strength token " U;" (optional)
-        //  2 - Android version
-        //  3 - full locale string (optional)
-        //  4   - country
-        //  5   - language
-        //  6 - device model (optional)
-        //  7 - build ID
-        //  8 - AppleWebKit major version number
-        //  9 - AppleWebKit minor version number
-        // 10 - " Mobile" string (optional)
-        // 11 - Safari major version number
-        // 12 - Safari minor version number
+                Pattern.quote("Mozilla/5.0 (Linux; Android ") + expectedRelease + "; " +
+                "(" + expectedModel + "; )?" +                  // Optional
+                "(Build/" + Pattern.quote(Build.ID) + "; )?" +  // Optional
+                Pattern.quote("wv) ") +
+                "AppleWebKit/\\d+\\.\\d+ " +
+                Pattern.quote("(KHTML, like Gecko) Version/4.0 ") +
+                "Chrome/\\d+\\.\\d+\\.\\d+\\.\\d+ " +
+                "(Mobile )?Safari/\\d+\\.\\d+";
         Log.i(LOG_TAG, String.format("Trying to match pattern %s", patternString));
         final Pattern userAgentExpr = Pattern.compile(patternString);
         Matcher patternMatcher = userAgentExpr.matcher(actualUserAgentString);
         assertTrue(String.format("CDD(3.4.1/C-1-3) User agent string did not match expected pattern. \nExpected " +
                         "pattern:\n%s\nActual:\n%s", patternString, actualUserAgentString),
                         patternMatcher.find());
-        if (patternMatcher.group(3) != null) {
-            Locale currentLocale = Locale.getDefault();
-            assertEquals(currentLocale.getLanguage().toLowerCase(), patternMatcher.group(4));
-            assertEquals(currentLocale.getCountry().toLowerCase(), patternMatcher.group(5));
-        }
-        if ("REL".equals(Build.VERSION.CODENAME)) {
-            // Model is only added in release builds
-            assertEquals(Build.MODEL, patternMatcher.group(6));
-            // Release version is valid only in release builds
-            assertEquals(Build.VERSION.RELEASE, patternMatcher.group(2));
-        }
-        assertEquals(Build.ID, patternMatcher.group(7));
     }
 
     public void testAccessUserAgentString() throws Exception {
