@@ -15,18 +15,17 @@
  */
 package android.graphics.cts;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.util.TypedValue;
-
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

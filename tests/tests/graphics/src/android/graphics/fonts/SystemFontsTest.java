@@ -22,11 +22,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.support.test.filters.SmallTest;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
-
-import androidx.test.filters.SmallTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -19,9 +19,10 @@ package android.graphics.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.Interpolator.Result;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import junit.framework.TestCase;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -26,9 +26,8 @@ import android.graphics.Camera;
 import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
-
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

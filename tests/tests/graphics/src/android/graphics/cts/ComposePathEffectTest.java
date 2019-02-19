@@ -18,7 +18,6 @@ package android.graphics.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ComposePathEffect;
@@ -26,9 +25,11 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathEffect;
+import android.graphics.Bitmap.Config;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import junit.framework.TestCase;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
