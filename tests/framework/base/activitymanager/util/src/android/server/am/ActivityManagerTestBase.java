@@ -1142,7 +1142,9 @@ public abstract class ActivityManagerTestBase {
 
         private void waitForRotationNotified() {
             for (int retry = 1; retry <= 5; retry++) {
-                if (mRotationObserver.notified) {
+                // There will receive USER_ROTATION changed twice because when the device rotates to
+                // 0deg, RotationContextButton will also set ROTATION_0 again.
+                if (mRotationObserver.count == 2) {
                     return;
                 }
                 logAlways("waitForRotationNotified retry=" + retry);
@@ -1152,25 +1154,26 @@ public abstract class ActivityManagerTestBase {
         }
 
         private class SettingsObserver extends ContentObserver {
-            boolean notified;
+            int count;
 
             SettingsObserver(Handler handler) { super(handler); }
 
             void observe() {
-                notified = false;
+                count = 0;
                 final ContentResolver resolver = mContext.getContentResolver();
                 resolver.registerContentObserver(Settings.System.getUriFor(
                         Settings.System.USER_ROTATION), false, this);
             }
 
             void stopObserver() {
+                count = 0;
                 final ContentResolver resolver = mContext.getContentResolver();
                 resolver.unregisterContentObserver(this);
             }
 
             @Override
             public void onChange(boolean selfChange) {
-                if (!selfChange) notified = true;
+                count++;
             }
         }
     }
