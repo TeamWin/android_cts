@@ -91,9 +91,7 @@ static bool is_library_on_path(const std::unordered_set<std::string>& library_se
   return library_search_paths.count(path.substr(0, path.size() - tail.size())) > 0;
 }
 
-// Tests if a file can be loaded or not. Returns empty string on success. On any failure
-// returns the error message from dlerror().
-static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path) {
+static std::string try_dlopen(const std::string& path) {
   // try to load the lib using dlopen().
   void *handle = dlopen(path.c_str(), RTLD_NOW);
   std::string error;
@@ -104,6 +102,15 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
   } else {
     error = dlerror();
   }
+  return error;
+}
+
+// Tests if a file can be loaded or not. Returns empty string on success. On any failure
+// returns the error message from dlerror().
+static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path,
+                                bool test_system_load_library) {
+  std::string error = try_dlopen(path);
+  bool loaded_in_native = error.empty();
 
   if (android::base::EndsWith(path, '/' + kWebViewPlatSupportLib)) {
     // Don't try to load this library from Java. Otherwise, the lib is initialized via
@@ -121,7 +128,7 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
 
   jstring java_load_lib_errmsg;
   bool java_load_lib_ok = java_load_ok;
-  if (java_load_ok) {
+  if (test_system_load_library && java_load_ok) {
     // If System.load() works then test System.loadLibrary() too. Cannot test
     // the other way around since System.loadLibrary() might very well find the
     // library somewhere else and hence work when System.load() fails.
@@ -135,13 +142,15 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
 
   if (loaded_in_native != java_load_ok || java_load_ok != java_load_lib_ok) {
     const std::string java_load_error(ScopedUtfChars(env, java_load_errmsg).c_str());
-    const std::string java_load_lib_error(ScopedUtfChars(env, java_load_lib_errmsg).c_str());
     error = "Inconsistent result for library \"" + path + "\": dlopen() " +
             (loaded_in_native ? "succeeded" : "failed (" + error + ")") +
             ", System.load() " +
-            (java_load_ok ? "succeeded" : "failed (" + java_load_error + ")") +
-            ", System.loadLibrary() " +
-             (java_load_lib_ok ? "succeeded" : "failed (" + java_load_lib_error + ")");
+            (java_load_ok ? "succeeded" : "failed (" + java_load_error + ")");
+    if (test_system_load_library) {
+      const std::string java_load_lib_error(ScopedUtfChars(env, java_load_lib_errmsg).c_str());
+      error += ", System.loadLibrary() " +
+               (java_load_lib_ok ? "succeeded" : "failed (" + java_load_lib_error + ")");
+    }
   }
 
   if (loaded_in_native && java_load_ok) {
@@ -150,7 +159,7 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
     // again with dlopen to get the handle for the lib and then calls dlclose twice (since we have
     // opened the lib twice; once in Java, once in here). This works because dlopen returns the
     // the same handle for the same shared lib object.
-    handle = dlopen(path.c_str(), RTLD_NOW);
+    void* handle = dlopen(path.c_str(), RTLD_NOW);
     dlclose(handle);
     dlclose(handle); // don't delete this line. it's not a mistake (see comment above).
   }
@@ -163,8 +172,9 @@ static bool check_lib(JNIEnv* env,
                       const std::string& path,
                       const std::unordered_set<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& libraries,
-                      std::vector<std::string>* errors) {
-  std::string err = load_library(env, clazz, path);
+                      std::vector<std::string>* errors,
+                      bool test_system_load_library) {
+  std::string err = load_library(env, clazz, path, test_system_load_library);
   bool loaded = err.empty();
 
   // The current restrictions on public libraries:
@@ -207,7 +217,9 @@ static bool check_path(JNIEnv* env,
                        const std::string& library_path,
                        const std::unordered_set<std::string>& library_search_paths,
                        const std::unordered_set<std::string>& libraries,
-                       std::vector<std::string>* errors) {
+                       std::vector<std::string>* errors,
+                       bool test_system_load_library) {
+
   bool success = true;
   std::queue<std::string> dirs;
   dirs.push(library_path);
@@ -237,13 +249,24 @@ static bool check_path(JNIEnv* env,
       std::string path = dir + "/" + dp->d_name;
       if (is_directory(path.c_str())) {
         dirs.push(path);
-      } else if (!check_lib(env, clazz, path, library_search_paths, libraries, errors)) {
+      } else if (!check_lib(env, clazz, path, library_search_paths, libraries, errors,
+                            test_system_load_library)) {
         success = false;
       }
     }
   }
 
   return success;
+}
+
+static bool check_path(JNIEnv* env,
+                       jclass clazz,
+                       const std::string& library_path,
+                       const std::unordered_set<std::string>& library_search_paths,
+                       const std::unordered_set<std::string>& libraries,
+                       std::vector<std::string>* errors) {
+  return check_path(env, clazz, library_path, library_search_paths, libraries, errors,
+                    /*test_system_load_library=*/true);
 }
 
 static bool jobject_array_to_set(JNIEnv* env,
@@ -302,6 +325,7 @@ extern "C" JNIEXPORT jstring JNICALL
         JNIEnv* env,
         jclass clazz,
         jobjectArray java_system_public_libraries,
+        jobjectArray java_runtime_public_libraries,
         jobjectArray java_vendor_public_libraries,
         jobjectArray java_product_public_libraries) {
   bool success = true;
@@ -326,6 +350,13 @@ extern "C" JNIEXPORT jstring JNICALL
                             &error_msg)) {
     success = false;
     errors.push_back("Errors in product public library file:" + error_msg);
+  }
+
+  std::unordered_set<std::string> runtime_public_libraries;
+  if (!jobject_array_to_set(env, java_runtime_public_libraries, &runtime_public_libraries,
+                            &error_msg)) {
+    success = false;
+    errors.push_back("Errors in runtime public library file:" + error_msg);
   }
 
   // Check the system libraries.
@@ -360,6 +391,19 @@ extern "C" JNIEXPORT jstring JNICALL
     success = false;
   }
 
+  // Check the runtime libraries.
+  if (!check_path(env, clazz, kRuntimeApexLibraryPath,
+                  { kRuntimeApexLibraryPath,
+                    // Add bionic as permitted path since the check_path searches recursively.
+                    // TODO(b/124378065): Remove this permitted path when the bug is resolved.
+                    kRuntimeApexLibraryPath + "/bionic" },
+                  runtime_public_libraries, &errors,
+                  // System.loadLibrary("icuuc") would fail since a copy exists in /system.
+                  // TODO(b/124218500): Remove it when the bug is resolved.
+                   /*test_system_load_library=*/false)) {
+    success = false;
+  }
+
   // Check the product libraries, if /product/lib exists.
   if (is_directory(kProductLibraryPath.c_str())) {
     if (!check_path(env, clazz, kProductLibraryPath, { kProductLibraryPath },
@@ -384,3 +428,17 @@ extern "C" JNIEXPORT jstring JNICALL
 
   return nullptr;
 }
+
+extern "C" JNIEXPORT jstring JNICALL Java_android_jni_cts_LinkerNamespacesHelper_tryDlopen(
+        JNIEnv* env,
+        jclass clazz,
+        jstring lib) {
+    ScopedUtfChars soname(env, lib);
+    std::string error_str = try_dlopen(soname.c_str());
+
+    if (!error_str.empty()) {
+      return env->NewStringUTF(error_str.c_str());
+    }
+    return nullptr;
+}
+
