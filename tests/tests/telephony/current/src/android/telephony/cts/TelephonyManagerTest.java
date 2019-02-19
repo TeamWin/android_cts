@@ -504,6 +504,47 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests that a GSM device properly reports either the correct TAC (type allocation code) or
+     * null.
+     * The TAC should match the first 8 digits of the IMEI.
+     */
+    @Test
+    public void testGetTac() {
+        String tac = mTelephonyManager.getTypeAllocationCode();
+        String imei = mTelephonyManager.getImei();
+
+        if (tac == null || imei == null) {
+            return;
+        }
+
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+                assertEquals(imei.substring(0, 8), tac);
+            }
+        }
+    }
+
+    /**
+     * Tests that a CDMA device properly reports either the correct MC (manufacturer code) or null.
+     * The MC should match the first 8 digits of the MEID.
+     */
+    @Test
+    public void testGetMc() {
+        String mc = mTelephonyManager.getManufacturerCode();
+        String meid = mTelephonyManager.getMeid();
+
+        if (mc == null || meid == null) {
+            return;
+        }
+
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+                assertEquals(meid.substring(0, 8), mc);
+            }
+        }
+    }
+
+    /**
      * Tests that the device properly reports either a valid IMEI or null.
      */
     @Test
