@@ -28,6 +28,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     private boolean mHasLauncherApps;
     private String mSerialNumber;
+    private int mCurrentUserId;
 
     @Override
     protected void setUp() throws Exception {
@@ -35,8 +36,10 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
         mHasLauncherApps = getDevice().getApiLevel() >= 21;
 
         if (mHasLauncherApps) {
-            mSerialNumber = Integer.toString(getUserSerialNumber(USER_SYSTEM));
-            installTestApps();
+            mCurrentUserId = getDevice().getCurrentUser();
+            mSerialNumber = Integer.toString(getUserSerialNumber(mCurrentUserId));
+            uninstallTestApps();
+            installTestApps(mCurrentUserId);
         }
     }
 
@@ -49,9 +52,9 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
     }
 
     @Override
-    protected void installTestApps() throws Exception {
-        super.installTestApps();
-        installAppAsUser(LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK, mPrimaryUserId);
+    protected void installTestApps(int userId) throws Exception {
+        super.installTestApps(mCurrentUserId);
+        installAppAsUser(LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK, mCurrentUserId);
     }
 
     @Override
@@ -66,7 +69,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testNoLaunchableActivityAppHasAppDetailsActivityInjected",
-                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
+                mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
     public void testNoSystemAppHasSyntheticAppDetailsActivityInjected() throws Exception {
@@ -75,7 +78,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testNoSystemAppHasSyntheticAppDetailsActivityInjected",
-                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
+                mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
     public void testGetSetAppDetailsActivityEnabled() throws Exception {
@@ -84,6 +87,6 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testGetSetAppDetailsActivityEnabled",
-                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
+                mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 }
