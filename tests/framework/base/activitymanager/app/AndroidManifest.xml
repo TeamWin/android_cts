@@ -321,6 +321,9 @@
                   android:exported="true"
                   android:configChanges="fontScale"
         />
+        <activity android:name=".DisplayAccessCheckEmbeddingActivity"
+                   android:allowEmbedded="true"
+                   android:exported="true"/>
         <receiver
             android:name=".LaunchBroadcastReceiver"
             android:enabled="true"

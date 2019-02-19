@@ -31,6 +31,11 @@ public class Components extends ComponentsBase {
     }
 
     public static final ComponentName SECOND_ACTIVITY = component("SecondActivity");
+
+    public static class SecondActivity {
+        public static final String EXTRA_DISPLAY_ACCESS_CHECK = "display_access_check";
+    }
+
     public static final ComponentName SECOND_NO_EMBEDDING_ACTIVITY =
             component("SecondActivityNoEmbedding");
 
