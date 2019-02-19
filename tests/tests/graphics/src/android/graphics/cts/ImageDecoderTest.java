@@ -1559,7 +1559,25 @@ public class ImageDecoderTest {
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
+    }
 
+    @Test
+    public void testAlphaPlusSetTargetColorSpace() {
+        // TargetColorSpace is ignored for ALPHA_8
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.grayscale_png);
+        for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
+            try {
+                Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                    decoder.setDecodeAsAlphaMaskEnabled(true);
+                    decoder.setTargetColorSpace(cs);
+                });
+                assertNotNull(bm);
+                assertEquals(Bitmap.Config.ALPHA_8, bm.getConfig());
+                assertNull(bm.getColorSpace());
+            } catch (IOException e) {
+                fail("Failed with exception " + e);
+            }
+        }
     }
 
     @Test(expected=IllegalStateException.class)
@@ -1632,7 +1650,7 @@ public class ImageDecoderTest {
             // By default, this will decode to HARDWARE
             ImageDecoder.Source src = f.apply(resId);
             try {
-                Bitmap bm  = ImageDecoder.decodeBitmap(src);
+                Bitmap bm = ImageDecoder.decodeBitmap(src);
                 assertEquals(Bitmap.Config.HARDWARE, bm.getConfig());
             } catch (IOException e) {
                 fail("Failed with exception " + e);
@@ -2022,13 +2040,16 @@ public class ImageDecoderTest {
         public final int width;
         public final int height;
         public final boolean isF16;
+        public final boolean isGray;
         private final ColorSpace mColorSpace;
 
-        AssetRecord(String name, int width, int height, boolean isF16, ColorSpace colorSpace) {
+        AssetRecord(String name, int width, int height, boolean isF16, boolean isGray,
+                ColorSpace colorSpace) {
             this.name = name;
             this.width = width;
             this.height = height;
             this.isF16 = isF16;
+            this.isGray = isGray;
             mColorSpace = colorSpace;
         }
 
@@ -2043,13 +2064,8 @@ public class ImageDecoderTest {
                     assertSame(requested, actual);
                 }
             } else if (requested != null) {
-                if (requested == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
-                    assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
-                } else if (requested == ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)) {
-                    assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), actual);
-                } else {
-                    assertSame(requested, actual);
-                }
+                // If the asset is *not* 16 bit, requesting EXTENDED will promote to 16 bit.
+                assertSame(requested, actual);
             } else if (mColorSpace == null) {
                 assertEquals(this.name, "Unknown", actual.getName());
             } else {
@@ -2060,21 +2076,21 @@ public class ImageDecoderTest {
 
     private static final AssetRecord[] ASSETS = new AssetRecord[] {
             // A null ColorSpace means that the color space is "Unknown".
-            new AssetRecord("almost-red-adobe.png", 1, 1, false, null),
-            new AssetRecord("green-p3.png", 64, 64, false,
+            new AssetRecord("almost-red-adobe.png", 1, 1, false, false, null),
+            new AssetRecord("green-p3.png", 64, 64, false, false,
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
-            new AssetRecord("green-srgb.png", 64, 64, false, sSRGB),
-            new AssetRecord("blue-16bit-prophoto.png", 100, 100, true,
+            new AssetRecord("green-srgb.png", 64, 64, false, false, sSRGB),
+            new AssetRecord("blue-16bit-prophoto.png", 100, 100, true, false,
                     ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB)),
-            new AssetRecord("blue-16bit-srgb.png", 64, 64, true,
+            new AssetRecord("blue-16bit-srgb.png", 64, 64, true, false,
                     ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)),
-            new AssetRecord("purple-cmyk.png", 64, 64, false, sSRGB),
-            new AssetRecord("purple-displayprofile.png", 64, 64, false, null),
-            new AssetRecord("red-adobergb.png", 64, 64, false,
+            new AssetRecord("purple-cmyk.png", 64, 64, false, false, sSRGB),
+            new AssetRecord("purple-displayprofile.png", 64, 64, false, false, null),
+            new AssetRecord("red-adobergb.png", 64, 64, false, false,
                     ColorSpace.get(ColorSpace.Named.ADOBE_RGB)),
-            new AssetRecord("translucent-green-p3.png", 64, 64, false,
+            new AssetRecord("translucent-green-p3.png", 64, 64, false, false,
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
-            new AssetRecord("grayscale-linearSrgb.png", 32, 32, false,
+            new AssetRecord("grayscale-linearSrgb.png", 32, 32, false, true,
                     ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)),
     };
 
@@ -2107,22 +2123,7 @@ public class ImageDecoderTest {
         AssetManager assets = mRes.getAssets();
         for (AssetRecord record : ASSETS) {
             ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
-            for (ColorSpace cs : new ColorSpace[] {
-                    sSRGB,
-                    ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
-                    ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
-                    ColorSpace.get(ColorSpace.Named.ADOBE_RGB),
-                    ColorSpace.get(ColorSpace.Named.BT709),
-                    ColorSpace.get(ColorSpace.Named.BT2020),
-                    ColorSpace.get(ColorSpace.Named.DCI_P3),
-                    ColorSpace.get(ColorSpace.Named.NTSC_1953),
-                    ColorSpace.get(ColorSpace.Named.SMPTE_C),
-                    ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB),
-                    ColorSpace.get(ColorSpace.Named.ACES),
-                    ColorSpace.get(ColorSpace.Named.ACESCG),
-                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
-                    ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB),
-            }) {
+            for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
                 try {
                     Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                         if (record.isF16) {
@@ -2135,6 +2136,95 @@ public class ImageDecoderTest {
                     record.checkColorSpace(cs, bm.getColorSpace());
                 } catch (IOException e) {
                     fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
+                }
+            }
+        }
+    }
+
+    private boolean isExtended(ColorSpace colorSpace) {
+        return colorSpace == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)
+            || colorSpace == ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB);
+    }
+
+    @Test
+    public void testTargetColorSpaceUpconvert() {
+        // Verify that decoding an asset to EXTENDED upconverts to F16.
+        AssetManager assets = mRes.getAssets();
+        boolean[] trueFalse = new boolean[] { true, false };
+        final ColorSpace linearExtended = ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB);
+        final ColorSpace linearSrgb = ColorSpace.get(ColorSpace.Named.LINEAR_SRGB);
+
+        for (AssetRecord record : ASSETS) {
+            if (record.isF16) {
+                // These assets decode to F16 by default.
+                continue;
+            }
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
+                for (boolean alphaMask : trueFalse) {
+                    try {
+                        Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                            // Force software so we can check the Config.
+                            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                            decoder.setTargetColorSpace(cs);
+                            // This has no effect on non-gray assets.
+                            decoder.setDecodeAsAlphaMaskEnabled(alphaMask);
+                        });
+
+                        if (record.isGray && alphaMask) {
+                            assertSame(Bitmap.Config.ALPHA_8, bm.getConfig());
+                            assertNull(bm.getColorSpace());
+                        } else {
+                            assertSame(cs, bm.getColorSpace());
+                            if (isExtended(cs)) {
+                                assertSame(Bitmap.Config.RGBA_F16, bm.getConfig());
+                            } else {
+                                assertSame(Bitmap.Config.ARGB_8888, bm.getConfig());
+                            }
+                        }
+                    } catch (IOException e) {
+                        fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
+                    }
+
+                    // Using MEMORY_POLICY_LOW_RAM prevents upconverting.
+                    try {
+                        Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                            // Force software so we can check the Config.
+                            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                            decoder.setTargetColorSpace(cs);
+                            decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
+                            // This has no effect on non-gray assets.
+                            decoder.setDecodeAsAlphaMaskEnabled(alphaMask);
+                        });
+
+                        assertNotEquals(Bitmap.Config.RGBA_F16, bm.getConfig());
+
+                        if (record.isGray && alphaMask) {
+                            assertSame(Bitmap.Config.ALPHA_8, bm.getConfig());
+                            assertNull(bm.getColorSpace());
+                        } else {
+                            ColorSpace actual = bm.getColorSpace();
+                            if (isExtended(cs)) {
+                                if (cs == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
+                                    assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
+                                } else if (cs == linearExtended) {
+                                    assertSame(linearSrgb, actual);
+                                } else {
+                                    fail("Test error: did isExtended() change?");
+                                }
+                            } else {
+                                assertSame(cs, actual);
+                                if (bm.hasAlpha()) {
+                                    assertSame(Bitmap.Config.ARGB_8888, bm.getConfig());
+                                } else {
+                                    assertSame(Bitmap.Config.RGB_565, bm.getConfig());
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        fail("Failed to decode asset " + record.name
+                                + " with MEMORY_POLICY_LOW_RAM to " + cs + " with " + e);
+                    }
                 }
             }
         }
