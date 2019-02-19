@@ -15,21 +15,22 @@
  */
 package android.view.cts;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.view.Surface;
-import android.view.SurfaceControl;
+import android.util.Log;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
-
-import androidx.test.rule.ActivityTestRule;
+import android.view.SurfaceControl;
+import android.view.Surface;
 
 import org.junit.After;
 import org.junit.Before;

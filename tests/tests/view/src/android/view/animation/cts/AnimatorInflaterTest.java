@@ -30,6 +30,10 @@ import android.animation.StateListAnimator;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
@@ -37,13 +41,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.cts.R;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
-
-import org.junit.After;
 import org.junit.Before;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
