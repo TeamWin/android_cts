@@ -25,6 +25,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -516,7 +517,8 @@ public abstract class ActivityManagerTestBase {
     protected boolean supportsInsecureLock() {
         return !hasDeviceFeature(FEATURE_LEANBACK)
                 && !hasDeviceFeature(FEATURE_WATCH)
-                && !hasDeviceFeature(FEATURE_EMBEDDED);
+                && !hasDeviceFeature(FEATURE_EMBEDDED)
+                && !hasDeviceFeature(FEATURE_AUTOMOTIVE);
     }
 
     protected boolean isWatch() {
