@@ -49,6 +49,7 @@ public class MediaControllerTest extends AndroidTestCase {
     private final Object mWaitLock = new Object();
     private Handler mHandler = new Handler(Looper.getMainLooper());
     private MediaSession mSession;
+    private Bundle mSessionInfo;
     private MediaSessionCallback mCallback = new MediaSessionCallback();
     private MediaController mController;
     private RemoteUserInfo mControllerInfo;
@@ -56,7 +57,9 @@ public class MediaControllerTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mSession = new MediaSession(getContext(), SESSION_TAG);
+        mSessionInfo = new Bundle();
+        mSessionInfo.putString(EXTRAS_KEY, EXTRAS_VALUE);
+        mSession = new MediaSession(getContext(), SESSION_TAG, mSessionInfo);
         mSession.setCallback(mCallback, mHandler);
         mController = mSession.getController();
         mControllerInfo = new RemoteUserInfo(
@@ -118,6 +121,10 @@ public class MediaControllerTest extends AndroidTestCase {
 
     public void testGetSessionToken() throws Exception {
         assertEquals(mSession.getSessionToken(), mController.getSessionToken());
+
+        Bundle sessionInfo = mController.getSessionInfo();
+        assertNotNull(sessionInfo);
+        assertEquals(EXTRAS_VALUE, sessionInfo.getString(EXTRAS_KEY));
     }
 
     public void testSendCommand() throws Exception {
