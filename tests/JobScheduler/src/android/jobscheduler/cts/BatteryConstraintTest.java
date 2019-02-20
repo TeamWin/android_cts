@@ -46,6 +46,9 @@ import java.util.concurrent.TimeUnit;
 public class BatteryConstraintTest extends ConstraintTest {
     private static final String TAG = "BatteryConstraintTest";
 
+    private String FEATURE_WATCH = "android.hardware.type.watch";
+    private String TWM_HARDWARE_FEATURE = "com.google.clockwork.hardware.traditional_watch_mode";
+
     /** Unique identifier for the job scheduled by this suite of tests. */
     public static final int BATTERY_JOB_ID = BatteryConstraintTest.class.hashCode();
 
@@ -299,6 +302,13 @@ public class BatteryConstraintTest extends ConstraintTest {
         }
 
         setBatteryState(false, mLowBatteryWarningLevel);
+
+        if(getInstrumentation().getContext().getPackageManager().hasSystemFeature(FEATURE_WATCH) &&
+               getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+               TWM_HARDWARE_FEATURE)) {
+            return;
+        }
+
         // setBatteryState() waited for the charging/not-charging state to formally settle,
         // but battery level reporting lags behind that.  wait a moment to let that happen
         // before proceeding.
