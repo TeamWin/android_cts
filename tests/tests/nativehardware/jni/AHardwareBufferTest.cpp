@@ -324,7 +324,7 @@ TEST(AHardwareBufferTest, ProtectedContentAndCpuReadIncompatible) {
     AHardwareBuffer* buffer = NULL;
     AHardwareBuffer_Desc desc = {};
     desc.width = 120;
-    desc.height = 240;
+    desc.width = 240;
     desc.layers = 1;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;

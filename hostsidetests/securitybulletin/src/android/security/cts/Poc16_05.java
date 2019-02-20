@@ -23,12 +23,20 @@ public class Poc16_05 extends SecurityTestCase {
     /**
      *  b/27555981
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-05")
     public void testPocCVE_2016_2460() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2016-2460", getDevice(), 60);
 
         String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
         assertNotMatches("[\\s\\n\\S]*IGraphicBufferProducer_Info is Leaked[\\s\\n\\S]*", logcat);
+    }
+
+    /**
+     *  b/27275324
+     */
+    @SecurityTest(minPatchLevel = "2016-05")
+    public void testPocCVE_2015_1805() throws Exception {
+      AdbUtils.runPoc("CVE-2015-1805", getDevice(), 300);
     }
 }

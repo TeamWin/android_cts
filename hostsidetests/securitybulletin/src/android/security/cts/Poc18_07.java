@@ -25,7 +25,7 @@ public class Poc18_07 extends SecurityTestCase {
     /**
      * b/76221123
      */
-     @SecurityTest
+     @SecurityTest(minPatchLevel = "2018-07")
      public void testPocCVE_2018_9424() throws Exception {
        AdbUtils.runCommandLine("logcat -c" , getDevice());
        AdbUtils.runPoc("CVE-2018-9424", getDevice(), 60);
