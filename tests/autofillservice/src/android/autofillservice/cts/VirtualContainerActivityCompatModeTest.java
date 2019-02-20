@@ -37,6 +37,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.content.AutofillOptions;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;
@@ -65,12 +66,13 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @After
     public void resetCompatMode() {
-        sContext.getApplicationContext().setAutofillCompatibilityEnabled(false);
+        sContext.getApplicationContext().setAutofillOptions(null);
     }
 
     @Override
     protected void preActivityCreated() {
-        sContext.getApplicationContext().setAutofillCompatibilityEnabled(true);
+        sContext.getApplicationContext()
+                .setAutofillOptions(AutofillOptions.forWhitelistingItself());
     }
 
     @Override

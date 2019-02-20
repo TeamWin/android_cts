@@ -22,6 +22,7 @@ import android.autofillservice.cts.AbstractAutoFillActivity;
 import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
+import android.content.AutofillOptions;
 import android.os.SystemClock;
 import android.util.ArraySet;
 import android.util.Log;
@@ -43,12 +44,15 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
     protected AugmentedUiBot mAugmentedUiBot;
 
     @BeforeClass
-    public static void allowAugmentedAutofillWindow() {
+    public static void allowAugmentedAutofill() {
+        sContext.getApplicationContext()
+                .setAutofillOptions(AutofillOptions.forWhitelistingItself());
         allowOverlays();
     }
 
     @AfterClass
-    public static void disallowAugmentedAutofillWindow() {
+    public static void resetAllowAugmentedAutofill() {
+        sContext.getApplicationContext().setAutofillOptions(null);
         disallowOverlays();
     }
 
