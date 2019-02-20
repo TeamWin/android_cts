@@ -40,7 +40,8 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
     junit \
     truth-prebuilt \
     accountaccesslib \
-	ub-uiautomator
+	ub-uiautomator \
+    testng # TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows
 
 LOCAL_STATIC_ANDROID_LIBRARIES := androidx.legacy_legacy-support-v4
 

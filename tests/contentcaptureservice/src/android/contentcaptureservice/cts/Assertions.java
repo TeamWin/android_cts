@@ -27,6 +27,7 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHA
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.net.Uri;
 import android.util.Log;
@@ -85,8 +86,8 @@ final class Assertions {
                 .that(session.context.getTaskId()).isEqualTo(activity.getRealTaskId());
         assertWithMessage("wrong flags on context for session %s", session)
                 .that(session.context.getFlags()).isEqualTo(expectedFlags);
-        assertWithMessage("context for session %s should not have URI", session)
-                .that(session.context.getUri()).isNull();
+        assertWithMessage("context for session %s should not have ID", session)
+                .that(session.context.getLocusId()).isNull();
         assertWithMessage("context for session %s should not have extras", session)
                 .that(session.context.getExtras()).isNull();
     }
@@ -110,9 +111,9 @@ final class Assertions {
      * Asserts the invariants of a child session.
      */
     public static void assertChildSessionContext(@NonNull Session session,
-            @NonNull String expectedUri) {
+            @NonNull String expectedId) {
         assertChildSessionContext(session);
-        assertThat(session.context.getUri()).isEqualTo(Uri.parse(expectedUri));
+        assertThat(session.context.getLocusId()).isEqualTo(new LocusId(Uri.parse(expectedId)));
     }
 
     /**
