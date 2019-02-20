@@ -8,6 +8,9 @@
         },
         {
           "exclude-filter": "android.os.cts.BuildVersionTest#testBuildFingerprint"
+        },
+        {
+          "exclude-filter": "android.os.cts.UsbDebuggingTest#testUsbDebugging"
         }
       ]
     }
