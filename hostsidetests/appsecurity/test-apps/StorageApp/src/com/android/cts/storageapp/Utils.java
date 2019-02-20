@@ -152,7 +152,9 @@ public class Utils {
     }
 
     private static long getAllocatedSize(File f) throws Exception {
-        return Os.lstat(f.getAbsolutePath()).st_blocks * 512;
+        return Os.lstat(f.getAbsolutePath()).st_blocks * 512 /
+               Os.lstat(f.getAbsolutePath()).st_blksize *
+               Os.lstat(f.getAbsolutePath()).st_blksize ;
     }
 
     public static boolean deleteContents(File dir) {
