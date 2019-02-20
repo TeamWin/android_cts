@@ -430,7 +430,9 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void suspendPackage(String packageName,
             Instrumentation instrumentation, boolean suspend) throws IOException {
-        String command = " cmd package " + (suspend ? "suspend " : "unsuspend ") + packageName;
+        int userId = mContext.getUserId();
+        String command = " cmd package " + (suspend ? "suspend " : "unsuspend ")
+                + "--user " + userId + " " + packageName;
 
         runCommand(command, instrumentation);
     }
