@@ -1,7 +1,15 @@
 {
   "presubmit": [
     {
-      "name": "CtsOsTestCases"
+      "name": "CtsOsTestCases",
+      "options": [
+        {
+          "exclude-filter": "android.os.cts.BuildTest#testIsSecureUserBuild"
+        },
+        {
+          "exclude-filter": "android.os.cts.BuildVersionTest#testBuildFingerprint"
+        }
+      ]
     }
   ]
 }
