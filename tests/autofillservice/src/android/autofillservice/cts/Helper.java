@@ -218,8 +218,12 @@ public final class Helper {
     /**
      * Dumps the state of the autofill service on logcat.
      */
-    public static void dumpAutofillService() {
-        Log.i(TAG, "dumpsys autofill\n\n" + runShellCommand("dumpsys autofill"));
+    public static void dumpAutofillService(@NonNull String tag) {
+        final String autofillDump = runShellCommand("dumpsys autofill");
+        Log.i(tag, "dumpsys autofill\n\n" + autofillDump);
+        final String myServiceDump = runShellCommand("dumpsys activity service %s",
+                InstrumentedAutoFillService.SERVICE_NAME);
+        Log.i(tag, "my service dump: \n" + myServiceDump);
     }
 
     /**
