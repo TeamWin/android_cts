@@ -14,6 +14,9 @@
         },
         {
           "exclude-filter": "android.os.cts.SeccompTest#testIsolatedServicePolicy"
+        },
+        {
+          "exclude-filter": "android.os.cts.DebugTest#testGetAndReset"
         }
       ]
     }
