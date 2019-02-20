@@ -3230,9 +3230,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_profile_owner_permission_lockdown_test_instructions">
             Select each of the three grant states for the permission shown below in turn.\n
             Now open application settings, select Permissions, and verify if the following behavior is observed.\n
-            <b>Grant:</b> Permission is granted to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
+            <b>Grant:</b> Permission is granted to the app and cannot be changed through the settings UI. A support message is available through an accessible mechanism, such as by attempting to change it or via an information button.\n
             <b>Let user decide:</b> Permission state can be changed through the settings UI.\n
-            <b>Deny:</b> Permission is denied to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
+            <b>Deny:</b> Permission is denied to the app and cannot be changed through the settings UI. A support message is available through an accessible mechanism, such as by attempting to change it or via an information button.\n
             Please mark the test accordingly.
     </string>
     <string name="device_owner_permission_lockdown_test_info">
