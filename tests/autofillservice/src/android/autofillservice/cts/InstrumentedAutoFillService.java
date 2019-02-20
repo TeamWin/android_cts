@@ -54,6 +54,10 @@ import com.android.compatibility.common.util.RetryableException;
 import com.android.compatibility.common.util.TestNameUtils;
 import com.android.compatibility.common.util.Timeout;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -89,6 +93,8 @@ public class InstrumentedAutoFillService extends AutofillService {
     // the UI thread of the test process and we don't want to hose it in case of failures here
     private static final HandlerThread sMyThread = new HandlerThread("MyServiceThread");
     private final Handler mHandler;
+
+    private boolean mConnected;
 
     static {
         Log.i(TAG, "Starting thread " + sMyThread);
@@ -178,19 +184,42 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     @Override
     public void onConnected() {
-        mHandler.post(()->handleConnected(true));
+        Log.v(TAG, "onConnected");
+        if (mConnected) {
+            dumpSelf();
+            sReplier.addException(new IllegalStateException("onConnected() called again"));
+        }
+        mConnected = true;
+        mHandler.post(() -> handleConnected(true));
     }
 
     @Override
     public void onDisconnected() {
-        mHandler.post(()->handleConnected(false));
+        Log.v(TAG, "onDisconnected");
+        if (!mConnected) {
+            dumpSelf();
+            sReplier.addException(
+                    new IllegalStateException("onDisconnected() called when disconnected"));
+        }
+        mConnected = false;
+        mHandler.post(() -> handleConnected(false));
     }
 
     @Override
     public void onFillRequest(android.service.autofill.FillRequest request,
             CancellationSignal cancellationSignal, FillCallback callback) {
-
         final ComponentName component = getLastActivityComponent(request.getFillContexts());
+        if (DUMP_FILL_REQUESTS) {
+            dumpStructure("onFillRequest()", request.getFillContexts());
+        } else {
+            Log.i(TAG, "onFillRequest() for " + component.toShortString());
+        }
+        if (!mConnected) {
+            dumpSelf();
+            sReplier.addException(
+                    new IllegalStateException("onFillRequest() called when disconnected"));
+        }
+
         if (!TestNameUtils.isRunningTest()) {
             Log.e(TAG, "onFillRequest(" + component + ") called after tests finished");
             return;
@@ -198,11 +227,6 @@ public class InstrumentedAutoFillService extends AutofillService {
         if (!fromSamePackage(component))  {
             Log.w(TAG, "Ignoring onFillRequest() from different package: " + component);
             return;
-        }
-        if (DUMP_FILL_REQUESTS) {
-            dumpStructure("onFillRequest()", request.getFillContexts());
-        } else {
-            Log.i(TAG, "onFillRequest() for " + component.toShortString());
         }
         mHandler.post(
                 () -> sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
@@ -212,6 +236,11 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
+        if (!mConnected) {
+            dumpSelf();
+            sReplier.addException(
+                    new IllegalStateException("onSaveRequest() called when disconnected"));
+        }
         mHandler.post(()->handleSaveRequest(request, callback));
     }
 
@@ -252,6 +281,27 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     private ComponentName getLastActivityComponent(List<FillContext> contexts) {
         return contexts.get(contexts.size() - 1).getStructure().getActivityComponent();
+    }
+
+    private void dumpSelf()  {
+        try {
+            try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
+                dump(null, pw, null);
+                pw.flush();
+                final String dump = sw.toString();
+                Log.e(TAG, "dumpSelf(): " + dump);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "I don't always fail to dump, but when I do, I dump the failure", e);
+        }
+    }
+
+    @Override
+    protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+        pw.print("sConnected: "); pw.println(sConnected);
+        pw.print("mConnected: "); pw.println(mConnected);
+        pw.print("sInstance: "); pw.println(sInstance);
+        pw.println("sReplier: "); sReplier.dump(pw);
     }
 
     /**
@@ -633,6 +683,18 @@ public class InstrumentedAutoFillService extends AutofillService {
                 Helper.offer(mSaveRequests, new SaveRequest(contexts, data, callback, datasetIds),
                         CONNECTION_TIMEOUT.ms());
             }
+        }
+
+        private void dump(PrintWriter pw) {
+            pw.print("mResponses: "); pw.println(mResponses);
+            pw.print("mFillRequests: "); pw.println(mFillRequests);
+            pw.print("mSaveRequests: "); pw.println(mSaveRequests);
+            pw.print("mExceptions: "); pw.println(mExceptions);
+            pw.print("mOnSaveIntentSender: "); pw.println(mOnSaveIntentSender);
+            pw.print("mAcceptedPackageName: "); pw.println(mAcceptedPackageName);
+            pw.print("mAcceptedPackageName: "); pw.println(mAcceptedPackageName);
+            pw.print("mReportUnhandledFillRequest: "); pw.println(mReportUnhandledSaveRequest);
+            pw.print("mIdMode: "); pw.println(mIdMode);
         }
     }
 }
