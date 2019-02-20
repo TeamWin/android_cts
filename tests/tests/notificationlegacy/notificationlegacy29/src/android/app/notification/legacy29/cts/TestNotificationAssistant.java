@@ -69,6 +69,6 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         Bundle signals = new Bundle();
         signals.putInt(Adjustment.KEY_USER_SENTIMENT, Ranking.USER_SENTIMENT_POSITIVE);
         return new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
-                sbn.getUserId());
+                sbn.getUser());
     }
 }
