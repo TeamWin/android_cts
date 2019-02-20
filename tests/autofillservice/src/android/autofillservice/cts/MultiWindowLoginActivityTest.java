@@ -140,7 +140,7 @@ public class MultiWindowLoginActivityTest
         assertThat(loginActivity.hasWindowFocus()).isFalse();
 
         // Make LoginActivity to regain window focus and fill ui is expected to show
-        tapViewAndExpectWindowEvent(loginActivity.getUsernameLabel());
+        tapViewAndExpectWindowEvent(loginActivity.getUsername());
         mUiBot.assertDatasets("The Dude");
         assertThat(emptyActivity.hasWindowFocus()).isFalse();
 
