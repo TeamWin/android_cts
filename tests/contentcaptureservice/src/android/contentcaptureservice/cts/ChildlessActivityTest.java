@@ -945,10 +945,16 @@ public class ChildlessActivityTest
     }
 
     private void setFeatureEnabled(@NonNull ContentCaptureManager mgr,
+            @NonNull CtsContentCaptureService service,
             @NonNull DisabledReason reason, boolean enabled) {
         switch (reason) {
             case BY_API:
-                mgr.setContentCaptureFeatureEnabled(enabled);
+                if (enabled) {
+                    // The service cannot re-enable itself, so we use settings instead.
+                    setFeatureEnabled("true");
+                } else {
+                    service.disableContentCaptureServices();
+                }
                 break;
             case BY_SETTINGS:
                 setFeatureEnabled(Boolean.toString(enabled));
@@ -979,7 +985,7 @@ public class ChildlessActivityTest
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
         final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
 
-        setFeatureEnabled(mgr, reason, /* enabled= */ false);
+        setFeatureEnabled(mgr, service, reason, /* enabled= */ false);
 
         disconnectedListener.waitForOnDisconnected();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -1009,7 +1015,7 @@ public class ChildlessActivityTest
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
         final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
 
-        setFeatureEnabled(mgr, reason, /* enabled= */ false);
+        setFeatureEnabled(mgr, service1, reason, /* enabled= */ false);
         disconnectedListener.waitForOnDisconnected();
 
         assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -1025,7 +1031,7 @@ public class ChildlessActivityTest
         // Re-enable feature
         final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
         reconnectionWatcher.whitelistPackage(MY_PACKAGE);
-        setFeatureEnabled(mgr, reason, /* enabled= */ true);
+        setFeatureEnabled(mgr, service1, reason, /* enabled= */ true);
         final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
 
@@ -1041,12 +1047,6 @@ public class ChildlessActivityTest
         assertThat(service1.getAllSessionIds()).isEmpty();
         final Session session = service2.getOnlyFinishedSession();
         activity2.assertDefaultEvents(session);
-    }
-
-    @Test
-    public void testSetContentCaptureFeatureEnabled_notService() throws Exception {
-        final ContentCaptureManager mgr = getContentCaptureManagerHack();
-        assertThrows(SecurityException.class,  () -> mgr.setContentCaptureFeatureEnabled(true));
     }
 
     @Test
