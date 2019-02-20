@@ -46,9 +46,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 # Enforce public / test api only
 LOCAL_SDK_VERSION := test_current
 
-# TODO(b/77530630): remove when this test passes with aapt2
-LOCAL_USE_AAPT2 := false
-
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
