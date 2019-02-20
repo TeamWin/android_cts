@@ -55,6 +55,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public static final String BACKDOOR_USERNAME = "LemmeIn";
     public static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
+    protected LinearLayout mRoot;
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -83,6 +84,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
         super.onCreate(savedInstanceState);
         setContentView(getContentView());
 
+        mRoot = findViewById(R.id.root);
         mUsernameContainer = findViewById(R.id.username_container);
         mLoginButton = findViewById(R.id.login);
         mSaveButton = findViewById(R.id.save);
