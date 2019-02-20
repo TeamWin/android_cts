@@ -242,7 +242,8 @@ public class StorageManagerTest extends AndroidTestCase {
     }
 
     public void testGetStorageVolume() throws Exception {
-        assertNull("Should not get volume for null path", mStorageManager.getStorageVolume(null));
+        assertNull("Should not get volume for null path",
+                mStorageManager.getStorageVolume((File) null));
         assertNull("Should not get volume for invalid path",
                 mStorageManager.getStorageVolume(new File("/system")));
         assertNull("Should not get volume for storage directory",

@@ -20,13 +20,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Bundle;
 import android.os.Parcel;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.textclassifier.TextClassificationContext;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextClassifierEvent;
 import android.widget.TextView;
-
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

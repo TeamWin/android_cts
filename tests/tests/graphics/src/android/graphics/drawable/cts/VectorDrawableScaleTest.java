@@ -22,11 +22,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.cts.R;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
 import android.view.PixelCopy;
 import android.widget.ImageView;
-
-import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;

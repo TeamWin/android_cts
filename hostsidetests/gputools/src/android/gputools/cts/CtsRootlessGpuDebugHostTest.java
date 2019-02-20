@@ -15,14 +15,9 @@
  */
 package android.gputools.cts;
 
-import android.platform.test.annotations.Presubmit;
-
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IDeviceTest;
-
-import com.android.ddmlib.Log;
 
 import java.util.Scanner;
 
@@ -252,11 +247,14 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB);
         setupLayer(LAYER_B_LIB);
 
+
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
 
         // Kick off our DEBUG app
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
@@ -293,8 +291,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB);
 
         // Attempt to copy them over to our RELEASE app (this should fail)
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|", "run-as", RELEASE_APP,
-                                   "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", RELEASE_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
 
         // Kick off our RELEASE app
         mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
@@ -325,8 +324,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
@@ -357,8 +357,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
@@ -389,8 +390,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
@@ -454,10 +456,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_B_LIB);
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|", "run-as", DEBUG_APP,
-                                 "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+                "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
 
         // Enable layerB with system properties
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_B_NAME);

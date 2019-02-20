@@ -43,12 +43,11 @@ import android.graphics.Shader.TileMode;
 import android.graphics.cts.R;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable.ConstantState;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.view.Gravity;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
