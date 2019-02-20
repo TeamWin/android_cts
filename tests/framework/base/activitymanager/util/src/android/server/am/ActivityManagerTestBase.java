@@ -805,7 +805,7 @@ public abstract class ActivityManagerTestBase {
     protected int getDeviceRotation(int displayId) {
         final String displays = runCommandAndPrintOutput("dumpsys display displays").trim();
         Pattern pattern = Pattern.compile(
-                "(mDisplayId=" + displayId + ")([\\s\\S]*)(mOverrideDisplayInfo)(.*)"
+                "(mDisplayId=" + displayId + ")([\\s\\S]*?)(mOverrideDisplayInfo)(.*)"
                         + "(rotation)(\\s+)(\\d+)");
         Matcher matcher = pattern.matcher(displays);
         if (matcher.find()) {
