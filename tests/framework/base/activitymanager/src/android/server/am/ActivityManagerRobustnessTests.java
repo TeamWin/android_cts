@@ -28,7 +28,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerRobustnessTests
  */
 @Presubmit
-@FlakyTest
 public class ActivityManagerRobustnessTests extends ActivityManagerTestBase {
 
     /**
