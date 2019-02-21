@@ -18,6 +18,9 @@ package android.hardware.camera2.cts;
 
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.SESSION_CLOSED;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Instrumentation;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -41,12 +44,13 @@ import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
@@ -55,16 +59,13 @@ import com.android.compatibility.common.util.Stat;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Test camera2 API use case performance KPIs, such as camera open time, session creation time,
