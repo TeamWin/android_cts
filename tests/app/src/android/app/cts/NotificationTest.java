@@ -615,25 +615,29 @@ public class NotificationTest extends AndroidTestCase {
 
     public void testBubbleMetadataBuilder() {
         PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder()
                 .setDesiredHeight(BUBBLE_HEIGHT)
                 .setTitle(BUBBLE_TITLE)
                 .setIcon(icon)
-                .setIntent(bubbleIntent);
+                .setIntent(bubbleIntent)
+                .setDeleteIntent(deleteIntent);
 
         Notification.BubbleMetadata data = metadataBuilder.build();
         assertEquals(BUBBLE_HEIGHT, data.getDesiredHeight());
         assertEquals(BUBBLE_TITLE, data.getTitle());
         assertEquals(icon, data.getIcon());
         assertEquals(bubbleIntent, data.getIntent());
+        assertEquals(deleteIntent, data.getDeleteIntent());
         assertFalse(data.getSuppressInitialNotification());
         assertFalse(data.getAutoExpandBubble());
     }
 
     public void testBubbleMetadata_parcel() {
         PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata metadata =
                 new Notification.BubbleMetadata.Builder()
@@ -643,6 +647,7 @@ public class NotificationTest extends AndroidTestCase {
                         .setSuppressInitialNotification(true)
                         .setIcon(icon)
                         .setIntent(bubbleIntent)
+                        .setDeleteIntent(deleteIntent)
                         .build();
 
         writeAndReadParcelable(metadata);
@@ -650,6 +655,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(BUBBLE_HEIGHT, metadata.getDesiredHeight());
         assertEquals(icon, metadata.getIcon());
         assertEquals(bubbleIntent, metadata.getIntent());
+        assertEquals(deleteIntent, metadata.getDeleteIntent());
         assertTrue(metadata.getAutoExpandBubble());
         assertTrue(metadata.getSuppressInitialNotification());
 
@@ -755,6 +761,7 @@ public class NotificationTest extends AndroidTestCase {
 
     private Notification.BubbleMetadata makeBubbleMetadata() {
         PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+
         return new Notification.BubbleMetadata.Builder()
                         .setIntent(bubbleIntent)
                         .setTitle(BUBBLE_TITLE)
