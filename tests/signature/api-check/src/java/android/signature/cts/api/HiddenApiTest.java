@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.text.ParseException;
 
@@ -57,13 +58,38 @@ public class HiddenApiTest extends AbstractApiTest {
         DexMemberChecker.init();
     }
 
+    // We have four methods to split up the load, keeping individual test runs small.
+
+    private final static Predicate<DexMember> METHOD_FILTER =
+            dexMember -> (dexMember instanceof DexMethod);
+
+    private final static Predicate<DexMember> FIELD_FILTER =
+            dexMember -> (dexMember instanceof DexField);
+
+    public void testSignatureMethodsThroughReflection() {
+        doTestSignature(METHOD_FILTER,/* reflection= */ true, /* jni= */ false);
+    }
+
+    public void testSignatureMethodsThroughJni() {
+        doTestSignature(METHOD_FILTER, /* reflection= */ false, /* jni= */ true);
+    }
+
+    public void testSignatureFieldsThroughReflection() {
+        doTestSignature(FIELD_FILTER, /* reflection= */ true, /* jni= */ false);
+    }
+
+    public void testSignatureFieldsThroughJni() {
+        doTestSignature(FIELD_FILTER, /* reflection= */ false, /* jni= */ true);
+    }
+
     /**
      * Tests that the device does not expose APIs on the provided lists of
      * DEX signatures.
      *
      * Will check the entire API, and then report the complete list of failures
      */
-    public void testSignature() {
+    private void doTestSignature(Predicate<DexMember> memberFilter, boolean reflection,
+            boolean jni) {
         runWithTestResultObserver(resultObserver -> {
             DexMemberChecker.Observer observer = new DexMemberChecker.Observer() {
                 @Override
@@ -118,11 +144,14 @@ public class HiddenApiTest extends AbstractApiTest {
                     }
                 }
             };
-            parseDexApiFilesAsStream(hiddenapiFiles).forEach(dexMember -> {
-                if (shouldTestMember(dexMember)) {
-                    DexMemberChecker.checkSingleMember(dexMember, observer);
-                }
-            });
+            parseDexApiFilesAsStream(hiddenapiFiles)
+                    .filter(memberFilter)
+                    .forEach(dexMember -> {
+                        if (shouldTestMember(dexMember)) {
+                            DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
+                                    observer);
+                        }
+                    });
         });
     }
 

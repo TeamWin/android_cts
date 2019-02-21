@@ -74,6 +74,11 @@ public class DexMemberChecker {
     }
 
     public static void checkSingleMember(DexMember dexMember, DexMemberChecker.Observer observer) {
+        checkSingleMember(dexMember, /* reflection= */ true, /* jni= */ true, observer);
+    }
+
+    public static void checkSingleMember(DexMember dexMember, boolean reflection, boolean jni,
+            DexMemberChecker.Observer observer) {
         Class<?> klass = findClass(dexMember);
         if (klass == null) {
             // Class not found. Therefore its members are not visible.
@@ -84,41 +89,46 @@ public class DexMemberChecker {
 
         if (dexMember instanceof DexField) {
             DexField field = (DexField) dexMember;
-            observer.fieldAccessibleViaReflection(
-                    hasMatchingField_Reflection(klass, field),
-                    field);
-            try {
-                observer.fieldAccessibleViaJni(
-                        hasMatchingField_JNI(klass, field),
+            if (reflection) {
+                observer.fieldAccessibleViaReflection(
+                        hasMatchingField_Reflection(klass, field),
                         field);
-            } catch (ExceptionInInitializerError | UnsatisfiedLinkError | NoClassDefFoundError e) {
-                if ((e instanceof NoClassDefFoundError)
-                        && !(e.getCause() instanceof ExceptionInInitializerError)
-                        && !(e.getCause() instanceof UnsatisfiedLinkError)) {
-                    throw e;
-                }
+            }
+            if (jni) {
+                try {
+                    observer.fieldAccessibleViaJni(hasMatchingField_JNI(klass, field), field);
+                } catch (ExceptionInInitializerError | UnsatisfiedLinkError
+                        | NoClassDefFoundError e) {
+                    if ((e instanceof NoClassDefFoundError)
+                            && !(e.getCause() instanceof ExceptionInInitializerError)
+                            && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                        throw e;
+                    }
 
-                // Could not initialize the class. Skip JNI test.
-                Log.w(TAG, "JNI failed for " + dexMember.toString(), e);
+                    // Could not initialize the class. Skip JNI test.
+                    Log.w(TAG, "JNI failed for " + dexMember.toString(), e);
+                }
             }
         } else if (dexMember instanceof DexMethod) {
             DexMethod method = (DexMethod) dexMember;
-            observer.methodAccessibleViaReflection(
-                    hasMatchingMethod_Reflection(klass, method),
-                    method);
-            try {
-                observer.methodAccessibleViaJni(
-                        hasMatchingMethod_JNI(klass, method),
+            if (reflection) {
+                observer.methodAccessibleViaReflection(hasMatchingMethod_Reflection(klass, method),
                         method);
-            } catch (ExceptionInInitializerError | UnsatisfiedLinkError | NoClassDefFoundError e) {
-                if ((e instanceof NoClassDefFoundError)
-                        && !(e.getCause() instanceof ExceptionInInitializerError)
-                        && !(e.getCause() instanceof UnsatisfiedLinkError)) {
-                    throw e;
-                }
+            }
+            if (jni) {
+                try {
+                    observer.methodAccessibleViaJni(hasMatchingMethod_JNI(klass, method), method);
+                } catch (ExceptionInInitializerError | UnsatisfiedLinkError
+                        | NoClassDefFoundError e) {
+                    if ((e instanceof NoClassDefFoundError)
+                            && !(e.getCause() instanceof ExceptionInInitializerError)
+                            && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                        throw e;
+                    }
 
-                // Could not initialize the class. Skip JNI test.
-                Log.w(TAG, "JNI failed for " + dexMember.toString(), e);
+                    // Could not initialize the class. Skip JNI test.
+                    Log.w(TAG, "JNI failed for " + dexMember.toString(), e);
+                }
             }
         } else {
             throw new IllegalStateException("Unexpected type of dex member");
