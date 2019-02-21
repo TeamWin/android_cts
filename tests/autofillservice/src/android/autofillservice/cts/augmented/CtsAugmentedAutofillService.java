@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts.augmented;
 
+import static android.autofillservice.cts.augmented.AugmentedHelper.await;
 import static android.autofillservice.cts.augmented.AugmentedHelper.getActivityName;
 import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_CONNECTION_TIMEOUT;
 import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_FILL_TIMEOUT;
@@ -44,6 +45,7 @@ import com.android.compatibility.common.util.TestNameUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -66,6 +68,11 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
     private static final HandlerThread sMyThread = new HandlerThread("MyAugmentedServiceThread");
     private final Handler mHandler;
 
+    private final CountDownLatch mConnectedLatch = new CountDownLatch(1);
+    private final CountDownLatch mDisconnectedLatch = new CountDownLatch(1);
+
+    private static ServiceWatcher sServiceWatcher;
+
     static {
         Log.i(TAG, "Starting thread " + sMyThread);
         sMyThread.start();
@@ -73,6 +80,94 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
 
     public CtsAugmentedAutofillService() {
         mHandler = Handler.createAsync(sMyThread.getLooper());
+    }
+
+    @NonNull
+    public static ServiceWatcher setServiceWatcher() {
+        if (sServiceWatcher != null) {
+            throw new IllegalStateException("There Can Be Only One!");
+        }
+        sServiceWatcher = new ServiceWatcher();
+        return sServiceWatcher;
+    }
+
+
+    public static void resetStaticState() {
+        List<Throwable> exceptions = sAugmentedReplier.mExceptions;
+        if (exceptions != null) {
+            exceptions.clear();
+        }
+        // TODO(b/123540602): should probably set sInstance to null as well, but first we would need
+        // to make sure each test unbinds the service.
+
+        // TODO(b/123540602): each test should use a different service instance, but we need
+        // to provide onConnected() / onDisconnected() methods first and then change the infra so
+        // we can wait for those
+
+        if (sServiceWatcher != null) {
+            Log.wtf(TAG, "resetStaticState(): should not have sServiceWatcher");
+            sServiceWatcher = null;
+        }
+    }
+
+    @Override
+    public void onConnected() {
+        Log.i(TAG, "onConnected(): sServiceWatcher=" + sServiceWatcher);
+
+        if (sServiceWatcher == null) {
+            addException("onConnected() without a watcher");
+            return;
+        }
+
+        if (sServiceWatcher.mService != null) {
+            addException("onConnected(): already created: %s", sServiceWatcher);
+            return;
+        }
+
+        sServiceWatcher.mService = this;
+        sServiceWatcher.mCreated.countDown();
+
+        if (mConnectedLatch.getCount() == 0) {
+            addException("already connected: %s", mConnectedLatch);
+        }
+        mConnectedLatch.countDown();
+    }
+
+    @Override
+    public void onDisconnected() {
+        Log.i(TAG, "onDisconnected(): sServiceWatcher=" + sServiceWatcher);
+
+        if (mDisconnectedLatch.getCount() == 0) {
+            addException("already disconnected: %s", mConnectedLatch);
+        }
+        mDisconnectedLatch.countDown();
+
+        if (sServiceWatcher == null) {
+            addException("onDisconnected() without a watcher");
+            return;
+        }
+        if (sServiceWatcher.mService == null) {
+            addException("onDisconnected(): no service on %s", sServiceWatcher);
+            return;
+        }
+
+        sServiceWatcher.mDestroyed.countDown();
+        sServiceWatcher.mService = null;
+        sServiceWatcher = null;
+    }
+
+    /**
+     * Waits until the system calls {@link #onConnected()}.
+     */
+    public void waitUntilConnected() throws InterruptedException {
+        await(mConnectedLatch, "not connected");
+    }
+
+    /**
+     * Waits until the system calls {@link #onDisconnected()}.
+     */
+    public void waitUntilDisconnected() throws InterruptedException {
+        await(mDisconnectedLatch, "not disconnected");
     }
 
     @Override
@@ -95,6 +190,12 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
      */
     static AugmentedReplier getAugmentedReplier() {
         return sAugmentedReplier;
+    }
+
+    private static void addException(@NonNull String fmt, @Nullable Object...args) {
+        final String msg = String.format(fmt, args);
+        Log.e(TAG, msg);
+        sAugmentedReplier.addException(new IllegalStateException(msg));
     }
 
     /**
@@ -264,6 +365,35 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
                 Log.d(TAG, "offering " + myRequest);
                 Helper.offer(mFillRequests, myRequest, AUGMENTED_CONNECTION_TIMEOUT.ms());
             }
+        }
+    }
+
+    public static final class ServiceWatcher {
+
+        private final CountDownLatch mCreated = new CountDownLatch(1);
+        private final CountDownLatch mDestroyed = new CountDownLatch(1);
+
+        private CtsAugmentedAutofillService mService;
+
+        @NonNull
+        public CtsAugmentedAutofillService waitOnConnected() throws InterruptedException {
+            await(mCreated, "not created");
+
+            if (mService == null) {
+                throw new IllegalStateException("not created");
+            }
+
+            return mService;
+        }
+
+        public void waitOnDisconnected() throws InterruptedException {
+            await(mDestroyed, "not destroyed");
+        }
+
+        @Override
+        public String toString() {
+            return "mService: " + mService + " created: " + (mCreated.getCount() == 0)
+                    + " destroyed: " + (mDestroyed.getCount() == 0);
         }
     }
 }
