@@ -1630,6 +1630,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                 R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
+    public void testLocalVideo_cp1251_3_a_ms_acm_mp3() throws Exception {
+        playVideoTest(R.raw.cp1251_3_a_ms_acm_mp3, -1, -1);
+    }
+
     private void readSubtitleTracks() throws Exception {
         mSubtitleTrackIndex.clear();
         MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
