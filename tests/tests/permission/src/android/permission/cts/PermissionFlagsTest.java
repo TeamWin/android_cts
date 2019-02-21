@@ -222,6 +222,19 @@ public class PermissionFlagsTest {
     }
 
     @Test
+    public void preMPermsAreMarkedRevokeOnUpgrade() throws Exception {
+        install(APK_LOCATION_22);
+
+        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE,
+                getPermissionFlags(APP_PKG, ACCESS_COARSE_LOCATION)
+                        & FLAG_PERMISSION_REVOKE_ON_UPGRADE);
+        assertEquals(FLAG_PERMISSION_REVOKE_ON_UPGRADE,
+                getPermissionFlags(APP_PKG, ACCESS_BACKGROUND_LOCATION)
+                        & FLAG_PERMISSION_REVOKE_ON_UPGRADE);
+    }
+
+
+    @Test
     public void revokeOnUpgrade() throws Exception {
         install(APK_LOCATION_22);
 
