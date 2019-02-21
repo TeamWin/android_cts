@@ -37,7 +37,7 @@
         </provider>
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.providerui.cts"
                      android:label="CTS UI tests of android.provider">
         <meta-data android:name="listener"

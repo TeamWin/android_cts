@@ -90,8 +90,7 @@ public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper
             return;
         }
         Log.e(mTag, "Dumping after exception on " + testName, t);
-        final String autofillDump = runShellCommand("dumpsys autofill");
-        Log.e(mTag, "autofill dump: \n" + autofillDump);
+        Helper.dumpAutofillService(mTag);
         final String activityDump = runShellCommand("dumpsys activity top");
         Log.e(mTag, "top activity dump: \n" + activityDump);
         mDumped = true;

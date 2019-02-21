@@ -38,6 +38,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.DisconnectListener;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
@@ -337,8 +338,8 @@ public class ChildlessActivityTest
         Log.v(TAG, "main session id: " + mainSessionId);
 
         final ContentCaptureSession childSession = mainSession
-                .createContentCaptureSession(new ContentCaptureContext.Builder()
-                        .setUri(Uri.parse("http://child")).build());
+                .createContentCaptureSession(newContentCaptureContextBuilder("child")
+                        .build());
         final ContentCaptureSessionId childSessionId = childSession.getContentCaptureSessionId();
         Log.v(TAG, "child session id: " + childSessionId);
 
@@ -367,7 +368,7 @@ public class ChildlessActivityTest
         assertViewAppeared(mainEvents, 0, mainSessionId, rootView, grandpa.getAutofillId());
 
         final Session childTestSession = service.getFinishedSession(childSessionId);
-        assertChildSessionContext(childTestSession, "http://child");
+        assertChildSessionContext(childTestSession, "child");
         final List<ContentCaptureEvent> childEvents = childTestSession.getEvents();
         Log.v(TAG, "childEvents(" + childEvents.size() + "): " + childEvents);
         final int minEvents = 1;
@@ -393,16 +394,16 @@ public class ChildlessActivityTest
         Log.v(TAG, "main session id: " + mainSessionId);
 
         // Create 1st session
-        final ContentCaptureContext context1 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session1")).build();
+        final ContentCaptureContext context1 = newContentCaptureContextBuilder("session1")
+                .build();
         final ContentCaptureSession childSession1 = mainSession
                 .createContentCaptureSession(context1);
         final ContentCaptureSessionId childSessionId1 = childSession1.getContentCaptureSessionId();
         Log.v(TAG, "child session id 1: " + childSessionId1);
 
         // Create 2nd session
-        final ContentCaptureContext context2 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session2")).build();
+        final ContentCaptureContext context2 = newContentCaptureContextBuilder("session2")
+                .build();
         final ContentCaptureSession childSession2 = mainSession
                 .createContentCaptureSession(context2);
         final ContentCaptureSessionId childSessionId2 = childSession2.getContentCaptureSessionId();
@@ -412,8 +413,8 @@ public class ChildlessActivityTest
         childSession1.close();
 
         // Create 3nd session...
-        final ContentCaptureContext context3 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session3")).build();
+        final ContentCaptureContext context3 = newContentCaptureContextBuilder("session3")
+                .build();
         final ContentCaptureSession childSession3 = mainSession
                 .createContentCaptureSession(context3);
         final ContentCaptureSessionId childSessionId3 = childSession3.getContentCaptureSessionId();
@@ -423,8 +424,8 @@ public class ChildlessActivityTest
         childSession3.close();
 
         // Create 4nd session
-        final ContentCaptureContext context4 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session4")).build();
+        final ContentCaptureContext context4 = newContentCaptureContextBuilder("session4")
+                .build();
         final ContentCaptureSession childSession4 = mainSession
                 .createContentCaptureSession(context4);
         final ContentCaptureSessionId childSessionId4 = childSession4.getContentCaptureSessionId();
@@ -447,16 +448,16 @@ public class ChildlessActivityTest
         assertMainSessionContext(mainTestSession, activity);
 
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
-        assertChildSessionContext(childTestSession1, "http://session1");
+        assertChildSessionContext(childTestSession1, "session1");
 
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
-        assertChildSessionContext(childTestSession2, "http://session2");
+        assertChildSessionContext(childTestSession2, "session2");
 
         final Session childTestSession3 = service.getFinishedSession(childSessionId3);
-        assertChildSessionContext(childTestSession3, "http://session3");
+        assertChildSessionContext(childTestSession3, "session3");
 
         final Session childTestSession4 = service.getFinishedSession(childSessionId4);
-        assertChildSessionContext(childTestSession4, "http://session4");
+        assertChildSessionContext(childTestSession4, "session4");
 
         // Gets all events first so they're all logged before the assertions
         final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
@@ -515,8 +516,8 @@ public class ChildlessActivityTest
 
         // Create session
         final ContentCaptureSession childSession = mainSession
-                .createContentCaptureSession(new ContentCaptureContext.Builder()
-                        .setUri(Uri.parse("http://child_session")).build());
+                .createContentCaptureSession(
+                        newContentCaptureContextBuilder("child_session").build());
         final ContentCaptureSessionId childSessionId = childSession.getContentCaptureSessionId();
         Log.v(TAG, "child session: " + childSessionId);
 
@@ -539,7 +540,7 @@ public class ChildlessActivityTest
 
         // Assert child session
         final Session childTestSession = service.getFinishedSession(childSessionId);
-        assertChildSessionContext(childTestSession, "http://child_session");
+        assertChildSessionContext(childTestSession, "child_session");
         final List<ContentCaptureEvent> childEvents = childTestSession.getEvents();
         assertThat(childEvents.size()).isAtLeast(1);
         final AutofillId rootId = activity.getRootView().getAutofillId();
@@ -567,8 +568,8 @@ public class ChildlessActivityTest
         Log.v(TAG, "main session id: " + mainSessionId);
 
         // Create 1st session
-        final ContentCaptureContext context1 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session1")).build();
+        final ContentCaptureContext context1 = newContentCaptureContextBuilder("session1")
+                .build();
         final ContentCaptureSession childSession1 = mainSession
                 .createContentCaptureSession(context1);
         final ContentCaptureSessionId childSessionId1 = childSession1.getContentCaptureSessionId();
@@ -578,8 +579,8 @@ public class ChildlessActivityTest
         final TextView s1c1 = addChild(activity, childSession1, "s1c1");
 
         // Create 2nd session
-        final ContentCaptureContext context2 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session2")).build();
+        final ContentCaptureContext context2 = newContentCaptureContextBuilder("session2")
+                .build();
         final ContentCaptureSession childSession2 = mainSession
                 .createContentCaptureSession(context2);
         final ContentCaptureSessionId childSessionId2 = childSession2.getContentCaptureSessionId();
@@ -592,8 +593,8 @@ public class ChildlessActivityTest
         waitAndClose(childSession1);
 
         // Create 3nd session...
-        final ContentCaptureContext context3 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session3")).build();
+        final ContentCaptureContext context3 = newContentCaptureContextBuilder("session3")
+                .build();
         final ContentCaptureSession childSession3 = mainSession
                 .createContentCaptureSession(context3);
         final ContentCaptureSessionId childSessionId3 = childSession3.getContentCaptureSessionId();
@@ -608,8 +609,8 @@ public class ChildlessActivityTest
         waitAndClose(childSession3);
 
         // Create 4nd session
-        final ContentCaptureContext context4 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session4")).build();
+        final ContentCaptureContext context4 = newContentCaptureContextBuilder("session4")
+                .build();
         final ContentCaptureSession childSession4 = mainSession
                 .createContentCaptureSession(context4);
         final ContentCaptureSessionId childSessionId4 = childSession4.getContentCaptureSessionId();
@@ -635,16 +636,16 @@ public class ChildlessActivityTest
 
         // Gets all events first so they're all logged before the assertions
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
-        assertChildSessionContext(childTestSession1, "http://session1");
+        assertChildSessionContext(childTestSession1, "session1");
         final List<ContentCaptureEvent> events1 = childTestSession1.getEvents();
         Log.v(TAG, "events1(" + events1.size() + "): " + events1);
 
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
         final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
-        assertChildSessionContext(childTestSession2, "http://session2");
+        assertChildSessionContext(childTestSession2, "session2");
         Log.v(TAG, "events2(" + events2.size() + "): " + events2);
         final Session childTestSession3 = service.getFinishedSession(childSessionId3);
-        assertChildSessionContext(childTestSession3, "http://session3");
+        assertChildSessionContext(childTestSession3, "session3");
         List<ContentCaptureEvent> events3 = childTestSession3.getEvents();
         Log.v(TAG, "events3(" + events3.size() + "): " + events3);
 
@@ -666,7 +667,7 @@ public class ChildlessActivityTest
         assertViewAppeared(events3, 3, s3c3, rootId);
 
         final Session childTestSession4 = service.getFinishedSession(childSessionId4);
-        assertChildSessionContext(childTestSession4, "http://session4");
+        assertChildSessionContext(childTestSession4, "session4");
         assertThat(childTestSession4.getEvents()).isEmpty();
 
         // Assert lifecycle methods were called in the right order
@@ -695,16 +696,16 @@ public class ChildlessActivityTest
         Log.v(TAG, "main session id: " + mainSessionId);
 
         // Create child session
-        final ContentCaptureContext childContext = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://child")).build();
+        final ContentCaptureContext childContext = newContentCaptureContextBuilder("child")
+                .build();
         final ContentCaptureSession childSession = mainSession
                 .createContentCaptureSession(childContext);
         final ContentCaptureSessionId childSessionId = childSession.getContentCaptureSessionId();
         Log.v(TAG, "child session id: " + childSessionId);
 
         // Create grand child session
-        final ContentCaptureContext grandChild = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://grandChild")).build();
+        final ContentCaptureContext grandChild = newContentCaptureContextBuilder("grandChild")
+                .build();
         final ContentCaptureSession grandChildSession = childSession
                 .createContentCaptureSession(grandChild);
         final ContentCaptureSessionId grandChildSessionId = grandChildSession
@@ -727,11 +728,11 @@ public class ChildlessActivityTest
         assertThat(mainTestSession.getEvents()).isEmpty();
 
         final Session childTestSession = service.getFinishedSession(childSessionId);
-        assertChildSessionContext(childTestSession, "http://child");
+        assertChildSessionContext(childTestSession, "child");
         assertThat(childTestSession.getEvents()).isEmpty();
 
         final Session grandChildTestSession = service.getFinishedSession(grandChildSessionId);
-        assertChildSessionContext(grandChildTestSession, "http://grandChild");
+        assertChildSessionContext(grandChildTestSession, "grandChild");
         assertThat(grandChildTestSession.getEvents()).isEmpty();
 
         // Assert lifecycle methods were called in the right order
@@ -764,16 +765,16 @@ public class ChildlessActivityTest
         Log.v(TAG, "main session id: " + mainSessionId);
 
         // Create 1st session
-        final ContentCaptureContext context1 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session1")).build();
+        final ContentCaptureContext context1 = newContentCaptureContextBuilder("session1")
+                .build();
         final ContentCaptureSession childSession1 = mainSession
                 .createContentCaptureSession(context1);
         final ContentCaptureSessionId childSessionId1 = childSession1.getContentCaptureSessionId();
         Log.v(TAG, "child session id 1: " + childSessionId1);
 
         // Create 2nd session
-        final ContentCaptureContext context2 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session2")).build();
+        final ContentCaptureContext context2 = newContentCaptureContextBuilder("session2")
+                .build();
         final ContentCaptureSession childSession2 = childSession1
                 .createContentCaptureSession(context2);
         final ContentCaptureSessionId childSessionId2 = childSession2.getContentCaptureSessionId();
@@ -783,8 +784,8 @@ public class ChildlessActivityTest
         childSession1.close();
 
         // Create 3nd session...
-        final ContentCaptureContext context3 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session3")).build();
+        final ContentCaptureContext context3 = newContentCaptureContextBuilder("session3")
+                .build();
         final ContentCaptureSession childSession3 = mainSession
                 .createContentCaptureSession(context3);
         final ContentCaptureSessionId childSessionId3 = childSession3.getContentCaptureSessionId();
@@ -794,8 +795,8 @@ public class ChildlessActivityTest
         childSession3.close();
 
         // Create 4nd session
-        final ContentCaptureContext context4 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session4")).build();
+        final ContentCaptureContext context4 = newContentCaptureContextBuilder("session4")
+                .build();
         final ContentCaptureSession childSession4 = mainSession
                 .createContentCaptureSession(context4);
         final ContentCaptureSessionId childSessionId4 = childSession4.getContentCaptureSessionId();
@@ -819,19 +820,19 @@ public class ChildlessActivityTest
         assertThat(mainTestSession.getEvents()).isEmpty();
 
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
-        assertChildSessionContext(childTestSession1, "http://session1");
+        assertChildSessionContext(childTestSession1, "session1");
         assertThat(childTestSession1.getEvents()).isEmpty();
 
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
-        assertChildSessionContext(childTestSession2, "http://session2");
+        assertChildSessionContext(childTestSession2, "session2");
         assertThat(childTestSession2.getEvents()).isEmpty();
 
         final Session childTestSession3 = service.getFinishedSession(childSessionId3);
-        assertChildSessionContext(childTestSession3, "http://session3");
+        assertChildSessionContext(childTestSession3, "session3");
         assertThat(childTestSession3.getEvents()).isEmpty();
 
         final Session childTestSession4 = service.getFinishedSession(childSessionId4);
-        assertChildSessionContext(childTestSession4, "http://session4");
+        assertChildSessionContext(childTestSession4, "session4");
         assertThat(childTestSession4.getEvents()).isEmpty();
 
         // Assert lifecycle methods were called in the right order
@@ -863,8 +864,8 @@ public class ChildlessActivityTest
         Log.v(TAG, "main session id: " + mainSessionId);
 
         // Create 1st session
-        final ContentCaptureContext context1 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session1")).build();
+        final ContentCaptureContext context1 = newContentCaptureContextBuilder("session1")
+                .build();
         final ContentCaptureSession childSession1 = mainSession
                 .createContentCaptureSession(context1);
         final ContentCaptureSessionId childSessionId1 = childSession1.getContentCaptureSessionId();
@@ -876,8 +877,8 @@ public class ChildlessActivityTest
         Log.v(TAG, "childrens from session1: " + s1c1Id);
 
         // Create 2nd session
-        final ContentCaptureContext context2 = new ContentCaptureContext.Builder()
-                .setUri(Uri.parse("http://session2")).build();
+        final ContentCaptureContext context2 = newContentCaptureContextBuilder("session2")
+                .build();
         final ContentCaptureSession childSession2 = mainSession
                 .createContentCaptureSession(context2);
         final ContentCaptureSessionId childSessionId2 = childSession2.getContentCaptureSessionId();
@@ -910,12 +911,12 @@ public class ChildlessActivityTest
 
         // Logs events before asserting
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
-        assertChildSessionContext(childTestSession1, "http://session1");
+        assertChildSessionContext(childTestSession1, "session1");
         final List<ContentCaptureEvent> events1 = childTestSession1.getEvents();
         Log.v(TAG, "events1(" + events1.size() + "): " + events1);
         final Session childTestSession2 = service.getFinishedSession(childSessionId2);
         final List<ContentCaptureEvent> events2 = childTestSession2.getEvents();
-        assertChildSessionContext(childTestSession2, "http://session2");
+        assertChildSessionContext(childTestSession2, "session2");
         Log.v(TAG, "events2(" + events2.size() + "): " + events2);
 
         // Assert children
@@ -945,10 +946,16 @@ public class ChildlessActivityTest
     }
 
     private void setFeatureEnabled(@NonNull ContentCaptureManager mgr,
+            @NonNull CtsContentCaptureService service,
             @NonNull DisabledReason reason, boolean enabled) {
         switch (reason) {
             case BY_API:
-                mgr.setContentCaptureFeatureEnabled(enabled);
+                if (enabled) {
+                    // The service cannot re-enable itself, so we use settings instead.
+                    setFeatureEnabled("true");
+                } else {
+                    service.disableContentCaptureServices();
+                }
                 break;
             case BY_SETTINGS:
                 setFeatureEnabled(Boolean.toString(enabled));
@@ -979,7 +986,7 @@ public class ChildlessActivityTest
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
         final DisconnectListener disconnectedListener = service.setOnDisconnectListener();
 
-        setFeatureEnabled(mgr, reason, /* enabled= */ false);
+        setFeatureEnabled(mgr, service, reason, /* enabled= */ false);
 
         disconnectedListener.waitForOnDisconnected();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -1009,7 +1016,7 @@ public class ChildlessActivityTest
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
         final DisconnectListener disconnectedListener = service1.setOnDisconnectListener();
 
-        setFeatureEnabled(mgr, reason, /* enabled= */ false);
+        setFeatureEnabled(mgr, service1, reason, /* enabled= */ false);
         disconnectedListener.waitForOnDisconnected();
 
         assertThat(mgr.isContentCaptureFeatureEnabled()).isFalse();
@@ -1025,7 +1032,7 @@ public class ChildlessActivityTest
         // Re-enable feature
         final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
         reconnectionWatcher.whitelistPackage(MY_PACKAGE);
-        setFeatureEnabled(mgr, reason, /* enabled= */ true);
+        setFeatureEnabled(mgr, service1, reason, /* enabled= */ true);
         final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();
 
@@ -1041,12 +1048,6 @@ public class ChildlessActivityTest
         assertThat(service1.getAllSessionIds()).isEmpty();
         final Session session = service2.getOnlyFinishedSession();
         activity2.assertDefaultEvents(session);
-    }
-
-    @Test
-    public void testSetContentCaptureFeatureEnabled_notService() throws Exception {
-        final ContentCaptureManager mgr = getContentCaptureManagerHack();
-        assertThrows(SecurityException.class,  () -> mgr.setContentCaptureFeatureEnabled(true));
     }
 
     @Test
@@ -1138,4 +1139,8 @@ public class ChildlessActivityTest
         sDeviceConfigManager.set(value);
     }
 
+    @NonNull
+    private ContentCaptureContext.Builder newContentCaptureContextBuilder(@NonNull String id) {
+        return new ContentCaptureContext.Builder(new LocusId(Uri.parse(id)));
+    }
 }

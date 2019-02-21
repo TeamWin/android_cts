@@ -110,7 +110,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     @Test
     public void testKeyValueBackupJobRunsSuccessfully() throws Exception {
         // Install a new key value backup app and simulate data changed.
-        installPackageAsUser(KEY_VALUE_APK, true, mProfileUserId);
+        installPackageAsUser(KEY_VALUE_APK, false, mProfileUserId);
         checkDeviceTestAsUser(
                 KEY_VALUE_TEST_PACKAGE,
                 KEY_VALUE_DEVICE_TEST_NAME,
@@ -165,7 +165,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     public void testFullBackupJobRunsSuccessfully() throws Exception {
         // Install a new eligible full backup app and run a backup pass for @pm@ as we cannot
         // perform a full backup pass before @pm@ is backed up.
-        installPackageAsUser(FULL_BACKUP_APK, true, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, false, mProfileUserId);
         mBackupUtils.backupNowAndAssertSuccessForUser(PACKAGE_MANAGER_SENTINEL, mProfileUserId);
 
         // Force run full backup job.

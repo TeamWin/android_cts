@@ -19,44 +19,44 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.LocusId;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.view.contentcapture.UserDataRemovalRequest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @AppModeFull(reason = "unit test")
 @RunWith(MockitoJUnitRunner.class)
 public class UserDataRemovalRequestTest {
 
-    @Mock
-    private final Uri mUri = Uri.parse("content://com.example/");
+    private final LocusId mLocusId = new LocusId(Uri.parse("content://com.example/"));
 
     private UserDataRemovalRequest.Builder mBuilder = new UserDataRemovalRequest.Builder();
 
     @Test
-    public void testBuilder_addUri_invalid() {
-        assertThrows(NullPointerException.class, () -> mBuilder.addUri(null, false));
+    public void testBuilder_addLocusId_invalid() {
+        assertThrows(NullPointerException.class, () -> mBuilder.addLocusId(null, false));
     }
 
     @Test
-    public void testBuilder_addUri_valid() {
-        assertThat(mBuilder.addUri(mUri, false)).isNotNull();
-        assertThat(mBuilder.addUri(Uri.parse("content://com.example2"), true)).isNotNull();
+    public void testBuilder_addLocusId_valid() {
+        assertThat(mBuilder.addLocusId(mLocusId, false)).isNotNull();
+        assertThat(mBuilder.addLocusId(new LocusId(Uri.parse("content://com.example2")), true))
+                .isNotNull();
     }
 
     @Test
     public void testBuilder_addUriAfterForEverything() {
         assertThat(mBuilder.forEverything()).isNotNull();
-        assertThrows(IllegalStateException.class, () -> mBuilder.addUri(mUri, false));
+        assertThrows(IllegalStateException.class, () -> mBuilder.addLocusId(mLocusId, false));
     }
 
     @Test
     public void testBuilder_forEverythingAfterAddingUri() {
-        assertThat(mBuilder.addUri(mUri, false)).isNotNull();
+        assertThat(mBuilder.addLocusId(mLocusId, false)).isNotNull();
         assertThrows(IllegalStateException.class, () -> mBuilder.forEverything());
     }
 
@@ -69,7 +69,7 @@ public class UserDataRemovalRequestTest {
     public void testBuild_valid() {
         assertThat(new UserDataRemovalRequest.Builder().forEverything().build())
                 .isNotNull();
-        assertThat(new UserDataRemovalRequest.Builder().addUri(mUri, false).build())
+        assertThat(new UserDataRemovalRequest.Builder().addLocusId(mLocusId, false).build())
                 .isNotNull();
     }
 
@@ -77,9 +77,8 @@ public class UserDataRemovalRequestTest {
     public void testNoMoreInteractionsAfterBuild() {
         assertThat(mBuilder.forEverything().build()).isNotNull();
 
-        assertThrows(IllegalStateException.class, () -> mBuilder.addUri(mUri, false));
+        assertThrows(IllegalStateException.class, () -> mBuilder.addLocusId(mLocusId, false));
         assertThrows(IllegalStateException.class, () -> mBuilder.forEverything());
         assertThrows(IllegalStateException.class, () -> mBuilder.build());
-
     }
 }

@@ -2607,6 +2607,32 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mPlayer.reset();
     }
 
+    public void testFileDataSourceDesc() throws Exception {
+        long startPosMs = 3000;
+        long endPosMs = 7000;
+        AssetFileDescriptor afd = mResources.openRawResourceFd(
+                R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz);
+        FileDataSourceDesc fdsd = new FileDataSourceDesc.Builder()
+                .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()))
+                .setStartPosition(startPosMs)
+                .setEndPosition(endPosMs)
+                .build();
+
+        assertEquals(0, fdsd.getOffset());
+        assertEquals(FileDataSourceDesc.FD_LENGTH_UNKNOWN, fdsd.getLength());
+        assertEquals(startPosMs, fdsd.getStartPosition());
+        assertEquals(endPosMs, fdsd.getEndPosition());
+
+        FileDataSourceDesc fdsd2 = new FileDataSourceDesc.Builder(fdsd)
+                .build();
+        assertEquals(0, fdsd2.getOffset());
+        assertEquals(FileDataSourceDesc.FD_LENGTH_UNKNOWN, fdsd2.getLength());
+        assertEquals(startPosMs, fdsd2.getStartPosition());
+        assertEquals(endPosMs, fdsd2.getEndPosition());
+
+        afd.close();
+    }
+
     public void testStartEndPositions() throws Exception {
         long startPosMs = 3000;
         long endPosMs = 7000;

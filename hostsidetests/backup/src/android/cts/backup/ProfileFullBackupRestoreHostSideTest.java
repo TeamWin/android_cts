@@ -53,7 +53,7 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
         mTransport = switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
 
         // Setup test package.
-        installPackageAsUser(FULL_BACKUP_APK, true, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, false, mProfileUserId);
         clearPackageDataAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
     }
 
@@ -115,7 +115,7 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
 
         uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
 
-        installPackageAsUser(FULL_BACKUP_APK, true, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, false, mProfileUserId);
 
         checkDeviceTest("assertFilesRestored");
     }

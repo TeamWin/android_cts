@@ -133,7 +133,7 @@ public class NotificationAssistantServiceTest {
         signals.putInt(Adjustment.KEY_USER_SENTIMENT,
                 NotificationListenerService.Ranking.USER_SENTIMENT_NEGATIVE);
         Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
-                sbn.getUserId());
+                sbn.getUser());
 
         mNotificationAssistantService.adjustNotification(adjustment);
         Thread.sleep(SLEEP_TIME); // wait for adjustment to be processed
@@ -160,7 +160,7 @@ public class NotificationAssistantServiceTest {
         Bundle signals = new Bundle();
         signals.putInt(Adjustment.KEY_IMPORTANCE, newImportance);
         Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
-                sbn.getUserId());
+                sbn.getUser());
 
         mNotificationAssistantService.adjustNotification(adjustment);
         Thread.sleep(SLEEP_TIME); // wait for adjustment to be processed
@@ -196,7 +196,7 @@ public class NotificationAssistantServiceTest {
         Bundle signals = new Bundle();
         signals.putParcelableArrayList(Adjustment.KEY_CONTEXTUAL_ACTIONS, extraAction);
         Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
-                sbn.getUserId());
+                sbn.getUser());
 
         mNotificationAssistantService.adjustNotification(adjustment);
         Thread.sleep(SLEEP_TIME); //wait for adjustment to be processed
@@ -235,7 +235,7 @@ public class NotificationAssistantServiceTest {
         Bundle signals = new Bundle();
         signals.putCharSequenceArrayList(Adjustment.KEY_TEXT_REPLIES, extraReply);
         Adjustment adjustment = new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
-                sbn.getUserId());
+                sbn.getUser());
 
         mNotificationAssistantService.adjustNotification(adjustment);
         Thread.sleep(SLEEP_TIME); //wait for adjustment to be processed

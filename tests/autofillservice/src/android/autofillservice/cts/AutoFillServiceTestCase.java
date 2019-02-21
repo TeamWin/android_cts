@@ -360,6 +360,11 @@ public final class AutoFillServiceTestCase {
             presentation.setTextViewText(R.id.text1, message);
             return presentation;
         }
+
+        @NonNull
+        protected AutofillManager getAutofillManager() {
+            return mContext.getSystemService(AutofillManager.class);
+        }
     }
 
     protected static final UiBot sDefaultUiBot = new UiBot();

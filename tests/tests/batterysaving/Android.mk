@@ -27,6 +27,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctstestrunner \
+    truth-prebuilt \
     ub-uiautomator
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs

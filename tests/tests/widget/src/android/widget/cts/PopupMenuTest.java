@@ -88,7 +88,11 @@ public class PopupMenuTest {
     @After
     public void teardown() throws Throwable {
         if (mPopupMenu != null) {
-            mActivityRule.runOnUiThread(mPopupMenu::dismiss);
+            mActivityRule.runOnUiThread(() -> {
+                mPopupMenu.dismiss();
+                mPopupMenu = null;
+            });
+            mInstrumentation.waitForIdleSync();
         }
     }
 

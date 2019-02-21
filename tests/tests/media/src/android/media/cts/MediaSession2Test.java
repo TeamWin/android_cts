@@ -19,6 +19,7 @@ package android.media.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -325,6 +326,41 @@ public class MediaSession2Test {
     }
 
     @Test
+    public void testCallback_onPostConnect_connected() throws Exception {
+        Session2Callback sessionCallback = new Session2Callback();
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .build()) {
+            Controller2Callback controllerCallback = new Controller2Callback();
+            MediaController2 controller = new MediaController2(
+                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+            assertTrue(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS));
+            assertEquals(Process.myUid(), sessionCallback.mController.getUid());
+        }
+    }
+
+    @Test
+    public void testCallback_onPostConnect_rejected() throws Exception {
+        Session2Callback sessionCallback = new Session2Callback() {
+            @Override
+            public Session2CommandGroup onConnect(MediaSession2 session,
+                    MediaSession2.ControllerInfo controller) {
+                // Reject all
+                return null;
+            }
+        };
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .build()) {
+            Controller2Callback controllerCallback = new Controller2Callback();
+            MediaController2 controller = new MediaController2(
+                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            assertFalse(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS));
+        }
+    }
+
+    @Test
     public void testCallback_onSessionCommand() {
         Session2Callback sessionCallback = new Session2Callback();
 
@@ -544,6 +580,7 @@ public class MediaSession2Test {
 
     class Session2Callback extends MediaSession2.SessionCallback {
         private final CountDownLatch mOnConnectLatch = new CountDownLatch(1);
+        private final CountDownLatch mOnPostConnectLatch = new CountDownLatch(1);
         private final CountDownLatch mOnDisconnectLatch = new CountDownLatch(1);
         private final CountDownLatch mOnSessionCommandLatch = new CountDownLatch(1);
         private final CountDownLatch mOnCommandResultLatch = new CountDownLatch(1);
@@ -565,6 +602,16 @@ public class MediaSession2Test {
             mController = controller;
             mOnConnectLatch.countDown();
             return new Session2CommandGroup.Builder().build();
+        }
+
+        @Override
+        public void onPostConnect(MediaSession2 session, MediaSession2.ControllerInfo controller) {
+            if (controller.getUid() != Process.myUid()) {
+                return;
+            }
+            mSession = session;
+            mController = controller;
+            mOnPostConnectLatch.countDown();
         }
 
         @Override
@@ -618,6 +665,14 @@ public class MediaSession2Test {
         public boolean awaitOnConnect(long waitTimeMs) {
             try {
                 return mOnConnectLatch.await(waitTimeMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+
+        public boolean awaitOnPostConnect(long waitTimeMs) {
+            try {
+                return mOnPostConnectLatch.await(waitTimeMs, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 return false;
             }

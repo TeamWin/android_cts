@@ -43,14 +43,32 @@ public class BatteryUtils {
 
     /** Make the target device think it's off charger. */
     public static void runDumpsysBatteryUnplug() throws Exception {
-        SystemUtil.runShellCommandForNoOutput("dumpsys battery unplug");
+        SystemUtil.runShellCommandForNoOutput("cmd battery unplug");
 
         Log.d(TAG, "Battery UNPLUGGED");
     }
 
-    /** Reset {@link #runDumpsysBatteryUnplug}.  */
+    /**
+     * Set the battery level to {@code level} percent. The valid range is [0, 100].
+     */
+    public static void runDumpsysBatterySetLevel(int level) throws Exception {
+        SystemUtil.runShellCommandForNoOutput(("cmd battery set level " + level));
+
+        Log.d(TAG, "Battery level set to " + level);
+    }
+
+    /**
+     * Set whether the device is plugged in to a charger or not.
+     */
+    public static void runDumpsysBatterySetPluggedIn(boolean pluggedIn) throws Exception {
+        SystemUtil.runShellCommandForNoOutput(("cmd battery set ac " + (pluggedIn ? "1" : "0")));
+
+        Log.d(TAG, "Battery AC set to " + pluggedIn);
+    }
+
+    /** Reset the effect of all the previous {@code runDumpsysBattery*} call  */
     public static void runDumpsysBatteryReset() throws Exception {
-        SystemUtil.runShellCommandForNoOutput(("dumpsys battery reset"));
+        SystemUtil.runShellCommandForNoOutput(("cmd battery reset"));
 
         Log.d(TAG, "Battery RESET");
     }
