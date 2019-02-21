@@ -18,6 +18,7 @@ package android.telephony.cts;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
+import android.telephony.CellIdentity;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -41,6 +42,7 @@ import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -126,8 +128,17 @@ public class CellInfoTest extends AndroidTestCase{
 
     private static final int MAX_CELLINFO_WAIT_MILLIS = 5000;
 
+    private static final int RADIO_HAL_VERSION_1_2 = makeRadioVersion(1, 2);
+
     private PackageManager mPm;
     private TelephonyManager mTm;
+
+    private int mRadioHalVersion;
+
+    private static final int makeRadioVersion(int major, int minor) {
+        if (major < 0 || minor < 0) return 0;
+        return major * 100 + minor;
+    }
 
     private Executor mSimpleExecutor = new Executor() {
         @Override
@@ -148,6 +159,8 @@ public class CellInfoTest extends AndroidTestCase{
         super.setUp();
         mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
+        Pair<Integer, Integer> verPair = mTm.getRadioHalVersion();
+        mRadioHalVersion = makeRadioVersion(verPair.first, verPair.second);
     }
 
     private static class CellInfoResultsCallback extends TelephonyManager.CellInfoCallback {
@@ -189,6 +202,8 @@ public class CellInfoTest extends AndroidTestCase{
             if (cellInfo.isRegistered()) {
                 ++numRegisteredCells;
             }
+            verifyBaseCellInfo(cellInfo);
+            verifyBaseCellIdentity(cellInfo.getCellIdentity(), cellInfo.isRegistered());
             if (cellInfo instanceof CellInfoLte) {
                 verifyLteInfo((CellInfoLte) cellInfo);
             } else if (cellInfo instanceof CellInfoWcdma) {
@@ -211,6 +226,28 @@ public class CellInfoTest extends AndroidTestCase{
         //       not hit any of these cases yet.
         assertTrue("None or too many registered cells : " + numRegisteredCells,
                 numRegisteredCells > 0 && numRegisteredCells <= 2);
+    }
+
+    private void verifyBaseCellInfo(CellInfo info) {
+        assertTrue("Invalid timestamp in CellInfo: " + info.getTimeStamp(),
+                info.getTimeStamp() > 0 && info.getTimeStamp() < Long.MAX_VALUE);
+
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+            // In HAL 1.2 or greater, the connection status must be reported
+            assertTrue(info.getCellConnectionStatus() != CellInfo.CONNECTION_UNKNOWN);
+        }
+    }
+
+    private void verifyBaseCellIdentity(CellIdentity id, boolean isRegistered) {
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+            if (isRegistered) {
+                String alphaLong = (String) id.getOperatorAlphaLong();
+                assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
+
+                String alphaShort = (String) id.getOperatorAlphaShort();
+                assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
+            }
+        }
     }
 
     private void verifyCdmaInfo(CellInfoCdma cdma) {
@@ -259,12 +296,6 @@ public class CellInfoTest extends AndroidTestCase{
             assertTrue("SID is required for registered cells", systemId != Integer.MAX_VALUE);
             assertTrue("NID is required for registered cells", networkId != Integer.MAX_VALUE);
             assertTrue("BSID is required for registered cells", basestationId != Integer.MAX_VALUE);
-
-            String alphaLong = (String) cdma.getOperatorAlphaLong();
-            assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
-
-            String alphaShort = (String) cdma.getOperatorAlphaShort();
-            assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
         }
     }
 
@@ -411,9 +442,6 @@ public class CellInfoTest extends AndroidTestCase{
             assertTrue("TAC is required for registered cells", tac != Integer.MAX_VALUE);
             assertTrue("MCC is required for registered cells", nr.getMccString() != null);
             assertTrue("MNC is required for registered cells", nr.getMncString() != null);
-
-            assertNotNull("getOperatorAlphaLong() returns NULL!", nr.getOperatorAlphaLong());
-            assertNotNull("getOperatorAlphaShort() returns NULL!", nr.getOperatorAlphaShort());
         }
     }
 
@@ -511,12 +539,6 @@ public class CellInfoTest extends AndroidTestCase{
                     lte.getMccString() != null || lte.getMcc() != Integer.MAX_VALUE);
             assertTrue("MNC is required for registered cells",
                     lte.getMncString() != null || lte.getMnc() != Integer.MAX_VALUE);
-
-            String alphaLong = (String) lte.getOperatorAlphaLong();
-            assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
-
-            String alphaShort = (String) lte.getOperatorAlphaShort();
-            assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
         }
     }
 
@@ -569,6 +591,11 @@ public class CellInfoTest extends AndroidTestCase{
         int timingAdvance = cellSignalStrengthLte.getTimingAdvance();
         assertTrue("getTimingAdvance() out of range [0,1282], timingAdvance=" + timingAdvance,
                 timingAdvance == Integer.MAX_VALUE || (timingAdvance >= 0 && timingAdvance <= 1282));
+
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+            assertTrue("RSRP Must be valid for LTE",
+                    cellSignalStrengthLte.getRsrp() != CellInfo.UNAVAILABLE);
+        }
     }
 
     private void verifyCellSignalStrengthLteParcel(CellSignalStrengthLte cellSignalStrengthLte) {
@@ -638,12 +665,6 @@ public class CellInfoTest extends AndroidTestCase{
                     wcdma.getMccString() != null || wcdma.getMcc() != Integer.MAX_VALUE);
             assertTrue("MNC is required for registered cells",
                     wcdma.getMncString() != null || wcdma.getMnc() != Integer.MAX_VALUE);
-
-            String alphaLong = (String) wcdma.getOperatorAlphaLong();
-            assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
-
-            String alphaShort = (String) wcdma.getOperatorAlphaShort();
-            assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
         }
     }
 
@@ -669,6 +690,10 @@ public class CellInfoTest extends AndroidTestCase{
 
         int level = wcdma.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
+
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+            assertTrue("RSCP Must be valid for WCDMA", wcdma.getRscp() != CellInfo.UNAVAILABLE);
+        }
     }
 
     private void verifyCellSignalStrengthWcdmaParcel(CellSignalStrengthWcdma wcdma) {
@@ -734,12 +759,6 @@ public class CellInfoTest extends AndroidTestCase{
                     gsm.getMccString() != null || gsm.getMcc() != Integer.MAX_VALUE);
             assertTrue("MNC is required for registered cells",
                     gsm.getMncString() != null || gsm.getMnc() != Integer.MAX_VALUE);
-
-            String alphaLong = (String) gsm.getOperatorAlphaLong();
-            assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
-
-            String alphaShort = (String) gsm.getOperatorAlphaShort();
-            assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
         }
     }
 
@@ -773,6 +792,10 @@ public class CellInfoTest extends AndroidTestCase{
         int ber = gsm.getBitErrorRate();
         assertTrue("getBitErrorRate out of range [0,7], 99, or CellInfo.UNAVAILABLE, ber=" + ber,
                 ber == 99 || ber == CellInfo.UNAVAILABLE || (ber >= 0 && ber <= 7));
+
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+            assertTrue("RSSI Must be valid for GSM", gsm.getDbm() != CellInfo.UNAVAILABLE);
+        }
     }
 
     private void verifyCellSignalStrengthGsmParcel(CellSignalStrengthGsm gsm) {
@@ -846,12 +869,6 @@ public class CellInfoTest extends AndroidTestCase{
             assertTrue("CID is required for registered cells", cid != Integer.MAX_VALUE);
             assertTrue("MCC is required for registered cells", tdscdma.getMccString() != null);
             assertTrue("MNC is required for registered cells", tdscdma.getMncString() != null);
-
-            String alphaLong = (String) tdscdma.getOperatorAlphaLong();
-            assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
-
-            String alphaShort = (String) tdscdma.getOperatorAlphaShort();
-            assertNotNull("getOperatorAlphaShort() returns NULL!", alphaShort);
         }
     }
 
@@ -877,6 +894,10 @@ public class CellInfoTest extends AndroidTestCase{
 
         int level = tdscdma.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
+
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+            assertTrue("RSCP Must be valid for TDSCDMA", tdscdma.getRscp() != CellInfo.UNAVAILABLE);
+        }
     }
 
     private void verifyCellSignalStrengthTdscdmaParcel(CellSignalStrengthTdscdma tdscdma) {
