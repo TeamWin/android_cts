@@ -112,6 +112,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
     Stream<Object> readFileOptimized(File file) {
         try {
             if (file.getName().endsWith(".zip")) {
+                @SuppressWarnings("resource")
                 ZipFile zip = new ZipFile(file);
                 return zip.stream().map(entry -> {
                     try {
@@ -138,6 +139,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
     Stream<InputStream> readFile(File file) {
         try {
             if (file.getName().endsWith(".zip")) {
+                @SuppressWarnings("resource")
                 ZipFile zip = new ZipFile(file);
                 return zip.stream().map(entry -> {
                     try {

@@ -193,7 +193,7 @@ public class DexMemberChecker {
         List<String> methodParams = dexMethod.getJavaParameterTypes();
 
         if (dexMethod.isConstructor()) {
-            for (Constructor constructor : klass.getDeclaredConstructors()) {
+            for (Constructor<?> constructor : klass.getDeclaredConstructors()) {
                 if (typesMatch(constructor.getParameterTypes(), methodParams)) {
                     return true;
                 }

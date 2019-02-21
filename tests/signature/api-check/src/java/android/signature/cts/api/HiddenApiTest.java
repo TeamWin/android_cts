@@ -16,6 +16,8 @@
 
 package android.signature.cts.api;
 
+import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
+
 import android.os.Bundle;
 import android.signature.cts.DexApiDocumentParser;
 import android.signature.cts.DexField;
@@ -23,20 +25,10 @@ import android.signature.cts.DexMember;
 import android.signature.cts.DexMemberChecker;
 import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
-import android.signature.cts.ResultObserver;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.text.ParseException;
-
-import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
 
 /**
  * Checks that it is not possible to access hidden APIs.
