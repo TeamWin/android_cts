@@ -855,11 +855,13 @@ public class ActivityManagerState {
 
     static class KeyguardControllerState {
 
+        boolean aodShowing = false;
         boolean keyguardShowing = false;
         SparseArray<Boolean> mKeyguardOccludedStates = new SparseArray<>();
 
         KeyguardControllerState(KeyguardControllerProto proto) {
             if (proto != null) {
+                aodShowing = proto.aodShowing;
                 keyguardShowing = proto.keyguardShowing;
                 for (int i = 0;  i < proto.keyguardOccludedStates.length; i++) {
                     mKeyguardOccludedStates.append(proto.keyguardOccludedStates[i].displayId,

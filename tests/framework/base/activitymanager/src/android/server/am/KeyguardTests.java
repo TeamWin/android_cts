@@ -53,10 +53,13 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
+import android.hardware.display.AmbientDisplayConfiguration;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.ActivitySessionClient;
 import android.server.am.WindowManagerState.WindowState;
+import android.server.am.settings.SettingsSession;
 
 import androidx.test.filters.FlakyTest;
 
@@ -69,11 +72,29 @@ import org.junit.Test;
  */
 @Presubmit
 public class KeyguardTests extends KeyguardTestBase {
+    class AodSession extends SettingsSession<Integer> {
+        private AmbientDisplayConfiguration mConfig;
+
+        AodSession() {
+            super(Settings.Secure.getUriFor(Settings.Secure.DOZE_ALWAYS_ON),
+                    Settings.Secure::getInt,
+                    Settings.Secure::putInt);
+            mConfig = new AmbientDisplayConfiguration(mContext);
+        }
+
+        boolean isAodAvailable() {
+            return mConfig.alwaysOnAvailable();
+        }
+
+        void setAodEnabled(boolean enabled) throws Exception {
+            set(enabled ? 1 : 0);
+        }
+    }
+
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
         assumeTrue(supportsInsecureLock());
         assertFalse(isUiModeLockedToVrHeadset());
     }
@@ -235,7 +256,8 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
             launchActivity(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY);
-            mAmWmState.computeState(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY);
+            mAmWmState.computeState(
+                    SHOW_WHEN_LOCKED_ATTR_ACTIVITY, INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
             mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_ADD_ACTIVITY, true);
 
@@ -260,7 +282,8 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
             launchActivity(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
-            mAmWmState.computeState(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
+            mAmWmState.computeState(
+                    SHOW_WHEN_LOCKED_ATTR_ACTIVITY, INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
             mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY, true);
 
@@ -285,7 +308,8 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
             launchActivity(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            mAmWmState.computeState(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.computeState(
+                    SHOW_WHEN_LOCKED_ATTR_ACTIVITY, INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
             mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
@@ -309,7 +333,8 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
             launchActivity(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            mAmWmState.computeState(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.computeState(
+                    SHOW_WHEN_LOCKED_ATTR_ACTIVITY, NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
             mAmWmState.assertVisibility(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
@@ -559,29 +584,75 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     @Test
-    @FlakyTest
-    public void testScreenOffWhileOccludedStopsActivity() throws Exception {
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+    public void testScreenOffWhileOccludedStopsActivityNoAod() throws Exception {
+        try (final AodSession aodSession = new AodSession()) {
+            aodSession.setAodEnabled(false);
+            testScreenOffWhileOccludedStopsActivity(false /* assertAod */);
+        }
+    }
+
+    @Test
+    public void testScreenOffWhileOccludedStopsActivityAod() throws Exception {
+        try (final AodSession aodSession = new AodSession()) {
+            assumeTrue(aodSession.isAodAvailable());
+            aodSession.setAodEnabled(true);
+            testScreenOffWhileOccludedStopsActivity(true /* assertAod */);
+        }
+    }
+
+    /**
+     * @param assertAod {@code true} to check AOD status, {@code false} otherwise. Note that when
+     *        AOD is disabled for the default display, AOD status shouldn't be checked.
+     */
+    private void testScreenOffWhileOccludedStopsActivity(boolean assertAod) {
+        try (final LockScreenSession lockScreenSession
+                     = new LockScreenSession()) {
             separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
+            if (assertAod) {
+                mAmWmState.assertAodShowing();
+            }
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+            waitAndAssertTopResumedActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity with showWhenLocked attribute should be resumed.");
             mAmWmState.assertKeyguardShowingAndOccluded();
+            if (assertAod) {
+                mAmWmState.assertAodNotShowing();
+            }
             lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
             assertSingleLaunchAndStop(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         }
     }
 
     @Test
-    public void testScreenOffCausesSingleStop() throws Exception {
+    public void testScreenOffCausesSingleStopNoAod() throws Exception {
+        try (final AodSession aodSession = new AodSession()) {
+            aodSession.setAodEnabled(false);
+            testScreenOffCausesSingleStop();
+        }
+    }
+
+    @Test
+    public void testScreenOffCausesSingleStopAod() throws Exception {
+        try (final AodSession aodSession = new AodSession()) {
+            assumeTrue(aodSession.isAodAvailable());
+            aodSession.setAodEnabled(true);
+            testScreenOffCausesSingleStop();
+        }
+    }
+
+    private void testScreenOffCausesSingleStop() {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             separateTestJournal();
             launchActivity(TEST_ACTIVITY);
             mAmWmState.assertVisibility(TEST_ACTIVITY, true);
             lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
             assertSingleLaunchAndStop(TEST_ACTIVITY);
         }
+
     }
+
 }
