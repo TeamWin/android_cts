@@ -446,10 +446,8 @@ public class SplitPermissionTest {
     }
 
     /**
-     * An implicit permission should get revoked when the app gets updated and now requests the
-     * permission.
-     *
-     * <p>(Pre-M version of test)
+     * An implicit permission should <u>not</u> get revoked when the app gets updated as pre-M apps
+     * cannot deal with revoked permissions. Hence only the user should ever explicitly do that.
      */
     @Test
     public void newPermissionGetRevokedOnUpgradePreM() throws Exception {
@@ -457,7 +455,7 @@ public class SplitPermissionTest {
 
         install(APK_CONTACTS_CALLLOG_16);
 
-        assertPermissionRevoked(READ_CALL_LOG);
+        assertPermissionGranted(READ_CALL_LOG);
     }
 
     /**
