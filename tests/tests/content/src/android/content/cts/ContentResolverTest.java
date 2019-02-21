@@ -1263,6 +1263,27 @@ public class ContentResolverTest extends AndroidTestCase {
         latch.await(10, TimeUnit.SECONDS);
     }
 
+    public void testGetTypeInfo() throws Exception {
+        for (String mimeType : new String[] {
+                "image/png",
+                "IMage/PnG",
+                "image/x-custom",
+                "application/x-flac",
+                "application/rdf+xml",
+                "x-custom/x-custom",
+        }) {
+            assertNotNull(mContentResolver.getTypeInfo(mimeType));
+        }
+    }
+
+    public void testGetTypeInfo_Invalid() throws Exception {
+        try {
+            mContentResolver.getTypeInfo(null);
+            fail("Expected exception for null");
+        } catch (NullPointerException expected) {
+        }
+    }
+
     private class MockContentObserver extends ContentObserver {
         private boolean mHadOnChanged = false;
 
