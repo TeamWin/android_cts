@@ -26,6 +26,7 @@ import static android.provider.Settings.Secure.CONTENT_CAPTURE_ENABLED;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.Application;
+import android.content.ContentCaptureOptions;
 import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
@@ -128,6 +129,26 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
+    }
+
+    /**
+     * Hack to make sure ContentCapture is available for the CTS test package.
+     *
+     * <p>It must be set here because when the application starts it queries the server, at which
+     * point our service is not set yet.
+     */
+    // TODO: remove this hack if we ever split the CTS module in multiple APKs
+    @BeforeClass
+    public static void whitelistSelf() {
+        final ContentCaptureOptions options = ContentCaptureOptions.forWhitelistingItself();
+        Log.v(TAG, "@BeforeClass: whitelistSelf(): options=" + options);
+        sContext.getApplicationContext().setContentCaptureOptions(options);
+    }
+
+    @AfterClass
+    public static void unWhitelistSelf() {
+        Log.v(TAG, "@afterClass: unWhitelistSelf()");
+        sContext.getApplicationContext().setContentCaptureOptions(null);
     }
 
     @BeforeClass
