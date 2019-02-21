@@ -43,4 +43,8 @@
         <option name="include-annotation" value="android.icu.testsharding.MainTestShard" />
         <option name="hidden-api-checks" value="false"/>
     </test>
+
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
+        <option name="screenshot-on-failure" value="false" />
+    </object>
 </configuration>

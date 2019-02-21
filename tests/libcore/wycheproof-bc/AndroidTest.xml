@@ -35,4 +35,8 @@
         <option name="runtime-hint" value="16m"/>
         <option name="test-timeout" value="3600000" />
     </test>
+
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
+        <option name="screenshot-on-failure" value="false" />
+    </object>
 </configuration>
