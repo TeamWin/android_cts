@@ -56,7 +56,7 @@ public class AspectRatioSdk28Tests extends AspectRatioTestsBase {
                 .hasSystemFeature(FEATURE_WATCH);
         float minAspectRatio = isWatch ? MIN_WATCH_DEVICE_ASPECT_RATIO : MIN_DEVICE_ASPECT_RATIO;
 
-        runAspectRatioTest(mSdk28MinAspectRatioActivity, (actual, displayId) -> {
+        runAspectRatioTest(mSdk28MinAspectRatioActivity, (actual, displayId, size) -> {
             assertThat(actual, greaterThanOrEqualToInexact(minAspectRatio));
         });
     }

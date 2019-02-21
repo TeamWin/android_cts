@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
@@ -72,6 +73,16 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     public static class MinAspectRatioUnsetActivity extends Activity {
     }
 
+    // Test target activity that has minAspectRatio="true", resizeableActivity="false",
+    // and screenOrientation="landscape".
+    public static class MinAspectRatioLandscapeActivity extends Activity {
+    }
+
+    // Test target activity that has minAspectRatio="true", resizeableActivity="false",
+    // and screenOrientation="portrait".
+    public static class MinAspectRatioPortraitActivity extends Activity {
+    }
+
     @Rule
     public ActivityTestRule<MaxAspectRatioActivity> mMaxAspectRatioActivity =
             new ActivityTestRule<>(MaxAspectRatioActivity.class,
@@ -107,10 +118,20 @@ public class AspectRatioTests extends AspectRatioTestsBase {
             new ActivityTestRule<>(MinAspectRatioUnsetActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
 
+    @Rule
+    public ActivityTestRule<MinAspectRatioLandscapeActivity> mMinAspectRatioLandscapeActivity =
+            new ActivityTestRule<>(MinAspectRatioLandscapeActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
+
+    @Rule
+    public ActivityTestRule<MinAspectRatioPortraitActivity> mMinAspectRatioPortraitActivity =
+            new ActivityTestRule<>(MinAspectRatioPortraitActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
+
     @Test
     public void testMaxAspectRatio() {
         // Activity has a maxAspectRatio, assert that the actual ratio is less than that.
-        runAspectRatioTest(mMaxAspectRatioActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMaxAspectRatioActivity, (actual, displayId, size) -> {
             assertThat(actual, lessThanOrEqualTo(MAX_ASPECT_RATIO));
         });
     }
@@ -118,7 +139,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     @Test
     public void testMetaDataMaxAspectRatio() {
         // Activity has a maxAspectRatio, assert that the actual ratio is less than that.
-        runAspectRatioTest(mMetaDataMaxAspectRatioActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMetaDataMaxAspectRatioActivity, (actual, displayId, size) -> {
             assertThat(actual, lessThanOrEqualTo(MAX_ASPECT_RATIO));
         });
     }
@@ -126,7 +147,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     @Test
     public void testMaxAspectRatioResizeableActivity() {
         // Since this activity is resizeable, its max aspect ratio should be ignored.
-        runAspectRatioTest(mMaxAspectRatioResizeableActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMaxAspectRatioResizeableActivity, (actual, displayId, size) -> {
             // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
             assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
@@ -139,7 +160,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     public void testMaxAspectRatioUnsetActivity() {
         // Since this activity didn't set an explicit maxAspectRatio, there should be no such
         // ratio enforced.
-        runAspectRatioTest(mMaxAspectRatioUnsetActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMaxAspectRatioUnsetActivity, (actual, displayId, size) -> {
             // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
             assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
@@ -150,7 +171,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     @Test
     public void testMinAspectRatio() {
         // Activity has a minAspectRatio, assert the ratio is at least that.
-        runAspectRatioTest(mMinAspectRatioActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMinAspectRatioActivity, (actual, displayId, size) -> {
             assertThat(actual, greaterThanOrEqualToInexact(MIN_ASPECT_RATIO));
         });
     }
@@ -158,7 +179,7 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     @Test
     public void testMinAspectRatioResizeableActivity() {
         // Since this activity is resizeable, the minAspectRatio should be ignored.
-        runAspectRatioTest(mMinAspectRatioResizeableActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMinAspectRatioResizeableActivity, (actual, displayId, size) -> {
             // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
             assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
@@ -170,11 +191,29 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     public void testMinAspectRatioUnsetActivity() {
         // Since this activity didn't set an explicit minAspectRatio, there should be no such
         // ratio enforced.
-        runAspectRatioTest(mMinAspectRatioUnsetActivity, (actual, displayId) -> {
+        runAspectRatioTest(mMinAspectRatioUnsetActivity, (actual, displayId, size) -> {
             // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
             assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
             assertThat(actual, lessThanOrEqualToInexact(getDefaultDisplayAspectRatio()));
+        });
+    }
+
+    @Test
+    public void testMinAspectLandscapeActivity() {
+        // Activity has requested a fixed orientation, assert the orientation is that.
+        runAspectRatioTest(mMinAspectRatioLandscapeActivity, (actual, displayId, size) -> {
+            assertThat(actual, greaterThanOrEqualToInexact(MIN_ASPECT_RATIO));
+            assertThat(size.x, greaterThan(size.y));
+        });
+    }
+
+    @Test
+    public void testMinAspectPortraitActivity() {
+        // Activity has requested a fixed orientation, assert the orientation is that.
+        runAspectRatioTest(mMinAspectRatioPortraitActivity, (actual, displayId, size) -> {
+            assertThat(actual, greaterThanOrEqualToInexact(MIN_ASPECT_RATIO));
+            assertThat(size.y, greaterThan(size.x));
         });
     }
 }
