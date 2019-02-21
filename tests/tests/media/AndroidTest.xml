@@ -43,5 +43,6 @@
         <option name="test-timeout" value="1800000" />
         <option name="runtime-hint" value="4h" />
         <option name="hidden-api-checks" value="false" />
+        <option name="isolated-storage" value="false" />
     </test>
 </configuration>
