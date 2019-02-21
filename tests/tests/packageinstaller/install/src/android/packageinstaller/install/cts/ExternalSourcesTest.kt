@@ -21,9 +21,9 @@ import android.app.AppOpsManager.MODE_ERRORED
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
 import android.provider.Settings
-import android.support.test.InstrumentationRegistry
-import android.support.test.filters.MediumTest
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.InstrumentationRegistry
+import androidx.test.filters.MediumTest
+import androidx.test.runner.AndroidJUnit4
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice

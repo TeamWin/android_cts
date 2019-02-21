@@ -31,8 +31,8 @@ import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
-import android.support.test.InstrumentationRegistry
-import android.support.test.rule.ActivityTestRule
+import androidx.test.InstrumentationRegistry
+import androidx.test.rule.ActivityTestRule
 import android.support.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.After
