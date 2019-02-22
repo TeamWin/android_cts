@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -63,6 +64,9 @@ public class MediaController2Test {
     static final String SESSION_RESULT_VALUE = "test_result_value";
     static final Session2Command.Result SESSION_COMMAND_RESULT;
 
+    private static final String TEST_KEY = "test_key";
+    private static final String TEST_VALUE = "test_value";
+
     static {
         Bundle resultData = new Bundle();
         resultData.putString(SESSION_RESULT_KEY, SESSION_RESULT_VALUE);
@@ -73,6 +77,7 @@ public class MediaController2Test {
     static Executor sHandlerExecutor;
 
     private Context mContext;
+    private Bundle mExtras;
     private MediaSession2 mSession;
     private Session2Callback mSessionCallback;
 
@@ -117,8 +122,11 @@ public class MediaController2Test {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mSessionCallback = new Session2Callback();
+        mExtras = new Bundle();
+        mExtras.putString(TEST_KEY, TEST_VALUE);
         mSession = new MediaSession2.Builder(mContext)
                 .setSessionCallback(sHandlerExecutor, mSessionCallback)
+                .setExtras(mExtras)
                 .build();
     }
 
@@ -149,6 +157,11 @@ public class MediaController2Test {
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
             assertEquals(controller, controllerCallback.mController);
             assertEquals(mSession.getSessionToken(), controller.getConnectedSessionToken());
+
+            Bundle extrasFromConnectedSessionToken =
+                    controller.getConnectedSessionToken().getExtras();
+            assertNotNull(extrasFromConnectedSessionToken);
+            assertEquals(TEST_VALUE, extrasFromConnectedSessionToken.getString(TEST_KEY));
         } finally {
             assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
             assertNull(controllerCallback.mController.getConnectedSessionToken());
