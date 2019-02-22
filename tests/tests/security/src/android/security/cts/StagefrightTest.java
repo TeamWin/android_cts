@@ -772,6 +772,12 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2018-06")
+    public void testBug_73552574() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_73552574_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_73552574_avc, "video/avc", 320, 240, frameSizes);
+    }
+
     @SecurityTest(minPatchLevel = "2018-02")
     public void testStagefright_bug_68342866() throws Exception {
         Thread server = new Thread() {
