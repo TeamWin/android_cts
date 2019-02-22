@@ -26,6 +26,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.storage.StorageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -37,6 +38,7 @@ import com.android.compatibility.common.util.FeatureUtil;
 
 import java.util.List;
 
+@AppModeFull // TODO(Instant) Figure out which intents should be visible
 public class AvailableIntentsTest extends AndroidTestCase {
     private static final String NORMAL_URL = "http://www.google.com/";
     private static final String SECURE_URL = "https://www.google.com/";

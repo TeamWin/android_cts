@@ -30,6 +30,7 @@ import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -1239,6 +1240,7 @@ public class ContentResolverTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull
     public void testHangRecover() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.REMOVE_TASKS);

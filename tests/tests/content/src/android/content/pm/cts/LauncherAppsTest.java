@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -73,6 +74,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_isNull() {
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
                 SETTINGS_PACKAGE, USER_HANDLE);
@@ -80,6 +82,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_isNotNull() {
         registerDefaultObserver();
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
@@ -88,6 +91,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_isNullOnUnregister() {
         registerDefaultObserver();
         unregisterObserver(DEFAULT_OBSERVER_ID);
@@ -97,6 +101,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_getTotalUsageLimit() {
         registerDefaultObserver();
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
@@ -106,6 +111,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_getTotalUsageRemaining() {
         registerDefaultObserver();
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
@@ -115,6 +121,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_smallestLimitReturned() {
         registerDefaultObserver();
         registerObserver(1, 5);
@@ -129,6 +136,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_allowsZeroLimit() {
         registerObserver(DEFAULT_OBSERVER_ID, 0);
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
