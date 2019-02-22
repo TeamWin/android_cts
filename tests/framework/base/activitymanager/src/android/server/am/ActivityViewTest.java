@@ -50,7 +50,6 @@ import org.junit.Test;
  *      atest CtsActivityManagerDeviceTestCases:ActivityViewTest
  */
 @Presubmit
-@FlakyTest
 public class ActivityViewTest extends ActivityManagerTestBase {
 
     private Instrumentation mInstrumentation;

@@ -49,7 +49,6 @@ import java.util.Arrays;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleFreeformTests
  */
-@FlakyTest(bugId = 77652261)
 @MediumTest
 @Presubmit
 public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestBase {

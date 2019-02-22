@@ -78,6 +78,7 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  * atest CtsActivityManagerDeviceTestCases:ActivityMetricsLoggerTests
  */
+@Presubmit
 public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     private static final String TAG_ATM = "ActivityTaskManager";
     private final MetricsReader mMetricsReader = new MetricsReader();
@@ -100,7 +101,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * In all three cases, verify the delay measurements are the same.
      */
     @Test
-    @Presubmit
     public void testAppLaunchIsLogged() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -179,7 +179,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * See {@link Activity#reportFullyDrawn()}
      */
     @Test
-    @Presubmit
     public void testAppFullyDrawnReportIsLogged() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -215,8 +214,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * metrics logs. Verify we output the correct launch state.
      */
     @Test
-    @Presubmit
-    @FlakyTest(bugId = 122118854)
     public void testAppWarmLaunchSetsWaitResultDelayData() {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -253,8 +250,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * metrics logs. Verify we output the correct launch state.
      */
     @Test
-    @Presubmit
-    @FlakyTest(bugId = 122118854)
     public void testAppHotLaunchSetsWaitResultDelayData() {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -291,7 +286,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * metrics logs. Verify we output the correct launch state.
      */
     @Test
-    @Presubmit
     public void testAppColdLaunchSetsWaitResultDelayData() {
         final String amStartOutput = SystemUtil.runShellCommand(
                 "am start -S -W " + TEST_ACTIVITY.flattenToShortString());
@@ -320,7 +314,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * see b/117148004
      */
     @Test
-    @Presubmit
     public void testLaunchOfVisibleApp() {
         // Launch an activity.
         getLaunchActivityBuilder()
@@ -371,8 +364,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * trampoline activity. See b/80380150 (Long warm launch times reported in dev play console)
      */
     @Test
-    @Presubmit
-    @FlakyTest(bugId = 80380150)
     public void testNoDisplayActivityLaunch() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -398,7 +389,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * draws on screen.
      */
     @Test
-    @Presubmit
     public void testTrampolineActivityLaunch() {
         // Launch a trampoline activity that will launch single task activity.
         getLaunchActivityBuilder()
