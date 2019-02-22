@@ -17,6 +17,8 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertSessionPaused;
+import static android.contentcaptureservice.cts.Assertions.assertSessionResumed;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
@@ -143,19 +145,21 @@ public class CustomViewActivityTest extends
         assertThat(events.size()).isAtLeast(CustomViewActivity.MIN_EVENTS + additionalEvents);
 
         // Assert just the relevant events
-        assertViewTreeStarted(events, 0);
-        assertDecorViewAppeared(events, 1, decorView);
-        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
-        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
+        assertSessionResumed(events, 0);
+        assertViewTreeStarted(events, 1);
+        assertDecorViewAppeared(events, 2, decorView);
+        assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
 
         final ContentCaptureSession mainSession = activity.mCustomView.getContentCaptureSession();
-        assertVirtualViewAppeared(events, 4, mainSession, customViewId, 1, "child");
-        assertVirtualViewDisappeared(events, 5, customViewId, mainSession, 1);
+        assertVirtualViewAppeared(events, 5, mainSession, customViewId, 1, "child");
+        assertVirtualViewDisappeared(events, 6, customViewId, mainSession, 1);
 
         // This is the "wrong" part - the parent is notified last
-        assertViewWithUnknownParentAppeared(events, 6, session.id, activity.mCustomView);
+        assertViewWithUnknownParentAppeared(events, 7, session.id, activity.mCustomView);
 
-        assertViewTreeFinished(events, 7);
+        assertViewTreeFinished(events, 8);
+        assertSessionPaused(events, 9);
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
     }

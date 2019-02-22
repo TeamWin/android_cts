@@ -17,6 +17,8 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertSessionPaused;
+import static android.contentcaptureservice.cts.Assertions.assertSessionResumed;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
@@ -49,7 +51,7 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
      * <p>Used on {@link #assertInitialViewsAppeared(Session, int)} and
      * {@link #assertInitialViewsDisappeared(List, int)}.
      */
-    public static final int MIN_EVENTS = 6;
+    public static final int MIN_EVENTS = 7;
 
     CustomView mCustomView;
 
@@ -113,12 +115,13 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
         assertThat(events.size()).isAtLeast(MIN_EVENTS + additionalEvents);
 
         // Assert just the relevant events
-        assertViewTreeStarted(events, 0);
-        assertDecorViewAppeared(events, 1, getDecorView());
-        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
-        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
-        assertViewWithUnknownParentAppeared(events, 4, session.id, mCustomView);
-        assertViewTreeFinished(events, 5);
+        assertSessionResumed(events, 0);
+        assertViewTreeStarted(events, 1);
+        assertDecorViewAppeared(events, 2, getDecorView());
+        assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
+        assertViewWithUnknownParentAppeared(events, 5, session.id, mCustomView);
+        assertViewTreeFinished(events, 6);
 
         return events;
     }
@@ -132,5 +135,6 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
         if (true) return;     // TODO(b/123540067, 122315042): not really working
         assertViewsOptionallyDisappeared(events, MIN_EVENTS + additionalEvents,
                 getDecorView().getAutofillId(), mCustomView.getAutofillId());
+        assertSessionPaused(events, MIN_EVENTS + additionalEvents);
     }
 }
