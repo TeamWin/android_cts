@@ -16,6 +16,9 @@
 
 package android.media.cts;
 
+import android.content.Context;
+import android.app.ActivityManager;
+import android.content.pm.PackageManager;
 import android.media.MediaCas;
 import android.media.MediaCas.PluginDescriptor;
 import android.media.MediaCas.Session;
@@ -151,6 +154,10 @@ public class MediaCasTest extends AndroidTestCase {
      * be instantiated.
      */
     public void testEnumeratePlugins() throws Exception {
+        if (isLowRam() && !isTV()){
+           Log.d(TAG, "Skipping testEnumetaePlugins.");
+           return;
+        }
         PluginDescriptor[] descriptors = MediaCas.enumeratePlugins();
         for (int i = 0; i < descriptors.length; i++) {
             Log.d(TAG, "desciptor[" + i + "]: id=" + descriptors[i].getSystemId()
@@ -193,6 +200,10 @@ public class MediaCasTest extends AndroidTestCase {
     }
 
     public void testInvalidSystemIdFails() throws Exception {
+        if (isLowRam() && !isTV()){
+           Log.d(TAG, "Skipping testInvalidSystemIdFails.");
+           return;
+        }
         assertFalse("Invalid id " + sInvalidSystemId + " should not be supported",
                 MediaCas.isSystemIdSupported(sInvalidSystemId));
 
@@ -224,6 +235,10 @@ public class MediaCasTest extends AndroidTestCase {
     }
 
     public void testClearKeyPluginInstalled() throws Exception {
+        if (isLowRam() && !isTV()){
+           Log.d(TAG, "Skipping testClearKeyPluginInstalled.");
+           return;
+        }
         PluginDescriptor[] descriptors = MediaCas.enumeratePlugins();
         for (int i = 0; i < descriptors.length; i++) {
             if (descriptors[i].getSystemId() == sClearKeySystemId) {
@@ -237,6 +252,10 @@ public class MediaCasTest extends AndroidTestCase {
      * Test that valid call sequences succeed.
      */
     public void testClearKeyApis() throws Exception {
+        if (isLowRam() && !isTV()){
+           Log.d(TAG, "Skipping testClearKeyApis.");
+           return;
+        }
         MediaCas mediaCas = null;
         MediaDescrambler descrambler = null;
 
@@ -316,6 +335,10 @@ public class MediaCasTest extends AndroidTestCase {
      * Test that all sessions are closed after a MediaCas object is released.
      */
     public void testClearKeySessionClosedAfterRelease() throws Exception {
+        if (isLowRam() && !isTV()){
+           Log.d(TAG, "Skipping testClearKeySessionClosedAfterRelease.");
+           return;
+        }
         MediaCas mediaCas = null;
         MediaDescrambler descrambler = null;
 
@@ -365,6 +388,10 @@ public class MediaCasTest extends AndroidTestCase {
      * Test that invalid call sequences fail with expected exceptions.
      */
     public void testClearKeyExceptions() throws Exception {
+        if (isLowRam() && !isTV()){
+           Log.d(TAG, "Skipping testClearKeyExceptions.");
+           return;
+        }
         MediaCas mediaCas = null;
         MediaDescrambler descrambler = null;
 
@@ -560,5 +587,14 @@ public class MediaCasTest extends AndroidTestCase {
           tempArray[i++] = (byte)Integer.parseInt(matcher.group(), 16);
         }
         return Arrays.copyOfRange(tempArray, 0, i);
+    }
+
+    private boolean isTV() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
+    }
+
+    private boolean isLowRam() {
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        return am.isLowRamDevice();
     }
 }
