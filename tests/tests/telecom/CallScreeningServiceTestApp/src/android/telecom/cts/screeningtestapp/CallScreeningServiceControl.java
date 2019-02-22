@@ -57,8 +57,8 @@ public class CallScreeningServiceControl extends Service {
                 }
 
                 @Override
-                public void setProviderCallIdentification(String name, String description, String details,
-                        Icon icon, int confidence) {
+                public void setProviderCallIdentification(CharSequence name,
+                        CharSequence description, CharSequence details, Icon icon, int confidence) {
                     Log.i(TAG, "setProviderCallIdentification: got test id info");
                     if (TextUtils.isEmpty(name)) {
                         mCallIdentification = null;
