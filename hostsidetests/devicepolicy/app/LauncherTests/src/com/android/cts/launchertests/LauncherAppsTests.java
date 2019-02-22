@@ -218,6 +218,38 @@ public class LauncherAppsTests extends AndroidTestCase {
         assertActivityInjected(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
     }
 
+    public void testGetSetAppDetailsActivityEnabled() throws Exception {
+        assertActivityInjected(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
+        PackageManager pm = mInstrumentation.getContext().getPackageManager();
+        try {
+            pm.setAppDetailsActivityEnabled(mContext.getPackageName(), false);
+            fail("Should not able to change current app's app details activity state");
+        } catch (SecurityException e) {
+            // Expected: No permission
+        }
+        try {
+            pm.setAppDetailsActivityEnabled(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE, false);
+            fail("Should not able to change other app's app details activity state");
+        } catch (SecurityException e) {
+            // Expected: No permission
+        }
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            assertTrue(pm.getAppDetailsActivityEnabled(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE));
+            // Disable app details activity and assert if the change is applied
+            pm.setAppDetailsActivityEnabled(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE, false);
+            assertFalse(pm.getAppDetailsActivityEnabled(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE));
+            assertInjectedActivityNotFound(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
+            // Enable app details activity and assert if the change is applied
+            pm.setAppDetailsActivityEnabled(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE, true);
+            assertTrue(pm.getAppDetailsActivityEnabled(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE));
+            assertActivityInjected(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
+        } finally {
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+
     public void testProfileOwnerLauncherActivityInjected() throws Exception {
         assertActivityInjected(MANAGED_PROFILE_PKG);
     }
