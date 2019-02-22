@@ -146,10 +146,11 @@ public class Utils {
     public static int[] prepareMultipleUsers(ITestDevice device, int maxUsers)
             throws DeviceNotAvailableException {
         final int[] userIds = getAllUsers(device);
+        int currentUserId = device.getCurrentUser();
         for (int i = 1; i < userIds.length; i++) {
             if (i < maxUsers) {
                 device.startUser(userIds[i]);
-            } else {
+            } else if (userIds[i] != currentUserId) {
                 device.stopUser(userIds[i]);
             }
         }
