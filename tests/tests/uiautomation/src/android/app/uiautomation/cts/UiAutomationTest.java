@@ -16,13 +16,16 @@
 
 package android.app.uiautomation.cts;
 
+import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.ParcelFileDescriptor;
+import android.content.pm.PackageManager;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -60,6 +63,64 @@ public class UiAutomationTest extends InstrumentationTestCase {
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         uiAutomation.setServiceInfo(info);
         grantWriteSecureSettingsPermission(uiAutomation);
+    }
+
+    public void testAdoptShellPermissions() {
+        final Context context = getInstrumentation().getContext();
+        final ActivityManager activityManager = context.getSystemService(ActivityManager.class);
+        final PackageManager packageManager = context.getPackageManager();
+
+        // Try to access APIs guarded by a platform defined signature permissions
+        try {
+            activityManager.getPackageImportance("foo.bar.baz");
+            fail("Should not be able to access APIs protected by a permission apps cannot get");
+        } catch (SecurityException e) {
+            /* expected */
+        }
+        try {
+            packageManager.grantRuntimePermission(context.getPackageName(),
+                    Manifest.permission.CAMERA, Process.myUserHandle());
+            fail("Should not be able to access APIs protected by a permission apps cannot get");
+        } catch (SecurityException e) {
+            /* expected */
+        }
+
+        // Access APIs guarded by a platform defined signature permissions
+        try {
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+
+            // Access APIs guarded by a platform defined signature permission
+            activityManager.getPackageImportance("foo.bar.baz");
+
+            // Grant ourselves a runtime permission (was granted at install)
+            assertSame(packageManager.checkPermission(Manifest.permission.CAMERA,
+                    context.getPackageName()), PackageManager.PERMISSION_DENIED);
+            packageManager.grantRuntimePermission(context.getPackageName(),
+                    Manifest.permission.CAMERA, Process.myUserHandle());
+        } catch (SecurityException e) {
+            fail("Should be able to access APIs protected by a permission apps cannot get");
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+        // Make sure the grant worked
+        assertSame(packageManager.checkPermission(Manifest.permission.CAMERA,
+                context.getPackageName()), PackageManager.PERMISSION_GRANTED);
+
+
+        // Try to access APIs guarded by a platform defined signature permissions
+        try {
+            activityManager.getPackageImportance("foo.bar.baz");
+            fail("Should not be able to access APIs protected by a permission apps cannot get");
+        } catch (SecurityException e) {
+            /* expected */
+        }
+        try {
+            packageManager.revokeRuntimePermission(context.getPackageName(),
+                    Manifest.permission.CAMERA, Process.myUserHandle());
+            fail("Should not be able to access APIs protected by a permission apps cannot get");
+        } catch (SecurityException e) {
+            /* expected */
+        }
     }
 
     public void testWindowContentFrameStats() throws Exception {
