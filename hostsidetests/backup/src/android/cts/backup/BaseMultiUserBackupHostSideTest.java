@@ -196,6 +196,17 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
                 String.format("pm install-existing --user %d %s", userId, packageName));
     }
 
+    /**
+     * Installs existing {@code packageName} for user {@code userId}. This fires off asynchronous
+     * restore and returns after it receives an intent which is sent when the restore operation has
+     * completed.
+     */
+    void installExistingPackageAsUserWaitTillComplete(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(
+                String.format("pm install-existing --user %d --wait %s", userId, packageName));
+    }
+
     /** Run device side test as user {@code userId}. */
     void checkDeviceTestAsUser(String packageName, String className, String testName, int userId)
             throws DeviceNotAvailableException {
