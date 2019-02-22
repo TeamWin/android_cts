@@ -20,3 +20,14 @@ cc_library_shared {
     sdk_version: "current",
     stl: "c++_static",
 }
+
+java_library {
+    name: "cts-api-signature-test",
+    srcs: ["src/java/**/*.java"],
+    sdk_version: "test_current",
+    static_libs: [
+        "cts-signature-common",
+        "repackaged.android.test.base",
+        "repackaged.android.test.runner",
+    ],
+}
