@@ -28,7 +28,6 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.PictureInPictureParams;
 import android.content.ComponentName;
@@ -247,7 +246,7 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestB
         }
 
         @Override
-        protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        protected void onPostCreate(Bundle savedInstanceState) {
             super.onPostCreate(savedInstanceState);
             mLifecycleLog.onActivityCallback(this, ON_POST_CREATE);
         }

@@ -28,7 +28,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-import android.annotation.NonNull;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
@@ -95,7 +94,7 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
                     Settings.Secure::putString);
         }
 
-        public void enableVrListener(@NonNull ComponentName targetVrComponent) throws Exception {
+        public void enableVrListener(ComponentName targetVrComponent) throws Exception {
             ComponentName component = new ComponentName(targetVrComponent.getPackageName(),
                     MockVrListenerService.class.getName());
             set(component.flattenToString());
