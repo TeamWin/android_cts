@@ -76,6 +76,9 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     static final String SERVICE_NAME = SERVICE_PACKAGE + "/." + SERVICE_CLASS;
 
+    // TODO(b/125844305): remove once fixed
+    private static final boolean FAIL_ON_INVALID_CONNECTION_STATE = false;
+
     private static final String TAG = "InstrumentedAutoFillService";
 
     private static final boolean DUMP_FILL_REQUESTS = false;
@@ -185,7 +188,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onConnected() {
         Log.v(TAG, "onConnected");
-        if (mConnected) {
+        if (mConnected && FAIL_ON_INVALID_CONNECTION_STATE) {
             dumpSelf();
             sReplier.addException(new IllegalStateException("onConnected() called again"));
         }
@@ -196,7 +199,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onDisconnected() {
         Log.v(TAG, "onDisconnected");
-        if (!mConnected) {
+        if (!mConnected && FAIL_ON_INVALID_CONNECTION_STATE) {
             dumpSelf();
             sReplier.addException(
                     new IllegalStateException("onDisconnected() called when disconnected"));
@@ -214,7 +217,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         } else {
             Log.i(TAG, "onFillRequest() for " + component.toShortString());
         }
-        if (!mConnected) {
+        if (!mConnected && FAIL_ON_INVALID_CONNECTION_STATE) {
             dumpSelf();
             sReplier.addException(
                     new IllegalStateException("onFillRequest() called when disconnected"));
@@ -236,7 +239,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
-        if (!mConnected) {
+        if (!mConnected && FAIL_ON_INVALID_CONNECTION_STATE) {
             dumpSelf();
             sReplier.addException(
                     new IllegalStateException("onSaveRequest() called when disconnected"));
