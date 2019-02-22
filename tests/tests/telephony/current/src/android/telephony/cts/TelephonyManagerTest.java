@@ -923,42 +923,42 @@ public class TelephonyManagerTest {
     }
 
     /**
-     * Tests TelephonyManager.getCurrentEmergencyNumberList.
+     * Tests TelephonyManager.getEmergencyNumberList.
      */
     @Test
-    public void testGetCurrentEmergencyNumberList() {
+    public void testGetEmergencyNumberList() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
         Map<Integer, List<EmergencyNumber>> emergencyNumberList
-          = mTelephonyManager.getCurrentEmergencyNumberList();
+          = mTelephonyManager.getEmergencyNumberList();
         // TODO enhance it later
     }
 
     /**
-     * Tests TelephonyManager.isCurrentEmergencyNumber.
+     * Tests TelephonyManager.isEmergencyNumber.
      */
     @Test
-    public void testIsCurrentEmergencyNumber() {
+    public void testIsEmergencyNumber() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        boolean isEmergencyNumber = mTelephonyManager.isCurrentEmergencyNumber("911");
+        boolean isEmergencyNumber = mTelephonyManager.isEmergencyNumber("911");
         // TODO enhance it later
     }
 
     /**
-     * Tests TelephonyManager.isCurrentPotentialEmergencyNumber.
+     * Tests TelephonyManager.isPotentialEmergencyNumber.
      */
     @Test
-    public void testIsCurrentPotentialEmergencyNumber() {
+    public void testIsPotentialEmergencyNumber() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
         // use shell permission to run system api
         boolean isEmergencyNumber =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                        (tm) -> tm.isCurrentPotentialEmergencyNumber("911"));
+                        (tm) -> tm.isPotentialEmergencyNumber("911"));
         // TODO enhance it later
     }
 
