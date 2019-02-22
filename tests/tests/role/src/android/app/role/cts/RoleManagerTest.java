@@ -40,6 +40,7 @@ import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -113,6 +114,7 @@ public class RoleManagerTest {
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
     }
 
+    @FlakyTest
     @Test
     public void requestRoleAndRejectThenIsNotRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
@@ -120,6 +122,7 @@ public class RoleManagerTest {
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
     }
 
+    @FlakyTest
     @Test
     public void requestRoleAndApproveThenIsRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
