@@ -1849,6 +1849,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Navigate to \"Data usage\" page and then into the \"Wi-Fi data usage\" category.\n
         Confirm that \"All work apps\" section is present and that the list includes badged apps.\n
         Confirm that tapping on \"All work apps\" section shows a list of only work profile apps data usage.\n
+        (If the section is not present, this might be because work apps have not used Wi-Fi data yet. Ensure that you have used Wi-Fi data on a work app, then repeat these instructions.)\n
         \n
         Then use the Back button to return to this test and mark accordingly.
     </string>
