@@ -39,6 +39,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     private static final String TEST_APP_APK = "CtsSimpleApp.apk";
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
+    private static final String SIMPLE_PRE_M_APP_APK = "CtsSimplePreMApp.apk";
 
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
@@ -84,6 +85,14 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
         // Unlock FBE and verify resetPassword is enabled again
         executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
         executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
+    }
+
+    public void testPermissionGrantPreMApp() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(SIMPLE_PRE_M_APP_APK, mUserId);
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantStateAppPreMDeviceAdminPreQ");
     }
 
     protected void executeDeviceTestClass(String className) throws Exception {
