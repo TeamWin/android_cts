@@ -24,6 +24,7 @@ import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.view.View;
+import android.view.contentcapture.ContentCaptureSession;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -104,6 +105,17 @@ public final class Helper {
         final TextView child = new TextView(context);
         child.setText(text);
         child.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_YES);
+        Log.v(TAG, "newImportantView(text=" + text + ", id=" + child.getAutofillId() + ")");
+        return child;
+    }
+
+    /**
+     * Creates a view that can be added to a parent and is important for content capture
+     */
+    public static TextView newImportantView(@NonNull Context context,
+            @NonNull ContentCaptureSession session, @NonNull String text) {
+        final TextView child = newImportantView(context, text);
+        child.setContentCaptureSession(session);
         return child;
     }
 

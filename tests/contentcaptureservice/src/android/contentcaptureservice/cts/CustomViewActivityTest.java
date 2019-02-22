@@ -18,8 +18,8 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewDisappeared;
@@ -143,7 +143,7 @@ public class CustomViewActivityTest extends
         assertThat(events.size()).isAtLeast(CustomViewActivity.MIN_EVENTS + additionalEvents);
 
         // Assert just the relevant events
-        assertViewHierarchyStarted(events, 0);
+        assertViewTreeStarted(events, 0);
         assertDecorViewAppeared(events, 1, decorView);
         assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
         assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
@@ -155,7 +155,7 @@ public class CustomViewActivityTest extends
         // This is the "wrong" part - the parent is notified last
         assertViewWithUnknownParentAppeared(events, 6, session.id, activity.mCustomView);
 
-        assertViewHierarchyFinished(events, 7);
+        assertViewTreeFinished(events, 7);
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
     }
