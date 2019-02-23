@@ -32,8 +32,6 @@ import java.util.Scanner;
 
 import static org.junit.Assert.*;
 
-import static org.junit.Assert.*;
-
 public class AdbUtils {
 
     /** Runs a commandline on the specified device

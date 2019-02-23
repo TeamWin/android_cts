@@ -66,8 +66,8 @@ public class Poc17_03 extends SecurityTestCase {
     public void testPocCVE_2017_0334() throws Exception {
         if (containsDriver(getDevice(), "/dev/dri/renderD129")) {
            String out = AdbUtils.runPoc("CVE-2017-0334", getDevice());
-           assertNotMatchesMultiLine(".*Leaked ptr is (0x[fF]{6}[cC]0[a-fA-F0-9]{8}"
-               +"|0x[c-fC-F][a-fA-F0-9]{7}).*",out);
+           assertNotMatchesMultiLine("Leaked ptr is (0x[fF]{6}[cC]0[a-fA-F0-9]{8}"
+               +"|0x[c-fC-F][a-fA-F0-9]{7})",out);
         }
     }
 
@@ -79,8 +79,8 @@ public class Poc17_03 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
         String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine(".*Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
-                         "audioserver <<<.*", logcatOut);
+        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
+                         "audioserver <<<", logcatOut);
     }
 
     /*
