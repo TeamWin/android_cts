@@ -40,7 +40,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -266,21 +265,20 @@ public class SplitPermissionTest {
     }
 
     /**
-     * The background location permission is never granted by default, not even for pre-M apps.
+     * The background location permission granted by default for pre-M apps.
      */
     @Test
     public void backgroundLocationPermissionDefaultGrantPreM() throws Exception {
         install(APK_LOCATION_22);
 
         assertPermissionGranted(ACCESS_COARSE_LOCATION);
-        assertPermissionRevoked(ACCESS_BACKGROUND_LOCATION);
+        assertPermissionGranted(ACCESS_BACKGROUND_LOCATION);
     }
 
     /**
      * If a permission was granted before the split happens, the new permission should inherit the
      * granted state.
      */
-    @Ignore("There is no post-M permission that has the default inheritence behavior")
     @Test
     public void inheritGrantedPermissionState() throws Exception {
         install(APK_LOCATION_29);
@@ -289,19 +287,6 @@ public class SplitPermissionTest {
         install(APK_LOCATION_28);
 
         assertPermissionGranted(ACCESS_BACKGROUND_LOCATION);
-    }
-
-    /**
-     * Background location permissions do not inherit the state on split.
-     */
-    @Test
-    public void backgroundLocationDoesNotInheritGrantedPermissionState() throws Exception {
-        install(APK_LOCATION_29);
-        grantPermission(APP_PKG, ACCESS_COARSE_LOCATION);
-
-        install(APK_LOCATION_28);
-
-        assertPermissionRevoked(ACCESS_BACKGROUND_LOCATION);
     }
 
     /**
