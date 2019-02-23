@@ -802,7 +802,20 @@ final class Helper {
      * Checks if screen orientation can be changed.
      */
     public static boolean isRotationSupported(Context context) {
-        return !context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        final PackageManager packageManager = context.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.v(TAG, "isRotationSupported(): is auto");
+            return false;
+        }
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            Log.v(TAG, "isRotationSupported(): has leanback feature");
+            return false;
+        }
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_PC)) {
+            Log.v(TAG, "isRotationSupported(): is PC");
+            return false;
+        }
+        return true;
     }
 
     /**
