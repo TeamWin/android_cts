@@ -74,7 +74,6 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-@Ignore
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     private static final String SESSION_ID = "MediaSession2Test_permission";
@@ -151,6 +150,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPlay() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYBACK_PLAY, (controller) -> {
             controller.play();
@@ -158,6 +158,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPause() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYBACK_PAUSE, (controller) -> {
             controller.pause();
@@ -165,6 +166,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testStop() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYBACK_STOP, (controller) -> {
             controller.stop();
@@ -172,6 +174,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testFastForward() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_SESSION_FAST_FORWARD, (controller) -> {
             controller.fastForward();
@@ -179,6 +182,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testRewind() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_SESSION_REWIND, (controller) -> {
             controller.rewind();
@@ -186,6 +190,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testSeekTo() throws InterruptedException {
         final long position = 10;
         testOnCommandRequest(COMMAND_CODE_PLAYBACK_SEEK_TO, (controller) -> {
@@ -194,6 +199,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testSkipToNext() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM, (controller) -> {
             controller.skipToNextItem();
@@ -201,6 +207,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testSkipToPrevious() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM, (controller) -> {
             controller.skipToPreviousItem();
@@ -208,6 +215,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testSkipToPlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM, (controller) -> {
@@ -216,6 +224,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testSetPlaylist() throws InterruptedException {
         List<MediaItem2> list = TestUtils.createPlaylist(2);
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST, (controller) -> {
@@ -224,6 +233,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testUpdatePlaylistMetadata() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA, (controller) -> {
             controller.updatePlaylistMetadata(null);
@@ -231,6 +241,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testAddPlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_ADD_ITEM, (controller) -> {
@@ -239,6 +250,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testRemovePlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_REMOVE_ITEM, (controller) -> {
@@ -247,6 +259,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testReplacePlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_REPLACE_ITEM, (controller) -> {
@@ -255,6 +268,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testSetVolume() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_SET_VOLUME, (controller) -> {
             controller.setVolumeTo(0, 0);
@@ -262,6 +276,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPlayFromMediaId() throws InterruptedException {
         final String mediaId = "testPlayFromMediaId";
         createSessionWithAllowedActions(
@@ -281,6 +296,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPlayFromUri() throws InterruptedException {
         final Uri uri = Uri.parse("play://from.uri");
         createSessionWithAllowedActions(
@@ -300,6 +316,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPlayFromSearch() throws InterruptedException {
         final String query = "testPlayFromSearch";
         createSessionWithAllowedActions(
@@ -319,6 +336,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPrepareFromMediaId() throws InterruptedException {
         final String mediaId = "testPrepareFromMediaId";
         createSessionWithAllowedActions(
@@ -338,6 +356,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPrepareFromUri() throws InterruptedException {
         final Uri uri = Uri.parse("prepare://from.uri");
         createSessionWithAllowedActions(
@@ -357,6 +376,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testPrepareFromSearch() throws InterruptedException {
         final String query = "testPrepareFromSearch";
         createSessionWithAllowedActions(
@@ -376,6 +396,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
+    @Ignore
     public void testChangingPermissionWithSetAllowedCommands() throws InterruptedException {
         final String query = "testChangingPermissionWithSetAllowedCommands";
         createSessionWithAllowedActions(
