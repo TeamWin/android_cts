@@ -45,7 +45,6 @@ import android.provider.Settings;
 import android.server.am.CommandSession.SizeInfo;
 import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.settings.SettingsSession;
-import android.support.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -102,14 +101,12 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testRotation(NO_RELAUNCH_ACTIVITY, 2, 0, 0);
     }
 
-    @FlakyTest(bugId = 73701185)
     @Test
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
         testChangeFontScale(FONT_SCALE_ACTIVITY, true /* relaunch */);
     }
 
-    @FlakyTest(bugId = 73812451)
     @Test
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch

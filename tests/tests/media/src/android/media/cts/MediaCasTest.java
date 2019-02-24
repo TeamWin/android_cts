@@ -31,6 +31,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import java.lang.ArrayIndexOutOfBoundsException;
 import java.nio.ByteBuffer;
@@ -48,6 +49,7 @@ public class MediaCasTest extends AndroidTestCase {
     // CA System Ids used for testing
     private static final int sInvalidSystemId = 0;
     private static final int sClearKeySystemId = 0xF6D8;
+    private static final int API_LEVEL_BEFORE_CAS_SESSION = 28;
 
     // ClearKey CAS/Descrambler test vectors
     private static final String sProvisionStr =
@@ -569,8 +571,16 @@ public class MediaCasTest extends AndroidTestCase {
             int arg, byte[] data, Handler handler) throws Exception {
         TestEventListener listener = new TestEventListener(mediaCas, session, event, arg, data);
         mediaCas.setEventListener(listener, handler);
-        session.sendSessionEvent(event, arg, data);
-        assertTrue("Didn't receive event callback for " + event, listener.waitForResult());
+        try {
+            session.sendSessionEvent(event, arg, data);
+        } catch (UnsupportedCasException e) {
+            if (!PropertyUtil.isVendorApiLevelNewerThan(API_LEVEL_BEFORE_CAS_SESSION)){
+                Log.d(TAG, "Send Session Event isn't supported, Skipped this test case");
+                return;
+            }
+            throw e;
+        }
+        assertTrue("Didn't receive session event callback for " + event, listener.waitForResult());
     }
 
     // helper to descramble from the sample input (sInputBufferStr) and get output buffer

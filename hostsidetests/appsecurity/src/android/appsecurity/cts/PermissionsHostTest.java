@@ -528,6 +528,6 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
     }
 }

@@ -39,7 +39,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
-LOCAL_PRIVATE_PLATFORM_APIS := true
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
 

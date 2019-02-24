@@ -24,8 +24,8 @@ LOCAL_PACKAGE_NAME := CtsPackageInstallerTapjackingTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
-    android-support-test \
-    compatibility-device-util \
+    androidx.test.rules \
+    compatibility-device-util-axt \
     platform-test-annotations \
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res

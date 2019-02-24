@@ -72,6 +72,22 @@
             android:label="MinAspectRatioUnsetActivity"
             android:resizeableActivity="false" />
 
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioLandscapeActivity"
+            android:label="MinAspectRatioLandscapeActivity"
+            android:minWidth="1dp"
+            android:minAspectRatio="3.0"
+            android:resizeableActivity="false"
+            android:screenOrientation="landscape" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioPortraitActivity"
+            android:label="MinAspectRatioPortraitActivity"
+            android:minWidth="1dp"
+            android:minAspectRatio="3.0"
+            android:resizeableActivity="false"
+            android:screenOrientation="portrait" />
+
         <activity android:name="android.server.am.ActivityManagerTestBase$SideActivity"
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.SideActivity"/>

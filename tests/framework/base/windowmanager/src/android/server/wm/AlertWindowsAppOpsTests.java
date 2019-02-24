@@ -55,7 +55,6 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:AlertWindowsAppOpsTests
  */
-@FlakyTest(detail = "Can be promoted to pre-submit once confirmed stable.")
 @Presubmit
 public class AlertWindowsAppOpsTests {
     private static final long APP_OP_CHANGE_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(2);

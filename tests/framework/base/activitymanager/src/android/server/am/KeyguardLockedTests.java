@@ -295,7 +295,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testShowWhenLockedAttrImeActivityAndShowSoftInput() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              // Leverage MockImeSession to ensure at least an IME exists as default.
@@ -317,7 +316,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testShowWhenLockedImeActivityAndShowSoftInput() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              final TestActivitySession<ShowWhenLockedImeActivity> imeTestActivitySession = new

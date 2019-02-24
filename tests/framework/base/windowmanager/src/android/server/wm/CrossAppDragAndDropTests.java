@@ -67,7 +67,6 @@ import java.util.regex.Pattern;
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
-@FlakyTest(bugId = 109874623)
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 

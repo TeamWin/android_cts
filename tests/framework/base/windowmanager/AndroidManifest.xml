@@ -44,7 +44,7 @@
         <activity android:name="android.server.wm.WindowFocusTests$SecondaryActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity" />
-
+        <activity android:name="android.app.Activity"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

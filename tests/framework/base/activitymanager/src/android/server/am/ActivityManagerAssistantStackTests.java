@@ -65,7 +65,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAssistantStackTests
  */
 @Presubmit
-@FlakyTest(bugId = 71875631)
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
     private int mAssistantDisplayId = DEFAULT_DISPLAY;

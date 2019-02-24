@@ -62,6 +62,7 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
     private boolean mSupportsMultiUser;
     private int mPrimaryUserId;
     private int mSecondaryUserId;
+    private int mStartingUserId;
 
     @Before
     public void setUp() throws Exception {
@@ -72,6 +73,7 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
             return;
         }
         mPrimaryUserId = getDevice().getPrimaryUserId();
+        mStartingUserId = getDevice().getCurrentUser();
         mSecondaryUserId = users[1];
         getDevice().switchUser(mSecondaryUserId);
         uninstallTestPackages();
@@ -84,7 +86,7 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
             return;
         }
         uninstallTestPackages();
-        getDevice().switchUser(mPrimaryUserId);
+        getDevice().switchUser(mStartingUserId);
     }
 
     // each connection to an exposed component needs to run in its own test to

@@ -167,7 +167,7 @@ public class WindowFocusTests {
 
             final boolean perDisplayFocusEnabled = getInstrumentation()
                     .getTargetContext().getResources()
-                    .getBoolean(com.android.internal.R.bool.config_perDisplayFocusEnabled);
+                    .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
             if (perDisplayFocusEnabled) {
                 primaryActivity.assertWindowFocusState(true /* hasFocus */);
                 sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
@@ -207,7 +207,7 @@ public class WindowFocusTests {
     @Test
     public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
         if (getInstrumentation().getTargetContext().getResources().getBoolean(
-                com.android.internal.R.bool.config_perDisplayFocusEnabled)) {
+                android.R.bool.config_perDisplayFocusEnabled)) {
             return;
         }
 
@@ -249,7 +249,6 @@ public class WindowFocusTests {
      * - The window which lost top-focus can be notified about pointer-capture lost.
      */
     @Test
-    @FlakyTest(bugId = 121122996)
     public void testPointerCapture() throws InterruptedException {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);

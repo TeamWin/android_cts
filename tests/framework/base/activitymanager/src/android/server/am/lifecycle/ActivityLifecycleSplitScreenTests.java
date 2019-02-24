@@ -58,7 +58,6 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityLifecycleSplitScreenTests
  */
-@FlakyTest(bugId = 77652261)
 @MediumTest
 @Presubmit
 public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTestBase {

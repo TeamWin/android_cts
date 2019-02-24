@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
@@ -211,6 +213,23 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.computeState(LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertNotExist(BROADCAST_RECEIVER_ACTIVITY);
+    }
+
+    @Test
+    public void testLaunchTaskOnHome() {
+        if (!hasHomeScreen()) {
+            return;
+        }
+
+        getLaunchActivityBuilder().setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
+
+        getLaunchActivityBuilder().setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_TASK_ON_HOME).execute();
+
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        mAmWmState.waitForHomeActivityVisible();
+        mAmWmState.assertHomeActivityVisible(true);
     }
 
     @Test

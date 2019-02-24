@@ -25,15 +25,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

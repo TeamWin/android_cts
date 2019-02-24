@@ -77,6 +77,8 @@ public class PackageManagerTest extends AndroidTestCase {
             "android.content.cts.CALL_ABROAD_PERMISSION";
     private static final String PROVIDER_NAME = "android.content.cts.MockContentProvider";
     private static final String PERMISSIONGROUP_NAME = "android.permission-group.COST_MONEY";
+    // There are 10 activities in AndroidManifest
+    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 10;
 
     @Override
     protected void setUp() throws Exception {
@@ -608,6 +610,10 @@ public class PackageManagerTest extends AndroidTestCase {
         assertEquals(PERMISSIONGROUP_NAME, declaredPermission.group);
         assertEquals(PermissionInfo.PROTECTION_NORMAL, declaredPermission.protectionLevel);
 
+        // Check if number of activities in PackageInfo matches number of activities in manifest,
+        // to make sure no synthesized activities not in the manifest are returned.
+        assertEquals("Number of activities in manifest != Number of activities in PackageInfo",
+                NUM_OF_ACTIVITIES_IN_MANIFEST, pkgInfo.activities.length);
         // Check activities
         ActivityInfo activity = findPackageItemOrFail(pkgInfo.activities, ACTIVITY_NAME);
         assertTrue(activity.enabled);

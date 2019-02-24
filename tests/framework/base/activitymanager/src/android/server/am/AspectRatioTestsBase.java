@@ -37,7 +37,7 @@ class AspectRatioTestsBase {
     private static final float FLOAT_EQUALITY_DELTA = .01f;
 
     interface AssertAspectRatioCallback {
-        void assertAspectRatio(float actual, int displayId);
+        void assertAspectRatio(float actual, int displayId, Point size);
     }
 
     void runAspectRatioTest(final ActivityTestRule activityRule,
@@ -46,7 +46,8 @@ class AspectRatioTestsBase {
         PollingCheck.waitFor(activity::hasWindowFocus);
         try {
             callback.assertAspectRatio(getActivityAspectRatio(activity),
-                    getDisplay(activity).getDisplayId());
+                    getDisplay(activity).getDisplayId(),
+                    getActivitySize(activity));
         } finally {
             finishActivity(activityRule);
         }
@@ -68,8 +69,14 @@ class AspectRatioTestsBase {
                 WindowManager.class).getDefaultDisplay());
     }
 
-    static float getActivityAspectRatio(Activity activity) {
+    private static float getActivityAspectRatio(Activity activity) {
         return getAspectRatio(getDisplay(activity));
+    }
+
+    private static Point getActivitySize(Activity activity) {
+        final Point size = new Point();
+        getDisplay(activity).getSize(size);
+        return size;
     }
 
     private static Display getDisplay(Activity activity) {

@@ -34,7 +34,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:StartActivityTests
  */
 @Presubmit
-@FlakyTest
 public class StartActivityTests extends ActivityManagerTestBase {
 
     @Rule
