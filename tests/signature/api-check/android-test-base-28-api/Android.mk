@@ -16,11 +16,12 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsAndroidTestBase27ApiSignatureTestCases
+LOCAL_PACKAGE_NAME := CtsAndroidTestBase28ApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
     android-test-base-current.api \
 
 LOCAL_MIN_SDK_VERSION := 25
+LOCAL_SDK_VERSION := 28
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
