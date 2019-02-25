@@ -38,6 +38,7 @@ import android.content.pm.PackageInstaller.SessionInfo;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -52,6 +53,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @RunWith(Parameterized.class)
+@AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class InstallSessionParamsUnitTest {
     private static final String LOG_TAG = InstallSessionParamsUnitTest.class.getSimpleName();
     private static Optional UNSET = new Optional(false, null);

@@ -45,6 +45,7 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ServiceInfo;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 
@@ -58,6 +59,7 @@ import java.util.List;
  * in AndroidManifest.xml just for test of PackageManager, and there are no corresponding parts
  * of these declarations in test project.
  */
+@AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class PackageManagerTest extends AndroidTestCase {
     private PackageManager mPackageManager;
     private static final String PACKAGE_NAME = "android.content.cts";

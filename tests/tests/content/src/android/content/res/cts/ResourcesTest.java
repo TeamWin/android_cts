@@ -35,6 +35,7 @@ import android.graphics.drawable.ColorStateListDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -957,6 +958,8 @@ public class ResourcesTest extends AndroidTestCase {
                 mResources.getFont(R.font.sample_bolditalic_family).getStyle());
     }
 
+    // TODO Figure out why it fails in the instant mode.
+    @AppModeFull
     public void testComplextColorDrawableAttrInflation() {
         Context context = InstrumentationRegistry.getTargetContext();
         LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(

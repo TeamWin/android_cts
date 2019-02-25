@@ -44,6 +44,7 @@ import java.util.Calendar;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+//@AppModeFull // TODO(Instant) Should clip board data be visible?
 public class ClipDescriptionTest {
     private UiDevice mUiDevice;
     private Context mContext;
