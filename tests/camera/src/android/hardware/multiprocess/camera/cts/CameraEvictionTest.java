@@ -24,6 +24,7 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.cts.CameraCtsActivity;
 import android.os.Handler;
 import android.test.ActivityInstrumentationTestCase2;
@@ -33,7 +34,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.mockito.Mockito.*;
 
@@ -253,6 +256,57 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         forceCtsActivityToTop();
     }
 
+    public static class AvailabilityCallbackImpl extends CameraManager.AvailabilityCallback {
+        @Override
+        public void onCameraAvailable(String cameraId) {
+            // No op
+        }
+
+        @Override
+        public void onCameraUnavailable(String cameraId) {
+            // No op
+        }
+
+        @Override
+        public void onCameraAccessPrioritiesChanged() {
+            // No op
+        }
+    }
+
+    /**
+     * Test camera availability access callback.
+     */
+    public void testCamera2AccessCallback() throws Throwable {
+        int PERMISSION_CALLBACK_TIMEOUT_MS = 2000;
+        CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
+        assertNotNull(manager);
+        String[] cameraIds = manager.getCameraIdList();
+
+        if (cameraIds.length == 0) {
+            Log.i(TAG, "Skipping testCamera2PermissionCallback, device has no cameras.");
+            return;
+        }
+
+        assertTrue(mContext.getMainLooper() != null);
+
+        // Setup camera manager
+        Handler cameraHandler = new Handler(mContext.getMainLooper());
+
+        final CameraManager.AvailabilityCallback spyAvailCb = spy(new AvailabilityCallbackImpl());
+        manager.registerAvailabilityCallback(spyAvailCb, cameraHandler);
+
+        // Remove current task from top of stack. This will impact the camera access
+        // pririorties.
+        getActivity().moveTaskToBack(/*nonRoot*/true);
+
+        verify(spyAvailCb, timeout(
+                PERMISSION_CALLBACK_TIMEOUT_MS).atLeastOnce()).onCameraAccessPrioritiesChanged();
+
+        forceCtsActivityToTop();
+
+        verify(spyAvailCb, timeout(
+                PERMISSION_CALLBACK_TIMEOUT_MS).atLeastOnce()).onCameraAccessPrioritiesChanged();
+    }
 
     /**
      * Test basic eviction scenarios for camera used in MediaRecoder
