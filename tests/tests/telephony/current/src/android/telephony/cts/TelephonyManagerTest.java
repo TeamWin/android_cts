@@ -42,6 +42,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.AvailableNetworkInfo;
 import android.telephony.CellLocation;
 import android.telephony.NetworkRegistrationState;
 import android.telephony.PhoneStateListener;
@@ -57,6 +58,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
@@ -64,6 +66,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -79,6 +82,7 @@ import java.util.regex.Pattern;
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
+    private SubscriptionManager mSubscriptionManager;
     private boolean mOnCellLocationChangedCalled = false;
     private ServiceState mServiceState;
     private final Object mLock = new Object();
@@ -92,6 +96,8 @@ public class TelephonyManagerTest {
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mSubscriptionManager = (SubscriptionManager) getContext()
+                .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
         mPackageManager = getContext().getPackageManager();
     }
 
@@ -946,5 +952,88 @@ public class TelephonyManagerTest {
         }
         boolean isEmergencyNumber = mTelephonyManager.isCurrentPotentialEmergencyNumber("911");
         // TODO enhance it later
+    }
+
+    /**
+     * Tests {@link TelephonyManager#setPreferredOpportunisticDataSubscription} and
+     * {@link TelephonyManager#getPreferredOpportunisticDataSubscription}
+     */
+    @Test
+    public void testPreferredOpportunisticDataSubscription() {
+        int randomSubId = 1;
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        int subId =
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getPreferredOpportunisticDataSubscription());
+        assertEquals(subId, SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+        List<SubscriptionInfo> subscriptionInfoList =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
+                            (tm) -> tm.getOpportunisticSubscriptions());
+        if (subscriptionInfoList == null || subscriptionInfoList.size() == 0) {
+            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setPreferredOpportunisticDataSubscription(randomSubId));
+            assertEquals(res, false);
+            subId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.getPreferredOpportunisticDataSubscription());
+            assertEquals(subId, SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+
+        } else {
+            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setPreferredOpportunisticDataSubscription(
+                            subscriptionInfoList.get(0).getSubscriptionId()));
+            assertEquals(res, true);
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getPreferredOpportunisticDataSubscription());
+            assertEquals(subId, subscriptionInfoList.get(0).getSubscriptionId());
+        }
+
+        boolean result = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.setPreferredOpportunisticDataSubscription(
+                        SubscriptionManager.DEFAULT_SUBSCRIPTION_ID));
+        assertEquals(result, true);
+        subId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+            (tm) -> tm.getPreferredOpportunisticDataSubscription());
+        assertEquals(subId, SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+    }
+
+    /**
+     * Tests {@link TelephonyManager#updateAvailableNetworks}
+     */
+    @Test
+    public void testUpdateAvailableNetworks() {
+        int randomSubId = 1;
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        List<SubscriptionInfo> subscriptionInfoList =
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
+                (tm) -> tm.getOpportunisticSubscriptions());
+        List<String> mccMncs = new ArrayList<String>();
+        List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
+        if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
+                || !mSubscriptionManager.isActiveSubscriptionId(
+                        subscriptionInfoList.get(0).getSubscriptionId())) {
+            AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(randomSubId,
+                    AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
+            availableNetworkInfos.add(availableNetworkInfo);
+            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
+            assertEquals(res, false);
+        } else {
+            AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
+                    subscriptionInfoList.get(0).getSubscriptionId(),
+                    AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
+            availableNetworkInfos.add(availableNetworkInfo);
+            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
+            assertEquals(res, true);
+            availableNetworkInfos.clear();
+            res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
+            assertEquals(res, true);
+        }
     }
 }
