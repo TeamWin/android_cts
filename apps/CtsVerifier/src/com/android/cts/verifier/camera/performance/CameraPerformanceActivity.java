@@ -16,22 +16,24 @@
 
 package com.android.cts.verifier.camera.performance;
 
+import android.app.AlertDialog;
+import android.app.Instrumentation;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.hardware.camera2.cts.PerformanceTest;
+import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.cts.CameraTestCase;
+import android.hardware.cts.LegacyCameraPerformanceTest;
+import android.os.Bundle;
+import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ReportLog.Metric;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
-
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
-import android.app.Instrumentation;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.os.Bundle;
-import android.os.Handler;
-import android.support.test.InstrumentationRegistry;
-import android.util.Log;
-import android.view.View;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -39,25 +41,18 @@ import junit.framework.TestSuite;
 
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
+import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
-import org.junit.runner.Result;
-import org.junit.runner.Runner;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
-import java.util.Enumeration;
-import java.util.Set;
-
-import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
-import android.hardware.camera2.cts.PerformanceTest;
-import android.hardware.cts.CameraTestCase;
-import android.hardware.cts.LegacyCameraPerformanceTest;
 
 /**
  * This test checks the camera performance by running the respective CTS performance test cases
