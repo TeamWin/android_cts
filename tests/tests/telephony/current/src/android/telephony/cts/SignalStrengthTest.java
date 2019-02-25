@@ -84,12 +84,15 @@ public class SignalStrengthTest extends AndroidTestCase {
 
         assertTrue("No Signal Strength Information Reported!", !signalStrengths.isEmpty());
 
-        Set<Class<?>> types = new HashSet<Class<?>>();
+        Set<Class<? extends CellSignalStrength>> types =
+                new HashSet<Class<? extends CellSignalStrength>>();
 
-        Class<?> dataType = getSignalStrengthTypeForNetworkType(mTm.getDataNetworkType());
+        Class<? extends CellSignalStrength> dataType =
+                getSignalStrengthTypeForNetworkType(mTm.getDataNetworkType());
         if (dataType != null) types.add(dataType);
 
-        Class<?> voiceType = getSignalStrengthTypeForNetworkType(mTm.getNetworkType());
+        Class<? extends CellSignalStrength> voiceType =
+                getSignalStrengthTypeForNetworkType(mTm.getNetworkType());
 
         // Check if camped for Voice-Only
         if (dataType == null && voiceType != null) {
@@ -112,6 +115,9 @@ public class SignalStrengthTest extends AndroidTestCase {
             assertTrue("Invalid SignalStrength type detected" + css.getClass(),
                     types.contains(css.getClass()));
         }
+
+        assertTrue(!ss.getCellSignalStrengths(dataType).isEmpty()
+                || !ss.getCellSignalStrengths(voiceType).isEmpty());
     }
 
     /** Check whether the device is LTE + NR dual connected */
@@ -121,7 +127,8 @@ public class SignalStrengthTest extends AndroidTestCase {
     }
 
     /** Get the CellSignalStrength class type that should be returned when using a network type */
-    private static Class<?> getSignalStrengthTypeForNetworkType(int networkType) {
+    private static Class<? extends CellSignalStrength>
+            getSignalStrengthTypeForNetworkType(int networkType) {
         switch(networkType) {
             case TelephonyManager.NETWORK_TYPE_GPRS: /* fall through */
             case TelephonyManager.NETWORK_TYPE_EDGE: /* fall through */
