@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.LocationOnScreenTests.TestActivity.COLOR_TOLERANCE;
 import static android.server.wm.LocationOnScreenTests.TestActivity.EXTRA_LAYOUT_PARAMS;
 import static android.server.wm.LocationOnScreenTests.TestActivity.TEST_COLOR_1;
 import static android.server.wm.LocationOnScreenTests.TestActivity.TEST_COLOR_2;
@@ -33,6 +34,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -175,14 +177,29 @@ public class LocationOnScreenTests {
     }
 
     private boolean isTestColors(Bitmap screenshot, int x, int y) {
-        return screenshot.getPixel(x, y) == TEST_COLOR_1
-                && screenshot.getPixel(x + 1, y) == TEST_COLOR_2;
+        return sameColorWithinTolerance(screenshot.getPixel(x, y), TEST_COLOR_1)
+                && sameColorWithinTolerance(screenshot.getPixel(x + 1, y), TEST_COLOR_2);
+    }
+
+    /**
+     * Returns whether two colors are considered the same.
+     *
+     * Some tolerance is allowed to compensate for errors introduced when screenshots are scaled.
+     */
+    private static boolean sameColorWithinTolerance(int pixelColor, int testColor) {
+        final Color pColor = Color.valueOf(pixelColor);
+        final Color tColor = Color.valueOf(testColor);
+        return pColor.alpha() == tColor.alpha()
+                && Math.abs(pColor.red() - tColor.red()) <= COLOR_TOLERANCE
+                && Math.abs(pColor.blue() - tColor.blue()) <= COLOR_TOLERANCE
+                && Math.abs(pColor.green() - tColor.green()) <= COLOR_TOLERANCE;
     }
 
     public static class TestActivity extends Activity {
 
         static final int TEST_COLOR_1 = 0xff123456;
         static final int TEST_COLOR_2 = 0xfffedcba;
+        static final int COLOR_TOLERANCE = 4;
         static final String EXTRA_LAYOUT_PARAMS = "extra.layout_params";
         private View mView;
         private boolean mEnterAnimationComplete;
