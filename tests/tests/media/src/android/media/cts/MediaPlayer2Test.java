@@ -314,6 +314,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         MediaPlayer2 mp = createMediaPlayer2(mContext, resid);
 
+        float maxVol = mp.getMaxPlayerVolume();
+        assertTrue(maxVol > 0.0);
+
         Monitor onPrepareCalled = new Monitor();
         Monitor onPlayCalled = new Monitor();
         Monitor onSeekToCalled = new Monitor();
@@ -522,7 +525,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             onPlayCalled.waitForSignal();
             assertTrue(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
-            long duration = mp.getDuration(mp.getCurrentDataSource());
+            long duration = mp.getDuration();
             Thread.sleep(duration * 4); // allow for several loops
             assertTrue(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             assertEquals("wrong number of completion signals", 0,
@@ -2123,6 +2126,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, Size size) {
+                assertEquals(size, mp.getVideoSize());
                 mOnVideoSizeChangedCalled.signal();
             }
 
