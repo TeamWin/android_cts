@@ -15,23 +15,24 @@
  */
 package android.content.pm.cts.shortcuthost;
 
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class ShortcutManagerMultiuserTest extends BaseShortcutManagerHostTest {
     private static final String TARGET_APK = "CtsShortcutMultiuserTest.apk";
     private static final String TARGET_PKG = "android.content.pm.cts.shortcut.multiuser";
 
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         getDevice().uninstallPackage(TARGET_PKG);
 
         super.tearDown();
     }
 
+    @Test
     public void testManagedUser() throws Exception {
         if (!mIsMultiuserSupported || !mIsManagedUserSupported) {
             return;
@@ -58,6 +59,7 @@ public class ShortcutManagerMultiuserTest extends BaseShortcutManagerHostTest {
                 "test05_getAndLaunch_managed", profileId);
     }
 
+    @Test
     public void testSecondaryUser() throws Exception {
         if (!mIsMultiuserSupported) {
             return;
