@@ -14,27 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# cts-api-signature-test java library
-# ===================================
-
-include $(CLEAR_VARS)
-
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src/java)
-
-LOCAL_MODULE := cts-api-signature-test
-
-LOCAL_SDK_VERSION := test_current
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    cts-signature-common \
-    repackaged.android.test.base \
-    repackaged.android.test.runner
-
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
 # hidden API lists
 # ===================================
 
