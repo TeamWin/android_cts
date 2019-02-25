@@ -58,6 +58,7 @@ import android.telephony.cts.locationaccessingapp.CtsLocationAccessService;
 import android.telephony.cts.locationaccessingapp.ICtsLocationAccessControl;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
@@ -434,6 +435,15 @@ public class TelephonyManagerTest {
         assertTrue(TextUtils.isEmpty(state.getVoiceOperatorAlphaLong()));
         assertTrue(TextUtils.isEmpty(state.getVoiceOperatorAlphaShort()));
         assertTrue(TextUtils.isEmpty(state.getVoiceOperatorNumeric()));
+    }
+
+    @Test
+    public void testGetRadioHalVersion() {
+        Pair<Integer, Integer> version = mTelephonyManager.getRadioHalVersion();
+
+        // The version must be valid, and the versions start with 1.0
+        assertFalse("Invalid Radio HAL Version: " + version,
+                version.first < 1 || version.second < 0);
     }
 
     @Test
