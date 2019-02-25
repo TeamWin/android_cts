@@ -15,19 +15,19 @@
  */
 package android.os.cts.batterysaving;
 
+import static android.provider.Settings.Global.BATTERY_SAVER_CONSTANTS;
 import static android.provider.Settings.Secure.LOCATION_MODE_OFF;
-import static android.provider.Settings.Secure.LOCATION_PROVIDERS_ALLOWED;
 
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
 import static com.android.compatibility.common.util.BatteryUtils.turnOnScreen;
-import static com.android.compatibility.common.util.SettingsUtils.putSecureSetting;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -38,10 +38,10 @@ import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.TestUtils.RunnableWithThrow;
 
 import org.junit.Rule;
@@ -79,8 +79,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
 
         assertEquals(0, getLocationGlobalKillSwitch());
 
-        // Make sure GPS is enabled.
-        putSecureSetting(LOCATION_PROVIDERS_ALLOWED, "+gps");
+        SettingsUtils.set(SettingsUtils.NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS, "gps_mode=2");
         assertNotEquals(LOCATION_MODE_OFF, getLocationMode());
         assertTrue(getLocationManager().isLocationEnabled());
 
@@ -91,8 +90,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         // Skip if the location mode is not what's expected.
         final int mode = getPowerManager().getLocationPowerSaveMode();
         if (mode != PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF) {
-            Log.i(TAG, "Unexpected location power save mode (" + mode + "), skipping.");
-            return;
+            fail("Unexpected location power save mode (" + mode + ").");
         }
 
         // Make sure screen is on.
@@ -151,7 +149,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         CallbackAsserter locationModeBroadcastAsserter = CallbackAsserter.forBroadcast(
                 new IntentFilter(LocationManager.MODE_CHANGED_ACTION));
         CallbackAsserter locationModeObserverAsserter = CallbackAsserter.forContentUri(
-                Settings.Secure.getUriFor(Settings.Secure.LOCATION_PROVIDERS_ALLOWED));
+                Settings.Secure.getUriFor(Settings.Secure.LOCATION_MODE));
 
         r.run();
 
