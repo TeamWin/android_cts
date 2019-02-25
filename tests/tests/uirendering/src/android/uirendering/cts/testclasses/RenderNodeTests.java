@@ -62,7 +62,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
         assertEquals(0, renderNode.getRotationX(), 0.01f);
         assertEquals(0, renderNode.getRotationY(), 0.01f);
-        assertEquals(0, renderNode.getRotation(), 0.01f);
+        assertEquals(0, renderNode.getRotationZ(), 0.01f);
 
         assertEquals(1, renderNode.getScaleX(), 0.01f);
         assertEquals(1, renderNode.getScaleY(), 0.01f);
@@ -93,7 +93,7 @@ public class RenderNodeTests extends ActivityTestBase {
         final Rect rect = new Rect(10, 10, 80, 80);
 
         final RenderNode renderNode = new RenderNode("Blue rect");
-        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        renderNode.setPosition(rect.left, rect.top, rect.right, rect.bottom);
         assertEquals(rect.left, renderNode.getLeft());
         assertEquals(rect.top, renderNode.getTop());
         assertEquals(rect.right, renderNode.getRight());
@@ -101,7 +101,7 @@ public class RenderNodeTests extends ActivityTestBase {
         renderNode.setClipToBounds(true);
 
         {
-            Canvas canvas = renderNode.startRecording();
+            Canvas canvas = renderNode.beginRecording();
             assertEquals(rect.width(), canvas.getWidth());
             assertEquals(rect.height(), canvas.getHeight());
             assertTrue(canvas.isHardwareAccelerated());
@@ -123,11 +123,11 @@ public class RenderNodeTests extends ActivityTestBase {
     public void testAlphaOverlappingRendering() {
         final Rect rect = new Rect(10, 10, 80, 80);
         final RenderNode renderNode = new RenderNode(null);
-        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        renderNode.setPosition(rect.left, rect.top, rect.right, rect.bottom);
         renderNode.setHasOverlappingRendering(true);
         assertTrue(renderNode.hasOverlappingRendering());
         {
-            Canvas canvas = renderNode.startRecording();
+            Canvas canvas = renderNode.beginRecording();
             canvas.drawColor(Color.RED);
             canvas.drawColor(Color.BLUE);
             renderNode.endRecording();
@@ -144,11 +144,11 @@ public class RenderNodeTests extends ActivityTestBase {
     public void testAlphaNonOverlappingRendering() {
         final Rect rect = new Rect(10, 10, 80, 80);
         final RenderNode renderNode = new RenderNode(null);
-        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        renderNode.setPosition(rect.left, rect.top, rect.right, rect.bottom);
         renderNode.setHasOverlappingRendering(false);
         assertFalse(renderNode.hasOverlappingRendering());
         {
-            Canvas canvas = renderNode.startRecording();
+            Canvas canvas = renderNode.beginRecording();
             canvas.drawColor(Color.RED);
             canvas.drawColor(Color.BLUE);
             renderNode.endRecording();
@@ -165,9 +165,9 @@ public class RenderNodeTests extends ActivityTestBase {
     public void testUseCompositingLayer() {
         final Rect rect = new Rect(10, 10, 80, 80);
         final RenderNode renderNode = new RenderNode(null);
-        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        renderNode.setPosition(rect.left, rect.top, rect.right, rect.bottom);
         {
-            Canvas canvas = renderNode.startRecording();
+            Canvas canvas = renderNode.beginRecording();
             canvas.drawColor(0xFF0000AF);
             renderNode.endRecording();
         }
@@ -199,14 +199,14 @@ public class RenderNodeTests extends ActivityTestBase {
         final RenderNode renderNode = new RenderNode("sizeTest");
         assertTrue(renderNode.computeApproximateMemoryUsage() > 500);
         assertTrue(renderNode.computeApproximateMemoryUsage() < 1500);
-        int sizeBefore = renderNode.computeApproximateMemoryUsage();
+        long sizeBefore = renderNode.computeApproximateMemoryUsage();
         {
-            Canvas canvas = renderNode.startRecording();
+            Canvas canvas = renderNode.beginRecording();
             assertTrue(canvas.isHardwareAccelerated());
             canvas.drawColor(Color.BLUE);
             renderNode.endRecording();
         }
-        int sizeAfter = renderNode.computeApproximateMemoryUsage();
+        long sizeAfter = renderNode.computeApproximateMemoryUsage();
         assertTrue(sizeAfter > sizeBefore);
         renderNode.discardDisplayList();
         assertEquals(sizeBefore, renderNode.computeApproximateMemoryUsage());
@@ -256,20 +256,20 @@ public class RenderNodeTests extends ActivityTestBase {
 
         assertFalse(renderNode.setRotationX(0.0f));
         assertFalse(renderNode.setRotationY(0.0f));
-        assertFalse(renderNode.setRotation(0.0f));
+        assertFalse(renderNode.setRotationZ(0.0f));
         assertTrue(renderNode.hasIdentityMatrix());
 
         assertTrue(renderNode.setRotationX(1.0f));
         assertEquals(1.0f, renderNode.getRotationX(), 0.0f);
         assertTrue(renderNode.setRotationY(1.0f));
         assertEquals(1.0f, renderNode.getRotationY(), 0.0f);
-        assertTrue(renderNode.setRotation(1.0f));
-        assertEquals(1.0f, renderNode.getRotation(), 0.0f);
+        assertTrue(renderNode.setRotationZ(1.0f));
+        assertEquals(1.0f, renderNode.getRotationZ(), 0.0f);
         assertFalse(renderNode.hasIdentityMatrix());
 
         assertTrue(renderNode.setRotationX(0.0f));
         assertTrue(renderNode.setRotationY(0.0f));
-        assertTrue(renderNode.setRotation(0.0f));
+        assertTrue(renderNode.setRotationZ(0.0f));
         assertTrue(renderNode.hasIdentityMatrix());
     }
 
@@ -294,7 +294,7 @@ public class RenderNodeTests extends ActivityTestBase {
         final RenderNode renderNode = new RenderNode(null);
         assertEquals(0, renderNode.getWidth());
         assertEquals(0, renderNode.getHeight());
-        RecordingCanvas canvas = renderNode.startRecording();
+        RecordingCanvas canvas = renderNode.beginRecording();
         assertTrue(canvas.isHardwareAccelerated());
         assertEquals(0, canvas.getWidth());
         assertEquals(0, canvas.getHeight());
@@ -304,10 +304,10 @@ public class RenderNodeTests extends ActivityTestBase {
     @Test
     public void testStartEndRecordingWithBounds() {
         final RenderNode renderNode = new RenderNode(null);
-        renderNode.setLeftTopRightBottom(10, 20, 30, 50);
+        renderNode.setPosition(10, 20, 30, 50);
         assertEquals(20, renderNode.getWidth());
         assertEquals(30, renderNode.getHeight());
-        RecordingCanvas canvas = renderNode.startRecording();
+        RecordingCanvas canvas = renderNode.beginRecording();
         assertTrue(canvas.isHardwareAccelerated());
         assertEquals(20, canvas.getWidth());
         assertEquals(30, canvas.getHeight());
@@ -319,7 +319,7 @@ public class RenderNodeTests extends ActivityTestBase {
         final RenderNode renderNode = new RenderNode(null);
         assertEquals(0, renderNode.getWidth());
         assertEquals(0, renderNode.getHeight());
-        RecordingCanvas canvas = renderNode.startRecording(5, 10);
+        RecordingCanvas canvas = renderNode.beginRecording(5, 10);
         assertTrue(canvas.isHardwareAccelerated());
         assertEquals(5, canvas.getWidth());
         assertEquals(10, canvas.getHeight());
@@ -329,10 +329,10 @@ public class RenderNodeTests extends ActivityTestBase {
     @Test
     public void testStartEndRecordingWithBoundsWithSize() {
         final RenderNode renderNode = new RenderNode(null);
-        renderNode.setLeftTopRightBottom(10, 20, 30, 50);
+        renderNode.setPosition(10, 20, 30, 50);
         assertEquals(20, renderNode.getWidth());
         assertEquals(30, renderNode.getHeight());
-        RecordingCanvas canvas = renderNode.startRecording(5, 10);
+        RecordingCanvas canvas = renderNode.beginRecording(5, 10);
         assertTrue(canvas.isHardwareAccelerated());
         assertEquals(5, canvas.getWidth());
         assertEquals(10, canvas.getHeight());
