@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts.augmented;
 
+import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
 import static android.view.autofill.AutofillManager.MAX_TEMP_AUGMENTED_SERVICE_DURATION_MS;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
@@ -38,6 +39,8 @@ import androidx.annotation.Nullable;
 import com.google.common.base.Preconditions;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper for common funcionalities.
@@ -158,5 +161,18 @@ public final class AugmentedHelper {
 
     private AugmentedHelper() {
         throw new UnsupportedOperationException("contain static methods only");
+    }
+
+    /**
+     * Awaits for a latch to be counted down.
+     */
+    public static void await(@NonNull CountDownLatch latch, @NonNull String fmt,
+            @Nullable Object... args)
+            throws InterruptedException {
+        final boolean called = latch.await(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        if (!called) {
+            throw new IllegalStateException(String.format(fmt, args)
+                    + " in " + CONNECTION_TIMEOUT.ms() + "ms");
+        }
     }
 }

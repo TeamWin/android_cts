@@ -59,6 +59,15 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    public void testServiceLifecycle() throws Exception {
+        enableService();
+        CtsAugmentedAutofillService augmentedService = enableAugmentedService();
+
+        AugmentedHelper.resetAugmentedService();
+        augmentedService.waitUntilDisconnected();
+    }
+
+    @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAutoFill_neitherServiceCanAutofill() throws Exception {
         // Set services
