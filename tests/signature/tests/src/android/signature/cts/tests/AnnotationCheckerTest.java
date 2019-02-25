@@ -31,7 +31,6 @@ import org.junit.runner.RunWith;
 /**
  * Test class for {@link android.signature.cts.AnnotationChecker}.
  */
-@SuppressWarnings("deprecation")
 @RunWith(JUnit4.class)
 public class AnnotationCheckerTest extends AbstractApiCheckerTest<AnnotationChecker> {
 
