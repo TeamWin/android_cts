@@ -2263,6 +2263,7 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Navigate to \"Data usage\" page and then into the \"Wi-Fi data usage\" category.\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
+        (If the section is not present, this might be because work apps have not used Wi-Fi data yet. Ensure that you have used Wi-Fi data on a work app, then repeat these instructions.)\n
         \n
         Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
