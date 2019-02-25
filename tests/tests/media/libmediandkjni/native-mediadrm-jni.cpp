@@ -56,6 +56,8 @@ struct PlaybackParams {
 
 static fields_t gFieldIds;
 static bool gGotVendorDefinedEvent = false;
+static bool gListenerGotValidExpiryTime = false;
+static bool gOnKeyChangeListenerOK = false;
 
 static const size_t kPlayTimeSeconds = 30;
 static const size_t kUuidSize = 16;
@@ -490,10 +492,55 @@ static void listener(
             gGotVendorDefinedEvent = true;
             ALOGD("EVENT_VENDOR_DEFINED received");
             break;
+        case EVENT_SESSION_RECLAIMED:
+            ALOGD("EVENT_SESSION_RECLAIMED received");
+            break;
         default:
             ALOGD("Unknown event received");
             break;
     }
+}
+
+static void onExpirationUpdateListener(
+    AMediaDrm* /*drm*/, const AMediaDrmSessionId* /*sessionId*/,
+    int64_t expiryTimeInMS) {
+
+    if (expiryTimeInMS == 100) {
+        ALOGD("Updates new expiration time to %" PRId64 " ms", expiryTimeInMS);
+        gListenerGotValidExpiryTime = true;
+    } else {
+        ALOGE("Expects 100 ms for expiry time, received: %" PRId64 " ms", expiryTimeInMS);
+        gListenerGotValidExpiryTime = false;
+    }
+}
+
+static void onKeysChangeListener(
+    AMediaDrm* /*drm*/, const AMediaDrmSessionId* /*sessionId*/,
+    const AMediaDrmKeyStatus* keysStatus, size_t numKeys, bool hasNewUsableKey) {
+
+    gOnKeyChangeListenerOK = false;
+    if (numKeys != 2) {
+        ALOGE("Expects 2 keys, received %zd keys", numKeys);
+        return;
+    }
+
+    if (!hasNewUsableKey) {
+        ALOGE("Expects hasNewUsableKey to be true");
+        return;
+    }
+
+    ALOGD("Number of keys changed=%zd", numKeys);
+    AMediaDrmKeyStatus keyStatus;
+    for (size_t i = 0; i < numKeys; ++i) {
+        keyStatus.keyId.ptr = keysStatus[i].keyId.ptr;
+        keyStatus.keyId.length = keysStatus[i].keyId.length;
+        keyStatus.keyType = keysStatus[i].keyType;
+
+        ALOGD("key[%zd]: key: %0x, %0x, %0x", i, keyStatus.keyId.ptr[0], keyStatus.keyId.ptr[1],
+                keyStatus.keyId.ptr[2]);
+        ALOGD("key[%zd]: key type=%d", i, keyStatus.keyType);
+    }
+    gOnKeyChangeListenerOK = true;
 }
 
 static void acquireLicense(
@@ -530,6 +577,8 @@ static void acquireLicense(
 
     AMediaDrmKeySetId keySetId;
     gGotVendorDefinedEvent = false;
+    gListenerGotValidExpiryTime = false;
+    gOnKeyChangeListenerOK = false;
     status = AMediaDrm_provideKeyResponse(aMediaObjects.getDrm(), &sessionId,
             reinterpret_cast<const uint8_t*>(kResponse),
             sizeof(kResponse), &keySetId);
@@ -577,6 +626,22 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testClearK
         return JNI_FALSE;
     }
 
+    status = AMediaDrm_setOnExpirationUpdateListener(aMediaObjects.getDrm(),
+            onExpirationUpdateListener);
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException",
+                "setOnExpirationUpdateListener failed");
+        return JNI_FALSE;
+    }
+
+    status = AMediaDrm_setOnKeysChangeListener(aMediaObjects.getDrm(),
+            onKeysChangeListener);
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException",
+                "setOnKeysChangeListener failed");
+        return JNI_FALSE;
+    }
+
     aMediaObjects.setAudioExtractor(AMediaExtractor_new());
     const char* url = env->GetStringUTFChars(params.audioUrl, 0);
     if (url) {
@@ -615,7 +680,7 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testClearK
 
     acquireLicense(env, aMediaObjects, sessionId, KEY_TYPE_STREAMING);
 
-    // Check if the event listener has received the expected event sent by
+    // Checks if the event listener has received the expected event sent by
     // provideKeyResponse. This is for testing AMediaDrm_setOnEventListener().
     const char *utf8_outValue = NULL;
     status = AMediaDrm_getPropertyString(aMediaObjects.getDrm(),
@@ -624,10 +689,13 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testClearK
         std::string eventType(utf8_outValue);
         if (eventType.compare("true") == 0) {
             int count = 0;
-            while (!gGotVendorDefinedEvent && count++ < 5) {
+            while ((!gGotVendorDefinedEvent ||
+                    !gListenerGotValidExpiryTime ||
+                    !gOnKeyChangeListenerOK) && count++ < 5) {
                // Prevents race condition when the event arrives late
                usleep(2000);
             }
+
             if (!gGotVendorDefinedEvent) {
                 ALOGE("Event listener did not receive the expected event.");
                 jniThrowExceptionFmt(env, "java/lang/RuntimeException",
@@ -635,6 +703,22 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testClearK
                 AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
                 return JNI_FALSE;
            }
+
+          // Checks if onExpirationUpdateListener received the correct expiry time.
+           if (!gListenerGotValidExpiryTime) {
+               jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                       "onExpirationUpdateListener received incorrect expiry time.");
+               AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+               return JNI_FALSE;
+           }
+
+          // Checks if onKeysChangeListener succeeded.
+          if (!gOnKeyChangeListenerOK) {
+              jniThrowExceptionFmt(env, "java/lang/RuntimeException",
+                      "onKeysChangeListener failed");
+              AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+              return JNI_FALSE;
+          }
         }
     }
 
@@ -726,7 +810,7 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testQueryK
         ALOGI("AMediaDrm_queryKeyStatus: key=%s, value=%s", keyStatus[i].mKey, keyStatus[i].mValue);
     }
 
-    if (numPairs !=  3) {
+    if (numPairs != 3) {
         jniThrowExceptionFmt(env, "java/lang/RuntimeException",
                 "AMediaDrm_queryKeyStatus returns %zd key status, expecting 3", numPairs);
         AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
