@@ -38,7 +38,11 @@ LOCAL_CTS_TEST_PACKAGE := android.adminhostside
 LOCAL_COMPATIBILITY_SUITE := cts arcts vts general-tests
 
 # Need the dependency to build/run the module solely by atest.
+ifndef ENABLE_DEFAULT_TEST_LOCATION
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_TESTCASES)/cts-current-api/current.api
+else
+LOCAL_TARGET_REQUIRED_MODULES := cts-current-api
+endif
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
