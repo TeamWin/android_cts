@@ -18,8 +18,8 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 
@@ -113,12 +113,12 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
         assertThat(events.size()).isAtLeast(MIN_EVENTS + additionalEvents);
 
         // Assert just the relevant events
-        assertViewHierarchyStarted(events, 0);
+        assertViewTreeStarted(events, 0);
         assertDecorViewAppeared(events, 1, getDecorView());
         assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
         assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
         assertViewWithUnknownParentAppeared(events, 4, session.id, mCustomView);
-        assertViewHierarchyFinished(events, 5);
+        assertViewTreeFinished(events, 5);
 
         return events;
     }

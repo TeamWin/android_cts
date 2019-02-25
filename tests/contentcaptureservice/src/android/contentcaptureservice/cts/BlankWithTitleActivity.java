@@ -18,8 +18,8 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -52,12 +52,12 @@ public class BlankWithTitleActivity extends AbstractContentCaptureActivity {
         final int minEvents = 7; // TODO(b/122315042): disappeared not always sent
         assertThat(events.size()).isAtLeast(minEvents);
 
-        assertViewHierarchyStarted(events, 0);
+        assertViewTreeStarted(events, 0);
         assertDecorViewAppeared(events, 1, decorView);
         // TODO(b/123540067): ignoring 4 intermediate parents
         final ViewNode title = assertViewAppeared(events, 5).getViewNode();
         assertThat(title.getText()).isEqualTo("Blanka");
-        assertViewHierarchyFinished(events, 6);
+        assertViewTreeFinished(events, 6);
         if (false) { // TODO(b/123540067): disabled because it includes the parent
             assertViewsOptionallyDisappeared(events, minEvents, decorView.getAutofillId(),
                     title.getAutofillId());
