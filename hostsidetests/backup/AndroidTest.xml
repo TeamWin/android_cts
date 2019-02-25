@@ -28,6 +28,10 @@
         <option name="enable-backup-if-needed" value="true" />
         <option name="select-local-transport" value="true" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="cmd thermalservice override-status 0" />
+        <option name="teardown-command" value="cmd thermalservice reset" />
+    </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsBackupHostTestCases.jar" />
     </test>
