@@ -73,10 +73,23 @@ class CameraServiceListener {
         return;
     }
 
+
+    static void onCameraAccessPrioritiesChanged(void* obj) {
+        ALOGV("onCameraAccessPrioritiesChanged");
+        if (obj == nullptr) {
+            return;
+        }
+        CameraServiceListener* thiz = reinterpret_cast<CameraServiceListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mOnCameraAccessPrioritiesChangedCount++;
+        return;
+    }
+
     void resetCount() {
         std::lock_guard<std::mutex> lock(mMutex);
         mOnAvailableCount = 0;
         mOnUnavailableCount = 0;
+        mOnCameraAccessPrioritiesChangedCount = 0;
         return;
     }
 
@@ -88,6 +101,11 @@ class CameraServiceListener {
     int getUnavailableCount() {
         std::lock_guard<std::mutex> lock(mMutex);
         return mOnUnavailableCount;
+    }
+
+    int getCameraAccessPrioritiesChangedCount() {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mOnCameraAccessPrioritiesChangedCount;
     }
 
     bool isAvailable(const char* cameraId) {
@@ -102,6 +120,7 @@ class CameraServiceListener {
     std::mutex mMutex;
     int mOnAvailableCount = 0;
     int mOnUnavailableCount = 0;
+    int mOnCameraAccessPrioritiesChangedCount = 0;
     std::map<std::string, bool> mAvailableMap;
 };
 
@@ -3128,6 +3147,118 @@ testImageReaderCloseAcquiredImagesNative(
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, nullptr, AIMAGE_FORMAT_JPEG,
             ImageReaderListener::acquireImageCb);
+}
+
+template <>
+struct std::default_delete<ACameraManager> {
+    inline void operator()(ACameraManager* manager) const { ACameraManager_delete(manager); }
+};
+
+class AvailabilityContext {
+    public:
+        AvailabilityContext();
+        ~AvailabilityContext();
+
+        camera_status_t initialize();
+        int getAcessCallbackCountAndReset();
+
+    private:
+        std::unique_ptr<ACameraManager> mCameraManager;
+        std::unique_ptr<CameraServiceListener> mServiceListener;
+        std::unique_ptr<ACameraManager_ExtendedAvailabilityCallbacks> mServiceCb;
+};
+
+AvailabilityContext::AvailabilityContext() :
+    mCameraManager(ACameraManager_create()),
+    mServiceListener(std::make_unique<CameraServiceListener>()),
+    mServiceCb(std::make_unique<ACameraManager_ExtendedAvailabilityCallbacks>()) {
+        mServiceCb->availabilityCallbacks.context = mServiceListener.get();
+        mServiceCb->availabilityCallbacks.onCameraAvailable = CameraServiceListener::onAvailable;
+        mServiceCb->availabilityCallbacks.onCameraUnavailable =
+                CameraServiceListener::onUnavailable;
+        mServiceCb->onCameraAccessPrioritiesChanged =
+                CameraServiceListener::onCameraAccessPrioritiesChanged;
+}
+
+camera_status_t AvailabilityContext::initialize() {
+    auto rc = ACameraManager_registerExtendedAvailabilityCallback(mCameraManager.get(),
+            mServiceCb.get());
+    if (rc != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Register availability callback failed: rc %d", rc);
+        return rc;
+    }
+
+    ACameraIdList* cameraIdList = nullptr;
+    rc = ACameraManager_getCameraIdList(mCameraManager.get(), &cameraIdList);
+    if (rc != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Get camera id list failed: ret %d", rc);
+        return rc;
+    }
+    ACameraManager_deleteCameraIdList(cameraIdList);
+
+    return rc;
+}
+
+int AvailabilityContext::getAcessCallbackCountAndReset() {
+    auto ret = mServiceListener->getCameraAccessPrioritiesChangedCount();
+    mServiceListener->resetCount();
+    return ret;
+}
+
+AvailabilityContext::~AvailabilityContext() {
+    if (mServiceCb != nullptr) {
+        camera_status_t ret = ACameraManager_unregisterExtendedAvailabilityCallback(
+                mCameraManager.get(), mServiceCb.get());
+        if (ret != ACAMERA_OK) {
+            ALOGE("Unregister availability callback failed: ret %d", ret);
+        }
+    }
+}
+
+extern "C" jlong
+Java_android_hardware_multiprocess_camera_cts_CameraEvictionTest_\
+initializeAvailabilityCallbacksNative(
+        JNIEnv* env, jclass /*clazz*/) {
+    ALOGV("%s", __FUNCTION__);
+
+    AvailabilityContext *ctx = new AvailabilityContext();
+
+    auto rc = ctx->initialize();
+    if (rc != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Availability context initialization failed: %d", rc);
+        return 0;
+    }
+
+    return (jlong) ctx;
+}
+
+extern "C" jint
+Java_android_hardware_multiprocess_camera_cts_CameraEvictionTest_\
+getAccessCallbacksCountAndResetNative(
+        JNIEnv* env, jclass /*clazz*/, jlong context) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (context == 0) {
+        LOG_ERROR(errorString, "Invalid availability context");
+        return 0;
+    }
+
+    AvailabilityContext* ctx = reinterpret_cast<AvailabilityContext*>(context);
+    return ctx->getAcessCallbackCountAndReset();
+}
+
+extern "C" void
+Java_android_hardware_multiprocess_camera_cts_CameraEvictionTest_\
+releaseAvailabilityCallbacksNative(
+        JNIEnv* env, jclass /*clazz*/, jlong context) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (context == 0) {
+        return;
+    }
+
+    AvailabilityContext* ctx = reinterpret_cast<AvailabilityContext*>(context);
+    delete ctx;
 }
 
 extern "C" jboolean
