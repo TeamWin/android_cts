@@ -34,13 +34,13 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.VectorDrawable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.Xml;
 
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -50,11 +50,12 @@ import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.Xfermode;
 import android.os.LocaleList;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.Hyphenator;
 import android.text.SpannedString;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ColorUtils;
