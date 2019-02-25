@@ -72,6 +72,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -741,7 +742,7 @@ public class TelephonyManagerTest {
                 == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
             fail("Expected SIM inserted");
         }
-        String locale = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+        Locale locale = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getSimLocale());
         Log.d(TAG, "testGetSimLocale: " + locale);
         assertNotNull(locale);
