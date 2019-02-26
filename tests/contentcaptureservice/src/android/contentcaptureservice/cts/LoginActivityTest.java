@@ -44,7 +44,6 @@ import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -59,6 +58,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.After;
 import org.junit.Before;

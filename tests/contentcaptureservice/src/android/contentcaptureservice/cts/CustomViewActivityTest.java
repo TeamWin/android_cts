@@ -38,7 +38,6 @@ import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewStructure;
@@ -47,6 +46,7 @@ import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSession;
 
 import androidx.annotation.NonNull;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Test;
 

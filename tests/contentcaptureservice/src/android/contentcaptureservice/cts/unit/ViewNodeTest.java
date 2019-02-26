@@ -25,7 +25,6 @@ import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
 import android.view.View;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
@@ -33,6 +32,8 @@ import android.view.autofill.AutofillValue;
 import android.view.contentcapture.ViewNode;
 import android.view.contentcapture.ViewNode.ViewStructureImpl;
 import android.widget.FrameLayout;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
