@@ -35,7 +35,7 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
     public void testGetters() throws Exception {
         final int PRESENTATION_ID = 42;
         final int PROGRAM_ID = 43;
-        final Map<Locale, String> LABELS = generateLabels();
+        final Map<Locale, CharSequence> LABELS = generateLabels();
         final Locale LOCALE = Locale.US;
         final int MASTERING_INDICATION = AudioPresentation.MASTERED_FOR_STEREO;
         final boolean HAS_AUDIO_DESCRIPTION = false;
@@ -63,7 +63,7 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
     public void testEqualsAndHashCode() throws Exception {
         final int PRESENTATION_ID = 42;
         final int PROGRAM_ID = 43;
-        final Map<Locale, String> LABELS = generateLabels();
+        final Map<Locale, CharSequence> LABELS = generateLabels();
         final Locale LOCALE = Locale.US;
         final Locale LOCALE_3 = Locale.FRENCH;
         final int MASTERING_INDICATION = AudioPresentation.MASTERED_FOR_STEREO;
@@ -123,7 +123,7 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
             assertEquals(presentation2, presentation1);
             assertEquals(presentation1.hashCode(), presentation2.hashCode());
             AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
-                    .setLabels(new HashMap<ULocale, String>())).build();
+                    .setLabels(new HashMap<ULocale, CharSequence>())).build();
             assertNotEquals(presentation1, presentation3);
             assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
         }
@@ -181,17 +181,17 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
         }
     }
 
-    private static Map<Locale, String> generateLabels() {
-        Map<Locale, String> result = new HashMap<Locale, String>();
+    private static Map<Locale, CharSequence> generateLabels() {
+        Map<Locale, CharSequence> result = new HashMap<Locale, CharSequence>();
         result.put(Locale.US, Locale.US.getDisplayLanguage());
         result.put(Locale.FRENCH, Locale.FRENCH.getDisplayLanguage());
         result.put(Locale.GERMAN, Locale.GERMAN.getDisplayLanguage());
         return result;
     }
 
-    private static Map<ULocale, String> localeToULocale(Map<Locale, String> locales) {
-        Map<ULocale, String> ulocaleLabels = new HashMap<ULocale, String>();
-        for (Map.Entry<Locale, String> entry : locales.entrySet()) {
+    private static Map<ULocale, CharSequence> localeToULocale(Map<Locale, CharSequence> locales) {
+        Map<ULocale, CharSequence> ulocaleLabels = new HashMap<ULocale, CharSequence>();
+        for (Map.Entry<Locale, CharSequence> entry : locales.entrySet()) {
             ulocaleLabels.put(ULocale.forLocale(entry.getKey()), entry.getValue());
         }
         return ulocaleLabels;
