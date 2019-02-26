@@ -92,7 +92,7 @@ public class ViewConfigurationTest {
                 context.getResources().getDisplayMetrics());
 
         // Verify that the min scaling span size is reasonable.
-        float scaledMinScalingSpanMm = vc.getScaledMinScalingSpan() / pixelsToMmRatio;
+        float scaledMinScalingSpanMm = vc.getScaledMinimumScalingSpan() / pixelsToMmRatio;
         assertTrue(scaledMinScalingSpanMm > 0);
         assertTrue(scaledMinScalingSpanMm < 40.5); // 1.5 times the recommended size of 27mm
     }
@@ -102,7 +102,7 @@ public class ViewConfigurationTest {
         ViewConfiguration vc = new ViewConfiguration();
         boolean correctExceptionThrown = false;
         try {
-            vc.getScaledMinScalingSpan();
+            vc.getScaledMinimumScalingSpan();
         } catch (IllegalStateException e) {
             if (e.getMessage().equals("Min scaling span cannot be determined when this "
                     + "method is called on a ViewConfiguration that was instantiated using a "
