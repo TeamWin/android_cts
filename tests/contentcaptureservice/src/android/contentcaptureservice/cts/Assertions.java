@@ -18,11 +18,13 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.MY_EPOCH;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_CONTEXT_UPDATED;
-import static android.view.contentcapture.ContentCaptureEvent.TYPE_INITIAL_VIEW_TREE_APPEARED;
-import static android.view.contentcapture.ContentCaptureEvent.TYPE_INITIAL_VIEW_TREE_APPEARING;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_SESSION_PAUSED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_SESSION_RESUMED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APPEARED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APPEARING;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -217,26 +219,23 @@ final class Assertions {
     }
 
     /**
-     * Asserts the contents of a {@link #TYPE_INITIAL_VIEW_TREE_APPEARING} event.
+     * Asserts the contents of a {@link #TYPE_VIEW_TREE_APPEARING} event.
      */
     public static void assertViewTreeStarted(@NonNull List<ContentCaptureEvent> events,
             int index) {
-        assertViewHierarchyEvent(events, index, /* started= */ true);
+        assertSessionLevelEvent(events, index, TYPE_VIEW_TREE_APPEARING);
     }
 
     /**
-     * Asserts the contents of a {@link #TYPE_INITIAL_VIEW_TREE_APPEARED} event.
+     * Asserts the contents of a {@link #TYPE_VIEW_TREE_APPEARED} event.
      */
     public static void assertViewTreeFinished(@NonNull List<ContentCaptureEvent> events,
             int index) {
-        assertViewHierarchyEvent(events, index, /* started= */ false);
+        assertSessionLevelEvent(events, index, TYPE_VIEW_TREE_APPEARED);
     }
 
-    private static void assertViewHierarchyEvent(@NonNull List<ContentCaptureEvent> events,
-            int index, boolean started) {
-        final int expectedType = started
-                ? TYPE_INITIAL_VIEW_TREE_APPEARING
-                : TYPE_INITIAL_VIEW_TREE_APPEARED;
+    private static void assertSessionLevelEvent(@NonNull List<ContentCaptureEvent> events,
+            int index, int expectedType) {
         final ContentCaptureEvent event = getEvent(events, index, expectedType);
         assertWithMessage("event %s (index %s) should not have a ViewNode", event, index)
                 .that(event.getViewNode()).isNull();
@@ -249,15 +248,34 @@ final class Assertions {
     }
 
     /**
-     * Asserts that a session for the given activity has no events.
+     * Asserts the contents of a {@link #TYPE_SESSION_RESUMED} event.
      */
-    public static void assertNoEvents(@NonNull Session session,
+    public static void assertSessionResumed(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertSessionLevelEvent(events, index, TYPE_SESSION_RESUMED);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_SESSION_PAUSED} event.
+     */
+    public static void assertSessionPaused(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertSessionLevelEvent(events, index, TYPE_SESSION_PAUSED);
+    }
+
+    /**
+     * Asserts that a session for the given activity has no view-level events, just
+     * {@link #TYPE_SESSION_RESUMED} and {@link #TYPE_SESSION_PAUSED}.
+     */
+    public static void assertNoViewLevelEvents(@NonNull Session session,
             @NonNull AbstractContentCaptureActivity activity) {
         assertRightActivity(session, session.id, activity);
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events on " + activity + ": " + events);
-        assertThat(events).isEmpty();
+        assertThat(events).hasSize(2);
+        assertSessionResumed(events, 0);
+        assertSessionPaused(events, 1);
     }
 
     /**
@@ -268,15 +286,18 @@ final class Assertions {
      * @param events events received by the service.
      * @param minimumSize size of events received if activity stopped before views disappeared
      * @param expectedIds ids of views that might have disappeared.
+     *
+     * @return whether the view disappeared events were generated
      */
     // TODO(b/123540067, 122315042): remove this method if we could make it deterministic, and
     // inline the assertions (or rename / change its logic)
-    public static void assertViewsOptionallyDisappeared(@NonNull List<ContentCaptureEvent> events,
-            int minimumSize, @NonNull AutofillId... expectedIds) {
+    public static boolean assertViewsOptionallyDisappeared(
+            @NonNull List<ContentCaptureEvent> events, int minimumSize,
+            @NonNull AutofillId... expectedIds) {
         final int actualSize = events.size();
         if (actualSize == minimumSize) {
             // Activity stopped before TYPE_VIEW_DISAPPEARED were sent.
-            return;
+            return false;
         }
         assertThat(events).hasSize(minimumSize + 1);
         final ContentCaptureEvent batchDisappearEvent = events.get(minimumSize);
@@ -293,6 +314,7 @@ final class Assertions {
             assertWithMessage("wrong deleteds id on %s", batchDisappearEvent)
                     .that(actualIds).containsExactly((Object[]) expectedIds);
         }
+        return true;
     }
 
     /**
@@ -483,11 +505,17 @@ final class Assertions {
             case TYPE_VIEW_TEXT_CHANGED:
                 string = "TEXT_CHANGE";
                 break;
-            case TYPE_INITIAL_VIEW_TREE_APPEARING:
+            case TYPE_VIEW_TREE_APPEARING:
                 string = "TREE_START";
                 break;
-            case TYPE_INITIAL_VIEW_TREE_APPEARED:
+            case TYPE_VIEW_TREE_APPEARED:
                 string = "TREE_END";
+                break;
+            case TYPE_SESSION_PAUSED:
+                string = "PAUSED";
+                break;
+            case TYPE_SESSION_RESUMED:
+                string = "RESUMED";
                 break;
             default:
                 return "UNKNOWN-" + type;

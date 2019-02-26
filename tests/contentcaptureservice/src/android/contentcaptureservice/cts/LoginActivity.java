@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertSessionId;
+import static android.contentcaptureservice.cts.Assertions.assertSessionResumed;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
@@ -49,7 +50,7 @@ public class LoginActivity extends AbstractRootViewActivity {
      * <p>Used on {@link #assertInitialViewsAppeared(Session, int)} and
      * {@link #assertInitialViewsDisappeared(List, int)}.
      */
-    public static final int MIN_EVENTS = 10;
+    public static final int MIN_EVENTS = 11;
 
     TextView mUsernameLabel;
     EditText mUsername;
@@ -122,15 +123,16 @@ public class LoginActivity extends AbstractRootViewActivity {
         final View decorView = activity.getDecorView();
         final View rootView = activity.getRootView();
 
-        assertViewTreeStarted(events, 0);
-        assertDecorViewAppeared(events, 1, decorView);
-        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
-        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events, 4, sessionId, rootView, grandpa1.getAutofillId());
-        assertViewAppeared(events, 5, sessionId, activity.mUsernameLabel, rootId);
-        assertViewAppeared(events, 6, sessionId, activity.mUsername, rootId);
-        assertViewAppeared(events, 7, sessionId, activity.mPasswordLabel, rootId);
-        assertViewAppeared(events, 8, sessionId, activity.mPassword, rootId);
+        assertSessionResumed(events, 0);
+        assertViewTreeStarted(events, 1);
+        assertDecorViewAppeared(events, 2, decorView);
+        assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 5, sessionId, rootView, grandpa1.getAutofillId());
+        assertViewAppeared(events, 6, sessionId, activity.mUsernameLabel, rootId);
+        assertViewAppeared(events, 7, sessionId, activity.mUsername, rootId);
+        assertViewAppeared(events, 8, sessionId, activity.mPasswordLabel, rootId);
+        assertViewAppeared(events, 9, sessionId, activity.mPassword, rootId);
 
         return events;
     }
