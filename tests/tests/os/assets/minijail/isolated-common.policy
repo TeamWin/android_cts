@@ -7,8 +7,8 @@ capget: 1
 capset: return EPERM
 chdir: return EPERM
 
-# clock_gettime: clk_id=={CLOCK_BOOTTIME,CLOCK_MONOTONIC,CLOCK_MONOTONIC_COARSE,CLOCK_PROCESS_CPUTIME_ID,CLOCK_REALTIME,CLOCK_REALTIME_COARSE}
-clock_gettime: arg0 == 0 || arg0 == 1 || arg0 == 2 || arg0 == 5 || arg0 == 6 || arg0 == 7
+# clock_gettime: clk_id=={CLOCK_BOOTTIME,CLOCK_MONOTONIC,CLOCK_MONOTONIC_COARSE,CLOCK_THREAD_CPUTIME_ID,CLOCK_PROCESS_CPUTIME_ID,CLOCK_REALTIME,CLOCK_REALTIME_COARSE}
+clock_gettime: arg0 == 0 || arg0 == 1 || arg0 == 2 || arg0 == 3 || arg0 == 5 || arg0 == 6 || arg0 == 7
 
 clone: 1
 close: 1
@@ -29,7 +29,8 @@ fchownat: return EPERM
 fchown: return EPERM
 
 # fnctl: restrict cmd
-fcntl: arg1 == F_GETFL || arg1 == F_GETFD || arg1 == F_SETFD || arg1 == F_SETLK || arg1 == F_SETLKW || arg1 == F_GETLK || arg1 == F_DUPFD
+#   F_DUPFD_CLOEXEC=1030
+fcntl: arg1 == F_GETFL || arg1 == F_GETFD || arg1 == F_SETFD || arg1 == F_SETLK || arg1 == F_SETLKW || arg1 == F_GETLK || arg1 == F_DUPFD || arg1 == 1030
 
 fdatasync: 1
 flock: 1
