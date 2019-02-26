@@ -13,10 +13,10 @@
 // limitations under the License.
 
 java_library_static {
-    name: "ctsdeviceutillegacy",
+    name: "ctsdeviceutillegacy-axt",
 
     static_libs: [
-        "compatibility-device-util",
+        "compatibility-device-util-axt",
         "junit",
     ],
 
