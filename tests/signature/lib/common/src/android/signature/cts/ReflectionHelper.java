@@ -42,9 +42,8 @@ public class ReflectionHelper {
      * @param classDescription the description of the class to find.
      * @return the reflected class, or null if not found.
      */
-    @SuppressWarnings("unchecked")
-    public static Class<?> findMatchingClass(JDiffClassDescription classDescription, ClassProvider classProvider)
-            throws ClassNotFoundException {
+    public static Class<?> findMatchingClass(JDiffClassDescription classDescription,
+            ClassProvider classProvider) throws ClassNotFoundException {
         // even if there are no . in the string, split will return an
         // array of length 1
         String shortClassName = classDescription.getShortClassName();
@@ -126,7 +125,6 @@ public class ReflectionHelper {
      * @param jdiffDes constructor description to find.
      * @return reflected constructor, or null if not found.
      */
-    @SuppressWarnings("unchecked")
     static Constructor<?> findMatchingConstructor(Class<?> runtimeClass,
             JDiffClassDescription.JDiffConstructor jdiffDes) {
         for (Constructor<?> c : runtimeClass.getDeclaredConstructors()) {

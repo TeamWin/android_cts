@@ -18,8 +18,10 @@ package android.signature.cts;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -42,6 +44,17 @@ public class DexApiDocumentParser {
     private static final Pattern REGEX_METHOD =
             Pattern.compile("^(L[^>]*;)->(.*)(\\(.*\\).*)$");
 
+    // Estimate of the length of a line.
+    private static final int LINE_LENGTH_ESTIMATE = 100;
+
+    // Converter from String to DexMember. Cached here.
+    private static final Function<String, DexMember> DEX_MEMBER_CONVERTER = str -> {
+        try {
+            return parseLine(str, /* lineNum= */ -1); // No line info available.
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    };
     private static final BiFunction<String, Integer, DexMember> DEX_MEMBER_LINE_NUM_CONVERTER = (
             str, lineNum) -> {
         try {
@@ -51,11 +64,28 @@ public class DexApiDocumentParser {
         }
     };
 
+    public Stream<DexMember> parseAsStream(Object o) {
+        if (o instanceof ByteBuffer) {
+            return parseAsStream((ByteBuffer) o);
+        } else {
+            return parseAsStream((InputStream) o);
+        }
+    }
+
     public Stream<DexMember> parseAsStream(InputStream inputStream) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         return StreamSupport.stream(
                 new BufferedReaderLineSpliterator<DexMember>(reader, DEX_MEMBER_LINE_NUM_CONVERTER),
                 false);
+    }
+
+    public Stream<DexMember> parseAsStream(ByteBuffer buffer) {
+        return parseAsStream(buffer, LINE_LENGTH_ESTIMATE);
+    }
+    public Stream<DexMember> parseAsStream(ByteBuffer buffer, int lineLengthEstimate) {
+        // TODO: Ensurance that the input conforms to ByteBufferLineSpliterator requirements.
+        return StreamSupport.stream(new ByteBufferLineSpliterator<DexMember>(buffer,
+                lineLengthEstimate, DEX_MEMBER_CONVERTER), true);
     }
 
     private static DexMember parseLine(String line, int lineNum) throws ParseException {

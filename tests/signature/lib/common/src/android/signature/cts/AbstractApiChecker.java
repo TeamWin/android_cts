@@ -55,7 +55,6 @@ public abstract class AbstractApiChecker {
      *
      * @param classDescription a description of a class in an API.
      */
-    @SuppressWarnings("unchecked")
     private Class<?> checkClassCompliance(JDiffClassDescription classDescription) {
         try {
             Class<?> runtimeClass = ReflectionHelper
@@ -124,7 +123,6 @@ public abstract class AbstractApiChecker {
      * @param classDescription a description of a class in an API.
      * @param runtimeClass the runtime class corresponding to {@code classDescription}.
      */
-    @SuppressWarnings("unchecked")
     private void checkFieldsCompliance(JDiffClassDescription classDescription,
             Class<?> runtimeClass) {
         // A map of field name to field of the fields contained in runtimeClass.
@@ -155,7 +153,7 @@ public abstract class AbstractApiChecker {
      *
      * @return a {@link Map} of fieldName to {@link Field}
      */
-    private static Map<String, Field> buildFieldMap(Class testClass) {
+    private static Map<String, Field> buildFieldMap(Class<?> testClass) {
         Map<String, Field> fieldMap = new HashMap<>();
         // Scan the superclass
         if (testClass.getSuperclass() != null) {
@@ -163,7 +161,7 @@ public abstract class AbstractApiChecker {
         }
 
         // Scan the interfaces
-        for (Class interfaceClass : testClass.getInterfaces()) {
+        for (Class<?> interfaceClass : testClass.getInterfaces()) {
             fieldMap.putAll(buildFieldMap(interfaceClass));
         }
 
@@ -187,7 +185,6 @@ public abstract class AbstractApiChecker {
      * @param classDescription a description of a class in an API.
      * @param runtimeClass the runtime class corresponding to {@code classDescription}.
      */
-    @SuppressWarnings("unchecked")
     private void checkConstructorCompliance(JDiffClassDescription classDescription,
             Class<?> runtimeClass) {
         for (JDiffClassDescription.JDiffConstructor con : classDescription.getConstructors()) {
