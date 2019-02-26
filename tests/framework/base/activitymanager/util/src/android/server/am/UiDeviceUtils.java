@@ -17,12 +17,13 @@
 package android.server.am;
 
 import static android.server.am.StateLogger.logE;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.KeyEvent.KEYCODE_APP_SWITCH;
 import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_SLEEP;
 import static android.view.KeyEvent.KEYCODE_WAKEUP;
 import static android.view.KeyEvent.KEYCODE_WINDOW;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.KeyguardManager;
 import android.graphics.Point;

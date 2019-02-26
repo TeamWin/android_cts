@@ -58,7 +58,8 @@ import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.CommandSession.ActivityCallback;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;

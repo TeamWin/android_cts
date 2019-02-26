@@ -26,7 +26,8 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
 import android.app.PictureInPictureParams;
@@ -39,10 +40,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.server.am.ActivityManagerDisplayTestBase;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.lifecycle.ActivityLifecycleMonitor;
-import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import android.util.Pair;
+
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitor;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 
 import org.junit.After;
 import org.junit.Before;

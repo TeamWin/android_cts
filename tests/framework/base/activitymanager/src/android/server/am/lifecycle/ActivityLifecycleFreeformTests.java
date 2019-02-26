@@ -26,7 +26,6 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
@@ -37,8 +36,9 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.support.test.filters.MediumTest;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
 import org.junit.Test;

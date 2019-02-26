@@ -29,13 +29,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;

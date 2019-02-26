@@ -29,7 +29,8 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.UserData;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 

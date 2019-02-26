@@ -60,8 +60,9 @@ import static android.server.am.Components.TestActivity.EXTRA_CONFIGURATION;
 import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressWindowButton;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
@@ -88,9 +89,10 @@ import android.server.am.CommandSession.SizeInfo;
 import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.settings.SettingsSession;
-import android.support.test.filters.FlakyTest;
 import android.util.Log;
 import android.util.Size;
+
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;

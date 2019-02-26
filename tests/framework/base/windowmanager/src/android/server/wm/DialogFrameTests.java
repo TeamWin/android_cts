@@ -29,7 +29,8 @@ import static android.server.wm.DialogFrameTestActivity.TEST_NO_FOCUS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
 import static android.server.wm.DialogFrameTestActivity.TEST_WITH_MARGINS;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -42,7 +43,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 import android.server.am.WindowManagerState.WindowState;
-import android.support.test.rule.ActivityTestRule;
+
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Ignore;
 import org.junit.Rule;

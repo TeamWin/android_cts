@@ -20,13 +20,13 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.UiAutomation;
 import android.app.stubs.TestTileService;
-import android.os.Debug;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
+
+import androidx.test.InstrumentationRegistry;
 
 import junit.framework.Assert;
 

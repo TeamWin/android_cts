@@ -17,9 +17,10 @@
 package android.server.wm;
 
 import static android.provider.Settings.Global.WINDOW_ANIMATION_SCALE;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,11 +33,12 @@ import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.support.test.filters.FlakyTest;
-import android.support.test.rule.ActivityTestRule;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;

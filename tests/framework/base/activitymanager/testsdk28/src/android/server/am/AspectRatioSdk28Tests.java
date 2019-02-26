@@ -17,13 +17,15 @@
 package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_WATCH;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertThat;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.rule.ActivityTestRule;
+
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
 import org.junit.Test;

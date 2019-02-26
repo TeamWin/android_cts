@@ -57,7 +57,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.ActivitySessionClient;
 import android.server.am.WindowManagerState.WindowState;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;

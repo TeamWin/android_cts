@@ -24,8 +24,9 @@ import static org.junit.Assume.assumeThat;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.rule.ActivityTestRule;
 import android.view.Display;
+
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
 import org.junit.Test;

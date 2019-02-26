@@ -29,9 +29,10 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
-
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 import java.util.regex.Matcher;

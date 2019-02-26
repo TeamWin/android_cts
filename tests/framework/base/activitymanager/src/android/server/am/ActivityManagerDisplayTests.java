@@ -27,6 +27,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.util.Size;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 import java.util.List;

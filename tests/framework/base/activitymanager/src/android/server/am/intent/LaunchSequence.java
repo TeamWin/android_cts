@@ -17,7 +17,7 @@
 package android.server.am.intent;
 
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
 import android.server.am.intent.Persistence.LaunchFromIntent;
@@ -27,7 +27,6 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Optional;
-
 
 /**
  * <pre>

@@ -16,8 +16,9 @@
 package android.autofillservice.cts;
 
 import android.service.autofill.CustomDescription;
-import android.support.test.InstrumentationRegistry;
 import android.widget.RemoteViews;
+
+import androidx.test.InstrumentationRegistry;
 
 public final class CustomDescriptionHelper {
 

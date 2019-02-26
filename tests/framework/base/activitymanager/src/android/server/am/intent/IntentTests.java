@@ -16,7 +16,7 @@
 
 package android.server.am.intent;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -24,7 +24,8 @@ import android.content.res.AssetManager;
 import android.os.Environment;
 import android.server.am.intent.Persistence.IntentFlag;
 import android.server.am.intent.Persistence.TestCase;
-import android.support.test.filters.LargeTest;
+
+import androidx.test.filters.LargeTest;
 
 import com.google.common.collect.Lists;
 

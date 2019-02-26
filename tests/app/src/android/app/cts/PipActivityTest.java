@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
+
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
@@ -26,8 +27,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 import android.test.ActivityInstrumentationTestCase2;
+
+import androidx.test.filters.FlakyTest;
+
 import java.util.function.BooleanSupplier;
 
 /**
