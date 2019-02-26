@@ -34,4 +34,8 @@
         <option name="core-expectation" value="/knownfailures.txt" />
         <option name="runtime-hint" value="10m"/>
     </test>
+
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
+        <option name="screenshot-on-failure" value="false" />
+    </object>
 </configuration>
