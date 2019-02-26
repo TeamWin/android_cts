@@ -15,18 +15,24 @@
  */
 package android.content.pm.cts.shortcuthost;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.After;
+import org.junit.Before;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -38,29 +44,21 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-abstract public class BaseShortcutManagerHostTest extends DeviceTestCase implements IBuildReceiver {
+abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
     protected static final boolean DUMPSYS_IN_TEARDOWN = false; // DO NOT SUBMIT WITH TRUE
 
     protected static final boolean NO_UNINSTALL_IN_TEARDOWN = false; // DO NOT SUBMIT WITH TRUE
 
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
 
-    private IBuildInfo mCtsBuild;
-
     protected boolean mIsMultiuserSupported;
     protected boolean mIsManagedUserSupported;
 
     private ArrayList<Integer> mOriginalUsers;
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
+    @Before
+    public void setUp() throws Exception {
+        assertNotNull(getBuild());  // ensure build has been set before test is run.
 
         mIsMultiuserSupported = getDevice().isMultiUserSupported();
         if (!mIsMultiuserSupported) {
@@ -76,10 +74,9 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         removeTestUsers();
-        super.tearDown();
     }
 
     protected void dumpsys(String label) throws DeviceNotAvailableException {
@@ -104,7 +101,7 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
             DeviceNotAvailableException {
         CLog.i("Installing app " + appFileName + " for user " + userId);
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         String result = getDevice().installPackageForUser(
                 buildHelper.getTestFile(appFileName), true, true, userId, "-t");
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
