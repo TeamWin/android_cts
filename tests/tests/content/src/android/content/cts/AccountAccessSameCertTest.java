@@ -30,6 +30,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.content.AbstractThreadedSyncAdapter;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -49,6 +50,7 @@ import org.junit.runner.RunWith;
  * Tests whether a sync adapter can access accounts.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Sync manager not suported")
 public class AccountAccessSameCertTest {
     @Rule
     public final TestRule mFlakyTestTRule = new FlakyTestRule(3);

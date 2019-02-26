@@ -34,11 +34,6 @@ import android.content.res.Resources.NotFoundException;
 import android.content.res.Resources.Theme;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -46,6 +41,12 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.cts.util.TestUtils;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;

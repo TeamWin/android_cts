@@ -17,6 +17,11 @@
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
 
+    <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+
+    <!-- The framework has some native code involved. -->
+    <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
+
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/content" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>

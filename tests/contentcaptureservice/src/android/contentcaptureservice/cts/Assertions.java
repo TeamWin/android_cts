@@ -219,7 +219,7 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_INITIAL_VIEW_TREE_APPEARING} event.
      */
-    public static void assertViewHierarchyStarted(@NonNull List<ContentCaptureEvent> events,
+    public static void assertViewTreeStarted(@NonNull List<ContentCaptureEvent> events,
             int index) {
         assertViewHierarchyEvent(events, index, /* started= */ true);
     }
@@ -227,7 +227,7 @@ final class Assertions {
     /**
      * Asserts the contents of a {@link #TYPE_INITIAL_VIEW_TREE_APPEARED} event.
      */
-    public static void assertViewHierarchyFinished(@NonNull List<ContentCaptureEvent> events,
+    public static void assertViewTreeFinished(@NonNull List<ContentCaptureEvent> events,
             int index) {
         assertViewHierarchyEvent(events, index, /* started= */ false);
     }
@@ -475,19 +475,19 @@ final class Assertions {
         final String string;
         switch (type) {
             case TYPE_VIEW_APPEARED:
-                string = "APPEARED";
+                string = "APPEAR";
                 break;
             case TYPE_VIEW_DISAPPEARED:
-                string = "DISAPPEARED";
+                string = "DISAPPEAR";
                 break;
             case TYPE_VIEW_TEXT_CHANGED:
-                string = "TEXT_CHANGED";
+                string = "TEXT_CHANGE";
                 break;
             case TYPE_INITIAL_VIEW_TREE_APPEARING:
-                string = "HIERARCHY_STARTED";
+                string = "TREE_START";
                 break;
             case TYPE_INITIAL_VIEW_TREE_APPEARED:
-                string = "HIERARCHY_FINISHED";
+                string = "TREE_END";
                 break;
             default:
                 return "UNKNOWN-" + type;

@@ -19,6 +19,7 @@ package android.content.cts;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 
 /**
  * Test {@link ContextWrapper}.
@@ -32,6 +33,7 @@ import android.content.pm.PackageManager;
  * There are some tests for ContextWrapper that don't make sense for Context - those are included
  * in this class.
  */
+@AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ContextWrapperTest extends ContextTest {
 
     /**

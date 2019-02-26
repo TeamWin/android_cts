@@ -58,6 +58,7 @@ import android.telephony.cts.locationaccessingapp.CtsLocationAccessService;
 import android.telephony.cts.locationaccessingapp.ICtsLocationAccessControl;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
@@ -71,6 +72,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -437,6 +439,15 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testGetRadioHalVersion() {
+        Pair<Integer, Integer> version = mTelephonyManager.getRadioHalVersion();
+
+        // The version must be valid, and the versions start with 1.0
+        assertFalse("Invalid Radio HAL Version: " + version,
+                version.first < 1 || version.second < 0);
+    }
+
+    @Test
     public void testCreateForPhoneAccountHandle() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
@@ -731,7 +742,7 @@ public class TelephonyManagerTest {
                 == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
             fail("Expected SIM inserted");
         }
-        String locale = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+        Locale locale = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getSimLocale());
         Log.d(TAG, "testGetSimLocale: " + locale);
         assertNotNull(locale);

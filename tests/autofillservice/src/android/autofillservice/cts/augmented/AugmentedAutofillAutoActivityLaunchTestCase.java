@@ -28,7 +28,6 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.view.autofill.AutofillManager;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -42,6 +41,8 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
 
     protected static AugmentedReplier sAugmentedReplier;
     protected AugmentedUiBot mAugmentedUiBot;
+
+    private CtsAugmentedAutofillService.ServiceWatcher mServiceWatcher;
 
     @BeforeClass
     public static void allowAugmentedAutofill() {
@@ -60,15 +61,17 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
     public void setFixtures() {
         sAugmentedReplier = CtsAugmentedAutofillService.getAugmentedReplier();
         sAugmentedReplier.reset();
+        CtsAugmentedAutofillService.resetStaticState();
         mAugmentedUiBot = new AugmentedUiBot(mUiBot);
         mSafeCleanerRule
-            .run(() -> sAugmentedReplier.assertNoUnhandledFillRequests())
-            .add(() -> { return sAugmentedReplier.getExceptions(); });
-    }
-
-    @After
-    public void resetService() {
-        AugmentedHelper.resetAugmentedService();
+                .run(() -> sAugmentedReplier.assertNoUnhandledFillRequests())
+                .run(() -> {
+                    AugmentedHelper.resetAugmentedService();
+                    if (mServiceWatcher != null) {
+                        mServiceWatcher.waitOnDisconnected();
+                    }
+                })
+                .add(() -> { return sAugmentedReplier.getExceptions(); });
     }
 
     @Override
@@ -76,11 +79,17 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
         return AutofillManager.FLAG_SMART_SUGGESTION_SYSTEM;
     }
 
-    protected void enableAugmentedService() {
-        enableAugmentedService(/* whitelistSelf= */ true);
+    protected CtsAugmentedAutofillService enableAugmentedService() throws InterruptedException {
+        return enableAugmentedService(/* whitelistSelf= */ true);
     }
 
-    protected void enableAugmentedService(boolean whitelistSelf) {
+    protected CtsAugmentedAutofillService enableAugmentedService(boolean whitelistSelf)
+            throws InterruptedException {
+        if (mServiceWatcher != null) {
+            throw new IllegalStateException("There Can Be Only One!");
+        }
+
+        mServiceWatcher = CtsAugmentedAutofillService.setServiceWatcher();
         AugmentedHelper.setAugmentedService(CtsAugmentedAutofillService.SERVICE_NAME);
 
         // TODO(b/124456706): instead of sleeping it should wait for onConnected()
@@ -92,5 +101,9 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
             packages.add(Helper.MY_PACKAGE);
             getAutofillManager().setAugmentedAutofillWhitelist(packages, /* activities= */ null);
         }
+
+        CtsAugmentedAutofillService service = mServiceWatcher.waitOnConnected();
+        service.waitUntilConnected();
+        return service;
     }
 }

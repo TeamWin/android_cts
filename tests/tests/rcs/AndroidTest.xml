@@ -22,5 +22,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telephony.ims.cts" />
+        <option name="hidden-api-checks" value="false"/>
     </test>
 </configuration>

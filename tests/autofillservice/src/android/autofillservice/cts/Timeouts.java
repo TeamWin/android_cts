@@ -21,7 +21,7 @@ import com.android.compatibility.common.util.Timeout;
 /**
  * Timeouts for common tasks.
  */
-final class Timeouts {
+public final class Timeouts {
 
     private static final long ONE_TIMEOUT_TO_RULE_THEN_ALL_MS = 20_000;
     private static final long ONE_NAPTIME_TO_RULE_THEN_ALL_MS = 2_000;
@@ -31,7 +31,7 @@ final class Timeouts {
     /**
      * Timeout until framework binds / unbinds from service.
      */
-    static final Timeout CONNECTION_TIMEOUT = new Timeout("CONNECTION_TIMEOUT",
+    public static final Timeout CONNECTION_TIMEOUT = new Timeout("CONNECTION_TIMEOUT",
             ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
 
     /**

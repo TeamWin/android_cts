@@ -33,6 +33,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ServiceManager;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Contacts.People;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
@@ -742,6 +743,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals("android.content.cts.MockActivity2", target.getClassName());
     }
 
+    @AppModeFull
     public void testResolveActivityMultipleMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
 

@@ -17,7 +17,6 @@
 package com.android.compatibility.common.util;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
@@ -170,5 +169,12 @@ public final class SettingsUtils {
     public static void putSecureSetting(String key, String value) {
         set(SettingsUtils.NAMESPACE_SECURE, key, value);
 
+    }
+
+    /**
+     * Get a global setting for the current (foreground) user. Trims ending new line.
+     */
+    public static String getSecureSetting(String key) {
+        return SystemUtil.runShellCommand("settings --user current get secure " + key).trim();
     }
 }

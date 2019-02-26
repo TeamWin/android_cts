@@ -16,42 +16,25 @@
 
 package android.nativemidi.cts;
 
-import android.app.Activity;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.midi.MidiManager;
-import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiDevice;
-import android.media.midi.MidiDevice.MidiConnection;
 import android.media.midi.MidiDeviceInfo;
-import android.media.midi.MidiDeviceInfo.PortInfo;
-import android.media.midi.MidiDeviceStatus;
-import android.media.midi.MidiInputPort;
-import android.media.midi.MidiReceiver;
-import android.media.midi.MidiSender;
-
+import android.media.midi.MidiManager;
 import android.os.Bundle;
-
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-
-import android.test.AndroidTestCase;
-
 import android.util.Log;
 
-import java.io.IOException;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
-import java.util.ArrayList;
-import java.util.Random;
-
-import org.junit.Assert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.util.Random;
 
 /*
  * Test Class

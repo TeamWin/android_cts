@@ -2633,6 +2633,18 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         afd.close();
     }
 
+    public void testCallbackDataSourceDesc() throws Exception {
+        TestDataSourceCallback dataSource = new TestDataSourceCallback(new byte[0]);
+        CallbackDataSourceDesc cbdsd = new CallbackDataSourceDesc.Builder()
+                .setDataSource(dataSource)
+                .build();
+        assertEquals(dataSource, cbdsd.getDataSourceCallback());
+
+        CallbackDataSourceDesc cbdsd2 = new CallbackDataSourceDesc.Builder(cbdsd)
+                .build();
+        assertEquals(dataSource, cbdsd2.getDataSourceCallback());
+    }
+
     public void testStartEndPositions() throws Exception {
         long startPosMs = 3000;
         long endPosMs = 7000;

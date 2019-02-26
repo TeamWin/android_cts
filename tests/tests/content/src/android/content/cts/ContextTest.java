@@ -46,6 +46,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 import android.preference.PreferenceManager;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
@@ -67,6 +68,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ContextTest extends AndroidTestCase {
     private static final String TAG = "ContextTest";
     private static final String ACTUAL_RESULT = "ResultSetByReceiver";

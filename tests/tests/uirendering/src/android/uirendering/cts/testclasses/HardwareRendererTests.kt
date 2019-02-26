@@ -121,8 +121,8 @@ private fun rendererTest(setup: RendererTest.() -> Unit) {
     verify(spec.verifier!!) {
         spec.onPrepare?.invoke(this)
         val content = RenderNode("content")
-        content.setLeftTopRightBottom(0, 0, TEST_WIDTH, TEST_HEIGHT)
-        spec.onDraw!!.invoke(content.startRecording())
+        content.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT)
+        spec.onDraw!!.invoke(content.beginRecording())
         content.endRecording()
         setContentRoot(content)
     }
@@ -154,8 +154,8 @@ class HardwareRendererTests : ActivityTestBase() {
 
         try {
             val content = RenderNode("content")
-            content.setLeftTopRightBottom(0, 0, TEST_WIDTH, TEST_HEIGHT)
-            val canvas = content.startRecording()
+            content.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT)
+            val canvas = content.beginRecording()
             canvas.drawColor(Color.BLUE)
             content.endRecording()
             renderer.setContentRoot(content)
@@ -203,8 +203,8 @@ class HardwareRendererTests : ActivityTestBase() {
 
         try {
             val content = RenderNode("content")
-            content.setLeftTopRightBottom(0, 0, TEST_WIDTH, TEST_HEIGHT)
-            val canvas = content.startRecording()
+            content.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT)
+            val canvas = content.beginRecording()
             canvas.drawColor(Color.BLUE)
             content.endRecording()
             renderer.setContentRoot(content)
@@ -310,7 +310,7 @@ class HardwareRendererTests : ActivityTestBase() {
         assertNotNull(reader)
         val renderer = HardwareRenderer()
         val content = RenderNode("content")
-        val canvas = content.startRecording()
+        val canvas = content.beginRecording()
 
         run {
             for (i in 0..5) {
@@ -384,13 +384,12 @@ class HardwareRendererTests : ActivityTestBase() {
         }
         onDraw = {
             val childNode = RenderNode("shadowCaster")
-            childNode.setLeftTopRightBottom(childRect.left, childRect.top,
-                childRect.right, childRect.bottom)
+            childNode.setPosition(childRect)
             val outline = Outline()
             outline.setRect(Rect(0, 0, childRect.width(), childRect.height()))
             outline.alpha = 1f
             childNode.setOutline(outline)
-            val childCanvas = childNode.startRecording()
+            val childCanvas = childNode.beginRecording()
             childCanvas.drawColor(Color.RED)
             childNode.endRecording()
             childNode.elevation = 20f

@@ -35,6 +35,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 import android.util.StringBuilderPrinter;
 
 import androidx.test.InstrumentationRegistry;
@@ -48,6 +49,7 @@ import org.junit.runner.RunWith;
  * Test {@link ApplicationInfo}.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ApplicationInfoTest {
     private static final String SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME = "com.android.cts.stub";
 

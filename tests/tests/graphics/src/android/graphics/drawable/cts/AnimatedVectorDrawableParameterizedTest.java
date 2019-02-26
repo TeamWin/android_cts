@@ -29,15 +29,15 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.View;
 import android.widget.ImageView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.SystemUtil;

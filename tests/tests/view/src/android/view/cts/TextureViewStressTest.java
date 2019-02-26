@@ -16,9 +16,10 @@
 
 package android.view.cts;
 
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
+
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 
 @RequiresDevice
 @LargeTest

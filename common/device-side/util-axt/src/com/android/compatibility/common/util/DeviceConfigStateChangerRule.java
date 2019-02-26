@@ -39,6 +39,15 @@ public class DeviceConfigStateChangerRule extends StateChangerRule<String> {
      */
     public DeviceConfigStateChangerRule(@NonNull Context context, @NonNull String namespace,
             @NonNull String key, @Nullable String value) {
-        super(new DeviceConfigStateManager(context, namespace, key), value);
+        this(new DeviceConfigStateManager(context, namespace, key), value);
+    }
+
+    /**
+     * Alternative constructor used when then test case already defines a
+     * {@link DeviceConfigStateManager}.
+     */
+    public DeviceConfigStateChangerRule(@NonNull DeviceConfigStateManager dcsm,
+            @Nullable String value) {
+        super(dcsm, value);
     }
 }

@@ -23,9 +23,9 @@ import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertRightRelationship;
 import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyFinished;
-import static android.contentcaptureservice.cts.Assertions.assertViewHierarchyStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
+import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
@@ -173,11 +173,11 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final int minEvents = 5; // TODO(b/122315042): disappeared not always sent
         assertThat(mainEvents.size()).isAtLeast(minEvents);
-        assertViewHierarchyStarted(mainEvents, 0);
+        assertViewTreeStarted(mainEvents, 0);
         assertDecorViewAppeared(mainEvents, 1, decorView);
         assertViewAppeared(mainEvents, 2, grandpa2, decorView.getAutofillId());
         assertViewAppeared(mainEvents, 3, grandpa1, grandpa2.getAutofillId());
-        assertViewHierarchyFinished(mainEvents, 4);
+        assertViewTreeFinished(mainEvents, 4);
         assertViewsOptionallyDisappeared(mainEvents, 5, decorView.getAutofillId(),
                 grandpa2.getAutofillId(), grandpa1.getAutofillId());
 
@@ -297,7 +297,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final ContentCaptureContext actualContext = ctxUpdatedEvent.getContentCaptureContext();
         assertContentCaptureContext(actualContext);
 
-        assertViewHierarchyStarted(events, 1);
+        assertViewTreeStarted(events, 1);
         assertDecorViewAppeared(events, 2, decorView);
         assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
         assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
@@ -602,7 +602,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         int i = LoginActivity.MIN_EVENTS - 1;
         assertViewAppeared(events, i, sessionId, children[0], rootId);
         assertViewAppeared(events, i + 1, sessionId, children[1], rootId);
-        assertViewHierarchyFinished(events, i + 2);
+        assertViewTreeFinished(events, i + 2);
 
         activity.assertInitialViewsDisappeared(events, children.length);
     }
@@ -640,15 +640,21 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         final int additionalEvents = 2; // 2 children views
         final List<ContentCaptureEvent> events = activity.assertJustInitialViewsAppeared(session,
                 additionalEvents);
+        assertThat(events.size()).isAtLeast(LoginActivity.MIN_EVENTS + 5);
         final View decorView = activity.getDecorView();
         final View grandpa1 = activity.getGrandParent();
         final View grandpa2 = activity.getGrandGrandParent();
         final AutofillId rootId = activity.getRootView().getAutofillId();
         int i = LoginActivity.MIN_EVENTS - 1;
 
-        assertViewHierarchyFinished(events, i);
-        assertViewAppeared(events, i + 1, sessionId, children[0], rootId);
-        assertViewAppeared(events, i + 2, sessionId, children[1], rootId);
+        assertViewTreeFinished(events, i);
+        assertViewTreeStarted(events, i + 1);
+        assertViewAppeared(events, i + 2, sessionId, children[0], rootId);
+        assertViewAppeared(events, i + 3, sessionId, children[1], rootId);
+        assertViewTreeFinished(events, i + 4);
+
+        // TODO(b/122315042): assert parents disappeared
+        if (true) return;
 
         // TODO(b/122315042): sometimes we get decor view disappareared events, sometimes we don't
         // As we don't really care about those, let's fix it!
