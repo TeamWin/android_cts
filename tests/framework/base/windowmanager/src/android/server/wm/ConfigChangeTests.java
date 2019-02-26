@@ -24,7 +24,6 @@ import static android.server.wm.app.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
-import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.view.Surface.ROTATION_0;
@@ -32,8 +31,8 @@ import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -42,14 +41,19 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.settings.SettingsSession;
+
+import androidx.annotation.IntDef;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,6 +65,22 @@ import java.util.List;
 public class ConfigChangeTests extends ActivityManagerTestBase {
 
     private static final float EXPECTED_FONT_SIZE_SP = 10.0f;
+
+    /** Verifies if the count of configuration changes is expected. */
+    private static final int TEST_MODE_CONFIGURATION_CHANGE = 1;
+    /** Verifies if the count of relaunch is expected. */
+    private static final int TEST_MODE_RELAUNCH = 2;
+    /** Verifies if sizes match. */
+    private static final int TEST_MODE_RESIZE = 3;
+
+    /** Test mode that defines which lifecycle callback is verified in a particular test */
+    @IntDef(flag = true, value = {
+            TEST_MODE_CONFIGURATION_CHANGE,
+            TEST_MODE_RELAUNCH,
+            TEST_MODE_RESIZE
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface TestMode {}
 
     @Test
     public void testRotation90Relaunch() throws Exception{
@@ -78,27 +98,124 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         testRotation(NO_RELAUNCH_ACTIVITY, 1, 0, 1);
     }
 
-    // TODO(b/110382028): Fix relaunch testing and use an activity that doesn't handle config change
     @Test
-    public void testRotation180Relaunch() throws Exception {
+    public void testRotation180_RegularActivity() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
-        // TODO(b/110533226): Fix test on devices with display cutout
         assumeFalse("Skipping test: display cutout present, can't predict exact lifecycle",
                 hasDisplayCutout());
 
-        // Should receive a relaunch
+        // Should receive nothing
         testRotation(TEST_ACTIVITY, 2, 0, 0);
     }
 
     @Test
-    public void testRotation180NoRelaunch() throws Exception {
+    public void testRotation180_NoRelaunchActivity() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
-        // TODO(b/110533226): Fix test on devices with display cutout
         assumeFalse("Skipping test: display cutout present, can't predict exact lifecycle",
                 hasDisplayCutout());
 
         // Should receive nothing
         testRotation(NO_RELAUNCH_ACTIVITY, 2, 0, 0);
+    }
+
+    @Test
+    @FlakyTest(bugId = 110533226, detail = "Promote to presubmit once confirm it's not flaky")
+    public void testRotation180RelaunchWithCutout() throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
+
+        testRotation180WithCutout(TEST_ACTIVITY, TEST_MODE_RELAUNCH);
+    }
+
+    @Test
+    @FlakyTest(bugId = 110533226, detail = "Promote to presubmit once confirm it's not flaky")
+    public void testRotation180NoRelaunchWithCutout() throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
+
+        testRotation180WithCutout(NO_RELAUNCH_ACTIVITY, TEST_MODE_CONFIGURATION_CHANGE);
+    }
+
+    /**
+     * Test activity configuration changes for devices with cutout(s). Landscape and
+     * reverse-landscape rotations should result in same screen space available for apps.
+     */
+    @Test
+    @FlakyTest(bugId = 110533226, detail = "Promote to presubmit once confirm it's not flaky")
+    public void testConfigChangeWhenRotatingWithCutout() throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
+
+        testRotation180WithCutout(TEST_ACTIVITY, TEST_MODE_RESIZE);
+    }
+
+    private void testRotation180WithCutout(ComponentName activityName, @TestMode int testMode)
+            throws Exception {
+        launchActivity(activityName);
+        mAmWmState.computeState(activityName);
+
+        try(final RotationSession rotationSession = new RotationSession()) {
+            final StateCount count1 = getStateCountForRotation(activityName, rotationSession,
+                    ROTATION_0 /* before */, ROTATION_180 /* after */);
+            final StateCount count2 = getStateCountForRotation(activityName, rotationSession,
+                    ROTATION_90 /* before */, ROTATION_270 /* after */);
+
+            final int configChange = count1.mConfigChangeCount + count2.mConfigChangeCount;
+            final int relaunch = count1.mRelaunchCount + count2.mRelaunchCount;
+            // There should at least one 180 rotation without resize.
+            final boolean sameSize = !count1.mResize || !count2.mResize;
+
+            switch(testMode) {
+                case TEST_MODE_CONFIGURATION_CHANGE: {
+                    assertTrue("There must be at most one 180 degree rotation that results in the"
+                            + " same configuration on device with cutout", configChange <= 1);
+                    assertEquals("There must be no relaunch during test", 0, relaunch);
+                    break;
+                }
+                case TEST_MODE_RELAUNCH: {
+                    assertEquals("There must be no configuration change during test",
+                            0, configChange);
+                    assertTrue("There must be at most one 180 degree rotation that results in"
+                            + " relaunch on device with cutout", relaunch <= 1);
+                    break;
+                }
+                case TEST_MODE_RESIZE: {
+                    assertTrue("A device with cutout should have the same available screen space"
+                            + " in landscape and reverse-landscape", sameSize);
+                    break;
+                }
+                default: {
+                    fail("unrecognized test mode: " + testMode);
+                }
+            }
+        }
+    }
+
+    private StateCount getStateCountForRotation(ComponentName activityName, RotationSession session,
+            int before, int after) throws Exception {
+        session.set(before);
+        separateTestJournal();
+        session.set(after);
+        mAmWmState.computeState(activityName);
+        final ActivityLifecycleCounts counter = new ActivityLifecycleCounts(activityName);
+
+        int configChangeCount = counter.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED);
+        int relaunchCount = counter.getCount(ActivityCallback.ON_CREATE);
+        boolean resize = getLastReportedSizesForActivity(activityName) != null;
+
+        return new StateCount(configChangeCount, relaunchCount, resize);
+    }
+
+    private final static class StateCount {
+        final int mConfigChangeCount;
+        final int mRelaunchCount;
+        final boolean mResize;
+
+        StateCount(int configChangeCount, int relaunchCount, boolean resize) {
+            mConfigChangeCount = configChangeCount;
+            mRelaunchCount = relaunchCount;
+            mResize = resize;
+        }
     }
 
     @Test
@@ -111,54 +228,6 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
         testChangeFontScale(FONT_SCALE_NO_RELAUNCH_ACTIVITY, false /* relaunch */);
-    }
-
-    /**
-     * Test activity configuration changes for devices with cutout(s). Landscape and
-     * reverse-landscape rotations should result in same screen space available for apps.
-     */
-    @Test
-    public void testConfigChangeWhenRotatingWithCutout() throws Exception {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
-        assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
-
-        // Start an activity that handles config changes
-        launchActivity(RESIZEABLE_ACTIVITY);
-        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
-        final int displayId = mAmWmState.getAmState().getDisplayByActivity(RESIZEABLE_ACTIVITY);
-
-        // 0 - 180 rotation or 270 - 90 rotation should have same screen space
-        boolean configSame0_180 = false, configSame270_90 = false;
-        final int[] cutoutRotations = { ROTATION_180, ROTATION_90, ROTATION_270 };
-
-        // Rotate the activity and check that the orientation doesn't change at least once
-        try (final RotationSession rotationSession = new RotationSession()) {
-            rotationSession.set(ROTATION_0);
-
-            final SizeInfo[] sizes = new SizeInfo[cutoutRotations.length];
-            for (int i = 0; i < cutoutRotations.length; i++) {
-                separateTestJournal();
-                final int rotation = cutoutRotations[i];
-                rotationSession.set(rotation);
-                final int newDeviceRotation = getDeviceRotation(displayId);
-                if (rotation != newDeviceRotation) {
-                    log("This device doesn't support locked user "
-                            + "rotation mode. Not continuing the rotation checks.");
-                    continue;
-                }
-
-                // Record configuration changes on rotations between opposite orientations
-                sizes[i] = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
-                if (i == 0) {
-                    configSame0_180 = sizes[i] == null;
-                } else if (i == 2) {
-                    configSame270_90 = sizes[i] == null;
-                }
-            }
-
-            assertThat("A device with cutout should have same available screen space in "
-                    + "landscape and reverse-landscape", configSame0_180 || configSame270_90);
-        }
     }
 
     private void testRotation(ComponentName activityName, int rotationStep, int numRelaunch,
