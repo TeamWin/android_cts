@@ -154,7 +154,7 @@ public class CapturedActivity extends Activity {
     }
 
     public long getCaptureDurationMs() {
-        return mOnEmbedded ? 100000 : 10000;
+        return mOnEmbedded ? 100000 : 50000;
     }
 
     public TestResult runTest(AnimationTestCase animationTestCase) throws Throwable {
@@ -172,7 +172,7 @@ public class CapturedActivity extends Activity {
             return testResult;
         }
 
-        final long timeOutMs = mOnEmbedded ? 125000 : 25000;
+        final long timeOutMs = mOnEmbedded ? 125000 : 62500;
         final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + getCaptureDurationMs();
         final long endDelayMs = endCaptureDelayMs + 1000;
 
