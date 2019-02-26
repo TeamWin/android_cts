@@ -36,7 +36,6 @@ import org.junit.runner.RunWith;
 /**
  * Test class for JDiffClassDescription.
  */
-@SuppressWarnings("deprecation")
 @RunWith(JUnit4.class)
 public class ApiComplianceCheckerTest extends AbstractApiCheckerTest<ApiComplianceChecker> {
 
