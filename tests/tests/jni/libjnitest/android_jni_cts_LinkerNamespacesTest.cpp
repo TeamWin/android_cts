@@ -171,7 +171,7 @@ static bool check_lib(JNIEnv* env,
                       jclass clazz,
                       const std::string& path,
                       const std::unordered_set<std::string>& library_search_paths,
-                      const std::unordered_set<std::string>& libraries,
+                      const std::unordered_set<std::string>& public_library_basenames,
                       std::vector<std::string>* errors,
                       bool test_system_load_library) {
   std::string err = load_library(env, clazz, path, test_system_load_library);
@@ -182,24 +182,36 @@ static bool check_lib(JNIEnv* env,
   //  - No library with the same name can be found in a sub directory.
   //  - Each public library does not contain any directory components.
 
-  // Check if this library should be considered a public library.
   std::string baselib = basename(path.c_str());
-  if (libraries.find(baselib) != libraries.end() &&
-      is_library_on_path(library_search_paths, baselib, path)) {
-    if (!loaded) {
-      errors->push_back("The library \"" + path +
-                        "\" is a public library but it cannot be loaded: " + err);
-      return false;
+  bool is_public = public_library_basenames.find(baselib) != public_library_basenames.end();
+  bool is_in_search_path = is_library_on_path(library_search_paths, baselib, path);
+
+  if (is_public) {
+    if (is_in_search_path) {
+      if (!loaded) {
+        errors->push_back("The library \"" + path +
+                          "\" is a public library but it cannot be loaded: " + err);
+        return false;
+      }
+    } else {  // !is_in_search_path
+      if (loaded) {
+        errors->push_back("The library \"" + path +
+                          "\" is a public library that was loaded from a subdirectory.");
+        return false;
+      }
     }
-  } else if (loaded) {
-    errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
-    return false;
-  } else { // (!loaded && !shouldBeAccessible(path))
-    if (!not_accessible(err) && !not_found(err) && !wrong_arch(path, err)) {
-      errors->push_back("unexpected dlerror: " + err);
+  } else {  // !is_public
+    if (loaded) {
+      errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
       return false;
     }
   }
+
+  if (!loaded && !not_accessible(err) && !not_found(err) && !wrong_arch(path, err)) {
+    errors->push_back("unexpected dlerror: " + err);
+    return false;
+  }
+
   return true;
 }
 
@@ -216,7 +228,7 @@ static bool check_path(JNIEnv* env,
                        jclass clazz,
                        const std::string& library_path,
                        const std::unordered_set<std::string>& library_search_paths,
-                       const std::unordered_set<std::string>& libraries,
+                       const std::unordered_set<std::string>& public_library_basenames,
                        std::vector<std::string>* errors,
                        bool test_system_load_library) {
 
@@ -249,8 +261,8 @@ static bool check_path(JNIEnv* env,
       std::string path = dir + "/" + dp->d_name;
       if (is_directory(path.c_str())) {
         dirs.push(path);
-      } else if (!check_lib(env, clazz, path, library_search_paths, libraries, errors,
-                            test_system_load_library)) {
+      } else if (!check_lib(env, clazz, path, library_search_paths, public_library_basenames,
+                            errors, test_system_load_library)) {
         success = false;
       }
     }
@@ -263,10 +275,10 @@ static bool check_path(JNIEnv* env,
                        jclass clazz,
                        const std::string& library_path,
                        const std::unordered_set<std::string>& library_search_paths,
-                       const std::unordered_set<std::string>& libraries,
+                       const std::unordered_set<std::string>& public_library_basenames,
                        std::vector<std::string>* errors) {
-  return check_path(env, clazz, library_path, library_search_paths, libraries, errors,
-                    /*test_system_load_library=*/true);
+  return check_path(env, clazz, library_path, library_search_paths, public_library_basenames,
+                    errors, /*test_system_load_library=*/true);
 }
 
 static bool jobject_array_to_set(JNIEnv* env,
@@ -441,4 +453,3 @@ extern "C" JNIEXPORT jstring JNICALL Java_android_jni_cts_LinkerNamespacesHelper
     }
     return nullptr;
 }
-
