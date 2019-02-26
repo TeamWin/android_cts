@@ -404,8 +404,8 @@ public class AvailableIntentsTest extends AndroidTestCase {
         WifiManager manager = mContext.getSystemService(WifiManager.class);
 
         if (manager.isEasyConnectSupported()) {
-            Intent intent = new Intent(Settings.ACTION_PROCESS_WIFI_EASY_CONNECT_QR_CODE);
-            intent.putExtra(Settings.EXTRA_QR_CODE, QRCODE);
+            Intent intent = new Intent(Settings.ACTION_PROCESS_WIFI_EASY_CONNECT_URI);
+            intent.setData(Uri.parse(QRCODE));
             assertCanBeHandled(intent);
         }
     }
