@@ -26,6 +26,7 @@ import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -171,6 +172,12 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     /** Clears data of {@code packageName} for user {@code userId}. */
     void clearPackageDataAsUser(String packageName, int userId) throws DeviceNotAvailableException {
         mDevice.executeShellCommand(String.format("pm clear --user %d %s", userId, packageName));
+    }
+
+    /** Installs {@code apk} for user {@code userId} and allows replacements and downgrades. */
+    void installPackageAsUser(String apk, int userId)
+            throws DeviceNotAvailableException, TargetSetupError {
+        installPackageAsUser(apk, false, userId, "-r", "-d");
     }
 
     /** Uninstalls {@code packageName} for user {@code userId}. */

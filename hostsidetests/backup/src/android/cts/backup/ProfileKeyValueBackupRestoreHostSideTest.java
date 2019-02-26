@@ -64,7 +64,7 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         mTransport = switchUserToLocalTransportAndAssertSuccess(profileUserId);
 
         // Setup test package.
-        installPackageAsUser(KEY_VALUE_APK, false, profileUserId);
+        installPackageAsUser(KEY_VALUE_APK, profileUserId);
         clearPackageDataAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
     }
 
@@ -106,7 +106,7 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
 
         uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        installPackageAsUser(KEY_VALUE_APK, false, profileUserId);
+        installPackageAsUser(KEY_VALUE_APK, profileUserId);
 
         checkDeviceTest("assertSharedPrefsRestored");
     }
@@ -138,7 +138,7 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
 
         uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        installPackageAsUser(KEY_VALUE_APK, false, mParentUserId);
+        installPackageAsUser(KEY_VALUE_APK, mParentUserId);
         String mark = mLogcatInspector.mark(TAG);
         installExistingPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
