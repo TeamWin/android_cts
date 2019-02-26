@@ -45,6 +45,9 @@ LOCAL_SRC_FILES := \
 
 LOCAL_PACKAGE_NAME := CtsOsTestCases
 
+# Set its own test config to prevent sharing with cts-platform-version-check
+LOCAL_TEST_CONFIG := CtsOsTestCases.xml
+
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
