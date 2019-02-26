@@ -182,7 +182,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         final Pattern userAgentExpr = Pattern.compile(patternString);
         Matcher patternMatcher = userAgentExpr.matcher(useragent);
         if (shouldMatch) {
-            assertTrue(String.format("User agent string did not match expected pattern. \n" +
+            assertTrue(String.format("CDD(3.4.1/C-1-3) User agent string did not match expected pattern. \n" +
                             "Expected pattern:\n%s\nActual:\n%s", patternString, useragent),
                     patternMatcher.find());
         } else {
