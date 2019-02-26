@@ -268,7 +268,7 @@ public class ApiComplianceChecker extends AbstractApiChecker {
             String genericTypeName = null;
             Type type = field.getGenericType();
             if (type != null) {
-                genericTypeName = type instanceof Class ? ((Class) type).getName() :
+                genericTypeName = type instanceof Class ? ((Class<?>) type).getName() :
                         type.toString().replace('$', '.');
             }
             if (genericTypeName == null || !genericTypeName.equals(fieldDescription.mFieldType)) {
