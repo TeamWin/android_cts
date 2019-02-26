@@ -80,16 +80,6 @@ class LinkerNamespacesHelper {
         "libc.so",
         "libm.so",
         "libdl.so",
-
-        // TODO(b/124501296): Whitelist these libs due to misconfiguration in classloader namespace
-        "libartbase.so",
-        "libdexfile_external.so",
-        "libdexfile.so",
-        "libartpalette.so",
-        "libnativebridge.so",
-        "libnativehelper.so",
-        "libnativeloader.so",
-        "libandroidicu.so",
     };
 
     // The grey-list.
