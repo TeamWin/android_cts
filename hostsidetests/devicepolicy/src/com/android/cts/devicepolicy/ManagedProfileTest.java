@@ -18,6 +18,9 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
+
+import android.stats.devicepolicy.EventId;
+
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -30,8 +33,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import android.stats.devicepolicy.EventId;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -51,8 +52,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
-
-    private static final String WIFI_CONFIG_CREATOR_APK = "CtsWifiConfigCreator.apk";
 
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
     private static final String WIDGET_PROVIDER_PKG = "com.android.cts.widgetprovider";
@@ -376,6 +375,26 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             fail(mHasFeature ? "Device must allow creating only one managed profile"
                     : "Device must not allow creating a managed profile");
         }
+    }
+
+    /**
+     * Verify that removing a managed profile will remove all networks owned by that profile.
+     */
+    public void testProfileWifiCleanup() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId);
+
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId);
+
+        // Now delete the user - should undo the effect of testAddWifiNetwork.
+        removeUser(mProfileUserId);
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
+                mParentUserId);
     }
 
     public void testWifiMacAddress() throws Exception {
