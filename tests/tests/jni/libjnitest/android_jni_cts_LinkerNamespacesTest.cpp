@@ -201,7 +201,10 @@ static bool check_lib(JNIEnv* env,
       }
     }
   } else {  // !is_public
-    if (loaded) {
+    // If the library loaded successfully but is in a subdirectory then it is
+    // still not public. That is the case e.g. for
+    // /apex/com.android.runtime/lib{,64}/bionic/lib*.so.
+    if (loaded && is_in_search_path) {
       errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
       return false;
     }
@@ -405,10 +408,7 @@ extern "C" JNIEXPORT jstring JNICALL
 
   // Check the runtime libraries.
   if (!check_path(env, clazz, kRuntimeApexLibraryPath,
-                  { kRuntimeApexLibraryPath,
-                    // Add bionic as permitted path since the check_path searches recursively.
-                    // TODO(b/124378065): Remove this permitted path when the bug is resolved.
-                    kRuntimeApexLibraryPath + "/bionic" },
+                  { kRuntimeApexLibraryPath },
                   runtime_public_libraries, &errors,
                   // System.loadLibrary("icuuc") would fail since a copy exists in /system.
                   // TODO(b/124218500): Remove it when the bug is resolved.
