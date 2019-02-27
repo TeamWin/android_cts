@@ -19,11 +19,12 @@ package android.server.wm;
 import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_CUTOUT_MODE;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.DISPATCHED;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.ROOT;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
@@ -43,12 +44,13 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.rule.ActivityTestRule;
 import android.view.DisplayCutout;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
+
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.PollingCheck;
 

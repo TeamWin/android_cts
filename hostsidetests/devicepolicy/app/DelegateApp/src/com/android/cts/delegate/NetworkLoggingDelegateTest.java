@@ -16,7 +16,6 @@
 package com.android.cts.delegate;
 
 import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
@@ -25,10 +24,11 @@ import android.app.admin.DevicePolicyManager;
 import android.app.admin.NetworkEvent;
 import android.content.Context;
 import android.content.Intent;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

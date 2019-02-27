@@ -40,8 +40,9 @@ import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.provider.ContactsContract;
 import android.test.AndroidTestCase;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.permissiondeclareapp.UtilsProvider;
 

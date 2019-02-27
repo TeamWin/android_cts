@@ -4,16 +4,7 @@
       "name": "CtsOsTestCases",
       "options": [
         {
-          "exclude-filter": "android.os.cts.BuildTest#testIsSecureUserBuild"
-        },
-        {
-          "exclude-filter": "android.os.cts.BuildVersionTest#testBuildFingerprint"
-        },
-        {
           "exclude-filter": "android.os.cts.UsbDebuggingTest#testUsbDebugging"
-        },
-        {
-          "exclude-filter": "android.os.cts.SeccompTest#testIsolatedServicePolicy"
         },
         {
           "exclude-filter": "android.os.cts.DebugTest#testGetAndReset"

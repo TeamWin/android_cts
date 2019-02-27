@@ -16,16 +16,17 @@
 
 package android.server.am;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 import android.app.Activity;
 import android.graphics.Point;
-import android.support.test.rule.ActivityTestRule;
 import android.view.Display;
 import android.view.WindowManager;
+
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.PollingCheck;
 

@@ -20,12 +20,13 @@ import static android.server.wm.LocationOnScreenTests.TestActivity.COLOR_TOLERAN
 import static android.server.wm.LocationOnScreenTests.TestActivity.EXTRA_LAYOUT_PARAMS;
 import static android.server.wm.LocationOnScreenTests.TestActivity.TEST_COLOR_1;
 import static android.server.wm.LocationOnScreenTests.TestActivity.TEST_COLOR_2;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.is;
 
@@ -40,15 +41,16 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
 import android.widget.FrameLayout;
+
+import androidx.test.filters.FlakyTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.PollingCheck;

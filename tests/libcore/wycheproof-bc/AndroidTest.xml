@@ -36,4 +36,8 @@
         <option name="test-timeout" value="3600000" />
         <option name="hidden-api-checks" value="false" />
     </test>
+
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
+        <option name="screenshot-on-failure" value="false" />
+    </object>
 </configuration>

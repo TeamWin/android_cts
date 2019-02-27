@@ -16,7 +16,7 @@
 
 package android.server.am.intent;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
 import android.content.Context;

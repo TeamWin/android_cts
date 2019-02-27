@@ -59,10 +59,9 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
-import static android.server.am.app27.Components.SDK_27_HOME_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
-import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
+import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
 import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.server.am.second.Components.EMBEDDING_ACTIVITY;
 import static android.server.am.second.Components.EmbeddingActivity.ACTION_EMBEDDING_TEST_ACTIVITY_START;
@@ -73,9 +72,10 @@ import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
 import static android.server.am.second.Components.SECOND_NO_EMBEDDING_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
@@ -120,6 +120,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
@@ -129,7 +130,6 @@ import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;

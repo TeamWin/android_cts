@@ -37,7 +37,7 @@ LOCAL_SRC_FILES := \
     ../../../../apps/CtsVerifier/src/com/android/cts/verifier/vr/MockVrListenerService.java \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
+    androidx.test.rules hamcrest-library \
     cts-amwm-util \
     CtsMockInputMethodLib \
     metrics-helper-lib

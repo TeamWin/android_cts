@@ -25,13 +25,14 @@ import static org.junit.Assert.assertEquals;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Point;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.FlakyTest;
-import android.support.test.rule.ActivityTestRule;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 

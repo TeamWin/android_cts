@@ -30,7 +30,7 @@
         <activity android:name=".NativeActivity" android:label="Native Crash Test Activity" android:process=":TestProcess" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="com.android.server.cts.errors" />
 </manifest>
 

@@ -22,8 +22,8 @@ LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES = \
     mockito-target-extended \
-    android-support-test \
-    ctstestrunner \
+    androidx.test.rules \
+    ctstestrunner-axt \
     dexmaker-mockmaker-tests \
     dexmaker-inline-mockmaker-tests \
     dexmaker-extended-mockmaker-tests \

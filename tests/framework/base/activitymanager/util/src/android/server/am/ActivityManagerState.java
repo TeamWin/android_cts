@@ -26,7 +26,8 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
 import android.graphics.Rect;

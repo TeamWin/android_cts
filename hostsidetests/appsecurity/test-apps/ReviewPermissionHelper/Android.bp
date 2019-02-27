@@ -19,8 +19,8 @@ android_test {
 
     static_libs: [
         "ub-uiautomator",
-        "android-support-test",
-        "compatibility-device-util",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
     ],
 
     test_suites: [

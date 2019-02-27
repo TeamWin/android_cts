@@ -19,7 +19,8 @@ package android.server.am.intent;
 import static android.server.am.intent.Persistence.LaunchFromIntent.prepareSerialisation;
 import static android.server.am.intent.StateComparisonException.assertEndStatesEqual;
 import static android.server.am.intent.StateComparisonException.assertInitialStateEqual;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.collect.Iterables.getLast;
 

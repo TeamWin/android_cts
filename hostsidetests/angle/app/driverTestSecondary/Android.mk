@@ -31,7 +31,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts cts_instant
 
 LOCAL_MULTILIB := both
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test AngleIntegrationTestCommon
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt androidx.test.rules AngleIntegrationTestCommon
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
 include $(BUILD_CTS_SUPPORT_PACKAGE)

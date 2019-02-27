@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts;
 
-import android.support.test.rule.ActivityTestRule;
+import androidx.test.rule.ActivityTestRule;
 
 /**
  * Custom {@link ActivityTestRule}.

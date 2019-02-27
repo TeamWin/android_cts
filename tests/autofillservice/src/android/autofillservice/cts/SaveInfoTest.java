@@ -29,8 +29,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.InternalSanitizer;
 import android.service.autofill.Sanitizer;
 import android.service.autofill.SaveInfo;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.autofill.AutofillId;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

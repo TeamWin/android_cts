@@ -126,39 +126,6 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
     }
 
     /**
-     * Verify that getting the service state requires location permission
-     * <p>
-     * Requires Permission: {@link
-     * android.Manifest.permission#ACCESS_COARSE_LOCATION}
-     */
-    @UiThreadTest
-    public void testGetServiceState() {
-        if (!mHasTelephony) {
-            return;
-        }
-
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
-                Context.TELEPHONY_SERVICE);
-
-        PhoneStateListener phoneStateListener = new PhoneStateListener();
-        try {
-            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
-            fail("TelephonyManager.listen(LISTEN_SERVICE_STATE) did not" +
-                    " throw SecurityException as expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-
-        try {
-            telephonyManager.getServiceState();
-            fail("TelephonyManager.getServiceState did not throw"
-                    + " SecurityException as expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    /**
      * Helper method to verify that calling requestLocationUpdates with given
      * provider throws SecurityException.
      * 

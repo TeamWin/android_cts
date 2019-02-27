@@ -18,9 +18,10 @@ package com.android.cts.delegate;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
 import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.List;
 

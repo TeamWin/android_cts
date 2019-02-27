@@ -22,7 +22,8 @@
     <target_preparer class="android.cts.backup.BackupPreparer">
         <option name="enable-backup-if-needed" value="true" />
         <option name="select-local-transport" value="true" />
-    </target_preparer>    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+    </target_preparer>
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsShortcutHostTestCases.jar" />
         <option name="runtime-hint" value="10m" />
     </test>

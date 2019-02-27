@@ -20,7 +20,8 @@ import static org.junit.Assert.assertThat;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.rule.ActivityTestRule;
+
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
 import org.junit.Test;

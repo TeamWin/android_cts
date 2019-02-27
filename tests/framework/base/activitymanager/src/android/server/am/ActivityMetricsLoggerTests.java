@@ -58,9 +58,10 @@ import android.metrics.LogMaker;
 import android.metrics.MetricsReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
+
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 

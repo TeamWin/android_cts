@@ -16,23 +16,17 @@
 
 package com.android.angleIntegrationTest.driverTestSecondary;
 
+import static org.junit.Assert.fail;
+
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.angleIntegrationTest.common.AngleIntegrationTestActivity;
 import com.android.angleIntegrationTest.common.GlesView;
-
-import static org.junit.Assert.fail;
-import android.content.Context;
-import android.app.Activity;
-import android.os.Bundle;
-import android.util.Log;
-
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.lang.Override;
 
 @RunWith(AndroidJUnit4.class)
 public class AngleDriverTestActivity {

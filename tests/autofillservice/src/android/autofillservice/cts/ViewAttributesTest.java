@@ -22,7 +22,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
@@ -30,6 +29,7 @@ import android.widget.EditText;
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

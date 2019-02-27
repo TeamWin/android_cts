@@ -21,7 +21,10 @@ import static android.contentcaptureservice.cts.Assertions.assertChildSessionCon
 import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertLifecycleOrder;
 import static android.contentcaptureservice.cts.Assertions.assertMainSessionContext;
+import static android.contentcaptureservice.cts.Assertions.assertNoViewLevelEvents;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.assertSessionPaused;
+import static android.contentcaptureservice.cts.Assertions.assertSessionResumed;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
@@ -47,7 +50,6 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillId;
@@ -61,6 +63,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.DeviceConfigStateManager;
@@ -226,9 +229,7 @@ public class ChildlessActivityTest
 
         // Should be empty because the root view is not important for content capture without a
         // child that is important.
-        final List<ContentCaptureEvent> events = session.getEvents();
-        Log.v(TAG, "events(" + events.size() + "): " + events);
-        assertThat(events).isEmpty();
+        assertNoViewLevelEvents(session, activity);
     }
 
     @Test
@@ -273,17 +274,19 @@ public class ChildlessActivityTest
         final View decorView = activity.getDecorView();
 
         // Assert just the relevant events
-        assertThat(events.size()).isAtLeast(8);
-        assertViewTreeStarted(events, 0);
-        assertDecorViewAppeared(events, 1, decorView);
-        assertViewAppeared(events, 2, grandpa2, decorView.getAutofillId());
-        assertViewAppeared(events, 3, grandpa1, grandpa2.getAutofillId());
-        assertViewAppeared(events, 4, sessionId, rootView, grandpa1.getAutofillId());
-        assertViewAppeared(events, 5, sessionId, child, rootId);
-        assertViewTreeFinished(events, 6);
-        assertViewTreeStarted(events, 7);
-        assertViewDisappeared(events, 8, child.getAutofillId());
-        assertViewTreeFinished(events, 9);
+        assertThat(events.size()).isAtLeast(12);
+        assertSessionResumed(events, 0);
+        assertViewTreeStarted(events, 1);
+        assertDecorViewAppeared(events, 2, decorView);
+        assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
+        assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events, 5, sessionId, rootView, grandpa1.getAutofillId());
+        assertViewAppeared(events, 6, sessionId, child, rootId);
+        assertViewTreeFinished(events, 7);
+        assertViewTreeStarted(events, 8);
+        assertViewDisappeared(events, 9, child.getAutofillId());
+        assertViewTreeFinished(events, 10);
+        assertSessionPaused(events, 11);
 
         // TODO(b/122315042): assert parents disappeared
     }
@@ -317,12 +320,14 @@ public class ChildlessActivityTest
 
         // Assert just the relevant events
 
-        assertThat(events.size()).isAtLeast(4);
+        assertThat(events.size()).isAtLeast(6);
         // TODO(b/122959591): figure out the child is coming first
-        assertViewTreeStarted(events, 0);
-        assertViewAppeared(events, 1, sessionId, child, rootView.getAutofillId());
-        assertViewAppeared(events, 2, sessionId, rootView, grandpa.getAutofillId());
-        assertViewTreeFinished(events, 3);
+        assertSessionResumed(events, 0);
+        assertViewTreeStarted(events, 1);
+        assertViewAppeared(events, 2, sessionId, child, rootView.getAutofillId());
+        assertViewAppeared(events, 3, sessionId, rootView, grandpa.getAutofillId());
+        assertViewTreeFinished(events, 4);
+        assertSessionPaused(events, 5);
     }
 
     @Test
@@ -364,10 +369,12 @@ public class ChildlessActivityTest
         final List<ContentCaptureEvent> mainEvents = mainTestSession.getEvents();
         Log.v(TAG, "mainEvents(" + mainEvents.size() + "): " + mainEvents);
 
-        assertThat(mainEvents.size()).isAtLeast(3);
-        assertViewTreeStarted(mainEvents, 0);
-        assertViewAppeared(mainEvents, 1, mainSessionId, rootView, grandpa.getAutofillId());
-        assertViewTreeFinished(mainEvents, 2);
+        assertThat(mainEvents.size()).isAtLeast(5);
+        assertSessionResumed(mainEvents, 0);
+        assertViewTreeStarted(mainEvents, 1);
+        assertViewAppeared(mainEvents, 2, mainSessionId, rootView, grandpa.getAutofillId());
+        assertViewTreeFinished(mainEvents, 3);
+        assertSessionPaused(mainEvents, 4);
 
         final Session childTestSession = service.getFinishedSession(childSessionId);
         assertChildSessionContext(childTestSession, "child");
@@ -475,7 +482,7 @@ public class ChildlessActivityTest
         Log.v(TAG, "events3(" + events3.size() + "): " + events3);
         Log.v(TAG, "events4(" + events4.size() + "): " + events4);
 
-        assertThat(mainEvents).isEmpty();
+        assertNoViewLevelEvents(mainTestSession, activity);
         assertThat(events1).isEmpty();
         assertThat(events2).isEmpty();
         assertThat(events3).isEmpty();
@@ -680,13 +687,15 @@ public class ChildlessActivityTest
         final AutofillId rootId = rootView.getAutofillId();
         final View grandpa = activity.getGrandParent();
 
-        assertThat(mainEvents).hasSize(6);
-        assertViewTreeStarted(mainEvents, 0);
-        assertViewAppeared(mainEvents, 1, rootView, grandpa.getAutofillId());
-        assertViewTreeFinished(mainEvents, 2);
-        assertViewTreeStarted(mainEvents, 3);
-        assertViewDisappeared(mainEvents, 4, rootId);
-        assertViewTreeFinished(mainEvents, 5);
+        assertThat(mainEvents).hasSize(8);
+        assertSessionResumed(mainEvents, 0);
+        assertViewTreeStarted(mainEvents, 1);
+        assertViewAppeared(mainEvents, 2, rootView, grandpa.getAutofillId());
+        assertViewTreeFinished(mainEvents, 3);
+        assertSessionPaused(mainEvents, 4); // TODO(b/122959591): investigate why
+        assertViewTreeStarted(mainEvents, 5);
+        assertViewDisappeared(mainEvents, 6, rootId);
+        assertViewTreeFinished(mainEvents, 7);
 
         assertThat(events1).hasSize(3);
         assertViewTreeStarted(events1, 0);
@@ -769,7 +778,7 @@ public class ChildlessActivityTest
         // Assert sessions
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
-        assertThat(mainTestSession.getEvents()).isEmpty();
+        assertNoViewLevelEvents(mainTestSession, activity);
 
         final Session childTestSession = service.getFinishedSession(childSessionId);
         assertChildSessionContext(childTestSession, "child");
@@ -861,7 +870,7 @@ public class ChildlessActivityTest
         // Assert main sessions info
         final Session mainTestSession = service.getFinishedSession(mainSessionId);
         assertMainSessionContext(mainTestSession, activity);
-        assertThat(mainTestSession.getEvents()).isEmpty();
+        assertNoViewLevelEvents(mainTestSession, activity);
 
         final Session childTestSession1 = service.getFinishedSession(childSessionId1);
         assertChildSessionContext(childTestSession1, "session1");

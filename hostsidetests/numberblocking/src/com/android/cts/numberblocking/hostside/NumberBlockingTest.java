@@ -171,7 +171,7 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
                 className, methodName, userId);
         RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
                 NUMBER_BLOCKING_TESTS_PKG,
-                "android.support.test.runner.AndroidJUnitRunner",
+                "androidx.test.runner.AndroidJUnitRunner",
                 getDevice().getIDevice());
         testRunner.addInstrumentationArg("blocked_number", BLOCKED_NUMBER);
         testRunner.addInstrumentationArg("phone_account_id", PHONE_ACCOUNT_ID);

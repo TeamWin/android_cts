@@ -45,11 +45,12 @@ import android.app.stubs.ActivityCallbacksTestActivity.Event;
 import android.app.stubs.ActivityCallbacksTestActivity.Source;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Pair;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Rule;

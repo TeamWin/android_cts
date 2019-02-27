@@ -18,6 +18,7 @@ package android.telephony.cts;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
+import android.os.SystemClock;
 import android.telephony.CellIdentity;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
@@ -38,6 +39,7 @@ import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
 import android.telephony.CellSignalStrengthTdscdma;
 import android.telephony.CellSignalStrengthWcdma;
+import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
@@ -127,7 +129,12 @@ public class CellInfoTest extends AndroidTestCase{
     private static final int CHANNEL_RASTER_EUTRAN = 100; //kHz
 
     private static final int MAX_CELLINFO_WAIT_MILLIS = 5000;
-
+    private static final int MAX_LISTENER_WAIT_MILLIS = 1000; // usually much less
+    // The maximum interval between CellInfo updates from the modem. In the AOSP code it varies
+    // between 2 and 10 seconds, and there is an allowable modem delay of 3 seconds, so if we
+    // cannot get a seconds CellInfo update within 15 seconds, then something is broken.
+    // See DeviceStateMonitor#CELL_INFO_INTERVAL_*
+    private static final int MAX_CELLINFO_INTERVAL_MILLIS = 15000; // in AOSP the max is 10s
     private static final int RADIO_HAL_VERSION_1_2 = makeRadioVersion(1, 2);
 
     private PackageManager mPm;
@@ -147,6 +154,42 @@ public class CellInfoTest extends AndroidTestCase{
         }
     };
 
+    private static class CellInfoResultsCallback extends TelephonyManager.CellInfoCallback {
+        List<CellInfo> cellInfo;
+
+        @Override
+        public synchronized void onCellInfo(List<CellInfo> cellInfo) {
+            this.cellInfo = cellInfo;
+            notifyAll();
+        }
+
+        public synchronized void wait(int millis) throws InterruptedException {
+            if (cellInfo == null) {
+                super.wait(millis);
+            }
+        }
+    }
+
+    private static class CellInfoListener extends PhoneStateListener {
+        List<CellInfo> cellInfo;
+
+        public CellInfoListener(Executor e) {
+            super(e);
+        }
+
+        @Override
+        public synchronized void onCellInfoChanged(List<CellInfo> cellInfo) {
+            this.cellInfo = cellInfo;
+            notifyAll();
+        }
+
+        public synchronized void wait(int millis) throws InterruptedException {
+            if (cellInfo == null) {
+                super.wait(millis);
+            }
+        }
+    }
+
     private boolean isCamped() {
         ServiceState ss = mTm.getServiceState();
         if (ss == null) return false;
@@ -163,19 +206,53 @@ public class CellInfoTest extends AndroidTestCase{
         mRadioHalVersion = makeRadioVersion(verPair.first, verPair.second);
     }
 
-    private static class CellInfoResultsCallback extends TelephonyManager.CellInfoCallback {
-        List<CellInfo> cellInfo;
-
-        @Override
-        public synchronized void onCellInfo(List<CellInfo> cellInfo) {
-            this.cellInfo = cellInfo;
-            notifyAll();
-        }
-
-        public synchronized void wait(int millis) throws InterruptedException {
-            if (cellInfo == null) {
-                super.wait(millis);
+    /**
+     * Test to ensure that the PhoneStateListener receives callbacks every time that new CellInfo
+     * is received and not otherwise.
+     */
+    public void testPhoneStateListenerCallback() throws Throwable {
+        CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
+        // Prime the system by requesting a CellInfoUpdate
+        mTm.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);
+        resultsCallback.wait(MAX_CELLINFO_WAIT_MILLIS);
+        // Register a new PhoneStateListener for CellInfo
+        CellInfoListener listener = new CellInfoListener(mSimpleExecutor);
+        mTm.listen(listener, PhoneStateListener.LISTEN_CELL_INFO);
+        // Expect a callback immediately upon registration
+        listener.wait(MAX_LISTENER_WAIT_MILLIS);
+        assertNotNull("CellInfo Listener Never Fired on Registration", listener.cellInfo);
+        // Save the initial listener result as a baseline
+        List<CellInfo> referenceList = listener.cellInfo;
+        assertFalse("CellInfo does not contain valid results", referenceList.isEmpty());
+        assertTrue("Listener Didn't Receive the Right Data",
+                referenceList.containsAll(resultsCallback.cellInfo));
+        listener.cellInfo = null;
+        resultsCallback.cellInfo = null;
+        long timeoutTime = SystemClock.elapsedRealtime() + MAX_CELLINFO_INTERVAL_MILLIS;
+        while (timeoutTime > SystemClock.elapsedRealtime()) {
+            // Request a CellInfo update to try and coax an update from the listener
+            mTm.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);
+            resultsCallback.wait(MAX_CELLINFO_WAIT_MILLIS);
+            assertNotNull("CellInfoCallback should return valid data", resultsCallback.cellInfo);
+            if (referenceList.containsAll(resultsCallback.cellInfo)) {
+                // Check the a call to getAllCellInfo doesn't trigger the listener.
+                mTm.getAllCellInfo();
+                // Wait for the listener to fire; it shouldn't.
+                listener.wait(MAX_LISTENER_WAIT_MILLIS);
+                // Check to ensure the listener didn't fire for stale data.
+                assertNull("PhoneStateListener Fired For Old CellInfo Data", listener.cellInfo);
+            } else {
+                // If there is new CellInfo data, then the listener should fire
+                listener.wait(MAX_LISTENER_WAIT_MILLIS);
+                assertNotNull("Listener did not receive updated CellInfo Data",
+                        listener.cellInfo);
+                assertFalse("CellInfo data should be different from the old listener data."
+                        + referenceList + " : " + listener.cellInfo,
+                        referenceList.containsAll(listener.cellInfo));
+                return; // pass the test
             }
+            // Reset the resultsCallback for the next iteration
+            resultsCallback.cellInfo = null;
         }
     }
 

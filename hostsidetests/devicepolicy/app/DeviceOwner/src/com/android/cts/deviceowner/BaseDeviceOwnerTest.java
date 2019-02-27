@@ -19,9 +19,10 @@ import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
+
+import androidx.test.InstrumentationRegistry;
 
 /**
  * Base class for device-owner based tests.
