@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
-import com.android.compatibility.common.util.LogcatInspector;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -31,7 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,34 +65,38 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
 
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
-    private int mProfileUserId;
+    private Optional<Integer> mProfileUserId = Optional.empty();
 
     /** Create a profile user and switch to the local transport. */
     @Before
     @Override
     public void setUp() throws Exception {
-        super.setUp();
         mDevice = getDevice();
+        super.setUp();
 
         int parentUserId = mDevice.getCurrentUser();
-        mProfileUserId = createProfileUser(parentUserId, "Profile-Jobs");
-        startUserAndInitializeForBackup(mProfileUserId);
+        int profileUserId = createProfileUser(parentUserId, "Profile-Jobs");
+        mProfileUserId = Optional.of(profileUserId);
+        startUserAndInitializeForBackup(profileUserId);
 
-        switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
+        switchUserToLocalTransportAndAssertSuccess(profileUserId);
     }
 
     /** Remove the profile. */
     @After
     @Override
     public void tearDown() throws Exception {
-        mDevice.removeUser(mProfileUserId);
+        if (mProfileUserId.isPresent()) {
+            mDevice.removeUser(mProfileUserId.get());
+            mProfileUserId = Optional.empty();
+        }
         super.tearDown();
     }
 
     /** Assert that the key value backup job for the profile is scheduled. */
     @Test
     public void testKeyValueBackupJobScheduled() throws Exception {
-        int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, mProfileUserId);
+        int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, mProfileUserId.get());
         assertThat(isSystemJobScheduled(jobId, KEY_VALUE_JOB_NAME)).isTrue();
     }
 
@@ -109,25 +112,23 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
      */
     @Test
     public void testKeyValueBackupJobRunsSuccessfully() throws Exception {
+        int profileUserId = mProfileUserId.get();
         // Install a new key value backup app and simulate data changed.
-        installPackageAsUser(KEY_VALUE_APK, false, mProfileUserId);
+        installPackageAsUser(KEY_VALUE_APK, false, profileUserId);
         checkDeviceTestAsUser(
                 KEY_VALUE_TEST_PACKAGE,
                 KEY_VALUE_DEVICE_TEST_NAME,
                 "callDataChanged",
-                mProfileUserId);
+                profileUserId);
 
         // Force run k/v job.
         String startLog = mLogcatInspector.mark(TAG);
-        int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, mProfileUserId);
+        int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, profileUserId);
         mBackupUtils.executeShellCommandSync(JOB_SCHEDULER_RUN_COMMAND + " " + jobId);
 
         // Check logs for success.
         mLogcatInspector.assertLogcatContainsInOrder(
-                LOGCAT_FILTER,
-                TIMEOUT_FOR_KEY_VALUE_SECONDS,
-                startLog,
-                KEY_VALUE_SUCCESS_LOG);
+                LOGCAT_FILTER, TIMEOUT_FOR_KEY_VALUE_SECONDS, startLog, KEY_VALUE_SUCCESS_LOG);
 
         // Check job rescheduled.
         assertThat(isSystemJobScheduled(jobId, KEY_VALUE_JOB_NAME)).isTrue();
@@ -136,10 +137,11 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     /** Stop the profile user and assert that the key value job is no longer scheduled. */
     @Test
     public void testKeyValueBackupJobCancelled() throws Exception {
-        int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, mProfileUserId);
+        int profileUserId = mProfileUserId.get();
+        int jobId = getJobIdForUser(KEY_VALUE_MIN_JOB_ID, profileUserId);
         assertThat(isSystemJobScheduled(jobId, KEY_VALUE_JOB_NAME)).isTrue();
 
-        mDevice.stopUser(mProfileUserId, /* waitFlag */ true, /* forceFlag */ true);
+        mDevice.stopUser(profileUserId, /* waitFlag */ true, /* forceFlag */ true);
 
         assertThat(isSystemJobScheduled(jobId, KEY_VALUE_JOB_NAME)).isFalse();
     }
@@ -147,7 +149,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     /** Assert that the full backup job for the profile is scheduled. */
     @Test
     public void testFullBackupJobScheduled() throws Exception {
-        int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, mProfileUserId);
+        int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, mProfileUserId.get());
         assertThat(isSystemJobScheduled(jobId, FULL_BACKUP_JOB_NAME)).isTrue();
     }
 
@@ -163,22 +165,20 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
      */
     @Test
     public void testFullBackupJobRunsSuccessfully() throws Exception {
+        int profileUserId = mProfileUserId.get();
         // Install a new eligible full backup app and run a backup pass for @pm@ as we cannot
         // perform a full backup pass before @pm@ is backed up.
-        installPackageAsUser(FULL_BACKUP_APK, false, mProfileUserId);
-        mBackupUtils.backupNowAndAssertSuccessForUser(PACKAGE_MANAGER_SENTINEL, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, false, profileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(PACKAGE_MANAGER_SENTINEL, profileUserId);
 
         // Force run full backup job.
         String startLog = mLogcatInspector.mark(TAG);
-        int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, mProfileUserId);
+        int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, profileUserId);
         mBackupUtils.executeShellCommandSync(JOB_SCHEDULER_RUN_COMMAND + " " + jobId);
 
         // Check logs for success.
         mLogcatInspector.assertLogcatContainsInOrder(
-                LOGCAT_FILTER,
-                TIMEOUT_FOR_FULL_BACKUP_SECONDS,
-                startLog,
-                FULL_BACKUP_SUCCESS_LOG);
+                LOGCAT_FILTER, TIMEOUT_FOR_FULL_BACKUP_SECONDS, startLog, FULL_BACKUP_SUCCESS_LOG);
 
         // Check job rescheduled.
         assertThat(isSystemJobScheduled(jobId, FULL_BACKUP_JOB_NAME)).isTrue();
@@ -187,10 +187,11 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     /** Stop the profile user and assert that the full backup job is no longer scheduled. */
     @Test
     public void testFullBackupJobCancelled() throws Exception {
-        int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, mProfileUserId);
+        int profileUserId = mProfileUserId.get();
+        int jobId = getJobIdForUser(FULL_BACKUP_MIN_JOB_ID, profileUserId);
         assertThat(isSystemJobScheduled(jobId, FULL_BACKUP_JOB_NAME)).isTrue();
 
-        mDevice.stopUser(mProfileUserId, /* waitFlag */ true, /* forceFlag */ true);
+        mDevice.stopUser(profileUserId, /* waitFlag */ true, /* forceFlag */ true);
 
         assertThat(isSystemJobScheduled(jobId, FULL_BACKUP_JOB_NAME)).isFalse();
     }

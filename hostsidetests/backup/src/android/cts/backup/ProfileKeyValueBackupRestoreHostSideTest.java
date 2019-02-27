@@ -28,50 +28,60 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Optional;
+
 /** Test the backup and restore flow for a key-value app in a profile. */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
     private static final String TAG = "ProfileKeyValueBackupRestoreHostSideTest";
     private static final String LOGCAT_FILTER = "BackupManagerService:* " + TAG + ":* *:S";
-    private static final String RESTOREATINSTALL_LOG = "restoreAtInstall pkg="
-        + KEY_VALUE_TEST_PACKAGE;
+    private static final String RESTOREATINSTALL_LOG =
+            "restoreAtInstall pkg=" + KEY_VALUE_TEST_PACKAGE;
     private static final String RESTORECOMPLETE_LOG = "Restore complete";
     private static final int TIMEOUT_FOR_RESTOREATINSTALL_SECONDS = 30;
 
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
     private int mParentUserId;
-    private int mProfileUserId;
+    private Optional<Integer> mProfileUserId = Optional.empty();
     private String mTransport;
 
     /** Create the profile, switch to the local transport and setup the test package. */
     @Before
     @Override
     public void setUp() throws Exception {
-        super.setUp();
         mDevice = getDevice();
+        super.setUp();
 
         // Create profile user.
         mParentUserId = mDevice.getCurrentUser();
-        mProfileUserId = createProfileUser(mParentUserId, "Profile-KV");
-        startUserAndInitializeForBackup(mProfileUserId);
+        int profileUserId = createProfileUser(mParentUserId, "Profile-KV");
+        mProfileUserId = Optional.of(profileUserId);
+        startUserAndInitializeForBackup(profileUserId);
 
         // Switch to local transport.
-        mTransport = switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
+        mTransport = switchUserToLocalTransportAndAssertSuccess(profileUserId);
 
         // Setup test package.
-        installPackageAsUser(KEY_VALUE_APK, false, mProfileUserId);
-        clearPackageDataAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+        installPackageAsUser(KEY_VALUE_APK, false, profileUserId);
+        clearPackageDataAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
     }
 
     /** Uninstall the test package and remove the profile. */
     @After
     @Override
     public void tearDown() throws Exception {
-        clearBackupDataInTransportForUser(KEY_VALUE_TEST_PACKAGE, mTransport, mProfileUserId);
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
-        mDevice.removeUser(mProfileUserId);
+        if (mProfileUserId.isPresent()) {
+            int profileUserId = mProfileUserId.get();
+            if (mTransport != null) {
+                clearBackupDataInTransportForUser(
+                        KEY_VALUE_TEST_PACKAGE, mTransport, profileUserId);
+            }
+            uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+            mDevice.removeUser(profileUserId);
+            mProfileUserId = Optional.empty();
+        }
         super.tearDown();
     }
 
@@ -88,14 +98,15 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
      */
     @Test
     public void testKeyValueBackupAndRestore() throws Exception {
+        int profileUserId = mProfileUserId.get();
         checkDeviceTest("assertSharedPrefsIsEmpty");
         checkDeviceTest("writeSharedPrefsAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        installPackageAsUser(KEY_VALUE_APK, false, mProfileUserId);
+        installPackageAsUser(KEY_VALUE_APK, false, profileUserId);
 
         checkDeviceTest("assertSharedPrefsRestored");
     }
@@ -111,32 +122,33 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
      *   <li>Uninstall the app.
      *   <li>Install the app for parent user.
      *   <li>Install the app, which now already exists in parent user, for profile user to perform a
-     *   restore-at-install operation. This fires off asynchronous restore and returns before the
-     *   restore operation has finished.
+     *       restore-at-install operation. This fires off asynchronous restore and returns before
+     *       the restore operation has finished.
      *   <li>Assert that restore has finished via logcat.
      *   <li>Check that the shared preferences are restored.
      * </ol>
      */
     @Test
     public void testKeyValueBackupAndRestoreForInstallExistingPackage() throws Exception {
+        int profileUserId = mProfileUserId.get();
         checkDeviceTest("assertSharedPrefsIsEmpty");
         checkDeviceTest("writeSharedPrefsAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
         installPackageAsUser(KEY_VALUE_APK, false, mParentUserId);
         String mark = mLogcatInspector.mark(TAG);
-        installExistingPackageAsUser(KEY_VALUE_TEST_PACKAGE, mProfileUserId);
+        installExistingPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-         // Check logs for success.
+        // Check logs for success.
         mLogcatInspector.assertLogcatContainsInOrder(
-            LOGCAT_FILTER,
-            TIMEOUT_FOR_RESTOREATINSTALL_SECONDS,
-            mark,
-            RESTOREATINSTALL_LOG,
-            RESTORECOMPLETE_LOG);
+                LOGCAT_FILTER,
+                TIMEOUT_FOR_RESTOREATINSTALL_SECONDS,
+                mark,
+                RESTOREATINSTALL_LOG,
+                RESTORECOMPLETE_LOG);
 
         checkDeviceTest("assertSharedPrefsRestored");
         uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId);
@@ -144,6 +156,9 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
         checkDeviceTestAsUser(
-                KEY_VALUE_TEST_PACKAGE, KEY_VALUE_DEVICE_TEST_NAME, methodName, mProfileUserId);
+                KEY_VALUE_TEST_PACKAGE,
+                KEY_VALUE_DEVICE_TEST_NAME,
+                methodName,
+                mProfileUserId.get());
     }
 }
