@@ -1,7 +1,5 @@
 package android.telephonyprovider.cts;
 
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.setDefaultSmsApp;
-
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -12,17 +10,22 @@ import android.content.Context;
 import android.net.Uri;
 import android.provider.Telephony;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 @SmallTest
 public class ThreadsTest {
     private Context mContext;
     private ContentResolver mContentResolver;
+
+    @BeforeClass
+    public static void ensureDefaultSmsApp() {
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+    }
 
     @Before
     public void setupTestEnvironment() {
@@ -33,18 +36,12 @@ public class ThreadsTest {
 
     @AfterClass
     public static void cleanup() {
-        ContentResolver contentResolver =
-                InstrumentationRegistry.getInstrumentation().getContext().getContentResolver();
-
-        setDefaultSmsApp(true);
+        ContentResolver contentResolver = getInstrumentation().getContext().getContentResolver();
         contentResolver.delete(Telephony.Threads.CONTENT_URI, null, null);
-        setDefaultSmsApp(false);
     }
 
     @Test
     public void testThreadDeletion_doNotReuseThreadIdsFromEmptyThreads() {
-        setDefaultSmsApp(true);
-
         String destination1 = "+19998880001";
         String destination2 = "+19998880002";
 
