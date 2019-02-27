@@ -23,7 +23,7 @@ android_test {
 
     static_libs: [
         "compatibility-device-util-axt",
-        "ctsdeviceutillegacy",
+        "ctsdeviceutillegacy-axt",
         "mockito-target-minus-junit4",
         "androidx.test.rules",
         "kotlin-test",
