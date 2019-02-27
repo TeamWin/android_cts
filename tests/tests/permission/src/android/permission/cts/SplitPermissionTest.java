@@ -22,14 +22,19 @@ import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.permission.cts.PermissionUtils.getAppOp;
+import static android.permission.cts.PermissionUtils.getPermissionFlags;
 import static android.permission.cts.PermissionUtils.grantPermission;
 import static android.permission.cts.PermissionUtils.isGranted;
 import static android.permission.cts.PermissionUtils.setAppOp;
+import static android.permission.cts.PermissionUtils.setPermissionFlags;
 import static android.permission.cts.PermissionUtils.uninstallApp;
 
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertEquals;
 
 import android.app.UiAutomation;
 import android.content.Context;
@@ -287,6 +292,40 @@ public class SplitPermissionTest {
         install(APK_LOCATION_28);
 
         assertPermissionGranted(ACCESS_BACKGROUND_LOCATION);
+    }
+
+    /**
+     * If a permission has flags before the split happens, the new permission should inherit the
+     * flags.
+     *
+     * <p>(Pre-M version of test)
+     */
+    @Test
+    public void inheritFlagsPreM() {
+        install(APK_CONTACTS_16);
+        setPermissionFlags(APP_PKG, READ_CONTACTS, FLAG_PERMISSION_USER_SET,
+                FLAG_PERMISSION_USER_SET);
+
+        install(APK_CONTACTS_15);
+
+        assertEquals(FLAG_PERMISSION_USER_SET,
+                getPermissionFlags(APP_PKG, READ_CALL_LOG) & FLAG_PERMISSION_USER_SET);
+    }
+
+    /**
+     * If a permission has flags before the split happens, the new permission should inherit the
+     * flags.
+     */
+    @Test
+    public void inheritFlags() {
+        install(APK_LOCATION_29);
+        setPermissionFlags(APP_PKG, ACCESS_COARSE_LOCATION, FLAG_PERMISSION_USER_SET,
+                FLAG_PERMISSION_USER_SET);
+
+        install(APK_LOCATION_28);
+
+        assertEquals(FLAG_PERMISSION_USER_SET,
+                getPermissionFlags(APP_PKG, ACCESS_BACKGROUND_LOCATION) & FLAG_PERMISSION_USER_SET);
     }
 
     /**
