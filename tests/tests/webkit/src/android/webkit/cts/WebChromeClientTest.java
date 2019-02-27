@@ -34,6 +34,11 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.google.common.util.concurrent.SettableFuture;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -41,6 +46,7 @@ import java.util.concurrent.BlockingQueue;
 @AppModeFull
 public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000L;
+    private static final String TOUCH_RECEIVED = "touch received";
 
     private CtsTestServer mWebServer;
     private WebIconDatabase mIconDb;
@@ -205,11 +211,13 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         runWindowTest(false);
     }
 
+    // Note that test is still a little flaky. See b/119468441.
     public void testOnJsBeforeUnloadIsCalled() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
 
+        // Use a default WebChromeClient to listen first page title change.
         final MockWebChromeClient webChromeClient = new MockWebChromeClient();
         mOnUiThread.setWebChromeClient(webChromeClient);
 
@@ -219,20 +227,37 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
 
         assertFalse(webChromeClient.hadOnJsBeforeUnload());
 
-        mOnUiThread.loadUrlAndWaitForCompletion(mWebServer.getAssetUrl(TestHtmlConstants.JS_UNLOAD_URL));
+        mOnUiThread.loadUrlAndWaitForCompletion(
+            mWebServer.getAssetUrl(TestHtmlConstants.JS_UNLOAD_URL));
+
+        final SettableFuture<String> pageTitleFuture = SettableFuture.create();
+        final SettableFuture<Void> onJsBeforeUnloadFuture = SettableFuture.create();
+        final MockWebChromeClient webChromeClientWaitTitle = new MockWebChromeClient() {
+            @Override
+            public void onReceivedTitle(WebView view, String title) {
+                super.onReceivedTitle(view, title);
+                pageTitleFuture.set(title);
+            }
+
+            @Override
+            public boolean onJsBeforeUnload(
+                WebView view, String url, String message, JsResult result) {
+                boolean ret = super.onJsBeforeUnload(view, url, message, result);
+                onJsBeforeUnloadFuture.set(null);
+                return ret;
+            }
+        };
+        mOnUiThread.setWebChromeClient(webChromeClientWaitTitle);
 
         // Send a user gesture, required for unload to execute since WebView version 60.
         tapWebView();
+        assertEquals(TOUCH_RECEIVED, waitForFuture(pageTitleFuture));
 
         // unload should trigger when we try to navigate away
-        mOnUiThread.loadUrlAndWaitForCompletion(mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
+        mOnUiThread.loadUrlAndWaitForCompletion(
+            mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
 
-        new PollingCheck(TEST_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return webChromeClient.hadOnJsBeforeUnload();
-            }
-        }.run();
+        waitForFuture(onJsBeforeUnloadFuture);
     }
 
     public void testOnJsAlert() throws Exception {
@@ -399,6 +424,20 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
 
         // Wait for the system to process all events in the queue
         getInstrumentation().waitForIdleSync();
+    }
+
+    // TODO(ctzsm): Remove this method and replace its usage when we have it in a util class.
+    private static <T> T waitForFuture(Future<T> future) throws Exception {
+        try {
+            return future.get(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Error)
+                throw(Error) cause;
+            if (cause instanceof RuntimeException)
+                throw(RuntimeException) cause;
+            throw new RuntimeException(cause);
+        }
     }
 
     private class MockWebChromeClient extends WaitForProgressClient {
