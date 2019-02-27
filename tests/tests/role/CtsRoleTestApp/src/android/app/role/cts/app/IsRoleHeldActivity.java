@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import android.os.Bundle;
 import android.text.TextUtils;
 
 /**
- * An activity that requests a role.
+ * An activity that checks whether a role is held.
  */
-public class RequestRoleActivity extends Activity {
+public class IsRoleHeldActivity extends Activity {
 
-    private static final int REQUEST_CODE_REQUEST_ROLE = 1;
+    private static final String EXTRA_IS_ROLE_HELD = "android.app.role.cts.app.extra.IS_ROLE_HELD";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,17 +39,8 @@ public class RequestRoleActivity extends Activity {
         }
 
         RoleManager roleManager = getSystemService(RoleManager.class);
-        Intent intent = roleManager.createRequestRoleIntent(roleName);
-        startActivityForResult(intent, REQUEST_CODE_REQUEST_ROLE);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_REQUEST_ROLE) {
-            setResult(resultCode, data);
-            finish();
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
+        setResult(RESULT_OK, new Intent()
+                .putExtra(EXTRA_IS_ROLE_HELD, roleManager.isRoleHeld(roleName)));
+        finish();
     }
 }
