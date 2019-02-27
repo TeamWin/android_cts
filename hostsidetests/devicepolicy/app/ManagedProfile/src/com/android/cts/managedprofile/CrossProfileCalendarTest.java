@@ -197,7 +197,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
 
         // Test the return cursor is correct when the all checks are met.
         final String[] projection = new String[] {
-                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Calendars.IS_PRIMARY,
                 CalendarContract.Calendars.CALENDAR_COLOR,
                 CalendarContract.Calendars.CALENDAR_TIME_ZONE
         };
@@ -208,7 +208,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         assertThat(cursor).isNotNull();
         assertThat(cursor.getCount()).isEqualTo(1);
         cursor.moveToFirst();
-        assertThat(cursor.getString(0)).isEqualTo(WORK_CALENDAR_TITLE);
+        assertThat(cursor.getInt(0)).isEqualTo(1);
         assertThat(cursor.getInt(1)).isEqualTo(WORK_CALENDAR_COLOR);
         assertThat(cursor.getString(2)).isEqualTo(WORK_TIMEZONE);
     }
@@ -229,7 +229,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
                 CalendarContract.Events.TITLE,
                 CalendarContract.Events.EVENT_LOCATION,
                 CalendarContract.Events.DTSTART,
-                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME
+                CalendarContract.Calendars.IS_PRIMARY
         };
         final Cursor cursor = mResolver.query(
                 CalendarContract.Events.ENTERPRISE_CONTENT_URI,
@@ -241,7 +241,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         assertThat(cursor.getString(0)).isEqualTo(WORK_EVENT_TITLE);
         assertThat(cursor.getString(1)).isEqualTo(WORK_EVENT_LOCATION);
         assertThat(cursor.getLong(2)).isEqualTo(WORK_EVENT_DTSTART);
-        assertThat(cursor.getString(3)).isEqualTo(WORK_CALENDAR_TITLE);
+        assertThat(cursor.getInt(3)).isEqualTo(1);
     }
 
     // This test should be run when the test package is whitelisted and cross-profile calendar
@@ -253,7 +253,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         final String[] projection = new String[]{
                 CalendarContract.Instances.TITLE,
                 CalendarContract.Instances.DTSTART,
-                CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Instances.IS_PRIMARY,
         };
         final Cursor cursor = mResolver.query(
                 buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_URI,
@@ -266,7 +266,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         cursor.moveToFirst();
         assertThat(cursor.getString(0)).isEqualTo(WORK_EVENT_TITLE);
         assertThat(cursor.getLong(1)).isEqualTo(WORK_EVENT_DTSTART);
-        assertThat(cursor.getString(2)).isEqualTo(WORK_CALENDAR_TITLE);
+        assertThat(cursor.getInt(2)).isEqualTo(1);
     }
 
     // This test should be run when the test package is whitelisted and cross-profile calendar
@@ -278,7 +278,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         final String[] projection = new String[]{
                 CalendarContract.Instances.TITLE,
                 CalendarContract.Instances.DTSTART,
-                CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Instances.IS_PRIMARY,
         };
         final Cursor cursor = mResolver.query(
                 buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_BY_DAY_URI,
@@ -291,7 +291,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         cursor.moveToFirst();
         assertThat(cursor.getString(0)).isEqualTo(WORK_EVENT_TITLE);
         assertThat(cursor.getLong(1)).isEqualTo(WORK_EVENT_DTSTART);
-        assertThat(cursor.getString(2)).isEqualTo(WORK_CALENDAR_TITLE);
+        assertThat(cursor.getInt(2)).isEqualTo(1);
     }
 
     // This test should be run when the test package is whitelisted and cross-profile calendar
