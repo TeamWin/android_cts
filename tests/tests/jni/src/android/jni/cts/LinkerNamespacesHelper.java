@@ -74,12 +74,6 @@ class LinkerNamespacesHelper {
     private final static String[] PUBLIC_RUNTIME_LIBRARIES = {
         "libicui18n.so",
         "libicuuc.so",
-
-        // Add bionic as permitted public library since the check_path searches recursively.
-        // TODO(b/124378065): Remove these libraries when the bug is resolved.
-        "libc.so",
-        "libm.so",
-        "libdl.so",
     };
 
     // The grey-list.
