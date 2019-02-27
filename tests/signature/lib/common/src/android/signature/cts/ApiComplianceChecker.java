@@ -240,6 +240,8 @@ public class ApiComplianceChecker extends AbstractApiChecker {
         Class<?>[] interfaces = runtimeClass.getInterfaces();
         for (Class<?> c : interfaces) {
             interFaceSet.add(c.getCanonicalName());
+            // Add grandparent interfaces in case the parent interface is hidden.
+            addInterfacesToSetByName(c, interFaceSet);
         }
 
         // Add the interfaces that the super class implements as well just in case the super class
