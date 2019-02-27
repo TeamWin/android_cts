@@ -43,6 +43,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
 
@@ -378,6 +379,27 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSubscriptionGroupingWithPermission() throws Exception {
+        if (!isSupported()) return;
+
+        // Set subscription group with current sub Id.
+        int[] subGroup = new int[] {mSubId};
+        String uuid = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.setSubscriptionGroup(subGroup));
+
+        // Getting subscriptions in group.
+        List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(mSubId);
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
+        assertEquals(uuid, infoList.get(0).getGroupUuid());
+
+        // Remove from subscription group with current sub Id.
+        boolean success = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.removeSubscriptionsFromGroup(subGroup));
+        assertTrue(success);
+    }
+
+    @Test
     public void testSettingOpportunisticSubscription() throws Exception {
         if (!isSupported()) return;
 
@@ -429,6 +451,17 @@ public class SubscriptionManagerTest {
         // Shouldn't crash.
         SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
         info.isMetered();
+    }
+
+    @Test
+    public void testGetOpportunisticSubscriptions() throws Exception {
+        if (!isSupported()) return;
+
+        List<SubscriptionInfo> infoList = mSm.getOpportunisticSubscriptions();
+
+        for (SubscriptionInfo info : infoList) {
+            assertTrue(info.isOpportunistic());
+        }
     }
 
     private void assertOverrideSuccess(SubscriptionPlan... plans) {

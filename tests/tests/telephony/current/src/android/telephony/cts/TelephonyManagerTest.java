@@ -1356,6 +1356,27 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testSwitchMultiSimConfig() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        boolean rebootRequired = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isRebootRequiredForModemConfigChange());
+
+        // It's hard to test if reboot is needed.
+        if (!rebootRequired) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.switchMultiSimConfig(1));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.switchMultiSimConfig(2));
+        } else {
+            // This should result in no-op.
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.switchMultiSimConfig(mTelephonyManager.getPhoneCount()));
+        }
+    }
 
     public static void waitForMs(long ms) {
         try {
