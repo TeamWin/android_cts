@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2019 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS security test cases">
+<configuration description="Config for CTS Notification legacy test cases">
     <option name="test-suite-tag" value="cts" />
-    <option name="config-descriptor:metadata" key="component" value="security" />
+    <option name="config-descriptor:metadata" key="component" value="framework" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsSecurityTestCases.apk" />
+        <option name="test-file-name" value="CtsLegacyNotificationTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.security.cts" />
-        <option name="runtime-hint" value="1h40m18s" />
-        <!-- test-timeout unit is ms, value = 15 min -->
-        <option name="test-timeout" value="900000" />
+        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
+        <option name="package" value="android.app.notification.legacy.cts" />
+        <option name="runtime-hint" value="1m0s" />
         <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>
