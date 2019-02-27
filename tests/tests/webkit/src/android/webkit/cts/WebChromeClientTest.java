@@ -36,10 +36,6 @@ import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -251,13 +247,13 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
 
         // Send a user gesture, required for unload to execute since WebView version 60.
         tapWebView();
-        assertEquals(TOUCH_RECEIVED, waitForFuture(pageTitleFuture));
+        assertEquals(TOUCH_RECEIVED, WebkitUtils.waitForFuture(pageTitleFuture));
 
         // unload should trigger when we try to navigate away
         mOnUiThread.loadUrlAndWaitForCompletion(
             mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
 
-        waitForFuture(onJsBeforeUnloadFuture);
+        WebkitUtils.waitForFuture(onJsBeforeUnloadFuture);
     }
 
     public void testOnJsAlert() throws Exception {
@@ -424,20 +420,6 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
 
         // Wait for the system to process all events in the queue
         getInstrumentation().waitForIdleSync();
-    }
-
-    // TODO(ctzsm): Remove this method and replace its usage when we have it in a util class.
-    private static <T> T waitForFuture(Future<T> future) throws Exception {
-        try {
-            return future.get(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof Error)
-                throw(Error) cause;
-            if (cause instanceof RuntimeException)
-                throw(RuntimeException) cause;
-            throw new RuntimeException(cause);
-        }
     }
 
     private class MockWebChromeClient extends WaitForProgressClient {
