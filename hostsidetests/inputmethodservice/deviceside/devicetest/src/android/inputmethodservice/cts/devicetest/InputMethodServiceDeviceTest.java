@@ -42,9 +42,10 @@ import android.inputmethodservice.cts.common.Ime2Constants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObject2;
 import android.view.inputmethod.InputMethodSubtype;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -28,9 +28,9 @@ LOCAL_JAVA_LIBRARIES := junit android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES = \
 	androidx.legacy_legacy-support-v4 \
-	ctstestrunner \
-	android-support-test \
-	compatibility-device-util \
+	ctstestrunner-axt \
+	androidx.test.rules \
+	compatibility-device-util-axt \
 	ShortcutManagerTestUtils \
 	testng
 

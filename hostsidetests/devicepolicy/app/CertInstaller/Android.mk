@@ -31,8 +31,8 @@ LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_MIN_SDK_VERSION := 22
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     truth-prebuilt \
     testng \
 	cts-security-test-support-library

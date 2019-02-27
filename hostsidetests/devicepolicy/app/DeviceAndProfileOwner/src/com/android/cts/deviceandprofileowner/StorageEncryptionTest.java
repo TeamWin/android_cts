@@ -18,11 +18,13 @@ package com.android.cts.deviceandprofileowner;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_INACTIVE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_UNSUPPORTED;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 /**
  * Test {@link DevicePolicyManager#setStorageEncryption(ComponentName, boolean)} and

@@ -21,9 +21,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
-    compatibility-device-util \
-    ctstestrunner \
+    androidx.test.rules \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     ub-uiautomator \
 
 

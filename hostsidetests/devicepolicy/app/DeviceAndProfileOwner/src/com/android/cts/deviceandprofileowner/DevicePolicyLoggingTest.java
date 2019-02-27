@@ -27,19 +27,16 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANT
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
-import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.provider.Settings.Secure.DEFAULT_INPUT_METHOD;
 import static android.provider.Settings.Secure.SKIP_FIRST_USE_HINTS;
-import static java.util.stream.Collectors.toList;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import java.util.List;
+
+import androidx.test.InstrumentationRegistry;
 
 /**
  * Invocations of {@link android.app.admin.DevicePolicyManager} methods which are either not CTS

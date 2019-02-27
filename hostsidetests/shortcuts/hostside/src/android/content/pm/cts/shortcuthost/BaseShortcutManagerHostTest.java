@@ -49,7 +49,7 @@ abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
 
     protected static final boolean NO_UNINSTALL_IN_TEARDOWN = false; // DO NOT SUBMIT WITH TRUE
 
-    private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
     protected boolean mIsMultiuserSupported;
     protected boolean mIsManagedUserSupported;

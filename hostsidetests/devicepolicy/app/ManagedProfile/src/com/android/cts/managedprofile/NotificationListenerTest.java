@@ -24,12 +24,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import com.google.common.collect.ImmutableList;
 

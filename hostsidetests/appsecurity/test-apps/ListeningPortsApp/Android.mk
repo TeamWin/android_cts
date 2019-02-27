@@ -21,7 +21,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_PACKAGE_NAME := CtsListeningPortsTest

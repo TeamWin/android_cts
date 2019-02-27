@@ -45,7 +45,7 @@ import java.util.zip.ZipFile;
  * test run and attaches the agent.
  */
 public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAbiReceiver {
-    private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String RUNNER = "androidx.test.runner.AndroidJUnitRunner";
     // inject these options from HostTest directly using --set-option <option name>:<option value>
     @Option(name = "package-name",
             description = "The package name of the device test",

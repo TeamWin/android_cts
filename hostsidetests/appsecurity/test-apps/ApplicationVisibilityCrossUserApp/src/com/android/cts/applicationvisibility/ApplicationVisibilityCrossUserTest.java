@@ -15,10 +15,11 @@
  */
 package com.android.cts.applicationvisibility;
 
+import static android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES;
 
 import android.app.UiAutomation;
 import android.content.Context;
@@ -27,7 +28,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Process;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;

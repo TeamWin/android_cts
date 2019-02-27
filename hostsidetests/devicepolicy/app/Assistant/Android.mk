@@ -31,8 +31,8 @@ LOCAL_PACKAGE_NAME := CtsDevicePolicyAssistApp
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.legacy_legacy-support-v4 \
-    compatibility-device-util \
-    android-support-test \
+    compatibility-device-util-axt \
+    androidx.test.rules \
 
 
 LOCAL_SDK_VERSION := current

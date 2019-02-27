@@ -25,6 +25,6 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <instrumentation
-        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.cts.backup.othersoundssettingsapp" />
 </manifest>
