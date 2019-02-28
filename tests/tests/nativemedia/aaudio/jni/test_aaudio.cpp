@@ -62,11 +62,12 @@ class AAudioInputStreamTest : public AAudioStreamTest<InputStreamBuilderHelper> 
 };
 
 void AAudioInputStreamTest::SetUp() {
+    mSetupSuccesful = false;
+    if (!deviceSupportsFeature(FEATURE_RECORDING)) return;
     mHelper.reset(new InputStreamBuilderHelper(
                     std::get<PARAM_SHARING_MODE>(GetParam()),
                     std::get<PARAM_PERF_MODE>(GetParam())));
     mHelper->initBuilder();
-    mSetupSuccesful = false;
     mHelper->createAndVerifyStream(&mSetupSuccesful);
     if (!mSetupSuccesful) return;
 
@@ -172,12 +173,13 @@ class AAudioOutputStreamTest : public AAudioStreamTest<OutputStreamBuilderHelper
 };
 
 void AAudioOutputStreamTest::SetUp() {
+    mSetupSuccesful = false;
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     mHelper.reset(new OutputStreamBuilderHelper(
                     std::get<PARAM_SHARING_MODE>(GetParam()),
                     std::get<PARAM_PERF_MODE>(GetParam())));
     mHelper->initBuilder();
 
-    mSetupSuccesful = false;
     mHelper->createAndVerifyStream(&mSetupSuccesful);
     if (!mSetupSuccesful) return;
 

@@ -21,6 +21,8 @@
 #include <android/log.h>
 #include <gtest/gtest.h>
 
+#include "utils.h"
+
 // Creates a builder, the caller takes ownership
 static void create_stream_builder(AAudioStreamBuilder** aaudioBuilder) {
     aaudio_result_t result = AAudio_createStreamBuilder(aaudioBuilder);
@@ -85,6 +87,7 @@ TEST(test_aaudio, aaudio_stream_device_negative) {
 
 // Test creating a default stream with everything unspecified.
 TEST(test_aaudio, aaudio_stream_unspecified) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
 
@@ -110,6 +113,7 @@ class AAudioStreamBuilderSamplingRateTest : public ::testing::TestWithParam<int3
 };
 
 TEST_P(AAudioStreamBuilderSamplingRateTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setSampleRate(aaudioBuilder, GetParam());
@@ -138,6 +142,7 @@ class AAudioStreamBuilderChannelCountTest : public ::testing::TestWithParam<int3
 };
 
 TEST_P(AAudioStreamBuilderChannelCountTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setChannelCount(aaudioBuilder, GetParam());
@@ -171,6 +176,7 @@ class AAudioStreamBuilderFormatTest : public ::testing::TestWithParam<aaudio_for
 };
 
 TEST_P(AAudioStreamBuilderFormatTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setFormat(aaudioBuilder, GetParam());
@@ -198,6 +204,7 @@ class AAudioStreamBuilderSharingModeTest : public ::testing::TestWithParam<aaudi
 };
 
 TEST_P(AAudioStreamBuilderSharingModeTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setFormat(aaudioBuilder, GetParam());
@@ -225,6 +232,10 @@ class AAudioStreamBuilderDirectionTest : public ::testing::TestWithParam<aaudio_
 };
 
 TEST_P(AAudioStreamBuilderDirectionTest, openStream) {
+    if (GetParam() == AAUDIO_DIRECTION_OUTPUT
+            && !deviceSupportsFeature(FEATURE_PLAYBACK)) return;
+    if (GetParam() == AAUDIO_DIRECTION_INPUT
+            && !deviceSupportsFeature(FEATURE_RECORDING)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setFormat(aaudioBuilder, GetParam());
@@ -254,6 +265,7 @@ class AAudioStreamBuilderBufferCapacityTest : public ::testing::TestWithParam<in
 };
 
 TEST_P(AAudioStreamBuilderBufferCapacityTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setBufferCapacityInFrames(aaudioBuilder, GetParam());
@@ -287,6 +299,7 @@ class AAudioStreamBuilderPerfModeTest : public ::testing::TestWithParam<aaudio_p
 };
 
 TEST_P(AAudioStreamBuilderPerfModeTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setPerformanceMode(aaudioBuilder, GetParam());
