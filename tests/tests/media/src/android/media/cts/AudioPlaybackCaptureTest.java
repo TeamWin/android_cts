@@ -80,16 +80,12 @@ public class AudioPlaybackCaptureTest {
 
             if (matchingUsages != null) {
                 for (int usage : matchingUsages) {
-                    apccBuilder.addMatchingUsage(new AudioAttributes.Builder()
-                            .setUsage(usage)
-                            .build());
+                    apccBuilder.addMatchingUsage(usage);
                 }
             }
             if (excludeUsages != null) {
                 for (int usage : excludeUsages) {
-                    apccBuilder.excludeUsage(new AudioAttributes.Builder()
-                            .setUsage(usage)
-                            .build());
+                    apccBuilder.excludeUsage(usage);
                 }
             }
             if (matchingUids != null) {
