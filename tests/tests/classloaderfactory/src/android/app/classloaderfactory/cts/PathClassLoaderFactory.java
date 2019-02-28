@@ -15,13 +15,14 @@
 package android.app.classloaderfactory.cts;
 
 import android.app.AppComponentFactory;
+import android.content.pm.ApplicationInfo;
 import dalvik.system.PathClassLoader;
 
 // AppComponentFactory which sets up PathClassLoader as the main class loader
 // of the process.
 public class PathClassLoaderFactory extends AppComponentFactory {
     @Override
-    public ClassLoader instantiateClassLoader(ClassLoader defaultCL) {
+    public ClassLoader instantiateClassLoader(ClassLoader defaultCL, ApplicationInfo aInfo) {
         return new PathClassLoader(AppComponentFactoryTest.SECONDARY_APK_PATH, defaultCL);
     }
 }
