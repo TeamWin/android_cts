@@ -35,6 +35,8 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Downloads;
 import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Images;
+import android.provider.cts.MediaStoreUtils.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -158,16 +160,16 @@ public class MediaStore_DownloadsTest {
         final Uri downloadUri = Uri.parse("https://developer.android.com/overview.html");
         final Uri refererUri = Uri.parse("https://www.android.com");
 
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 Downloads.EXTERNAL_CONTENT_URI, displayName, mimeType);
         params.setDownloadUri(downloadUri);
         params.setRefererUri(refererUri);
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (PrintWriter pw = new PrintWriter(session.openOutputStream())) {
                 pw.print(content);
             }
@@ -205,16 +207,16 @@ public class MediaStore_DownloadsTest {
     @Test
     public void testUpdateDownload() throws Exception {
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
@@ -242,16 +244,16 @@ public class MediaStore_DownloadsTest {
     @Test
     public void testDeleteDownload() throws Exception {
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
@@ -284,15 +286,15 @@ public class MediaStore_DownloadsTest {
 
         mCountDownLatch = new CountDownLatch(1);
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
         mAddedUris.add(pendingUri);
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);

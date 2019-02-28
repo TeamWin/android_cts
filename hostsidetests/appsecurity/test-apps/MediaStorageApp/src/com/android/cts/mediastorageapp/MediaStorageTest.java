@@ -41,6 +41,9 @@ import android.provider.MediaStore.MediaColumns;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
 
+import com.android.cts.mediastorageapp.MediaStoreUtils.PendingParams;
+import com.android.cts.mediastorageapp.MediaStoreUtils.PendingSession;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -232,10 +235,10 @@ public class MediaStorageTest {
     private static Uri createImage(Uri collectionUri) throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 collectionUri, displayName, "image/png");
-        final Uri pendingUri = MediaStore.createPending(context, params);
-        try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
+        final Uri pendingUri = MediaStoreUtils.createPending(context, params);
+        try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
             try (OutputStream out = session.openOutputStream()) {
                 final Bitmap bitmap = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888);
                 bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
@@ -247,10 +250,10 @@ public class MediaStorageTest {
     private static Uri createAudio(Uri collectionUri) throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 collectionUri, displayName, "audio/mpeg");
-        final Uri pendingUri = MediaStore.createPending(context, params);
-        try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
+        final Uri pendingUri = MediaStoreUtils.createPending(context, params);
+        try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
             try (InputStream in = context.getResources().openRawResource(R.raw.testmp3);
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);

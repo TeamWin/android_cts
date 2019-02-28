@@ -37,7 +37,8 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
-import android.provider.MediaStore.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -103,10 +104,10 @@ public class MediaStorePendingTest {
             throws Exception {
         final String displayName = "cts" + System.nanoTime();
 
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 insertUri, displayName, "image/png");
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         final long id = ContentUris.parseId(pendingUri);
 
         // Verify pending status across various queries
@@ -120,7 +121,7 @@ public class MediaStorePendingTest {
 
         // Write an image into place
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
                  OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
@@ -153,13 +154,13 @@ public class MediaStorePendingTest {
         final String displayName = "cts" + System.nanoTime();
 
         final Uri insertUri = mExternalImages;
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 insertUri, displayName, "image/png");
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         final File pendingFile;
 
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
@@ -191,9 +192,9 @@ public class MediaStorePendingTest {
         final String displayName = "cts" + System.nanoTime();
 
         final Uri insertUri = mExternalAudio;
-        final MediaStore.PendingParams params1 = new MediaStore.PendingParams(
+        final PendingParams params1 = new PendingParams(
                 insertUri, displayName, "audio/mpeg");
-        final MediaStore.PendingParams params2 = new MediaStore.PendingParams(
+        final PendingParams params2 = new PendingParams(
                 insertUri, displayName, "audio/mpeg");
 
         final Uri publishUri1 = execPending(params1, R.raw.testmp3);
@@ -402,7 +403,7 @@ public class MediaStorePendingTest {
     }
 
     private void assertCreatePending(PendingParams params) {
-        MediaStore.createPending(mContext, params);
+        MediaStoreUtils.createPending(mContext, params);
     }
 
     private void assertNotCreatePending(PendingParams params) {
@@ -411,15 +412,15 @@ public class MediaStorePendingTest {
 
     private void assertNotCreatePending(String message, PendingParams params) {
         try {
-            MediaStore.createPending(mContext, params);
+            MediaStoreUtils.createPending(mContext, params);
             fail(message);
         } catch (Exception expected) {
         }
     }
 
     private Uri execPending(PendingParams params, int resId) throws Exception {
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(resId);
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
