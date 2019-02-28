@@ -21,6 +21,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -72,7 +73,11 @@ public class CommandReceiver extends BroadcastReceiver {
                 doStopForegroundService(context, LocalForegroundService.class);
                 break;
             case COMMAND_START_FOREGROUND_SERVICE_LOCATION:
-                doStartForegroundService(context, LocalForegroundServiceLocation.class);
+                int type = intent.getIntExtra(
+                        LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
+                doStartForegroundServiceWithType(context, LocalForegroundServiceLocation.class,
+                        type);
                 break;
             case COMMAND_STOP_FOREGROUND_SERVICE_LOCATION:
                 doStopForegroundService(context, LocalForegroundServiceLocation.class);
@@ -106,6 +111,14 @@ public class CommandReceiver extends BroadcastReceiver {
         Intent fgsIntent = new Intent(context, cls);
         int command = LocalForegroundService.COMMAND_START_FOREGROUND;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        context.startForegroundService(fgsIntent);
+    }
+
+    private void doStartForegroundServiceWithType(Context context, Class cls, int type) {
+        Intent fgsIntent = new Intent(context, cls);
+        int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
+        fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        fgsIntent.putExtra(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE, type);
         context.startForegroundService(fgsIntent);
     }
 
