@@ -29,7 +29,7 @@ LOCAL_JAVA_LIBRARIES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
-    ctsdeviceutillegacy \
+    ctsdeviceutillegacy-axt \
     ctstestserver \
     ctstestrunner-axt
 
