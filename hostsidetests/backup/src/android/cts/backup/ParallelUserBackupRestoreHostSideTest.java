@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -54,22 +55,23 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
     private ExecutorService mExecutorService;
 
     private int mParentUserId;
-    private int mProfileUserId;
+    private Optional<Integer> mProfileUserId = Optional.empty();
 
     /** Setup the parent and profile user for backup. */
     @Before
     @Override
     public void setUp() throws Exception {
-        super.setUp();
         mDevice = getDevice();
+        super.setUp();
 
         mParentUserId = mDevice.getCurrentUser();
         startUserAndInitializeForBackup(mParentUserId);
         switchUserToLocalTransportAndAssertSuccess(mParentUserId);
 
-        mProfileUserId = createProfileUser(mParentUserId, "Profile-Parallel");
-        startUserAndInitializeForBackup(mProfileUserId);
-        switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
+        int profileUserId = createProfileUser(mParentUserId, "Profile-Parallel");
+        mProfileUserId = Optional.of(profileUserId);
+        startUserAndInitializeForBackup(profileUserId);
+        switchUserToLocalTransportAndAssertSuccess(profileUserId);
 
         mExecutorService = Executors.newFixedThreadPool(2);
     }
@@ -78,8 +80,13 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
     @After
     @Override
     public void tearDown() throws Exception {
-        mExecutorService.shutdownNow();
-        mDevice.removeUser(mProfileUserId);
+        if (mExecutorService != null) {
+            mExecutorService.shutdownNow();
+        }
+        if (mProfileUserId.isPresent()) {
+            mDevice.removeUser(mProfileUserId.get());
+            mProfileUserId = Optional.empty();
+        }
     }
 
     /**
@@ -103,12 +110,13 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
      */
     @Test
     public void testParallelBackupAndRestore() throws Exception {
+        int profileUserId = mProfileUserId.get();
         // Test parallel backups.
         CountDownLatch backupLatch = new CountDownLatch(2);
         Future<String> parentBackupOutput =
                 mExecutorService.submit(backupCallableForUser(mParentUserId, backupLatch));
         Future<String> profileBackupOutput =
-                mExecutorService.submit(backupCallableForUser(mProfileUserId, backupLatch));
+                mExecutorService.submit(backupCallableForUser(profileUserId, backupLatch));
 
         // Wait for both backups to complete.
         boolean backupsCompleted = backupLatch.await(TIMEOUT_BACKUP, TimeUnit.MILLISECONDS);
@@ -125,7 +133,7 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
         Future<String> parentRestoreOutput =
                 mExecutorService.submit(restoreCallableForUser(mParentUserId, restoreLatch));
         Future<String> profileRestoreOutput =
-                mExecutorService.submit(restoreCallableForUser(mProfileUserId, restoreLatch));
+                mExecutorService.submit(restoreCallableForUser(profileUserId, restoreLatch));
 
         // Wait for both restores to complete.
         boolean restoresCompleted = restoreLatch.await(TIMEOUT_RESTORE, TimeUnit.MILLISECONDS);

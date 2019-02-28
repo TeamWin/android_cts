@@ -27,6 +27,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Optional;
+
 /**
  * Verifies that serial number for ancestral work profile is read/written correctly. The host-side
  * part is needed to create/remove a test user as the test is run for a new secondary user to avoid
@@ -40,27 +42,31 @@ public class ProfileSerialNumberHostSideTest extends BaseMultiUserBackupHostSide
     private static final String TEST_CLASS = TEST_PACKAGE + ".ProfileSerialNumberTest";
 
     private ITestDevice mDevice;
-    private int mUserId;
+    private Optional<Integer> mProfileUserId = Optional.empty();
 
     @Before
     @Override
     public void setUp() throws Exception {
+        mDevice = getDevice();
         super.setUp();
 
-        mDevice = getDevice();
-
         int userId = mDevice.getCurrentUser();
-        mUserId = createProfileUser(userId, "Profile-Serial-Number");
-        startUserAndInitializeForBackup(mUserId);
+        int profileUserId = createProfileUser(userId, "Profile-Serial-Number");
+        mProfileUserId = Optional.of(profileUserId);
+        startUserAndInitializeForBackup(profileUserId);
 
-        installPackageAsUser(APK_NAME, false, mUserId);
+        installPackageAsUser(APK_NAME, false, profileUserId);
     }
 
     @After
     @Override
     public void tearDown() throws Exception {
-        uninstallPackageAsUser(APK_NAME, mUserId);
-        mDevice.removeUser(mUserId);
+        if (mProfileUserId.isPresent()) {
+            int profileUserId = mProfileUserId.get();
+            uninstallPackageAsUser(APK_NAME, profileUserId);
+            mDevice.removeUser(profileUserId);
+            mProfileUserId = Optional.empty();
+        }
 
         super.tearDown();
     }
@@ -68,12 +74,15 @@ public class ProfileSerialNumberHostSideTest extends BaseMultiUserBackupHostSide
     /**
      * Test reading and writing of serial number for user's ancestral profile.
      *
-     * Test logic:
-     *    1. Set ancestral serial number for user with
-     *       {@link BackupManager#setAncestralSerialNumber(long)}
-     *    2. Get user by ancestral serial number with
-     *       {@link BackupManager#getUserForAncestralSerialNumber(long)} and verify the same user is
-     *       returned
+     * <p>Test logic:
+     *
+     * <ol>
+     *   <li>Set ancestral serial number for user with {@link
+     *       BackupManager#setAncestralSerialNumber(long)}.
+     *   <li>Get user by ancestral serial number with {@link
+     *       BackupManager#getUserForAncestralSerialNumber(long)} and verify the same user is
+     *       returned.
+     * </ol>
      */
     @Test
     public void testSetAndGetAncestralSerialNumber() throws Exception {
@@ -92,6 +101,6 @@ public class ProfileSerialNumberHostSideTest extends BaseMultiUserBackupHostSide
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
-        checkDeviceTestAsUser(TEST_PACKAGE, TEST_CLASS, methodName, mUserId);
+        checkDeviceTestAsUser(TEST_PACKAGE, TEST_CLASS, methodName, mProfileUserId.get());
     }
 }

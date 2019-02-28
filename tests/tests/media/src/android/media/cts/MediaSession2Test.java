@@ -18,8 +18,10 @@ package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -61,6 +63,9 @@ import java.util.Objects;
 @SmallTest
 public class MediaSession2Test {
     private static final long WAIT_TIME_MS = 300L;
+
+    private static final String TEST_KEY = "test_key";
+    private static final String TEST_VALUE = "test_value";
 
     static Handler sHandler;
     static Executor sHandlerExecutor;
@@ -164,13 +169,17 @@ public class MediaSession2Test {
 
     @Test
     public void testSession2Token() {
-        try (MediaSession2 session = new MediaSession2.Builder(mContext).build()) {
+        final Bundle extras = new Bundle();
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setExtras(extras)
+                .build()) {
             Session2Token token = session.getSessionToken();
             assertEquals(Process.myUid(), token.getUid());
             assertEquals(mContext.getPackageName(), token.getPackageName());
             assertNull(token.getServiceName());
             assertEquals(Session2Token.TYPE_SESSION, token.getType());
             assertEquals(0, token.describeContents());
+            assertSame(extras, token.getExtras());
         }
     }
 
@@ -220,20 +229,28 @@ public class MediaSession2Test {
 
     @Test
     public void testSession2Token_writeToParcel() {
-        try (MediaSession2 session = new MediaSession2.Builder(mContext).build()) {
+        final Bundle extras = new Bundle();
+        extras.putString(TEST_KEY, TEST_VALUE);
+
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setExtras(extras)
+                .build()) {
             Session2Token token = session.getSessionToken();
 
             Parcel parcel = Parcel.obtain();
             token.writeToParcel(parcel, 0 /* flags */);
             parcel.setDataPosition(0);
             Session2Token tokenOut = Session2Token.CREATOR.createFromParcel(parcel);
+            parcel.recycle();
 
             assertEquals(Process.myUid(), tokenOut.getUid());
             assertEquals(mContext.getPackageName(), tokenOut.getPackageName());
             assertNull(tokenOut.getServiceName());
             assertEquals(Session2Token.TYPE_SESSION, tokenOut.getType());
 
-            parcel.recycle();
+            Bundle extrasOut = tokenOut.getExtras();
+            assertNotNull(extrasOut);
+            assertEquals(TEST_VALUE, extrasOut.getString(TEST_KEY));
         }
     }
 

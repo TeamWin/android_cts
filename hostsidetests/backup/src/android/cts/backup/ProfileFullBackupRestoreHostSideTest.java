@@ -28,42 +28,52 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Optional;
+
 /** Test the backup and restore flow for a full-backup app in a profile. */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
-    private int mProfileUserId;
+    private Optional<Integer> mProfileUserId = Optional.empty();
     private String mTransport;
 
     /** Create the profile, switch to the local transport and setup the test package. */
     @Before
     @Override
     public void setUp() throws Exception {
-        super.setUp();
         mDevice = getDevice();
+        super.setUp();
 
         // Create profile user.
         int parentUserId = mDevice.getCurrentUser();
-        mProfileUserId = createProfileUser(parentUserId, "Profile-Full");
-        startUserAndInitializeForBackup(mProfileUserId);
+        int profileUserId = createProfileUser(parentUserId, "Profile-Full");
+        mProfileUserId = Optional.of(profileUserId);
+        startUserAndInitializeForBackup(profileUserId);
 
         // Switch to local transport.
-        mTransport = switchUserToLocalTransportAndAssertSuccess(mProfileUserId);
+        mTransport = switchUserToLocalTransportAndAssertSuccess(profileUserId);
 
         // Setup test package.
-        installPackageAsUser(FULL_BACKUP_APK, false, mProfileUserId);
-        clearPackageDataAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, false, profileUserId);
+        clearPackageDataAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
     }
 
     /** Uninstall the test package and remove the profile. */
     @After
     @Override
     public void tearDown() throws Exception {
-        clearBackupDataInTransportForUser(FULL_BACKUP_TEST_PACKAGE, mTransport, mProfileUserId);
-        uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
-        mDevice.removeUser(mProfileUserId);
+        if (mProfileUserId.isPresent()) {
+            int profileUserId = mProfileUserId.get();
+            if (mTransport != null) {
+                clearBackupDataInTransportForUser(
+                        FULL_BACKUP_TEST_PACKAGE, mTransport, profileUserId);
+            }
+            uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
+            mDevice.removeUser(profileUserId);
+            mProfileUserId = Optional.empty();
+        }
         super.tearDown();
     }
 
@@ -80,15 +90,16 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
      */
     @Test
     public void testFullBackupAndSystemRestore() throws Exception {
+        int profileUserId = mProfileUserId.get();
         checkDeviceTest("assertFilesDontExist");
         checkDeviceTest("writeFilesAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("clearFilesAndAssertSuccess");
 
         mBackupUtils.restoreAndAssertSuccessForUser(
-                BackupUtils.LOCAL_TRANSPORT_TOKEN, FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
+                BackupUtils.LOCAL_TRANSPORT_TOKEN, FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("assertFilesRestored");
     }
@@ -106,22 +117,26 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
      */
     @Test
     public void testFullBackupAndRestoreAtInstall() throws Exception {
+        int profileUserId = mProfileUserId.get();
         checkDeviceTest("assertFilesDontExist");
         checkDeviceTest("writeFilesAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("clearFilesAndAssertSuccess");
 
-        uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, mProfileUserId);
+        uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
-        installPackageAsUser(FULL_BACKUP_APK, false, mProfileUserId);
+        installPackageAsUser(FULL_BACKUP_APK, false, profileUserId);
 
         checkDeviceTest("assertFilesRestored");
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
         checkDeviceTestAsUser(
-                FULL_BACKUP_TEST_PACKAGE, FULL_BACKUP_DEVICE_TEST_NAME, methodName, mProfileUserId);
+                FULL_BACKUP_TEST_PACKAGE,
+                FULL_BACKUP_DEVICE_TEST_NAME,
+                methodName,
+                mProfileUserId.get());
     }
 }

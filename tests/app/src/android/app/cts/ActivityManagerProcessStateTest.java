@@ -29,14 +29,17 @@ import android.app.cts.android.app.cts.tools.UidImportanceListener;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.CommandReceiver;
+import android.app.stubs.LocalForegroundServiceLocation;
 import android.app.stubs.ScreenOnActivity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.PowerManager;
@@ -1580,7 +1583,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-                WAITFOR_MSEC);
+            WAITFOR_MSEC);
 
         try {
             // First start a foreground service
@@ -1590,9 +1593,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
 
             // Try to elevate to foreground service location
+            Bundle bundle = new Bundle();
+            bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE_LOCATION);
 

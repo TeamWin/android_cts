@@ -30,6 +30,7 @@ import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
@@ -123,57 +124,20 @@ abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
     protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, String testMethodName, int userId)
             throws DeviceNotAvailableException {
-        Map<String, String> params = Collections.emptyMap();
-        runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
-    }
 
-    protected void runDeviceTestsAsUser(String pkgName, @Nullable String testClassName,
-            @Nullable String testMethodName, int userId,
-            Map<String, String> params) throws DeviceNotAvailableException {
-        if (testClassName != null && testClassName.startsWith(".")) {
-            testClassName = pkgName + testClassName;
-        }
-
-        RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
-                pkgName, RUNNER, getDevice().getIDevice());
-        if (testClassName != null && testMethodName != null) {
-            testRunner.setMethodName(testClassName, testMethodName);
-        } else if (testClassName != null) {
-            testRunner.setClassName(testClassName);
-        }
-
-        for (Map.Entry<String, String> param : params.entrySet()) {
-            testRunner.addInstrumentationArg(param.getKey(), param.getValue());
-        }
-
-        CollectingTestListener listener = new CollectingTestListener();
-        assertTrue(getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener));
-
-        TestRunResult runResult = listener.getCurrentRunResults();
-        if (runResult.getTestResults().size() == 0) {
-            fail("No tests have been executed.");
-            return;
-        }
-
-        printTestResult(runResult);
-        if (runResult.hasFailedTests() || runResult.getNumTestsInState(TestStatus.PASSED) == 0) {
-            fail("Some tests have been failed.");
-        }
-    }
-
-    private void printTestResult(TestRunResult runResult) {
-        for (Map.Entry<TestDescription, TestResult> testEntry :
-                runResult.getTestResults().entrySet()) {
-            TestResult testResult = testEntry.getValue();
-
-            final String message = "Test " + testEntry.getKey() + ": " + testResult.getStatus();
-            if (testResult.getStatus() == TestStatus.PASSED) {
-                CLog.i(message);
-            } else {
-                CLog.e(message);
-                CLog.e(testResult.getStackTrace());
+        final DeviceTestRunOptions opts = new DeviceTestRunOptions(pkgName);
+        if (testClassName != null) {
+            if (testClassName.startsWith(".")) {
+                testClassName = pkgName + testClassName;
             }
+            opts.setTestClassName(testClassName);
         }
+        if (testMethodName != null) {
+            opts.setTestMethodName(testMethodName);
+        }
+        opts.setUserId(userId);
+
+        runDeviceTests(opts);
     }
 
     private void removeTestUsers() throws Exception {

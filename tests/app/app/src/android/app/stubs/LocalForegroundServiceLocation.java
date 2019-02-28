@@ -16,12 +16,15 @@
 
 package android.app.stubs;
 
+import static org.junit.Assert.assertEquals;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -35,12 +38,43 @@ import com.android.compatibility.common.util.IBinderParcelable;
 public class LocalForegroundServiceLocation extends LocalForegroundService {
 
     private static final String TAG = "LocalForegroundServiceLocation";
-    private static final String EXTRA_COMMAND = "LocalForegroundServiceLocation.command";
     private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
+    public static final String EXTRA_FOREGROUND_SERVICE_TYPE = "ForegroundService.type";
+    public static final int COMMAND_START_FOREGROUND_WITH_TYPE = 1;
+    private int mNotificationId = 0;
 
     /** Returns the channel id for this service */
     @Override
     protected String getNotificationChannelId() {
         return NOTIFICATION_CHANNEL_ID;
+    }
+
+    @Override
+    public void onStart(Intent intent, int startId) {
+        String notificationChannelId = getNotificationChannelId();
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(new NotificationChannel(
+            notificationChannelId, notificationChannelId,
+            NotificationManager.IMPORTANCE_DEFAULT));
+
+        Context context = getApplicationContext();
+        int command = intent.getIntExtra(EXTRA_COMMAND, -1);
+
+        switch (command) {
+            case COMMAND_START_FOREGROUND_WITH_TYPE:
+                final int type = intent.getIntExtra(EXTRA_FOREGROUND_SERVICE_TYPE,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
+                mNotificationId ++;
+                final Notification notification =
+                    new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
+                        .setContentTitle(getNotificationTitle(mNotificationId))
+                        .setSmallIcon(R.drawable.black)
+                        .build();
+                startForeground(mNotificationId, notification, type);
+                assertEquals(type, getForegroundServiceType());
+                break;
+            default:
+                Log.e(TAG, "Unknown command: " + command);
+        }
     }
 }

@@ -15,18 +15,13 @@
  */
 package android.autofillservice.cts;
 
-import android.os.Bundle;
-import android.view.View;
-
 /**
  * Same as {@link LoginActivity}, but with autofill disabled.
  */
 public class LoginNotImportantForAutofillActivity extends LoginActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        mRoot.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+    protected int getContentView() {
+        return R.layout.login_activity_not_important;
     }
 }

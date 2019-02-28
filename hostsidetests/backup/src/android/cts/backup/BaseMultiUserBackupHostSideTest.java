@@ -66,8 +66,8 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     /** Check device features and keep track of pre-test device state. */
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mDevice = getDevice();
+        super.setUp();
 
         // Check that backup and multi-user features are both supported.
         assumeTrue("Backup feature not supported", mIsBackupSupported);

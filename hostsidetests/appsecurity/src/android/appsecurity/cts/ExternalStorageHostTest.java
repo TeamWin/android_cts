@@ -302,6 +302,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
             updateAppOp(PKG_A, owner, "android:legacy_storage", true);
             runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedLegacy", owner);
+            runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedWrite", owner);
 
             updateAppOp(PKG_A, owner, "android:legacy_storage", false);
             runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedNonLegacy", owner);

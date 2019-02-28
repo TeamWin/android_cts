@@ -23,7 +23,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
-    ctsdeviceutillegacy \
+    ctsdeviceutillegacy-axt \
     ctstestserver \
     ctstestrunner-axt
 

@@ -32,8 +32,10 @@ import android.uirendering.cts.bitmapcomparers.ExactComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
+import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.uirendering.cts.util.CompareUtils;
 
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -282,6 +284,67 @@ public class ExactCanvasTests extends ActivityTestBase {
                             new Paint());
                 })
                 .runWithComparer(mExactComparer);
+    }
+
+    @Test
+    public void testBlackTriangleVertices2() {
+        BitmapVerifier verifier = new PerPixelBitmapVerifier() {
+            @Override
+            protected boolean verifyPixel(int x, int y, int observedColor) {
+                // The CanvasClient will draw the following black triangle on a white
+                // background:
+                //               (40, 0)
+                //
+                //
+                //
+                //
+                // (0, 80)                      (80, 0)
+                if (y >= 80) {
+                    // Below the triangle is white.
+                    return CompareUtils.verifyPixelWithThreshold(observedColor, Color.WHITE, 0);
+                } else if (x < 40) {
+                    // The line on the left is
+                    //    y = -2x + 80
+                    // Above is white, below is black. Give some leeway for
+                    // antialiasing.
+                    if (y < -2 * x + 80 - 1) {
+                        return CompareUtils.verifyPixelWithThreshold(observedColor, Color.WHITE, 0);
+                    } else if (y > -2 * x + 80 + 1) {
+                        return CompareUtils.verifyPixelWithThreshold(observedColor, Color.BLACK, 0);
+                    }
+                } else {
+                    // The line on the right is
+                    //    y = 2x - 80
+                    // Above is white, below is black. Give some leeway for
+                    // antialiasing.
+                    if (y < 2 * x - 80 - 1) {
+                        return CompareUtils.verifyPixelWithThreshold(observedColor, Color.WHITE, 0);
+                    } else if (y > 2 * x - 80 + 1) {
+                        return CompareUtils.verifyPixelWithThreshold(observedColor, Color.BLACK, 0);
+                    }
+                }
+                // Ignore points very close to the line.
+                return true;
+            }
+        };
+
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    canvas.drawColor(Color.WHITE);
+
+                    float[] vertices = new float[6];
+                    vertices[0] = 40;
+                    vertices[1] = 0;
+                    vertices[2] = 80;
+                    vertices[3] = 80;
+                    vertices[4] = 0;
+                    vertices[5] = 80;
+                    int[] colors = new int[] { Color.BLACK, Color.BLACK, Color.BLACK };
+                    canvas.drawVertices(Canvas.VertexMode.TRIANGLES, vertices.length, vertices, 0,
+                            null, 0, colors, 0, null, 0, 0,
+                            new Paint());
+                })
+                .runWithVerifier(verifier);
     }
 
     @Test

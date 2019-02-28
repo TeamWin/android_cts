@@ -15,6 +15,7 @@
 package android.app.classloaderfactory.cts;
 
 import android.app.AppComponentFactory;
+import android.content.pm.ApplicationInfo;
 import dalvik.system.InMemoryDexClassLoader;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -26,7 +27,7 @@ import java.util.zip.ZipFile;
 // loader of the process.
 public class InMemoryDexClassLoaderFactory extends AppComponentFactory {
     @Override
-    public ClassLoader instantiateClassLoader(ClassLoader defaultCL) {
+    public ClassLoader instantiateClassLoader(ClassLoader defaultCL, ApplicationInfo aInfo) {
         try {
             // InMemoryDexClassLoader will not load a zip file. Must extract
             // dex files into ByteBuffers.

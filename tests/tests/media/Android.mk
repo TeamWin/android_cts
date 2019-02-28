@@ -46,7 +46,7 @@ LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
-    ctsdeviceutillegacy \
+    ctsdeviceutillegacy-axt \
     ctsmediautil \
     ctstestrunner-axt \
     hamcrest-library \
