@@ -21,26 +21,18 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import androidx.test.InstrumentationRegistry;
 
 class DefaultSmsAppHelper {
-    static void setDefaultSmsApp(boolean setToSmsApp) {
+    static void ensureDefaultSmsApp() {
         String packageName =
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
 
-        setDefaultSmsAppSetting(setToSmsApp, packageName);
+        runShellCommand(
+                String.format("settings put secure sms_default_application %s", packageName));
+
 
         // FIXME: Required because setting default SMS app to a given package adds appops WRITE_SMS
         // permissions to the given package, but changing away from a given package seem to remove
         // the appops permission from the given package. This is a known issue and should be fixed
         // for Q.
-        setSmsWritePermission(setToSmsApp, packageName);
-    }
-
-    private static void setDefaultSmsAppSetting(boolean setToSmsApp, String packageName) {
-        runShellCommand(String.format("settings put secure sms_default_application %s",
-                setToSmsApp ? packageName : "default"));
-    }
-
-    private static void setSmsWritePermission(boolean setToSmsApp, String packageName) {
-        runShellCommand(String.format("appops set %s WRITE_SMS %s", packageName,
-                setToSmsApp ? "allow" : "default"));
+        runShellCommand(String.format("appops set %s WRITE_SMS allow", packageName));
     }
 }

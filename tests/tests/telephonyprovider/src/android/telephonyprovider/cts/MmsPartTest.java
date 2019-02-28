@@ -16,8 +16,6 @@
 
 package android.telephonyprovider.cts;
 
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.setDefaultSmsApp;
-
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -28,10 +26,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 
-import androidx.test.InstrumentationRegistry;
-
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
@@ -45,6 +42,11 @@ public class MmsPartTest {
      */
     private static final String TEST_MESSAGE_ID = "100";
 
+    @BeforeClass
+    public static void ensureDefaultSmsApp() {
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+    }
+
     @Before
     public void setupTestEnvironment() {
         cleanup();
@@ -53,18 +55,12 @@ public class MmsPartTest {
 
     @AfterClass
     public static void cleanup() {
-        ContentResolver contentResolver =
-                InstrumentationRegistry.getInstrumentation().getContext().getContentResolver();
-
-        setDefaultSmsApp(true);
+        ContentResolver contentResolver = getInstrumentation().getContext().getContentResolver();
         contentResolver.delete(Telephony.Mms.Part.CONTENT_URI, null, null);
-        setDefaultSmsApp(false);
     }
 
     @Test
     public void testMmsPartInsert_cannotInsertPartWithDataColumn() {
-        setDefaultSmsApp(true);
-
         ContentValues values = new ContentValues();
         values.put(Telephony.Mms.Part._DATA, "/dev/urandom");
         values.put(Telephony.Mms.Part.NAME, "testMmsPartInsert_cannotInsertPartWithDataColumn");
@@ -75,8 +71,6 @@ public class MmsPartTest {
 
     @Test
     public void testMmsPartInsert_canInsertPartWithoutDataColumn() {
-        setDefaultSmsApp(true);
-
         String name = "testMmsInsert_canInsertPartWithoutDataColumn";
 
         Uri uri = insertTestMmsPartWithName(name);
@@ -85,8 +79,6 @@ public class MmsPartTest {
 
     @Test
     public void testMmsPart_deletedPartIdsAreNotReused() {
-        setDefaultSmsApp(true);
-
         long id1 = insertAndVerifyMmsPartReturningId("testMmsPart_deletedPartIdsAreNotReused_1");
 
         deletePartById(id1);
