@@ -37,6 +37,8 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
+import android.provider.cts.MediaStoreUtils.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 import android.util.Size;
 
@@ -320,12 +322,12 @@ public class MediaStore_Images_MediaTest {
         Assume.assumeTrue(StorageManager.hasIsolatedStorage());
 
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 mExternalImages, displayName, "image/jpeg");
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
@@ -369,12 +371,12 @@ public class MediaStore_Images_MediaTest {
     @Test
     public void testLocationDeprecated() throws Exception {
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 mExternalImages, displayName, "image/jpeg");
 
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         final Uri publishUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
                     OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);

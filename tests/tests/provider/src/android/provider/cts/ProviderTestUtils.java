@@ -35,6 +35,8 @@ import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
+import android.provider.cts.MediaStoreUtils.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -217,10 +219,9 @@ public class ProviderTestUtils {
     static Uri stageMedia(int resId, Uri collectionUri, String mimeType) throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
-                collectionUri, displayName, mimeType);
-        final Uri pendingUri = MediaStore.createPending(context, params);
-        try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
+        final PendingParams params = new PendingParams(collectionUri, displayName, mimeType);
+        final Uri pendingUri = MediaStoreUtils.createPending(context, params);
+        try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
             try (InputStream source = context.getResources().openRawResource(resId);
                     OutputStream target = session.openOutputStream()) {
                 FileUtils.copy(source, target);
