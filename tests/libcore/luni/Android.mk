@@ -23,7 +23,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     apache-harmony-tests \
     conscrypt-tests \
     core-tests \
-    cts-core-test-runner \
+    cts-core-test-runner-axt \
     mockito-target-minus-junit4 \
     time_zone_distro-tests \
     time_zone_distro_installer-tests
