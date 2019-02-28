@@ -16,15 +16,7 @@
 package com.android.cts.deviceowner;
 
 import android.content.pm.PackageManager;
-import android.net.MacAddress;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.text.TextUtils;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Tests that require the WiFi feature.
@@ -32,8 +24,6 @@ import java.util.stream.Collectors;
 public class WifiTest extends BaseDeviceOwnerTest {
     /** Mac address returned when the caller doesn't have access. */
     private static final String DEFAULT_MAC_ADDRESS = "02:00:00:00:00:00";
-    /** SSID returned when the caller doesn't have access or if WiFi is not connected. */
-    private static final String DEFAULT_SSID = "<unknown ssid>";
 
     public void testGetWifiMacAddress() {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
@@ -46,32 +36,5 @@ public class WifiTest extends BaseDeviceOwnerTest {
                 DEFAULT_MAC_ADDRESS.equals(macAddress));
         assertFalse("getWifiMacAddress() returned an empty string.  WiFi not enabled?",
                 TextUtils.isEmpty(macAddress));
-    }
-
-    public void testGetRandomizedMacAddress() {
-        final WifiManager wifiManager = mContext.getSystemService(WifiManager.class);
-        final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
-        assertNotNull("Cannot get WiFi connection info", connectionInfo);
-        assertFalse("Default SSID is reported for current connection, check WiFi and location",
-                DEFAULT_SSID.equals(connectionInfo.getSSID()));
-
-
-        final List<WifiConfiguration> wifiConfigs = wifiManager.getConfiguredNetworks();
-        for (final WifiConfiguration config : wifiConfigs) {
-            if (config.SSID == null) continue;
-
-            if (config.SSID.equals(connectionInfo.getSSID())) {
-                final MacAddress macAddress = config.getRandomizedMacAddress();
-                assertFalse("Device owner should be able to get the randomized MAC address",
-                        macAddress.equals(MacAddress.fromString(DEFAULT_MAC_ADDRESS)));
-                return;
-            }
-        }
-
-        final String ssids = wifiConfigs.stream()
-                .map(c -> c.SSID).filter(Objects::nonNull).collect(Collectors.joining(","));
-
-        fail(String.format("Failed to find WifiConfiguration for the current connection, " +
-                "current SSID: %s; configured SSIDs: %s", connectionInfo.getSSID(), ssids));
     }
 }
