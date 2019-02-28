@@ -38,5 +38,7 @@
         <option name="test-timeout" value="1800000" />
         <option name="ajur-max-shard" value="2" />
         <option name="runtime-hint" value="3h" />
+        <!-- disable isolated storage so tests can access dynamic config stored in /sdcard. -->
+        <option name="isolated-storage" value="false" />
     </test>
 </configuration>
