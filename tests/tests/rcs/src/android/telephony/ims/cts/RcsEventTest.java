@@ -23,7 +23,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.test.InstrumentationRegistry;
 import android.telephony.ims.RcsEvent;
 import android.telephony.ims.RcsEventQueryParams;
 import android.telephony.ims.RcsEventQueryResult;
@@ -38,6 +37,8 @@ import android.telephony.ims.RcsMessageStore;
 import android.telephony.ims.RcsMessageStoreException;
 import android.telephony.ims.RcsParticipant;
 import android.telephony.ims.RcsParticipantAliasChangedEvent;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.google.android.collect.Lists;
 
