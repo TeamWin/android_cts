@@ -16,20 +16,19 @@
 
 package android.cts.backup.profileserialnumberapp;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import android.app.Instrumentation;
 import android.app.backup.BackupManager;
 import android.os.Binder;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

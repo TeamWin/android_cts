@@ -22,7 +22,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-aia-util \
     androidx.test.rules \
-    ctsdeviceutillegacy \
+    ctsdeviceutillegacy-axt \
     ctstestrunner-axt
 
 # tag this module as a cts test artifact
