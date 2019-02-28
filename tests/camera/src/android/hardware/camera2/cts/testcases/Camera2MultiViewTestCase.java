@@ -274,6 +274,12 @@ public class Camera2MultiViewTestCase {
         camera.stopPreview();
     }
 
+    protected void stopRepeating(String cameraId) throws Exception {
+        CameraHolder camera = getCameraHolder(cameraId);
+        assertTrue("Camera " + cameraId + " preview is not running", camera.isPreviewStarted());
+        camera.stopRepeating();
+    }
+
     protected void finalizeOutputConfigs(String cameraId, List<OutputConfiguration> configs,
             CaptureCallback listener) throws Exception {
         CameraHolder camera = getCameraHolder(cameraId);
@@ -609,6 +615,17 @@ public class Camera2MultiViewTestCase {
             mSessionListener.getStateWaiter().waitForState(
                     SESSION_CLOSED, SESSION_CLOSE_TIMEOUT_MS);
             mSessionListener = null;
+        }
+
+        public void stopRepeating() throws Exception {
+            if (VERBOSE) Log.v(TAG,
+                    "Stopping camera " + mCameraId +" repeating request");
+            if (!isOpened()) {
+                return;
+            }
+            mSession.stopRepeating();
+            mSessionListener.getStateWaiter().waitForState(
+                    SESSION_READY, SESSION_READY_TIMEOUT_MS);
         }
     }
 }
