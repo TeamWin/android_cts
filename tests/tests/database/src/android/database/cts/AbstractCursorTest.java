@@ -27,6 +27,7 @@ import android.database.DataSetObserver;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 
@@ -166,6 +167,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         observer.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
     }
 
+    @AppModeFull
     public void testSetNotificationsUris() throws Exception {
         final Uri queryUri = Uri.parse("content://com.android.cts.providerapp");
         try (Cursor cursor = mContext.getContentResolver().query(queryUri, null, null, null)) {
