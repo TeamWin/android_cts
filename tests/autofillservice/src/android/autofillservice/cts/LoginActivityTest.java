@@ -372,6 +372,8 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         final FillRequest request = sReplier.getNextFillRequest();
         assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
         assertTextIsSanitized(request.structure, ID_PASSWORD);
+        assertThat(request.contexts.get(request.contexts.size() - 1).getFocusedId())
+                .isEqualTo(mActivity.getUsername().getAutofillId());
 
         // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(
