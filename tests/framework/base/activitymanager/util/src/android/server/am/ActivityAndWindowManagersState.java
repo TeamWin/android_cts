@@ -263,6 +263,12 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Keyguard showing and occluded...");
     }
 
+    void waitForAodShowing() {
+        waitForWithAmState(state -> state.getKeyguardControllerState().aodShowing,
+                "***Waiting for AOD showing...");
+
+    }
+
     void waitForKeyguardGone() {
         waitForWithAmState(state -> !state.getKeyguardControllerState().keyguardShowing,
                 "***Waiting for Keyguard gone...");
@@ -705,6 +711,16 @@ public class ActivityAndWindowManagersState {
     public void assertKeyguardGone() {
         assertFalse("Keyguard is not shown",
                 getAmState().getKeyguardControllerState().keyguardShowing);
+    }
+
+    public void assertAodShowing() {
+        assertTrue("AOD is showing",
+                getAmState().getKeyguardControllerState().aodShowing);
+    }
+
+    public void assertAodNotShowing() {
+        assertFalse("AOD is not showing",
+                getAmState().getKeyguardControllerState().aodShowing);
     }
 
     public void assumePendingActivityContain(ComponentName activity) {
