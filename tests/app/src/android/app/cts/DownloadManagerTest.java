@@ -592,14 +592,16 @@ public class DownloadManagerTest {
     }
 
     private Uri getMediaStoreUri(Uri downloadUri) throws Exception {
-        final String res = runShellCommand(
-                "content query --uri " + downloadUri + " --projection mediastore_uri").trim();
-        final String str = "mediastore_uri=";
+        final String cmd = String.format("content query --uri %s --projection %s",
+                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI);
+        final String res = runShellCommand(cmd).trim();
+        final String str = DownloadManager.COLUMN_MEDIASTORE_URI + "=";
         final int i = res.indexOf(str);
         if (i >= 0) {
             return Uri.parse(res.substring(i + str.length()));
         } else {
-            throw new FileNotFoundException("Failed to find mediastore_uri for "
+            throw new FileNotFoundException("Failed to find "
+                    + DownloadManager.COLUMN_MEDIASTORE_URI + " for "
                     + downloadUri + "; found " + res);
         }
     }
