@@ -22,11 +22,12 @@ import static android.telephony.ims.cts.DefaultSmsAppHelper.setDefaultSmsApp;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
 import android.telephony.ims.RcsManager;
 import android.telephony.ims.RcsMessageStore;
 import android.telephony.ims.RcsMessageStoreException;
 import android.telephony.ims.RcsParticipant;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
