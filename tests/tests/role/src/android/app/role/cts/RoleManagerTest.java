@@ -21,14 +21,19 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
+import android.app.role.OnRoleHoldersChangedListener;
 import android.app.role.RoleManager;
 import android.app.role.RoleManagerCallback;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
 import android.support.test.uiautomator.By;
@@ -45,6 +50,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -55,10 +61,12 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests {@link RoleManager}.
@@ -70,17 +78,25 @@ public class RoleManagerTest {
 
     private static final long TIMEOUT_MILLIS = 15 * 1000;
 
-    private static final String ROLE_NAME = RoleManager.ROLE_DIALER;
+    private static final long UNEXPECTED_TIMEOUT_MILLIS = 1000;
+
+    private static final String ROLE_NAME = RoleManager.ROLE_MUSIC;
 
     private static final String APP_PACKAGE_NAME = "android.app.role.cts.app";
+    private static final String APP_IS_ROLE_HELD_ACTIVITY_NAME = APP_PACKAGE_NAME
+            + ".IsRoleHeldActivity";
+    private static final String APP_IS_ROLE_HELD_EXTRA_IS_ROLE_HELD = APP_PACKAGE_NAME
+            + ".extra.IS_ROLE_HELD";
     private static final String APP_REQUEST_ROLE_ACTIVITY_NAME = APP_PACKAGE_NAME
             + ".RequestRoleActivity";
-    private static final String APP_REQUEST_ROLE_EXTRA_ROLE_NAME = APP_PACKAGE_NAME
-            + ".extra.ROLE_NAME";
+
+    private static final String PERMISSION_MANAGE_ROLES_FROM_CONTROLLER =
+            "com.android.permissioncontroller.permission.MANAGE_ROLES_FROM_CONTROLLER";
 
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
+    private static final PackageManager sPackageManager = sContext.getPackageManager();
     private static final RoleManager sRoleManager = sContext.getSystemService(RoleManager.class);
     private static final UiDevice sUiDevice = UiDevice.getInstance(sInstrumentation);
 
@@ -88,30 +104,43 @@ public class RoleManagerTest {
     public ActivityTestRule<WaitForResultActivity> mActivityRule =
             new ActivityTestRule<>(WaitForResultActivity.class);
 
-    // TODO: STOPSHIP: Remove once we automatically revoke role upon uninstallation.
+    private String mRoleHolder;
+
     @Before
+    public void saveRoleHolder() throws Exception {
+        List<String> roleHolders = getRoleHolders(ROLE_NAME);
+        mRoleHolder = !roleHolders.isEmpty() ? roleHolders.get(0) : null;
+
+        if (Objects.equals(mRoleHolder, APP_PACKAGE_NAME)) {
+            removeRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+            mRoleHolder = null;
+        }
+    }
+
     @After
-    public void removeRoleHolder() throws Exception {
+    public void restoreRoleHolder() throws Exception {
         removeRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        if (mRoleHolder != null) {
+            addRoleHolder(ROLE_NAME, mRoleHolder);
+        }
+
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
     }
 
     @Test
-    public void roleIsAvailable() {
-        assertThat(sRoleManager.isRoleAvailable(ROLE_NAME)).isTrue();
+    public void requestRoleIntentHasPermissionControllerPackage() throws Exception {
+        Intent intent = sRoleManager.createRequestRoleIntent(ROLE_NAME);
+
+        assertThat(intent.getPackage()).isEqualTo(
+                sPackageManager.getPermissionControllerPackageName());
     }
 
     @Test
-    public void addRoleHolderThenIsRoleHolder() throws Exception {
-        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
-        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
-    }
+    public void requestRoleIntentHasExtraRoleName() throws Exception {
+        Intent intent = sRoleManager.createRequestRoleIntent(ROLE_NAME);
 
-    @Test
-    public void addAndRemoveRoleHolderThenIsNotRoleHolder() throws Exception {
-        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
-        removeRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
-        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
+        assertThat(intent.getStringExtra(Intent.EXTRA_ROLE_NAME)).isEqualTo(ROLE_NAME);
     }
 
     @FlakyTest
@@ -119,6 +148,7 @@ public class RoleManagerTest {
     public void requestRoleAndRejectThenIsNotRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
+
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
     }
 
@@ -127,27 +157,14 @@ public class RoleManagerTest {
     public void requestRoleAndApproveThenIsRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
+
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
-    }
-
-    @Test
-    public void revokeSingleRoleThenEnsureOtherRolesAppopsIntact() throws Exception {
-        addRoleHolder(RoleManager.ROLE_DIALER, APP_PACKAGE_NAME);
-        addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
-        removeRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
-        assertThat(AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS))
-                .isEqualTo(AppOpsManager.MODE_ALLOWED);
-    }
-
-    @Test
-    public void migratedRoleHoldersNotEmpty() throws Exception {
-        assertThat(getRoleHolders(RoleManager.ROLE_SMS)).isNotEmpty();
     }
 
     private void requestRole(@NonNull String roleName) {
         Intent intent = new Intent()
                 .setComponent(new ComponentName(APP_PACKAGE_NAME, APP_REQUEST_ROLE_ACTIVITY_NAME))
-                .putExtra(APP_REQUEST_ROLE_EXTRA_ROLE_NAME, roleName);
+                .putExtra(Intent.EXTRA_ROLE_NAME, roleName);
         mActivityRule.getActivity().startActivityToWaitForResult(intent);
     }
 
@@ -158,12 +175,13 @@ public class RoleManagerTest {
         UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
         if (button == null) {
             dumpWindowHierarchy();
-            throw new AssertionError("Cannot find button to click");
+            fail("Cannot find button to click");
         }
         button.click();
         Pair<Integer, Intent> result = mActivityRule.getActivity().waitForActivityResult(
                 TIMEOUT_MILLIS);
         int expectedResult = expectResultOk ? Activity.RESULT_OK : Activity.RESULT_CANCELED;
+
         assertThat(result.first).isEqualTo(expectedResult);
     }
 
@@ -187,9 +205,225 @@ public class RoleManagerTest {
         }
     }
 
+    @Test
+    public void roleIsAvailable() {
+        assertThat(sRoleManager.isRoleAvailable(ROLE_NAME)).isTrue();
+    }
+
+    @Test
+    public void dontAddRoleHolderThenRoleIsNotHeld() throws Exception {
+        assertRoleIsHeld(ROLE_NAME, false);
+    }
+
+    @Test
+    public void addRoleHolderThenRoleIsHeld() throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        assertRoleIsHeld(ROLE_NAME, true);
+    }
+
+    @Test
+    public void addAndRemoveRoleHolderThenRoleIsNotHeld() throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+        removeRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        assertRoleIsHeld(ROLE_NAME, false);
+    }
+
+    private void assertRoleIsHeld(@NonNull String roleName, boolean isHeld)
+            throws InterruptedException {
+        Intent intent = new Intent()
+                .setComponent(new ComponentName(APP_PACKAGE_NAME, APP_IS_ROLE_HELD_ACTIVITY_NAME))
+                .putExtra(Intent.EXTRA_ROLE_NAME, roleName);
+        WaitForResultActivity activity = mActivityRule.getActivity();
+        activity.startActivityToWaitForResult(intent);
+        Pair<Integer, Intent> result = activity.waitForActivityResult(TIMEOUT_MILLIS);
+
+        assertThat(result.first).isEqualTo(Activity.RESULT_OK);
+        assertThat(result.second).isNotNull();
+        assertThat(result.second.hasExtra(APP_IS_ROLE_HELD_EXTRA_IS_ROLE_HELD)).isTrue();
+        assertThat(result.second.getBooleanExtra(APP_IS_ROLE_HELD_EXTRA_IS_ROLE_HELD, false))
+                .isEqualTo(isHeld);
+    }
+
+    @Test
+    public void dontAddRoleHolderThenIsNotRoleHolder() throws Exception {
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
+    }
+
+    @Test
+    public void addRoleHolderThenIsRoleHolder() throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
+    }
+
+    @Test
+    public void addAndRemoveRoleHolderThenIsNotRoleHolder() throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+        removeRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
+    }
+
+    @Test
+    public void addAndClearRoleHoldersThenIsNotRoleHolder() throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+        clearRoleHolders(ROLE_NAME);
+
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
+    }
+
+    @Test
+    public void addOnRoleHoldersChangedListenerAndAddRoleHolderThenIsNotified() throws Exception {
+        assertOnRoleHoldersChangedListenerIsNotified(() -> addRoleHolder(ROLE_NAME,
+                APP_PACKAGE_NAME));
+    }
+
+    @Test
+    public void addOnRoleHoldersChangedListenerAndRemoveRoleHolderThenIsNotified()
+            throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        assertOnRoleHoldersChangedListenerIsNotified(() -> removeRoleHolder(ROLE_NAME,
+                APP_PACKAGE_NAME));
+    }
+
+    @Test
+    public void addOnRoleHoldersChangedListenerAndClearRoleHoldersThenIsNotified()
+            throws Exception {
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        assertOnRoleHoldersChangedListenerIsNotified(() -> clearRoleHolders(ROLE_NAME));
+    }
+
+    private void assertOnRoleHoldersChangedListenerIsNotified(@NonNull ThrowingRunnable runnable)
+            throws Exception {
+        ListenerFuture future = new ListenerFuture();
+        UserHandle user = Process.myUserHandle();
+        runWithShellPermissionIdentity(() -> sRoleManager.addOnRoleHoldersChangedListenerAsUser(
+                sContext.getMainExecutor(), future, user));
+        Pair<String, UserHandle> result;
+        try {
+            runnable.run();
+            result = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } finally {
+            runWithShellPermissionIdentity(() ->
+                    sRoleManager.removeOnRoleHoldersChangedListenerAsUser(future, user));
+        }
+
+        assertThat(result.first).isEqualTo(ROLE_NAME);
+        assertThat(result.second).isEqualTo(user);
+    }
+
+    @Test
+    public void addAndRemoveOnRoleHoldersChangedListenerAndAddRoleHolderThenIsNotNotified()
+            throws Exception {
+        ListenerFuture future = new ListenerFuture();
+        UserHandle user = Process.myUserHandle();
+        runWithShellPermissionIdentity(() -> {
+            sRoleManager.addOnRoleHoldersChangedListenerAsUser(sContext.getMainExecutor(), future,
+                    user);
+            sRoleManager.removeOnRoleHoldersChangedListenerAsUser(future, user);
+        });
+        addRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
+
+        try {
+            future.get(UNEXPECTED_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            // Expected
+            return;
+        }
+        throw new AssertionError("OnRoleHoldersChangedListener was notified after removal");
+    }
+
+    @Test
+    public void setRoleNamesFromControllerShouldRequireManageRolesFromControllerPermission() {
+        assertRequiresManageRolesFromControllerPermission(
+                () -> sRoleManager.setRoleNamesFromController(Collections.emptyList()),
+                "setRoleNamesFromController");
+    }
+
+    @Test
+    public void addRoleHolderFromControllerShouldRequireManageRolesFromControllerPermission() {
+        assertRequiresManageRolesFromControllerPermission(
+                () -> sRoleManager.addRoleHolderFromController(ROLE_NAME, APP_PACKAGE_NAME),
+                "addRoleHolderFromController");
+    }
+
+    @Test
+    public void removeRoleHolderFromControllerShouldRequireManageRolesFromControllerPermission() {
+        assertRequiresManageRolesFromControllerPermission(
+                () -> sRoleManager.removeRoleHolderFromController(ROLE_NAME, APP_PACKAGE_NAME),
+                "removeRoleHolderFromController");
+    }
+
+    @Test
+    public void getHeldRolesFromControllerShouldRequireManageRolesFromControllerPermission() {
+        assertRequiresManageRolesFromControllerPermission(
+                () -> sRoleManager.getHeldRolesFromController(APP_PACKAGE_NAME),
+                "getHeldRolesFromController");
+    }
+
+    private void assertRequiresManageRolesFromControllerPermission(@NonNull Runnable runnable,
+            @NonNull String methodName) {
+        try {
+            runnable.run();
+        } catch (SecurityException e) {
+            if (e.getMessage().contains(PERMISSION_MANAGE_ROLES_FROM_CONTROLLER)) {
+                // Expected
+                return;
+            }
+            throw e;
+        }
+        fail("RoleManager." + methodName + "() should require "
+                + PERMISSION_MANAGE_ROLES_FROM_CONTROLLER);
+    }
+
+    @Test
+    public void manageRoleFromsFromControllerPermissionShouldBeDeclaredByPermissionController()
+            throws PackageManager.NameNotFoundException {
+        PermissionInfo permissionInfo = sPackageManager.getPermissionInfo(
+                PERMISSION_MANAGE_ROLES_FROM_CONTROLLER, 0);
+
+        assertThat(permissionInfo.packageName).isEqualTo(
+                sPackageManager.getPermissionControllerPackageName());
+        assertThat(permissionInfo.getProtection()).isEqualTo(PermissionInfo.PROTECTION_SIGNATURE);
+        assertThat(permissionInfo.getProtectionFlags()).isEqualTo(0);
+    }
+
+    @Test
+    public void removeSmsRoleHolderThenDialerRoleAppOpIsNotDenied() throws Exception {
+        if (!(sRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)
+                && sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS))) {
+            return;
+        }
+
+        addRoleHolder(RoleManager.ROLE_DIALER, APP_PACKAGE_NAME);
+        addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
+        removeRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
+
+        assertThat(AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS))
+                .isEqualTo(AppOpsManager.MODE_ALLOWED);
+    }
+
+    @Test
+    public void smsRoleHasHolder() throws Exception {
+        if (!sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS)) {
+            return;
+        }
+
+        assertThat(getRoleHolders(RoleManager.ROLE_SMS)).isNotEmpty();
+    }
+
+    private List<String> getRoleHolders(@NonNull String roleName) throws Exception {
+        return callWithShellPermissionIdentity(() -> sRoleManager.getRoleHolders(roleName));
+    }
+
     private void assertIsRoleHolder(@NonNull String roleName, @NonNull String packageName,
             boolean shouldBeRoleHolder) throws Exception {
         List<String> packageNames = getRoleHolders(roleName);
+
         if (shouldBeRoleHolder) {
             assertThat(packageNames).contains(packageName);
         } else {
@@ -197,53 +431,49 @@ public class RoleManagerTest {
         }
      }
 
-    private List<String> getRoleHolders(@NonNull String roleName) throws Exception {
-        return callWithShellPermissionIdentity(() -> sRoleManager.getRoleHolders(roleName));
-    }
-
     private void addRoleHolder(@NonNull String roleName, @NonNull String packageName)
             throws Exception {
-        UserHandle user = Process.myUserHandle();
-        Executor executor = sContext.getMainExecutor();
-        boolean[] successful = new boolean[1];
-        CountDownLatch latch = new CountDownLatch(1);
+        CallbackFuture future = new CallbackFuture();
         runWithShellPermissionIdentity(() -> sRoleManager.addRoleHolderAsUser(roleName,
-                packageName, 0, user, executor, new RoleManagerCallback() {
-                    @Override
-                    public void onSuccess() {
-                        successful[0] = true;
-                        latch.countDown();
-                    }
-                    @Override
-                    public void onFailure() {
-                        successful[0] = false;
-                        latch.countDown();
-                    }
-                }));
-        latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        assertThat(successful[0]).isTrue();
+                packageName, 0, Process.myUserHandle(), sContext.getMainExecutor(), future));
+        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private void removeRoleHolder(@NonNull String roleName, @NonNull String packageName)
             throws Exception {
-        UserHandle user = Process.myUserHandle();
-        Executor executor = sContext.getMainExecutor();
-        boolean[] successful = new boolean[1];
-        CountDownLatch latch = new CountDownLatch(1);
+        CallbackFuture future = new CallbackFuture();
         runWithShellPermissionIdentity(() -> sRoleManager.removeRoleHolderAsUser(roleName,
-                packageName, 0, user, executor, new RoleManagerCallback() {
-                    @Override
-                    public void onSuccess() {
-                        successful[0] = true;
-                        latch.countDown();
-                    }
-                    @Override
-                    public void onFailure() {
-                        successful[0] = false;
-                        latch.countDown();
-                    }
-                }));
-        latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        assertThat(successful[0]).isTrue();
+                packageName, 0, Process.myUserHandle(), sContext.getMainExecutor(), future));
+        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    private void clearRoleHolders(@NonNull String roleName) throws Exception {
+        CallbackFuture future = new CallbackFuture();
+        runWithShellPermissionIdentity(() -> sRoleManager.clearRoleHoldersAsUser(roleName, 0,
+                Process.myUserHandle(), sContext.getMainExecutor(), future));
+        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    private static class ListenerFuture extends CompletableFuture<Pair<String, UserHandle>>
+            implements OnRoleHoldersChangedListener {
+
+        @Override
+        public void onRoleHoldersChanged(@NonNull String roleName, @NonNull UserHandle user) {
+            complete(new Pair<>(roleName, user));
+        }
+    }
+
+    private static class CallbackFuture extends CompletableFuture<Void>
+            implements RoleManagerCallback {
+
+        @Override
+        public void onSuccess() {
+            complete(null);
+        }
+
+        @Override
+        public void onFailure() {
+            completeExceptionally(new RuntimeException());
+        }
     }
 }

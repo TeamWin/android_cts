@@ -20,6 +20,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.util.Pair;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -34,11 +37,12 @@ public class WaitForResultActivity extends Activity {
     private int mResultCode;
     private Intent mData;
 
-    public void startActivityToWaitForResult(Intent intent) {
+    public void startActivityToWaitForResult(@NonNull Intent intent) {
         mLatch = new CountDownLatch(1);
         startActivityForResult(intent, REQUEST_CODE_WAIT_FOR_RESULT);
     }
 
+    @NonNull
     public Pair<Integer, Intent> waitForActivityResult(long timeoutMillis)
             throws InterruptedException {
         mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
@@ -46,7 +50,7 @@ public class WaitForResultActivity extends Activity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == REQUEST_CODE_WAIT_FOR_RESULT) {
             mResultCode = resultCode;
             mData = data;
