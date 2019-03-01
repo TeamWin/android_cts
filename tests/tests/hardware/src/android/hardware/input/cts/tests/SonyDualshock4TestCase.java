@@ -36,4 +36,9 @@ public class SonyDualshock4TestCase extends InputTestCase {
     public void testAllKeys() {
         testInputEvents(R.raw.sony_dualshock4_keyeventtests);
     }
+
+    @Test
+    public void testAllMotions() {
+        testInputEvents(R.raw.sony_dualshock4_motioneventtests);
+    }
 }
