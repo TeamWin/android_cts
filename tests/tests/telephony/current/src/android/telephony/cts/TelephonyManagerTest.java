@@ -16,6 +16,8 @@
 
 package android.telephony.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,9 +39,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
-import static com.google.common.truth.Truth.assertThat;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -52,19 +51,21 @@ import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.emergency.EmergencyNumber;
 import android.telephony.UiccCardInfo;
 import android.telephony.cts.locationaccessingapp.CtsLocationAccessService;
 import android.telephony.cts.locationaccessingapp.ICtsLocationAccessControl;
+import android.telephony.emergency.EmergencyNumber;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
