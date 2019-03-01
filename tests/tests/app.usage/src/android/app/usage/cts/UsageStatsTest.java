@@ -1096,10 +1096,15 @@ public class UsageStatsTest {
                 Activities.ActivityThree.class,
         };
         mUiDevice.wakeUp();
+        mUiDevice.pressHome();
 
         final long startTime = System.currentTimeMillis();
         // Launch the series of Activities.
         launchSubActivities(activitySequence);
+
+        mUiDevice.pressHome();
+        SystemClock.sleep(250);
+
         final long endTime = System.currentTimeMillis();
         final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
 
