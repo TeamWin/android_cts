@@ -490,7 +490,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         grantPermissions(new String[] {
                 Manifest.permission.WRITE_CALENDAR,
                 Manifest.permission.WRITE_CONTACTS,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_SMS,
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.RECORD_AUDIO,
@@ -584,7 +585,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 null,
                 Manifest.permission.WRITE_CONTACTS,
                 null,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                Manifest.permission.RECORD_AUDIO
         };
 
         // Request the permission and allow it
@@ -608,7 +609,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
                 .checkSelfPermission(Manifest.permission.WRITE_CONTACTS));
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
+                .checkSelfPermission(Manifest.permission.RECORD_AUDIO));
     }
 
     @Test
@@ -641,8 +642,9 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.READ_CALENDAR,
                 Manifest.permission.WRITE_CALENDAR,
                 Manifest.permission.WRITE_CONTACTS,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_AUDIO,
                 Manifest.permission.READ_SMS,
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.READ_CALL_LOG,
