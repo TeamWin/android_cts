@@ -18,6 +18,7 @@ package android.provider.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -103,6 +104,11 @@ public class MediaStoreTest {
     public void testGetVersion() {
         // Could be a version string or null...just check it doesn't blow up.
         MediaStore.getVersion(getContext());
+
+        // Each volume should have a unique version to help detect data wipes
+        final String internal = MediaStore.getVersion(getContext(), MediaStore.VOLUME_INTERNAL);
+        final String external = MediaStore.getVersion(getContext(), MediaStore.VOLUME_EXTERNAL);
+        assertNotEquals(external, internal);
     }
 
     @Test
