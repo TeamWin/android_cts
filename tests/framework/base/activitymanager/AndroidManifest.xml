@@ -113,6 +113,14 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ShowWhenLockedCallbackTrackingActivity" />
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondProcessCallbackTrackingActivity"
+                  android:process=":SecondProcess"
+                  android:exported="true"/>
+
+        <provider android:name="android.server.am.lifecycle.LifecycleLog"
+                  android:authorities="android.server.am.lifecycle.logprovider"
+                  android:exported="true" />
+
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$LaunchForResultActivity"/>
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>
@@ -133,6 +141,8 @@
                   android:supportsPictureInPicture="true"
                   androidprv:alwaysFocusable="true"
                   android:exported="true"/>
+
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SlowActivity"/>
 
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 

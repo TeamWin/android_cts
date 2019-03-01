@@ -33,12 +33,13 @@ import java.util.function.BooleanSupplier;
  * Gets notified about activity lifecycle updates and provides blocking mechanism to wait until
  * expected activity states are reached.
  */
-public class LifecycleTracker implements ActivityLifecycleCallback {
+public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
 
     private LifecycleLog mLifecycleLog;
 
     LifecycleTracker(LifecycleLog lifecycleLog) {
         mLifecycleLog = lifecycleLog;
+        mLifecycleLog.setLifecycleTracker(this);
     }
 
     void waitAndAssertActivityStates(
@@ -65,7 +66,7 @@ public class LifecycleTracker implements ActivityLifecycleCallback {
     }
 
     @Override
-    synchronized public void onActivityLifecycleChanged(Activity activity, Stage stage) {
+    synchronized public void onActivityLifecycleChanged() {
         notify();
     }
 

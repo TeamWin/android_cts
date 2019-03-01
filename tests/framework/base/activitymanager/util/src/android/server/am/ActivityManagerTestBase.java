@@ -477,6 +477,13 @@ public abstract class ActivityManagerTestBase {
         injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
     }
 
+    protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
+        final Rect sideStackBounds = stack.getBounds();
+        final int tapX = sideStackBounds.left + sideStackBounds.width() / 2;
+        final int tapY = sideStackBounds.top + sideStackBounds.height() / 2;
+        tapOnDisplay(tapX, tapY, stack.mDisplayId);
+    }
+
     private static void injectMotion(long downTime, long eventTime, int action,
             int x, int y, int displayId) {
         final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
