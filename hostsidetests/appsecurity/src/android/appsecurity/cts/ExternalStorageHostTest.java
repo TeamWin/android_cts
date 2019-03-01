@@ -104,6 +104,22 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         wipePrimaryExternalStorage();
     }
 
+    @Test
+    public void testExternalStorageRename() throws Exception {
+        try {
+            wipePrimaryExternalStorage();
+
+            getDevice().uninstallPackage(PKG_A);
+            installPackage(APK_A);
+
+            for (int user : mUsers) {
+                runDeviceTests(PKG_A, CLASS, "testExternalStorageRename", user);
+            }
+        } finally {
+            getDevice().uninstallPackage(PKG_A);
+        }
+    }
+
     /**
      * Verify that app with no external storage permissions works correctly.
      */
