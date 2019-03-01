@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
@@ -76,6 +77,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
@@ -1273,6 +1275,14 @@ public class TelephonyManagerTest {
         assertThat(raf).isNotEqualTo(TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN);
     }
 
+    private static void assertSetOpportunisticSubSuccess(int value) {
+        assertThat(value).isEqualTo(TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS);
+    }
+
+    private static void assertSetOpportunisticInvalidParameter(int value) {
+        assertThat(value).isEqualTo(TelephonyManager.SET_OPPORTUNISTIC_SUB_INVALID_PARAMETER);
+    }
+
     /**
      * Tests {@link TelephonyManager#setPreferredOpportunisticDataSubscription} and
      * {@link TelephonyManager#getPreferredOpportunisticDataSubscription}
@@ -1283,6 +1293,12 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+            (tm) -> tm.setPreferredOpportunisticDataSubscription(
+                SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, false,
+                null, null));
+        // wait for the data change to take effect
+        waitForMs(500);
         int subId =
             ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getPreferredOpportunisticDataSubscription());
@@ -1290,28 +1306,37 @@ public class TelephonyManagerTest {
         List<SubscriptionInfo> subscriptionInfoList =
                     ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
                             (tm) -> tm.getOpportunisticSubscriptions());
+        Consumer<Integer> callbackSuccess = TelephonyManagerTest::assertSetOpportunisticSubSuccess;
+        Consumer<Integer> callbackFailure =
+                TelephonyManagerTest::assertSetOpportunisticInvalidParameter;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0) {
-            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.setPreferredOpportunisticDataSubscription(randomSubId));
-            assertThat(res).isEqualTo(false);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setPreferredOpportunisticDataSubscription(randomSubId, false,
+                            AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+            // wait for the data change to take effect
+            waitForMs(500);
             subId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.getPreferredOpportunisticDataSubscription());
             assertThat(subId).isEqualTo(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
 
         } else {
-            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.setPreferredOpportunisticDataSubscription(
-                            subscriptionInfoList.get(0).getSubscriptionId()));
-            assertThat(res).isEqualTo(true);
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                            subscriptionInfoList.get(0).getSubscriptionId(), false,
+                            AsyncTask.SERIAL_EXECUTOR, callbackSuccess));
+            // wait for the data change to take effect
+            waitForMs(500);
+            subId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getPreferredOpportunisticDataSubscription());
             assertThat(subId).isEqualTo(subscriptionInfoList.get(0).getSubscriptionId());
         }
 
-        boolean result = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.setPreferredOpportunisticDataSubscription(
-                        SubscriptionManager.DEFAULT_SUBSCRIPTION_ID));
-        assertThat(result).isEqualTo(true);
+                        SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, false,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess));
+        // wait for the data change to take effect
+        waitForMs(500);
         subId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
             (tm) -> tm.getPreferredOpportunisticDataSubscription());
         assertThat(subId).isEqualTo(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
