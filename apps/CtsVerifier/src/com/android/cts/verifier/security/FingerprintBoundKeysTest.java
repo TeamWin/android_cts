@@ -123,6 +123,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         if (tryEncrypt()) {
             showToast("Test failed. Key accessible without auth.");
         } else {
+            prepareEncrypt();
             showAuthenticationScreen();
         }
     }
@@ -195,13 +196,13 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
 
     private boolean encryptInternal(boolean doEncrypt) {
         try {
-            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null);
-            SecretKey secretKey = (SecretKey) keyStore.getKey(KEY_NAME, null);
-            if (DEBUG) {
-                Log.i(TAG, "encryptInternal: [1]: key retrieved");
-            }
             if (!doEncrypt) {
+                KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+                keyStore.load(null);
+                SecretKey secretKey = (SecretKey) keyStore.getKey(KEY_NAME, null);
+                if (DEBUG) {
+                    Log.i(TAG, "encryptInternal: [1]: key retrieved");
+                }
                 if (mCipher == null) {
                     mCipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
                             + KeyProperties.BLOCK_MODE_CBC + "/"
@@ -223,7 +224,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
             // All we want it to see the event in the log;
             // Extra exception info is not valuable
             if (DEBUG) {
-                Log.i(TAG, "encryptInternal: [4]: Encryption failed");
+                Log.w(TAG, "encryptInternal: [4]: Encryption failed", e);
             }
             return false;
         } catch (KeyPermanentlyInvalidatedException e) {
@@ -236,8 +237,9 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         } catch (UserNotAuthenticatedException e) {
             Log.w(TAG, "encryptInternal: [6]: User not authenticated", e);
             return false;
-        } catch (NoSuchPaddingException | KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
-                | NoSuchAlgorithmException | InvalidKeyException e) {
+        } catch (NoSuchPaddingException | KeyStoreException | CertificateException
+                 | UnrecoverableKeyException | IOException
+                 | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException("Failed to init Cipher", e);
         }
     }
@@ -292,7 +294,8 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                 }
                 hasStrongBox = getContext().getPackageManager()
                                     .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
-                if (mActivity.tryEncrypt() && mActivity.doValidityDurationTest(false)) {
+                if (mActivity.tryEncrypt() &&
+                    mActivity.doValidityDurationTest(false)) {
                     try {
                         Thread.sleep(3000);
                     } catch (Exception e) {
