@@ -18,7 +18,7 @@ android_test {
     srcs: ["src/**/*.kt", "src/**/*.java"],
 
     static_libs: [
-        "compatibility-device-util",
+        "compatibility-device-util-axt",
     ],
 
     test_suites: [

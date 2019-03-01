@@ -172,7 +172,7 @@
             android:value="android.telephony.mbms.cts"/>
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.telephony.cts"
                      android:label="CTS tests of android.telephony">
         <meta-data android:name="listener"
