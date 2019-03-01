@@ -1820,24 +1820,29 @@ public class ViewTest {
     @Test
     public void testMeasure() throws Throwable {
         final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+
+        float density = view.getContext().getResources().getDisplayMetrics().density;
+        int size1 = (int) (100 * density + 0.5);
+        int size2 = (int) (75 * density + 0.5);
+
         assertTrue(view.hasCalledOnMeasure());
-        assertEquals(100, view.getMeasuredWidth());
-        assertEquals(200, view.getMeasuredHeight());
+        assertEquals(size1, view.getMeasuredWidth());
+        assertEquals(size2, view.getMeasuredHeight());
 
         view.reset();
         mActivityRule.runOnUiThread(view::requestLayout);
         mInstrumentation.waitForIdleSync();
         assertTrue(view.hasCalledOnMeasure());
-        assertEquals(100, view.getMeasuredWidth());
-        assertEquals(200, view.getMeasuredHeight());
+        assertEquals(size1, view.getMeasuredWidth());
+        assertEquals(size2, view.getMeasuredHeight());
 
         view.reset();
-        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(200, 100);
+        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(size2, size1);
         mActivityRule.runOnUiThread(() -> view.setLayoutParams(layoutParams));
         mInstrumentation.waitForIdleSync();
         assertTrue(view.hasCalledOnMeasure());
-        assertEquals(200, view.getMeasuredWidth());
-        assertEquals(100, view.getMeasuredHeight());
+        assertEquals(size2, view.getMeasuredWidth());
+        assertEquals(size1, view.getMeasuredHeight());
     }
 
     @Test(expected=NullPointerException.class)
@@ -2416,11 +2421,15 @@ public class ViewTest {
         final View view = mActivity.findViewById(R.id.mock_view);
         Rect rect = new Rect();
 
+        float density = view.getContext().getResources().getDisplayMetrics().density;
+        int size1 = (int) (100 * density + 0.5);
+        int size2 = (int) (75 * density + 0.5);
+
         assertTrue(view.getLocalVisibleRect(rect));
         assertEquals(0, rect.left);
         assertEquals(0, rect.top);
-        assertEquals(100, rect.right);
-        assertEquals(200, rect.bottom);
+        assertEquals(size1, rect.right);
+        assertEquals(size2, rect.bottom);
 
         final LinearLayout.LayoutParams layoutParams1 = new LinearLayout.LayoutParams(0, 300);
         mActivityRule.runOnUiThread(() -> view.setLayoutParams(layoutParams1));
