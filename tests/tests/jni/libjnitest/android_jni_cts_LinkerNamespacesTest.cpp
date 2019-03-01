@@ -34,6 +34,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <nativehelper/JNIHelp.h>
 #include <nativehelper/ScopedLocalRef.h>
@@ -172,8 +173,9 @@ static bool check_lib(JNIEnv* env,
                       const std::string& path,
                       const std::unordered_set<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& public_library_basenames,
-                      std::vector<std::string>* errors,
-                      bool test_system_load_library) {
+                      bool test_system_load_library,
+                      bool check_absence,
+                      /*out*/ std::vector<std::string>* errors) {
   std::string err = load_library(env, clazz, path, test_system_load_library);
   bool loaded = err.empty();
 
@@ -204,7 +206,7 @@ static bool check_lib(JNIEnv* env,
     // If the library loaded successfully but is in a subdirectory then it is
     // still not public. That is the case e.g. for
     // /apex/com.android.runtime/lib{,64}/bionic/lib*.so.
-    if (loaded && is_in_search_path) {
+    if (loaded && is_in_search_path && check_absence) {
       errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
       return false;
     }
@@ -232,9 +234,9 @@ static bool check_path(JNIEnv* env,
                        const std::string& library_path,
                        const std::unordered_set<std::string>& library_search_paths,
                        const std::unordered_set<std::string>& public_library_basenames,
-                       std::vector<std::string>* errors,
-                       bool test_system_load_library) {
-
+                       bool test_system_load_library,
+                       bool check_absence,
+                       /*out*/ std::vector<std::string>* errors) {
   bool success = true;
   std::queue<std::string> dirs;
   dirs.push(library_path);
@@ -265,23 +267,13 @@ static bool check_path(JNIEnv* env,
       if (is_directory(path.c_str())) {
         dirs.push(path);
       } else if (!check_lib(env, clazz, path, library_search_paths, public_library_basenames,
-                            errors, test_system_load_library)) {
+                            test_system_load_library, check_absence, errors)) {
         success = false;
       }
     }
   }
 
   return success;
-}
-
-static bool check_path(JNIEnv* env,
-                       jclass clazz,
-                       const std::string& library_path,
-                       const std::unordered_set<std::string>& library_search_paths,
-                       const std::unordered_set<std::string>& public_library_basenames,
-                       std::vector<std::string>* errors) {
-  return check_path(env, clazz, library_path, library_search_paths, public_library_basenames,
-                    errors, /*test_system_load_library=*/true);
 }
 
 static bool jobject_array_to_set(JNIEnv* env,
@@ -402,31 +394,38 @@ extern "C" JNIEXPORT jstring JNICALL
   system_library_search_paths.insert(kRuntimeApexLibraryPath);
 
   if (!check_path(env, clazz, kSystemLibraryPath, system_library_search_paths,
-                  system_public_libraries, &errors)) {
+                  system_public_libraries,
+                  /*test_system_load_library=*/false, /*check_absence=*/true, &errors)) {
     success = false;
   }
 
+  // Pre-Treble devices use ld.config.vndk_lite.txt, where the default namespace
+  // isn't isolated. That means it can successfully load libraries in /apex, so
+  // don't complain about that in that case.
+  bool check_absence = !android::base::GetBoolProperty("ro.vndk.lite", false);
+
   // Check the runtime libraries.
-  if (!check_path(env, clazz, kRuntimeApexLibraryPath,
-                  { kRuntimeApexLibraryPath },
-                  runtime_public_libraries, &errors,
+  if (!check_path(env, clazz, kRuntimeApexLibraryPath, {kRuntimeApexLibraryPath},
+                  runtime_public_libraries,
                   // System.loadLibrary("icuuc") would fail since a copy exists in /system.
-                  // TODO(b/124218500): Remove it when the bug is resolved.
-                   /*test_system_load_library=*/false)) {
+                  // TODO(b/124218500): Change to true when the bug is resolved.
+                  /*test_system_load_library=*/false,
+                  check_absence, &errors)) {
     success = false;
   }
 
   // Check the product libraries, if /product/lib exists.
   if (is_directory(kProductLibraryPath.c_str())) {
-    if (!check_path(env, clazz, kProductLibraryPath, { kProductLibraryPath },
-                    product_public_libraries, &errors)) {
+    if (!check_path(env, clazz, kProductLibraryPath, {kProductLibraryPath},
+                    product_public_libraries,
+                    /*test_system_load_library=*/false, /*check_absence=*/true, &errors)) {
       success = false;
     }
   }
 
   // Check the vendor libraries.
-  if (!check_path(env, clazz, kVendorLibraryPath, { kVendorLibraryPath },
-                  vendor_public_libraries, &errors)) {
+  if (!check_path(env, clazz, kVendorLibraryPath, {kVendorLibraryPath}, vendor_public_libraries,
+                  /*test_system_load_library=*/false, /*check_absence=*/true, &errors)) {
     success = false;
   }
 
