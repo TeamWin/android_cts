@@ -46,7 +46,7 @@
     </application>
 
     <!-- This is a self-instrumenting test package. -->
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.preference2.cts"
                      android:label="CTS Test Cases for android.preference2">
         <meta-data android:name="listener"

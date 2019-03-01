@@ -28,10 +28,11 @@ import android.autofillservice.cts.common.SettingsStateKeeperRule;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SafeCleanerRule;

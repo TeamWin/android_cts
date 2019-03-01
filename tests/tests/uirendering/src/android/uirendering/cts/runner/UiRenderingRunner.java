@@ -16,7 +16,7 @@
 
 package android.uirendering.cts.runner;
 
-import android.support.test.runner.AndroidJUnitRunner;
+import androidx.test.runner.AndroidJUnitRunner;
 
 /**
  * TODO: Do some cool stuff we also want like sharing DrawActivity cross-class.

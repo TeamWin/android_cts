@@ -41,7 +41,6 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.provider.cts.GetResultActivity.Result;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -52,6 +51,9 @@ import android.test.InstrumentationTestCase;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+
+import androidx.core.content.FileProvider;
+import androidx.test.InstrumentationRegistry;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -64,8 +66,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import androidx.core.content.FileProvider;
 
 public class MediaStoreUiTest extends InstrumentationTestCase {
     private static final String TAG = "MediaStoreUiTest";

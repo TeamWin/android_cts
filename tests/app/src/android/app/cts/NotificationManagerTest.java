@@ -51,9 +51,10 @@ import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import junit.framework.Assert;
 

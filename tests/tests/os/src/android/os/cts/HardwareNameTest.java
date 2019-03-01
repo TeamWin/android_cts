@@ -19,6 +19,7 @@ package android.os.cts;
 import android.test.AndroidTestCase;
 import android.os.cts.HardwareName;
 
+
 public class HardwareNameTest extends AndroidTestCase {
 
     @Override

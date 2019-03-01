@@ -21,11 +21,12 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -35,7 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Certain KeyEvents should never be delivered to apps. These keys are:

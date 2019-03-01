@@ -22,9 +22,10 @@ import android.content.Context;
 import android.media.SessionToken2;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Ignore;

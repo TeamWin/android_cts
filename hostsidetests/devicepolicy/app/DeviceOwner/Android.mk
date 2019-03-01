@@ -37,9 +37,9 @@ LOCAL_JAVA_LIBRARIES := \
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util \
-    android-support-test \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
+    androidx.test.rules \
     cts-security-test-support-library \
     testng
 

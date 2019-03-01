@@ -34,7 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
                                cts-location-tests \
-                               ctstestrunner \
+                               ctstestrunner-axt \
                                apache-commons-math \
                                androidplot \
                                ctsverifier-opencv \
@@ -42,7 +42,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                androidx.legacy_legacy-support-v4  \
                                mockito-target-minus-junit4 \
                                mockwebserver \
-                               compatibility-device-util \
+                               compatibility-device-util-axt \
                                platform-test-annotations \
                                cts-security-test-support-library
 
@@ -89,7 +89,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 \
                                compatibility-common-util-devicesidelib \
-                               compatibility-device-util
+                               compatibility-device-util-axt
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 

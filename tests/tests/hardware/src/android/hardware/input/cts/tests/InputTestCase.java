@@ -22,13 +22,13 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.hardware.input.cts.InputCallback;
 import android.hardware.input.cts.InputCtsActivity;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.cts.input.HidDevice;
 import com.android.cts.input.HidJsonParser;
@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 
 public abstract class InputTestCase {
     private static final float TOLERANCE = 0.005f;

@@ -41,8 +41,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -73,14 +71,6 @@ import android.os.LocaleList;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -150,6 +140,15 @@ import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.cts.util.TestUtils;
 
+import androidx.annotation.IntDef;
+import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -161,6 +160,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.xmlpull.v1.XmlPullParserException;
+
+import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import java.io.IOException;
 import java.lang.annotation.Retention;

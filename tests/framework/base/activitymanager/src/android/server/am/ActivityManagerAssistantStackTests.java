@@ -55,7 +55,7 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
-import android.support.test.filters.FlakyTest;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Ignore;
 import org.junit.Test;

@@ -15,14 +15,6 @@
  */
 package android.graphics.cts;
 
-import android.graphics.Color;
-import android.graphics.ColorSpace;
-import android.graphics.ColorSpace.Named;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import static android.graphics.Color.alpha;
 import static android.graphics.Color.blue;
 import static android.graphics.Color.colorSpace;
@@ -33,12 +25,23 @@ import static android.graphics.Color.pack;
 import static android.graphics.Color.red;
 import static android.graphics.Color.toArgb;
 import static android.graphics.Color.valueOf;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+
+import android.graphics.Color;
+import android.graphics.ColorSpace;
+import android.graphics.ColorSpace.Named;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
