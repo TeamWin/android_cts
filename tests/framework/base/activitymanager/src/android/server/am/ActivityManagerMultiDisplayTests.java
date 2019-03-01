@@ -100,7 +100,6 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -113,7 +112,7 @@ import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowState;
 import android.text.TextUtils;
 import android.util.SparseArray;
-import android.view.Display;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -2450,12 +2449,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .setShowSystemDecorations(false).createDisplay();
             // Verify the virtual display should not support system decoration.
-            final DisplayManager displayManager =
-                    mTargetContext.getSystemService(DisplayManager.class);
-            final Display display = displayManager.getDisplay(newDisplay.mId);
-            final boolean supportSystemDecoration =
-                    display != null && display.supportsSystemDecorations();
-            assertFalse("Display should not support system decoration", supportSystemDecoration);
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> assertFalse("Display should not support system decoration",
+                            mTargetContext.getSystemService(WindowManager.class)
+                                    .shouldShowSystemDecors(newDisplay.mId)));
 
             // Launch Ime test activity in virtual display.
             imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
