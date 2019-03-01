@@ -2340,4 +2340,13 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
         testReuse(src, "animated.gif");
     }
+
+    @Test
+    public void testIsMimeTypeSupported() {
+        for (Record record : RECORDS) {
+            assertTrue(record.mimeType, ImageDecoder.isMimeTypeSupported(record.mimeType));
+        }
+
+        assertFalse(ImageDecoder.isMimeTypeSupported("image/x-does-not-exist"));
+    }
 }
