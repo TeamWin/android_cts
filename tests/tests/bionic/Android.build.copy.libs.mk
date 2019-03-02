@@ -43,6 +43,8 @@ my_bionic_testlib_files := \
   libdlext_test_runpath_zip/libdlext_test_runpath_zip_zipaligned.zip \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
+  libsegment_gap_inner.so \
+  libsegment_gap_outer.so \
   libsysv-hash-table-library.so \
   libtest_atexit.so \
   libtest_check_order_dlsym.so \
