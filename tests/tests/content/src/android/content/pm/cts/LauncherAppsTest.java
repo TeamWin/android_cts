@@ -37,12 +37,14 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+@Ignore("Can be enabled only after b/126946674 is fixed")
 @RunWith(AndroidJUnit4.class)
 public class LauncherAppsTest {
 
