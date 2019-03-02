@@ -34,6 +34,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
@@ -57,6 +58,7 @@ import java.util.List;
  * </ul>
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot read state of other packages.")
 public class SplitPermissionTest {
     /** The package name of all apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";

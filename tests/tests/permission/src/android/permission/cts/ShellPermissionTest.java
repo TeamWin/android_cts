@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -55,6 +56,8 @@ public class ShellPermissionTest {
      *   {@link #BLACKLISTED_PERMISSIONS}.
      */
     @Test
+    @AppModeFull(reason = "Instant apps cannot read properties of other packages. Also the shell "
+            + "is never an instant app, hence this test does not matter for instant apps.")
     public void testBlacklistedPermissions() throws Exception {
         final Set<String> blacklist = new HashSet<>(Arrays.asList(BLACKLISTED_PERMISSIONS));
 

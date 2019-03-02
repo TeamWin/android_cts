@@ -32,6 +32,7 @@ import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.permission.PermissionControllerManager;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Test {@link PermissionControllerManager}
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot talk to permission controller")
 public class PermissionControllerTest {
     private static final String APP = "android.permission.cts.appthataccesseslocation";
 
