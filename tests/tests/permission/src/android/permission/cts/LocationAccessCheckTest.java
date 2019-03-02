@@ -51,6 +51,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Privacy;
 import android.provider.Settings;
@@ -84,6 +85,8 @@ import java.util.concurrent.CountDownLatch;
  * Tests the {@code LocationAccessCheck} in permission controller.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a location "
+        + "access check notification for instant apps.")
 public class LocationAccessCheckTest {
     private static final String LOG_TAG = LocationAccessCheckTest.class.getSimpleName();
 

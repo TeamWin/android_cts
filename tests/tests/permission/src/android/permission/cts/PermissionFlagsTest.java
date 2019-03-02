@@ -37,6 +37,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
+
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -47,6 +49,7 @@ import org.junit.runner.RunWith;
  * Tests how permission flags behave.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Cannot read permission flags of other app.")
 public class PermissionFlagsTest {
     /** The package name of all apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";
