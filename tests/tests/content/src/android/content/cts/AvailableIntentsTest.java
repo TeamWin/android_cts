@@ -267,14 +267,25 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
-    public void testAlarmClockSetTimer() {
-        Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
-        intent.putExtra(AlarmClock.EXTRA_LENGTH, 60000);
+    public void testAlarmClockShowAlarms() {
+        Intent intent = new Intent(AlarmClock.ACTION_SHOW_ALARMS);
         assertCanBeHandled(intent);
     }
 
-    public void testAlarmClockShowAlarms() {
-        Intent intent = new Intent(AlarmClock.ACTION_SHOW_ALARMS);
+    public void testAlarmClockDismissAlarm() {
+        Intent intent = new Intent(AlarmClock.ACTION_DISMISS_ALARM);
+        assertCanBeHandled(intent);
+    }
+
+    public void testAlarmClockSnoozeAlarm() {
+        Intent intent = new Intent(AlarmClock.ACTION_SNOOZE_ALARM);
+        intent.putExtra(AlarmClock.EXTRA_ALARM_SNOOZE_DURATION, 10);
+        assertCanBeHandled(intent);
+    }
+
+    public void testAlarmClockSetTimer() {
+        Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
+        intent.putExtra(AlarmClock.EXTRA_LENGTH, 60000);
         assertCanBeHandled(intent);
     }
 
