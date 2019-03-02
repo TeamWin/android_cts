@@ -31,7 +31,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
-import android.net.Uri;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
@@ -115,7 +114,7 @@ final class Assertions {
     public static void assertChildSessionContext(@NonNull Session session,
             @NonNull String expectedId) {
         assertChildSessionContext(session);
-        assertThat(session.context.getLocusId()).isEqualTo(new LocusId(Uri.parse(expectedId)));
+        assertThat(session.context.getLocusId()).isEqualTo(new LocusId(expectedId));
     }
 
     /**

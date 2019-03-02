@@ -33,6 +33,7 @@ import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+import static android.view.contentcapture.UserDataRemovalRequest.FLAG_IS_PREFIX;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -41,7 +42,6 @@ import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -71,6 +71,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<LoginActivity> {
 
     private static final String TAG = LoginActivityTest.class.getSimpleName();
+
+    private static final int NO_FLAGS = 0;
 
     private static final ActivityTestRule<LoginActivity> sActivityRule = new ActivityTestRule<>(
             LoginActivity.class, false, false);
@@ -512,15 +514,15 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
     }
 
     @Test
-    public void testUserDataRemovalRequest_oneUri() throws Exception {
+    public void testUserDataRemovalRequest_oneId() throws Exception {
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        final LocusId locusId = new LocusId(Uri.parse("com.example"));
+        final LocusId locusId = new LocusId("com.example");
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
                 .removeUserData(new UserDataRemovalRequest.Builder()
-                        .addLocusId(locusId, false)
+                        .addLocusId(locusId, NO_FLAGS)
                         .build()));
 
         final LoginActivity activity = launchActivity();
@@ -539,21 +541,21 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final LocusIdRequest actualRequest = requests.get(0);
         assertThat(actualRequest.getLocusId()).isEqualTo(locusId);
-        assertThat(actualRequest.isRecursive()).isFalse();
+        assertThat(actualRequest.getFlags()).isEqualTo(NO_FLAGS);
     }
 
     @Test
-    public void testUserDataRemovalRequest_manyUris() throws Exception {
+    public void testUserDataRemovalRequest_manyIds() throws Exception {
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
-        final LocusId locusId1 = new LocusId(Uri.parse("com.example"));
-        final LocusId locusId2 = new LocusId(Uri.parse("com.example2"));
+        final LocusId locusId1 = new LocusId("com.example");
+        final LocusId locusId2 = new LocusId("com.example2");
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
                 .removeUserData(new UserDataRemovalRequest.Builder()
-                        .addLocusId(locusId1, false)
-                        .addLocusId(locusId2, true)
+                        .addLocusId(locusId1, NO_FLAGS)
+                        .addLocusId(locusId2, FLAG_IS_PREFIX)
                         .build()));
 
         final LoginActivity activity = launchActivity();
@@ -572,11 +574,11 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         final LocusIdRequest actualRequest1 = requests.get(0);
         assertThat(actualRequest1.getLocusId()).isEqualTo(locusId1);
-        assertThat(actualRequest1.isRecursive()).isFalse();
+        assertThat(actualRequest1.getFlags()).isEqualTo(NO_FLAGS);
 
         final LocusIdRequest actualRequest2 = requests.get(1);
         assertThat(actualRequest2.getLocusId()).isEqualTo(locusId2);
-        assertThat(actualRequest2.isRecursive()).isTrue();
+        assertThat(actualRequest2.getFlags()).isEqualTo(FLAG_IS_PREFIX);
     }
 
     @Test
@@ -698,10 +700,10 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
      * {@link #assertContentCaptureContext(ContentCaptureContext)}.
      */
     private ContentCaptureContext newContentCaptureContext() {
-        final Uri uri = Uri.parse("file://dev/null");
+        final String id = "file://dev/null";
         final Bundle bundle = new Bundle();
         bundle.putString("DUDE", "SWEET");
-        return new ContentCaptureContext.Builder(new LocusId(uri)).setExtras(bundle).build();
+        return new ContentCaptureContext.Builder(new LocusId(id)).setExtras(bundle).build();
     }
 
     /**
@@ -709,8 +711,8 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
      */
     private void assertContentCaptureContext(@NonNull ContentCaptureContext context) {
         assertWithMessage("null context").that(context).isNotNull();
-        assertWithMessage("wrong URI on context %s", context).that(context.getLocusId().getUri())
-                .isEqualTo(Uri.parse("file://dev/null"));
+        assertWithMessage("wrong ID on context %s", context).that(context.getLocusId().getId())
+                .isEqualTo("file://dev/null");
         final Bundle extras = context.getExtras();
         assertWithMessage("no extras on context %s", context).that(extras).isNotNull();
         assertWithMessage("wrong number of extras on context %s", context).that(extras.size())
