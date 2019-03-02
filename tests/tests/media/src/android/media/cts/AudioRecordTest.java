@@ -37,6 +37,7 @@ import android.media.MicrophoneInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
@@ -839,6 +840,50 @@ public class AudioRecordTest {
                                          .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                                          .build())
                                  .build(); });
+        }
+    }
+
+    @Test
+    public void testMediaMetrics() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        AudioRecord record = null;
+        try {
+            final int RECORD_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+            final int RECORD_CHANNEL_MASK = AudioFormat.CHANNEL_IN_MONO;
+            final int RECORD_SAMPLE_RATE = 8000;
+            final AudioFormat format = new AudioFormat.Builder()
+                    .setSampleRate(RECORD_SAMPLE_RATE)
+                    .setChannelMask(RECORD_CHANNEL_MASK)
+                    .setEncoding(RECORD_ENCODING)
+                    .build();
+
+            // Setup a recorder
+            record = new AudioRecord.Builder()
+                .setAudioSource(MediaRecorder.AudioSource.MIC)
+                .setAudioFormat(format)
+                .build();
+
+            final PersistableBundle metrics = record.getMetrics();
+
+            assertNotNull("null metrics", metrics);
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.ENCODING,
+                    new String("AUDIO_FORMAT_PCM_16_BIT"));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.SOURCE,
+                    new String("AUDIO_SOURCE_MIC"));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.SAMPLERATE,
+                    new Integer(RECORD_SAMPLE_RATE));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.CHANNELS,
+                    new Integer(AudioFormat.channelCountFromInChannelMask(RECORD_CHANNEL_MASK)));
+
+            // deprecated, value ignored.
+            AudioHelper.assertMetricsKey(metrics, AudioRecord.MetricsConstants.LATENCY);
+        } finally {
+            if (record != null) {
+                record.release();
+            }
         }
     }
 
