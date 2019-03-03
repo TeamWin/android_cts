@@ -46,6 +46,8 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.provider.MediaStore.MediaColumns;
+import android.provider.cts.MediaStoreUtils.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -412,11 +414,11 @@ public class MediaStore_Images_ThumbnailsTest {
     @Test
     public void testInsertUpdateDelete() throws Exception {
         final String displayName = "cts" + System.nanoTime();
-        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+        final PendingParams params = new PendingParams(
                 mExternalImages, displayName, "image/png");
-        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         final Uri finalUri;
-        try (MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri)) {
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (OutputStream out = session.openOutputStream()) {
                 writeImage(mLargestDimension, mLargestDimension, Color.RED, out);
             }

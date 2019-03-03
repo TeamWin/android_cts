@@ -57,6 +57,18 @@ public class MultiUserTest extends BaseHostJUnit4Test {
      */
     private static final long WAIT_AFTER_USER_SWITCH = TimeUnit.SECONDS.toMillis(10);
 
+    private boolean mNeedsTearDown = false;
+
+    /**
+     * {@code true} if {@link #tearDown()} needs to be fully executed.
+     *
+     * <p>When {@link #setUp()} is interrupted by {@link org.junit.AssumptionViolatedException}
+     * before the actual setup tasks are executed, all the corresponding cleanup tasks should also
+     * be skipped.</p>
+     *
+     * <p>Once JUnit 5 becomes available in Android, we can remove this by moving the assumption
+     * checks into a non-static {@link org.junit.BeforeClass} method.</p>
+     */
     private ArrayList<Integer> mOriginalUsers;
 
     /**
@@ -67,6 +79,7 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         // Skip whole tests when DUT has no android.software.input_methods feature.
         assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
         assumeTrue(getDevice().isMultiUserSupported());
+        mNeedsTearDown = true;
 
         mOriginalUsers = new ArrayList<>(getDevice().listUsers());
         mOriginalUsers.forEach(
@@ -78,6 +91,10 @@ public class MultiUserTest extends BaseHostJUnit4Test {
      */
     @After
     public void tearDown() throws Exception {
+        if (!mNeedsTearDown) {
+            return;
+        }
+
         getDevice().switchUser(getDevice().getPrimaryUserId());
         // We suspect that the optimization made for Bug 38143512 was a bit unstable.  Let's see
         // if adding a sleep improves the stability or not.

@@ -26,6 +26,10 @@
             android:name=".RequestRoleActivity"
             android:exported="true" />
 
+        <activity
+            android:name=".IsRoleHeldActivity"
+            android:exported="true" />
+
         <!-- Dialer -->
         <activity android:name=".DialerDialActivity">
             <intent-filter>
@@ -71,5 +75,14 @@
                 <data android:mimeType="application/vnd.wap.mms-message" />
             </intent-filter>
         </receiver>
+
+        <!-- Music -->
+        <activity android:name=".MusicActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.APP_MUSIC" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

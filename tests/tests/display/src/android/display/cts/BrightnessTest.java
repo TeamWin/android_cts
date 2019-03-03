@@ -106,6 +106,7 @@ public class BrightnessTest {
 
             // Setup and remember some initial state.
             recordSliderEvents();
+            waitForFirstSliderEvent();
             setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 20);
             getNewEvents(1);
 
@@ -289,6 +290,7 @@ public class BrightnessTest {
 
             // Setup and remember some initial state.
             recordSliderEvents();
+            waitForFirstSliderEvent();
             setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 20);
             getNewEvents(1);
 
@@ -379,9 +381,24 @@ public class BrightnessTest {
     private void recordSliderEvents() {
         mLastReadEvents = new HashMap<>();
         List<BrightnessChangeEvent> eventsBefore = mDisplayManager.getBrightnessEvents();
-        for (BrightnessChangeEvent event: eventsBefore) {
+        for (BrightnessChangeEvent event : eventsBefore) {
             mLastReadEvents.put(event.timeStamp, event);
         }
+    }
+
+    private void waitForFirstSliderEvent() throws  InterruptedException {
+        // Keep changing brightness until we get an event to handle devices with sensors
+        // that take a while to warm up.
+        int brightness = 25;
+        for (int i = 0; i < 20; ++i) {
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, brightness);
+            brightness = brightness == 25 ? 80 : 25;
+            Thread.sleep(100);
+            if (!getNewEvents().isEmpty()) {
+                return;
+            }
+        }
+        fail("Failed to fetch first slider event. Is the ambient brightness sensor working?");
     }
 
     private int getSystemSetting(String setting) {

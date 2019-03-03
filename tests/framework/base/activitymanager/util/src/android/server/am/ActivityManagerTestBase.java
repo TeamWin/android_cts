@@ -109,11 +109,13 @@ import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.hardware.display.AmbientDisplayConfiguration;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.server.am.CommandSession.ActivityCallback;
 import android.server.am.CommandSession.ActivitySession;
@@ -473,6 +475,13 @@ public abstract class ActivityManagerTestBase {
 
         final long upTime = SystemClock.uptimeMillis();
         injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
+    }
+
+    protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
+        final Rect sideStackBounds = stack.getBounds();
+        final int tapX = sideStackBounds.left + sideStackBounds.width() / 2;
+        final int tapY = sideStackBounds.top + sideStackBounds.height() / 2;
+        tapOnDisplay(tapX, tapY, stack.mDisplayId);
     }
 
     private static void injectMotion(long downTime, long eventTime, int action,
@@ -954,6 +963,7 @@ public abstract class ActivityManagerTestBase {
         private final boolean mIsLockDisabled;
         private boolean mLockCredentialSet;
         private boolean mRemoveActivitiesOnClose;
+        private AmbientDisplayConfiguration mAmbientDisplayConfiguration;
 
         public static final int FLAG_REMOVE_ACTIVITIES_ON_CLOSE = 1;
 
@@ -969,6 +979,7 @@ public abstract class ActivityManagerTestBase {
             if ((flags & FLAG_REMOVE_ACTIVITIES_ON_CLOSE) != 0) {
                 mRemoveActivitiesOnClose = true;
             }
+            mAmbientDisplayConfiguration = new AmbientDisplayConfiguration(mContext);
         }
 
         public LockScreenSession setLockCredential() {
@@ -1006,9 +1017,13 @@ public abstract class ActivityManagerTestBase {
             // puts the device to sleep, but kept around for clarity.
             getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
-            for (int retry = 1; isDisplayOn(DEFAULT_DISPLAY) && retry <= 5; retry++) {
-                logAlways("***Waiting for display to turn off... retry=" + retry);
-                SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
+            if (mAmbientDisplayConfiguration.alwaysOnEnabled(UserHandle.SYSTEM.getIdentifier())) {
+                mAmWmState.waitForAodShowing();
+            } else {
+                for (int retry = 1; isDisplayOn(DEFAULT_DISPLAY) && retry <= 5; retry++) {
+                    logAlways("***Waiting for display to turn off... retry=" + retry);
+                    SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
+                }
             }
             return this;
         }

@@ -18,7 +18,9 @@ package android.hardware.camera2.cts;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
+import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraAccessException;
@@ -27,11 +29,14 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils.ImageVerifierListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.cts.rs.BitmapUtils;
 import android.hardware.camera2.cts.testcases.Camera2MultiViewTestCase;
 import android.hardware.camera2.cts.testcases.Camera2MultiViewTestCase.CameraPreviewListener;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.os.SystemClock;
 import android.os.ConditionVariable;
 import android.util.Log;
@@ -57,6 +62,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     private final static int NUM_SURFACE_SWITCHES = 30;
     private final static int IMG_READER_COUNT = 2;
     private final static int YUV_IMG_READER_COUNT = 3;
+    private final static double BITMAP_DIFF_THRESHOLD = 0.1;
 
     @Test
     public void testTextureViewPreview() throws Exception {
@@ -826,6 +832,146 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         stopPreview(cameraId);
     }
 
+
+    /*
+     * Two output Surface of the same size are configured: one from TextureView and
+     * the other is ImageReader with usage flag USAGE_GPU_SAMPLED_IMAGE. The
+     * ImageReader queues Image to a ImageWriter of the same usage flag, the
+     * ImageWriter then is connected to another TextureView. Verify the Bitmap
+     * from the first TextureView is identical to the second TextureView.
+     */
+    @Test
+    public void testTextureImageWriterReaderOperation() throws Exception {
+        for (String id : mCameraIds) {
+            ImageReader reader = null;
+            ImageWriter writer = null;
+            Surface writerOutput = null;
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+                openCamera(id);
+
+                if (!getStaticInfo(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+
+                int maxNumStreamsProc =
+                        getStaticInfo(id).getMaxNumOutputStreamsProcessedChecked();
+                if (maxNumStreamsProc < 2) {
+                    continue;
+                }
+
+                Size previewSize = getOrderedPreviewSizes(id).get(0);
+                List<TextureView> views = Arrays.asList(mTextureView[0]);
+
+                // view[0] is normal camera -> TextureView path
+                // view[1] is camera -> ImageReader -> TextureView path
+                SurfaceTexture surfaceTexture0 = getAvailableSurfaceTexture(
+                        WAIT_FOR_COMMAND_TO_COMPLETE, mTextureView[0]);
+                assertNotNull("Unable to get preview surface texture 0", surfaceTexture0);
+                surfaceTexture0.setDefaultBufferSize(
+                        previewSize.getWidth(), previewSize.getHeight());
+
+                SurfaceTexture surfaceTexture1 = getAvailableSurfaceTexture(
+                        WAIT_FOR_COMMAND_TO_COMPLETE, mTextureView[1]);
+                assertNotNull("Unable to get preview surface texture 1", surfaceTexture1);
+                surfaceTexture1.setDefaultBufferSize(
+                        previewSize.getWidth(), previewSize.getHeight());
+
+                updatePreviewDisplayRotation(previewSize, mTextureView[1]);
+
+                reader = ImageReader.newInstance(
+                        previewSize.getWidth(), previewSize.getHeight(),
+                        ImageFormat.PRIVATE,
+                        MAX_READER_IMAGES,
+                        HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+
+                writerOutput = new Surface(surfaceTexture1);
+                writer = ImageWriter.newInstance(
+                        writerOutput, MAX_READER_IMAGES,
+                        ImageFormat.PRIVATE);
+
+                ImageWriterQueuer writerInput = new ImageWriterQueuer(writer);
+
+                reader.setOnImageAvailableListener(writerInput, mHandler);
+
+                startTextureViewPreview(id, views, reader);
+                SystemClock.sleep(PREVIEW_TIME_MS);
+                stopRepeating(id);
+
+
+                Surface preview = new Surface(surfaceTexture0);
+                CaptureRequest.Builder requestBuilder = getCaptureBuilder(id,
+                        CameraDevice.TEMPLATE_PREVIEW);
+                requestBuilder.addTarget(reader.getSurface());
+                requestBuilder.addTarget(preview);
+                SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+                CameraPreviewListener stListener0 = new CameraPreviewListener();
+                CameraPreviewListener stListener1 = new CameraPreviewListener();
+                mTextureView[0].setSurfaceTextureListener(stListener0);
+                mTextureView[1].setSurfaceTextureListener(stListener1);
+
+                // do a single capture
+                capture(id, requestBuilder.build(), resultListener);
+                // wait for capture done
+                stListener0.waitForPreviewDone(WAIT_FOR_COMMAND_TO_COMPLETE);
+                stListener1.waitForPreviewDone(WAIT_FOR_COMMAND_TO_COMPLETE);
+
+                // get bitmap from both TextureView and compare
+                Bitmap bitmap0 = mTextureView[0].getBitmap();
+                Bitmap bitmap1 = mTextureView[1].getBitmap();
+                BitmapUtils.BitmapCompareResult result =
+                        BitmapUtils.compareBitmap(bitmap0, bitmap1);
+
+                Log.i(TAG, "Bitmap difference is " + result.mDiff);
+                assertTrue(String.format(
+                        "Bitmap difference exceeds threshold: diff %f > threshold %f",
+                        result.mDiff, BITMAP_DIFF_THRESHOLD),
+                        result.mDiff <= BITMAP_DIFF_THRESHOLD);
+
+                assertTrue(String.format(
+                        "Bitmap from direct Textureview is flat. All pixels are (%f, %f, %f)",
+                        result.mLhsAverage[0], result.mLhsAverage[1], result.mLhsAverage[2]),
+                        !result.mLhsFlat);
+
+                assertTrue(String.format(
+                        "Bitmap from ImageWriter Textureview is flat. All pixels are (%f, %f, %f)",
+                        result.mRhsAverage[0], result.mRhsAverage[1], result.mRhsAverage[2]),
+                        !result.mRhsFlat);
+            } finally {
+                if (reader != null) {
+                    reader.close();
+                }
+                if (writer != null) {
+                    writer.close();
+                }
+                if (writerOutput != null) {
+                    writerOutput.release();
+                }
+                closeCamera(id);
+            }
+        }
+    }
+
+    public static class ImageWriterQueuer implements ImageReader.OnImageAvailableListener {
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            Image image = null;
+            try {
+                image = reader.acquireNextImage();
+            } finally {
+                if (image != null && mWriter != null) {
+                    mWriter.queueInputImage(image);
+                }
+            }
+        }
+
+        public ImageWriterQueuer(ImageWriter writer) {
+            mWriter = writer;
+        }
+        private ImageWriter mWriter = null;
+    }
+
     private void checkForLastFrameInSequence(long lastSequenceFrameNumber,
             SimpleCaptureCallback listener) throws Exception {
         // Find the last frame number received in results and failures.
@@ -1040,8 +1186,6 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             surfaces[i] = new Surface(previewTexture[i]);
         }
 
-        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
-
         // Create shared outputs for the two surface textures
         OutputConfiguration surfaceSharedOutput = new OutputConfiguration(
                 OutputConfiguration.SURFACE_GROUP_ID_NONE, surfaces[0]);
@@ -1083,8 +1227,6 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             updatePreviewDisplayRotation(previewSize, mTextureView[i]);
             surfaces[i] = new Surface(previewTexture[i]);
         }
-
-        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
 
         //
         // Create deferred outputConfiguration, addSurface, createCaptureSession, addSurface, and

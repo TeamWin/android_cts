@@ -20,6 +20,7 @@ import android.app.UiAutomation;
 import android.support.test.InstrumentationRegistry;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -29,19 +30,28 @@ import org.junit.runners.model.Statement;
  * Custom JUnit4 rule that runs a test adopting Shell's permissions, revoking them at the end.
  *
  * <p>NOTE: should only be used in the cases where *every* test in a class requires the permission.
- * For a more fine-grained access, use {@link SystemUtil#runWithShellPermissionIdentity(Runnable)}
+ * For a more fine-grained access, use
+ * {@link SystemUtil#runWithShellPermissionIdentity(ThrowingRunnable)}
  * or {@link SystemUtil#callWithShellPermissionIdentity(java.util.concurrent.Callable)} instead.
  */
 public class AdoptShellPermissionsRule implements TestRule {
 
     private final UiAutomation mUiAutomation;
 
+    private final String[] mPermissions;
+
     public AdoptShellPermissionsRule() {
         this(InstrumentationRegistry.getInstrumentation().getUiAutomation());
     }
 
     public AdoptShellPermissionsRule(@NonNull UiAutomation uiAutomation) {
+        this(uiAutomation, (String[]) null);
+    }
+
+    public AdoptShellPermissionsRule(@NonNull UiAutomation uiAutomation,
+            @Nullable String... permissions) {
         mUiAutomation = uiAutomation;
+        mPermissions = permissions;
     }
 
     @Override
@@ -50,7 +60,11 @@ public class AdoptShellPermissionsRule implements TestRule {
 
             @Override
             public void evaluate() throws Throwable {
-                mUiAutomation.adoptShellPermissionIdentity();
+                if (mPermissions != null) {
+                    mUiAutomation.adoptShellPermissionIdentity(mPermissions);
+                } else {
+                    mUiAutomation.adoptShellPermissionIdentity();
+                }
                 try {
                     base.evaluate();
                 } finally {

@@ -98,6 +98,9 @@ public class BackgroundPermissionsTest {
      * If a bg permission is lost during an upgrade, the app-op should downgrade to foreground
      */
     @Test
+    @AppModeFull(reason = "Instant apps cannot read properties of other packages which is needed "
+            + "to grant permissions to them. Also instant apps are never updated, hence the test "
+            + "is useless.")
     public void appOpGetsDowngradedWhenBgPermIsNotRequestedAnymore() throws Exception {
         install(APK_LOCATION_BACKGROUND_29);
         try {

@@ -100,7 +100,6 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -113,7 +112,7 @@ import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowState;
 import android.text.TextUtils;
 import android.util.SparseArray;
-import android.view.Display;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -1205,10 +1204,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on secondary display must be on top");
 
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(DEFAULT_DISPLAY);
-            final int width = displayMetrics.getSize().getWidth();
-            final int height = displayMetrics.getSize().getHeight();
-            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+            tapOnDisplayCenter(DEFAULT_DISPLAY);
 
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, DEFAULT_DISPLAY,
                     "Top activity must be on the primary display");
@@ -2096,10 +2092,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     }}
             );
 
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(DEFAULT_DISPLAY);
-            final int width = displayMetrics.getSize().getWidth();
-            final int height = displayMetrics.getSize().getHeight();
-            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+            tapOnDisplayCenter(DEFAULT_DISPLAY);
 
             // Check that the activity on the primary display is the topmost resumed
             waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
@@ -2156,18 +2149,15 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertFocusedAppOnDisplay("Activity on second display must be focused.",
                     VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
 
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(DEFAULT_DISPLAY);
-            final int width = displayMetrics.getSize().getWidth();
-            final int height = displayMetrics.getSize().getHeight();
-            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+            tapOnDisplayCenter(DEFAULT_DISPLAY);
 
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                     "Activity should be top resumed when tapped.");
             mAmWmState.assertFocusedActivity("Activity on default display must be top focused.",
                     TEST_ACTIVITY);
 
-            tapOnDisplay(VirtualDisplayHelper.WIDTH / 2, VirtualDisplayHelper.HEIGHT / 2,
-                    newDisplay.mId);
+            tapOnDisplayCenter(newDisplay.mId);
+
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                     "Virtual display activity should be top resumed when tapped.");
             mAmWmState.assertFocusedActivity("Activity on second display must be top focused.",
@@ -2459,12 +2449,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .setShowSystemDecorations(false).createDisplay();
             // Verify the virtual display should not support system decoration.
-            final DisplayManager displayManager =
-                    mTargetContext.getSystemService(DisplayManager.class);
-            final Display display = displayManager.getDisplay(newDisplay.mId);
-            final boolean supportSystemDecoration =
-                    display != null && display.supportsSystemDecorations();
-            assertFalse("Display should not support system decoration", supportSystemDecoration);
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> assertFalse("Display should not support system decoration",
+                            mTargetContext.getSystemService(WindowManager.class)
+                                    .shouldShowSystemDecors(newDisplay.mId)));
 
             // Launch Ime test activity in virtual display.
             imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,

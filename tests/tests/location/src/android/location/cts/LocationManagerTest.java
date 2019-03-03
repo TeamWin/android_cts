@@ -18,16 +18,12 @@ package android.location.cts;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.GnssStatus;
-import android.location.GpsStatus;
-import android.location.GpsStatus.Listener;
-import android.location.GpsStatus.NmeaListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -38,8 +34,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
-import android.provider.Settings;
 import android.test.UiThreadTest;
 
 import java.util.List;
@@ -836,16 +830,8 @@ public class LocationManagerTest extends BaseMockLocationTest {
         mManager.removeProximityAlert(pi);
     }
 
-
     @UiThreadTest
     public void testNmeaListener() {
-        MockNmeaListener listener = new MockNmeaListener();
-        mManager.addNmeaListener(listener);
-        mManager.removeNmeaListener(listener);
-
-        mManager.addNmeaListener((NmeaListener) null);
-        mManager.removeNmeaListener((NmeaListener) null);
-
         MockGnssNmeaListener gnssListener = new MockGnssNmeaListener();
         mManager.addNmeaListener(gnssListener);
         mManager.removeNmeaListener(gnssListener);
@@ -941,22 +927,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         // Register for location updates, then set a mock location and ensure it is marked "mock"
         updateLocationAndWait(TEST_MOCK_PROVIDER_NAME, realProviderToFool, latitude, longitude);
-    }
-
-    @UiThreadTest
-    public void testGpsStatusListener() {
-        MockGpsStatusListener listener = new MockGpsStatusListener();
-        mManager.addGpsStatusListener(listener);
-        mManager.removeGpsStatusListener(listener);
-
-        mManager.addGpsStatusListener(null);
-        mManager.removeGpsStatusListener(null);
-    }
-
-    public void testGetGpsStatus() {
-        GpsStatus status = mManager.getGpsStatus(null);
-        assertNotNull(status);
-        assertSame(status, mManager.getGpsStatus(status));
     }
 
     @UiThreadTest
@@ -1343,23 +1313,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
-    private static class MockNmeaListener implements NmeaListener {
-        private boolean mIsNmeaReceived;
-
-        @Override
-        public void onNmeaReceived(long timestamp, String nmea) {
-            mIsNmeaReceived = true;
-        }
-
-        public boolean isNmeaRecevied() {
-            return mIsNmeaReceived;
-        }
-
-        public void reset() {
-            mIsNmeaReceived = false;
-        }
-    }
-
     private static class MockGnssNmeaListener implements OnNmeaMessageListener {
         private boolean mIsNmeaReceived;
 
@@ -1374,22 +1327,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         public void reset() {
             mIsNmeaReceived = false;
-        }
-    }
-
-    private static class MockGpsStatusListener implements Listener {
-        private boolean mHasCallOnGpsStatusChanged;
-
-        public boolean hasCallOnGpsStatusChanged() {
-            return mHasCallOnGpsStatusChanged;
-        }
-
-        public void reset(){
-            mHasCallOnGpsStatusChanged = false;
-        }
-
-        public void onGpsStatusChanged(int event) {
-            mHasCallOnGpsStatusChanged = true;
         }
     }
 

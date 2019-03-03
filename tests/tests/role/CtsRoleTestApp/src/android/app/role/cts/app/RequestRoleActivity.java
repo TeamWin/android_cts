@@ -27,15 +27,13 @@ import android.text.TextUtils;
  */
 public class RequestRoleActivity extends Activity {
 
-    private static final String EXTRA_ROLE_NAME = "android.app.role.cts.app.extra.ROLE_NAME";
-
     private static final int REQUEST_CODE_REQUEST_ROLE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String roleName = getIntent().getStringExtra(EXTRA_ROLE_NAME);
+        String roleName = getIntent().getStringExtra(Intent.EXTRA_ROLE_NAME);
         if (TextUtils.isEmpty(roleName)) {
             throw new IllegalArgumentException("Role name in extras cannot be null or empty");
         }

@@ -19,6 +19,7 @@ package com.android.compatibility.common.util;
 import android.app.UiAutomation;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.rules.TestRule;
@@ -36,12 +37,20 @@ public class AdoptShellPermissionsRule implements TestRule {
 
     private final UiAutomation mUiAutomation;
 
+    private final String[] mPermissions;
+
     public AdoptShellPermissionsRule() {
         this(InstrumentationRegistry.getInstrumentation().getUiAutomation());
     }
 
     public AdoptShellPermissionsRule(@NonNull UiAutomation uiAutomation) {
+        this(uiAutomation, (String[]) null);
+    }
+
+    public AdoptShellPermissionsRule(@NonNull UiAutomation uiAutomation,
+            @Nullable String... permissions) {
         mUiAutomation = uiAutomation;
+        mPermissions = permissions;
     }
 
     @Override
@@ -50,7 +59,11 @@ public class AdoptShellPermissionsRule implements TestRule {
 
             @Override
             public void evaluate() throws Throwable {
-                mUiAutomation.adoptShellPermissionIdentity();
+                if (mPermissions != null) {
+                    mUiAutomation.adoptShellPermissionIdentity(mPermissions);
+                } else {
+                    mUiAutomation.adoptShellPermissionIdentity();
+                }
                 try {
                     base.evaluate();
                 } finally {

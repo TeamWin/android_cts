@@ -16,8 +16,6 @@
 
 package android.telephonyprovider.cts;
 
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.setDefaultSmsApp;
-
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -28,11 +26,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
@@ -40,6 +38,11 @@ import javax.annotation.Nullable;
 @SmallTest
 public class MmsTest {
     private ContentResolver mContentResolver;
+
+    @BeforeClass
+    public static void ensureDefaultSmsApp() {
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+    }
 
     @Before
     public void setupTestEnvironment() {
@@ -49,42 +52,13 @@ public class MmsTest {
 
     @AfterClass
     public static void cleanup() {
-        ContentResolver contentResolver =
-                InstrumentationRegistry.getInstrumentation().getContext().getContentResolver();
-
-        setDefaultSmsApp(true);
+        ContentResolver contentResolver = getInstrumentation().getContext().getContentResolver();
         contentResolver.delete(Telephony.Mms.CONTENT_URI, null, null);
-        setDefaultSmsApp(false);
     }
 
     @Test
-    public void testMmsInsert_insertFailsWhenNotDefault() {
-        setDefaultSmsApp(false);
-
-        String testSubject1 = "testMmsInsert_withoutPermission1";
-        String testSubject2 = "testMmsInsert_withoutPermission2";
-
-        Uri uri1 = insertTestMmsSendReqWithSubject(testSubject1);
-        Uri uri2 = insertTestMmsSendReqWithSubject(testSubject2);
-
-        // If the URIs are the same, then the inserts failed. This is either due to insert returning
-        // null for both, or the appops check on insert returning a dummy string.
-        assertThat(uri1).isEqualTo(uri2);
-
-        // As this point, we can assume some failure of the insert since each URI points to the same
-        // row, which means at least one did not insert properly. We can then double check that the
-        // returned URI did not somehow have the correct subject. Since CTS tests should clear the
-        // environment, we should be reasonable sure that this assertion will not lead to a false
-        // failure.
-        assertThatMmsInsertFailed(uri1, testSubject1);
-        assertThatMmsInsertFailed(uri2, testSubject2);
-    }
-
-    @Test
-    public void testMmsInsert_insertSendReqSucceedsWhenDefault() {
-        setDefaultSmsApp(true);
-
-        String expectedSubject = "testMmsInsert_withPermission";
+    public void testMmsInsert_insertSendReqSucceeds() {
+        String expectedSubject = "testMmsInsert_insertSendReqSucceeds";
 
         Uri uri = insertTestMmsSendReqWithSubject(expectedSubject);
 
@@ -101,8 +75,6 @@ public class MmsTest {
 
     @Test
     public void testMmsDelete() {
-        setDefaultSmsApp(true);
-
         String expectedSubject = "testMmsDelete";
 
         Uri uri = insertTestMmsSendReqWithSubject(expectedSubject);
@@ -119,39 +91,9 @@ public class MmsTest {
     }
 
     @Test
-    public void testMmsQuery_canViewSendReqMessageIfNotDefault() {
-        setDefaultSmsApp(true);
-
-        String expectedSubject = "testMmsInsert_withPermission";
-
-        Uri uri = insertTestMmsSendReqWithSubject(expectedSubject);
-
-        setDefaultSmsApp(false);
-
-        assertThatMmsInsertSucceeded(uri, expectedSubject);
-    }
-
-    @Test
-    public void testMmsQuery_cannotViewNotificationIndMessagesIfNotDefault() {
-        setDefaultSmsApp(true);
-
+    public void testMmsQuery_canViewNotificationIndMessages() {
         int messageType = PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND;
-        String expectedSubject = "testMmsQuery_cannotViewNotificationIndMessagesIfNotDefault";
-
-        Uri uri = insertTestMms(expectedSubject, messageType);
-
-        setDefaultSmsApp(false);
-
-        Cursor cursor = mContentResolver.query(uri, null, null, null);
-        assertThat(cursor.getCount()).isEqualTo(0);
-    }
-
-    @Test
-    public void testMmsQuery_canViewNotificationIndMessagesIfDefault() {
-        setDefaultSmsApp(true);
-
-        int messageType = PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND;
-        String expectedSubject = "testMmsQuery_canViewNotificationIndMessagesIfDefault";
+        String expectedSubject = "testMmsQuery_canViewNotificationIndMessages";
 
         Uri uri = insertTestMms(expectedSubject, messageType);
 

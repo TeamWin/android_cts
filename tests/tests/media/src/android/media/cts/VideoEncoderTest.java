@@ -40,6 +40,8 @@ import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
 
+import androidx.test.filters.SmallTest;
+
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
@@ -1470,7 +1472,9 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
     public void testGoogH265FlexQCIF()   { specific(googH265(),   176, 144, true /* flex */); }
     public void testGoogH265SurfQCIF()   { specific(googH265(),   176, 144, false /* flex */); }
+    @SmallTest
     public void testGoogH264FlexQCIF()   { specific(googH264(),   176, 144, true /* flex */); }
+    @SmallTest
     public void testGoogH264SurfQCIF()   { specific(googH264(),   176, 144, false /* flex */); }
     public void testGoogH263FlexQCIF()   { specific(googH263(),   176, 144, true /* flex */); }
     public void testGoogH263SurfQCIF()   { specific(googH263(),   176, 144, false /* flex */); }
@@ -1483,7 +1487,9 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
     public void testOtherH265FlexQCIF()  { specific(otherH265(),  176, 144, true /* flex */); }
     public void testOtherH265SurfQCIF()  { specific(otherH265(),  176, 144, false /* flex */); }
+    @SmallTest
     public void testOtherH264FlexQCIF()  { specific(otherH264(),  176, 144, true /* flex */); }
+    @SmallTest
     public void testOtherH264SurfQCIF()  { specific(otherH264(),  176, 144, false /* flex */); }
     public void testOtherH263FlexQCIF()  { specific(otherH263(),  176, 144, true /* flex */); }
     public void testOtherH263SurfQCIF()  { specific(otherH263(),  176, 144, false /* flex */); }

@@ -121,9 +121,6 @@ public final class Helper {
             "SETTINGS_SHELL_CMD_TIMEOUT", OneTimeSettingsListener.DEFAULT_TIMEOUT_MS / 2, 2,
             OneTimeSettingsListener.DEFAULT_TIMEOUT_MS);
 
-    private static final String RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION =
-            "config_forceDefaultOrientation";
-
     /**
      * Helper interface used to filter nodes.
      *
@@ -853,29 +850,20 @@ public final class Helper {
      * Checks if screen orientation can be changed.
      */
     public static boolean isRotationSupported(Context context) {
-        if (!isScreenRotationSupported(context)) {
-            Log.v(TAG, "isRotationSupported(): screen rotation not supported");
+        final PackageManager packageManager = context.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.v(TAG, "isRotationSupported(): is auto");
             return false;
         }
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             Log.v(TAG, "isRotationSupported(): has leanback feature");
             return false;
         }
-        return true;
-    }
-
-     /**
-     * Returns {@code true} if display rotation is supported, {@code false} otherwise.
-     */
-    private static boolean isScreenRotationSupported(Context context) {
-        try {
-            return !getBoolean(context, RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION);
-        } catch (Resources.NotFoundException e) {
-            Log.d(TAG, "Resource not found: "
-                    + RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION
-                    + ". Assume rotation supported");
-            return true;
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_PC)) {
+            Log.v(TAG, "isRotationSupported(): is PC");
+            return false;
         }
+        return true;
     }
 
     private static boolean getBoolean(Context context, String id) {

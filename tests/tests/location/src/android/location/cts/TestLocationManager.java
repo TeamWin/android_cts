@@ -20,7 +20,6 @@ import android.content.Context;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
-import android.location.GpsStatus;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Handler;
@@ -139,32 +138,6 @@ public class TestLocationManager {
                 locationListener,
                 Looper.getMainLooper());
         }
-    }
-    /**
-     * See {@link android.location.LocationManager#addGpsStatusListener (GpsStatus.Listener)}.
-     * @param listener the GpsStatus.Listener to add
-     */
-    public void addGpsStatusListener(final GpsStatus.Listener listener) {
-        Log.i(TAG, "Add Gps Status Listener.");
-        Handler mainThreadHandler = new Handler(Looper.getMainLooper());
-        // Add Gps status listener to the main thread, since the Gps Status updates will go to
-        // the main thread while the test thread is blocked by mGpsStatusListener.await()
-        mainThreadHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mLocationManager.addGpsStatusListener(listener);
-            }
-        });
-    }
-
-    /**
-     * See {@link android.location.LocationManager#removeGpsStatusListener (GpsStatus.Listener)}.
-     *
-     * @param listener the listener to remove
-     */
-    public void removeGpsStatusListener(GpsStatus.Listener listener) {
-        Log.i(TAG, "Remove Gps Status Listener.");
-        mLocationManager.removeGpsStatusListener(listener);
     }
 
     /**
