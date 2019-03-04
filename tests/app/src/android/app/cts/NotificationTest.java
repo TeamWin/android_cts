@@ -670,22 +670,6 @@ public class NotificationTest extends AndroidTestCase {
         }
     }
 
-    public void testBubbleMetadataBuilder_throwForNoTitle() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(mContext, 1);
-        Notification.BubbleMetadata.Builder metadataBuilder =
-                new Notification.BubbleMetadata.Builder()
-                .setDesiredHeight(BUBBLE_HEIGHT)
-                .setIcon(icon)
-                .setIntent(bubbleIntent);
-        try {
-            metadataBuilder.build();
-            fail("Should have thrown IllegalStateException, no title");
-        } catch (IllegalStateException e) {
-            // expected
-        }
-    }
-
     public void testBubbleMetadataBuilder_throwForNoIcon() {
         PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
         Notification.BubbleMetadata.Builder metadataBuilder =
