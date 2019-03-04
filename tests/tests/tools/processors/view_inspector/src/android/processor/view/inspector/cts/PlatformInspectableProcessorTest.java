@@ -499,6 +499,22 @@ public class PlatformInspectableProcessorTest {
         assertEquals(setOf("FOUR", "ONE"), mPropertyReader.getIntFlag("value"));
     }
 
+    class PublicFieldTest {
+        @InspectableProperty
+        public final int value;
+
+        PublicFieldTest(Random seed) {
+            value = seed.nextInt();
+        }
+    }
+
+    @Test
+    public void testPublicField() {
+        PublicFieldTest node = new PublicFieldTest(mRandom);
+        mapAndRead(node);
+        assertEquals(node.value, mPropertyReader.get("value"));
+    }
+
     private static <T> Set<T> setOf(T... items) {
         Set<T> set = new HashSet<>(items.length);
 
