@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsWifiConfigCreator
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt
 
 LOCAL_SDK_VERSION := current
 

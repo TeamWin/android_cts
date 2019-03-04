@@ -39,18 +39,19 @@ import android.media.MediaLibraryService2.MediaLibrarySession;
 import android.media.MediaLibraryService2.MediaLibrarySession.MediaLibrarySessionCallback;
 import android.media.MediaMetadata2;
 import android.media.MediaSession2;
-import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
-import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
+import android.media.SessionCommand2;
+import android.media.SessionCommandGroup2;
 import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.ResultReceiver;
+
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
 

@@ -16,12 +16,13 @@
 
 package android.security.cts;
 
-import org.junit.runner.RunWith;
-import org.junit.Test;
-
 import android.graphics.Bitmap;
 import android.platform.test.annotations.SecurityTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SecurityTest
 @RunWith(AndroidJUnit4.class)

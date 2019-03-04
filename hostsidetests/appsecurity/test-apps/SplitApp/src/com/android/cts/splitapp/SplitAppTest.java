@@ -38,16 +38,14 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.ConditionVariable;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
-import android.os.StatFs;
-import android.support.test.InstrumentationRegistry;
 import android.system.Os;
-import android.system.OsConstants;
 import android.system.StructStat;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.DisplayMetrics;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -56,7 +54,6 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;

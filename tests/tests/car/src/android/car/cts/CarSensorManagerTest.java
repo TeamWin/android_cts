@@ -16,26 +16,23 @@
 
 package android.car.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.car.Car;
-import android.car.hardware.CarSensorEvent;
 import android.car.hardware.CarSensorManager;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 
-import java.util.stream.IntStream;
-
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.stream.IntStream;
 
 @SmallTest
 @RequiresDevice

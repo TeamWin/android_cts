@@ -26,7 +26,7 @@
         <activity android:name="com.android.dx.mockito.inline.extended.tests.EmptyActivity" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.extended.mocking.cts"
                      android:label="CTS tests for mockito extended mocking">
         <meta-data android:name="listener"

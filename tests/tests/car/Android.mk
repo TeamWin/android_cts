@@ -25,9 +25,9 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-	android-support-test \
-	compatibility-device-util \
-	ctstestrunner
+	androidx.test.rules \
+	compatibility-device-util-axt \
+	ctstestrunner-axt
 
 LOCAL_JAVA_LIBRARIES := android.car android.test.base.stubs
 

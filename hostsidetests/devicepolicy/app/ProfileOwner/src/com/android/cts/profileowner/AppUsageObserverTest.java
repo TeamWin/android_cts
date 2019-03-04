@@ -18,7 +18,8 @@ package com.android.cts.profileowner;
 import android.app.PendingIntent;
 import android.app.usage.UsageStatsManager;
 import android.content.Intent;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.concurrent.TimeUnit;
 

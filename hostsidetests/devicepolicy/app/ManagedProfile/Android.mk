@@ -29,10 +29,10 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs junit android.test.base.stubs
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_JAVA_LIBRARIES = \
-	ctstestrunner \
-	compatibility-device-util \
+	ctstestrunner-axt \
+	compatibility-device-util-axt \
 	ub-uiautomator \
-	android-support-test \
+	androidx.test.rules \
 	guava
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
