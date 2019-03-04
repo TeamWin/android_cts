@@ -16,28 +16,28 @@
 
 package android.media.cts;
 
-import static android.media.SessionCommand2.COMMAND_CODE_SESSION_FAST_FORWARD;
+import static android.media.MediaSession2.ControllerInfo;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_PAUSE;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_PLAY;
-import static android.media.SessionCommand2.COMMAND_CODE_SESSION_REWIND;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_SEEK_TO;
-import static android.media.SessionCommand2.COMMAND_CODE_SET_VOLUME;
-import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM;
-import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_STOP;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_ADD_ITEM;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SET_LIST;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM;
 import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_FAST_FORWARD;
 import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PLAY_FROM_MEDIA_ID;
 import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PLAY_FROM_SEARCH;
 import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PLAY_FROM_URI;
 import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PREPARE_FROM_MEDIA_ID;
 import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH;
 import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PREPARE_FROM_URI;
-import static android.media.MediaSession2.ControllerInfo;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_REWIND;
+import static android.media.SessionCommand2.COMMAND_CODE_SET_VOLUME;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,8 +56,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

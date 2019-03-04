@@ -21,8 +21,8 @@ android_test {
         "android.test.base.stubs",
     ],
     static_libs: [
-        "android-support-test",
-        "ctstestrunner",
+        "androidx.test.rules",
+        "ctstestrunner-axt",
     ],
     test_suites: [
         "cts",

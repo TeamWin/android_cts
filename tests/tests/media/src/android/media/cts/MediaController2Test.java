@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaController2;
@@ -36,11 +35,11 @@ import android.media.MediaMetadata2;
 import android.media.MediaPlayerBase;
 import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
-import android.media.SessionCommand2;
-import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
 import android.media.Rating2;
+import android.media.SessionCommand2;
+import android.media.SessionCommandGroup2;
 import android.media.SessionToken2;
 import android.media.VolumeProvider2;
 import android.media.cts.TestServiceRegistry.SessionServiceCallback;
@@ -51,10 +50,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.os.ResultReceiver;
+
 import androidx.annotation.NonNull;
-import android.support.test.filters.FlakyTest;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

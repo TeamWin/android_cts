@@ -15,15 +15,10 @@
  */
 package android.media.cts;
 
-import android.media.cts.R;
-
 import static org.junit.Assert.assertNotNull;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-import com.android.compatibility.common.util.MediaUtils;
-
-import android.annotation.TargetApi;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -38,12 +33,11 @@ import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
-import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.net.Uri;
+import android.media.cts.R;
 import android.opengl.EGL14;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
@@ -53,10 +47,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.util.Pair;
-import android.util.SparseArray;
 import android.view.PixelCopy;
 import android.view.PixelCopy.OnPixelCopyFinishedListener;
 import android.view.Surface;
@@ -67,23 +59,28 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 
 @TargetApi(16)
 public class DecodeAccuracyTestBase {

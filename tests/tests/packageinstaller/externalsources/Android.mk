@@ -25,9 +25,9 @@ LOCAL_PACKAGE_NAME := CtsExternalSourcesTestCases
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator \
-                               android-support-test \
+                               androidx.test.rules \
                                androidx.legacy_legacy-support-v4 \
-                               compatibility-device-util
+                               compatibility-device-util-axt
 
 LOCAL_SDK_VERSION := current
 

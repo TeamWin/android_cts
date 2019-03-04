@@ -16,28 +16,28 @@
 
 package android.database.cts;
 
-import android.database.CharArrayBuffer;
-import android.database.CursorWindow;
-import android.database.MatrixCursor;
-import android.database.sqlite.SQLiteException;
-import android.os.Parcel;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import android.database.CharArrayBuffer;
+import android.database.CursorWindow;
+import android.database.MatrixCursor;
+import android.database.sqlite.SQLiteException;
+import android.os.Parcel;
+import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest

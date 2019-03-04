@@ -25,8 +25,9 @@ import android.service.autofill.CustomDescription;
 import android.service.autofill.InternalValidator;
 import android.service.autofill.Transformation;
 import android.service.autofill.Validator;
-import android.support.test.runner.AndroidJUnit4;
 import android.widget.RemoteViews;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

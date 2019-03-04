@@ -19,12 +19,10 @@ package com.android.nn.benchmark.cts;
 import static junit.framework.TestCase.assertFalse;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.support.test.filters.LargeTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.InstrumentationRegistry;
 import android.util.Pair;
+
+import androidx.test.filters.LargeTest;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.nn.benchmark.core.BenchmarkException;
 import com.android.nn.benchmark.core.BenchmarkResult;
@@ -32,7 +30,6 @@ import com.android.nn.benchmark.core.InferenceInOutSequence;
 import com.android.nn.benchmark.core.InferenceResult;
 import com.android.nn.benchmark.core.NNTestBase;
 import com.android.nn.benchmark.core.TestModels;
-import com.android.nn.benchmark.util.TestExternalStorageActivity;
 
 import org.junit.Before;
 import org.junit.Rule;

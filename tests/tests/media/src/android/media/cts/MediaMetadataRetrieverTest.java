@@ -16,35 +16,33 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
-
-import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
-import android.media.MediaDataSource;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaMetadataRetriever;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
-import android.platform.test.annotations.RequiresDevice;
-import android.test.AndroidTestCase;
-import android.util.Log;
-
-import com.android.compatibility.common.util.MediaUtils;
-
-import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.media.MediaMetadataRetriever.OPTION_CLOSEST;
 import static android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC;
 import static android.media.MediaMetadataRetriever.OPTION_NEXT_SYNC;
 import static android.media.MediaMetadataRetriever.OPTION_PREVIOUS_SYNC;
 
-import java.io.InputStream;
+import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.media.MediaDataSource;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
+import android.media.cts.R;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
+import android.test.AndroidTestCase;
+
+import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.MediaUtils;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;

@@ -23,8 +23,8 @@ java_test {
 
     static_libs: [
         "platformprotosnano",
-        "compatibility-device-util",
-        "android-support-test",
+        "compatibility-device-util-axt",
+        "androidx.test.rules", "hamcrest-library",
     ],
 
     sdk_version: "test_current",

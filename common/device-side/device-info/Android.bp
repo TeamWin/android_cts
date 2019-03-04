@@ -18,8 +18,8 @@ java_library {
     srcs: ["src/**/*.java"],
 
     static_libs: [
-        "compatibility-device-util",
-        "android-support-test",
+        "compatibility-device-util-axt",
+        "androidx.test.rules",
         "junit",
     ],
 

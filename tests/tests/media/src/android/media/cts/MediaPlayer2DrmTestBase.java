@@ -37,8 +37,6 @@ import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Base64;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -48,6 +46,8 @@ import androidx.annotation.CallSuper;
 import androidx.media.DataSourceDesc;
 import androidx.media.MediaPlayer2;
 import androidx.media.MediaPlayer2.DrmInfo;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import org.json.JSONArray;
 import org.json.JSONException;

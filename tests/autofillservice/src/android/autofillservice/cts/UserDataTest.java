@@ -30,7 +30,8 @@ import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.UserData;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.google.common.base.Strings;
 

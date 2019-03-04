@@ -26,10 +26,10 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_JAVA_LIBRARIES := bouncycastle-unbundled
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-        android-support-test \
+        androidx.test.rules \
         core-tests-support \
-        compatibility-device-util \
-        ctstestrunner \
+        compatibility-device-util-axt \
+        ctstestrunner-axt hamcrest-library \
         guava \
         junit \
         cts-security-test-support-library \
