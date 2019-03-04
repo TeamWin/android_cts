@@ -52,8 +52,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     public static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
 
-    protected static final String STORAGE_ENCRYPTION_TEST_CLASS = ".StorageEncryptionTest";
-    protected static final String IS_PRIMARY_USER_PARAM = "isPrimaryUser";
+    private static final String STORAGE_ENCRYPTION_TEST_CLASS = ".StorageEncryptionTest";
+    private static final String IS_PRIMARY_USER_PARAM = "isPrimaryUser";
 
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
@@ -74,7 +74,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
     private static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
 
-    protected static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
+    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
     private static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
@@ -115,8 +115,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String AUTOFILL_APP_PKG = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_APP_APK = "CtsDevicePolicyAutofillApp.apk";
 
-    private static final String CONTENT_CAPTURE_APP_PKG =
-            "com.android.cts.devicepolicy.contentcaptureapp";
     private static final String CONTENT_CAPTURE_APP_APK = "CtsDevicePolicyContentCaptureApp.apk";
 
     protected static final String ASSIST_APP_PKG = "com.android.cts.devicepolicy.assistapp";
@@ -128,10 +126,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String METERED_DATA_APP_PKG
             = "com.android.cts.devicepolicy.meteredtestapp";
     private static final String METERED_DATA_APP_APK = "CtsMeteredDataTestApp.apk";
-
-    private static final String TEST_EMPTY_CTS_APP_APK = "CtsEmptyTestApp.apk";
-    private static final String TEST_EMPTY_CTS_APP_PKG =
-            "android.packageinstaller.emptytestapp.cts";
 
     private static final String ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES
             = "enabled_notification_policy_access_packages";
@@ -150,7 +144,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     // The following constants were copied from DevicePolicyManager
     private static final int PASSWORD_QUALITY_SOMETHING = 0x10000;
-    private static final int WIPE_RESET_PROTECTION_DATA = 0x0002;
     private static final int KEYGUARD_DISABLE_FEATURES_NONE = 0;
     private static final int KEYGUARD_DISABLE_FINGERPRINT = 1 << 5;
     private static final int KEYGUARD_DISABLE_TRUST_AGENTS = 1 << 4;
@@ -1630,6 +1623,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .build());
     }
 
+    public void testRandomizedWifiMacAddress() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
+            return;
+        }
+        executeDeviceTestClass(".RandomizedWifiMacAddressTest");
+    }
+
     private String getLaunchableSystemPackage() throws DeviceNotAvailableException {
         final List<String> enabledSystemPackageNames = getEnabledSystemPackageNames();
         for (String enabledSystemPackage : enabledSystemPackageNames) {
@@ -1656,7 +1656,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
      */
-    protected void executeDeviceTestClassNoRestrictBackground(String className) throws Exception {
+    private void executeDeviceTestClassNoRestrictBackground(String className) throws Exception {
         boolean originalRestriction = ensureRestrictBackgroundPolicyOff();
         try {
             executeDeviceTestClass(className);
