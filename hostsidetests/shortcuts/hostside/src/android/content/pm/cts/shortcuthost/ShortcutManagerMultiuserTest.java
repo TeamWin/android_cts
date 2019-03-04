@@ -45,7 +45,7 @@ public class ShortcutManagerMultiuserTest extends BaseShortcutManagerHostTest {
         runDeviceTestsAsUser(TARGET_PKG, ".ShortcutManagerManagedUserTest",
                 "test01_managedProfileNotStarted", getPrimaryUserId());
 
-        getDevice().startUser(profileId);
+        startUserAndWait(profileId);
 
         runDeviceTestsAsUser(TARGET_PKG, ".ShortcutManagerManagedUserTest",
                 "test02_createShortuctsOnPrimaryUser", getPrimaryUserId());
