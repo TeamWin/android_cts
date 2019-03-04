@@ -16,6 +16,13 @@
 
 package android.media.cts;
 
+import static androidx.heifwriter.HeifWriter.INPUT_MODE_BITMAP;
+import static androidx.heifwriter.HeifWriter.INPUT_MODE_BUFFER;
+import static androidx.heifwriter.HeifWriter.INPUT_MODE_SURFACE;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -30,28 +37,14 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.LargeTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import static androidx.heifwriter.HeifWriter.INPUT_MODE_BITMAP;
-import static androidx.heifwriter.HeifWriter.INPUT_MODE_BUFFER;
-import static androidx.heifwriter.HeifWriter.INPUT_MODE_SURFACE;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.heifwriter.HeifWriter;
 
 import com.android.compatibility.common.util.MediaUtils;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.Closeable;
 import java.io.File;

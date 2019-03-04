@@ -38,7 +38,7 @@ import java.util.Map;
  */
 public class KeySetHostTest extends DeviceTestCase implements IBuildReceiver {
 
-    private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
     /* package with device-side tests */
     private static final String KEYSET_TEST_PKG = "com.android.cts.keysets.testapp";

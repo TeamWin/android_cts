@@ -26,12 +26,12 @@ android_test {
     },
 
     static_libs: [
-        "android-support-test",
+        "androidx.test.rules",
         "compatibility-common-util-devicesidelib",
         "compatibility-device-info-tests",
         "compatibility-device-info",
         "compatibility-device-util-tests",
-        "compatibility-device-util",
+        "compatibility-device-util-axt",
     ],
 
     sdk_version: "test_current",

@@ -27,11 +27,11 @@ import android.app.stubs.LocalForegroundService;
 import android.app.stubs.LocalGrantedService;
 import android.app.stubs.LocalService;
 import android.app.stubs.NullService;
+import android.app.stubs.R;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.support.test.InstrumentationRegistry;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -41,7 +41,8 @@ import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
-import android.app.stubs.R;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.IBinderParcelable;
 import com.android.compatibility.common.util.SystemUtil;

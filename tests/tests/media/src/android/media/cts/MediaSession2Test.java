@@ -39,19 +39,20 @@ import android.media.MediaPlayerBase;
 import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Builder;
-import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
-import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
+import android.media.SessionCommand2;
+import android.media.SessionCommandGroup2;
 import android.media.VolumeProvider2;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
+
 import androidx.annotation.NonNull;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
 

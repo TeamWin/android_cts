@@ -16,11 +16,6 @@
 
 package android.hardware.cts;
 
-import android.hardware.cts.helpers.sensorverification.ContinuousEventSanitizedVerification;
-import android.support.test.InstrumentationRegistry;
-import com.android.compatibility.common.util.SystemUtil;
-import junit.framework.Assert;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -38,6 +33,7 @@ import android.hardware.cts.helpers.TestSensorEventListener;
 import android.hardware.cts.helpers.TestSensorManager;
 import android.hardware.cts.helpers.sensoroperations.ParallelSensorOperation;
 import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
+import android.hardware.cts.helpers.sensorverification.ContinuousEventSanitizedVerification;
 import android.hardware.cts.helpers.sensorverification.EventGapVerification;
 import android.hardware.cts.helpers.sensorverification.EventOrderingVerification;
 import android.hardware.cts.helpers.sensorverification.EventTimestampSynchronizationVerification;
@@ -47,6 +43,12 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import junit.framework.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;

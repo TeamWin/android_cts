@@ -36,11 +36,12 @@ import android.jobscheduler.cts.jobtestapp.TestActivity;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 

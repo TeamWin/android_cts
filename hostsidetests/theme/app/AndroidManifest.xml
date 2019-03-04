@@ -39,7 +39,7 @@
     </application>
 
     <!--  self-instrumenting test package. -->
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.theme.app"
                      android:label="Generates Theme reference images"/>
 

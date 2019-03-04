@@ -19,7 +19,7 @@ package android.server.am;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.deprecatedsdk.Components.MAIN_ACTIVITY;
 
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Test;

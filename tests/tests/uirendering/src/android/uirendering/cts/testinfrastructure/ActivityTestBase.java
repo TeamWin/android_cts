@@ -21,13 +21,14 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Point;
 import android.graphics.Rect;
-import androidx.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.util.Log;
 import android.view.PixelCopy;
+
+import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 

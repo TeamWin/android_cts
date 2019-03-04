@@ -18,8 +18,8 @@ android_test {
     sdk_version: "current",
     srcs: ["src/**/*.java"],
     static_libs: [
-        "android-support-test",
-        "ctstestrunner",
+        "androidx.test.rules",
+        "ctstestrunner-axt",
     ],
     test_suites: [
         "cts",

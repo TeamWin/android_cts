@@ -24,7 +24,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsAccessibilityTestCases
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt ctstestrunner-axt hamcrest-library
 
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
