@@ -33,6 +33,7 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.BOTTOM_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.Components.DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY;
 import static android.server.am.Components.HOME_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
@@ -71,8 +72,10 @@ import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
 import static android.server.am.second.Components.SECOND_NO_EMBEDDING_ACTIVITY;
+import static android.server.am.second.Components.SecondActivity.EXTRA_DISPLAY_ACCESS_CHECK;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -100,6 +103,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -112,6 +116,9 @@ import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowState;
 import android.text.TextUtils;
 import android.util.SparseArray;
+import android.view.Display;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -2672,6 +2679,84 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
+    @Test
+    public void testDisplayHasAccess_UIDCanPresentOnPrivateDisplay() throws Exception {
+        try (final VirtualDisplayLauncher virtualDisplayLauncher = new VirtualDisplayLauncher()) {
+            // Create a virtual private display.
+            final ActivityDisplay newDisplay = virtualDisplayLauncher
+                    .setPublicDisplay(false)
+                    .createDisplay();
+            // Launch an embeddable activity into the private display.
+            // Assert that the UID can present on display.
+            final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
+            assertEquals("Activity which the UID should accessible on private display",
+                    isUidAccesibleOnDisplay(session1), true);
+
+            // Launch another embeddable activity with a different UID, verify that it will be
+            // able to access the display where it was put.
+            // Note that set withShellPermission as true in launchActivityOnDisplay is to
+            // make sure ACTIVITY_EMBEDDING can be granted by shell.
+            final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    SECOND_ACTIVITY, newDisplay,
+                    bundle -> bundle.putBoolean(EXTRA_DISPLAY_ACCESS_CHECK, true),
+                    true /* withShellPermission */, true /* waitForLaunch */);
+
+            // Verify SECOND_ACTIVITY's UID has access to this virtual private display.
+            assertEquals("Second activity which the UID should accessible on private display",
+                    isUidAccesibleOnDisplay(session2), true);
+        }
+    }
+
+    @Test
+    public void testDisplayHasAccess_NoAccessWhenUIDNotPresentOnPrivateDisplay() throws Exception {
+        try (final VirtualDisplayLauncher virtualDisplayLauncher = new VirtualDisplayLauncher()) {
+            // Create a virtual private display.
+            final ActivityDisplay newDisplay = virtualDisplayLauncher
+                    .setPublicDisplay(false)
+                    .createDisplay();
+            // Launch an embeddable activity into the private display.
+            // Assume that the UID can access on display.
+            final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
+            assertEquals("Activity which the UID should accessible on private display",
+                    isUidAccesibleOnDisplay(session1), true);
+
+            // Verify SECOND_NO_EMBEDDING_ACTIVITY's UID can't access this virtual private display
+            // since there is no entity with this UID on this display.
+            // Note that set withShellPermission as false in launchActivityOnDisplay is to
+            // prevent activity can launch when INTERNAL_SYSTEM_WINDOW granted by shell case.
+            separateTestJournal();
+            final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    SECOND_NO_EMBEDDING_ACTIVITY, newDisplay, null /* extrasConsumer */,
+                    false /* withShellPermission */, false /* waitForLaunch */);
+            assertEquals("Second activity which the UID should not accessible on private display",
+                    isUidAccesibleOnDisplay(session2), false);
+        }
+    }
+
+    @Test
+    public void testDisplayHasAccess_ExceptionWhenAddViewWithoutPresentOnPrivateDisplay()
+            throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create a virtual private display.
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setPublicDisplay(false)
+                    .createDisplay();
+            try {
+                final Display display = mContext.getSystemService(DisplayManager.class).getDisplay(
+                        newDisplay.mId);
+                final Context newDisplayContext = mContext.createDisplayContext(display);
+                newDisplayContext.getSystemService(WindowManager.class).addView(new View(mContext),
+                        new ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
+            } catch (IllegalArgumentException e) {
+                // Exception happened when createDisplayContext with invalid display.
+                return;
+            }
+            fail("UID should not have access to private display without present entities.");
+        }
+    }
+
     private void waitAndAssertNavBarStatesAreTheSame(List<WindowState> expected) throws Exception {
         // This is used to verify that we have nav bars shown on the same displays
         // as before the test.
@@ -2865,5 +2950,15 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
         // Assert the IME is shown on the expected display.
         mAmWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
+    }
+
+    boolean isUidAccesibleOnDisplay(ActivitySession session) {
+        boolean result = false;
+        try {
+            result = session.isUidAccesibleOnDisplay();
+        } catch (RuntimeException e) {
+            // Catch the exception while waiting reply (i.e. timeout)
+        }
+        return result;
     }
 }

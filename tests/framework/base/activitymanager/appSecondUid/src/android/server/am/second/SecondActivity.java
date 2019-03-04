@@ -16,7 +16,28 @@
 
 package android.server.am.second;
 
-import android.app.Activity;
+import static android.server.am.second.Components.SecondActivity.EXTRA_DISPLAY_ACCESS_CHECK;
 
-public class SecondActivity extends Activity {
+import android.os.Bundle;
+import android.server.am.CommandSession;
+import android.view.View;
+import android.view.WindowManager;
+
+public class SecondActivity extends CommandSession.BasicTestActivity {
+
+    @Override
+    protected void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+
+        if (getIntent().hasExtra(EXTRA_DISPLAY_ACCESS_CHECK)) {
+            // Verify that this activity can add views to the display where it is placed.
+            final View view = new View(this);
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+            params.width = WindowManager.LayoutParams.WRAP_CONTENT;
+            params.type = WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
+            params.setTitle("CustomView");
+            getWindowManager().addView(view, params);
+        }
+    }
 }
