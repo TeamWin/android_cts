@@ -118,10 +118,8 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
         mBackupUtils.executeShellCommandSync(
                 String.format("bmgr --user %d activate %b", userId, true));
 
-        mDevice.startUser(userId);
-        // Wait for user to be fully started.
-        boolean isUserStarted = waitForUserState(userId, "RUNNING_UNLOCKED");
-        assertThat(isUserStarted).isTrue();
+        boolean startSuccessful = mDevice.startUser(userId, /* wait for RUNNING_UNLOCKED */ true);
+        assertThat(startSuccessful).isTrue();
 
         mDevice.setSetting(userId, "secure", USER_SETUP_COMPLETE_SETTING, "1");
         mBackupUtils.enableBackupForUser(true, userId);
@@ -194,28 +192,5 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
             throws DeviceNotAvailableException {
         boolean result = runDeviceTests(mDevice, packageName, className, testName, userId, null);
         assertThat(result).isTrue();
-    }
-
-    /**
-     * Waits for user {@code userId} to be in the state {@code expectedState}. Returns {@code true}
-     * if the user is in the state within the timeout.
-     */
-    boolean waitForUserState(int userId, String expectedState) throws IOException {
-        long timeout = System.currentTimeMillis() + USER_STATE_TIMEOUT_MS;
-        while (System.currentTimeMillis() <= timeout) {
-            String output =
-                    mBackupUtils.executeShellCommandAndReturnOutput(
-                            String.format("am get-started-user-state %d", userId));
-            if (output.contains(expectedState)) {
-                return true;
-            }
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // Do nothing.
-            }
-        }
-        return false;
     }
 }
