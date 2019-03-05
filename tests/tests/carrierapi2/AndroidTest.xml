@@ -17,6 +17,11 @@
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="telecom" />
     <option name="not-shardable" value="true" />
+
+    <!-- Carrier APIs use permissions not available to instant apps. -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.TokenRequirement">
         <option name="token" value="sim-card-with-certs" />
     </target_preparer>
