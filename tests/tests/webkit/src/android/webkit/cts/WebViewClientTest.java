@@ -57,8 +57,16 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
     private WebViewOnUiThread mOnUiThread;
     private CtsTestServer mWebServer;
 
-    private static final String TEST_SAFE_BROWSING_URL =
-            "chrome://safe-browsing/match?type=malware";
+    private static final String TEST_SAFE_BROWSING_URL_PREFIX =
+            "chrome://safe-browsing/match?type=";
+    private static final String TEST_SAFE_BROWSING_MALWARE_URL =
+            TEST_SAFE_BROWSING_URL_PREFIX + "malware";
+    private static final String TEST_SAFE_BROWSING_PHISHING_URL =
+            TEST_SAFE_BROWSING_URL_PREFIX + "phishing";
+    private static final String TEST_SAFE_BROWSING_UNWANTED_SOFTWARE_URL =
+            TEST_SAFE_BROWSING_URL_PREFIX + "unwanted";
+    private static final String TEST_SAFE_BROWSING_BILLING_URL =
+            TEST_SAFE_BROWSING_URL_PREFIX + "billing";
 
     public WebViewClientTest() {
         super("android.webkit.cts", WebViewCtsActivity.class);
@@ -649,9 +657,9 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         // enabled.
         if (mOnUiThread.getSettings().getSafeBrowsingEnabled()) {
             assertEquals(0, backToSafetyWebViewClient.hasOnReceivedErrorCode());
-            mOnUiThread.loadUrlAndWaitForCompletion(TEST_SAFE_BROWSING_URL);
+            mOnUiThread.loadUrlAndWaitForCompletion(TEST_SAFE_BROWSING_MALWARE_URL);
 
-            assertEquals(TEST_SAFE_BROWSING_URL,
+            assertEquals(TEST_SAFE_BROWSING_MALWARE_URL,
                     backToSafetyWebViewClient.getOnSafeBrowsingHitRequest().getUrl().toString());
             assertTrue(backToSafetyWebViewClient.getOnSafeBrowsingHitRequest().isForMainFrame());
 
@@ -689,15 +697,66 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         // enabled.
         if (mOnUiThread.getSettings().getSafeBrowsingEnabled()) {
             assertEquals(0, proceedWebViewClient.hasOnReceivedErrorCode());
-            mOnUiThread.loadUrlAndWaitForCompletion(TEST_SAFE_BROWSING_URL);
+            mOnUiThread.loadUrlAndWaitForCompletion(TEST_SAFE_BROWSING_MALWARE_URL);
 
-            assertEquals(TEST_SAFE_BROWSING_URL,
+            assertEquals(TEST_SAFE_BROWSING_MALWARE_URL,
                     proceedWebViewClient.getOnSafeBrowsingHitRequest().getUrl().toString());
             assertTrue(proceedWebViewClient.getOnSafeBrowsingHitRequest().isForMainFrame());
 
             // Check that we actually proceeded
-            assertEquals(TEST_SAFE_BROWSING_URL, mOnUiThread.getUrl());
+            assertEquals(TEST_SAFE_BROWSING_MALWARE_URL, mOnUiThread.getUrl());
         }
+    }
+
+    private void testOnSafeBrowsingCode(String expectedUrl, int expectedThreatType)
+            throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        mWebServer = new CtsTestServer(getActivity());
+        String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        final String ORIGINAL_URL = mOnUiThread.getUrl();
+
+        final SafeBrowsingBackToSafetyClient backToSafetyWebViewClient =
+                new SafeBrowsingBackToSafetyClient();
+        mOnUiThread.setWebViewClient(backToSafetyWebViewClient);
+        mOnUiThread.getSettings().setSafeBrowsingEnabled(true);
+
+        // Note: Safe Browsing depends on user opt-in as well, so we can't assume it's actually
+        // enabled. #getSafeBrowsingEnabled will tell us the true state of whether Safe Browsing is
+        // enabled.
+        if (mOnUiThread.getSettings().getSafeBrowsingEnabled()) {
+            mOnUiThread.loadUrlAndWaitForCompletion(expectedUrl);
+
+            assertEquals("Safe Browsing hit is for unexpected URL",
+                    expectedUrl,
+                    backToSafetyWebViewClient.getOnSafeBrowsingHitRequest().getUrl().toString());
+
+            assertEquals("Safe Browsing hit has unexpected threat type",
+                    expectedThreatType,
+                    backToSafetyWebViewClient.getOnSafeBrowsingHitThreatType());
+        }
+    }
+
+    public void testOnSafeBrowsingMalwareCode() throws Throwable {
+        testOnSafeBrowsingCode(TEST_SAFE_BROWSING_MALWARE_URL,
+                WebViewClient.SAFE_BROWSING_THREAT_MALWARE);
+    }
+
+    public void testOnSafeBrowsingPhishingCode() throws Throwable {
+        testOnSafeBrowsingCode(TEST_SAFE_BROWSING_PHISHING_URL,
+                WebViewClient.SAFE_BROWSING_THREAT_PHISHING);
+    }
+
+    public void testOnSafeBrowsingUnwantedSoftwareCode() throws Throwable {
+        testOnSafeBrowsingCode(TEST_SAFE_BROWSING_UNWANTED_SOFTWARE_URL,
+                WebViewClient.SAFE_BROWSING_THREAT_UNWANTED_SOFTWARE);
+    }
+
+    public void testOnSafeBrowsingBillingCode() throws Throwable {
+        testOnSafeBrowsingCode(TEST_SAFE_BROWSING_BILLING_URL,
+                WebViewClient.SAFE_BROWSING_THREAT_BILLING);
     }
 
     private void requireLoadedPage() throws Throwable {
