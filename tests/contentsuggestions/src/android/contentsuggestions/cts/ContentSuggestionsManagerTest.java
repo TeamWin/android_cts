@@ -99,7 +99,7 @@ public class ContentSuggestionsManagerTest {
         String requestId = "TEST";
 
         mManager.notifyInteraction(requestId, new Bundle());
-        verifyService().notifyInteraction(eq(requestId), any());
+        verifyService().onNotifyInteraction(eq(requestId), any());
     }
 
     @Test
@@ -107,7 +107,7 @@ public class ContentSuggestionsManagerTest {
         int taskId = 1;
 
         mManager.provideContextImage(taskId, new Bundle());
-        verifyService().processContextImage(eq(taskId), any(), any());
+        verifyService().onProcessContextImage(eq(taskId), any(), any());
     }
 
     @Test
@@ -117,7 +117,7 @@ public class ContentSuggestionsManagerTest {
 
 
         mManager.suggestContentSelections(request, Executors.newSingleThreadExecutor(), callback);
-        verifyService().suggestContentSelections(any(), any());
+        verifyService().onSuggestContentSelections(any(), any());
     }
 
     @Test
@@ -129,7 +129,7 @@ public class ContentSuggestionsManagerTest {
 
 
         mManager.classifyContentSelections(request, Executors.newSingleThreadExecutor(), callback);
-        verifyService().classifyContentSelections(any(), any());
+        verifyService().onClassifyContentSelections(any(), any());
     }
 
     private CtsContentSuggestionsService verifyService() {

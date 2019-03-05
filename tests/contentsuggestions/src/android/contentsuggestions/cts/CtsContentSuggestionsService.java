@@ -66,47 +66,48 @@ public class CtsContentSuggestionsService extends ContentSuggestionsService {
     }
 
     @Override
-    public void processContextImage(int taskId, Bitmap contextImage, Bundle extras) {
+    public void onProcessContextImage(int taskId, Bitmap contextImage, Bundle extras) {
         if (DEBUG) {
             Log.d(TAG,
-                    "processContextImage() called with: taskId = [" + taskId + "], contextImage = ["
+                    "onProcessContextImage() called with: taskId = [" + taskId
+                            + "], contextImage = ["
                             + contextImage + "], extras = [" + extras + "]");
         }
-        sWatcher.verifier.processContextImage(taskId, contextImage, extras);
+        sWatcher.verifier.onProcessContextImage(taskId, contextImage, extras);
     }
 
     @Override
-    public void suggestContentSelections(SelectionsRequest request, SelectionsCallback callback) {
+    public void onSuggestContentSelections(SelectionsRequest request, SelectionsCallback callback) {
         if (DEBUG) {
             Log.d(TAG,
-                    "suggestContentSelections() called with: request = [" + request
+                    "onSuggestContentSelections() called with: request = [" + request
                             + "], callback = ["
                             + callback + "]");
         }
-        sWatcher.verifier.suggestContentSelections(request, callback);
+        sWatcher.verifier.onSuggestContentSelections(request, callback);
     }
 
     @Override
-    public void classifyContentSelections(ClassificationsRequest request,
+    public void onClassifyContentSelections(ClassificationsRequest request,
             ClassificationsCallback callback) {
         if (DEBUG) {
             Log.d(TAG,
-                    "classifyContentSelections() called with: request = [" + request
+                    "onClassifyContentSelections() called with: request = [" + request
                             + "], callback = ["
                             + callback + "]");
         }
-        sWatcher.verifier.classifyContentSelections(request, callback);
+        sWatcher.verifier.onClassifyContentSelections(request, callback);
     }
 
     @Override
-    public void notifyInteraction(String requestId, Bundle interaction) {
+    public void onNotifyInteraction(String requestId, Bundle interaction) {
         if (DEBUG) {
             Log.d(TAG,
-                    "notifyInteraction() called with: requestId = [" + requestId
+                    "onNotifyInteraction() called with: requestId = [" + requestId
                             + "], interaction = ["
                             + interaction + "]");
         }
-        sWatcher.verifier.notifyInteraction(requestId, interaction);
+        sWatcher.verifier.onNotifyInteraction(requestId, interaction);
     }
 
     public static Watcher setWatcher() {
