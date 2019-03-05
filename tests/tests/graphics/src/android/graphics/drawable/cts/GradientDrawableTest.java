@@ -482,6 +482,27 @@ public class GradientDrawableTest {
     }
 
     @Test
+    public void testNegativeGradientThickness() {
+        try {
+            new GradientDrawable().setThicknessRatio(-1);
+            fail("Did not throw IllegalArgumentException with negative thickness ratio");
+        } catch (IllegalArgumentException e) {
+            // expected, test success
+        }
+    }
+
+    @Test
+    public void testZeroGradientThickness() {
+        try {
+            new GradientDrawable().setThicknessRatio(0);
+            fail("Did not throw IllegalArgumentException with zero thickness ratio");
+        } catch (IllegalArgumentException e) {
+            // expected, test success
+        }
+
+    }
+
+    @Test
     public void testGradientThicknessRatio() {
         GradientDrawable drawable = new GradientDrawable();
 
@@ -498,6 +519,26 @@ public class GradientDrawableTest {
         drawable.setInnerRadius(innerRadius);
 
         assertEquals(innerRadius, drawable.getInnerRadius());
+    }
+
+    @Test
+    public void testNegativeInnerRadiusRatio() {
+        try {
+            new GradientDrawable().setInnerRadiusRatio(-1);
+            fail("Did not throw IllegalArgumentException with negative thickness ratio");
+        } catch (IllegalArgumentException e) {
+            // expected, test success
+        }
+    }
+
+    @Test
+    public void testZeroInnerRadiusRatio() {
+        try {
+            new GradientDrawable().setInnerRadiusRatio(0);
+            fail("Did not throw IllegalArgumentException with zero thickness ratio");
+        } catch (IllegalArgumentException e) {
+            // expected, test success
+        }
     }
 
     @Test
