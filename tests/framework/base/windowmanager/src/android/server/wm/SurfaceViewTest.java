@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.server.wm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -28,7 +28,6 @@ import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
-import android.view.cts.SurfaceViewCtsActivity.MockSurfaceView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
@@ -50,7 +49,7 @@ import org.junit.runner.RunWith;
 public class SurfaceViewTest {
     private Instrumentation mInstrumentation;
     private SurfaceViewCtsActivity mActivity;
-    private MockSurfaceView mMockSurfaceView;
+    private SurfaceViewCtsActivity.MockSurfaceView mMockSurfaceView;
 
     @Rule
     public ActivityTestRule<SurfaceViewCtsActivity> mActivityRule =

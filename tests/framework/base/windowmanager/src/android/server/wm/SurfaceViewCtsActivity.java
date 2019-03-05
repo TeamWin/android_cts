@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.view.cts;
+package android.server.wm;
 
 import android.app.Activity;
 import android.content.Context;
@@ -21,7 +21,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
 import android.os.Bundle;
 import android.view.Surface;
 import android.view.SurfaceHolder;
