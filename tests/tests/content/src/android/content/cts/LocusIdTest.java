@@ -38,7 +38,12 @@ public class LocusIdTest {
 
     @Test
     public void testConstructor_nullId() {
-        assertThrows(NullPointerException.class, () -> new LocusId(null));
+        assertThrows(IllegalArgumentException.class, () -> new LocusId(null));
+    }
+
+    @Test
+    public void testConstructor_emptyId() {
+        assertThrows(IllegalArgumentException.class, () -> new LocusId(""));
     }
 
     @Test
