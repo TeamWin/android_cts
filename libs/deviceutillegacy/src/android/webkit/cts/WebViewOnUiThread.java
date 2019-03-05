@@ -47,7 +47,6 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 
 /**
  * Many tests need to run WebView code in the UI thread. This class
@@ -481,16 +480,12 @@ public class WebViewOnUiThread extends WebViewSyncLoader {
     }
 
     /**
-     * Execute javascript, returning a Future for the result.
+     * Execute javascript synchronously, returning the result.
      */
-    public Future<String> evaluateJavascript(final String script) {
-        SettableFuture<String> future = SettableFuture.create();
-        WebkitUtils.onMainThread(() -> {
-            mWebView.evaluateJavascript(script, (String result) -> {
-                future.set(result);
-            });
-        });
-        return future;
+    public String evaluateJavascriptSync(final String script) {
+        final SettableFuture<String> future = SettableFuture.create();
+        evaluateJavascript(script, result -> future.set(result));
+        return WebkitUtils.waitForFuture(future);
     }
 
     public void evaluateJavascript(final String script, final ValueCallback<String> result) {
