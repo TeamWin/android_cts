@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetFileDescriptor.AutoCloseInputStream;
 import android.database.Cursor;
@@ -55,10 +56,20 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
     protected MyActivity mActivity;
 
     private String[] mDisabledImes;
+    private String mDocumentsUiPackageId;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        final ResolveInfo ri = pm.resolveActivity(intent, 0);
+        mDocumentsUiPackageId = ri.activityInfo.packageName;
+
 
         // Wake up the device and dismiss the keyguard before the test starts.
         executeShellCommand("input keyevent KEYCODE_WAKEUP");
@@ -83,6 +94,10 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         mActivity.finish();
 
         enableImes();
+    }
+
+    protected String getDocumentsUiPackageId() {
+        return mDocumentsUiPackageId;
     }
 
     protected String getColumn(Uri uri, String column) {
@@ -187,7 +202,7 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
             Log.d(TAG, "Not clearing DocumentsUI due to test name: " + testName);
             return;
         }
-        executeShellCommand("pm clear com.android.documentsui");
+        executeShellCommand("pm clear " + getDocumentsUiPackageId());
     }
 
     private void disableImes() throws Exception {

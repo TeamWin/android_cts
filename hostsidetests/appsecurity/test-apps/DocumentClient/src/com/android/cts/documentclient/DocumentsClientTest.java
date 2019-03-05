@@ -48,8 +48,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
     private UiSelector findRootListSelector() throws UiObjectNotFoundException {
         return new UiSelector().resourceId(
-                "com.android.documentsui:id/container_roots").childSelector(
-                new UiSelector().resourceId("com.android.documentsui:id/roots_list"));
+                getDocumentsUiPackageId() + ":id/container_roots").childSelector(
+                new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/roots_list"));
 
     }
 
@@ -58,7 +58,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         if (!new UiObject(rootsList).waitForExists(TIMEOUT)) {
             Log.d(TAG, "Failed to find roots list; trying to expand");
             final UiSelector hamburger = new UiSelector().resourceId(
-                    "com.android.documentsui:id/toolbar").childSelector(
+                    getDocumentsUiPackageId() + ":id/toolbar").childSelector(
                     new UiSelector().className("android.widget.ImageButton").clickable(true));
             new UiObject(hamburger).click();
         }
@@ -73,8 +73,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
     private UiObject findSearchViewTextField() {
         final UiSelector selector = new UiSelector().resourceId(
-                "com.android.documentsui:id/option_menu_search").childSelector(
-                new UiSelector().resourceId("com.android.documentsui:id/search_src_text"));
+                getDocumentsUiPackageId() + ":id/option_menu_search").childSelector(
+                new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/search_src_text"));
         return mDevice.findObject(selector);
     }
 
@@ -93,14 +93,14 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         final UiObject rootItem = rootsListObject.getChildByText(
                 new UiSelector().className("android.widget.LinearLayout"), rootLabel, false);
         final UiSelector actionIcon =
-                new UiSelector().resourceId("com.android.documentsui:id/action_icon_area");
+                new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/action_icon_area");
         return new UiObject(rootItem.getSelector().childSelector(actionIcon));
     }
 
     private UiObject findDocument(String label) throws UiObjectNotFoundException {
         final UiSelector docList = new UiSelector().resourceId(
-                "com.android.documentsui:id/container_directory").childSelector(
-                new UiSelector().resourceId("com.android.documentsui:id/dir_list"));
+                getDocumentsUiPackageId() + ":id/container_directory").childSelector(
+                new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/dir_list"));
 
         // Wait for the first list item to appear
         assertTrue("First list item",
@@ -112,7 +112,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     }
 
     private UiObject findSaveButton() throws UiObjectNotFoundException {
-        return new UiObject(new UiSelector().resourceId("com.android.documentsui:id/container_save")
+        return new UiObject(new UiSelector().resourceId(
+                getDocumentsUiPackageId() + ":id/container_save")
                 .childSelector(new UiSelector().resourceId("android:id/button1")));
     }
 
