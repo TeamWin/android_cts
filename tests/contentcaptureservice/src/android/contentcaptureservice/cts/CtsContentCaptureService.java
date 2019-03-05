@@ -22,6 +22,7 @@ import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
+import android.service.contentcapture.ActivityEvent;
 import android.service.contentcapture.ContentCaptureService;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -93,9 +94,22 @@ public class CtsContentCaptureService extends ContentCaptureService {
     private int mLifecycleEventsCounter;
 
     /**
+     * Counter of received {@link ActivityEvent} events.
+     */
+    private int mActivityEventsCounter;
+
+    // NOTE: we could use the same counter for mLifecycleEventsCounter and mActivityEventsCounter,
+    // but that would make the tests flaker.
+
+    /**
      * Used for testing onUserDataRemovalRequest.
      */
     private UserDataRemovalRequest mRemovalRequest;
+
+    /**
+     * List of activity lifecycle events received.
+     */
+    private final ArrayList<MyActivityEvent> mActivityEvents = new ArrayList<>();
 
     /**
      * Optional listener for {@code onDisconnect()}.
@@ -244,9 +258,15 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     @Override
-    public void onUserDataRemovalRequest(@NonNull UserDataRemovalRequest request) {
+    public void onUserDataRemovalRequest(UserDataRemovalRequest request) {
         Log.i(TAG, "onUserDataRemovalRequest(id=" + mId + ",req=" + request + ")");
         mRemovalRequest = request;
+    }
+
+    @Override
+    public void onActivityEvent(ActivityEvent event) {
+        Log.i(TAG, "onActivityEvent(): " + event);
+        mActivityEvents.add(new MyActivityEvent(event));
     }
 
     /**
@@ -323,6 +343,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
         pw.print("mFinishedSessions: "); pw.println(mFinishedSessions);
         pw.print("mUnfinishedSessionLatches: "); pw.println(mUnfinishedSessionLatches);
         pw.print("mLifecycleEventsCounter: "); pw.println(mLifecycleEventsCounter);
+        pw.print("mActivityEventsCounter: "); pw.println(mActivityEventsCounter);
+        pw.print("mActivityLifecycleEvents: "); pw.println(mActivityEvents);
     }
 
     @NonNull
@@ -347,7 +369,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
                 + ".\nAll=" + mAllSessions
                 + ".\nOpen=" + mOpenSessions
                 + ".\nLatches=" + mUnfinishedSessionLatches
-                + ".\nFinished=" + mFinishedSessions);
+                + ".\nFinished=" + mFinishedSessions
+                + ".\nLifecycles=" + mActivityEvents);
     }
 
     private Session getExistingSession(@NonNull ContentCaptureSessionId sessionId) {
@@ -412,6 +435,21 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
     }
 
+    private final class MyActivityEvent {
+        public final int order;
+        public final ActivityEvent event;
+
+        private MyActivityEvent(ActivityEvent event) {
+            order = ++mActivityEventsCounter;
+            this.event = event;
+        }
+
+        @Override
+        public String toString() {
+            return order + "-" + event;
+        }
+    }
+
     public static final class ServiceWatcher {
 
         private final CountDownLatch mCreated = new CountDownLatch(1);
@@ -471,5 +509,81 @@ public class CtsContentCaptureService extends ContentCaptureService {
                 addException("DisconnectListener: onDisconnected() not called: " + e);
             }
         }
+    }
+
+    // TODO: make logic below more generic so it can be used for other events (and possibly move
+    // it to another helper class)
+
+    @NonNull
+    public EventsAssertor assertThat() {
+        return new EventsAssertor(mActivityEvents);
+    }
+
+    public static final class EventsAssertor {
+        private final List<MyActivityEvent> mEvents;
+        private int mNextEvent = 0;
+
+        private EventsAssertor(ArrayList<MyActivityEvent> events) {
+            mEvents = Collections.unmodifiableList(events);
+            Log.v(TAG, "EventsAssertor: " + mEvents);
+        }
+
+        @NonNull
+        public EventsAssertor activityResumed(@NonNull ComponentName expectedActivity) {
+            assertNextEvent((event) -> assertActivityEvent(event, expectedActivity,
+                    ActivityEvent.TYPE_ACTIVITY_RESUMED), "no ACTIVITY_RESUMED event for %s",
+                    expectedActivity);
+            return this;
+        }
+
+        @NonNull
+        public EventsAssertor activityPaused(@NonNull ComponentName expectedActivity) {
+            assertNextEvent((event) -> assertActivityEvent(event, expectedActivity,
+                    ActivityEvent.TYPE_ACTIVITY_PAUSED), "no ACTIVITY_PAUSED event for %s",
+                    expectedActivity);
+            return this;
+        }
+
+        private void assertNextEvent(@NonNull EventAssertion assertion, @NonNull String errorFormat,
+                @Nullable Object... errorArgs) {
+            do {
+                final int index = mNextEvent++;
+                final MyActivityEvent event = mEvents.get(index);
+                final String error = assertion.getErrorMessage(event);
+                if (error == null) return;
+                Log.w(TAG, "assertNextEvent(): ignoring event #" + index + "(" + event + "): "
+                        + error);
+            } while (mNextEvent < mEvents.size());
+            throw new AssertionError(String.format(errorFormat, errorArgs) + "\n. Events("
+                    + mEvents.size() + "): " + mEvents);
+        }
+    }
+
+    @Nullable
+    public static String assertActivityEvent(@NonNull MyActivityEvent myEvent,
+            @NonNull ComponentName expectedActivity, int expectedType) {
+        if (myEvent == null) {
+            return "myEvent is null";
+        }
+        final ActivityEvent event = myEvent.event;
+        if (event == null) {
+            return "event is null";
+        }
+        final int actualType = event.getEventType();
+        if (actualType != expectedType) {
+            return String.format("wrong event type for %s: expected %s, got %s", event,
+                    expectedType, actualType);
+        }
+        final ComponentName actualActivity = event.getComponentName();
+        if (!expectedActivity.equals(actualActivity)) {
+            return String.format("wrong activity for %s: expected %s, got %s", event,
+                    expectedActivity, actualActivity);
+        }
+        return null;
+    }
+
+    private interface EventAssertion {
+        @Nullable
+        String getErrorMessage(@NonNull MyActivityEvent event);
     }
 }
