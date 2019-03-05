@@ -100,14 +100,27 @@ public class OpenGlEsVersionTest {
     @Test
     public void testRequiredExtensions() throws InterruptedException {
         int reportedVersion = getVersionFromActivityManager(mActivity);
-        // We only have required extensions on ES3.1+
-        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) < 1)
+
+        if (getMajorVersion(reportedVersion) < 3)
             return;
 
         restartActivityWithClientVersion(3);
 
         String extensions = mActivity.getExtensionsString();
-        final String requiredList[] = {
+
+        final String es30RequiredList[] = {
+            "OES_EGL_image_external_essl3"
+        };
+
+        for (int i = 0; i < es30RequiredList.length; ++i) {
+            assertTrue("OpenGL ES version 3.0+ is missing extension " + es30RequiredList[i],
+                    hasExtension(extensions, es30RequiredList[i]));
+        }
+
+        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) < 1)
+            return;
+
+        final String es31RequiredList[] = {
             "EXT_texture_sRGB_decode",
             "KHR_blend_equation_advanced",
             "KHR_debug",
@@ -116,9 +129,9 @@ public class OpenGlEsVersionTest {
             "OES_texture_storage_multisample_2d_array"
         };
 
-        for (int i = 0; i < requiredList.length; ++i) {
-            assertTrue("OpenGL ES version 3.1+ is missing extension " + requiredList[i],
-                    hasExtension(extensions, requiredList[i]));
+        for (int i = 0; i < es31RequiredList.length; ++i) {
+            assertTrue("OpenGL ES version 3.1+ is missing extension " + es31RequiredList[i],
+                    hasExtension(extensions, es31RequiredList[i]));
         }
     }
 
