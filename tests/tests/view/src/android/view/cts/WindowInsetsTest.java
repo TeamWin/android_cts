@@ -58,11 +58,13 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT)
                 .build();
 
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
         assertEquals(Insets.of(5, 6, 7, 8), insets.getStableInsets());
+        assertEquals(Insets.of(9, 10, 11, 12), insets.getSystemGestureInsets());
         assertSame(CUTOUT, insets.getDisplayCutout());
     }
 
@@ -71,6 +73,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT)
                 .build();
         final WindowInsets copy = new WindowInsets.Builder(insets).build();
@@ -85,6 +88,7 @@ public class WindowInsetsTest {
 
         assertFalse(insets.hasSystemWindowInsets());
         assertFalse(insets.hasStableInsets());
+        assertEquals(Insets.NONE, insets.getSystemGestureInsets());
         assertNull(insets.getDisplayCutout());
         assertTrue(insets.isConsumed());
     }
@@ -97,6 +101,7 @@ public class WindowInsetsTest {
 
         assertFalse(insets.hasSystemWindowInsets());
         assertFalse(insets.hasStableInsets());
+        assertEquals(Insets.NONE, insets.getSystemGestureInsets());
 
         assertNull(insets.getDisplayCutout());
         assertFalse(insets.isConsumed());
@@ -108,12 +113,14 @@ public class WindowInsetsTest {
         final WindowInsets.Builder builder = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT);
         final WindowInsets insets = builder.build();
 
         builder.setSystemWindowInsets(Insets.NONE);
         builder.setStableInsets(Insets.NONE);
         builder.setDisplayCutout(null);
+        builder.setSystemGestureInsets(Insets.NONE);
 
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
         assertEquals(Insets.of(5, 6, 7, 8), insets.getStableInsets());
@@ -125,11 +132,13 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets insets2 = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         assertNotSame("Test setup failed, insets and insets2 should not be identical",
@@ -144,6 +153,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         assertNotEquals(insets, insets.consumeSystemWindowInsets());
@@ -156,6 +166,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets consumed = insets.consumeSystemWindowInsets();
@@ -163,6 +174,7 @@ public class WindowInsetsTest {
         assertEquals(Insets.NONE, consumed.getSystemWindowInsets());
         assertEquals(insets.getStableInsets(), consumed.getStableInsets());
         assertEquals(insets.getDisplayCutout(), consumed.getDisplayCutout());
+        assertEquals(insets.getSystemGestureInsets(), consumed.getSystemGestureInsets());
     }
 
     @Test
@@ -170,6 +182,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets consumed = insets.consumeStableInsets();
@@ -177,6 +190,7 @@ public class WindowInsetsTest {
         assertEquals(insets.getSystemWindowInsets(), consumed.getSystemWindowInsets());
         assertEquals(Insets.NONE, consumed.getStableInsets());
         assertEquals(insets.getDisplayCutout(), consumed.getDisplayCutout());
+        assertEquals(insets.getSystemGestureInsets(), consumed.getSystemGestureInsets());
     }
 
     @Test
@@ -184,6 +198,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets consumed = insets.consumeDisplayCutout();
@@ -191,6 +206,7 @@ public class WindowInsetsTest {
         assertEquals(insets.getSystemWindowInsets(), consumed.getSystemWindowInsets());
         assertEquals(insets.getStableInsets(), consumed.getStableInsets());
         assertNull(consumed.getDisplayCutout());
+        assertEquals(insets.getSystemGestureInsets(), consumed.getSystemGestureInsets());
     }
 
     @Test
@@ -198,6 +214,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         assertEquals(insets.getSystemWindowInsets(), Insets.of(
@@ -224,11 +241,13 @@ public class WindowInsetsTest {
         final WindowInsets replaced = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(13, 14, 15, 16))
                 .setDisplayCutout(CUTOUT).build()
                 .replaceSystemWindowInsets(new Rect(9, 10, 11, 12));
         final WindowInsets expected = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(9, 10, 11, 12))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(13, 14, 15, 16))
                 .setDisplayCutout(CUTOUT).build();
 
         assertEquals(expected, replaced);
@@ -241,6 +260,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(13, 14, 15, 16))
                 .setDisplayCutout(CUTOUT).build();
 
         assertEquals(insets.replaceSystemWindowInsets(newInsets),
@@ -253,26 +273,37 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets insetsChangedSysWindowInsets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(10, 20, 30, 40))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets insetsChangedStableInsets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(50, 60, 70, 80))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets insetsChangedCutout = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
                 .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                 .setDisplayCutout(CUTOUT2).build();
+
+        final WindowInsets insetsChangedGesture = new WindowInsets.Builder()
+                .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
+                .setStableInsets(Insets.of(5, 6, 7, 8))
+                .setSystemGestureInsets(Insets.of(90, 100, 110, 120))
+                .setDisplayCutout(CUTOUT).build();
 
         assertNotEquals(insets, insetsChangedSysWindowInsets);
         assertNotEquals(insets, insetsChangedStableInsets);
         assertNotEquals(insets, insetsChangedCutout);
+        assertNotEquals(insets, insetsChangedGesture);
     }
 
     @Test
@@ -280,6 +311,7 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(10, 20, 30, 40))
                 .setStableInsets(Insets.of(50, 60, 70, 80))
+                .setSystemGestureInsets(Insets.of(90, 100, 110, 120))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets insetInsets = insets.inset(
@@ -288,6 +320,8 @@ public class WindowInsetsTest {
         assertEquals(applyInset(insets.getSystemWindowInsets()),
                 insetInsets.getSystemWindowInsets());
         assertEquals(applyInset(insets.getStableInsets()), insetInsets.getStableInsets());
+        assertEquals(applyInset(insets.getSystemGestureInsets()),
+                insetInsets.getSystemGestureInsets());
         assertEquals(applyInset(getCutoutSafeInsets(insets)), getCutoutSafeInsets(insetInsets));
     }
 
@@ -296,12 +330,14 @@ public class WindowInsetsTest {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(10, 20, 30, 40))
                 .setStableInsets(Insets.of(50, 60, 70, 80))
+                .setSystemGestureInsets(Insets.of(90, 100, 110, 120))
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets insetInsets = insets.inset(1000, 1000, 1000, 1000);
 
         assertEquals(Insets.NONE, insetInsets.getSystemWindowInsets());
         assertEquals(Insets.NONE, insetInsets.getStableInsets());
+        assertEquals(Insets.NONE, insetInsets.getSystemGestureInsets());
         assertNull(insetInsets.getDisplayCutout());
     }
 
