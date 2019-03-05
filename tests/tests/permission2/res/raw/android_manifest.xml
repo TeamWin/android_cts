@@ -4475,6 +4475,11 @@
          @hide -->
     <permission android:name="android.permission.AMBIENT_WALLPAPER"
                 android:protectionLevel="signature|preinstalled" />
+    <!-- @SystemApi Permission that protects the {@link Intent#ACTION_REVIEW_ACCESSIBILITY_SERVICES}
+         intent.
+         @hide -->
+    <permission android:name="android.permission.REVIEW_ACCESSIBILITY_SERVICES"
+                android:protectionLevel="signature" />
 
     <!-- Allows the device to be reset, clearing all data and enables Test Harness Mode.
          @hide-->
