@@ -177,6 +177,11 @@
                   android:taskAffinity="nobody.but.LaunchingActivity"
                   android:exported="true" />
 
+        <activity
+            android:name="android.server.am.lifecycle.ActivityStarterTests$LaunchingAndFinishActivity"
+            android:taskAffinity="nobody.but.LaunchingActivity"
+            android:exported="true"/>
+
         <activity android:name="android.server.am.ActivityViewTest$ActivityViewTestActivity"
                   android:exported="true"/>
 
