@@ -17,6 +17,7 @@
 package android.app.appops.cts
 
 import android.app.AppOpsManager
+import android.app.AppOpsManager.HistoricalOp
 import android.app.AppOpsManager.HistoricalOps
 import android.app.Instrumentation
 import android.content.Context
@@ -149,7 +150,7 @@ class HistoricalAppopsTest {
         val secondOps = getHistoricalOpsFromDiskRaw(appOpsManager!!, uid, packageName!!,
                 null /*opNames*/, secondIntervalBeginMillis, secondIntervalEndMillis)
         val secondChunkCount = ((computeSlotCount(2) - computeSlotCount(1))
-                * SNAPSHOT_INTERVAL_MILLIS / chunk.endTimeMillis)
+            .times(SNAPSHOT_INTERVAL_MILLIS) / chunk.endTimeMillis)
         assertHasCounts(secondOps!!, 10 * secondChunkCount)
 
         // Validate the data for the third interval
@@ -164,12 +165,12 @@ class HistoricalAppopsTest {
         // Move history in future with the first interval duration
         appOpsManager!!.offsetHistory(- (2.5f * firstIntervalDurationMillis).toLong())
 
-        // Validate the data for the fourth interval
+        // Validate the data for the first interval
         val fourthOps = getHistoricalOpsFromDiskRaw(appOpsManager!!, uid, packageName!!,
                 null /*opNames*/, firstIntervalBeginMillis, firstIntervalEndMillis)
         assertHasCounts(fourthOps!!, 194)
 
-        // Validate the data for the fourth interval
+        // Validate the data for the second interval
         val fifthOps = getHistoricalOpsFromDiskRaw(appOpsManager!!, uid, packageName!!,
                 null /*opNames*/, secondIntervalBeginMillis, secondIntervalEndMillis)
 
@@ -187,7 +188,7 @@ class HistoricalAppopsTest {
         // Add the data to the history
         val chunk = createDataChunk()
         val chunkCount = (computeSlotCount(depth + 1)
-                * SNAPSHOT_INTERVAL_MILLIS / chunk.endTimeMillis)
+            .times(SNAPSHOT_INTERVAL_MILLIS) / chunk.endTimeMillis)
         for (i in 0 until chunkCount) {
             appOpsManager!!.addHistoricalOps(chunk)
         }
@@ -198,7 +199,7 @@ class HistoricalAppopsTest {
         val ops = getHistoricalOpsFromDiskRaw(appOpsManager!!, uid, packageName!!,
                 null /*opNames*/, intervalBeginMillis, intervalEndMillis)
         val expectedOpCount = ((computeSlotCount(depth + 1) - computeSlotCount(depth))
-                * SNAPSHOT_INTERVAL_MILLIS / chunk.endTimeMillis) * 10
+            .times(SNAPSHOT_INTERVAL_MILLIS) / chunk.endTimeMillis) * 10
         assertHasCounts(ops!!, expectedOpCount)
     }
 
@@ -209,43 +210,52 @@ class HistoricalAppopsTest {
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
 
-        appOpsManager!!.setUidMode(AppOpsManager.OPSTR_FINE_LOCATION, uid,
+        appOpsManager!!.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, uid,
                 AppOpsManager.MODE_ALLOWED)
-        appOpsManager!!.setUidMode(AppOpsManager.OPSTR_FINE_LOCATION, 2000,
+        appOpsManager!!.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
                 AppOpsManager.MODE_ALLOWED)
 
         try {
             val noteCount = 5
 
+            var beginTimeMillis = 0L
+            var endTimeMillis = 0L
+
             // Note ops such that we have data at all levels
             for (d in depth downTo 0) {
                 for (i in 0 until noteCount) {
-                    appOpsManager!!.noteOp(AppOpsManager.OPSTR_FINE_LOCATION, uid, packageName)
+                    appOpsManager!!.noteOp(AppOpsManager.OPSTR_START_FOREGROUND, uid, packageName)
                 }
+
                 if (d > 0) {
-                    val previousIntervalDuration = computeIntervalDurationMillis(d - 1)
-                    val currentIntervalDuration = computeIntervalDurationMillis(d)
-                    val sleepDurationMillis = (previousIntervalDuration
-                            + currentIntervalDuration / 2)
+                    val previousIntervalDuration = computeIntervalDurationMillis(d - 2)
+                    val currentIntervalDuration = computeIntervalDurationMillis(d - 1)
+
+                    endTimeMillis -= previousIntervalDuration
+                    beginTimeMillis -= currentIntervalDuration
+
+                    val sleepDurationMillis = currentIntervalDuration / 2
                     SystemClock.sleep(sleepDurationMillis)
                 }
             }
 
-            // Pick up ops for the whole interval
-            val durationMillis = (SNAPSHOT_INTERVAL_MILLIS
-                    * Math.pow(INTERVAL_COMPRESSION_MULTIPLIER.toDouble(),
-                    (depth).toDouble()) * (INTERVAL_COMPRESSION_MULTIPLIER - 1)).toLong()
-            val endTimeMillis = System.currentTimeMillis()
-            val beginTimeMillis = endTimeMillis - durationMillis
+            val nowMillis = System.currentTimeMillis()
+            if (depth > 0) {
+                beginTimeMillis += nowMillis
+                endTimeMillis += nowMillis
+            } else {
+                beginTimeMillis = nowMillis - SNAPSHOT_INTERVAL_MILLIS
+                endTimeMillis = Long.MAX_VALUE
+            }
 
             // Get all ops for the package
             val allOps = getHistoricalOps(appOpsManager!!, uid, packageName!!,
-                    null, beginTimeMillis, Long.MAX_VALUE)
+                    null, beginTimeMillis, endTimeMillis)
 
             assertThat(allOps).isNotNull()
             assertThat(allOps!!.uidCount).isEqualTo(1)
             assertThat(allOps.beginTimeMillis).isEqualTo(beginTimeMillis)
-            assertThat(allOps.endTimeMillis).isAtLeast(beginTimeMillis + durationMillis)
+            assertThat(allOps.endTimeMillis).isGreaterThan(beginTimeMillis)
 
             val uidOps = allOps.getUidOpsAt(0)
             assertThat(uidOps).isNotNull()
@@ -259,60 +269,79 @@ class HistoricalAppopsTest {
 
             val op = packageOps.getOpAt(0)
             assertThat(op).isNotNull()
-            assertThat(op.opName).isEqualTo(AppOpsManager.OPSTR_FINE_LOCATION)
+            assertThat(op.opName).isEqualTo(AppOpsManager.OPSTR_START_FOREGROUND)
 
-            assertThat(op.foregroundAccessCount).isEqualTo(noteCount)
-            assertThat(op.backgroundAccessCount).isEqualTo(0)
-
-            assertThat(op.getAccessCount(AppOpsManager.UID_STATE_PERSISTENT)).isEqualTo(0)
-            assertThat(op.getAccessCount(AppOpsManager.UID_STATE_TOP)).isEqualTo(0)
-            assertThat(op.getAccessCount(AppOpsManager.UID_STATE_FOREGROUND)).isEqualTo(0)
-            assertThat(op.getAccessCount(AppOpsManager.UID_STATE_FOREGROUND_SERVICE))
+            assertThat(op.getForegroundAccessCount(AppOpsManager.OP_FLAGS_ALL))
                     .isEqualTo(noteCount)
-            assertThat(op.getAccessCount(AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
-            assertThat(op.getAccessCount(AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
-
-            assertThat(op.foregroundAccessDuration).isEqualTo(0)
-            assertThat(op.backgroundAccessDuration).isEqualTo(0)
-            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_PERSISTENT)).isEqualTo(0)
-            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_TOP)).isEqualTo(0)
-            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_FOREGROUND)).isEqualTo(0)
-            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_FOREGROUND_SERVICE))
+            assertThat(op.getBackgroundAccessCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_PERSISTENT)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_TOP)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE_LOCATION))
                     .isEqualTo(0)
-            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
-            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE))
+                    .isEqualTo(noteCount)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_FOREGROUND)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
 
-            assertThat(op.foregroundRejectCount).isEqualTo(0)
-            assertThat(op.backgroundRejectCount).isEqualTo(0)
+            assertThat(op.getForegroundAccessDuration(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+            assertThat(op.getBackgroundAccessDuration(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+            assertThat(op.getAccessDuration(AppOpsManager.UID_STATE_TOP,
+                    AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAGS_ALL))
+                    .isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_PERSISTENT)).isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_TOP)).isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE_LOCATION))
+                    .isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE))
+                    .isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_FOREGROUND)).isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
+            assertThat(getAccessDuration(op, AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
+
+            assertThat(op.getForegroundRejectCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+            assertThat(op.getBackgroundRejectCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+            assertThat(op.getRejectCount(AppOpsManager.UID_STATE_TOP,
+                    AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAGS_ALL))
+                    .isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_PERSISTENT)).isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_TOP)).isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE_LOCATION))
+                    .isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE))
+                    .isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_FOREGROUND)).isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
+            assertThat(getRejectCount(op, AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
         } finally {
-            appOpsManager!!.setUidMode(AppOpsManager.OPSTR_FINE_LOCATION, uid,
+            appOpsManager!!.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, uid,
                     AppOpsManager.MODE_FOREGROUND)
-            appOpsManager!!.setUidMode(AppOpsManager.OPSTR_FINE_LOCATION, 2000,
+            appOpsManager!!.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
                     AppOpsManager.MODE_FOREGROUND)
         }
     }
 
-    private fun createDataChunk() : HistoricalOps {
+    private fun createDataChunk(): HistoricalOps {
         val chunk = HistoricalOps(SNAPSHOT_INTERVAL_MILLIS / 4,
                 SNAPSHOT_INTERVAL_MILLIS / 2)
-        chunk.increaseAccessCount(AppOpsManager.OP_COARSE_LOCATION, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, 10)
-        chunk.increaseAccessCount(AppOpsManager.OP_COARSE_LOCATION, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, 10)
-        chunk.increaseRejectCount(AppOpsManager.OP_COARSE_LOCATION, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, 10)
-        chunk.increaseRejectCount(AppOpsManager.OP_COARSE_LOCATION, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, 10)
-        chunk.increaseAccessDuration(AppOpsManager.OP_COARSE_LOCATION, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, 10)
-        chunk.increaseAccessDuration(AppOpsManager.OP_COARSE_LOCATION, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, 10)
+        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
+                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
+                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
+                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
+                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
+                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
+                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
         return chunk
     }
 
     private fun getHistoricalOps(appOpsManager: AppOpsManager, uid: Int,
             packageName: String, opNames: List<String>?, beginTimeMillis: Long,
-            endTimeMillis: Long) : HistoricalOps? {
+            endTimeMillis: Long): HistoricalOps? {
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
         val condition = lock.newCondition()
@@ -354,17 +383,29 @@ class HistoricalAppopsTest {
         val op = packageOps.getOpAt(0)
         assertThat(op).isNotNull()
 
-        assertThat(op.foregroundAccessCount).isEqualTo(count)
-        assertThat(op.backgroundAccessCount).isEqualTo(count)
-        assertThat(op.foregroundRejectCount).isEqualTo(count)
-        assertThat(op.backgroundRejectCount).isEqualTo(count)
-        assertThat(op.foregroundAccessDuration).isEqualTo(count)
-        assertThat(op.backgroundAccessDuration).isEqualTo(count)
+        assertThat(op.getForegroundAccessCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(count)
+        assertThat(op.getBackgroundAccessCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(count)
+        assertThat(op.getForegroundRejectCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(count)
+        assertThat(op.getBackgroundRejectCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(count)
+        assertThat(op.getForegroundAccessDuration(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(count)
+        assertThat(op.getBackgroundAccessDuration(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(count)
+    }
+
+    private fun getAccessCount(op: HistoricalOp, uidState: Int): Long {
+        return op.getAccessCount(uidState, uidState, AppOpsManager.OP_FLAGS_ALL)
+    }
+
+    private fun getRejectCount(op: HistoricalOp, uidState: Int): Long {
+        return op.getRejectCount(uidState, uidState, AppOpsManager.OP_FLAGS_ALL)
+    }
+
+    private fun getAccessDuration(op: HistoricalOp, uidState: Int): Long {
+        return op.getAccessDuration(uidState, uidState, AppOpsManager.OP_FLAGS_ALL)
     }
 
     private fun getHistoricalOpsFromDiskRaw(appOpsManager: AppOpsManager, uid: Int,
             packageName: String, opNames: List<String>?, beginTimeMillis: Long,
-            endTimeMillis: Long) : HistoricalOps? {
+            endTimeMillis: Long): HistoricalOps? {
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
         val condition = lock.newCondition()
@@ -402,7 +443,7 @@ class HistoricalAppopsTest {
                     (depth + 1).toDouble()).toLong() * SNAPSHOT_INTERVAL_MILLIS
         }
 
-        private fun computeSlotCount(depth: Int) : Int {
+        private fun computeSlotCount(depth: Int): Int {
             var count = 0
             for (i in 1..depth) {
                 count += Math.pow(INTERVAL_COMPRESSION_MULTIPLIER.toDouble(), i.toDouble()).toInt()
@@ -419,11 +460,11 @@ class HistoricalAppopsTest {
             return beginTimeMillis * SNAPSHOT_INTERVAL_MILLIS
         }
 
-        private fun getInstrumentation() : Instrumentation {
+        private fun getInstrumentation(): Instrumentation {
             return InstrumentationRegistry.getInstrumentation()
         }
 
-        private fun getContext() : Context {
+        private fun getContext(): Context {
             return getInstrumentation().context
         }
     }

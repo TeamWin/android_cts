@@ -4897,4 +4897,24 @@ Follow the instructions on the screen to measure the frequency response for the 
     </string>
     <string name="telecom_incoming_self_mgd_confirm_answer_button">Confirm Answer</string>
 
+    <!-- Strings for SetNewPasswordComplexityTest -->
+    <string name="set_complexity_test_title">Set New Password Complexity Test</string>
+    <string name="set_complexity_test_message">
+        This test verifies that when an app prompts users to set a new screen lock of a certain complexity level, correct limitations are applied to the UI.\n
+        \nClick the complexity level buttons one by one and make sure you can only set a screen lock of the types and minimum length specified on the right of each button.
+    </string>
+    <string name="set_complexity_high_txt">High</string>
+    <string name="set_complexity_medium_txt">Medium</string>
+    <string name="set_complexity_low_txt">Low</string>
+    <string name="set_complexity_none_txt">None</string>
+    <string name="set_complexity_high_desc">
+        PIN without repeating (4444) or ordered (1234, 4321, 2468) sequences, length at least 8; Or
+        \nAlphabetic, length at least 6; Or
+        \nAlphanumeric, length at least 6</string>
+    <string name="set_complexity_medium_desc">
+        PIN without repeating (4444) or ordered (1234, 4321, 2468) sequences, length at least 4; Or
+        \nAlphabetic, length at least 4; Or
+        \nAlphanumeric, length at least 4</string>
+    <string name="set_complexity_low_desc">Any pattern, PIN or password</string>
+    <string name="set_complexity_none_desc">No restrictions</string>
 </resources>

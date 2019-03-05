@@ -46,7 +46,6 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.ActivityLauncher;
-import android.net.Uri;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
@@ -1215,6 +1214,6 @@ public class ChildlessActivityTest
 
     @NonNull
     private ContentCaptureContext.Builder newContentCaptureContextBuilder(@NonNull String id) {
-        return new ContentCaptureContext.Builder(new LocusId(Uri.parse(id)));
+        return new ContentCaptureContext.Builder(new LocusId(id));
     }
 }

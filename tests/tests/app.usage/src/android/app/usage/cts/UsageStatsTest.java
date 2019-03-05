@@ -60,6 +60,7 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -933,6 +934,15 @@ public class UsageStatsTest {
 
         try {
             mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
+                    Duration.ofHours(1), Duration.ofHours(1), null);
+            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
+        } catch (SecurityException e) {
+            // Exception expected
+        }
+
+        // STOPSHIP b/126917290: remove this check when deprecated method is removed.
+        try {
+            mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
                     1, java.util.concurrent.TimeUnit.HOURS, null);
             fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
         } catch (SecurityException e) {
@@ -1096,10 +1106,15 @@ public class UsageStatsTest {
                 Activities.ActivityThree.class,
         };
         mUiDevice.wakeUp();
+        mUiDevice.pressHome();
 
         final long startTime = System.currentTimeMillis();
         // Launch the series of Activities.
         launchSubActivities(activitySequence);
+
+        mUiDevice.pressHome();
+        SystemClock.sleep(250);
+
         final long endTime = System.currentTimeMillis();
         final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
 

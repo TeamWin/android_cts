@@ -160,6 +160,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1696,6 +1697,7 @@ public abstract class ActivityManagerTestBase {
         private ComponentName mBroadcastReceiver;
         private String mBroadcastReceiverAction;
         private int mIntentFlags;
+        private Bundle mExtras;
         private LaunchInjector mLaunchInjector;
 
         private enum LauncherType {
@@ -1815,6 +1817,19 @@ public abstract class ActivityManagerTestBase {
         public LaunchActivityBuilder setIntentFlags(int flags) {
             mIntentFlags = flags;
             return this;
+        }
+
+        public LaunchActivityBuilder setIntentExtra(Consumer<Bundle> extrasConsumer) {
+            if (extrasConsumer != null) {
+                mExtras = new Bundle();
+                extrasConsumer.accept(mExtras);
+            }
+            return this;
+        }
+
+        @Override
+        public Bundle getExtras() {
+            return mExtras;
         }
 
         @Override

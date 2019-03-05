@@ -34,6 +34,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.Process;
 import android.os.SystemClock;
 import android.server.am.TestJournalProvider.TestJournalClient;
 import android.util.ArrayMap;
@@ -84,6 +85,8 @@ public final class CommandSession {
     private static final String KEY_HOST_ID = EXTRA_PREFIX + "key_host_id";
     private static final String KEY_ORIENTATION = EXTRA_PREFIX + "key_orientation";
     private static final String KEY_REQUEST_TOKEN = EXTRA_PREFIX + "key_request_id";
+    private static final String KEY_UID_HAS_ACCESS_ON_DISPLAY =
+            EXTRA_PREFIX + "uid_has_access_on_display";
 
     private static final String COMMAND_FINISH = EXTRA_PREFIX + "command_finish";
     private static final String COMMAND_GET_CONFIG = EXTRA_PREFIX + "command_get_config";
@@ -91,6 +94,8 @@ public final class CommandSession {
     private static final String COMMAND_TAKE_CALLBACK_HISTORY = EXTRA_PREFIX
             + "command_take_callback_history";
     private static final String COMMAND_WAIT_IDLE = EXTRA_PREFIX + "command_wait_idle";
+    private static final String COMMAND_DISPLAY_ACCESS_CHECK =
+            EXTRA_PREFIX + "display_access_check";
 
     private static final long INVALID_REQUEST_TOKEN = -1;
 
@@ -226,6 +231,11 @@ public final class CommandSession {
             return "Activity";
         }
 
+        public boolean isUidAccesibleOnDisplay() {
+            return sendCommandAndWaitReply(COMMAND_DISPLAY_ACCESS_CHECK, null).getBoolean(
+                    KEY_UID_HAS_ACCESS_ON_DISPLAY);
+        }
+
         /** Send command to the associated activity. */
         public void sendCommand(String command) {
             sendCommand(command, null /* data */);
@@ -348,6 +358,7 @@ public final class CommandSession {
     /** A proxy to launch activity by intent or shell command. */
     interface LaunchProxy {
         void setLaunchInjector(LaunchInjector injector);
+        default Bundle getExtras() { return null; }
         void execute();
         boolean shouldWaitForLaunched();
     }
@@ -412,6 +423,10 @@ public final class CommandSession {
             proxy.setLaunchInjector(new LaunchInjector() {
                 @Override
                 public void setupIntent(Intent intent) {
+                    final Bundle bundle = proxy.getExtras();
+                    if (bundle != null) {
+                        intent.putExtras(bundle);
+                    }
                     setupLaunchIntent(intent, waitIdle, session);
                 }
 
@@ -747,6 +762,13 @@ public final class CommandSession {
 
                 case COMMAND_WAIT_IDLE:
                     runWhenIdle(() -> reply(command));
+                    break;
+
+                case COMMAND_DISPLAY_ACCESS_CHECK:
+                    final Bundle result = new Bundle();
+                    final boolean displayHasAccess = getDisplay().hasAccess(Process.myUid());
+                    result.putBoolean(KEY_UID_HAS_ACCESS_ON_DISPLAY, displayHasAccess);
+                    reply(command, result);
                     break;
 
                 default:

@@ -46,6 +46,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
@@ -470,12 +471,20 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
         ActivitySession launchActivityOnDisplay(ComponentName activityName,
                 ActivityDisplay display) {
+            return launchActivityOnDisplay(activityName, display, null /* extrasConsumer */,
+                    true /* withShellPermission */, true /* waitForLaunch */);
+        }
+
+        ActivitySession launchActivityOnDisplay(ComponentName activityName,
+                ActivityDisplay display, Consumer<Bundle> extrasConsumer,
+                boolean withShellPermission, boolean waitForLaunch) {
             return launchActivity(builder -> builder
-                    // TODO(b/112837428): Use public display if possible.
                     // VirtualDisplayActivity is in different package. If the display is not public,
                     // it requires shell permission to launch activity ({@see com.android.server.am.
                     // ActivityStackSupervisor#isCallerAllowedToLaunchOnDisplay}).
-                    .setWithShellPermission(true)
+                    .setWithShellPermission(withShellPermission)
+                    .setWaitForLaunched(waitForLaunch)
+                    .setIntentExtra(extrasConsumer)
                     .setTargetActivity(activityName)
                     .setDisplayId(display.mId));
         }

@@ -38,6 +38,7 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_SCREEN_LOCK_COMPLEXITY" />
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.flash" android:required="false"/>
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
@@ -1313,6 +1314,18 @@
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
+        </activity>
+
+        <activity android:name=".security.SetNewPasswordComplexityTest"
+                  android:label="@string/set_complexity_test_title"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_security" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.software.lockscreen_disabled" />
         </activity>
 
         <activity android:name=".streamquality.StreamingVideoActivity"

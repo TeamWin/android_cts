@@ -337,7 +337,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         }
     }
 
-    public void testGetContent() throws Exception {
+    public void testGetContent_rootsShowing() throws Exception {
         if (!supportedHardware()) return;
 
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -361,7 +361,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertEquals("ReSuLt", result.data.getAction());
     }
 
-    public void testGetContentWithQueryContent() throws Exception {
+    public void testGetContentWithQuery_matchingFileShowing() throws Exception {
         if (!supportedHardware()) return;
 
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -378,6 +378,30 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         UiObject textField = findSearchViewTextField();
         assertTrue(textField.exists());
         assertEquals(queryString, textField.getText());
+    }
+
+    public void testGetContent_returnsResultToCallingActivity() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        mDevice.waitForIdle();
+        findRoot("CtsCreate").click();
+
+        // Pick the file.
+        mDevice.waitForIdle();
+        findDocument("FILE2").click();
+
+        // Confirm that the returned file is a regular file caused by the click.
+        final Result result = mActivity.getResult();
+        final Uri uri = result.data.getData();
+        assertEquals("doc:file2", DocumentsContract.getDocumentId(uri));
+
+        // We should now have permission to read
+        MoreAsserts.assertEquals("filetwo".getBytes(), readFully(uri));
     }
 
     public void testTransferDocument() throws Exception {

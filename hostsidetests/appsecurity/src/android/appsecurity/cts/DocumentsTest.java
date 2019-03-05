@@ -62,12 +62,18 @@ public class DocumentsTest extends DocumentsTestCase {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTree");
     }
 
-    public void testGetContent() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContent");
+    public void testGetContent_rootsShowing() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContent_rootsShowing");
     }
 
-    public void testGetContentWithQueryContent() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContentWithQueryContent");
+    public void testGetContentWithQuery_matchingFileShowing() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+                "testGetContentWithQuery_matchingFileShowing");
+    }
+
+    public void testGetContent_returnsResultToCallingActivity() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+                "testGetContent_returnsResultToCallingActivity");
     }
 
     public void testTransferDocument() throws Exception {
