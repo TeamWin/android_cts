@@ -226,7 +226,7 @@ public class BiometricTest extends PassFailButtons.Activity {
         BiometricPrompt.Builder builder = new BiometricPrompt.Builder(getApplicationContext())
             .setTitle("Please authenticate");
         if (allowCredential) {
-            builder.setAllowDeviceCredential(true);
+            builder.setDeviceCredentialAllowed(true);
         } else {
             builder.setNegativeButton("Cancel", mExecutor, mBiometricPromptButtonListener);
         }

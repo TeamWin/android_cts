@@ -109,7 +109,7 @@ public class BiometricPromptBoundKeysTest extends FingerprintBoundKeysTest {
                                 mHandler.post(mNegativeButtonRunnable);
                             }
                         })
-                .setRequireConfirmation(requireConfirmation)
+                .setConfirmationRequired(requireConfirmation)
                 .build();
         mBiometricPrompt.authenticate(
                 new BiometricPrompt
