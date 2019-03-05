@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.content.LocusId;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
@@ -39,11 +38,12 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ContentCaptureContextTest {
 
-    private static final Uri URI = Uri.parse("file://dev/null");
+    private static final String ID = "4815162342";
 
-    private static final LocusId ID = new LocusId(URI);
+    private static final LocusId LOCUS_ID = new LocusId(ID);
 
-    private final ContentCaptureContext.Builder mBuilder = new ContentCaptureContext.Builder(ID);
+    private final ContentCaptureContext.Builder mBuilder = new ContentCaptureContext.Builder(
+            LOCUS_ID);
 
     private final Bundle mExtras = new Bundle();
 
@@ -83,7 +83,7 @@ public class ContentCaptureContextTest {
     public void testGetId() {
         final ContentCaptureContext context = mBuilder.build();
         assertThat(context).isNotNull();
-        assertThat(context.getLocusId()).isEqualTo(ID);
+        assertThat(context.getLocusId()).isEqualTo(LOCUS_ID);
     }
 
     @Test
@@ -114,17 +114,17 @@ public class ContentCaptureContextTest {
 
     @Test
     public void testForLocus_valid() {
-        final ContentCaptureContext context = ContentCaptureContext.forLocusId(URI);
+        final ContentCaptureContext context = ContentCaptureContext.forLocusId(ID);
         assertThat(context).isNotNull();
         assertThat(context.getExtras()).isNull();
         final LocusId locusId = context.getLocusId();
         assertThat(locusId).isNotNull();
-        assertThat(locusId.getUri()).isEqualTo(URI);
+        assertThat(locusId.getId()).isEqualTo(ID);
     }
 
     private void assertEverything(@NonNull ContentCaptureContext context) {
         assertThat(context).isNotNull();
-        assertThat(context.getLocusId()).isEqualTo(ID);
+        assertThat(context.getLocusId()).isEqualTo(LOCUS_ID);
         assertExtras(context.getExtras());
     }
 

@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.content.LocusId;
-import android.net.Uri;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 
@@ -34,8 +33,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class LocusIdTest {
 
-    private static final Uri URI = Uri.parse("file://dev/null");
-    private static final Uri ANOTHER_URI = Uri.parse("http://h.t.t.p");
+    private static final String ID = "file://dev/null";
+    private static final String ANOTHER_ID = "http://h.t.t.p";
 
     @Test
     public void testConstructor_nullId() {
@@ -44,30 +43,30 @@ public class LocusIdTest {
 
     @Test
     public void testParcel() {
-        final LocusId clone = cloneThroughParcel(new LocusId(URI));
-        assertThat(clone.getUri()).isEqualTo(URI);
+        final LocusId clone = cloneThroughParcel(new LocusId(ID));
+        assertThat(clone.getId()).isEqualTo(ID);
     }
 
     @Test
     public void testEquals() {
-        final LocusId id1  = new LocusId(URI);
-        final LocusId id2  = new LocusId(URI);
+        final LocusId id1  = new LocusId(ID);
+        final LocusId id2  = new LocusId(ID);
         assertThat(id1).isEqualTo(id2);
         assertThat(id2).isEqualTo(id1);
 
-        final LocusId id3 = new LocusId(ANOTHER_URI);
+        final LocusId id3 = new LocusId(ANOTHER_ID);
         assertThat(id1).isNotEqualTo(id3);
         assertThat(id3).isNotEqualTo(id1);
     }
 
     @Test
     public void testHashcode() {
-        final LocusId id1  = new LocusId(URI);
-        final LocusId id2  = new LocusId(URI);
+        final LocusId id1  = new LocusId(ID);
+        final LocusId id2  = new LocusId(ID);
         assertThat(id1.hashCode()).isEqualTo(id2.hashCode());
         assertThat(id2.hashCode()).isEqualTo(id1.hashCode());
 
-        final LocusId id3 = new LocusId(ANOTHER_URI);
+        final LocusId id3 = new LocusId(ANOTHER_ID);
         assertThat(id1.hashCode()).isNotEqualTo(id3.hashCode());
         assertThat(id3.hashCode()).isNotEqualTo(id1.hashCode());
     }
