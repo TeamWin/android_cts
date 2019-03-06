@@ -56,26 +56,31 @@ public class CarSensorManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testRequiredSensorsForDrivingState() throws Exception {
-        boolean foundSpeed = false;
-        boolean foundGear = false;
-        for (int sensor: mSupportedSensors) {
-            if (sensor == CarSensorManager.SENSOR_TYPE_CAR_SPEED) {
-                foundSpeed = true;
-            } else if ( sensor == CarSensorManager.SENSOR_TYPE_GEAR) {
-                foundGear = true;
-            }
-            if (foundGear && foundSpeed) {
-                break;
-            }
-        }
-        assertTrue(foundGear && foundSpeed);
+        boolean foundSpeed =
+            isSupportSensor(CarSensorManager.SENSOR_TYPE_CAR_SPEED);
+        boolean foundGear = isSupportSensor(CarSensorManager.SENSOR_TYPE_GEAR);
+        assertTrue("Must support SENSOR_TYPE_CAR_SPEED", foundSpeed);
+        assertTrue("Must support SENSOR_TYPE_GEAR", foundGear);
     }
 
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportNightSensor() {
-        assertTrue("Must support SENSOR_TYPE_NIGHT",
-                IntStream.of(mSupportedSensors)
-                        .anyMatch(x -> x == CarSensorManager.SENSOR_TYPE_NIGHT));
+        boolean foundNightSensor =
+            isSupportSensor(CarSensorManager.SENSOR_TYPE_NIGHT);
+        assertTrue("Must support SENSOR_TYPE_NIGHT", foundNightSensor);
+    }
+
+    @CddTest(requirement = "2.5.1")
+    @Test
+    public void testMustSupportParkingBrake() throws Exception {
+        boolean foundParkingBrake =
+            isSupportSensor(CarSensorManager.SENSOR_TYPE_PARKING_BRAKE);
+        assertTrue("Must support SENSOR_TYPE_PARKING_BRAKE", foundParkingBrake);
+    }
+
+    private boolean isSupportSensor(int sensorType) {
+        return IntStream.of(mSupportedSensors)
+            .anyMatch(x -> x == sensorType);
     }
 }
