@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.DisplayCutout;
@@ -49,6 +50,8 @@ public class LightBarTestBase {
 
     public static final Path DUMP_PATH = FileSystems.getDefault()
             .getPath("/sdcard/LightBarTestBase/");
+
+    private static final int COLOR_DIFF_THESHOLDS = 2;
 
     private ArrayList<Rect> mCutouts;
 
@@ -171,7 +174,7 @@ public class LightBarTestBase {
                 continue;
             }
 
-            if (dividerColor != pixels[col]) {
+            if (!isColorSame(dividerColor, pixels[col])) {
                 diffCount++;
             }
         }
@@ -189,6 +192,13 @@ public class LightBarTestBase {
                 dumpBitmap(bitmap, methodName);
             }
         }
+    }
+
+    private static boolean isColorSame(int c1, int c2) {
+        return Math.abs(Color.alpha(c1) - Color.alpha(c2)) < COLOR_DIFF_THESHOLDS
+                && Math.abs(Color.red(c1) - Color.red(c2)) < COLOR_DIFF_THESHOLDS
+                && Math.abs(Color.green(c1) - Color.green(c2)) < COLOR_DIFF_THESHOLDS
+                && Math.abs(Color.blue(c1) - Color.blue(c2)) < COLOR_DIFF_THESHOLDS;
     }
 
     protected void assumeNavigationBarChangesColor(int backgroundColorPixelCount, int totalPixel) {
