@@ -20,7 +20,6 @@ import static android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_NORMAL;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_SMALL;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
-
 import static android.util.DisplayMetrics.DENSITY_400;
 import static android.util.DisplayMetrics.DENSITY_560;
 import static android.util.DisplayMetrics.DENSITY_HIGH;
@@ -29,8 +28,8 @@ import static android.util.DisplayMetrics.DENSITY_MEDIUM;
 import static android.util.DisplayMetrics.DENSITY_TV;
 import static android.util.DisplayMetrics.DENSITY_XHIGH;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -38,17 +37,18 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.StatFs;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
 import android.util.DisplayMetrics;
-import android.view.WindowManager;
 import android.util.Log;
+import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 
-import org.junit.runner.RunWith;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 

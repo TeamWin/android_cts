@@ -18,7 +18,6 @@ package android.app.cts;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
@@ -28,6 +27,7 @@ import static org.mockito.Mockito.verify;
 
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
+import android.app.stubs.R;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -39,11 +39,12 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -52,8 +53,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
-
-import android.app.stubs.R;
 
 import java.io.IOException;
 import java.util.ArrayList;

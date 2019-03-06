@@ -21,9 +21,6 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import android.os.Process;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
@@ -31,6 +28,10 @@ import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeEventStream;

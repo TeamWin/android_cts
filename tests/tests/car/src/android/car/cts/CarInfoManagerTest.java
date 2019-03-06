@@ -19,10 +19,10 @@ import static org.junit.Assert.assertNotNull;
 
 import android.car.Car;
 import android.car.CarInfoManager;
-import android.os.Bundle;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

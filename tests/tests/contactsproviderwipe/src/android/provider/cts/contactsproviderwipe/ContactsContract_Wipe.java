@@ -32,10 +32,11 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Intents;
 import android.provider.ContactsContract.ProviderStatus;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

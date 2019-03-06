@@ -17,6 +17,7 @@
 package com.android.cts.usepermission;
 
 import static junit.framework.Assert.assertEquals;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
@@ -31,8 +32,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
@@ -47,13 +46,19 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.widget.ScrollView;
 import android.widget.Switch;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import junit.framework.Assert;
+
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
-import junit.framework.Assert;
-import org.junit.Before;
-import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public abstract class BasePermissionsTest {

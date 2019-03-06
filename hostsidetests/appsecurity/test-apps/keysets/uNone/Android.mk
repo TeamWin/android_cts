@@ -22,7 +22,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 LOCAL_PACKAGE_NAME := CtsKeySetSigningAUpgradeNone
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 LOCAL_DEX_PREOPT := false

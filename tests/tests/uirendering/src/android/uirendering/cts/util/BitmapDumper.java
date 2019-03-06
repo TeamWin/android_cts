@@ -17,7 +17,6 @@ package android.uirendering.cts.util;
 
 import android.graphics.Bitmap;
 import android.os.Environment;
-import android.support.test.InstrumentationRegistry;
 import android.uirendering.cts.differencevisualizers.DifferenceVisualizer;
 import android.util.Log;
 

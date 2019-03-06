@@ -25,26 +25,26 @@ import android.hardware.input.cts.InputCallback;
 import android.hardware.input.cts.InputCtsActivity;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import libcore.io.IoUtils;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class InputTestCase {
     // hid executable expects "-" argument to read from stdin instead of a file

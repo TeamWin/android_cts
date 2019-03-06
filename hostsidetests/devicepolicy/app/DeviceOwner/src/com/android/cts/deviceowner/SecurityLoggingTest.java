@@ -65,7 +65,8 @@ import android.os.UserManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

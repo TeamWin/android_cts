@@ -41,10 +41,11 @@ import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.Request.SetRe
 import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.Response;
 import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.SyncInvocation;
 import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.BatteryUtils;
@@ -62,9 +63,7 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
 
-
 // TODO Don't run if no network is available.
-
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class CtsSyncManagerTest {

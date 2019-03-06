@@ -20,8 +20,8 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
 
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs android.test.runner.stubs
 

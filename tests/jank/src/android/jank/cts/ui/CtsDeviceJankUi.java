@@ -18,12 +18,13 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.jank.cts.CtsJankTestBase;
 import android.os.SystemClock;
-import android.support.test.jank.JankTest;
-import android.support.test.jank.WindowContentFrameStatsMonitor;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.Until;
 import android.widget.ListView;
+
+import androidx.test.jank.JankTest;
+import androidx.test.jank.WindowContentFrameStatsMonitor;
 
 import java.io.IOException;
 

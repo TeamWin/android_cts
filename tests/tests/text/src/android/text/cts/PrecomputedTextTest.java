@@ -29,9 +29,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
 import android.text.PrecomputedText;
 import android.text.PrecomputedText.Params;
@@ -43,6 +40,10 @@ import android.text.TextPaint;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.LocaleSpan;
 import android.text.style.TextAppearanceSpan;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

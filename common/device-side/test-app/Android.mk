@@ -31,7 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-test\
     compatibility-device-info-tests\
     compatibility-device-info\
     compatibility-device-util-tests\
-    compatibility-device-util
+    compatibility-device-util-axt
 
 LOCAL_PACKAGE_NAME := CompatibilityTestApp
 

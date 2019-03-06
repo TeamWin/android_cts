@@ -17,7 +17,8 @@ package com.android.cts.deviceandprofileowner;
 
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.InstrumentationRegistry;
 
 public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
 

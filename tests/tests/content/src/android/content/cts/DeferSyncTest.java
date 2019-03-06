@@ -39,8 +39,9 @@ import static org.mockito.Mockito.when;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentResolver;
 import android.os.Bundle;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.content.AlwaysSyncableSyncService;
 import com.android.cts.content.FlakyTestRule;

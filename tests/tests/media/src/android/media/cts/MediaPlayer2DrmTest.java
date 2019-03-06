@@ -20,10 +20,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.SdkSuppress;
-import android.support.test.rule.GrantPermissionRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.SdkSuppress;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

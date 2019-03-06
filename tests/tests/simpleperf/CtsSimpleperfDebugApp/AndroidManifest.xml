@@ -22,5 +22,5 @@
     </application>
     <instrumentation
         android:targetPackage="com.android.simpleperf"
-        android:name="android.support.test.runner.AndroidJUnitRunner" />
+        android:name="androidx.test.runner.AndroidJUnitRunner" />
 </manifest>
