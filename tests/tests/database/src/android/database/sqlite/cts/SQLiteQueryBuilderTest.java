@@ -225,6 +225,18 @@ public class SQLiteQueryBuilderTest {
     }
 
     @Test
+    public void testAppendWhereStandalone() {
+        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+        qb.setTables("Employee");
+        qb.appendWhereStandalone("A");
+        qb.appendWhereStandalone("B");
+        qb.appendWhereStandalone("C");
+
+        final String query = qb.buildQuery(null, null, null, null, null, null);
+        assertTrue(query.contains("(A) AND (B) AND (C)"));
+    }
+
+    @Test
     public void testQuery() {
         createEmployeeTable();
 
