@@ -49,8 +49,6 @@ import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -251,35 +249,6 @@ public class StorageTest extends InstrumentationTestCase {
         ext.mkdir();
         try { sm.setCacheBehaviorTombstone(ext, true); fail(); } catch (IOException expected) { }
         try { sm.setCacheBehaviorTombstone(ext, false); fail(); } catch (IOException expected) { }
-    }
-
-    public void testExternalStorageRename() throws Exception {
-        final String name = "cts_" + System.nanoTime();
-
-        // Stage some contents to move around
-        File cur = Environment.getExternalStorageDirectory();
-        try (FileOutputStream fos = new FileOutputStream(new File(cur, name))) {
-            fos.write(42);
-        }
-
-        for (File next : new File[] {
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                getContext().getExternalCacheDir(),
-                getContext().getExternalFilesDir(null),
-                getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                getContext().getExternalMediaDirs()[0],
-                getContext().getObbDir(),
-        }) {
-            next.mkdirs();
-            assertTrue("Failed to move from " + cur + " to " + next,
-                    new File(cur, name).renameTo(new File(next, name)));
-            cur = next;
-        }
-
-        // Make sure the data made the journey
-        try (FileInputStream fis = new FileInputStream(new File(cur, name))) {
-            assertEquals(42, fis.read());
-        }
     }
 
     /**
