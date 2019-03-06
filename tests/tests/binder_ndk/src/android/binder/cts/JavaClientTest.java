@@ -100,6 +100,31 @@ public class JavaClientTest {
         mInterface.TestOneway();
     }
 
+    private void checkDump(String expected, String[] args) throws RemoteException, IOException {
+        ParcelFileDescriptor[] sockets = ParcelFileDescriptor.createReliableSocketPair();
+        ParcelFileDescriptor socketIn = sockets[0];
+        ParcelFileDescriptor socketOut = sockets[1];
+
+        mInterface.asBinder().dump(socketIn.getFileDescriptor(), args);
+        socketIn.close();
+
+        FileInputStream fileInputStream = new ParcelFileDescriptor.AutoCloseInputStream(socketOut);
+
+        byte[] expectedBytes = expected.getBytes();
+        byte[] input = new byte[expectedBytes.length];
+
+        assertEquals(input.length, fileInputStream.read(input));
+        Assert.assertArrayEquals(input, expectedBytes);
+    }
+
+    @Test
+    public void testDump() throws RemoteException, IOException {
+        checkDump("", new String[]{});
+        checkDump("", new String[]{"", ""});
+        checkDump("Hello World!", new String[]{"Hello ", "World!"});
+        checkDump("ABC", new String[]{"A", "B", "C"});
+    }
+
     @Test
     public void testCallingInfo() throws RemoteException {
       mInterface.CacheCallingInfoFromOneway();
