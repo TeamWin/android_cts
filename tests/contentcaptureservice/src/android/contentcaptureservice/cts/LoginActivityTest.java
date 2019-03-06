@@ -38,12 +38,14 @@ import static android.view.contentcapture.UserDataRemovalRequest.FLAG_IS_PREFIX;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.ComponentName;
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -65,6 +67,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
@@ -693,6 +696,39 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                     children[0].getAutofillId(), children[1].getAutofillId());
 
         }
+    }
+
+    @Test
+    public void testWhitelist_packageNotWhitelisted() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        service.setContentCaptureWhitelist((Set) null, (Set) null);
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        assertThat(service.getAllSessionIds()).isEmpty();
+    }
+
+    @Test
+    public void testWhitelist_activityNotWhitelisted() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ArraySet<ComponentName> components = new ArraySet<>();
+        components.add(new ComponentName(MY_PACKAGE, "some.activity"));
+        service.setContentCaptureWhitelist(null, components);
+        final ActivityWatcher watcher = startWatcher();
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        assertThat(service.getAllSessionIds()).isEmpty();
     }
 
     /**
