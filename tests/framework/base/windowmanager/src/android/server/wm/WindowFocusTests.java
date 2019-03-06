@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
@@ -42,6 +43,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -63,8 +65,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
-
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -144,6 +144,12 @@ public class WindowFocusTests {
         getInstrumentation().sendPointerSync(upEvent);
     }
 
+    /** Checks if the device supports multi-display. */
+    private static boolean supportsMultiDisplay() {
+        return getInstrumentation().getTargetContext().getPackageManager()
+                .hasSystemFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
+    }
+
     /**
      * Test the following conditions:
      * - Each display can have a focused window at the same time.
@@ -159,6 +165,7 @@ public class WindowFocusTests {
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_0, INVALID_DISPLAY);
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
 
+        assumeTrue(supportsMultiDisplay());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int secondaryDisplayId = displaySession.createDisplay(
                     getInstrumentation().getTargetContext()).getDisplayId();
@@ -208,6 +215,8 @@ public class WindowFocusTests {
      */
     @Test
     public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
+        assumeTrue(supportsMultiDisplay());
+
         if (getInstrumentation().getTargetContext().getResources().getBoolean(
                 android.R.bool.config_perDisplayFocusEnabled)) {
             return;
@@ -259,6 +268,7 @@ public class WindowFocusTests {
         getInstrumentation().runOnMainSync(primaryActivity::requestPointerCapture);
         primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
 
+        assumeTrue(supportsMultiDisplay());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int secondaryDisplayId = displaySession.createDisplay(
                     getInstrumentation().getTargetContext()).getDisplayId();
@@ -284,6 +294,8 @@ public class WindowFocusTests {
      */
     @Test
     public void testDisplayChanged() throws InterruptedException {
+        assumeTrue(supportsMultiDisplay());
+
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
 
