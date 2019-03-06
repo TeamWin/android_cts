@@ -25,6 +25,10 @@
 #include "itest_impl.h"
 #include "utilities.h"
 
+#include <stdio.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
 using ::aidl::test_package::Bar;
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::Foo;
@@ -73,6 +77,44 @@ TEST_P(NdkBinderTest_Aidl, Remoteness) {
 
 TEST_P(NdkBinderTest_Aidl, UseBinder) {
   ASSERT_EQ(STATUS_OK, AIBinder_ping(iface->asBinder().get()));
+}
+
+bool ReadFdToString(int fd, std::string* content) {
+  char buf[64];
+  ssize_t n;
+  while ((n = TEMP_FAILURE_RETRY(read(fd, &buf[0], sizeof(buf)))) > 0) {
+    content->append(buf, n);
+  }
+  return (n == 0) ? true : false;
+}
+
+std::string dumpToString(std::shared_ptr<ITest> itest, std::vector<const char*> args) {
+  int fd[2] = {-1, -1};
+  EXPECT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, fd));
+
+  EXPECT_OK(itest->dump(fd[0], args.data(), args.size()));
+  close(fd[0]);
+
+  std::string ret;
+  EXPECT_TRUE(ReadFdToString(fd[1], &ret));
+
+  close(fd[1]);
+  return ret;
+}
+
+TEST_P(NdkBinderTest_Aidl, UseDump) {
+  std::string name;
+  EXPECT_OK(iface->GetName(&name));
+  if (name == "JAVA" && !iface->isRemote()) {
+    // TODO(b/127361166): GTEST_SKIP is considered a failure, would prefer to use that here
+    // TODO(b/127339049): JavaBBinder doesn't implement dump
+    return;
+  }
+
+  EXPECT_EQ("", dumpToString(iface, {}));
+  EXPECT_EQ("", dumpToString(iface, {"", ""}));
+  EXPECT_EQ("Hello World!", dumpToString(iface, {"Hello ", "World!"}));
+  EXPECT_EQ("ABC", dumpToString(iface, {"A", "B", "C"}));
 }
 
 TEST_P(NdkBinderTest_Aidl, Trivial) {
