@@ -95,16 +95,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.view.cts.WindowCtsActivity"
-                  android:theme="@android:style/Theme.Holo.NoActionBar"
-                  android:screenOrientation="locked"
-                  android:label="WindowCtsActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.view.animation.cts.AnimationTestCtsActivity"
                   android:label="AnimationTestCtsActivity"
                   android:screenOrientation="locked"
@@ -129,15 +119,6 @@
                   android:label="LayoutAnimCtsActivity"
                   android:screenOrientation="locked"
                   android:configChanges="orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name="android.view.cts.SurfaceViewCtsActivity"
-                  android:screenOrientation="locked"
-                  android:label="SurfaceViewCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -308,15 +289,6 @@
 
         <activity android:name="android.view.cts.KeyEventInjectionActivity"
                   android:label="KeyEventInjectionActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name="android.view.cts.DragDropActivity"
-                  android:screenOrientation="locked"
-                  android:label="DragDropActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />

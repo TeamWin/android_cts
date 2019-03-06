@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.server.wm;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.server.cts.wm.R;
 import android.view.DragEvent;
 import android.view.InputDevice;
 import android.view.MotionEvent;

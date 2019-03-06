@@ -24,7 +24,8 @@
 
         <service
             android:name=".CtsContentSuggestionsService"
-            android:label="CtsContentSuggestionsService">
+            android:label="CtsContentSuggestionsService"
+            android:permission="android.permission.BIND_CONTENT_SUGGESTIONS_SERVICE">
             <intent-filter>
                 <action android:name="android.service.contentsuggestions.ContentSuggestionsService" />
             </intent-filter>

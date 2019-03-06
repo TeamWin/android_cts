@@ -34,7 +34,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.test.UiThreadTest;
+import android.util.Log;
 
 import java.util.List;
 
@@ -46,6 +48,9 @@ import java.util.List;
  * android.permission.ACCESS_LOCATION_EXTRA_COMMANDS to send extra commands to GPS provider
  */
 public class LocationManagerTest extends BaseMockLocationTest {
+
+    private static final String TAG = "LocationManagerTest";
+
     private static final long TEST_TIME_OUT = 5000;
 
     private static final String TEST_MOCK_PROVIDER_NAME = "test_provider";
@@ -949,6 +954,10 @@ public class LocationManagerTest extends BaseMockLocationTest {
      * Tests basic proximity alert when entering proximity
      */
     public void testEnterProximity() throws Exception {
+        if (!isSystemUser()) {
+            Log.i(TAG, "Skipping test on secondary user");
+            return;
+        }
         // need to mock the fused location provider for proximity tests
         mockFusedLocation();
 
@@ -961,6 +970,10 @@ public class LocationManagerTest extends BaseMockLocationTest {
      * Tests proximity alert when entering proximity, with no expiration
      */
     public void testEnterProximity_noexpire() throws Exception {
+        if (!isSystemUser()) {
+            Log.i(TAG, "Skipping test on secondary user");
+            return;
+        }
         // need to mock the fused location provider for proximity tests
         mockFusedLocation();
 
@@ -973,6 +986,10 @@ public class LocationManagerTest extends BaseMockLocationTest {
      * Tests basic proximity alert when exiting proximity
      */
     public void testExitProximity() throws Exception {
+        if (!isSystemUser()) {
+            Log.i(TAG, "Skipping test on secondary user");
+            return;
+        }
         // need to mock the fused location provider for proximity tests
         mockFusedLocation();
 
@@ -992,6 +1009,10 @@ public class LocationManagerTest extends BaseMockLocationTest {
      * Tests basic proximity alert when initially within proximity
      */
     public void testInitiallyWithinProximity() throws Exception {
+        if (!isSystemUser()) {
+            Log.i(TAG, "Skipping test on secondary user");
+            return;
+        }
         // need to mock the fused location provider for proximity tests
         mockFusedLocation();
 
@@ -1344,5 +1365,10 @@ public class LocationManagerTest extends BaseMockLocationTest {
                 status.usedInFix(i);
             }
         }
+    }
+
+    private boolean isSystemUser() {
+        UserManager userManager = mContext.getSystemService(UserManager.class);
+        return userManager.isSystemUser();
     }
 }

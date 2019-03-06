@@ -328,17 +328,22 @@ public class PerformanceTest extends Camera2AndroidTestCase {
                     continue;
                 }
 
-                openDevice(id);
-
-                StreamConfigurationMap configMap = mStaticInfo.getCharacteristics().get(
+                StreamConfigurationMap configMap = mAllStaticInfo.get(id).getCharacteristics().get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                boolean formatsSupported = true;
                 for (int format : formats) {
                     if (!configMap.isOutputSupportedFor(format)) {
                         Log.i(TAG, "Camera " + id + " does not support output format: " + format +
                                 " skipping");
-                        continue;
+                        formatsSupported = false;
+                        break;
                     }
                 }
+                if (!formatsSupported) {
+                    continue;
+                }
+
+                openDevice(id);
 
                 boolean partialsExpected = mStaticInfo.getPartialResultCount() > 1;
                 long startTimeMs;

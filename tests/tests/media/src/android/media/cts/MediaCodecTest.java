@@ -2353,20 +2353,66 @@ public class MediaCodecTest extends AndroidTestCase {
             final MediaCodec codec = MediaCodec.createDecoderByType(mimeType);
 
             try {
-                codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
-
-                codec.start();
-
                 final ConditionVariable cv = new ConditionVariable();
-                Thread[] threads = new Thread[10];
-                for (int j = 0; j < threads.length; ++j) {
-                    threads[j] = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
+                Runnable first = null;
+                switch (i % 5) {
+                    case 0:  // release
+                        codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
+                        codec.start();
+                        first = () -> { cv.block(); codec.release(); };
+                        break;
+                    case 1:  // start
+                        codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
+                        first = () -> {
                             cv.block();
-                            codec.release();
-                        }
-                    });
+                            try {
+                                codec.start();
+                            } catch (Exception e) {
+                                Log.i(TAG, "start failed", e);
+                            }
+                        };
+                        break;
+                    case 2:  // configure
+                        first = () -> {
+                            cv.block();
+                            try {
+                                codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
+                            } catch (Exception e) {
+                                Log.i(TAG, "configure failed", e);
+                            }
+                        };
+                        break;
+                    case 3:  // stop
+                        codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
+                        codec.start();
+                        first = () -> {
+                            cv.block();
+                            try {
+                                codec.stop();
+                            } catch (Exception e) {
+                                Log.i(TAG, "stop failed", e);
+                            }
+                        };
+                        break;
+                    case 4:  // flush
+                        codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
+                        codec.start();
+                        codec.dequeueInputBuffer(0);
+                        first = () -> {
+                            cv.block();
+                            try {
+                                codec.flush();
+                            } catch (Exception e) {
+                                Log.i(TAG, "flush failed", e);
+                            }
+                        };
+                        break;
+                }
+
+                Thread[] threads = new Thread[10];
+                threads[0] = new Thread(first);
+                for (int j = 1; j < threads.length; ++j) {
+                    threads[j] = new Thread(() -> { cv.block(); codec.release(); });
                 }
                 for (Thread thread : threads) {
                     thread.start();

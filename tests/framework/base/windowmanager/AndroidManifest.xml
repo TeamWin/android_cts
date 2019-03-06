@@ -45,6 +45,39 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity" />
         <activity android:name="android.app.Activity"/>
+
+        <activity android:name="android.server.wm.DragDropActivity"
+                  android:screenOrientation="locked"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:label="DragDropActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.server.wm.WindowCtsActivity"
+                  android:theme="@android:style/Theme.Holo.NoActionBar"
+                  android:screenOrientation="locked"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:label="WindowCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+        <activity android:name="android.server.wm.SurfaceViewCtsActivity"
+                  android:screenOrientation="locked"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:label="SurfaceViewCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

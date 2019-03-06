@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.server.wm;
 
 import android.app.Activity;
 import android.os.Bundle;
+
+import android.server.cts.wm.R;
 
 public class DragDropActivity extends Activity {
 

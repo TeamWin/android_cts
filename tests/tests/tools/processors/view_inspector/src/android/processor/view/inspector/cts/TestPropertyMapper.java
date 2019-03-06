@@ -116,6 +116,11 @@ class TestPropertyMapper implements PropertyMapper {
         return map(name, attributeId, ValueType.INT_FLAG);
     }
 
+    @Override
+    public int mapResourceId(String name, int attributeId) {
+        return map(name, attributeId, ValueType.RESOURCE_ID);
+    }
+
     private int map(String name, int attributeId) {
         return map(name, attributeId, ValueType.NONE);
     }

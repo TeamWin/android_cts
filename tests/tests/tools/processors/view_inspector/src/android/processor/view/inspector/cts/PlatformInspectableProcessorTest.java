@@ -32,8 +32,29 @@ import android.view.inspector.InspectableProperty.FlagMap;
 import android.view.inspector.InspectableProperty.ValueType;
 import android.view.inspector.InspectionCompanion;
 
+import androidx.annotation.AnimRes;
+import androidx.annotation.AnimatorRes;
+import androidx.annotation.AnyRes;
+import androidx.annotation.ArrayRes;
+import androidx.annotation.BoolRes;
 import androidx.annotation.ColorInt;
 import androidx.annotation.ColorLong;
+import androidx.annotation.DimenRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.FontRes;
+import androidx.annotation.IdRes;
+import androidx.annotation.IntegerRes;
+import androidx.annotation.InterpolatorRes;
+import androidx.annotation.LayoutRes;
+import androidx.annotation.MenuRes;
+import androidx.annotation.NavigationRes;
+import androidx.annotation.PluralsRes;
+import androidx.annotation.RawRes;
+import androidx.annotation.StringRes;
+import androidx.annotation.StyleRes;
+import androidx.annotation.StyleableRes;
+import androidx.annotation.TransitionRes;
+import androidx.annotation.XmlRes;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -513,6 +534,259 @@ public class PlatformInspectableProcessorTest {
         PublicFieldTest node = new PublicFieldTest(mRandom);
         mapAndRead(node);
         assertEquals(node.value, mPropertyReader.get("value"));
+    }
+
+    class ResourceIdTest {
+        @AnimatorRes private final int mAnimatorId;
+        @AnimRes private final int mAnimId;
+        @AnyRes private final int mAnyId;
+        @ArrayRes private final int mArrayId;
+        @BoolRes private final int mBoolId;
+        @DimenRes private final int mDimenId;
+        @DrawableRes private final int mDrawableId;
+        @FontRes private final int mFontId;
+        @IdRes private final int mIdId;
+        @IntegerRes private final int mIntegerId;
+        @InterpolatorRes private final int mInterpolatorId;
+        @LayoutRes private final int mLayoutId;
+        @MenuRes private final int mMenuId;
+        @NavigationRes private final int mNavigationId;
+        @PluralsRes private final int mPluralsId;
+        @RawRes private final int mRawId;
+        @StringRes private final int mStringId;
+        @StyleableRes private final int mStyleableId;
+        @StyleRes private final int mStyleId;
+        @TransitionRes private final int mTransitionId;
+        @XmlRes private final int mXmlId;
+        private final int mUnannotatedId;
+
+        ResourceIdTest(Random seed) {
+            mAnimatorId = seed.nextInt();
+            mAnimId = seed.nextInt();
+            mAnyId = seed.nextInt();
+            mArrayId = seed.nextInt();
+            mBoolId = seed.nextInt();
+            mDimenId = seed.nextInt();
+            mDrawableId = seed.nextInt();
+            mFontId = seed.nextInt();
+            mIdId = seed.nextInt();
+            mIntegerId = seed.nextInt();
+            mInterpolatorId = seed.nextInt();
+            mLayoutId = seed.nextInt();
+            mMenuId = seed.nextInt();
+            mNavigationId = seed.nextInt();
+            mPluralsId = seed.nextInt();
+            mRawId = seed.nextInt();
+            mStringId = seed.nextInt();
+            mStyleableId = seed.nextInt();
+            mStyleId = seed.nextInt();
+            mTransitionId = seed.nextInt();
+            mXmlId = seed.nextInt();
+            mUnannotatedId = seed.nextInt();
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @AnimatorRes
+        public int getAnimatorId() {
+            return mAnimatorId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @AnimRes
+        public int getAnimId() {
+            return mAnimId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @AnyRes
+        public int getAnyId() {
+            return mAnimId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @ArrayRes
+        public int getArrayId() {
+            return mArrayId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @BoolRes
+        public int getBoolId() {
+            return mBoolId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @DimenRes
+        public int getDimenId() {
+            return mDimenId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @DrawableRes
+        public int getDrawableId() {
+            return mDrawableId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @FontRes
+        public int getFontId() {
+            return mFontId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @IdRes
+        public int getIdId() {
+            return mIdId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @IntegerRes
+        public int getIntegerId() {
+            return mIntegerId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @InterpolatorRes
+        public int getInterpolatorId() {
+            return mInterpolatorId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @LayoutRes
+        public int getLayoutId() {
+            return mLayoutId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @MenuRes
+        public int getMenuId() {
+            return mMenuId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @NavigationRes
+        public int getNavigationId() {
+            return mNavigationId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @PluralsRes
+        public int getPluralsId() {
+            return mPluralsId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @RawRes
+        public int getRawId() {
+            return mRawId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @StringRes
+        public int getStringId() {
+            return mStringId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @StyleableRes
+        public int getStyleableId() {
+            return mStyleableId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @StyleRes
+        public int getStyleId() {
+            return mStyleId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @TransitionRes
+        public int getTransitionId() {
+            return mTransitionId;
+        }
+
+        @InspectableProperty(hasAttributeId = false)
+        @XmlRes
+        public int getXmlId() {
+            return mXmlId;
+        }
+
+        @InspectableProperty(hasAttributeId = false, valueType = ValueType.RESOURCE_ID)
+        public int getUnannotatedId() {
+            return mUnannotatedId;
+        }
+    }
+
+    @Test
+    public void testResourceId() {
+        ResourceIdTest node = new ResourceIdTest(mRandom);
+        mapAndRead(node);
+
+        assertEquals(node.getAnimatorId(), mPropertyReader.get("animatorId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("animatorId"));
+
+        assertEquals(node.getAnimId(), mPropertyReader.get("animId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("animId"));
+
+        assertEquals(node.getAnyId(), mPropertyReader.get("anyId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("anyId"));
+
+        assertEquals(node.getArrayId(), mPropertyReader.get("arrayId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("arrayId"));
+
+        assertEquals(node.getBoolId(), mPropertyReader.get("boolId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("boolId"));
+
+        assertEquals(node.getDimenId(), mPropertyReader.get("dimenId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("dimenId"));
+
+        assertEquals(node.getDrawableId(), mPropertyReader.get("drawableId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("drawableId"));
+
+        assertEquals(node.getFontId(), mPropertyReader.get("fontId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("fontId"));
+
+        assertEquals(node.getIdId(), mPropertyReader.get("idId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("idId"));
+
+        assertEquals(node.getIntegerId(), mPropertyReader.get("integerId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("integerId"));
+
+        assertEquals(node.getInterpolatorId(), mPropertyReader.get("interpolatorId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("interpolatorId"));
+
+        assertEquals(node.getLayoutId(), mPropertyReader.get("layoutId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("layoutId"));
+
+        assertEquals(node.getMenuId(), mPropertyReader.get("menuId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("menuId"));
+
+        assertEquals(node.getNavigationId(), mPropertyReader.get("navigationId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("navigationId"));
+
+        assertEquals(node.getPluralsId(), mPropertyReader.get("pluralsId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("pluralsId"));
+
+        assertEquals(node.getRawId(), mPropertyReader.get("rawId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("rawId"));
+
+        assertEquals(node.getStringId(), mPropertyReader.get("stringId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("stringId"));
+
+        assertEquals(node.getStyleableId(), mPropertyReader.get("styleableId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("styleableId"));
+
+        assertEquals(node.getStyleId(), mPropertyReader.get("styleId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("styleId"));
+
+        assertEquals(node.getTransitionId(), mPropertyReader.get("transitionId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("transitionId"));
+
+        assertEquals(node.getXmlId(), mPropertyReader.get("xmlId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("xmlId"));
+
+        assertEquals(node.getUnannotatedId(), mPropertyReader.get("unannotatedId"));
+        assertEquals(ValueType.RESOURCE_ID, mPropertyMapper.getValueType("unannotatedId"));
     }
 
     private static <T> Set<T> setOf(T... items) {
