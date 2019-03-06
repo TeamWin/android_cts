@@ -118,4 +118,9 @@ class TestPropertyReader implements PropertyReader {
     public void readIntFlag(int id, int value) {
         mProperties.put(id, value);
     }
+
+    @Override
+    public void readResourceId(int id, int value) {
+        mProperties.put(id, value);
+    }
 }
