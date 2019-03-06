@@ -2648,6 +2648,15 @@ public class AudioTrackTest {
 
         AudioTrack track = null;
         try {
+            final int TEST_SAMPLE_RATE = 44100;
+            final int TEST_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
+            final int TEST_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+            final AudioFormat format = new AudioFormat.Builder()
+                .setSampleRate(TEST_SAMPLE_RATE)
+                .setChannelMask(TEST_CHANNEL_MASK)
+                .setEncoding(TEST_ENCODING)
+                .build();
+
             final int TEST_USAGE = AudioAttributes.USAGE_MEDIA;
             final int TEST_CONTENT_TYPE = AudioAttributes.CONTENT_TYPE_MUSIC;
             final AudioAttributes attributes = new AudioAttributes.Builder()
@@ -2657,6 +2666,7 @@ public class AudioTrackTest {
 
             // Setup a new audio track
             track = new AudioTrack.Builder()
+                .setAudioFormat(format)
                 .setAudioAttributes(attributes)
                 .build();
 
@@ -2674,6 +2684,20 @@ public class AudioTrackTest {
 
             // AudioTrack.MetricsConstants.SAMPLERATE, metrics doesn't exit
             // AudioTrack.MetricsConstants.CHANNELMASK, metrics doesn't exist
+
+            // TestApi:
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.SAMPLE_RATE,
+                    new Integer(track.getSampleRate()));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.CHANNEL_MASK,
+                    new Long(TEST_CHANNEL_MASK >> 2));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.ENCODING,
+                    new String("AUDIO_FORMAT_PCM_16_BIT"));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.FRAME_COUNT,
+                    new Integer(track.getBufferSizeInFrames()));
+
+            // TestApi: no particular value checking.
+            AudioHelper.assertMetricsKey(metrics, AudioTrack.MetricsConstants.PORT_ID);
+            AudioHelper.assertMetricsKey(metrics, AudioTrack.MetricsConstants.ATTRIBUTES);
         } finally {
             if (track != null) {
                 track.release();
