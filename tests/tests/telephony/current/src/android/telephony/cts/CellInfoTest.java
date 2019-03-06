@@ -500,9 +500,9 @@ public class CellInfoTest extends AndroidTestCase{
         int tac = nr.getTac();
         assertTrue("getTac() out of range [0, 65536], tac = " + tac, 0 <= tac && tac <= 65536);
 
-        int channelNumber = nr.getChannelNumber();
-        assertTrue("getChannelNumber() out of range [0, 3279165], channelNumber = " + channelNumber,
-                0 <= channelNumber && channelNumber <= 3279165);
+        int nrArfcn = nr.getNrarfcn();
+        assertTrue("getNrarfcn() out of range [0, 3279165], nrarfcn = " + nrArfcn,
+                0 <= nrArfcn && nrArfcn <= 3279165);
 
         String mccStr = nr.getMccString();
         String mncStr = nr.getMncString();
