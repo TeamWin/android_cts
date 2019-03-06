@@ -109,7 +109,7 @@ public class ContentCaptureContextTest {
 
     @Test
     public void testForLocus_null() {
-        assertThrows(NullPointerException.class, () -> ContentCaptureContext.forLocusId(null));
+        assertThrows(IllegalArgumentException.class, () -> ContentCaptureContext.forLocusId(null));
     }
 
     @Test
