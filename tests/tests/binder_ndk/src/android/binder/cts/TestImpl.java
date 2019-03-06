@@ -28,10 +28,19 @@ import test_package.Foo;
 import test_package.Bar;
 
 import java.util.concurrent.CountDownLatch;
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 
 public class TestImpl extends ITest.Stub {
   @Override
   public int getInterfaceVersion() { return TestImpl.VERSION; }
+
+  @Override
+  protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+    for (String arg : args) {
+      pw.print(arg);
+    }
+  }
 
   @Override
   public String GetName() {
