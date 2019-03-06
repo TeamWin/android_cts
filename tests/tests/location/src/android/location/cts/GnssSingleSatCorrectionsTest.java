@@ -58,7 +58,6 @@ public class GnssSingleSatCorrectionsTest extends GnssTestCase {
     private static void setTestValues(GnssSingleSatCorrection.Builder singleSatCorrection) {
         GnssSingleSatCorrection singleSatCor = generateTestSingleSatCorrection();
         singleSatCorrection
-                .setSingleSatelliteCorrectionFlags(singleSatCor.getSingleSatelliteCorrectionFlags())
                 .setConstellationType(singleSatCor.getConstellationType())
                 .setSatelliteId(singleSatCor.getSatelliteId())
                 .setCarrierFrequencyHz(singleSatCor.getCarrierFrequencyHz())
@@ -72,7 +71,6 @@ public class GnssSingleSatCorrectionsTest extends GnssTestCase {
     public static GnssSingleSatCorrection generateTestSingleSatCorrection() {
         GnssSingleSatCorrection.Builder singleSatCorrection =
                 new GnssSingleSatCorrection.Builder()
-                        .setSingleSatelliteCorrectionFlags(15)
                         .setConstellationType(GnssStatus.CONSTELLATION_GALILEO)
                         .setSatelliteId(12)
                         .setCarrierFrequencyHz(1575420000f)

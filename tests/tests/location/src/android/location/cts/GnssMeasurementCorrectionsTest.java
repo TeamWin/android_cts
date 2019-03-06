@@ -31,9 +31,10 @@ import java.util.List;
 /** Unit tests for {@link GnssMeasurementCorrections}. */
 public class GnssMeasurementCorrectionsTest extends TestCase {
     public void testDescribeContents() {
-        GnssMeasurementCorrections measurementCorrections =
-                new GnssMeasurementCorrections.Builder().build();
-        measurementCorrections.describeContents();
+        GnssMeasurementCorrections.Builder measurementCorrectionsBuilder =
+                new GnssMeasurementCorrections.Builder();
+        setTestValues(measurementCorrectionsBuilder);
+        measurementCorrectionsBuilder.build().describeContents();
     }
 
     public void testWriteToParcel() {
@@ -93,7 +94,6 @@ public class GnssMeasurementCorrectionsTest extends TestCase {
     private static GnssSingleSatCorrection generateTestSingleSatCorrection() {
         GnssSingleSatCorrection.Builder singleSatCorrection = new GnssSingleSatCorrection.Builder();
         singleSatCorrection
-                .setSingleSatelliteCorrectionFlags(8)
                 .setConstellationType(GnssStatus.CONSTELLATION_GPS)
                 .setSatelliteId(11)
                 .setCarrierFrequencyHz(1575430000f)
