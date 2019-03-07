@@ -1246,6 +1246,49 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    public void testMkvWithoutCueSeek() throws Exception {
+        if (!checkLoadResource(
+                R.raw.video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz_withoutcues)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                mOnSeekCompleteCalled.signal();
+            }
+        });
+        mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
+        mMediaPlayer.prepare();
+        mOnSeekCompleteCalled.reset();
+        mMediaPlayer.start();
+
+        final int seekPosMs = 3000;
+        final int syncTime2Ms = 5960;
+
+        int cp = runSeekMode(MediaPlayer.SEEK_CLOSEST, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_CLOSEST cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_CLOSEST mode.",
+                  cp > seekPosMs && cp < syncTime2Ms);
+
+        cp = runSeekMode(MediaPlayer.SEEK_PREVIOUS_SYNC, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_PREVIOUS_SYNC cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_PREVIOUS_SYNC mode.",
+                cp >= syncTime2Ms);
+
+        cp = runSeekMode(MediaPlayer.SEEK_NEXT_SYNC, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_NEXT_SYNC cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_NEXT_SYNC mode.",
+                cp >= syncTime2Ms);
+
+        cp = runSeekMode(MediaPlayer.SEEK_CLOSEST_SYNC, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_CLOSEST_SYNC cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_CLOSEST_SYNC mode.",
+                cp >= syncTime2Ms);
+
+        mMediaPlayer.stop();
+    }
+
     public void testSeekModes() throws Exception {
         // This clip has 2 I frames at 66687us and 4299687us.
         if (!checkLoadResource(
