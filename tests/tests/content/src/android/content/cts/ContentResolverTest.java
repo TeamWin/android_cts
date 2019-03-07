@@ -1286,6 +1286,32 @@ public class ContentResolverTest extends AndroidTestCase {
         }
     }
 
+    public void testWrapContentProvider() throws Exception {
+        try (ContentProviderClient local = getContext().getContentResolver()
+                .acquireContentProviderClient(AUTHORITY)) {
+            final ContentResolver resolver = ContentResolver.wrap(local.getLocalContentProvider());
+            assertNotNull(resolver.getType(TABLE1_URI));
+            try {
+                resolver.getType(REMOTE_TABLE1_URI);
+                fail();
+            } catch (SecurityException | IllegalArgumentException expected) {
+            }
+        }
+    }
+
+    public void testWrapContentProviderClient() throws Exception {
+        try (ContentProviderClient remote = getContext().getContentResolver()
+                .acquireContentProviderClient(REMOTE_AUTHORITY)) {
+            final ContentResolver resolver = ContentResolver.wrap(remote);
+            assertNotNull(resolver.getType(REMOTE_TABLE1_URI));
+            try {
+                resolver.getType(TABLE1_URI);
+                fail();
+            } catch (SecurityException | IllegalArgumentException expected) {
+            }
+        }
+    }
+
     private class MockContentObserver extends ContentObserver {
         private boolean mHadOnChanged = false;
 

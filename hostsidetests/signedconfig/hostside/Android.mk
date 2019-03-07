@@ -38,7 +38,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_TARGET_REQUIRED_MODULES := \
+LOCAL_ADDITIONAL_DEPENDENCIES := $(call module-installed-files, \
     CtsSignedConfigTestAppV1 \
     CtsSignedConfigTestAppV2 \
     CtsSignedConfigTestApp2V2 \
@@ -46,7 +46,8 @@ LOCAL_TARGET_REQUIRED_MODULES := \
     CtsSignedConfigTestAppV1_badb64_config \
     CtsSignedConfigTestAppV1_badb64_signature \
     CtsSignedConfigTestAppV3_configv1 \
-    CtsSignedConfigTestAppV1_debug_key
+    CtsSignedConfigTestAppV1_debug_key \
+    )
 
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)

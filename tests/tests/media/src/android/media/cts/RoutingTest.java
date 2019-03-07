@@ -80,9 +80,12 @@ public class RoutingTest extends AndroidTestCase {
     private static final Set<Integer> AVAILABLE_INPUT_DEVICES_TYPE = new HashSet<>(
         Arrays.asList(AudioDeviceInfo.TYPE_BUILTIN_MIC));
 
+    private boolean mRoutingChanged;
     private AudioManager mAudioManager;
     private CountDownLatch mRoutingChangedLatch;
     private File mOutFile;
+    private Looper mRoutingChangedLooper;
+    private Object mRoutingChangedLock = new Object();
 
     @Override
     protected void setUp() throws Exception {
@@ -565,6 +568,10 @@ public class RoutingTest extends AndroidTestCase {
             if (mRoutingChangedLatch != null) {
                 mRoutingChangedLatch.countDown();
             }
+            synchronized (mRoutingChangedLock) {
+                mRoutingChanged = true;
+                mRoutingChangedLock.notify();
+            }
         }
     }
 
@@ -572,7 +579,7 @@ public class RoutingTest extends AndroidTestCase {
         final int resid = R.raw.testmp3_2;
         MediaPlayer mediaPlayer = MediaPlayer.create(mContext, resid);
         mediaPlayer.setAudioAttributes(
-            new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build());
+                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build());
         mediaPlayer.start();
         return mediaPlayer;
     }
@@ -662,54 +669,41 @@ public class RoutingTest extends AndroidTestCase {
         }
     }
 
-    public void test_MediaPlayer_RoutingChangedCallback() {
+    public void test_MediaPlayer_RoutingChangedCallback() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
             // Can't do it so skip this test
             return;
         }
 
-        MediaPlayer mediaPlayer = allocMediaPlayer();
-        AudioRoutingListener listener = new AudioRoutingListener();
-        mediaPlayer.addOnRoutingChangedListener(listener, null);
-
-        AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
-        if (deviceList.length < 2) {
-            // The available output device is less than 2, we can't switch output device.
-            return;
-        }
-        Set<Integer> testedDeviceTypes = new HashSet<>();
-        for (AudioDeviceInfo device : deviceList) {
-            final int deviceType = device.getType();
-            if (testedDeviceTypes.contains(deviceType)) {
-                // b/122478352 setPreferredDevice can not differentiate devices with same type.
-                continue;
+        mRoutingChanged = false;
+        mRoutingChangedLooper = null;
+        // Create MediaPlayer in another thread to make sure there is a looper active for events.
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                Looper.prepare();
+                // Keep looper to terminate when the test is finished.
+                mRoutingChangedLooper = Looper.myLooper();
+                AudioRoutingListener listener = new AudioRoutingListener();
+                MediaPlayer mediaPlayer = allocMediaPlayer();
+                mediaPlayer.addOnRoutingChangedListener(listener, null);
+                Looper.loop();
+                mediaPlayer.removeOnRoutingChangedListener(listener);
+                mediaPlayer.stop();
+                mediaPlayer.release();
             }
-            testedDeviceTypes.add(deviceType);
-            assertTrue(mediaPlayer.setPreferredDevice(device));
-            boolean routingChanged = false;
-            for (int i = 0; i < MAX_WAITING_ROUTING_CHANGED_COUNT; i++) {
-                // Create a new CountDownLatch in case it is triggered by previous routing change.
-                mRoutingChangedLatch = new CountDownLatch(1);
-                try {
-                    mRoutingChangedLatch.await(WAIT_ROUTING_CHANGE_TIME_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                }
-                AudioDeviceInfo routedDevice = mediaPlayer.getRoutedDevice();
-                if (routedDevice == null) {
-                    continue;
-                }
-                if (routedDevice.getId() == device.getId()) {
-                    routingChanged = true;
-                    break;
-                }
-            }
-            assertTrue("Switching to device " + device.getType() + " failed",
-                    routingChanged);
+        };
+        t.start();
+        synchronized (mRoutingChangedLock) {
+            mRoutingChangedLock.wait(WAIT_ROUTING_CHANGE_TIME_MS
+                    * MAX_WAITING_ROUTING_CHANGED_COUNT);
         }
-
-        mediaPlayer.removeOnRoutingChangedListener(listener);
-        mediaPlayer.stop();
-        mediaPlayer.release();
+        if (mRoutingChangedLooper != null) {
+            mRoutingChangedLooper.quitSafely();
+            mRoutingChangedLooper = null;
+        }
+        t.join();
+        assertTrue("Routing changed callback has not been called", mRoutingChanged);
     }
 
     public void test_mediaPlayer_incallMusicRoutingPermissions() {

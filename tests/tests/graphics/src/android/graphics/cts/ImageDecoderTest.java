@@ -321,7 +321,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testSetBogusAllocator() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
@@ -662,7 +662,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testPostProcessorTRANSPARENT() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -674,7 +674,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testPostProcessorInvalidReturn() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
@@ -686,7 +686,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testPostProcessorAndUnpremul() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
@@ -1118,7 +1118,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testMutableHardware() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
@@ -1131,7 +1131,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testMutableDrawable() {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
@@ -1182,7 +1182,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testZeroSampleSize() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1192,7 +1192,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNegativeSampleSize() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1296,7 +1296,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testResizeWebpLarger() {
         // libwebp does not upscale, so there is no way to get unpremul.
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.google_logo_2);
@@ -1311,7 +1311,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testResizeUnpremul() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.alpha);
         try {
@@ -1401,7 +1401,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testResizeZeroX() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1412,7 +1412,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testResizeZeroY() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1423,7 +1423,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testResizeNegativeX() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1434,7 +1434,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testResizeNegativeY() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1445,7 +1445,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testStoreImageDecoder() {
         class CachingCallback implements ImageDecoder.OnHeaderDecodedListener {
             ImageDecoder cachedDecoder;
@@ -1465,7 +1465,7 @@ public class ImageDecoderTest {
         l.cachedDecoder.setTargetSampleSize(2);
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testDecodeUnpremulDrawable() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1476,7 +1476,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testCropNegativeLeft() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1489,7 +1489,20 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
+    public void testCropNegativeLeftAnimated() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(-1, 0, info.getSize().getWidth(),
+                                                info.getSize().getHeight()));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testCropNegativeTop() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1502,7 +1515,20 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
+    public void testCropNegativeTopAnimated() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(0, -1, info.getSize().getWidth(),
+                                                info.getSize().getHeight()));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testCropTooWide() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1515,7 +1541,20 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
+    public void testCropTooWideAnimated() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(1, 0, info.getSize().getWidth() + 1,
+                                               info.getSize().getHeight()));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testCropTooTall() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
@@ -1528,9 +1567,24 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testCropResize() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                Size size = info.getSize();
+                decoder.setTargetSize(size.getWidth() / 2, size.getHeight() / 2);
+                decoder.setCrop(new Rect(0, 0, size.getWidth(),
+                                               size.getHeight()));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCropResizeAnimated() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 Size size = info.getSize();
@@ -1580,7 +1634,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testAlphaMaskPlusHardware() {
         SourceCreator f = mCreators[0];
         ImageDecoder.Source src = f.apply(R.drawable.png_test);
@@ -1590,6 +1644,24 @@ public class ImageDecoderTest {
                 decoder.setDecodeAsAlphaMaskEnabled(true);
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
             });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test
+    public void testAlphaMaskPlusHardwareAnimated() {
+        // AnimatedImageDrawable ignores both of these settings, so it is okay
+        // to combine them.
+        SourceCreator f = mCreators[0];
+        ImageDecoder.Source src = f.apply(R.drawable.animated);
+        assertNotNull(src);
+        try {
+            Drawable d = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setDecodeAsAlphaMaskEnabled(true);
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
+            });
+            assertNotNull(d);
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1861,7 +1933,7 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected=IOException.class)
+    @Test(expected = IOException.class)
     public void testZeroLengthByteBuffer() throws IOException {
         Drawable drawable = ImageDecoder.decodeDrawable(
             ImageDecoder.createSource(ByteBuffer.wrap(new byte[10], 0, 0)));
@@ -2232,26 +2304,29 @@ public class ImageDecoderTest {
 
     @Test
     public void testTargetColorSpaceIllegal() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
-        for (ColorSpace cs : new ColorSpace[] {
-                ColorSpace.get(ColorSpace.Named.CIE_LAB),
-                ColorSpace.get(ColorSpace.Named.CIE_XYZ),
-                new ColorSpace.Rgb("NoTransferParams",
-                        new float[]{ 0.640f, 0.330f, 0.300f, 0.600f, 0.150f, 0.060f },
-                        ColorSpace.ILLUMINANT_D50,
-                        x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f),
-                        0, 1),
-        }) {
-            try {
-                ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                    decoder.setTargetColorSpace(cs);
-                });
-                fail("Should have thrown an IllegalArgumentException for setTargetColorSpace("
-                        + cs + ")!");
-            } catch (IOException e) {
-                fail("Failed to decode png_test with " + e);
-            } catch (IllegalArgumentException illegal) {
-                // This is expected.
+        ColorSpace noTransferParamsCS = new ColorSpace.Rgb("NoTransferParams",
+                new float[]{ 0.640f, 0.330f, 0.300f, 0.600f, 0.150f, 0.060f },
+                ColorSpace.ILLUMINANT_D50,
+                x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f),
+                0, 1);
+        for (int resId : new int[] { R.drawable.png_test, R.drawable.animated }) {
+            ImageDecoder.Source src = mCreators[0].apply(resId);
+            for (ColorSpace cs : new ColorSpace[] {
+                    ColorSpace.get(ColorSpace.Named.CIE_LAB),
+                    ColorSpace.get(ColorSpace.Named.CIE_XYZ),
+                    noTransferParamsCS,
+            }) {
+                try {
+                    ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        decoder.setTargetColorSpace(cs);
+                    });
+                    fail("Should have thrown an IllegalArgumentException for setTargetColorSpace("
+                            + cs + ")!");
+                } catch (IOException e) {
+                    fail("Failed to decode png_test with " + e);
+                } catch (IllegalArgumentException illegal) {
+                    // This is expected.
+                }
             }
         }
     }

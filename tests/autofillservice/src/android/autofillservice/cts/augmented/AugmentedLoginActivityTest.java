@@ -25,12 +25,14 @@ import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.
 import static org.testng.Assert.assertThrows;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
+import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.LoginActivity;
 import android.autofillservice.cts.OneTimeCancellationSignalListener;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.content.ComponentName;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
+import android.util.ArraySet;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
@@ -214,6 +216,60 @@ public class AugmentedLoginActivityTest
         assertThrows(SecurityException.class,
                 () -> mgr.setAugmentedAutofillWhitelist((Set<String>) null,
                         (Set<ComponentName>) null));
+    }
+
+    @Test
+    public void testAugmentedAutofill_packageNotWhitelisted() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        final AutofillManager mgr = mActivity.getAutofillManager();
+        mgr.setAugmentedAutofillWhitelist((Set) null, (Set) null);
+
+        // Set expectations
+        sReplier.addResponse(NO_RESPONSE);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Assert no fill requests
+        sAugmentedReplier.assertNoUnhandledFillRequests();
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is not shown.
+        mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    @Test
+    public void testAugmentedAutofill_activityNotWhitelisted() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        final AutofillManager mgr = mActivity.getAutofillManager();
+        final ArraySet<ComponentName> components = new ArraySet<>();
+        components.add(new ComponentName(Helper.MY_PACKAGE, "some.activity"));
+        mgr.setAugmentedAutofillWhitelist(null, components);
+
+        // Set expectations
+        sReplier.addResponse(NO_RESPONSE);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Assert no fill requests
+        sAugmentedReplier.assertNoUnhandledFillRequests();
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is not shown.
+        mAugmentedUiBot.assertUiNeverShown();
     }
 
     /*

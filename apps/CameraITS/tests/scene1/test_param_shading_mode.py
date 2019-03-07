@@ -100,14 +100,32 @@ def main():
         for mode in range(3):
             for i in range(NUM_SHADING_MODE_SWITCH_LOOPS):
                 pylab.clf()
-                pylab.plot(range(num_map_gains), shading_maps[mode][i], '-ro')
-                pylab.plot(range(num_map_gains), reference_maps[mode], '-go')
+                pylab.figure(figsize=(5, 5))
+                pylab.subplot(2, 1, 1)
+                pylab.plot(range(num_map_gains), shading_maps[mode][i], '-r.',
+                           label='shading', alpha=0.7)
+                pylab.plot(range(num_map_gains), reference_maps[mode], '-g.',
+                           label='ref', alpha=0.7)
                 pylab.xlim([0, num_map_gains])
                 pylab.ylim([0.9, 4.0])
                 name = '%s_ls_maps_mode_%d_loop_%d' % (NAME, mode, i)
                 pylab.title(name)
                 pylab.xlabel('Map gains')
                 pylab.ylabel('Lens shading maps')
+                pylab.legend(loc='upper center', numpoints=1, fancybox=True)
+
+                pylab.subplot(2, 1, 2)
+                shading_ref_ratio = numpy.divide(
+                        shading_maps[mode][i], reference_maps[mode])
+                pylab.plot(range(num_map_gains), shading_ref_ratio, '-b.',
+                           clip_on=False)
+                pylab.xlim([0, num_map_gains])
+                pylab.ylim([1.0-THRESHOLD_DIFF_RATIO, 1.0+THRESHOLD_DIFF_RATIO])
+                pylab.title('Shading/reference Maps Ratio vs Gain')
+                pylab.xlabel('Map gains')
+                pylab.ylabel('Shading/ref maps ratio')
+
+                pylab.tight_layout()
                 matplotlib.pyplot.savefig('%s.png' % name)
 
         print 'Verifying lens shading maps with mode OFF are all 1.0'
@@ -117,9 +135,11 @@ def main():
         for mode in range(1, 3):
             print 'Verifying lens shading maps with mode', mode, 'are similar'
             for i in range(NUM_SHADING_MODE_SWITCH_LOOPS):
-                assert(numpy.allclose(shading_maps[mode][i],
-                                      reference_maps[mode],
-                                      THRESHOLD_DIFF_RATIO))
+                e_msg = 'FAIL mode: %d, loop: %d, THRESH: %.2f' % (
+                        mode, i, THRESHOLD_DIFF_RATIO)
+                assert (numpy.allclose(shading_maps[mode][i],
+                                       reference_maps[mode],
+                                       rtol=THRESHOLD_DIFF_RATIO)), e_msg
 
 if __name__ == '__main__':
     main()

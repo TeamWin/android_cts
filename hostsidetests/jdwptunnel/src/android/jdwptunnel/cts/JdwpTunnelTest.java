@@ -18,6 +18,7 @@ package android.jdwptunnel.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -40,6 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -88,6 +90,8 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         Map<String, Connector.Argument> params = conn.defaultArguments();
         params.get("port").setValue(port);
         params.get("hostname").setValue("localhost");
+        // Timeout after 1 minute
+        params.get("timeout").setValue("60000");
         return conn.attach(params);
     }
 
@@ -110,9 +114,14 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         moveToHomeScreen();
         mDevice.executeShellCommand("cmd activity start-activity -D -W -n " +
                 TEST_APP_PACKAGE_NAME + "/." + TEST_APP_ACTIVITY_CLASS_NAME);
+        // Don't keep trying after a minute.
+        final Instant deadline = Instant.now().plusSeconds(60);
         String pid = "";
         while ((pid = mDevice.executeShellCommand(
                     "pidof " + TEST_APP_PACKAGE_NAME).trim()).equals("")) {
+            if (Instant.now().isAfter(deadline)) {
+                fail("Unable to find PID of " + TEST_APP_PACKAGE_NAME + " process!");
+            }
             // Wait 1 second and try again.
             Thread.sleep(1000);
         }
@@ -136,6 +145,8 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         try {
             // Just pause the runtime so it won't get ahead of us while we setup everything.
             vm.suspend();
+            // Overall timeout for this whole test. 2-minutes
+            final Instant deadline = Instant.now().plusSeconds(120);
             // Check the test-activity class is not already loaded.
             assertTrue(TEST_APP_ACTIVITY_CLASS_NAME + " is not yet loaded!",
                     vm.allClasses().stream()
@@ -149,6 +160,9 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
             vm.resume();
             ReferenceType activityType = null;
             while (activityType == null) {
+                if (Instant.now().isAfter(deadline)) {
+                    fail(TEST_APP_FULL_CLASS_NAME + " did not load within timeout!");
+                }
                 activityType = vm.eventQueue().remove().stream()
                         .filter(e -> cpr == e.request())
                         .findFirst()
@@ -164,8 +178,10 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
             vm.resume();
 
             // Wait for the event.
-            boolean done = false;
             while (!vm.eventQueue().remove().stream().anyMatch(e -> e.request() == bpr)) {
+                if (Instant.now().isAfter(deadline)) {
+                    fail(TEST_APP_FULL_CLASS_NAME + " did hit onCreate breakpoint within timeout!");
+                }
             }
             bpr.disable();
             vm.resume();

@@ -16,6 +16,8 @@
 
 #include <aidl/test_package/BnTest.h>
 
+#include <stdio.h>
+#include <unistd.h>
 #include <condition_variable>
 #include <mutex>
 
@@ -29,6 +31,14 @@ using Bar = ::aidl::test_package::Bar;
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
  public:
+  binder_status_t dump(int fd, const char** args, uint32_t numArgs) override {
+    for (uint32_t i = 0; i < numArgs; i++) {
+      dprintf(fd, "%s", args[i]);
+    }
+    fsync(fd);
+    return STATUS_OK;
+  }
+
   ::ndk::ScopedAStatus GetName(std::string* _aidl_return) override {
     *_aidl_return = "CPP";
     return ::ndk::ScopedAStatus(AStatus_newOk());

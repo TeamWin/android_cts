@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.server.wm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

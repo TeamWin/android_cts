@@ -54,8 +54,7 @@ public class ProfileSerialNumberHostSideTest extends BaseMultiUserBackupHostSide
         int profileUserId = createProfileUser(userId, "Profile-Serial-Number");
         mProfileUserId = Optional.of(profileUserId);
         startUserAndInitializeForBackup(profileUserId);
-
-        installPackageAsUser(APK_NAME, false, profileUserId);
+        installPackageAsUser(APK_NAME, profileUserId);
     }
 
     @After
@@ -63,7 +62,7 @@ public class ProfileSerialNumberHostSideTest extends BaseMultiUserBackupHostSide
     public void tearDown() throws Exception {
         if (mProfileUserId.isPresent()) {
             int profileUserId = mProfileUserId.get();
-            uninstallPackageAsUser(APK_NAME, profileUserId);
+            uninstallPackageAsUser(TEST_PACKAGE, profileUserId);
             mDevice.removeUser(profileUserId);
             mProfileUserId = Optional.empty();
         }
