@@ -130,7 +130,8 @@ public class UsageStatsTest {
 
     @After
     public void cleanUp() throws Exception {
-        if (!mCachedUsageSourceSetting.equals(getUsageSourceSetting())) {
+        if (mCachedUsageSourceSetting != null &&
+            !mCachedUsageSourceSetting.equals(getUsageSourceSetting())) {
             setUsageSourceSetting(mCachedUsageSourceSetting);
             mUsageStatsManager.forceUsageSourceSettingRead();
         }
