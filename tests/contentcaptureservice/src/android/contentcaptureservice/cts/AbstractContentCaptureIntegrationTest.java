@@ -104,7 +104,7 @@ public abstract class AbstractContentCaptureIntegrationTest
             });
 
     private final SettingsStateChangerRule mFeatureEnablerRule = new SettingsStateChangerRule(
-            sContext, CONTENT_CAPTURE_ENABLED, "true");
+            sContext, CONTENT_CAPTURE_ENABLED, "1");
 
     @Rule
     public final RuleChain mLookAllTheseRules = RuleChain
@@ -201,12 +201,8 @@ public abstract class AbstractContentCaptureIntegrationTest
     }
 
     @Nullable
-    public static void setFeatureEnabled(@Nullable String enabled) {
-        if (enabled == null) {
-            SettingsUtils.syncDelete(sContext, CONTENT_CAPTURE_ENABLED);
-        } else {
-            SettingsUtils.syncSet(sContext, CONTENT_CAPTURE_ENABLED, enabled);
-        }
+    public static void setFeatureEnabledBySettings(@Nullable boolean enabled) {
+        SettingsUtils.syncSet(sContext, CONTENT_CAPTURE_ENABLED, enabled ? "1" : "0");
     }
 
     /**

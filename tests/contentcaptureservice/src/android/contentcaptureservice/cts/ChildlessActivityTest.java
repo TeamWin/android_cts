@@ -1019,13 +1019,13 @@ public class ChildlessActivityTest
             case BY_API:
                 if (enabled) {
                     // The service cannot re-enable itself, so we use settings instead.
-                    setFeatureEnabled("true");
+                    setFeatureEnabledBySettings(true);
                 } else {
                     service.disableContentCaptureServices();
                 }
                 break;
             case BY_SETTINGS:
-                setFeatureEnabled(Boolean.toString(enabled));
+                setFeatureEnabledBySettings(enabled);
                 break;
             case BY_DEVICE_CONFIG:
                 setFeatureEnabledByDeviceConfig(Boolean.toString(enabled));
