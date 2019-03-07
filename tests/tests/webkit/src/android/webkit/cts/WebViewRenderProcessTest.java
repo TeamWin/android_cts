@@ -23,17 +23,17 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebViewRenderer;
+import android.webkit.WebViewRenderProcess;
 
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.Future;
 
 @AppModeFull
-public class WebViewRendererTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
+public class WebViewRenderProcessTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private WebViewOnUiThread mOnUiThread;
 
-    public WebViewRendererTest() {
+    public WebViewRenderProcessTest() {
         super("com.android.cts.webkit", WebViewCtsActivity.class);
     }
 
@@ -53,28 +53,28 @@ public class WebViewRendererTest extends ActivityInstrumentationTestCase2<WebVie
         super.tearDown();
     }
 
-    private boolean terminateRendererOnUiThread(
-            final WebViewRenderer renderer) {
+    private boolean terminateRenderProcessOnUiThread(
+            final WebViewRenderProcess renderer) {
         return WebkitUtils.onMainThreadSync(() -> {
             return renderer.terminate();
         });
     }
 
-    WebViewRenderer getRendererOnUiThread(final WebView webView) {
+    WebViewRenderProcess getRenderProcessOnUiThread(final WebView webView) {
         return WebkitUtils.onMainThreadSync(() -> {
-            return webView.getWebViewRenderer();
+            return webView.getWebViewRenderProcess();
         });
     }
 
-    private Future<WebViewRenderer> startAndGetRenderer(
+    private Future<WebViewRenderProcess> startAndGetRenderProcess(
             final WebView webView) throws Throwable {
-        final SettableFuture<WebViewRenderer> future = SettableFuture.create();
+        final SettableFuture<WebViewRenderProcess> future = SettableFuture.create();
 
         WebkitUtils.onMainThread(() -> {
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onPageFinished(WebView view, String url) {
-                    WebViewRenderer result = webView.getWebViewRenderer();
+                    WebViewRenderProcess result = webView.getWebViewRenderProcess();
                     future.set(result);
                 }
             });
@@ -84,7 +84,7 @@ public class WebViewRendererTest extends ActivityInstrumentationTestCase2<WebVie
         return future;
     }
 
-    Future<Boolean> catchRendererTermination(final WebView webView) {
+    Future<Boolean> catchRenderProcessTermination(final WebView webView) {
         final SettableFuture<Boolean> future = SettableFuture.create();
 
         WebkitUtils.onMainThread(() -> {
@@ -103,53 +103,54 @@ public class WebViewRendererTest extends ActivityInstrumentationTestCase2<WebVie
         return future;
     }
 
-    public void testGetWebViewRenderer() throws Throwable {
+    // TODO(tobiasjs) enable after webview drop
+    public void disabled_testGetWebViewRenderProcess() throws Throwable {
         final WebView webView = mOnUiThread.getWebView();
-        final WebViewRenderer preStartRenderer = getRendererOnUiThread(webView);
+        final WebViewRenderProcess preStartRenderProcess = getRenderProcessOnUiThread(webView);
 
         if (!getActivity().isMultiprocessMode()) {
             assertNull(
-                    "getWebViewRenderer should return null is multiprocess is off.",
-                    preStartRenderer);
+                    "getWebViewRenderProcess should return null is multiprocess is off.",
+                    preStartRenderProcess);
             return;
         }
 
         assertNotNull(
                 "Should be possible to obtain a renderer handle before the renderer has started.",
-                preStartRenderer);
+                preStartRenderProcess);
         assertFalse(
                 "Should not be able to terminate an unstarted renderer.",
-                terminateRendererOnUiThread(preStartRenderer));
+                terminateRenderProcessOnUiThread(preStartRenderProcess));
 
-        final WebViewRenderer renderer = WebkitUtils.waitForFuture(startAndGetRenderer(webView));
+        final WebViewRenderProcess renderer = WebkitUtils.waitForFuture(startAndGetRenderProcess(webView));
         assertSame(
                 "The pre- and post-start renderer handles should be the same object.",
-                renderer, preStartRenderer);
+                renderer, preStartRenderProcess);
 
         assertSame(
                 "When getWebViewRender is called a second time, it should return the same object.",
-                renderer, WebkitUtils.waitForFuture(startAndGetRenderer(webView)));
+                renderer, WebkitUtils.waitForFuture(startAndGetRenderProcess(webView)));
 
-        Future<Boolean> terminationFuture = catchRendererTermination(webView);
+        Future<Boolean> terminationFuture = catchRenderProcessTermination(webView);
         assertTrue(
                 "A started renderer should be able to be terminated.",
-                terminateRendererOnUiThread(renderer));
+                terminateRenderProcessOnUiThread(renderer));
         assertTrue(
                 "Terminating a renderer should result in onRenderProcessGone being called.",
                 WebkitUtils.waitForFuture(terminationFuture));
 
         assertFalse(
                 "It should not be possible to terminate a renderer that has already terminated.",
-                terminateRendererOnUiThread(renderer));
+                terminateRenderProcessOnUiThread(renderer));
 
         WebView webView2 = mOnUiThread.createWebView();
         try {
             assertNotSame(
                     "After a renderer restart, the new renderer handle object should be different.",
-                    renderer, WebkitUtils.waitForFuture(startAndGetRenderer(webView2)));
+                    renderer, WebkitUtils.waitForFuture(startAndGetRenderProcess(webView2)));
         } finally {
             // Ensure that we clean up webView2. webView has been destroyed by the WebViewClient
-            // installed by catchRendererTermination
+            // installed by catchRenderProcessTermination
             WebkitUtils.onMainThreadSync(() -> webView2.destroy());
         }
     }
