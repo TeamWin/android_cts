@@ -15,11 +15,10 @@
  */
 package android.contentsuggestions.cts;
 
-import static android.support.test.InstrumentationRegistry.getContext;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,10 +32,10 @@ import android.app.contentsuggestions.ContentSuggestionsManager;
 import android.app.contentsuggestions.SelectionsRequest;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.Lists;
 
