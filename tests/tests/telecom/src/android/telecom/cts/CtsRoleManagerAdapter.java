@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.Instrumentation;
 import android.app.role.RoleManager;
-import android.app.role.RoleManagerCallback;
 import android.content.Context;
 import android.os.Process;
 import android.os.UserHandle;
@@ -164,14 +163,10 @@ public class CtsRoleManagerAdapter {
         LinkedBlockingQueue<String> q = new LinkedBlockingQueue<>(1);
         runWithShellPermissionIdentity(() -> {
             mRoleManager.addRoleHolderAsUser(roleName, packageName, 0, user, executor,
-                    new RoleManagerCallback() {
-                        @Override
-                        public void onSuccess() {
+                    successful -> {
+                        if (successful) {
                             q.add(roleName + packageName);
-                        }
-
-                        @Override
-                        public void onFailure() {
+                        } else  {
                             Log.e(TAG, "Add role holder failed.");
                         }
                     });
@@ -187,14 +182,10 @@ public class CtsRoleManagerAdapter {
         LinkedBlockingQueue<String> q = new LinkedBlockingQueue<>(1);
         runWithShellPermissionIdentity(() -> {
             mRoleManager.removeRoleHolderAsUser(roleName, packageName, 0, user, executor,
-                    new RoleManagerCallback() {
-                        @Override
-                        public void onSuccess() {
+                    successful -> {
+                        if (successful) {
                             q.add(roleName + packageName);
-                        }
-
-                        @Override
-                        public void onFailure() {
+                        } else {
                             Log.e(TAG, "Remove role holder failed.");
                         }
                     });

@@ -21,7 +21,6 @@ import static android.telecom.cts.TestUtils.shouldTestTelecom;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.app.role.RoleManager;
-import android.app.role.RoleManagerCallback;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -180,24 +179,13 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
 
         runWithShellPermissionIdentity(() -> mRoleManager.addRoleHolderAsUser(roleName,
-                packageName, 0, user, executor, new RoleManagerCallback() {
-                    @Override
-                    public void onSuccess() {
+                packageName, 0, user, executor, successful -> {
                         try {
-                            queue.put(true);
+                            queue.put(successful);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                    }
-                    @Override
-                    public void onFailure() {
-                        try {
-                            queue.put(false);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }));
+                    }));
         boolean result = queue.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
         assertTrue(result);
     }
@@ -209,22 +197,11 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
 
         runWithShellPermissionIdentity(() -> mRoleManager.removeRoleHolderAsUser(roleName,
-                packageName, 0, user, executor, new RoleManagerCallback() {
-                    @Override
-                    public void onSuccess() {
-                        try {
-                            queue.put(true);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    @Override
-                    public void onFailure() {
-                        try {
-                            queue.put(false);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                packageName, 0, user, executor, successful -> {
+                    try {
+                        queue.put(successful);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }));
         boolean result = queue.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
