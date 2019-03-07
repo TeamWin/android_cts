@@ -428,4 +428,9 @@ public class AvailableIntentsTest extends AndroidTestCase {
                 .setData(Uri.parse("package:android.content.cts"));
         assertCanBeHandled(intent);
     }
+
+    public void testRequestEnableContentCaptureIntent() {
+        Intent intent = new Intent(Settings.ACTION_REQUEST_ENABLE_CONTENT_CAPTURE);
+        assertCanBeHandled(intent);
+    }
 }
