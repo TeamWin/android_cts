@@ -16,6 +16,11 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
@@ -31,9 +36,10 @@ import android.media.PlaybackParams;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -42,7 +48,11 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class AudioTrackTest extends CtsAndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class AudioTrackTest {
     private String TAG = "AudioTrackTest";
     private final long WAIT_MSEC = 200;
     private final int OFFSET_DEFAULT = 0;
@@ -132,6 +142,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 1: constructor for streaming AudioTrack, mono, 16bit at misc
     // valid sample rates
+    @Test
     public void testConstructorMono16MusicStream() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -143,6 +154,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 2: constructor for streaming AudioTrack, stereo, 16bit at misc
     // valid sample rates
+    @Test
     public void testConstructorStereo16MusicStream() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -154,6 +166,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 3: constructor for static AudioTrack, mono, 16bit at misc valid
     // sample rates
+    @Test
     public void testConstructorMono16MusicStatic() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -165,6 +178,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 4: constructor for static AudioTrack, stereo, 16bit at misc
     // valid sample rates
+    @Test
     public void testConstructorStereo16MusicStatic() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -180,6 +194,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 1: constructor for streaming AudioTrack, mono, 8bit at misc
     // valid sample rates
+    @Test
     public void testConstructorMono8MusicStream() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -191,6 +206,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 2: constructor for streaming AudioTrack, stereo, 8bit at misc
     // valid sample rates
+    @Test
     public void testConstructorStereo8MusicStream() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -202,6 +218,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 3: constructor for static AudioTrack, mono, 8bit at misc valid
     // sample rates
+    @Test
     public void testConstructorMono8MusicStatic() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -213,6 +230,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 4: constructor for static AudioTrack, stereo, 8bit at misc
     // valid sample rates
+    @Test
     public void testConstructorStereo8MusicStatic() throws Exception {
 
         TestResults res = constructorTestMultiSampleRate(AudioManager.STREAM_MUSIC,
@@ -227,6 +245,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // ----------------------------------
 
     // Test case 1: constructor for all stream types
+    @Test
     public void testConstructorStreamType() throws Exception {
         // constants for test
         final int TYPE_TEST_SR = 22050;
@@ -276,6 +295,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // ----------------------------------
 
     // Test case 1: build AudioTrack with default parameters, test documented default params
+    @Test
     public void testBuilderDefault() throws Exception {
         // constants for test
         final String TEST_NAME = "testBuilderDefault";
@@ -306,6 +326,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 2: build AudioTrack with AudioFormat, test it's used
+    @Test
     public void testBuilderFormat() throws Exception {
         // constants for test
         final String TEST_NAME = "testBuilderFormat";
@@ -334,6 +355,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 3: build AudioTrack with session ID, test it's used
+    @Test
     public void testBuilderSession() throws Exception {
         // constants for test
         final String TEST_NAME = "testBuilderSession";
@@ -353,6 +375,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 4: build AudioTrack with AudioAttributes built from stream type, test it's used
+    @Test
     public void testBuilderAttributesStream() throws Exception {
         // constants for test
         final String TEST_NAME = "testBuilderAttributesStream";
@@ -385,6 +408,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 5: build AudioTrack with attributes and performance mode
+    @Test
     public void testBuilderAttributesPerformanceMode() throws Exception {
         // constants for test
         final String TEST_NAME = "testBuilderAttributesPerformanceMode";
@@ -426,6 +450,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // ----------------------------------
 
     // Test case 1: getPlaybackHeadPosition() at 0 after initialization
+    @Test
     public void testPlaybackHeadPositionAfterInit() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlaybackHeadPositionAfterInit";
@@ -446,6 +471,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 2: getPlaybackHeadPosition() increases after play()
+    @Test
     public void testPlaybackHeadPositionIncrease() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlaybackHeadPositionIncrease";
@@ -473,6 +499,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 3: getPlaybackHeadPosition() is 0 after flush();
+    @Test
     public void testPlaybackHeadPositionAfterFlush() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlaybackHeadPositionAfterFlush";
@@ -502,6 +529,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 3: getPlaybackHeadPosition() is 0 after stop();
+    @Test
     public void testPlaybackHeadPositionAfterStop() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlaybackHeadPositionAfterStop";
@@ -538,6 +566,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 4: getPlaybackHeadPosition() is > 0 after play(); pause();
+    @Test
     public void testPlaybackHeadPositionAfterPause() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlaybackHeadPositionAfterPause";
@@ -567,6 +596,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 5: getPlaybackHeadPosition() remains 0 after pause(); flush(); play();
+    @Test
     public void testPlaybackHeadPositionAfterFlushAndPlay() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlaybackHeadPositionAfterFlushAndPlay";
@@ -644,6 +674,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 1: setStereoVolume() with max volume returns SUCCESS
+    @Test
     public void testSetStereoVolumeMax() throws Exception {
         final String TEST_NAME = "testSetStereoVolumeMax";
         float maxVol = AudioTrack.getMaxVolume();
@@ -651,6 +682,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 2: setStereoVolume() with min volume returns SUCCESS
+    @Test
     public void testSetStereoVolumeMin() throws Exception {
         final String TEST_NAME = "testSetStereoVolumeMin";
         float minVol = AudioTrack.getMinVolume();
@@ -658,6 +690,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 3: setStereoVolume() with mid volume returns SUCCESS
+    @Test
     public void testSetStereoVolumeMid() throws Exception {
         final String TEST_NAME = "testSetStereoVolumeMid";
         float midVol = (AudioTrack.getMaxVolume() - AudioTrack.getMinVolume()) / 2;
@@ -665,6 +698,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 4: setPlaybackRate() with half the content rate returns SUCCESS
+    @Test
     public void testSetPlaybackRate() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackRate";
@@ -690,6 +724,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 5: setPlaybackRate(0) returns bad value error
+    @Test
     public void testSetPlaybackRateZero() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackRateZero";
@@ -712,6 +747,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 6: setPlaybackRate() accepts values twice the output sample
     // rate
+    @Test
     public void testSetPlaybackRateTwiceOutputSR() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackRateTwiceOutputSR";
@@ -739,6 +775,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 7: setPlaybackRate() and retrieve value, should be the same for
     // half the content SR
+    @Test
     public void testSetGetPlaybackRate() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetGetPlaybackRate";
@@ -765,6 +802,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 8: setPlaybackRate() invalid operation if track not initialized
+    @Test
     public void testSetPlaybackRateUninit() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackRateUninit";
@@ -787,6 +825,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 9: setVolume() with max volume returns SUCCESS
+    @Test
     public void testSetVolumeMax() throws Exception {
         final String TEST_NAME = "testSetVolumeMax";
         float maxVol = AudioTrack.getMaxVolume();
@@ -794,6 +833,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 10: setVolume() with min volume returns SUCCESS
+    @Test
     public void testSetVolumeMin() throws Exception {
         final String TEST_NAME = "testSetVolumeMin";
         float minVol = AudioTrack.getMinVolume();
@@ -801,6 +841,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 11: setVolume() with mid volume returns SUCCESS
+    @Test
     public void testSetVolumeMid() throws Exception {
         final String TEST_NAME = "testSetVolumeMid";
         float midVol = (AudioTrack.getMaxVolume() - AudioTrack.getMinVolume()) / 2;
@@ -812,6 +853,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // ----------------------------------
 
     // Test case 1: setPlaybackHeadPosition() on playing track
+    @Test
     public void testSetPlaybackHeadPositionPlaying() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackHeadPositionPlaying";
@@ -838,6 +880,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 2: setPlaybackHeadPosition() on stopped track
+    @Test
     public void testSetPlaybackHeadPositionStopped() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackHeadPositionStopped";
@@ -866,6 +909,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 3: setPlaybackHeadPosition() on paused track
+    @Test
     public void testSetPlaybackHeadPositionPaused() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackHeadPositionPaused";
@@ -894,6 +938,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 4: setPlaybackHeadPosition() beyond what has been written
+    @Test
     public void testSetPlaybackHeadPositionTooFar() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetPlaybackHeadPositionTooFar";
@@ -927,6 +972,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 5: setLoopPoints() fails for MODE_STREAM
+    @Test
     public void testSetLoopPointsStream() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetLoopPointsStream";
@@ -950,6 +996,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 6: setLoopPoints() fails start > end
+    @Test
     public void testSetLoopPointsStartAfterEnd() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetLoopPointsStartAfterEnd";
@@ -973,6 +1020,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 6: setLoopPoints() success
+    @Test
     public void testSetLoopPointsSuccess() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetLoopPointsSuccess";
@@ -996,6 +1044,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 7: setLoopPoints() fails with loop length bigger than content
+    @Test
     public void testSetLoopPointsLoopTooLong() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetLoopPointsLoopTooLong";
@@ -1023,6 +1072,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 8: setLoopPoints() fails with start beyond what can be written
     // for the track
+    @Test
     public void testSetLoopPointsStartTooFar() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetLoopPointsStartTooFar";
@@ -1051,6 +1101,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 9: setLoopPoints() fails with end beyond what can be written
     // for the track
+    @Test
     public void testSetLoopPointsEndTooFar() throws Exception {
         // constants for test
         final String TEST_NAME = "testSetLoopPointsEndTooFar";
@@ -1083,6 +1134,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // ----------------------------------
 
     // Test case 1: write() fails when supplying less data (bytes) than declared
+    @Test
     public void testWriteByteOffsetTooBig() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteByteOffsetTooBig";
@@ -1107,6 +1159,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 2: write() fails when supplying less data (shorts) than
     // declared
+    @Test
     public void testWriteShortOffsetTooBig() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteShortOffsetTooBig";
@@ -1131,6 +1184,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 3: write() fails when supplying less data (bytes) than declared
+    @Test
     public void testWriteByteSizeTooBig() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteByteSizeTooBig";
@@ -1155,6 +1209,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 4: write() fails when supplying less data (shorts) than
     // declared
+    @Test
     public void testWriteShortSizeTooBig() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteShortSizeTooBig";
@@ -1178,6 +1233,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 5: write() fails with negative offset
+    @Test
     public void testWriteByteNegativeOffset() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteByteNegativeOffset";
@@ -1201,6 +1257,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 6: write() fails with negative offset
+    @Test
     public void testWriteShortNegativeOffset() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteShortNegativeOffset";
@@ -1224,6 +1281,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 7: write() fails with negative size
+    @Test
     public void testWriteByteNegativeSize() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteByteNegativeSize";
@@ -1248,6 +1306,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 8: write() fails with negative size
+    @Test
     public void testWriteShortNegativeSize() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteShortNegativeSize";
@@ -1273,6 +1332,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 9: write() succeeds and returns the size that was written for
     // 16bit
+    @Test
     public void testWriteByte() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteByte";
@@ -1296,6 +1356,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 10: write() succeeds and returns the size that was written for
     // 16bit
+    @Test
     public void testWriteShort() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteShort";
@@ -1320,6 +1381,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 11: write() succeeds and returns the size that was written for
     // 8bit
+    @Test
     public void testWriteByte8bit() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteByte8bit";
@@ -1343,6 +1405,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     // Test case 12: write() succeeds and returns the size that was written for
     // 8bit
+    @Test
     public void testWriteShort8bit() throws Exception {
         // constants for test
         final String TEST_NAME = "testWriteShort8bit";
@@ -1369,6 +1432,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // ----------------------------------
 
     // Test case 1: getMinBufferSize() return ERROR_BAD_VALUE if SR < 4000
+    @Test
     public void testGetMinBufferSizeTooLowSR() throws Exception {
         // constant for test
         final String TEST_NAME = "testGetMinBufferSizeTooLowSR";
@@ -1382,6 +1446,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test case 2: getMinBufferSize() return ERROR_BAD_VALUE if sample rate too high
+    @Test
     public void testGetMinBufferSizeTooHighSR() throws Exception {
         // constant for test
         final String TEST_NAME = "testGetMinBufferSizeTooHighSR";
@@ -1395,6 +1460,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
             AudioTrack.ERROR_BAD_VALUE);
     }
 
+    @Test
     public void testAudioTrackProperties() throws Exception {
         // constants for test
         final String TEST_NAME = "testAudioTrackProperties";
@@ -1442,6 +1508,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         assertEquals(TEST_NAME, track.getNativeFrameCount(), track.getBufferSizeInFrames());
     }
 
+    @Test
     public void testReloadStaticData() throws Exception {
         // constants for test
         final String TEST_NAME = "testReloadStaticData";
@@ -1473,6 +1540,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     @Presubmit
+    @Test
     public void testPlayStaticDataShort() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -1498,6 +1566,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     }
 
+    @Test
     public void testPlayStaticData() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -1618,6 +1687,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     @Presubmit
+    @Test
     public void testPlayStreamDataShort() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlayStreamDataShort";
@@ -1636,6 +1706,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 NO_WAIT);
     }
 
+    @Test
     public void testPlayStreamData() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlayStreamData";
@@ -1771,6 +1842,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         Thread.sleep(waitMsec); // wait for release to complete
     }
 
+    @Test
     public void testPlayStreamByteBuffer() throws Exception {
         // constants for test
         final String TEST_NAME = "testPlayStreamByteBuffer";
@@ -1876,6 +1948,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testPlayChannelIndexStreamBuffer() throws Exception {
         // should hear 4 tones played 3 or 4 times depending
         // on the device output capabilities (e.g. stereo or 5.1 or otherwise)
@@ -2017,6 +2090,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 .isLowRamDevice();
     }
 
+    @Test
     public void testGetTimestamp() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -2032,6 +2106,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 streamName);
     }
 
+    @Test
     public void testFastTimestamp() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -2202,10 +2277,11 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                     ResultType.LOWER_BETTER, ResultUnit.MS);
             log.setSummary("average_jitter", averageJitterInMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
-            log.submit(getInstrumentation());
+            log.submit(InstrumentationRegistry.getInstrumentation());
         }
     }
 
+    @Test
     public void testVariableRatePlayback() throws Exception {
         final String TEST_NAME = "testVariableRatePlayback";
         final int TEST_SR = 24000;
@@ -2275,6 +2351,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     // This ensures consistent stop behavior on Android P and beyond, where data written
     // immediately after a stop doesn't get caught in the drain.
     @LargeTest
+    @Test
     public void testStopDrain() throws Exception {
         final String TEST_NAME = "testStopDrain";
         final int TEST_SR = 8000;
@@ -2332,6 +2409,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testVariableSpeedPlayback() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -2377,8 +2455,8 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
         // sanity test that playback params works as expected
         PlaybackParams params = new PlaybackParams().allowDefaults();
-        assertEquals(TEST_NAME, 1.0f, params.getSpeed());
-        assertEquals(TEST_NAME, 1.0f, params.getPitch());
+        assertEquals("default speed not correct", 1.0f, params.getSpeed(), 0.f /* delta */);
+        assertEquals("default pitch not correct", 1.0f, params.getPitch(), 0.f /* delta */);
         assertEquals(TEST_NAME,
                 params.AUDIO_FALLBACK_MODE_DEFAULT,
                 params.getAudioFallbackMode());
@@ -2397,8 +2475,8 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         PlaybackParams paramCheck = track.getPlaybackParams();
         assertEquals(TEST_NAME,
                 paramCheck.AUDIO_FALLBACK_MODE_DEFAULT, paramCheck.getAudioFallbackMode());
-        assertEquals(TEST_NAME,
-                1.0f, paramCheck.getPitch());
+        assertEquals("pitch should be unchanged on failure",
+                1.0f, paramCheck.getPitch(), 0. /* delta */);
 
         // now try to see if we can do extreme pitch correction that should probably be muted.
         params.setAudioFallbackMode(params.AUDIO_FALLBACK_MODE_MUTE);
@@ -2441,8 +2519,10 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
                 // verify that settings have changed
                 PlaybackParams checkParams = track.getPlaybackParams();
-                assertEquals(TAG, pitch, checkParams.getPitch());
-                assertEquals(TAG, speed, checkParams.getSpeed());
+                assertEquals("pitch not changed correctly",
+                        pitch, checkParams.getPitch(), 0. /* delta */);
+                assertEquals("speed not changed correctly",
+                        speed, checkParams.getSpeed(), 0. /* delta */);
 
                 // sleep for playback
                 Thread.sleep(TEST_DELTA_MS);
@@ -2463,6 +2543,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test AudioTrack to ensure we can build after a failure.
+    @Test
     public void testAudioTrackBufferSize() throws Exception {
         // constants for test
         final String TEST_NAME = "testAudioTrackBufferSize";
@@ -2496,6 +2577,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     // Test AudioTrack to see if there are any problems with large frame counts.
+    @Test
     public void testAudioTrackLargeFrameCount() throws Exception {
         // constants for test
         final String TEST_NAME = "testAudioTrackLargeFrameCount";
@@ -2522,6 +2604,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testSetNullPresentation() throws Exception {
         final AudioTrack track = new AudioTrack.Builder().build();
         assertThrows(IllegalArgumentException.class, () -> {
@@ -2529,11 +2612,13 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         });
     }
 
+    @Test
     public void testSetPresentationDefaultTrack() throws Exception {
         final AudioTrack track = new AudioTrack.Builder().build();
         assertEquals(AudioTrack.ERROR, track.setPresentation(createAudioPresentation()));
     }
 
+    @Test
     public void testIsDirectPlaybackSupported() throws Exception {
         // constants for test
         final String TEST_NAME = "testIsDirectPlaybackSupported";
@@ -2596,5 +2681,9 @@ public class AudioTrackTest extends CtsAndroidTestCase {
 
     private static AudioPresentation createAudioPresentation() {
         return (new AudioPresentation.Builder(42 /*presentationId*/)).build();
+    }
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 }
