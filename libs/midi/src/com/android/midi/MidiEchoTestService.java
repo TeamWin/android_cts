@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.android.cts.verifier.audio.midilib;
+package com.android.midi;
 
+import android.content.Context;
 import android.content.Intent;
-
+import android.media.midi.MidiDeviceInfo;
 import android.media.midi.MidiDeviceService;
 import android.media.midi.MidiDeviceStatus;
+import android.media.midi.MidiManager;
 import android.media.midi.MidiReceiver;
-import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -30,6 +32,26 @@ import java.io.IOException;
 /**
  * Virtual MIDI Device that copies its input to its output.
  * This is used for loop-back testing of MIDI I/O.
+ *
+ * Note: The application's AndroidManifest.xml should contain the following in
+ * its <application> section.
+ *
+     <service android:name="MidiEchoTestService"
+         android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
+         <intent-filter>
+             <action android:name="android.media.midi.MidiDeviceService" />
+         </intent-filter>
+         <meta-data android:name="android.media.midi.MidiDeviceService"
+            android:resource="@xml/echo_device_info" />
+     </service>
+
+ * also it must provide an xml reource file "echo_device_info.xml" containing:
+     <devices>
+         <device manufacturer="AndroidCTS" product="MidiEcho" tags="echo,test">
+             <input-port name="input" />
+             <output-port name="output" />
+         </device>
+     </devices>
  */
 
 public class MidiEchoTestService extends MidiDeviceService {
@@ -40,12 +62,50 @@ public class MidiEchoTestService extends MidiDeviceService {
     private MidiReceiver mInputReceiver = new MyReceiver();
     // This app will copy the data to this port.
     private MidiReceiver mOutputReceiver;
-    private static MidiEchoTestService mInstance;
+    private static MidiEchoTestService sInstance;
 
     // These are public so we can easily read them from CTS test.
     public int statusChangeCount;
     public boolean inputOpened;
     public int outputOpenCount;
+
+    public static final String TEST_MANUFACTURER = "AndroidCTS";
+    public static final String ECHO_PRODUCT = "MidiEcho";
+
+    /**
+     * Search through the available devices for the ECHO loop-back device.
+     */
+    public static MidiDeviceInfo findEchoDevice(Context context) {
+        MidiManager midiManager =
+                (MidiManager) context.getSystemService(Context.MIDI_SERVICE);
+        MidiDeviceInfo[] infos = midiManager.getDevices();
+        MidiDeviceInfo echoInfo = null;
+        for (MidiDeviceInfo info : infos) {
+            Bundle properties = info.getProperties();
+            String manufacturer = (String) properties.get(
+                    MidiDeviceInfo.PROPERTY_MANUFACTURER);
+
+            if (TEST_MANUFACTURER.equals(manufacturer)) {
+                String product = (String) properties.get(
+                        MidiDeviceInfo.PROPERTY_PRODUCT);
+                if (ECHO_PRODUCT.equals(product)) {
+                    echoInfo = info;
+                    break;
+                }
+            }
+        }
+        if (DEBUG) {
+            Log.i(TAG, "MidiEchoService for " + ECHO_PRODUCT + ": " + echoInfo);
+        }
+        return echoInfo;
+    }
+
+    /**
+     * @return A textual name for this echo service.
+     */
+    public static String getEchoServerName() {
+        return ECHO_PRODUCT;
+    }
 
     @Override
     public void onCreate() {
@@ -53,7 +113,7 @@ public class MidiEchoTestService extends MidiDeviceService {
         if (DEBUG) {
             Log.i(TAG, "#### onCreate()");
         }
-        mInstance = this;
+        sInstance = this;
     }
 
     @Override
@@ -82,7 +142,7 @@ public class MidiEchoTestService extends MidiDeviceService {
 
     // For CTS testing, so I can read test fields.
     public static MidiEchoTestService getInstance() {
-        return mInstance;
+        return sInstance;
     }
 
     @Override

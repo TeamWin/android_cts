@@ -45,7 +45,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                mockwebserver \
                                compatibility-device-util-axt \
                                platform-test-annotations \
-                               cts-security-test-support-library
+                               cts-security-test-support-library \
+                               cts-midi-lib
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4

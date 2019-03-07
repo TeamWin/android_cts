@@ -41,10 +41,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.cts.verifier.audio.midilib.MidiEchoTestService;
 import com.android.cts.verifier.PassFailButtons;
-
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
+
+import com.android.midi.MidiEchoTestService;
 
 /*
  * A note about the USB MIDI device.
