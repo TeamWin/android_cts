@@ -55,6 +55,7 @@ public class OomCatcher extends Activity implements ComponentCallbacks2 {
     }
 
     public void onDestroy() {
+        super.onDestroy();
         if (logThread != null) {
             logThread.interrupt();
         }
@@ -71,23 +72,26 @@ public class OomCatcher extends Activity implements ComponentCallbacks2 {
     public void onTrimMemory(int level) {
         Log.i(LOG_TAG, "Memory trim level: " + level);
         switch (level) {
-            // background messages
-            case TRIM_MEMORY_MODERATE:
-            case TRIM_MEMORY_COMPLETE:
-            // foreground messages
-            case TRIM_MEMORY_RUNNING_LOW:
-            case TRIM_MEMORY_RUNNING_CRITICAL:
+            // low priority messages being ignored
+            case TRIM_MEMORY_BACKGROUND: // bg
+            case TRIM_MEMORY_RUNNING_MODERATE: // fg
+                // fallthrough
+                Log.i(LOG_TAG, "ignoring low priority oom messages.");
+                break;
+            // medium priority messages being ignored
+            case TRIM_MEMORY_MODERATE: // bg
+            case TRIM_MEMORY_RUNNING_LOW: // fg
+                // fallthrough
+                Log.i(LOG_TAG, "ignoring medium priority oom messages.");
+                break;
+            // high priority messages
+            case TRIM_MEMORY_COMPLETE: // bg
+            case TRIM_MEMORY_RUNNING_CRITICAL: // fg
                 // fallthrough
                 onLowMemory();
                 break;
             case TRIM_MEMORY_UI_HIDDEN:
                 Log.i(LOG_TAG, "UI is hidden because the app is in the background.");
-                break;
-            // lower priority messages being ignored
-            case TRIM_MEMORY_BACKGROUND:
-            case TRIM_MEMORY_RUNNING_MODERATE:
-                // fallthrough
-                Log.i(LOG_TAG, "ignoring low priority oom messages.");
                 break;
             default:
                 Log.i(LOG_TAG, "unknown memory trim message.");
