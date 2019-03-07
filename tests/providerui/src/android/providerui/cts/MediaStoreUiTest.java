@@ -89,6 +89,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
     private File mFile;
     private Uri mMediaStoreUri;
+    private String mTargetPackageName;
 
     @Override
     public void setUp() throws Exception {
@@ -474,9 +475,13 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         final Intent intent = volume.createOpenDocumentTreeIntent();
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
+        if (mTargetPackageName == null) {
+            mTargetPackageName = getTargetPackageName(mActivity);
+        }
+
         // Granting the access
-        BySelector buttonPanelSelector = By.pkg("com.android.documentsui")
-                .res("com.android.documentsui:id/container_save");
+        BySelector buttonPanelSelector = By.pkg(mTargetPackageName)
+                .res(mTargetPackageName + ":id/container_save");
         mDevice.wait(Until.hasObject(buttonPanelSelector), 30 * DateUtils.SECOND_IN_MILLIS);
         final UiObject2 buttonPanel = mDevice.findObject(buttonPanelSelector);
         final UiObject2 allowButton = buttonPanel.findObject(By.res("android:id/button1"));
@@ -484,8 +489,8 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Granting the access by click "allow" in confirm dialog
-        final BySelector dialogButtonPanelSelector = By.pkg("com.android.documentsui")
-                .res("com.android.documentsui:id/buttonPanel");
+        final BySelector dialogButtonPanelSelector = By.pkg(mTargetPackageName)
+                .res(mTargetPackageName + ":id/buttonPanel");
         mDevice.wait(Until.hasObject(dialogButtonPanelSelector), 30 * DateUtils.SECOND_IN_MILLIS);
         final UiObject2 positiveButton = mDevice.findObject(dialogButtonPanelSelector)
                 .findObject(By.res("android:id/button1"));
@@ -503,5 +508,15 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
                     | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         mActivity.getContentResolver().takePersistableUriPermission(resultUri, flags);
         return resultUri;
+    }
+
+    private static String getTargetPackageName(Context context) {
+        final PackageManager pm = context.getPackageManager();
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        final ResolveInfo ri = pm.resolveActivity(intent, 0);
+        return ri.activityInfo.packageName;
     }
 }
