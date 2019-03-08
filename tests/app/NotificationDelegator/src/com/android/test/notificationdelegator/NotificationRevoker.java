@@ -30,7 +30,7 @@ public class NotificationRevoker extends Activity {
         setContentView(R.layout.activity);
 
         NotificationManager nm = getSystemService(NotificationManager.class);
-        nm.revokeNotificationDelegate();
+        nm.setNotificationDelegate(null);
         Log.d(TAG, "Removed delegate: " + nm.getNotificationDelegate());
         finish();
     }
