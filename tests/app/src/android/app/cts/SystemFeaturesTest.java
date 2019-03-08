@@ -537,15 +537,47 @@ public class SystemFeaturesTest {
 
     @Test
     public void testTouchScreenFeatures() {
+        // If device implementations include a touchscreen (single-touch or better), they:
+        // [C-1-1] MUST report TOUCHSCREEN_FINGER for the Configuration.touchscreen API field.
+        // [C-1-2] MUST report the android.hardware.touchscreen and
+        // android.hardware.faketouch feature flags
         ConfigurationInfo configInfo = mActivityManager.getDeviceConfigurationInfo();
-        if (configInfo.reqTouchScreen != Configuration.TOUCHSCREEN_NOTOUCH) {
+        if (configInfo.reqTouchScreen == Configuration.TOUCHSCREEN_NOTOUCH) {
+            // Device does not include a touchscreen
+            assertNotAvailable(PackageManager.FEATURE_TOUCHSCREEN);
+        } else {
+            // Device has a touchscreen
             assertAvailable(PackageManager.FEATURE_TOUCHSCREEN);
             assertAvailable(PackageManager.FEATURE_FAKETOUCH);
-        } else {
-            assertNotAvailable(PackageManager.FEATURE_TOUCHSCREEN);
+        }
+    }
+
+    @Test
+    public void testFakeTouchFeatures() {
+        // If device implementations declare support for android.hardware.faketouch, they:
+        // [C-1-7] MUST report TOUCHSCREEN_NOTOUCH for the Configuration.touchscreen API field
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH) &&
+                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
+            // The device *only* supports faketouch, and does not have a touchscreen
+            Configuration configuration = mContext.getResources().getConfiguration();
+            assertEquals(configuration.touchscreen, Configuration.TOUCHSCREEN_NOTOUCH);
         }
 
-        // TODO: Add tests for the other touchscreen features.
+        // If device implementations declare support for
+        // android.hardware.faketouch.multitouch.distinct, they:
+        // [C-2-1] MUST declare support for android.hardware.faketouch
+        if (mPackageManager.hasSystemFeature(
+                PackageManager.FEATURE_FAKETOUCH_MULTITOUCH_DISTINCT)) {
+            assertAvailable(PackageManager.FEATURE_FAKETOUCH);
+        }
+
+        // If device implementations declare support for
+        // android.hardware.faketouch.multitouch.jazzhand, they:
+        // [C-3-1] MUST declare support for android.hardware.faketouch
+        if (mPackageManager.hasSystemFeature(
+                PackageManager.FEATURE_FAKETOUCH_MULTITOUCH_JAZZHAND)) {
+            assertAvailable(PackageManager.FEATURE_FAKETOUCH);
+        }
     }
 
     @Test
