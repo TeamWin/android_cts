@@ -880,6 +880,20 @@ public class AudioRecordTest {
 
             // deprecated, value ignored.
             AudioHelper.assertMetricsKey(metrics, AudioRecord.MetricsConstants.LATENCY);
+
+            // TestApi:
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.CHANNEL_MASK,
+                    new Long(RECORD_CHANNEL_MASK));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.FRAME_COUNT,
+                    new Integer(record.getBufferSizeInFrames()));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.DURATION_MS,
+                    new Double(0.));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioRecord.MetricsConstants.START_COUNT,
+                    new Long(0));
+
+            // TestApi: no particular value checking.
+            AudioHelper.assertMetricsKey(metrics, AudioRecord.MetricsConstants.PORT_ID);
+            AudioHelper.assertMetricsKey(metrics, AudioRecord.MetricsConstants.ATTRIBUTES);
         } finally {
             if (record != null) {
                 record.release();
