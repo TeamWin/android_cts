@@ -33,6 +33,7 @@ import android.media.AudioPresentation;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
+import android.os.PersistableBundle;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
@@ -2637,6 +2638,47 @@ public class AudioTrackTest {
                 .build(),
                 new AudioAttributes.Builder().build());
         log(TEST_NAME, "PCM Stereo 48 kHz: " + isPcmStereo48kSupported);
+    }
+
+    @Test
+    public void testMediaMetrics() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        AudioTrack track = null;
+        try {
+            final int TEST_USAGE = AudioAttributes.USAGE_MEDIA;
+            final int TEST_CONTENT_TYPE = AudioAttributes.CONTENT_TYPE_MUSIC;
+            final AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(TEST_USAGE)
+                .setContentType(TEST_CONTENT_TYPE)
+                .build();
+
+            // Setup a new audio track
+            track = new AudioTrack.Builder()
+                .setAudioAttributes(attributes)
+                .build();
+
+            final PersistableBundle metrics = track.getMetrics();
+            assertNotNull("null metrics", metrics);
+
+            // The STREAMTYPE constant was generally not present in P, and if so
+            // was incorrectly exposed as an integer.
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.STREAMTYPE,
+                    new String("AUDIO_STREAM_MUSIC"));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.CONTENTTYPE,
+                    new String("AUDIO_CONTENT_TYPE_MUSIC"));
+            AudioHelper.assertMetricsKeyEquals(metrics, AudioTrack.MetricsConstants.USAGE,
+                    new String("AUDIO_USAGE_MEDIA"));
+
+            // AudioTrack.MetricsConstants.SAMPLERATE, metrics doesn't exit
+            // AudioTrack.MetricsConstants.CHANNELMASK, metrics doesn't exist
+        } finally {
+            if (track != null) {
+                track.release();
+            }
+        }
     }
 
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
