@@ -16,13 +16,16 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import android.hidl.manager.V1_0.IServiceManager;
 import android.hidl.manager.V1_0.IServiceNotification;
 import android.os.HwBlob;
+import android.os.NativeHandle;
 import android.os.RemoteException;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -30,6 +33,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -229,5 +234,46 @@ public class HwBinderTest {
         }
 
         assertTrue(notification.registered);
+    }
+
+    @Test
+    public void testEmptyNativeHandle() throws IOException {
+        NativeHandle handle = new NativeHandle();
+
+        assertFalse(handle.hasSingleFileDescriptor());
+        assertArrayEquals(new FileDescriptor[]{}, handle.getFileDescriptors());
+        assertArrayEquals(new int[]{}, handle.getInts());
+
+        handle.close();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEmptyHandleInvalidatedAfterClose() throws IOException {
+        NativeHandle handle = new NativeHandle();
+        handle.close();
+        handle.close();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEmptyHandleHasNoSingleFileDescriptor() {
+        NativeHandle handle = new NativeHandle();
+        handle.getFileDescriptor();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFullHandleHasNoSingleFileDescriptor() {
+        NativeHandle handle = new NativeHandle(
+            new FileDescriptor[]{FileDescriptor.in, FileDescriptor.in},
+            new int[]{}, false /*owns*/);
+        handle.getFileDescriptor();
+    }
+
+    @Test
+    public void testSingleFileDescriptor() {
+        NativeHandle handle = new NativeHandle(FileDescriptor.in, false /*own*/);
+
+        assertTrue(handle.hasSingleFileDescriptor());
+        assertArrayEquals(new FileDescriptor[]{FileDescriptor.in}, handle.getFileDescriptors());
+        assertArrayEquals(new int[]{}, handle.getInts());
     }
 }
