@@ -30,13 +30,15 @@ public class AvailableNetworkInfoTest extends AndroidTestCase {
         List<String> mccMncs = new ArrayList<String>();
         mccMncs.add(OPERATOR_MCCMNC_1);
         mccMncs.add(OPERATOR_MCCMNC_2);
+        List<Integer> bands = new ArrayList<Integer>();
 
         AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(SUB_ID,
-                AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
+                AvailableNetworkInfo.PRIORITY_HIGH, mccMncs, null);
         assertEquals(0, availableNetworkInfo.describeContents());
         assertEquals(SUB_ID, availableNetworkInfo.getSubId());
         assertEquals(AvailableNetworkInfo.PRIORITY_HIGH, availableNetworkInfo.getPriority());
         assertEquals(mccMncs, availableNetworkInfo.getMccMncs());
+        assertEquals(null, availableNetworkInfo.getBands());
 
         Parcel availableNetworkInfoParcel = Parcel.obtain();
         availableNetworkInfo.writeToParcel(availableNetworkInfoParcel, 0);
