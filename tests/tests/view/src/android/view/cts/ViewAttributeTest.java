@@ -37,7 +37,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
 import java.util.Map;
 
 @MediumTest
@@ -92,17 +91,16 @@ public class ViewAttributeTest {
         LayoutInflater inflater = LayoutInflater.from(mActivityRule.getActivity());
         LinearLayout rootView =
                 (LinearLayout) inflater.inflate(R.layout.view_attribute_layout, null);
-        List<Integer> stackRootView = rootView.getAttributeResolutionStack(android.R.attr.padding);
-        assertEquals(1, stackRootView.size());
-        assertEquals(R.layout.view_attribute_layout, stackRootView.get(0).intValue());
+        int[] stackRootView = rootView.getAttributeResolutionStack(android.R.attr.padding);
+        assertEquals(0, stackRootView.length);
 
         // View that has an explicit style ExplicitStyle1 set via style = ...
         View view1 = rootView.findViewById(R.id.view1);
-        List<Integer> stackView1 = view1.getAttributeResolutionStack(android.R.attr.padding);
-        assertEquals(3, stackView1.size());
-        assertEquals(R.layout.view_attribute_layout, stackView1.get(0).intValue());
-        assertEquals(R.style.ExplicitStyle1, stackView1.get(1).intValue());
-        assertEquals(R.style.ParentOfExplicitStyle1, stackView1.get(2).intValue());
+        int[] stackView1 = view1.getAttributeResolutionStack(android.R.attr.padding);
+        assertEquals(3, stackView1.length);
+        assertEquals(R.layout.view_attribute_layout, stackView1[0]);
+        assertEquals(R.style.ExplicitStyle1, stackView1[1]);
+        assertEquals(R.style.ParentOfExplicitStyle1, stackView1[2]);
     }
 
     @Test
