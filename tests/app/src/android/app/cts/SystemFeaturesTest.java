@@ -16,6 +16,11 @@
 
 package android.app.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.WallpaperManager;
@@ -41,7 +46,8 @@ import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
 import android.telephony.TelephonyManager;
-import android.test.InstrumentationTestCase;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
@@ -52,16 +58,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import junit.framework.AssertionFailedError;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Test for checking that the {@link PackageManager} is reporting the correct features.
  */
-public class SystemFeaturesTest extends InstrumentationTestCase {
+@RunWith(JUnit4.class)
+public class SystemFeaturesTest {
 
     private Context mContext;
     private PackageManager mPackageManager;
-    private HashSet<String> mAvailableFeatures;
+    private Set<String> mAvailableFeatures;
 
     private ActivityManager mActivityManager;
     private LocationManager mLocationManager;
@@ -70,10 +80,9 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     private WifiManager mWifiManager;
     private CameraManager mCameraManager;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        Instrumentation instrumentation = getInstrumentation();
+    @Before
+    public void setUp() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = instrumentation.getTargetContext();
         mPackageManager = mContext.getPackageManager();
         mAvailableFeatures = new HashSet<String>();
@@ -94,6 +103,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
      * Check for features improperly prefixed with "android." that are not defined in
      * {@link PackageManager}.
      */
+    @Test
     public void testFeatureNamespaces() throws IllegalArgumentException, IllegalAccessException {
         Set<String> officialFeatures = getFeatureConstantsNames("FEATURE_");
         assertFalse(officialFeatures.isEmpty());
@@ -114,6 +124,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testBluetoothFeature() {
         if (BluetoothAdapter.getDefaultAdapter() != null) {
             assertAvailable(PackageManager.FEATURE_BLUETOOTH);
@@ -122,6 +133,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testCameraFeatures() throws Exception {
         int numCameras = Camera.getNumberOfCameras();
         if (numCameras == 0) {
@@ -259,6 +271,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testLiveWallpaperFeature() {
         try {
             Intent intent = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
@@ -270,6 +283,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testLocationFeatures() {
         if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null) {
             assertAvailable(PackageManager.FEATURE_LOCATION);
@@ -286,6 +300,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testLowRamFeature() {
         if (mActivityManager.isLowRamDevice()) {
             assertAvailable(PackageManager.FEATURE_RAM_LOW);
@@ -294,6 +309,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testOffHostCardEmulationFeatures() {
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(mContext);
         if (nfcAdapter != null) {
@@ -318,6 +334,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testNfcFeatures() {
         if (NfcAdapter.getDefaultAdapter(mContext) != null) {
             // Watches MAY support all FEATURE_NFC features when an NfcAdapter is available, but
@@ -335,6 +352,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testScreenFeatures() {
         assertTrue(mPackageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
                 || mPackageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT));
@@ -344,6 +362,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
      * Check that the sensor features reported by the PackageManager correspond to the sensors
      * returned by {@link SensorManager#getSensorList(int)}.
      */
+    @Test
     public void testSensorFeatures() throws Exception {
         Set<String> featuresLeft = getFeatureConstantsNames("FEATURE_SENSOR_");
 
@@ -433,6 +452,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         return features;
     }
 
+    @Test
     public void testSipFeatures() {
         if (SipManager.newInstance(mContext) != null) {
             assertAvailable(PackageManager.FEATURE_SIP);
@@ -490,6 +510,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     /**
      * Check that the {@link TelephonyManager#getPhoneType()} matches the reported features.
      */
+    @Test
     public void testTelephonyFeatures() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -514,6 +535,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testTouchScreenFeatures() {
         ConfigurationInfo configInfo = mActivityManager.getDeviceConfigurationInfo();
         if (configInfo.reqTouchScreen != Configuration.TOUCHSCREEN_NOTOUCH) {
@@ -526,6 +548,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         // TODO: Add tests for the other touchscreen features.
     }
 
+    @Test
     public void testUsbAccessory() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) &&
@@ -543,6 +566,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testWifiFeature() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // no WiFi, skip the test
@@ -560,6 +584,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAudioOutputFeature() throws Exception {
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
@@ -586,8 +611,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
             (mPackageManager.hasSystemFeature(feature2) && mAvailableFeatures.contains(feature2))) {
             return;
         } else {
-            throw new AssertionFailedError("Must support at least one of " + feature1 + " or " +
-                feature2);
+            fail("Must support at least one of " + feature1 + " or " + feature2);
         }
     }
 
