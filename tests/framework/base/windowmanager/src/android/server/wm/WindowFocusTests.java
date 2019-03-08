@@ -16,13 +16,9 @@
 
 package android.server.wm;
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
-import static android.server.am.UiDeviceUtils.pressHomeButton;
-import static android.server.am.UiDeviceUtils.pressUnlockButton;
-import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -45,10 +41,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.Activity;
-import android.app.ActivityOptions;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
@@ -56,10 +49,8 @@ import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
-import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.server.am.ComponentNameUtils;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -68,7 +59,6 @@ import android.view.WindowManager.LayoutParams;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -82,25 +72,7 @@ import javax.annotation.concurrent.GuardedBy;
  *     atest WindowFocusTests
  */
 @Presubmit
-public class WindowFocusTests {
-
-    @Before
-    public void setUp() {
-        pressWakeupButton();
-        pressUnlockButton();
-        pressHomeButton();
-    }
-
-    private static <T extends InputTargetActivity> T startActivity(Class<T> cls, int displayId)
-            throws InterruptedException {
-        final Bundle options = (displayId == DEFAULT_DISPLAY
-                ? null : ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle());
-        final T activity = (T) getInstrumentation().startActivitySync(
-                new Intent(getInstrumentation().getTargetContext(), cls)
-                        .addFlags(FLAG_ACTIVITY_NEW_TASK), options);
-        activity.waitAndAssertWindowFocusState(true /* hasFocus */);
-        return activity;
-    }
+public class WindowFocusTests extends WindowManagerTestBase {
 
     private static void sendKey(int action, int keyCode, int displayId) {
         final KeyEvent keyEvent = new KeyEvent(action, keyCode);
@@ -314,28 +286,20 @@ public class WindowFocusTests {
         primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
     }
 
-    private static class InputTargetActivity extends Activity {
+    private static class InputTargetActivity extends FocusableActivity {
         private static final long TIMEOUT_DISPLAY_CHANGED = 1000; // milliseconds
-        private static final long TIMEOUT_WINDOW_FOCUS_CHANGED = 1000;
         private static final long TIMEOUT_POINTER_CAPTURE_CHANGED = 1000;
         private static final long TIMEOUT_NEXT_KEY_EVENT = 1000;
 
-        private final Object mLockWindowFocus = new Object();
         private final Object mLockPointerCapture = new Object();
         private final Object mLockKeyEvent = new Object();
 
         @GuardedBy("this")
         private int mDisplayId = INVALID_DISPLAY;
-        @GuardedBy("mLockWindowFocus")
-        private boolean mHasWindowFocus;
         @GuardedBy("mLockPointerCapture")
         private boolean mHasPointerCapture;
         @GuardedBy("mLockKeyEvent")
         private ArrayList<KeyEvent> mKeyEventList = new ArrayList<>();
-
-        public final String getLogTag() {
-            return ComponentNameUtils.getLogTag(getComponentName());
-        }
 
         @Override
         public void onAttachedToWindow() {
@@ -361,30 +325,6 @@ public class WindowFocusTests {
                 assertEquals(getLogTag() + " must be moved to the display.",
                         displayId, mDisplayId);
             }
-        }
-
-        @Override
-        public void onWindowFocusChanged(boolean hasFocus) {
-            synchronized (mLockWindowFocus) {
-                mHasWindowFocus = hasFocus;
-                mLockWindowFocus.notify();
-            }
-        }
-
-        void assertWindowFocusState(boolean hasFocus) {
-            synchronized (mLockWindowFocus) {
-                assertEquals(getLogTag() + " must" + (hasFocus ? "" : " not")
-                        + " have window focus.", hasFocus, mHasWindowFocus);
-            }
-        }
-
-        void waitAndAssertWindowFocusState(boolean hasFocus) throws InterruptedException {
-            synchronized (mLockWindowFocus) {
-                if (mHasWindowFocus != hasFocus) {
-                    mLockWindowFocus.wait(TIMEOUT_WINDOW_FOCUS_CHANGED);
-                }
-            }
-            assertWindowFocusState(hasFocus);
         }
 
         @Override
