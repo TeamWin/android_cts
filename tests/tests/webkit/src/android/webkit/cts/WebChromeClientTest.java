@@ -34,6 +34,8 @@ import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 @CddTest(requirement="3.4.1/H-0-1,T-0-1,A-0-1")
 public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000L;
+    private static final String JAVASCRIPT_UNLOAD = "javascript unload";
+    private static final String LISTENER_ADDED = "listener added";
     private static final String TOUCH_RECEIVED = "touch received";
 
     private CtsTestServer mWebServer;
@@ -215,26 +219,17 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
             return;
         }
 
-        // Use a default WebChromeClient to listen first page title change.
-        final MockWebChromeClient webChromeClient = new MockWebChromeClient();
-        mOnUiThread.setWebChromeClient(webChromeClient);
-
         final WebSettings settings = mOnUiThread.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
-        assertFalse(webChromeClient.hadOnJsBeforeUnload());
-
-        mOnUiThread.loadUrlAndWaitForCompletion(
-            mWebServer.getAssetUrl(TestHtmlConstants.JS_UNLOAD_URL));
-
-        final SettableFuture<String> pageTitleFuture = SettableFuture.create();
+        final BlockingQueue<String> pageTitleQueue = new ArrayBlockingQueue<>(3);
         final SettableFuture<Void> onJsBeforeUnloadFuture = SettableFuture.create();
         final MockWebChromeClient webChromeClientWaitTitle = new MockWebChromeClient() {
             @Override
             public void onReceivedTitle(WebView view, String title) {
                 super.onReceivedTitle(view, title);
-                pageTitleFuture.set(title);
+                pageTitleQueue.add(title);
             }
 
             @Override
@@ -247,9 +242,14 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         };
         mOnUiThread.setWebChromeClient(webChromeClientWaitTitle);
 
+        mOnUiThread.loadUrlAndWaitForCompletion(
+            mWebServer.getAssetUrl(TestHtmlConstants.JS_UNLOAD_URL));
+
+        assertEquals(JAVASCRIPT_UNLOAD, pageTitleQueue.poll(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertEquals(LISTENER_ADDED, pageTitleQueue.poll(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
         // Send a user gesture, required for unload to execute since WebView version 60.
         tapWebView();
-        assertEquals(TOUCH_RECEIVED, waitForFuture(pageTitleFuture));
+        assertEquals(TOUCH_RECEIVED, pageTitleQueue.poll(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
 
         // unload should trigger when we try to navigate away
         mOnUiThread.loadUrlAndWaitForCompletion(
