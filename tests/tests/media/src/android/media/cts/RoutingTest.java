@@ -54,8 +54,6 @@ import java.lang.Runnable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,8 +69,7 @@ import java.util.concurrent.Executors;
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class RoutingTest extends AndroidTestCase {
     private static final String TAG = "RoutingTest";
-    private static final int MAX_WAITING_ROUTING_CHANGED_COUNT = 3;
-    private static final long WAIT_ROUTING_CHANGE_TIME_MS = 1000;
+    private static final long WAIT_ROUTING_CHANGE_TIME_MS = 3000;
     private static final int AUDIO_BIT_RATE_IN_BPS = 12200;
     private static final int AUDIO_SAMPLE_RATE_HZ = 8000;
     private static final long MAX_FILE_SIZE_BYTE = 5000;
@@ -82,7 +79,6 @@ public class RoutingTest extends AndroidTestCase {
 
     private boolean mRoutingChanged;
     private AudioManager mAudioManager;
-    private CountDownLatch mRoutingChangedLatch;
     private File mOutFile;
     private Looper mRoutingChangedLooper;
     private Object mRoutingChangedLock = new Object();
@@ -565,9 +561,6 @@ public class RoutingTest extends AndroidTestCase {
     private class AudioRoutingListener implements AudioRouting.OnRoutingChangedListener
     {
         public void onRoutingChanged(AudioRouting audioRouting) {
-            if (mRoutingChangedLatch != null) {
-                mRoutingChangedLatch.countDown();
-            }
             synchronized (mRoutingChangedLock) {
                 mRoutingChanged = true;
                 mRoutingChangedLock.notify();
@@ -695,8 +688,7 @@ public class RoutingTest extends AndroidTestCase {
         };
         t.start();
         synchronized (mRoutingChangedLock) {
-            mRoutingChangedLock.wait(WAIT_ROUTING_CHANGE_TIME_MS
-                    * MAX_WAITING_ROUTING_CHANGED_COUNT);
+            mRoutingChangedLock.wait(WAIT_ROUTING_CHANGE_TIME_MS);
         }
         if (mRoutingChangedLooper != null) {
             mRoutingChangedLooper.quitSafely();
@@ -885,40 +877,21 @@ public class RoutingTest extends AndroidTestCase {
             return;
         }
 
-        MediaPlayer2 mediaPlayer2 = allocMediaPlayer2();
+        mRoutingChanged = false;
         AudioRoutingListener listener = new AudioRoutingListener();
+        MediaPlayer2 mediaPlayer2 = null;
+        try {
+            mediaPlayer2 = allocMediaPlayer2();
+        } catch (Exception e) {
+            fail("Failed to initialize MediaPlayer2 " + e.getMessage());
+        }
         mediaPlayer2.addOnRoutingChangedListener(listener, null);
-
-        AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
-        if (deviceList.length < 2) {
-            // The available output device is less than 2, we can't switch output device.
-            return;
+        synchronized (mRoutingChangedLock) {
+            mRoutingChangedLock.wait(WAIT_ROUTING_CHANGE_TIME_MS);
         }
-        for (int index = 0; index < deviceList.length; index++) {
-            assertTrue(mediaPlayer2.setPreferredDevice(deviceList[index]));
-            boolean routingChanged = false;
-            for (int i = 0; i < MAX_WAITING_ROUTING_CHANGED_COUNT; i++) {
-                // Create a new CountDownLatch in case it is triggered by previous routing change.
-                mRoutingChangedLatch = new CountDownLatch(1);
-                try {
-                    mRoutingChangedLatch.await(WAIT_ROUTING_CHANGE_TIME_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                }
-                AudioDeviceInfo routedDevice = mediaPlayer2.getRoutedDevice();
-                if (routedDevice == null) {
-                    continue;
-                }
-                if (routedDevice.getId() == deviceList[index].getId()) {
-                    routingChanged = true;
-                    break;
-                }
-            }
-            assertTrue("Switching to device" + deviceList[index].getType() + " failed",
-                    routingChanged);
-        }
-
         mediaPlayer2.removeOnRoutingChangedListener(listener);
         mediaPlayer2.close();
+        assertTrue("Routing changed callback has not been called", mRoutingChanged);
     }
 
     public void test_mediaPlayer2_incallMusicRoutingPermissions() throws Exception {
