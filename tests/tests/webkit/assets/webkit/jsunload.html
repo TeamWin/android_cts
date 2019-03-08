@@ -23,11 +23,8 @@
         }
         window.onbeforeunload = fireUnload;
         window.onload = function() {
-            document.addEventListener("touchend", function() {
-                setTimeout(() => {
-                    document.title = "touch received";
-                }, 0);
-            }, false);
+            document.addEventListener("click", () => document.title = "touch received", false);
+            document.title = "listener added";
         }
     </script>
     <body>
