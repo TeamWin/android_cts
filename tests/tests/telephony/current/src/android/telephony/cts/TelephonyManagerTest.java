@@ -1357,12 +1357,13 @@ public class TelephonyManagerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
                 (tm) -> tm.getOpportunisticSubscriptions());
         List<String> mccMncs = new ArrayList<String>();
+        List<Integer> bands = new ArrayList<Integer>();
         List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
                 || !mSubscriptionManager.isActiveSubscriptionId(
                         subscriptionInfoList.get(0).getSubscriptionId())) {
             AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(randomSubId,
-                    AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
+                    AvailableNetworkInfo.PRIORITY_HIGH, mccMncs, bands);
             availableNetworkInfos.add(availableNetworkInfo);
             boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
@@ -1370,7 +1371,7 @@ public class TelephonyManagerTest {
         } else {
             AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
                     subscriptionInfoList.get(0).getSubscriptionId(),
-                    AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
+                    AvailableNetworkInfo.PRIORITY_HIGH, mccMncs, bands);
             availableNetworkInfos.add(availableNetworkInfo);
             boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
