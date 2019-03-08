@@ -94,9 +94,10 @@ public class LineBreakerTest {
 
     @Test
     public void testSetJustification_shouldNotThrowExceptions() {
-        assertNotNull(new LineBreaker.Builder().setJustified(JUSTIFICATION_MODE_NONE).build());
-        assertNotNull(new LineBreaker.Builder().setJustified(JUSTIFICATION_MODE_INTER_WORD)
-                .build());
+        assertNotNull(new LineBreaker.Builder()
+                .setJustificationMode(JUSTIFICATION_MODE_NONE).build());
+        assertNotNull(new LineBreaker.Builder()
+                .setJustificationMode(JUSTIFICATION_MODE_INTER_WORD).build());
     }
 
     @Test
