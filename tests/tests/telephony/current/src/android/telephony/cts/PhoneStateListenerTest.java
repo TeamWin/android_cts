@@ -35,6 +35,7 @@ public class PhoneStateListenerTest extends  AndroidTestCase{
 
     public static final long WAIT_TIME = 1000;
 
+    private boolean mOnActiveDataSubscriptionIdChanged;
     private boolean mOnCallForwardingIndicatorChangedCalled;
     private boolean mOnCallStateChangedCalled;
     private boolean mOnCellLocationChangedCalled;
@@ -516,5 +517,43 @@ public class PhoneStateListenerTest extends  AndroidTestCase{
         }
         t.checkException();
         assertTrue(mOnUserMobileDataStateChanged);
+    }
+
+    public void testOnActiveDataSubscriptionIdChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onActiveDataSubscriptionIdChanged(int subId) {
+                        synchronized(mLock) {
+                            mOnActiveDataSubscriptionIdChanged = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(
+                        mListener, PhoneStateListener.LISTEN_ACTIVE_DATA_SUBSCRIPTION_ID_CHANGE);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnActiveDataSubscriptionIdChanged);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnActiveDataSubscriptionIdChanged){
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertTrue(mOnActiveDataSubscriptionIdChanged);
     }
 }
