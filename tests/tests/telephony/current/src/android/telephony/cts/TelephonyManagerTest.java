@@ -256,8 +256,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.getCellLocation();
         mTelephonyManager.getSimCarrierId();
         mTelephonyManager.getSimCarrierIdName();
-        mTelephonyManager.getSimPreciseCarrierId();
-        mTelephonyManager.getSimPreciseCarrierIdName();
+        mTelephonyManager.getSimSpecificCarrierId();
+        mTelephonyManager.getSimSpecificCarrierIdName();
         mTelephonyManager.getCarrierIdFromSimMccMnc();
         mTelephonyManager.isDataRoamingEnabled();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
