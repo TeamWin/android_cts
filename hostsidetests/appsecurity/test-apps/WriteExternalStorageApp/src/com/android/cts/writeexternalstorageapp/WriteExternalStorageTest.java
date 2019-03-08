@@ -43,6 +43,8 @@ import android.util.Log;
 import com.android.cts.externalstorageapp.CommonExternalStorageTest;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.List;
 import java.util.Random;
 
@@ -337,5 +339,34 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         final File afterFile = new File(after, "test.probe");
         assertNotEqual(Os.getuid(), Os.stat(after.getAbsolutePath()).st_uid);
         assertNotEqual(Os.getuid(), Os.stat(afterFile.getAbsolutePath()).st_uid);
+    }
+
+    public void testExternalStorageRename() throws Exception {
+        final String name = "cts_" + System.nanoTime();
+
+        // Stage some contents to move around
+        File cur = Environment.getExternalStorageDirectory();
+        try (FileOutputStream fos = new FileOutputStream(new File(cur, name))) {
+            fos.write(42);
+        }
+
+        for (File next : new File[] {
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                getContext().getExternalCacheDir(),
+                getContext().getExternalFilesDir(null),
+                getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+                getContext().getExternalMediaDirs()[0],
+                getContext().getObbDir(),
+        }) {
+            next.mkdirs();
+            assertTrue("Failed to move from " + cur + " to " + next,
+                    new File(cur, name).renameTo(new File(next, name)));
+            cur = next;
+        }
+
+        // Make sure the data made the journey
+        try (FileInputStream fis = new FileInputStream(new File(cur, name))) {
+            assertEquals(42, fis.read());
+        }
     }
 }

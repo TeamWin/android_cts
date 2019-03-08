@@ -109,14 +109,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         try {
             wipePrimaryExternalStorage();
 
-            getDevice().uninstallPackage(PKG_A);
-            installPackage(APK_A);
+            getDevice().uninstallPackage(WRITE_PKG);
+            installPackage(WRITE_APK);
 
             for (int user : mUsers) {
-                runDeviceTests(PKG_A, CLASS, "testExternalStorageRename", user);
+                runDeviceTests(WRITE_PKG, WRITE_CLASS, "testExternalStorageRename", user);
             }
         } finally {
-            getDevice().uninstallPackage(PKG_A);
+            getDevice().uninstallPackage(WRITE_PKG);
         }
     }
 
