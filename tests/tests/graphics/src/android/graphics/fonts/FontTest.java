@@ -27,6 +27,7 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.graphics.cts.R;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.Pair;
 
@@ -38,7 +39,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -391,8 +391,9 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    Font font = new Font.Builder(fis.getFD()).build();
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
+                    Font font = new Font.Builder(fd).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
@@ -420,8 +421,9 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    Font font = new Font.Builder(fis.getFD()).setTtcIndex(ttcIndex).build();
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
+                    Font font = new Font.Builder(fd).setTtcIndex(ttcIndex).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
@@ -450,8 +452,9 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    Font font = new Font.Builder(fis.getFD()).setFontVariationSettings(axes)
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
+                    Font font = new Font.Builder(fd).setFontVariationSettings(axes)
                             .build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -480,8 +483,9 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    Font font = new Font.Builder(fis.getFD()).setWeight(customWeight).build();
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
+                    Font font = new Font.Builder(fd).setWeight(customWeight).build();
                     assertEquals(path, customWeight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
@@ -503,8 +507,9 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    Font font = new Font.Builder(fis.getFD()).setSlant(
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
+                    Font font = new Font.Builder(fd).setSlant(
                             FontStyle.FONT_SLANT_ITALIC).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
@@ -533,9 +538,10 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is, dummy, dummy));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fis.getFD(), dummy.length, file.length() - dummy.length * 2).build();
+                            fd, dummy.length, file.length() - dummy.length * 2).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
@@ -564,9 +570,10 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is, dummy, dummy));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fis.getFD(), dummy.length, file.length() - dummy.length * 2)
+                            fd, dummy.length, file.length() - dummy.length * 2)
                             .setTtcIndex(ttcIndex).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -597,9 +604,10 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is, dummy, dummy));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fis.getFD(), dummy.length, file.length() - dummy.length * 2)
+                            fd, dummy.length, file.length() - dummy.length * 2)
                             .setFontVariationSettings(axes).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -629,9 +637,10 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is, dummy, dummy));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fis.getFD(), dummy.length, file.length() - dummy.length * 2)
+                            fd, dummy.length, file.length() - dummy.length * 2)
                             .setWeight(customWeight).build();
                     assertEquals(path, customWeight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -654,9 +663,10 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is, dummy, dummy));
 
-                try (FileInputStream fis = new FileInputStream(file)) {
+                try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                        ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fis.getFD(), dummy.length, file.length() - dummy.length * 2)
+                            fd, dummy.length, file.length() - dummy.length * 2)
                             .setSlant(FontStyle.FONT_SLANT_ITALIC).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
@@ -673,13 +683,13 @@ public class FontTest {
 
     @Test(expected = NullPointerException.class)
     public void testBuilder_fd_invalid_null() throws IOException {
-        FileDescriptor fd = null;
+        ParcelFileDescriptor fd = null;
         new Font.Builder(fd);
     }
 
     @Test(expected = NullPointerException.class)
     public void testBuilder_fd_subadata_invalid_null() throws IOException {
-        FileDescriptor fd = null;
+        ParcelFileDescriptor fd = null;
         new Font.Builder(fd, 0, -1);
     }
 
@@ -691,8 +701,9 @@ public class FontTest {
         File file = getTempFile();
         try (InputStream is = am.open(path)) {
             assertTrue(copyToFile(file, is));
-            try (FileInputStream fis = new FileInputStream(file)) {
-                new Font.Builder(fis.getFD(), 0, Integer.MAX_VALUE).build();
+            try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                    ParcelFileDescriptor.MODE_READ_ONLY)) {
+                new Font.Builder(fd, 0, Integer.MAX_VALUE).build();
             }
         }
     }
@@ -705,8 +716,9 @@ public class FontTest {
         File file = getTempFile();
         try (InputStream is = am.open(path)) {
             assertTrue(copyToFile(file, is));
-            try (FileInputStream fis = new FileInputStream(file)) {
-                new Font.Builder(fis.getFD(), Integer.MAX_VALUE, file.length()).build();
+            try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
+                    ParcelFileDescriptor.MODE_READ_ONLY)) {
+                new Font.Builder(fd, Integer.MAX_VALUE, file.length()).build();
             }
         }
     }
