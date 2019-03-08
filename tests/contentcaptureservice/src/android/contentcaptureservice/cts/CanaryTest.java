@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.RESOURCE_STRING_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.getInternalString;
+import static android.contentcaptureservice.cts.Helper.sContext;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -28,6 +29,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureManager;
 
+import com.android.compatibility.common.util.DeviceConfigStateManager;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.Test;
@@ -49,15 +51,15 @@ public class CanaryTest {
     @Test
     public void assertHasService() {
         final String serviceName = getInternalString(RESOURCE_STRING_SERVICE_NAME);
-        final String enableSettings = DeviceConfig.getProperty(
+        final String enableSettings = new DeviceConfigStateManager(sContext,
                 DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
-                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
+                ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED).get();
         final boolean hasService = RequiredServiceRule.hasService(SYSTEM_SERVICE_NAME);
         Log.d(TAG, "Service resource: '" + serviceName + "' Settings: '" + enableSettings
                 + "' Has '" + SYSTEM_SERVICE_NAME + "': " + hasService);
 
         // We're only asserting when the OEM defines a service
-        assumeTrue("service resource (" + serviceName + ")is not defined",
+        assumeTrue("service resource (" + serviceName + ") is not defined",
                 !TextUtils.isEmpty(serviceName));
         assertWithMessage("Should be enabled when resource '%s' is not empty (settings='%s')",
                 serviceName, enableSettings).that(hasService).isTrue();
