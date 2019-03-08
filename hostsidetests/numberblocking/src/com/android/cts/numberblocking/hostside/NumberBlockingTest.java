@@ -151,11 +151,19 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
         LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, "Installing test app for user: " + userId);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testAppFile = buildHelper.getTestFile(TEST_APK);
-        String installResult = getDevice().installPackageForUser(
-                testAppFile, true /*reinstall*/, userId);
+        String installResult;
+        try {
+            installResult = getDevice().installPackageForUser(
+                    testAppFile, true /*reinstall*/, userId);
+        } catch (DeviceNotAvailableException dna) {
+            fail("Device not available to install test app " + dna);
+            return;
+        }
         assertNull(String.format(
                 "failed to install number blocking test app. Reason: %s", installResult),
                 installResult);
+
+        waitForTestAppInstallation(NUMBER_BLOCKING_TESTS_PKG);
     }
 
     private void runTestAsPrimaryUser(String className, String methodName) throws Exception {
@@ -223,5 +231,22 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
         }
         fail("Couldn't find user " + userId);
         return -1;
+    }
+
+    private void waitForTestAppInstallation(String packageName) {
+        try {
+            int retries = 0;
+            while (!getDevice().getInstalledPackageNames().contains(packageName)
+                    && retries < 10) {
+                Thread.sleep(50);
+                retries++;
+            }
+
+            assertTrue(getDevice().getInstalledPackageNames().contains(packageName));
+        } catch (DeviceNotAvailableException dne) {
+            fail("Device not available.");
+        } catch (InterruptedException ie) {
+            fail("Failed to wait for change.");
+        }
     }
 }
