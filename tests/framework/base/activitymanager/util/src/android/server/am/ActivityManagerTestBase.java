@@ -29,6 +29,7 @@ import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
@@ -937,7 +938,7 @@ public abstract class ActivityManagerTestBase {
 
             SystemUtil.runWithShellPermissionIdentity(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
-                            COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+                            COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP));
             setDefaultHome(mSessionHome);
         }
 
@@ -945,7 +946,7 @@ public abstract class ActivityManagerTestBase {
         public void close() {
             SystemUtil.runWithShellPermissionIdentity(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
-                            COMPONENT_ENABLED_STATE_DISABLED, 0 /* flags */));
+                            COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
             if (mOrigHome != null) {
                 setDefaultHome(mOrigHome);
             }
