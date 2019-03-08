@@ -146,9 +146,9 @@
 
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 
-        <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivity" />
-        <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivity2" />
-        <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$ImeTestActivityWithBrokenContextWrapper" />
+        <activity android:name="android.server.am.MultiDisplaySystemDecorationTests$ImeTestActivity" />
+        <activity android:name="android.server.am.MultiDisplaySystemDecorationTests$ImeTestActivity2" />
+        <activity android:name="android.server.am.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper" />
 
         <activity android:name="android.server.am.KeyguardLockedTests$ShowWhenLockedImeActivity" />
 
