@@ -209,10 +209,9 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
     }
 
     private void clickOnLinkUsingJs(final String linkId, WebViewOnUiThread webViewOnUiThread) {
-        assertEquals("null", WebkitUtils.waitForFuture(
-                webViewOnUiThread.evaluateJavascript(
+        assertEquals("null", webViewOnUiThread.evaluateJavascriptSync(
                         "document.getElementById('" + linkId + "').click();" +
-                        "console.log('element with id [" + linkId + "] clicked');")));
+                        "console.log('element with id [" + linkId + "] clicked');"));
     }
 
     public void testLoadPage() throws Exception {
@@ -584,21 +583,18 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
             // Test a nonexistent page
             client.interceptResponse = new WebResourceResponse("text/html", "UTF-8", null);
-            assertEquals("\"[404][Not Found]\"", WebkitUtils.waitForFuture(
-                    mOnUiThread.evaluateJavascript(js)));
+            assertEquals("\"[404][Not Found]\"", mOnUiThread.evaluateJavascriptSync(js));
 
             // Test an empty page
             client.interceptResponse = new WebResourceResponse("text/html", "UTF-8",
                 new ByteArrayInputStream(new byte[0]));
-            assertEquals("\"[200][OK]\"", WebkitUtils.waitForFuture(
-                    mOnUiThread.evaluateJavascript(js)));
+            assertEquals("\"[200][OK]\"", mOnUiThread.evaluateJavascriptSync(js));
 
             // Test a nonempty page with unusual response code/text
             client.interceptResponse =
                 new WebResourceResponse("text/html", "UTF-8", 123, "unusual", null,
                     new ByteArrayInputStream("nonempty page".getBytes(StandardCharsets.UTF_8)));
-            assertEquals("\"[123][unusual]\"", WebkitUtils.waitForFuture(
-                    mOnUiThread.evaluateJavascript(js)));
+            assertEquals("\"[123][unusual]\"", mOnUiThread.evaluateJavascriptSync(js));
         } finally {
             server.shutdown();
         }
