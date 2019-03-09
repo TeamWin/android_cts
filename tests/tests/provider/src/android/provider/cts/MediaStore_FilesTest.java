@@ -39,8 +39,6 @@ import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,6 +48,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+
+import androidx.test.InstrumentationRegistry;
 
 @RunWith(Parameterized.class)
 public class MediaStore_FilesTest {
@@ -188,7 +188,7 @@ public class MediaStore_FilesTest {
             values.put(MediaColumns.DATA, valid);
 
             final Uri uri = mResolver.insert(internalFiles, values);
-            assertNotNull("Failed to insert " + valid, uri);
+            assertNotNull(valid, uri);
             mResolver.delete(uri, null, null);
         }
 
@@ -201,12 +201,7 @@ public class MediaStore_FilesTest {
         }) {
             final ContentValues values = new ContentValues();
             values.put(MediaColumns.DATA, invalid);
-
-            try {
-                mResolver.insert(internalFiles, values);
-                fail("Able to insert " + invalid);
-            } catch (SecurityException | IllegalArgumentException expected) {
-            }
+            assertNull(invalid, mResolver.insert(internalFiles, values));
         }
     }
 
@@ -224,11 +219,11 @@ public class MediaStore_FilesTest {
             values.put(MediaColumns.DATA, valid);
 
             final Uri uri = mResolver.insert(mExternalFiles, values);
-            assertNotNull("Failed to insert " + valid, uri);
+            assertNotNull(valid, uri);
             mResolver.delete(uri, null, null);
 
             final int count = mResolver.update(updateUri, values, null, null);
-            assertEquals("Failed to update", 1, count);
+            assertEquals(valid, 1, count);
         }
 
         for (String invalid : new String[] {
@@ -241,15 +236,13 @@ public class MediaStore_FilesTest {
             values.put(MediaColumns.DATA, invalid);
 
             try {
-                mResolver.insert(mExternalFiles, values);
-                fail("Able to insert " + invalid);
-            } catch (SecurityException | IllegalArgumentException expected) {
+                assertNull(invalid, mResolver.insert(mExternalFiles, values));
+            } catch (SecurityException tolerated) {
             }
 
             try {
-                mResolver.update(updateUri, values, null, null);
-                fail("Able to update " + invalid);
-            } catch (SecurityException | IllegalArgumentException expected) {
+                assertEquals(invalid, 0, mResolver.update(updateUri, values, null, null));
+            } catch (SecurityException tolerated) {
             }
         }
     }
