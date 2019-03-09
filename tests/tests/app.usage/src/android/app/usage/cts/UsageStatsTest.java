@@ -940,15 +940,6 @@ public class UsageStatsTest {
         } catch (SecurityException e) {
             // Exception expected
         }
-
-        // STOPSHIP b/126917290: remove this check when deprecated method is removed.
-        try {
-            mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
-                    1, java.util.concurrent.TimeUnit.HOURS, null);
-            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
-        } catch (SecurityException e) {
-            // Exception expected
-        }
     }
 
     @Test
