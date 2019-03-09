@@ -134,11 +134,11 @@ public class LineBreakerTest {
     public void testSetGetTabStops() {
         ParagraphConstraints c = new ParagraphConstraints();
         assertNull(c.getTabStops());  // null by default
-        assertEquals(0, c.getDefaultTabStop());  // 0 by default
-        c.setTabStops(new int[] { 120 }, 240);
+        assertEquals(0, c.getDefaultTabStop(), 0.0);  // 0 by default
+        c.setTabStops(new float[] { 120 }, 240);
         assertEquals(1, c.getTabStops().length);
-        assertEquals(120, c.getTabStops()[0]);
-        assertEquals(240, c.getDefaultTabStop());
+        assertEquals(120, c.getTabStops()[0], 0.0);
+        assertEquals(240, c.getDefaultTabStop(), 0.0);
     }
 
     @Test
@@ -493,7 +493,7 @@ public class LineBreakerTest {
                 .build();
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(70.0f);
-        c.setTabStops(new int[] { 20 }, 50);
+        c.setTabStops(new float[] { 20 }, 50);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
                 .appendStyleRun(sPaint, text.length(), false)
                 .build(), c, 0);
