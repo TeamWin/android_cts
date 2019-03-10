@@ -1694,6 +1694,17 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(R.raw.mkv_audio_pcms16le, -1, -1);
     }
 
+    public void testLocalVideo_segment000001_m2ts()
+            throws Exception {
+        if (checkLoadResource(R.raw.segment000001)) {
+            mMediaPlayer.stop();
+            assertTrue(checkLoadResource(R.raw.segment000001_m2ts));
+            playLoadedVideo(320, 240, 0);
+        } else {
+            MediaUtils.skipTest("no mp2 support, skipping m2ts");
+        }
+    }
+
     private void readSubtitleTracks() throws Exception {
         mSubtitleTrackIndex.clear();
         MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
