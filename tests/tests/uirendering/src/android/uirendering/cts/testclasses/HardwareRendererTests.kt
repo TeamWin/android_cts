@@ -262,12 +262,12 @@ class HardwareRendererTests : ActivityTestBase() {
             renderer.setSurface(reader.surface)
             assertEquals(HardwareRenderer.SYNC_OK,
                 renderer.createRenderRequest().syncAndDraw())
-            renderer.setStopped(true)
+            renderer.stop()
             assertEquals(HardwareRenderer.SYNC_CONTEXT_IS_STOPPED
                     or HardwareRenderer.SYNC_FRAME_DROPPED,
                 renderer.createRenderRequest().syncAndDraw())
             reader.acquireLatestImage()?.close()
-            renderer.setStopped(false)
+            renderer.start()
             val result = renderer.createRenderRequest().syncAndDraw()
             assertEquals(0, result and HardwareRenderer.SYNC_CONTEXT_IS_STOPPED)
         } finally {

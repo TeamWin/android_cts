@@ -21,7 +21,7 @@
         <option name="test-file-name" value="CtsLegacyNotificationTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
+        <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.app.notification.legacy.cts" />
         <option name="runtime-hint" value="1m0s" />
         <option name="hidden-api-checks" value="false" />

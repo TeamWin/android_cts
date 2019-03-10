@@ -79,8 +79,8 @@ public class PackageManagerTest extends AndroidTestCase {
             "android.content.cts.CALL_ABROAD_PERMISSION";
     private static final String PROVIDER_NAME = "android.content.cts.MockContentProvider";
     private static final String PERMISSIONGROUP_NAME = "android.permission-group.COST_MONEY";
-    // There are 10 activities in AndroidManifest
-    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 10;
+    // There are 11 activities/activity-alias in AndroidManifest
+    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 11;
 
     @Override
     protected void setUp() throws Exception {

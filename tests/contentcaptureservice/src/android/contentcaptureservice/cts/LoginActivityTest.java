@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertChildSessionContext;
@@ -110,6 +111,10 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         Log.v(TAG, "session id: " + session.id);
 
         activity.assertDefaultEvents(session);
+
+        service.assertThat()
+                .activityResumed(activity.getComponentName())
+                .activityPaused(activity.getComponentName());
     }
 
     @Test
@@ -138,10 +143,10 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final ContentCaptureSessionId mainSessionId =
-                mainSessionRef.get().getContentCaptureSessionId();
-        final ContentCaptureSessionId childSessionId =
-                childSessionRef.get().getContentCaptureSessionId();
+        final ContentCaptureSessionId mainSessionId = mainSessionRef.get()
+                .getContentCaptureSessionId();
+        final ContentCaptureSessionId childSessionId = childSessionRef.get()
+                .getContentCaptureSessionId();
         Log.v(TAG, "session ids: main=" + mainSessionId + ", child=" + childSessionId);
 
         // Sanity checks
@@ -163,7 +168,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertThat(allSessionIds).containsExactly(mainSessionId, childSessionId);
 
         /*
-         *  Asserts main session
+         * Asserts main session
          */
 
         // Checks context
@@ -200,7 +205,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         }
 
         /*
-         *  Asserts child session
+         * Asserts child session
          */
 
         // Checks context
@@ -223,8 +228,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         assertViewsOptionallyDisappeared(childEvents, minChildEvents,
                 rootId,
                 activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
-                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId()
-        );
+                activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId());
     }
 
     @Test
@@ -691,7 +695,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
                     rootId,
                     grandpa1.getAutofillId(), grandpa2.getAutofillId(),
                     decorView.getAutofillId(),
-                     activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
+                    activity.mUsernameLabel.getAutofillId(), activity.mUsername.getAutofillId(),
                     activity.mPasswordLabel.getAutofillId(), activity.mPassword.getAutofillId(),
                     children[0].getAutofillId(), children[1].getAutofillId());
 
@@ -769,4 +773,7 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
     // - changing text
     // - secure flag with child sessions
     // - making sure events are flushed when activity pause / resume
+
+    // TODO(b/126262658): moar lifecycle events, like multiple activities.
+
 }

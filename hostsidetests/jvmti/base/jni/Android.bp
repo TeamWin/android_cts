@@ -57,7 +57,7 @@ cc_library_shared {
         "-Wused-but-marked-unused",
         "-Wdeprecated",
         "-Wunreachable-code-break",
-        "-Wunreachable-code-return",
+//        "-Wunreachable-code-return",
         "-g",
         "-O0",
     ],

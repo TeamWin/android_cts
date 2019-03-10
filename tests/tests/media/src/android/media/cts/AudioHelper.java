@@ -16,6 +16,9 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.nio.ByteBuffer;
 
 import org.junit.Assert;
@@ -26,10 +29,25 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Looper;
+import android.os.PersistableBundle;
 
 // Used for statistics and loopers in listener tests.
 // See AudioRecordTest.java and AudioTrack_ListenerTest.java.
 public class AudioHelper {
+
+    // asserts key equals expected in the metrics bundle.
+    public static void assertMetricsKeyEquals(
+            PersistableBundle metrics, String key, Object expected) {
+        Object actual = metrics.get(key);
+        assertEquals("metric " + key + " actual " + actual + " != " + " expected " + expected,
+                expected, actual);
+    }
+
+    // asserts key exists in the metrics bundle.
+    public static void assertMetricsKey(PersistableBundle metrics, String key) {
+        Object actual = metrics.get(key);
+        assertNotNull("metric " + key + " does not exist", actual);
+    }
 
     // create sine waves or chirps for data arrays
     public static byte[] createSoundDataInByteArray(int bufferSamples, final int sampleRate,

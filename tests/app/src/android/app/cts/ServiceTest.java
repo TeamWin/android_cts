@@ -37,6 +37,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
@@ -62,6 +63,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";
@@ -91,6 +93,7 @@ public class ServiceTest extends ActivityTestsBase {
     private Intent mLocalService_ApplicationDoesNotHavePermission;
     private Intent mIsolatedService;
     private Intent mExternalService;
+    private Executor mContextMainExecutor;
 
     private IBinder mStateReceiver;
 
@@ -643,6 +646,7 @@ public class ServiceTest extends ActivityTestsBase {
         mStateReceiver = new MockBinder();
         getNotificationManager().createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
+        mContextMainExecutor = mContext.getMainExecutor();
     }
 
     @Override
@@ -1099,7 +1103,7 @@ public class ServiceTest extends ActivityTestsBase {
     public void testFailBindNonIsolatedService() throws Exception {
         EmptyConnection conn = new EmptyConnection();
         try {
-            mContext.bindIsolatedService(mLocalService, conn, 0, "isolated");
+            mContext.bindIsolatedService(mLocalService, 0, "isolated", mContextMainExecutor, conn);
             mContext.unbindService(conn);
             fail("Didn't get IllegalArgumentException");
         } catch (IllegalArgumentException e) {
@@ -1119,13 +1123,13 @@ public class ServiceTest extends ActivityTestsBase {
         try {
             conn1a = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn1a, Context.BIND_AUTO_CREATE, "1");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "1", mContextMainExecutor, conn1a);
             conn1b = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn1b, Context.BIND_AUTO_CREATE, "1");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "1", mContextMainExecutor, conn1b);
             conn2 = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn2, Context.BIND_AUTO_CREATE, "2");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "2", mContextMainExecutor, conn2);
 
             conn1a.waitForService(DELAY);
             conn1b.waitForService(DELAY);
@@ -1214,10 +1218,10 @@ public class ServiceTest extends ActivityTestsBase {
                     + " context=" + context);
             mConnection = new IsolatedConnection();
             boolean result = context.bindIsolatedService(
-                    mIsolatedService, mConnection,
+                    mIsolatedService,
                     Context.BIND_AUTO_CREATE | Context.BIND_DEBUG_UNBIND
                             | (mStrong == BINDING_STRONG ? 0 : Context.BIND_ALLOW_OOM_MANAGEMENT),
-                    mInstanceName);
+                    mInstanceName, mContextMainExecutor, mConnection);
             if (!result) {
                 mConnection = null;
             }
@@ -1387,7 +1391,7 @@ public class ServiceTest extends ActivityTestsBase {
         IsolatedConnection conn = new IsolatedConnection();
         try {
             mContext.bindIsolatedService(
-                    mIsolatedService, conn, Context.BIND_AUTO_CREATE, "1");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "1", mContextMainExecutor, conn);
 
             conn.waitForService(DELAY);
 
@@ -1409,13 +1413,13 @@ public class ServiceTest extends ActivityTestsBase {
         try {
             conn1a = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn1a, Context.BIND_AUTO_CREATE, "1");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "1", mContextMainExecutor, conn1a);
             conn1b = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn1b, Context.BIND_AUTO_CREATE, "1");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "1", mContextMainExecutor, conn1b);
             conn2 = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn2, Context.BIND_AUTO_CREATE, "2");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "2", mContextMainExecutor, conn2);
 
             conn1a.waitForService(DELAY);
             conn1b.waitForService(DELAY);
@@ -1449,7 +1453,7 @@ public class ServiceTest extends ActivityTestsBase {
         try {
             conn1a = new IsolatedConnection();
             mContext.bindIsolatedService(
-                    mIsolatedService, conn1a, Context.BIND_AUTO_CREATE, "1");
+                    mIsolatedService, Context.BIND_AUTO_CREATE, "1", mContextMainExecutor, conn1a);
 
             conn1a.waitForService(DELAY);
 

@@ -109,14 +109,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         try {
             wipePrimaryExternalStorage();
 
-            getDevice().uninstallPackage(PKG_A);
-            installPackage(APK_A);
+            getDevice().uninstallPackage(WRITE_PKG);
+            installPackage(WRITE_APK);
 
             for (int user : mUsers) {
-                runDeviceTests(PKG_A, CLASS, "testExternalStorageRename", user);
+                runDeviceTests(WRITE_PKG, WRITE_CLASS, "testExternalStorageRename", user);
             }
         } finally {
-            getDevice().uninstallPackage(PKG_A);
+            getDevice().uninstallPackage(WRITE_PKG);
         }
     }
 
@@ -265,6 +265,45 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", user);
                 runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testNoObbGifts", user);
             }
+        } finally {
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+        }
+    }
+
+    @Test
+    public void testExternalStorageUnsharedObb() throws Exception {
+        final int numUsers = mUsers.length;
+        Assume.assumeTrue(numUsers > 1);
+
+        try {
+            wipePrimaryExternalStorage();
+
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+            final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
+
+            // We purposefully delay the installation of the reading apps to
+            // verify that the daemon correctly invalidates any caches.
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            updateAppOp(WRITE_PKG, mUsers[0], "android:request_install_packages", true);
+            runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", mUsers[0]);
+
+            // Create a file in one user and verify that file is not accessible to other users.
+            assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
+            for (int i = 1; i < numUsers; ++i) {
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testNoObbGifts", mUsers[i]);
+                updateAppOp(WRITE_PKG, mUsers[i], "android:request_install_packages", true);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", mUsers[i]);
+            }
+
+            // Delete a file in one user and verify that it doesn't affect files accessible to
+            // other users.
+            runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testRemoveObbGifts", mUsers[0]);
+            for (int i = 1; i < numUsers; ++i) {
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testObbGifts", mUsers[i]);
+            }
+
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);

@@ -17,6 +17,7 @@
 package android.os.cts;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.fail;
 
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.os.PowerManager;
-import android.os.PowerManager.ThermalStatusCallback;
+import android.os.PowerManager.OnThermalStatusChangedListener;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
@@ -47,7 +48,9 @@ public class PowerManager_ThermalTest {
     private PowerManager mPowerManager;
     private Executor mExec = Executors.newSingleThreadExecutor();
     @Mock
-    private ThermalStatusCallback mCallback;
+    private OnThermalStatusChangedListener mListener1;
+    @Mock
+    private OnThermalStatusChangedListener mListener2;
 
     @Before
     public void setUp() throws Exception {
@@ -74,21 +77,47 @@ public class PowerManager_ThermalTest {
 
     @Test
     public void testThermalStatusCallback() throws Exception {
-        // Initial override status is Temperature.THROTTLING_NONE (0)
-        int status = 0; // Temperature.THROTTLING_NONE
-        mPowerManager.registerThermalStatusCallback(mCallback, mExec);
-        verify(mCallback, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
-                .times(1)).onStatusChange(status);
-        reset(mCallback);
-        status = 3; // Temperature.THROTTLING_SEVERE
+        // Initial override status is THERMAL_STATUS_NONE
+        int status = PowerManager.THERMAL_STATUS_NONE;
+        // Add listener1
+        mPowerManager.addThermalStatusListener(mExec, mListener1);
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+                .times(1)).onThermalStatusChanged(status);
+        reset(mListener1);
+        status = PowerManager.THERMAL_STATUS_SEVERE;
         ThermalUtils.overrideThermalStatus(status);
-        verify(mCallback, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
-                .times(1)).onStatusChange(status);
-        reset(mCallback);
-        mPowerManager.unregisterThermalStatusCallback(mCallback);
-        status = 2; // THROTTLING_MODERATE
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+                .times(1)).onThermalStatusChanged(status);
+        reset(mListener1);
+        // Add listener1 again
+        try {
+            mPowerManager.addThermalStatusListener(mListener1);
+            fail("Expected exception not thrown");
+        } catch (IllegalArgumentException expectedException) {
+        }
+        // Add listener2 on main thread.
+        mPowerManager.addThermalStatusListener(mListener2);
+        status = PowerManager.THERMAL_STATUS_MODERATE;
         ThermalUtils.overrideThermalStatus(status);
-        verify(mCallback, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
-                .times(0)).onStatusChange(status);
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+                .times(1)).onThermalStatusChanged(status);
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+                .times(1)).onThermalStatusChanged(status);
+        reset(mListener1);
+        reset(mListener2);
+        // Remove listener1
+        mPowerManager.removeThermalStatusListener(mListener1);
+        // Remove listener1 again
+        try {
+            mPowerManager.removeThermalStatusListener(mListener1);
+            fail("Expected exception not thrown");
+        } catch (IllegalArgumentException expectedException) {
+        }
+        status = PowerManager.THERMAL_STATUS_LIGHT;
+        ThermalUtils.overrideThermalStatus(status);
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+                .times(0)).onThermalStatusChanged(status);
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+                .times(1)).onThermalStatusChanged(status);
     }
 }

@@ -256,8 +256,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.getCellLocation();
         mTelephonyManager.getSimCarrierId();
         mTelephonyManager.getSimCarrierIdName();
-        mTelephonyManager.getSimPreciseCarrierId();
-        mTelephonyManager.getSimPreciseCarrierIdName();
+        mTelephonyManager.getSimSpecificCarrierId();
+        mTelephonyManager.getSimSpecificCarrierIdName();
         mTelephonyManager.getCarrierIdFromSimMccMnc();
         mTelephonyManager.isDataRoamingEnabled();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -1343,6 +1343,14 @@ public class TelephonyManagerTest {
         assertThat(subId).isEqualTo(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
     }
 
+    private static void assertUpdateAvailableNetworkSuccess(int value) {
+        assertThat(value).isEqualTo(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_SUCCESS);
+    }
+
+    private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
+        assertThat(value).isEqualTo(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS);
+    }
+
     /**
      * Tests {@link TelephonyManager#updateAvailableNetworks}
      */
@@ -1358,27 +1366,31 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getOpportunisticSubscriptions());
         List<String> mccMncs = new ArrayList<String>();
         List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
+        Consumer<Integer> callbackSuccess =
+                TelephonyManagerTest::assertUpdateAvailableNetworkSuccess;
+        Consumer<Integer> callbackFailure =
+                TelephonyManagerTest::assertUpdateAvailableNetworkInvalidArguments;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
                 || !mSubscriptionManager.isActiveSubscriptionId(
                         subscriptionInfoList.get(0).getSubscriptionId())) {
             AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(randomSubId,
                     AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
             availableNetworkInfos.add(availableNetworkInfo);
-            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
-            assertThat(res).isEqualTo(false);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
+                            AsyncTask.SERIAL_EXECUTOR, callbackFailure));
         } else {
             AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
                     subscriptionInfoList.get(0).getSubscriptionId(),
                     AvailableNetworkInfo.PRIORITY_HIGH, mccMncs);
             availableNetworkInfos.add(availableNetworkInfo);
-            boolean res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
-            assertThat(res).isEqualTo(true);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess));
             availableNetworkInfos.clear();
-            res = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.updateAvailableNetworks(availableNetworkInfos));
-            assertThat(res).isEqualTo(true);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackFailure));
         }
     }
 

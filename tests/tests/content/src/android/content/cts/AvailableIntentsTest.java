@@ -422,4 +422,15 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(intent);
         }
     }
+
+    public void testRequestSetAutofillServiceIntent() {
+        Intent intent = new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE)
+                .setData(Uri.parse("package:android.content.cts"));
+        assertCanBeHandled(intent);
+    }
+
+    public void testRequestEnableContentCaptureIntent() {
+        Intent intent = new Intent(Settings.ACTION_REQUEST_ENABLE_CONTENT_CAPTURE);
+        assertCanBeHandled(intent);
+    }
 }

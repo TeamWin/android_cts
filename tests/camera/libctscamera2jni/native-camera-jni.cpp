@@ -1132,7 +1132,8 @@ class PreviewTestCase {
     }
 
     camera_status_t createRequestsWithErrorLog(
-                const std::vector<ACameraOutputTarget*> extraOutputs) {
+                const std::vector<ACameraOutputTarget*> extraOutputs,
+                const ACameraIdList* physicalCameraIdList = nullptr) {
         if (mPreviewRequest || mStillRequest) {
             LOG_ERROR(errorString, "Cannot create requests before deleteing existing one");
             return ACAMERA_ERROR_UNKNOWN;
@@ -1146,13 +1147,51 @@ class PreviewTestCase {
         }
 
         camera_status_t ret;
+        bool usePhysicalSettings = (physicalCameraIdList != nullptr);
         if (mPreviewInited) {
-            ret = ACameraDevice_createCaptureRequest(
-                    mDevice, TEMPLATE_PREVIEW, &mPreviewRequest);
+            if (!usePhysicalSettings) {
+                ret = ACameraDevice_createCaptureRequest(
+                        mDevice, TEMPLATE_PREVIEW, &mPreviewRequest);
+            } else {
+                ret = ACameraDevice_createCaptureRequest_withPhysicalIds(
+                        mDevice, TEMPLATE_PREVIEW, physicalCameraIdList, &mPreviewRequest);
+            }
             if (ret != ACAMERA_OK) {
                 LOG_ERROR(errorString, "Camera %s create preview request failed. ret %d",
                         mCameraId, ret);
                 return ret;
+            }
+
+            if (usePhysicalSettings) {
+                for (int i = 0; i < physicalCameraIdList->numCameras; i++) {
+                    // Check physical camera specific metadata functions.
+                    uint8_t aeMode = ACAMERA_CONTROL_AE_MODE_ON;
+                    ret = ACaptureRequest_setEntry_physicalCamera_u8(mPreviewRequest,
+                            physicalCameraIdList->cameraIds[i], ACAMERA_CONTROL_AE_MODE,
+                            1 /*count*/, &aeMode);
+                    if (ret != ACAMERA_OK) {
+                        LOG_ERROR(errorString,
+                            "Error: Camera %s update AE mode key fail. ret %d",
+                            physicalCameraIdList->cameraIds[i], ret);
+                        return ret;
+                    }
+
+                    ACameraMetadata_const_entry entry;
+                    ret = ACaptureRequest_getConstEntry_physicalCamera(mPreviewRequest,
+                                physicalCameraIdList->cameraIds[i],
+                                ACAMERA_CONTROL_AE_MODE, &entry);
+                    if (ret != ACAMERA_OK) {
+                        LOG_ERROR(errorString, "Get AE mode key for physicalCamera %s failed."
+                                " ret %d", physicalCameraIdList->cameraIds[i], ret);
+                        return ret;
+                    }
+                    if (entry.data.u8[0] != aeMode) {
+                        LOG_ERROR(errorString,
+                            "Error: AE mode key is not updated. expect %d but get %d",
+                            aeMode, entry.data.u8[0]);
+                        return ACAMERA_ERROR_UNKNOWN;
+                    }
+                }
             }
 
             ret = ACameraOutputTarget_create(mPreviewAnw, &mReqPreviewOutput);
@@ -1894,6 +1933,20 @@ testCameraDeviceCreateCaptureRequestNative(
 
             // try get/set capture request fields
             ACameraMetadata_const_entry entry;
+            ret = ACaptureRequest_getConstEntry_physicalCamera(request, nullptr,
+                    ACAMERA_CONTROL_AE_MODE, &entry);
+            if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+                LOG_ERROR(errorString, "Get AE mode key for null physical id should fail. ret %d",
+                        ret);
+                goto cleanup;
+            }
+            ret = ACaptureRequest_getConstEntry_physicalCamera(request, cameraId,
+                    ACAMERA_CONTROL_AE_MODE, &entry);
+            if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+                LOG_ERROR(errorString, "Get AE mode key for physical id should fail. ret %d",
+                        ret);
+                goto cleanup;
+            }
             ret = ACaptureRequest_getConstEntry(request, ACAMERA_CONTROL_AE_MODE, &entry);
             if (ret != ACAMERA_OK) {
                 LOG_ERROR(errorString, "Get AE mode key failed. ret %d", ret);
@@ -1917,6 +1970,20 @@ testCameraDeviceCreateCaptureRequestNative(
                 }
                 // try set AE_MODE_ON
                 uint8_t aeMode = ACAMERA_CONTROL_AE_MODE_ON;
+                ret = ACaptureRequest_setEntry_physicalCamera_u8(
+                        request, nullptr, ACAMERA_CONTROL_AE_MODE, /*count*/ 1, &aeMode);
+                if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+                    LOG_ERROR(errorString, "Error: camera %s setEntry_physicalCamera_u8 should "
+                            "fail. ret %d", cameraId, ret);
+                    goto cleanup;
+                }
+                ret = ACaptureRequest_setEntry_physicalCamera_u8(
+                        request, cameraId, ACAMERA_CONTROL_AE_MODE, /*count*/ 1, &aeMode);
+                if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+                    LOG_ERROR(errorString, "Error: camera %s setEntry_physicalCamera_u8 should "
+                            "fail. ret %d", cameraId, ret);
+                    goto cleanup;
+                }
                 ret = ACaptureRequest_setEntry_u8(
                         request, ACAMERA_CONTROL_AE_MODE, /*count*/ 1, &aeMode);
                 if (ret != ACAMERA_OK) {
@@ -2613,10 +2680,8 @@ cleanup:
     return pass;
 }
 
-extern "C" jboolean
-Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
-testCameraDeviceLogicalPhysicalStreamingNative(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+bool nativeCameraDeviceLogicalPhysicalStreaming(
+        JNIEnv* env, jobject jPreviewSurface, bool usePhysicalSettings) {
     const int NUM_TEST_IMAGES = 10;
     const int TEST_WIDTH  = 640;
     const int TEST_HEIGHT = 480;
@@ -2694,6 +2759,23 @@ testCameraDeviceLogicalPhysicalStreamingNative(
             continue;
         }
 
+        // Check physical camera request keys
+        if (usePhysicalSettings) {
+            ACameraMetadata_const_entry entry;
+            camera_status_t status = ACameraMetadata_getConstEntry(
+                    chars, ACAMERA_REQUEST_AVAILABLE_PHYSICAL_CAMERA_REQUEST_KEYS, &entry);
+            if (status == ACAMERA_ERROR_METADATA_NOT_FOUND) {
+                // No supported PHYSICAL_CAMERA_REQUEST_KEYS, skip test
+                continue;
+            } else if (status != ACAMERA_OK) {
+                // Do not log error here. testcase did it.
+                goto cleanup;
+            } else if (entry.count == 0) {
+                // No supported PHYSICAL_CAMERA_REQUEST_KEYS, skip test
+                continue;
+            }
+        }
+
         ret = testCase.openCamera(cameraId);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
@@ -2766,7 +2848,31 @@ testCameraDeviceLogicalPhysicalStreamingNative(
             goto cleanup;
         }
 
-        ret = testCase.createRequestsWithErrorLog(readerOutputs);
+        if (usePhysicalSettings) {
+            std::vector<const char*> twoNullStr = {nullptr, nullptr};
+            ACameraIdList nullCameraIdList = {2, twoNullStr.data()};
+            ret = testCase.createRequestsWithErrorLog(readerOutputs, &nullCameraIdList);
+            if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+                LOG_ERROR(errorString, "Null physical camera ids must fail createCaptureRequest. "
+                        "ret %d", ret);
+                goto cleanup;
+            }
+
+            std::string invalidId = "";
+            std::vector<const char*> one0LengthStr = {invalidId.c_str()};
+            ACameraIdList invalidCameraIdList = {1, one0LengthStr.data()};
+            ret = testCase.createRequestsWithErrorLog(readerOutputs, &invalidCameraIdList);
+            if (ret != ACAMERA_ERROR_INVALID_PARAMETER) {
+                LOG_ERROR(errorString, "zero-length physical camera ids must fail "
+                        "createCaptureRequest. ret %d", ret);
+                goto cleanup;
+            }
+
+            ACameraIdList physicalCameraIdList = {2, candidateIds.data()};
+            ret = testCase.createRequestsWithErrorLog(readerOutputs, &physicalCameraIdList);
+        } else {
+            ret = testCase.createRequestsWithErrorLog(readerOutputs);
+        }
         if (ret != ACAMERA_OK) {
             // Don't log error here. testcase did it
             goto cleanup;
@@ -2842,6 +2948,23 @@ cleanup:
     }
     return pass;
 }
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
+testCameraDeviceLogicalPhysicalStreamingNative(
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+    return nativeCameraDeviceLogicalPhysicalStreaming(env,
+            jPreviewSurface, false /*usePhysicalSettings*/);
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
+testCameraDeviceLogicalPhysicalSettingsNative(
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+    return nativeCameraDeviceLogicalPhysicalStreaming(env,
+            jPreviewSurface, true /*usePhysicalSettings*/);
+}
+
 
 bool nativeImageReaderTestBase(
         JNIEnv* env, jstring jOutPath, jint format, AImageReader_ImageCallback cb) {

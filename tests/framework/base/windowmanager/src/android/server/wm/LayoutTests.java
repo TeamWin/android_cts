@@ -31,6 +31,7 @@ import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.graphics.Rect;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.view.KeyEvent;
@@ -55,6 +56,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:LayoutTests
  */
 @FlakyTest(detail = "Can be promoted to pre-submit once confirmed stable.")
+@AppModeFull(reason = "Cannot write global settings as an instant app.")
 @Presubmit
 public class LayoutTests {
     private static final long TIMEOUT_LAYOUT = 200; // milliseconds

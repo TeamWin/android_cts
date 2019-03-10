@@ -99,12 +99,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
@@ -638,19 +635,14 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // Verify that only methods annotated with @JavascriptInterface are exposed
         // on the JavaScript interface object.
-        final BlockingQueue<String> queue = new ArrayBlockingQueue<>(3);
-        mOnUiThread.evaluateJavascript("typeof dummy.provideResult", result -> {
-            queue.add(result);
-        });
-        mOnUiThread.evaluateJavascript("typeof dummy.wasProvideResultCalled", result -> {
-            queue.add(result);
-        });
-        mOnUiThread.evaluateJavascript("typeof dummy.getClass", result -> {
-            queue.add(result);
-        });
-        assertEquals("\"function\"", WebkitUtils.waitForNextQueueElement(queue));
-        assertEquals("\"undefined\"", WebkitUtils.waitForNextQueueElement(queue));
-        assertEquals("\"undefined\"", WebkitUtils.waitForNextQueueElement(queue));
+        assertEquals("\"function\"",
+                mOnUiThread.evaluateJavascriptSync("typeof dummy.provideResult"));
+
+        assertEquals("\"undefined\"",
+                mOnUiThread.evaluateJavascriptSync("typeof dummy.wasProvideResultCalled"));
+
+        assertEquals("\"undefined\"",
+                mOnUiThread.evaluateJavascriptSync("typeof dummy.getClass"));
     }
 
     public void testAddJavascriptInterfaceNullObject() throws Exception {
@@ -785,9 +777,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         assertFalse(mJsInterfaceWasCalled.get());
 
-        assertEquals("\"pass\"", WebkitUtils.waitForFuture(
-                mOnUiThread.evaluateJavascript(
-                        "try {dummy.call(); 'fail'; } catch (exception) { 'pass'; } ")));
+        assertEquals("\"pass\"", mOnUiThread.evaluateJavascriptSync(
+                "try {dummy.call(); 'fail'; } catch (exception) { 'pass'; } "));
         assertTrue(mJsInterfaceWasCalled.get());
     }
 
@@ -804,16 +795,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.addJavascriptInterface(obj, "dummy");
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        assertEquals("42", WebkitUtils.waitForFuture(
-                mOnUiThread.evaluateJavascript("dummy.custom_property = 42")));
+        assertEquals("42", mOnUiThread.evaluateJavascriptSync("dummy.custom_property = 42"));
 
-        assertEquals("true", WebkitUtils.waitForFuture(
-                mOnUiThread.evaluateJavascript("'custom_property' in dummy")));
+        assertEquals("true", mOnUiThread.evaluateJavascriptSync("'custom_property' in dummy"));
 
         mOnUiThread.reloadAndWaitForCompletion();
 
-        assertEquals("false", WebkitUtils.waitForFuture(
-                mOnUiThread.evaluateJavascript("'custom_property' in dummy")));
+        assertEquals("false", mOnUiThread.evaluateJavascriptSync("'custom_property' in dummy"));
     }
 
     public void testJavascriptInterfaceForClientPopup() throws Exception {
@@ -861,12 +849,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        assertEquals("true", WebkitUtils.waitForFuture(
-                childOnUiThread.evaluateJavascript("'dummy' in window")));
+        assertEquals("true", childOnUiThread.evaluateJavascriptSync("'dummy' in window"));
 
         // Verify that the injected object is functional.
-        assertEquals("42", WebkitUtils.waitForFuture(
-                childOnUiThread.evaluateJavascript("dummy.test()")));
+        assertEquals("42", childOnUiThread.evaluateJavascriptSync("dummy.test()"));
     }
 
     private final class TestPictureListener implements PictureListener {
@@ -2291,11 +2277,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        assertEquals("2", WebkitUtils.waitForFuture(
-                mOnUiThread.evaluateJavascript("1+1")));
+        assertEquals("2", mOnUiThread.evaluateJavascriptSync("1+1"));
 
-        assertEquals("9", WebkitUtils.waitForFuture(
-                mOnUiThread.evaluateJavascript("1+1; 4+5")));
+        assertEquals("9", mOnUiThread.evaluateJavascriptSync("1+1; 4+5"));
 
         final String EXPECTED_TITLE = "test";
         mOnUiThread.evaluateJavascript("document.title='" + EXPECTED_TITLE + "';", null);

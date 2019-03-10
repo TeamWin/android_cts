@@ -15,11 +15,10 @@
  */
 package android.contentsuggestions.cts;
 
-import static android.support.test.InstrumentationRegistry.getContext;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,10 +32,10 @@ import android.app.contentsuggestions.ContentSuggestionsManager;
 import android.app.contentsuggestions.SelectionsRequest;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.Lists;
 
@@ -99,7 +98,7 @@ public class ContentSuggestionsManagerTest {
         String requestId = "TEST";
 
         mManager.notifyInteraction(requestId, new Bundle());
-        verifyService().notifyInteraction(eq(requestId), any());
+        verifyService().onNotifyInteraction(eq(requestId), any());
     }
 
     @Test
@@ -107,7 +106,7 @@ public class ContentSuggestionsManagerTest {
         int taskId = 1;
 
         mManager.provideContextImage(taskId, new Bundle());
-        verifyService().processContextImage(eq(taskId), any(), any());
+        verifyService().onProcessContextImage(eq(taskId), any(), any());
     }
 
     @Test
@@ -117,7 +116,7 @@ public class ContentSuggestionsManagerTest {
 
 
         mManager.suggestContentSelections(request, Executors.newSingleThreadExecutor(), callback);
-        verifyService().suggestContentSelections(any(), any());
+        verifyService().onSuggestContentSelections(any(), any());
     }
 
     @Test
@@ -129,7 +128,7 @@ public class ContentSuggestionsManagerTest {
 
 
         mManager.classifyContentSelections(request, Executors.newSingleThreadExecutor(), callback);
-        verifyService().classifyContentSelections(any(), any());
+        verifyService().onClassifyContentSelections(any(), any());
     }
 
     private CtsContentSuggestionsService verifyService() {

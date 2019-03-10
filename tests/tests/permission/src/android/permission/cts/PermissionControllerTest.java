@@ -64,9 +64,16 @@ public class PermissionControllerTest {
     private static final PermissionControllerManager sController =
             sContext.getSystemService(PermissionControllerManager.class);
 
+    private void resetAppState() throws Exception {
+        sUiAutomation.grantRuntimePermission(APP, ACCESS_FINE_LOCATION);
+        sUiAutomation.grantRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
+        setAppOp(APP, ACCESS_FINE_LOCATION, MODE_ALLOWED);
+    }
+
     @Before
-    public void adoptShellPermissions() {
+    public void setup() throws Exception {
         sUiAutomation.adoptShellPermissionIdentity();
+        resetAppState();
     }
 
     private @NonNull Map<String, List<String>> revoke(@NonNull Map<String, List<String>> request,
@@ -126,14 +133,8 @@ public class PermissionControllerTest {
 
         revoke(request, false);
 
-        try {
-            assertThat(sContext.getPackageManager().checkPermission(ACCESS_BACKGROUND_LOCATION,
-                    APP)).isEqualTo(PERMISSION_DENIED);
-        } finally {
-            // Restore default state
-            setAppOp(APP, ACCESS_FINE_LOCATION, MODE_ALLOWED);
-            sUiAutomation.grantRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
-        }
+        assertThat(sContext.getPackageManager().checkPermission(ACCESS_BACKGROUND_LOCATION,
+                APP)).isEqualTo(PERMISSION_DENIED);
     }
 
     @Test
@@ -142,17 +143,11 @@ public class PermissionControllerTest {
         sUiAutomation.revokeRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
         setAppOp(APP, ACCESS_FINE_LOCATION, MODE_FOREGROUND);
 
-        try {
-            Map<String, List<String>> request = buildRequest(APP, ACCESS_BACKGROUND_LOCATION);
+        Map<String, List<String>> request = buildRequest(APP, ACCESS_BACKGROUND_LOCATION);
 
-            Map<String, List<String>> result = revoke(request, false);
+        Map<String, List<String>> result = revoke(request, false);
 
-            assertThat(result).isEmpty();
-        } finally {
-            // Restore default state
-            setAppOp(APP, ACCESS_FINE_LOCATION, MODE_ALLOWED);
-            sUiAutomation.grantRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
-        }
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -286,7 +281,8 @@ public class PermissionControllerTest {
     }
 
     @After
-    public void dropShellPermissions() {
+    public void dropShellPermissions() throws Exception {
+        resetAppState();
         sUiAutomation.dropShellPermissionIdentity();
     }
 }
