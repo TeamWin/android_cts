@@ -50,8 +50,8 @@ public class MediaScannerConnectionTest extends AndroidTestCase {
         // prepare the media file.
 
         FileCopyHelper copier = new FileCopyHelper(mContext);
-        String fileName = "test" + System.currentTimeMillis();
-        File dir = getContext().getExternalFilesDir(null);
+        String fileName = "test" + System.currentTimeMillis() + ".mp3";
+        File dir = getContext().getExternalMediaDirs()[0];
         mMediaFile = new File(dir, fileName);
         copier.copyToExternalStorage(R.raw.testmp3, mMediaFile);
 

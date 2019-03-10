@@ -36,6 +36,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -184,8 +185,8 @@ public class MediaScannerTest extends AndroidTestCase {
         ContentResolver res = mContext.getContentResolver();
 
         // check that the file ended up in the audio view
-        Uri audiouri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-        Cursor c = res.query(audiouri, null, null, null, null);
+        Cursor c = res.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
+                MediaColumns.DATA + "=?", new String[] { mMediaFile.getAbsolutePath() }, null);
         assertEquals(1, c.getCount());
         c.close();
 
@@ -195,7 +196,8 @@ public class MediaScannerTest extends AndroidTestCase {
         startMediaScanAndWait();
 
         // entry should not be in audio view anymore
-        c = res.query(audiouri, null, null, null, null);
+        c = res.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
+                MediaColumns.DATA + "=?", new String[] { mMediaFile.getAbsolutePath() }, null);
         assertEquals(0, c.getCount());
         c.close();
 
@@ -207,7 +209,8 @@ public class MediaScannerTest extends AndroidTestCase {
         // a little more time
         SystemClock.sleep(10000);
         // entry should be in audio view again
-        c = res.query(audiouri, null, null, null, null);
+        c = res.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
+                MediaColumns.DATA + "=?", new String[] { mMediaFile.getAbsolutePath() }, null);
         assertEquals(1, c.getCount());
         c.close();
 
