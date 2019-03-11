@@ -43,5 +43,7 @@
         <option name="runtime-hint" value="4h" />
         <option name="exclude-annotation" value="org.junit.Ignore" />
         <option name="hidden-api-checks" value="false" />
+        <!-- disable isolated storage so tests can access dynamic config stored in /sdcard. -->
+        <option name="isolated-storage" value="false" />
     </test>
 </configuration>
