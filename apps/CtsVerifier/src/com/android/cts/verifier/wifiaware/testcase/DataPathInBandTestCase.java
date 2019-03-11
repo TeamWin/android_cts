@@ -23,8 +23,8 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareNetworkInfo;
+import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.util.Log;
 import android.util.Pair;
 
@@ -165,8 +165,8 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         }
 
         // 6. request network
-        WifiAwareManager.NetworkSpecifierBuilder nsBuilder =
-                new WifiAwareManager.NetworkSpecifierBuilder().setDiscoverySession(
+        WifiAwareNetworkSpecifier.Builder nsBuilder =
+                new WifiAwareNetworkSpecifier.Builder().setDiscoverySession(
                         mWifiAwareDiscoverySession).setPeerHandle(mPeerHandle);
         if (!mIsSecurityOpen) {
             nsBuilder.setPskPassphrase(PASSPHRASE);
@@ -353,8 +353,8 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         }
 
         // 5. Request network
-        WifiAwareManager.NetworkSpecifierBuilder nsBuilder =
-                new WifiAwareManager.NetworkSpecifierBuilder().setDiscoverySession(
+        WifiAwareNetworkSpecifier.Builder nsBuilder =
+                new WifiAwareNetworkSpecifier.Builder().setDiscoverySession(
                         mWifiAwareDiscoverySession).setPeerHandle(mPeerHandle);
         if (!mIsSecurityOpen) {
             nsBuilder.setPskPassphrase(PASSPHRASE).setPort(port).setTransportProtocol(
