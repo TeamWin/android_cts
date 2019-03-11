@@ -361,7 +361,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
                 Size maxJpegSize = CameraTestUtils.getMaxSize(jpegSizes);
                 Size maxPreviewSize = mOrderedPreviewSizes.get(0);
-
+                Size QCIF = new Size(176, 144);
+                Size FULL_HD = new Size(1920, 1080);
                 for (int format : supportedYUVFormats) {
                     Size[] targetCaptureSizes =
                             mStaticInfo.getAvailableSizesForFormatChecked(format,
@@ -408,6 +409,14 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                                             " because full size jpeg + yuv larger than "
                                             + "max preview size (" + maxPreviewSize
                                             + ") is not supported");
+                                    continue;
+                                } else if (captureSz.equals(QCIF) &&
+                                        ((maxJpegSize.getWidth() > FULL_HD.getWidth()) ||
+                                         (maxJpegSize.getHeight() > FULL_HD.getHeight()))) {
+                                    Log.v(TAG, "Skip testing {yuv:" + captureSz
+                                            + " ,jpeg:" + maxJpegSize + "} for camera "
+                                            + mCamera.getId() +
+                                            " because QCIF + >Full_HD size is not supported");
                                     continue;
                                 } else {
                                     fail("Camera " + mCamera.getId() +
