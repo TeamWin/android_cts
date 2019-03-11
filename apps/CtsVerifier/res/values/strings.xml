@@ -3239,8 +3239,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="user_restriction_set_step">
         Set \'%s\' user restriction by turning on the switch below.
     </string>
-    <string name="disallow_add_user">Disallow add user</string>
-    <string name="disallow_add_user_action">Adding a new user</string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
     <string name="disallow_adjust_volume_action">Adjusting the volume</string>
     <string name="disallow_config_date_time">Disallow config date and time settings</string>
