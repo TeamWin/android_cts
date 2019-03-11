@@ -809,7 +809,7 @@ public class PlatformInspectableProcessorTest {
     @SuppressWarnings("unchecked")
     private <T> InspectionCompanion<T> loadCompanion(Class<T> cls) {
         final ClassLoader classLoader = cls.getClassLoader();
-        final String companionName = String.format("%s$$InspectionCompanion", cls.getName());
+        final String companionName = String.format("%s$InspectionCompanion", cls.getName());
 
         try {
             final Class<InspectionCompanion<T>> companion =
