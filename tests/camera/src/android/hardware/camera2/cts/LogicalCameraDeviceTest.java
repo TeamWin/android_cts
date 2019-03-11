@@ -528,6 +528,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             CameraCharacteristics properties =
                     mCameraManager.getCameraCharacteristics(physicalCameraId);
             assertNotNull("Can't get camera characteristics!", properties);
+            if (!mAllStaticInfo.get(physicalCameraId).isColorOutputSupported()) {
+                // No color output support, skip.
+                continue;
+            }
             StreamConfigurationMap configMap =
                 properties.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             physicalConfigs.put(physicalCameraId, configMap);
@@ -565,7 +569,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             ArrayList<String> supportedPhysicalCameras = new ArrayList<String>();
             for (String physicalCameraId : physicalCameraIds) {
                 List<Size> physicalPreviewSizes = physicalPreviewSizesMap.get(physicalCameraId);
-                if (physicalPreviewSizes.contains(previewSize)) {
+                if (physicalPreviewSizes != null && physicalPreviewSizes.contains(previewSize)) {
                    long minDurationPhysical =
                            physicalConfigs.get(physicalCameraId).getOutputMinFrameDuration(
                            ImageFormat.YUV_420_888, previewSize);
