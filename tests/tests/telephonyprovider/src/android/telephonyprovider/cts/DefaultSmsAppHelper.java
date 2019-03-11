@@ -21,7 +21,6 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static org.junit.Assert.assertTrue;
 
 import android.app.role.RoleManager;
-import android.app.role.RoleManagerCallback;
 import android.content.Context;
 import android.os.Process;
 import android.os.UserHandle;
@@ -50,17 +49,9 @@ class DefaultSmsAppHelper {
                     RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
                     user,
                     executor,
-                    new RoleManagerCallback() {
-                        @Override
-                        public void onSuccess() {
-                            success[0] = true;
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onFailure() {
-                            latch.countDown();
-                        }
+                    successful -> {
+                        success[0] = successful;
+                        latch.countDown();
                     });
         });
 

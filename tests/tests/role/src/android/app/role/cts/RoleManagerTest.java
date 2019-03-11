@@ -28,7 +28,6 @@ import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.role.OnRoleHoldersChangedListener;
 import android.app.role.RoleManager;
-import android.app.role.RoleManagerCallback;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -67,6 +66,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * Tests {@link RoleManager}.
@@ -464,16 +464,15 @@ public class RoleManagerTest {
     }
 
     private static class CallbackFuture extends CompletableFuture<Void>
-            implements RoleManagerCallback {
+            implements Consumer<Boolean> {
 
         @Override
-        public void onSuccess() {
-            complete(null);
-        }
-
-        @Override
-        public void onFailure() {
-            completeExceptionally(new RuntimeException());
+        public void accept(Boolean successful) {
+            if (successful) {
+                complete(null);
+            } else {
+                completeExceptionally(new RuntimeException());
+            }
         }
     }
 }
