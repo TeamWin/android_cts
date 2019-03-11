@@ -20,6 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
@@ -63,6 +64,9 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
             = getComponentName(StandardWithSingleTopActivity.class);
     private static final ComponentName TEST_LAUNCHING_ACTIVITY
             = getComponentName(TestLaunchingActivity.class);
+    private static final ComponentName LAUNCHING_AND_FINISH_ACTIVITY
+            = getComponentName(LaunchingAndFinishActivity.class);
+
 
     /**
      * Ensures that the following launch flag combination works when starting an activity which is
@@ -353,6 +357,27 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 mAmWmState.getAmState().getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY));
     }
 
+    @Test
+    public void testLaunchActivityWithFlagPreviousIsTop() {
+        // Launch a standard activity
+        getLaunchActivityBuilder()
+                .setTargetActivity(SINGLE_TOP_ACTIVITY)
+                .execute();
+
+        final int taskId = mAmWmState.getAmState().getTaskByActivity(
+                SINGLE_TOP_ACTIVITY).getTaskId();
+
+        // Launch a standard activity again with PREVIOUS_IS_TOP
+        getLaunchActivityBuilder()
+                .setTargetActivity(SINGLE_TOP_ACTIVITY)
+                .setLaunchingActivity(LAUNCHING_AND_FINISH_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_PREVIOUS_IS_TOP)
+                .execute();
+
+        assertEquals("Instance of activity must be one", 1,
+                mAmWmState.getAmState().getActivityCountInTask(taskId, SINGLE_TOP_ACTIVITY));
+    }
+
     /**
      * This test case tests behavior of activity launched with FLAG_ACTIVITY_SINGLE_TOP.
      * A single top activity must not be launched if it is already running at the top
@@ -480,6 +505,14 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         protected void onNewIntent(Intent intent) {
             super.onNewIntent(intent);
             ActivityLauncher.launchActivityFromExtras(this, intent.getExtras());
+        }
+    }
+
+    public static class LaunchingAndFinishActivity extends TestLaunchingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            finish();
         }
     }
 }
