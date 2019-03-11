@@ -43,19 +43,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt
 LOCAL_SRC_FILES := $(call all-java-files-under, .)
 LOCAL_MULTILIB := both
 LOCAL_JNI_SHARED_LIBRARIES := libdynamiclinker_native_lib_a libdynamiclinker_native_lib_b
-LOCAL_MANIFEST_FILE := AndroidManifest_27.xml
-LOCAL_PACKAGE_NAME := CtsDynamicLinkerTestCases27
-LOCAL_SDK_VERSION := current
-LOCAL_COMPATIBILITY_SUITE := cts vts
-include $(BUILD_CTS_PACKAGE)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt
-LOCAL_SRC_FILES := $(call all-java-files-under, .)
-LOCAL_MULTILIB := both
-LOCAL_JNI_SHARED_LIBRARIES := libdynamiclinker_native_lib_a libdynamiclinker_native_lib_b
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
 LOCAL_PACKAGE_NAME := CtsDynamicLinkerTestCases
 LOCAL_SDK_VERSION := current
