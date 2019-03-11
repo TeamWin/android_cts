@@ -25,7 +25,7 @@ public class PowerManagerServicePermissionTest extends AndroidTestCase {
         boolean batterySaverOn = manager.isPowerSaveMode();
 
         try {
-            manager.setPowerSaveMode(!batterySaverOn);
+            manager.setPowerSaveModeEnabled(!batterySaverOn);
             fail("Toggling battery saver requires POWER_SAVER or DEVICE_POWER permission");
         } catch (SecurityException e) {
             // Expected Exception
