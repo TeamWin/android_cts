@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+  <font android:font="@font/ascii_a3em_weight100_upright"
+        android:fontWeight="400"
+        android:fontStyle="normal" />
+      <!-- The same style fonts in a family ends up with IllegalArgumentException in
+           Typface.CustomFallbackBuilder, but this exception should be suppressed by resource
+           loader since developer can not recover during layout inflation.
+    -->
+    <font android:font="@font/ascii_b3em_weight100_italic"
+          android:fontWeight="400"
+          android:fontStyle="normal" />
+</font-family>
+
