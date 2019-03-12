@@ -512,6 +512,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         initializeMessageLooper(cameraId);
         Parameters params = mCamera.getParameters();
         if(!params.isVideoStabilizationSupported()) {
+            terminateMessageLooper();
             return;
         }
         //Check whether we can support preview callbacks along with stabilization
