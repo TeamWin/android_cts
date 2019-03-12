@@ -102,7 +102,7 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
 
     public void testSetOpportunisticMode() {
         callSetGlobalPrivateDnsOpportunisticModeExpectingResult(
-                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+                DevicePolicyManager.PRIVATE_DNS_SET_NO_ERROR);
 
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
@@ -113,7 +113,7 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
     public void testSetSpecificHostMode() {
         callSetGlobalPrivateDnsHostModeExpectingResult(
                 VALID_PRIVATE_DNS_HOST,
-                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+                DevicePolicyManager.PRIVATE_DNS_SET_NO_ERROR);
 
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
@@ -138,7 +138,7 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
         // First set a specific host and assert that applied.
         callSetGlobalPrivateDnsHostModeExpectingResult(
                 VALID_PRIVATE_DNS_HOST,
-                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+                DevicePolicyManager.PRIVATE_DNS_SET_NO_ERROR);
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
                 PRIVATE_DNS_MODE_PROVIDER_HOSTNAME);
@@ -148,7 +148,7 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
 
         // Next, set the mode to automatic and confirm that has applied.
         callSetGlobalPrivateDnsOpportunisticModeExpectingResult(
-                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+                DevicePolicyManager.PRIVATE_DNS_SET_NO_ERROR);
 
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
