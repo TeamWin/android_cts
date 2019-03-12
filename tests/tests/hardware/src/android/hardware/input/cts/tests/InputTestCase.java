@@ -27,7 +27,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.cts.input.HidDevice;
@@ -96,7 +96,7 @@ public abstract class InputTestCase {
     private void assertReceivedKeyEvent(@NonNull KeyEvent expectedKeyEvent) {
         KeyEvent receivedKeyEvent = waitForKey();
         if (receivedKeyEvent == null) {
-            failWithMessage("timed out waiting for " + expectedKeyEvent);
+            failWithMessage("Did not receive " + expectedKeyEvent);
         }
         assertEquals(mCurrentTestCase, expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
         assertEquals(mCurrentTestCase,
@@ -115,7 +115,7 @@ public abstract class InputTestCase {
           */
 
         if (event == null) {
-            failWithMessage("timed out waiting for " + expectedEvent);
+            failWithMessage("Did not receive " + expectedEvent);
         }
         if (event.getHistorySize() > 0) {
             failWithMessage("expected each MotionEvent to only have a single entry");
@@ -182,8 +182,6 @@ public abstract class InputTestCase {
         if (event instanceof KeyEvent) {
             return (KeyEvent) event;
         }
-        failWithMessage("expected a KeyEvent, but received: " + event
-                + ". So far received " + mEvents.size() + " events.");
         return null;
     }
 
@@ -192,8 +190,6 @@ public abstract class InputTestCase {
         if (event instanceof MotionEvent) {
             return (MotionEvent) event;
         }
-        failWithMessage("expected a MotionEvent, but received: " + event
-                + ". So far received " + mEvents.size() + " events.");
         return null;
     }
 

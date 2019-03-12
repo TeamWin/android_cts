@@ -29,8 +29,8 @@ LOCAL_MULTILIB := both
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    androidx.test.rules \
     androidx.annotation_annotation \
+    androidx.test.ext.junit \
     compatibility-device-util-axt \
     cts-input-lib \
     ctstestrunner-axt \
