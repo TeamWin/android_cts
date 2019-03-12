@@ -16,6 +16,7 @@
 
 package android.camera.cts;
 
+import static android.hardware.camera2.cts.CameraTestUtils.SESSION_CONFIGURE_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
@@ -46,10 +47,12 @@ import android.view.Surface;
 import androidx.heifwriter.HeifWriter;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class HeifWriterTest extends Camera2AndroidTestCase {
@@ -80,6 +83,9 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
             return;
         }
 
+        boolean sessionFailure = false;
+        Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
+                BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
         for (String id : mCameraIds) {
             try {
                 Log.v(TAG, "Testing HEIF capture for Camera " + id);
@@ -152,6 +158,14 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
 
                             // Start capture session and preview
                             createSessionByConfigs(configs);
+                            int state = mCameraSessionListener.getStateWaiter().waitForAnyOfStates(
+                                    Arrays.asList(sessionStates), SESSION_CONFIGURE_TIMEOUT_MS);
+                            if (state == BlockingSessionCallback.SESSION_CONFIGURE_FAILED) {
+                                // session configuration failure. Bail out due to known issue of
+                                // HeifWriter INPUT_SURFACE mode support for camera. b/79699819
+                                sessionFailure = true;
+                                break;
+                            }
                             startCapture(reqPreview.build(), /*repeating*/true, null, null);
 
                             SystemClock.sleep(SESSION_WARMUP_MS);
@@ -184,8 +198,14 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
                                 heifWriter.close();
                                 heifWriter = null;
                             }
-                            stopCapture(/*fast*/false);
+                            if (!sessionFailure) {
+                                stopCapture(/*fast*/false);
+                            }
                         }
+                    }
+
+                    if (sessionFailure) {
+                        break;
                     }
                 }
             } finally {
