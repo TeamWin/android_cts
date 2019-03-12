@@ -17,23 +17,42 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.metrics.proto.MetricMeasurement.Metric;
+import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.TestDescription;
+import com.android.tradefed.testtype.AndroidJUnitTest;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.InstrumentationTest;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.AbiUtils;
+
+import java.util.HashMap;
 
 /**
  * Tests that verify intent filters.
  */
-@AppModeFull // TODO: Needs porting to instant
+@AppModeFull(reason="Instant applications can never be system or privileged")
 public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+    //---------- BEGIN: To handle updated target SDK; remove as b/128436757 ----------
+    private static final String SHIM_UPDATE_NEW_APK = "CtsShimPrivUpgradePrebuilt_v28.apk";
+    private static final String SHIM_UPDATE_NEW_FAIL_APK = "CtsShimPrivUpgradeWrongSHAPrebuilt_v28.apk";
+    private static final String TEST_PREPARER_APK = "CtsPrivilegedUpdatePreparer.apk";
+    private static final String TEST_PREPARER_PKG = "com.android.cts.privilegedupdate.preparer";
+    private static final String TARGET_SDK_METHOD = "getTargetSdk";
+    private static final String TARGET_SDK_KEY = "target_sdk";
+    private static final int DEFAULT_TARGET_SDK = 24;
+    private static final int NEW_TARGET_SDK = 28;
+    private int mTargetSdk = 0;
+    //---------- END: To handle updated target SDK; remove as b/128436757 ----------
     private static final String TAG = "PrivilegedUpdateTests";
     private static final String SHIM_PKG = "com.android.cts.priv.ctsshim";
     /** Package name of the tests to be run */
@@ -82,6 +101,10 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
 
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(TEST_APK), false));
         getDevice().executeShellCommand("pm enable " + SHIM_PKG);
+        if (mTargetSdk == 0) {
+            mTargetSdk = DEFAULT_TARGET_SDK;
+            setTargetSdk();
+        }
     }
 
     @Override
@@ -96,7 +119,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
     public void testPrivilegedAppUpgradeRestricted() throws Exception {
         getDevice().uninstallPackage(SHIM_PKG);
         assertEquals(RESTRICTED_UPGRADE_FAILURE, getDevice().installPackage(
-                mBuildHelper.getTestFile(SHIM_UPDATE_FAIL_APK), true));
+                mBuildHelper.getTestFile(getUpdateApk(true)), true));
     }
 
     public void testSystemAppPriorities() throws Exception {
@@ -117,7 +140,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         
         try {
             assertNull(getDevice().installPackage(
-                    mBuildHelper.getTestFile(SHIM_UPDATE_APK), true));
+                    mBuildHelper.getTestFile(getUpdateApk(false)), true));
             runDeviceTests(TEST_PKG, ".PrivilegedUpdateTest", "testPrivilegedAppUpgradePriorities");
         } finally {
             getDevice().uninstallPackage(SHIM_PKG);
@@ -141,7 +164,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndEnabled");
         try {
             assertNull(getDevice().installPackage(
-                    mBuildHelper.getTestFile(SHIM_UPDATE_APK), true));
+                    mBuildHelper.getTestFile(getUpdateApk(false)), true));
             getDevice().executeShellCommand("pm disable-user " + SHIM_PKG);
             runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testUpdatedPrivAppAndDisabled");
             getDevice().executeShellCommand("pm enable " + SHIM_PKG);
@@ -155,4 +178,43 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
     }
+
+    //---------- BEGIN: To handle updated target SDK; remove as b/128436757 ----------
+    private String getUpdateApk(boolean fail) {
+        if (mTargetSdk == NEW_TARGET_SDK) {
+            if (fail) {
+                return SHIM_UPDATE_NEW_FAIL_APK;
+            }
+            return SHIM_UPDATE_NEW_APK;
+        }
+        if (fail) {
+            return SHIM_UPDATE_FAIL_APK;
+        }
+        return SHIM_UPDATE_APK;
+    }
+
+    private void setTargetSdk() throws Exception {
+        ITestInvocationListener listener = new TargetSdkListener();
+        AndroidJUnitTest instrTest = new AndroidJUnitTest();
+        instrTest.setInstallFile(mBuildHelper.getTestFile(TEST_PREPARER_APK));
+        instrTest.setDevice(getDevice());
+        instrTest.setPackageName(TEST_PREPARER_PKG);
+        instrTest.run(listener);
+    }
+
+    /* Special listener to retrieve the target sdk for the cts shim */
+    private class TargetSdkListener implements ITestInvocationListener {
+        @Override
+        public void testEnded(TestDescription test, HashMap<String, Metric> metrics) {
+            final Metric targetMetric = metrics.get(TARGET_SDK_KEY);
+            if (targetMetric == null) {
+                return;
+            }
+            try {
+                mTargetSdk = Integer.parseInt(targetMetric.getMeasurements().getSingleString());
+            } catch (NumberFormatException ignore) { }
+        }
+    }
+    //---------- END: To handle updated target SDK; remove as b/128436757 ----------
+
 }
