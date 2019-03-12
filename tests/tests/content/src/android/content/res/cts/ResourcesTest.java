@@ -968,4 +968,25 @@ public class ResourcesTest extends AndroidTestCase {
         View view = layoutInflater.inflate(R.layout.complex_color_drawable_attr_layout, null);
         assertTrue(view.getBackground() instanceof ColorStateListDrawable);
     }
+
+    public void testGetAttributeSetSourceResId() {
+        assertEquals(Resources.ID_NULL, Resources.getAttributeSetSourceResId(null));
+
+        XmlPullParser test_color_parser = mResources.getXml(R.xml.test_color);
+        AttributeSet test_color_set = Xml.asAttributeSet(test_color_parser);
+        assertEquals(R.xml.test_color, Resources.getAttributeSetSourceResId(test_color_set));
+
+        XmlPullParser colors_parser = mResources.getXml(R.xml.colors);
+        AttributeSet colors_set = Xml.asAttributeSet(colors_parser);
+        assertEquals(R.xml.colors, Resources.getAttributeSetSourceResId(colors_set));
+
+        XmlPullParser content_layout_parser = mResources.getLayout(R.layout.context_layout);
+        AttributeSet content_layout_set = Xml.asAttributeSet(content_layout_parser);
+        assertEquals(R.layout.context_layout,
+                Resources.getAttributeSetSourceResId(content_layout_set));
+
+        XmlPullParser anim_rotate_parser = mResources.getAnimation(R.anim.anim_rotate);
+        AttributeSet anim_rotate_set = Xml.asAttributeSet(anim_rotate_parser);
+        assertEquals(R.anim.anim_rotate, Resources.getAttributeSetSourceResId(anim_rotate_set));
+    }
 }
