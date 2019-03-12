@@ -1131,9 +1131,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
                 WAIT_TIME);
 
+        UiDevice device = UiDevice.getInstance(getInstrumentation());
+
         try {
             // Start the heavy-weight app, should launch like a normal app.
             mContext.startActivity(activityIntent);
+            waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
+            device.waitForIdle();
 
             // Wait for process state to reflect running activity.
             uidForegroundListener.waitForValue(
@@ -1182,6 +1186,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
+            device.waitForIdle();
 
             // Exit activity, check to see if we are now cached.
             getInstrumentation().getUiAutomation().performGlobalAction(
@@ -1260,6 +1265,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         try {
             // Start the first heavy-weight app, should launch like a normal app.
             mContext.startActivity(activity1Intent);
+            waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
+            device.waitForIdle();
 
             // Make sure the uid state reports are as expected.
             uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
@@ -1278,6 +1285,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // First, let's try returning to the original app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
+            waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
             // App should now be back in foreground.
@@ -1294,6 +1302,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Now we'll switch to the new app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
+            waitForAppFocus(CANT_SAVE_STATE_2_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
             // The original app should now become cached.
@@ -1317,6 +1326,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Try starting the first heavy weight app, but return to the existing second.
             startActivityAndWaitForShow(activity1Intent);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
+            waitForAppFocus(CANT_SAVE_STATE_2_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
             uid2Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
@@ -1329,6 +1339,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Again start the first heavy weight app, this time actually switching to it
             startActivityAndWaitForShow(activity1Intent);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
+            waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
             // The second app should now become cached.
@@ -1341,6 +1352,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Exit activity, check to see if we are now cached.
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
+            device.waitForIdle();
             getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_BACK);
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
