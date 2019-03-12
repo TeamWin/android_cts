@@ -140,6 +140,7 @@ public class MediaStoreTest {
         final StorageManager sm = mContext.getSystemService(StorageManager.class);
         try {
             sm.getStorageVolume(Uri.parse("content://com.example/path/to/item/"));
+            fail("getStorageVolume unrelated should throw exception");
         } catch (IllegalArgumentException expected) {
         }
     }
