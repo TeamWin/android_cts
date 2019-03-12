@@ -4900,8 +4900,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Strings for SetNewPasswordComplexityTest -->
     <string name="set_complexity_test_title">Set New Password Complexity Test</string>
     <string name="set_complexity_test_message">
-        This test verifies that when an app prompts users to set a new screen lock of a certain complexity level, correct limitations are applied to the UI.\n
-        \nClick the complexity level buttons one by one and make sure you can only set a screen lock of the types and minimum length specified on the right of each button.
+        This test verifies that when an app prompts users to set a new screen lock of a certain complexity level, users cannot set a screen lock weaker than the specified complexity.\n
+        \nClick the complexity level buttons one by one and make sure you can only set a screen lock not weaker than the types and minimum length specified on the right of each button.
     </string>
     <string name="set_complexity_high_txt">High</string>
     <string name="set_complexity_medium_txt">Medium</string>
