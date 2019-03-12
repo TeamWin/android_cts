@@ -103,6 +103,7 @@ public class ImageDecoderTest {
         new Record(R.drawable.google_chrome, 256, 256, "image/x-ico", sSRGB),
         new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", sSRGB),
         new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", sSRGB),
+        new Record(R.raw.heifwriter_input, 1920, 1080, "image/heif", sSRGB),
     };
 
     // offset is how many bytes to offset the beginning of the image.
@@ -965,7 +966,8 @@ public class ImageDecoderTest {
             byte[] bytes = getAsByteArray(record.resId);
             int truncatedLength = bytes.length / 2;
             if (record.mimeType.equals("image/x-ico")
-                    || record.mimeType.equals("image/x-adobe-dng")) {
+                    || record.mimeType.equals("image/x-adobe-dng")
+                    || record.mimeType.equals("image/heif")) {
                 // FIXME (scroggo): Some codecs currently do not support incomplete images.
                 continue;
             }
@@ -2382,6 +2384,11 @@ public class ImageDecoderTest {
     @LargeTest
     public void testReuse() {
         for (Record record : RECORDS) {
+            if (record.mimeType.equals("image/heif")) {
+                // This image takes too long for this test.
+                continue;
+            }
+
             String name = getAsResourceUri(record.resId).toString();
             for (SourceCreator f : mCreators) {
                 ImageDecoder.Source src = f.apply(record.resId);
