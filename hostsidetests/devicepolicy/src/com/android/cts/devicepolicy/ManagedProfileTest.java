@@ -178,8 +178,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         assertUserGetsRemoved(mProfileUserId);
         // testWipeDataWithReason() removes the managed profile,
         // so it needs to separated from other tests.
-        // Check the notification is presented after work profile got removed, so profile user no
-        // longer exists, verification should be run in primary user.
+        // Check and clear the notification is presented after work profile got removed, so profile
+        // user no longer exists, verification should be run in primary user.
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".WipeDataNotificationTest",
@@ -198,6 +198,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                 .setInt(0)
                 .build());
+        // Check and clear the notification is presented after work profile got removed, so profile
+        // user no longer exists, verification should be run in primary user.
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".WipeDataNotificationTest",
+                "testWipeDataWithReasonVerification",
+                mParentUserId);
     }
 
     public void testWipeDataWithoutReason() throws Exception {
