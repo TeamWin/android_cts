@@ -19,15 +19,15 @@ package android.util.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.ArraySet;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +38,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 // As is the case with ArraySet itself, ArraySetTest borrows heavily from ArrayMapTest.
-
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ArraySetTest {

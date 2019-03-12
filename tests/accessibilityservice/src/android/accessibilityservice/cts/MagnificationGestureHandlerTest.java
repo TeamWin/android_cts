@@ -42,8 +42,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
@@ -54,17 +52,20 @@ import android.graphics.PointF;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.MotionEvent;
 import android.widget.TextView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.ArrayList;
 import java.util.Arrays;

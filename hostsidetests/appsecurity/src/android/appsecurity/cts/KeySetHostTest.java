@@ -17,6 +17,7 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
@@ -40,7 +41,7 @@ import java.util.Map;
 @AppModeFull // TODO: Needs porting to instant
 public class KeySetHostTest extends DeviceTestCase implements IBuildReceiver {
 
-    private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
     /* package with device-side tests */
     private static final String KEYSET_TEST_PKG = "com.android.cts.keysets.testapp";

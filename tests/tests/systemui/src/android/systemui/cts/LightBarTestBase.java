@@ -16,7 +16,8 @@
 
 package android.systemui.cts;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -28,11 +29,12 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.WindowInsets;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import java.io.File;
 import java.io.FileOutputStream;

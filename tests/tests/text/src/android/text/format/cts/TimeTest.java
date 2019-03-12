@@ -23,11 +23,12 @@ import static org.junit.Assert.fail;
 
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.format.Time;
 import android.util.Log;
 import android.util.TimeFormatException;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

@@ -25,7 +25,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WindowManagerState.WindowState;
-import android.support.test.rule.ActivityTestRule;
+
+import androidx.test.rule.ActivityTestRule;
 
 abstract class ParentChildTestBase<T extends Activity> extends ActivityManagerTestBase {
 

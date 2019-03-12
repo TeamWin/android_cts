@@ -612,7 +612,7 @@
                  android:exported="false" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.widget.cts"
                      android:label="CTS tests of android.widget">
         <meta-data android:name="listener"

@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 LOCAL_PACKAGE_NAME := CtsKeySetSigningAUpgradeB
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 LOCAL_DEX_PREOPT := false
@@ -34,7 +34,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 LOCAL_PACKAGE_NAME := CtsKeySetSigningBUpgradeB
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
 LOCAL_DEX_PREOPT := false
@@ -49,7 +49,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 LOCAL_PACKAGE_NAME := CtsKeySetSigningAAndCUpgradeB
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 LOCAL_ADDITIONAL_CERTIFICATES := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-c

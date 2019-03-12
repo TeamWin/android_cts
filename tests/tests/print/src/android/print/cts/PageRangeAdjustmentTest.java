@@ -44,7 +44,8 @@ import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -32,17 +32,21 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 import android.util.SparseArray;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Contains the tests to prove compliance with android automotive specific bluetooth requirements.

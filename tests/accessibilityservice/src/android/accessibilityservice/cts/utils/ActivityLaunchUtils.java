@@ -24,7 +24,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Rect;
-import android.support.test.rule.ActivityTestRule;
+import androidx.test.rule.ActivityTestRule;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityWindowInfo;

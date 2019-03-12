@@ -16,29 +16,13 @@
 
 package android.server.wm;
 
-import android.app.AppOpsManager;
-import android.os.Process;
-import android.support.test.InstrumentationRegistry;
-import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-import com.android.compatibility.common.util.AppOpsUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import static android.support.test.InstrumentationRegistry.getContext;
-
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.app.AppOpsManager.OP_SYSTEM_ALERT_WINDOW;
+
+import static androidx.test.InstrumentationRegistry.getContext;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -49,6 +33,26 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+
+import android.app.AppOpsManager;
+import android.os.Process;
+import android.platform.test.annotations.Presubmit;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AppOpsUtils;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test whether system alert window properly interacts with app ops.

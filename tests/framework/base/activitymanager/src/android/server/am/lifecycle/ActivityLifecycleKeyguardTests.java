@@ -5,8 +5,9 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import android.app.Activity;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

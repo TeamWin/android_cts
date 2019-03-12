@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 # don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt ctstestrunner-axt
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 

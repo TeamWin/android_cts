@@ -46,7 +46,6 @@ import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory;
-import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -60,6 +59,7 @@ import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.RequiredFeatureRule;

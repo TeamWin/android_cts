@@ -24,8 +24,6 @@ import android.graphics.Picture;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.ExactComparer;
@@ -34,6 +32,9 @@ import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

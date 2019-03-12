@@ -41,14 +41,15 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.DisplayCutout;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 

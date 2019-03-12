@@ -25,8 +25,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.PersistableBundle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import org.junit.Before;
 import org.junit.Test;

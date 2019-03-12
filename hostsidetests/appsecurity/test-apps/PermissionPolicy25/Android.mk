@@ -21,9 +21,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
-    compatibility-device-util \
-    ctstestrunner \
+    androidx.test.rules \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

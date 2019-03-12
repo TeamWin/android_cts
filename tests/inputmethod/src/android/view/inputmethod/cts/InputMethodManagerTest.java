@@ -28,11 +28,7 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-import androidx.annotation.NonNull;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -44,6 +40,11 @@ import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+
+import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

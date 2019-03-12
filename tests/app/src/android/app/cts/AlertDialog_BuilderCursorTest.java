@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Instrumentation;
@@ -28,16 +30,15 @@ import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.ListView;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.File;
-
-import static org.mockito.Mockito.*;
 
 @MediumTest
 public class AlertDialog_BuilderCursorTest

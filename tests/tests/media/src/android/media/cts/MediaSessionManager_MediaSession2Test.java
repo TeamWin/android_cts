@@ -34,8 +34,9 @@ import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
 import android.media.session.MediaSessionManager.OnSessionTokensChangedListener;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

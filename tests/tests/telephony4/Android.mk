@@ -27,8 +27,8 @@ LOCAL_JAVA_LIBRARIES := telephony-common \
     android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
     truth-prebuilt
 
 LOCAL_HOST_SHARED_LIBRARIES := compatibility-device-telephony-preconditions

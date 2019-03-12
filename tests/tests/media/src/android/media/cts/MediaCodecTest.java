@@ -16,7 +16,6 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaCodec;
@@ -25,22 +24,24 @@ import android.media.MediaCodec.CodecException;
 import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaCodec.CryptoInfo.Pattern;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.media.MediaCrypto;
 import android.media.MediaDrm;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecInfo.CodecProfileLevel;
+import android.media.cts.R;
 import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PersistableBundle;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 

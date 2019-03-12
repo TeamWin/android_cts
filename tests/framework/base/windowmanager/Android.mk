@@ -32,8 +32,8 @@ LOCAL_PACKAGE_NAME := CtsWindowManagerDeviceTestCases
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    android-support-test \
+    compatibility-device-util-axt \
+    androidx.test.rules hamcrest-library \
     platform-test-annotations \
     cts-amwm-util
 

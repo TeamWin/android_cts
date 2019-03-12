@@ -29,7 +29,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-	ctstestrunner \
+	ctstestrunner-axt \
 	ub-uiautomator
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \

@@ -39,9 +39,6 @@ import android.graphics.Typeface;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.GetChars;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -55,6 +52,10 @@ import android.text.style.ReplacementSpan;
 import android.text.style.TextAppearanceSpan;
 import android.text.style.URLSpan;
 import android.util.StringBuilderPrinter;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
