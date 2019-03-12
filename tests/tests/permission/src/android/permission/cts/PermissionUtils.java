@@ -22,13 +22,15 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.permissionToOp;
+import static android.content.pm.PackageManager.FLAG_PERMISSION_HIDDEN;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_ON_UPGRADE;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_FIXED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
-import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.content.pm.PermissionInfo.PROTECTION_DANGEROUS;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -37,18 +39,24 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class PermissionUtils {
     private static long TIMEOUT_MILLIS = 10000;
 
     private static int TESTED_FLAGS = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED
             | FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED
-            | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
+            | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED | FLAG_PERMISSION_HIDDEN;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation =
@@ -88,16 +96,42 @@ public class PermissionUtils {
     }
 
     /**
-     * Set a new state for an app-op
+     * Set a new state for an app-op (using the permission-name)
      *
      * @param packageName The package the app-op belongs to
      * @param permission The permission the app-op belongs to
      * @param mode The new mode
      */
     static void setAppOp(@NonNull String packageName, @NonNull String permission, int mode) {
-        runWithShellPermissionIdentity(() -> sContext.getSystemService(AppOpsManager.class)
-                .setUidMode(permissionToOp(permission),
+        setAppOpByName(packageName, permissionToOp(permission), mode);
+    }
+
+    /**
+     * Set a new state for an app-op (using the app-op-name)
+     *
+     * @param packageName The package the app-op belongs to
+     * @param op The name of the op
+     * @param mode The new mode
+     */
+    static void setAppOpByName(@NonNull String packageName, @NonNull String op, int mode) {
+        runWithShellPermissionIdentity(
+                () -> sContext.getSystemService(AppOpsManager.class).setUidMode(op,
                         sContext.getPackageManager().getPackageUid(packageName, 0), mode));
+    }
+
+    /**
+     * Checks a permission. Does <u>not</u> check the appOp.
+     *
+     * <p>Users should use {@link #isGranted} instead.
+     *
+     * @param packageName The package that might have the permission granted
+     * @param permission The permission that might be granted
+     *
+     * @return {@code true} iff the permission is granted
+     */
+    static boolean isPermissionGranted(@NonNull String packageName, @NonNull String permission) {
+        return sContext.getPackageManager().checkPermission(permission, packageName)
+                == PERMISSION_GRANTED;
     }
 
     /**
@@ -114,8 +148,7 @@ public class PermissionUtils {
      */
     static boolean isGranted(@NonNull String packageName, @NonNull String permission)
             throws Exception {
-        if (sContext.getPackageManager().checkPermission(permission, packageName)
-                == PERMISSION_DENIED) {
+        if (!isPermissionGranted(packageName, permission)) {
             return false;
         }
 
@@ -138,23 +171,20 @@ public class PermissionUtils {
      * @param packageName The app that should have the permission granted
      * @param permission The permission to grant
      */
-    static void grantPermission(@NonNull String packageName, @NonNull String permission)
-            throws Exception {
+    static void grantPermission(@NonNull String packageName, @NonNull String permission) {
         sUiAutomation.grantRuntimePermission(packageName, permission);
 
         if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
             // The app-op for background location is encoded into the mode of the foreground
             // location
-            if (sContext.getPackageManager().checkPermission(ACCESS_COARSE_LOCATION, packageName)
-                    == PERMISSION_GRANTED) {
+            if (isPermissionGranted(ACCESS_COARSE_LOCATION, packageName)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
             }
         } else if (permission.equals(ACCESS_COARSE_LOCATION)) {
             // The app-op for location depends on the state of the bg location
-            if (sContext.getPackageManager().checkPermission(ACCESS_BACKGROUND_LOCATION,
-                    packageName) == PERMISSION_GRANTED) {
+            if (isPermissionGranted(ACCESS_BACKGROUND_LOCATION, packageName)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
@@ -204,6 +234,42 @@ public class PermissionUtils {
         runWithShellPermissionIdentity(
                 () -> sContext.getPackageManager().updatePermissionFlags(permission, packageName,
                         mask, flags, UserHandle.getUserHandleForUid(Process.myUid())));
+    }
+
+    /**
+     * Get all permissions an app requests. This includes the split permissions.
+     *
+     * @param packageName The package that requests the permissions.
+     *
+     * @return The permissions requested by the app
+     */
+    public static @NonNull List<String> getPermissions(@NonNull String packageName)
+            throws Exception {
+        PackageInfo appInfo = sContext.getPackageManager().getPackageInfo(packageName,
+                GET_PERMISSIONS);
+
+        return Arrays.asList(appInfo.requestedPermissions);
+    }
+
+    /**
+     * Get all runtime permissions that an app requests. This includes the split permissions.
+     *
+     * @param packageName The package that requests the permissions.
+     *
+     * @return The runtime permissions requested by the app
+     */
+    static @NonNull List<String> getRuntimePermissions(@NonNull String packageName)
+            throws Exception {
+        ArrayList<String> runtimePermissions = new ArrayList<>();
+
+        for (String perm : getPermissions(packageName)) {
+            PermissionInfo info = sContext.getPackageManager().getPermissionInfo(perm, 0);
+            if ((info.getProtection() & PROTECTION_DANGEROUS) != 0) {
+                runtimePermissions.add(perm);
+            }
+        }
+
+        return runtimePermissions;
     }
 
     /**

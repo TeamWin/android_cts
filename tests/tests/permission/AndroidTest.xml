@@ -46,6 +46,10 @@
         <option name="push" value="CtsAppThatRequestsLocationAndBackgroundPermission29.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationAndBackgroundPermission29.apk" />
         <option name="push" value="CtsAppThatAccessesLocationOnCommand.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk" />
         <option name="push" value="AppThatDoesNotHaveBgLocationAccess.apk->/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk" />
+        <option name="push" value="CtsAppThatAccessesStorageOnCommand22.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesStorageOnCommand22.apk" />
+        <option name="push" value="CtsAppThatAccessesStorageOnCommand28.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesStorageOnCommand28.apk" />
+        <option name="push" value="CtsAppThatAccessesStorageOnCommand29.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesStorageOnCommand29.apk" />
+        <option name="push" value="CtsAppThatAccessesStorageOnCommand28v3.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesStorageOnCommand28v3.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
