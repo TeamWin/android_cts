@@ -1751,6 +1751,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             assertTrue(trackInfos.get(i) != null);
             if (trackInfos.get(i).getTrackType() ==
                     MediaPlayer2.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {
+                assertTrue(trackInfos.get(i).getLanguage() != null);
+                assertTrue(trackInfos.get(i).getFormat() != null);
                 subtitleTrackIndex.add(i);
             }
         }
@@ -1760,7 +1762,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     private void selectSubtitleTrack(int index) throws Exception {
         int trackIndex = mSubtitleTrackIndex.get(index);
-        mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackIndex);
+        // test both selectTrack API
+        if (index == 0) {
+            mPlayer.selectTrack(trackIndex);
+        } else {
+            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackIndex);
+        }
         mSelectedSubtitleIndex = index;
     }
 
@@ -1843,9 +1850,17 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         // Run twice to check if repeated selection-deselection on the same track works well.
         for (int i = 0; i < 2; i++) {
             // Waits until at least one subtitle is fired. Timeout is 2.5 seconds.
-            selectSubtitleTrack(i);
             mOnSubtitleDataCalled.reset();
+            selectSubtitleTrack(i);
             assertTrue(mOnSubtitleDataCalled.waitForSignal(2500));
+
+            // Check selected track
+            assertTrue(
+                    mPlayer.getSelectedTrack(MediaPlayer2.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) > 0);
+            assertTrue(
+                    mPlayer.getSelectedTrack(
+                          mPlayer.getCurrentDataSource(),
+                          MediaPlayer2.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) > 0);
 
             // Try deselecting track.
             deselectSubtitleTrack(i);
