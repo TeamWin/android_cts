@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Left click",
+    "reports": [
+      [0x1a, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+      [0x1a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    ],
+    "source": "MOUSE_RELATIVE",
+    "events": [
+      {
+        "action": "DOWN",
+        "buttonState": ["PRIMARY"],
+        "axes": {"AXIS_PRESSURE": 1}
+      },
+      {
+        "action": "BUTTON_PRESS",
+        "buttonState": ["PRIMARY"],
+        "axes": {"AXIS_PRESSURE": 1}
+      },
+      {"action": "BUTTON_RELEASE",
+        "axes": {"AXIS_PRESSURE": 0}
+      },
+      {"action": "UP",
+        "axes": {"AXIS_PRESSURE": 0}
+      }
+    ]
+  }
+]
