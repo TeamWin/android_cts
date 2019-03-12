@@ -42,8 +42,6 @@ import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 import android.util.Size;
 
-import androidx.test.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Assume;
@@ -59,6 +57,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import androidx.test.InstrumentationRegistry;
 
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
@@ -93,11 +93,9 @@ public class MediaStore_Images_MediaTest {
 
         final long unique1 = System.nanoTime();
         final String TEST_TITLE1 = "Title " + unique1;
-        final String TEST_DESCRIPTION1 = "Description " + unique1;
 
         final long unique2 = System.nanoTime();
         final String TEST_TITLE2 = "Title " + unique2;
-        final String TEST_DESCRIPTION2 = "Description " + unique2;
 
         Cursor c = Media.query(mContentResolver, mExternalImages, null, null,
                 "_id ASC");
@@ -111,7 +109,7 @@ public class MediaStore_Images_MediaTest {
         ProviderTestUtils.stageFile(R.raw.scenery, file);
         String stringUrl = null;
         try {
-            stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE1, TEST_DESCRIPTION1);
+            stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE1, null);
         } catch (FileNotFoundException e) {
             fail(e.getMessage());
         } catch (UnsupportedOperationException e) {
@@ -127,7 +125,7 @@ public class MediaStore_Images_MediaTest {
         ProviderTestUtils.stageFile(R.raw.scenery, file);
         stringUrl = null;
         try {
-            stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE2, TEST_DESCRIPTION2);
+            stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE2, null);
         } catch (FileNotFoundException e) {
             fail(e.getMessage());
         } catch (UnsupportedOperationException e) {
@@ -142,7 +140,6 @@ public class MediaStore_Images_MediaTest {
         assertEquals(1, c.getCount());
         c.moveToFirst();
         assertEquals(TEST_TITLE2, c.getString(c.getColumnIndex(Media.TITLE)));
-        assertEquals(TEST_DESCRIPTION2, c.getString(c.getColumnIndex(Media.DESCRIPTION)));
         assertEquals(MIME_TYPE_JPEG, c.getString(c.getColumnIndex(Media.MIME_TYPE)));
         c.close();
 
@@ -154,11 +151,9 @@ public class MediaStore_Images_MediaTest {
         assertEquals(previousCount + 2, c.getCount());
         c.moveToFirst();
         assertEquals(TEST_TITLE2, c.getString(c.getColumnIndex(Media.TITLE)));
-        assertEquals(TEST_DESCRIPTION2, c.getString(c.getColumnIndex(Media.DESCRIPTION)));
         assertEquals(MIME_TYPE_JPEG, c.getString(c.getColumnIndex(Media.MIME_TYPE)));
         c.moveToNext();
         assertEquals(TEST_TITLE1, c.getString(c.getColumnIndex(Media.TITLE)));
-        assertEquals(TEST_DESCRIPTION1, c.getString(c.getColumnIndex(Media.DESCRIPTION)));
         assertEquals(MIME_TYPE_JPEG, c.getString(c.getColumnIndex(Media.MIME_TYPE)));
         c.close();
 
@@ -168,7 +163,6 @@ public class MediaStore_Images_MediaTest {
                 new String[] { TEST_TITLE2 }, "_id ASC");
         assertEquals(1, c.getCount());
         c.moveToFirst();
-        assertEquals(TEST_DESCRIPTION2, c.getString(c.getColumnIndex(Media.DESCRIPTION)));
         assertEquals(MIME_TYPE_JPEG, c.getString(c.getColumnIndex(Media.MIME_TYPE)));
         c.close();
     }

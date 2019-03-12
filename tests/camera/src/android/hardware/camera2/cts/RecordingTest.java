@@ -1225,6 +1225,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             }
 
             CamcorderProfile profile = CamcorderProfile.get(cameraId, profileId);
+            Size QCIF = new Size(176, 144);
+            Size FULL_HD = new Size(1920, 1080);
             Size videoSz = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
             Size maxPreviewSize = mOrderedPreviewSizes.get(0);
 
@@ -1301,8 +1303,6 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 }
             }
 
-            Log.i(TAG, "Testing video snapshot size " + videoSnapshotSz +
-                    " for video size " + videoSz);
             if (videoSnapshotSz.getWidth() * videoSnapshotSz.getHeight() > FRAME_SIZE_15M)
                 kFrameDrop_Tolerence = (int)(FRAMEDROP_TOLERANCE * FRAME_DROP_TOLERENCE_FACTOR);
 
@@ -1326,6 +1326,26 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                             MAX_VIDEO_SNAPSHOT_IMAGES, /*listener*/null);
                 }
             }
+
+            if (videoSz.equals(QCIF) &&
+                    ((videoSnapshotSz.getWidth() > FULL_HD.getWidth()) ||
+                     (videoSnapshotSz.getHeight() > FULL_HD.getHeight()))) {
+                List<Surface> outputs = new ArrayList<Surface>();
+                outputs.add(mPreviewSurface);
+                outputs.add(mRecordingSurface);
+                outputs.add(mReaderSurface);
+                boolean isSupported = isStreamConfigurationSupported(
+                        mCamera, outputs, mSessionListener, mHandler);
+                if (!isSupported) {
+                    videoSnapshotSz = defaultvideoSnapshotSz;
+                    createImageReader(
+                            videoSnapshotSz, ImageFormat.JPEG,
+                            MAX_VIDEO_SNAPSHOT_IMAGES, /*listener*/null);
+                }
+            }
+
+            Log.i(TAG, "Testing video snapshot size " + videoSnapshotSz +
+                    " for video size " + videoSz);
 
             if (VERBOSE) {
                 Log.v(TAG, "Testing camera recording with video size " + videoSz.toString());

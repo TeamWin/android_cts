@@ -18,7 +18,7 @@
     package="com.android.dynamiclinker"
     android:targetSandboxVersion="2">
 
-    <application>
+    <application android:extractNativeLibs="false">
         <uses-library android:name="android.test.runner" />
     </application>
     <instrumentation

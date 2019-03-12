@@ -154,6 +154,40 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId);
     }
 
+    /**
+     * Tests key-value app backup and restore in the profile user, when the app is already installed
+     * for another user. This test waits for an intent to be sent from the asynchronous restore
+     * operation to signal that the restore-at-install operation has completed.
+     *
+     * <ol>
+     *   <li>App writes shared preferences.
+     *   <li>Force a backup.
+     *   <li>Uninstall the app.
+     *   <li>Install the app for parent user.
+     *   <li>Install the app, which now already exists in parent user, for profile user to perform a
+     *   restore-at-install operation. This fires off asynchronous restore and waits for an intent
+     *   which is sent when the restore operation has completed.
+     *   <li>Check that the shared preferences are restored.
+     * </ol>
+     */
+    @Test
+    public void testKeyValueBackupAndRestoreForInstallExistingPackageWaitTillComplete()
+        throws Exception {
+        int profileUserId = mProfileUserId.get();
+        checkDeviceTest("assertSharedPrefsIsEmpty");
+        checkDeviceTest("writeSharedPrefsAndAssertSuccess");
+
+        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+
+        installPackageAsUser(KEY_VALUE_APK, mParentUserId);
+        installExistingPackageAsUserWaitTillComplete(KEY_VALUE_TEST_PACKAGE, profileUserId);
+
+        checkDeviceTest("assertSharedPrefsRestored");
+        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId);
+    }
+
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
         checkDeviceTestAsUser(
                 KEY_VALUE_TEST_PACKAGE,

@@ -49,7 +49,6 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class ConversationActionsTest {
     private static final String ID = "ID";
-    private static final String CONVERSATION_ID = "conversation_id";
     private static final String TEXT = "TEXT";
     private static final Person PERSON = new Person.Builder().setKey(TEXT).build();
     private static final ZonedDateTime TIME =
@@ -175,7 +174,6 @@ public class ConversationActionsTest {
                         .build();
         ConversationActions.Request request =
                 new ConversationActions.Request.Builder(Collections.singletonList(message))
-                        .setConversationId(CONVERSATION_ID)
                         .setHints(
                                 Collections.singletonList(
                                         ConversationActions.Request.HINT_FOR_IN_APP))
@@ -316,7 +314,6 @@ public class ConversationActionsTest {
         assertThat(request.getHints()).isEmpty();
         assertThat(request.getMaxSuggestions()).isEqualTo(-1);
         assertThat(request.getTypeConfig()).isNotNull();
-        assertThat(request.getConversationId()).isNull();
     }
 
     private void assertFullRequest(ConversationActions.Request request) {
@@ -326,7 +323,6 @@ public class ConversationActionsTest {
         assertThat(request.getHints()).containsExactly(ConversationActions.Request.HINT_FOR_IN_APP);
         assertThat(request.getMaxSuggestions()).isEqualTo(10);
         assertThat(request.getTypeConfig().shouldIncludeTypesFromTextClassifier()).isFalse();
-        assertThat(request.getConversationId()).isEqualTo(CONVERSATION_ID);
     }
 
     private void assertMinimalConversationAction(
