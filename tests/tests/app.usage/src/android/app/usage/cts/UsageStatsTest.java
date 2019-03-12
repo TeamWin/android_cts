@@ -935,7 +935,7 @@ public class UsageStatsTest {
 
         try {
             mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
-                    Duration.ofHours(1), Duration.ofHours(1), null);
+                    Duration.ofHours(1), Duration.ofHours(0), null);
             fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
         } catch (SecurityException e) {
             // Exception expected
