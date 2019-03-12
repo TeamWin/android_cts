@@ -117,6 +117,9 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
             mStorageStateChanged = false;
         }
+
+        // The super method should be called at the end.
+        super.tearDown();
     }
 
     /**
