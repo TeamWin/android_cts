@@ -33,7 +33,6 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.app.Service;
 import android.app.UiAutomation;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
@@ -49,12 +48,14 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -382,7 +383,6 @@ public class AccessibilityManagerTest {
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
     }
 
-    @AppModeFull
     @Test
     public void testGetRecommendedTimeoutMillis() throws Exception {
         ServiceControlUtils.enableSpeakingAndVibratingServices(sInstrumentation);
@@ -529,12 +529,13 @@ public class AccessibilityManagerTest {
     }
 
     private void putSecureSetting(UiAutomation automan, String name, String value) {
-        ContentResolver cr = mTargetContext.getContentResolver();
-        automan.adoptShellPermissionIdentity();
+        final StringBuilder cmd = new StringBuilder("settings put secure ")
+                .append(name).append(" ")
+                .append(value);
         try {
-            Settings.Secure.putString(cr, name, value);
-        } finally {
-            automan.dropShellPermissionIdentity();
+            SystemUtil.runShellCommand(automan, cmd.toString());
+        } catch (IOException e) {
+            fail("Fail to run shell command");
         }
     }
 }
