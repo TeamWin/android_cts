@@ -39,7 +39,6 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.text.LineBreaker;
 import android.graphics.text.MeasuredText;
-import android.text.Hyphenator;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -53,10 +52,6 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class LineBreakerTest {
     private static final String TAG = "LineBreakerTest";
-
-    private static final int NO_HYPHEN_EDIT = Hyphenator.packHyphenEdit(
-            Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-            Hyphenator.END_HYPHEN_EDIT_NO_EDIT);
 
     private static Paint sPaint;
     @BeforeClass
@@ -155,7 +150,8 @@ public class LineBreakerTest {
         assertEquals(13, r.getLineBreakOffset(0));
         assertEquals(-10.0f, r.getLineAscent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
         assertFalse(r.hasLineTab(0));
         assertEquals(130.0f, r.getLineWidth(0), 0.0f);
     }
@@ -180,8 +176,10 @@ public class LineBreakerTest {
         assertEquals(-10.0f, r.getLineAscent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertEquals(80.0f, r.getLineWidth(0), 0.0f);
@@ -216,10 +214,14 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
         assertEquals(2.0f, r.getLineDescent(3), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(2));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(3));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(3));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(3));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
@@ -251,8 +253,10 @@ public class LineBreakerTest {
         assertEquals(-10.0f, r.getLineAscent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertEquals(30.0f, r.getLineWidth(0), 0.0f);
@@ -288,13 +292,14 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
         assertEquals(2.0f, r.getLineDescent(3), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.unpackStartHyphenEdit(r.getLineHyphenEdit(2)));
-        assertEquals(Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.unpackEndHyphenEdit(r.getLineHyphenEdit(2)));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(3));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(3));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(3));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
@@ -333,9 +338,12 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(4.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
@@ -369,8 +377,10 @@ public class LineBreakerTest {
         assertEquals(-10.0f, r.getLineAscent(1), 0.0f);
         assertEquals(4.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertEquals(90.0f, r.getLineWidth(0), 0.0f);
@@ -399,8 +409,10 @@ public class LineBreakerTest {
         assertEquals(-10.0f, r.getLineAscent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertEquals(30.0f, r.getLineWidth(0), 0.0f);
@@ -433,9 +445,12 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
@@ -470,9 +485,12 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
         assertFalse(r.hasLineTab(0));
         assertTrue(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
@@ -507,9 +525,12 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
         assertTrue(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
@@ -548,9 +569,12 @@ public class LineBreakerTest {
         assertEquals(2.0f, r.getLineDescent(0), 0.0f);
         assertEquals(2.0f, r.getLineDescent(1), 0.0f);
         assertEquals(2.0f, r.getLineDescent(2), 0.0f);
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(0));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(1));
-        assertEquals(NO_HYPHEN_EDIT, r.getLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
         assertFalse(r.hasLineTab(0));
         assertFalse(r.hasLineTab(1));
         assertFalse(r.hasLineTab(2));
