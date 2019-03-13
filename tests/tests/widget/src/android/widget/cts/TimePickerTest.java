@@ -392,6 +392,9 @@ public class TimePickerTest {
         if (isWatch()) {
             return;
         }
+        // Hide timepicker_clock so that timepicker_spinner would be visible.
+        mActivityRule.runOnUiThread(() ->
+                mActivity.findViewById(R.id.timepicker_clock).setVisibility(View.GONE));
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_spinner);
 
         mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(false));
