@@ -19,6 +19,8 @@ import static android.telephony.ServiceState.DUPLEX_MODE_FDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_TDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_UNKNOWN;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.ServiceState;
@@ -82,7 +84,6 @@ public class ServiceStateTest extends AndroidTestCase {
         serviceState.setChannelNumber(CHANNEL_NUMBER_BAND_33);
         assertEquals(DUPLEX_MODE_TDD, serviceState.getDuplexMode());
 
-        assertTrue(serviceState.hashCode() > 0);
         assertNotNull(serviceState.toString());
 
         ServiceState tempServiceState = new ServiceState(serviceState);
@@ -97,6 +98,32 @@ public class ServiceStateTest extends AndroidTestCase {
         MockServiceState mockServiceState = new MockServiceState();
         mockServiceState.copyFrom(serviceState);
         assertTrue(mockServiceState.equals(serviceState));
+    }
+
+    public void testHashCode() {
+        ServiceState serviceStateA = getServiceStateWithOperatorName("a", "b");
+        ServiceState serviceStateB = getServiceStateWithOperatorName("a", "b");
+        ServiceState serviceStateC = getServiceStateWithOperatorName("c", "d");
+
+        // well-written hashCode functions shouldn't produce "0"
+        assertNotEquals(serviceStateA.hashCode(), 0);
+        assertNotEquals(serviceStateB.hashCode(), 0);
+
+        // If serviceStateA.equals(serviceStateB), then serviceStateA.hashCode()
+        // should equal serviceStateB.hashCode().
+        assertEquals(serviceStateA.hashCode(), serviceStateB.hashCode());
+        assertEquals(serviceStateA, serviceStateB);
+
+        // If serviceStateA.hashCode() != serviceStateC.hashCode(), then
+        // serviceStateA.equals(serviceStateB) should be false.
+        assertNotEquals(serviceStateA.hashCode(), serviceStateC.hashCode());
+        assertNotEquals(serviceStateA, serviceStateC);
+    }
+
+    private ServiceState getServiceStateWithOperatorName(String name, String numeric) {
+        ServiceState serviceState = new ServiceState();
+        serviceState.setOperatorName(name, name, numeric);
+        return serviceState;
     }
 
     /**
