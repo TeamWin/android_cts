@@ -349,4 +349,21 @@ public class FontsContractTest {
         assertNull(FontsContract.buildTypeface(
                 restrictedContext, null /* cancellation signal */, result.getFonts()));
     }
+
+    @Test
+    public void acceptSameStyleFontInFamilyTest() throws NameNotFoundException {
+        final FontRequest request = new FontRequest(AUTHORITY, PACKAGE,
+                MockFontProvider.SAME_STYLE_FONTS_IN_FAMILY_QUERY, SIGNATURE);
+        final FontFamilyResult result = FontsContract.fetchFonts(
+                mContext, null /* cancellation signal */, request);
+        assertNotNull(result);
+        assertEquals(FontFamilyResult.STATUS_OK, result.getStatusCode());
+
+        final FontInfo[] fonts = result.getFonts();
+        for (FontInfo font: fonts) {
+            assertNotNull(font.getUri());
+            assertEquals(Columns.RESULT_CODE_OK, font.getResultCode());
+        }
+        assertNotNull(FontsContract.buildTypeface(mContext, null /* cancellation signal */, fonts));
+    }
 }

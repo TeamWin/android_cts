@@ -58,6 +58,7 @@ public class MockFontProvider extends ContentProvider {
     static final String NOT_FOUND_THIRD_QUERY = "notFoundThird";
     static final String NEGATIVE_ERROR_CODE_QUERY = "negativeCode";
     static final String MANDATORY_FIELDS_ONLY_QUERY = "mandatoryFields";
+    static final String SAME_STYLE_FONTS_IN_FAMILY_QUERY = "sameStyleFontsInFamilyQueue";
 
     static class Font {
         public Font(int id, int fileId, int ttcIndex, String varSettings, int weight, int italic,
@@ -170,6 +171,14 @@ public class MockFontProvider extends ContentProvider {
         map.put(MANDATORY_FIELDS_ONLY_QUERY, new Font[] {
                 new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0,
                         Columns.RESULT_CODE_OK, false),
+        });
+
+        // The same style fonts in a family ends up with IllegalArgumentException in
+        // Typface.CustomFallbackBuilder, but this exception should be suppressed by resource loader
+        // since developer can not recover during layout inflation.
+        map.put(SAME_STYLE_FONTS_IN_FAMILY_QUERY, new Font[] {
+            new Font(id++, SAMPLE_FONT_FILE_0_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK, true),
+            new Font(id++, SAMPLE_FONT_FILE_1_ID, 0, null, 400, 0, Columns.RESULT_CODE_OK, true),
         });
 
 
