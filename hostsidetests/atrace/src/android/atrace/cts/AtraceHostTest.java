@@ -42,7 +42,7 @@ import trebuchet.model.ProcessModel;
 import trebuchet.model.ThreadModel;
 import trebuchet.model.base.Slice;
 import trebuchet.model.fragments.AsyncSlice;
-import trebuchet.queries.SliceQueries;
+import trebuchet.queries.slices.*;
 
 /**
  * Test to check that atrace is usable, to enable usage of systrace.
@@ -246,7 +246,7 @@ public class AtraceHostTest extends AtraceHostTestBase {
         ));
 
         ThreadModel thread = findThread(result.getModel(), result.getPid());
-        SliceQueries.INSTANCE.iterSlices(thread, (Slice slice) -> {
+        SliceQueriesKt.iterSlices(thread, (Slice slice) -> {
             requiredSections.remove(slice.getName());
             return Unit.INSTANCE;
         });
