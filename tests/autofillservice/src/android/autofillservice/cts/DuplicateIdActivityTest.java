@@ -26,8 +26,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.assist.AssistStructure;
+import android.app.assist.AssistStructure.ViewNode;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.autofill.AutofillId;
+import android.widget.EditText;
 
 import org.junit.After;
 import org.junit.Before;
@@ -38,9 +42,12 @@ public class DuplicateIdActivityTest
 
     private static final String TAG = "DuplicateIdActivityTest";
 
+    private static final AutofillActivityTestRule<DuplicateIdActivity> sActivityRule =
+            new AutofillActivityTestRule<DuplicateIdActivity>(DuplicateIdActivity.class);
+
     @Override
     protected AutofillActivityTestRule<DuplicateIdActivity> getActivityRule() {
-        return new AutofillActivityTestRule<DuplicateIdActivity>(DuplicateIdActivity.class);
+        return sActivityRule;
     }
 
     @Before
@@ -58,17 +65,23 @@ public class DuplicateIdActivityTest
      * Find the views that are tested from the structure in the request
      *
      * @param request The request
+     * @param expectedCount The expected number of children
      *
      * @return An array containing the two tested views
      */
-    private AssistStructure.ViewNode[] findViews(InstrumentedAutoFillService.FillRequest request) {
+    private AssistStructure.ViewNode[] findViews(InstrumentedAutoFillService.FillRequest request,
+            int expectedCount) {
         assertThat(request.structure.getWindowNodeCount()).isEqualTo(1);
         AssistStructure.WindowNode windowNode = request.structure.getWindowNodeAt(0);
 
         AssistStructure.ViewNode rootNode = windowNode.getRootViewNode();
 
-        assertThat(rootNode.getChildCount()).isEqualTo(2);
-        return new AssistStructure.ViewNode[]{rootNode.getChildAt(0), rootNode.getChildAt(1)};
+        assertThat(rootNode.getChildCount()).isEqualTo(expectedCount);
+        final ViewNode[] viewNodes = new AssistStructure.ViewNode[expectedCount];
+        for (int i = 0; i < expectedCount; i++) {
+            viewNodes[i] = rootNode.getChildAt(i);
+        }
+        return viewNodes;
     }
 
     @Test
@@ -90,7 +103,7 @@ public class DuplicateIdActivityTest
         final InstrumentedAutoFillService.FillRequest request1 = sReplier.getNextFillRequest();
         Log.v(TAG, "request1: " + request1);
 
-        final AssistStructure.ViewNode[] views1 = findViews(request1);
+        final AssistStructure.ViewNode[] views1 = findViews(request1, 2);
         final AssistStructure.ViewNode view1 = views1[0];
         final AssistStructure.ViewNode view2 = views1[1];
         final AutofillId id1 = view1.getAutofillId();
@@ -115,21 +128,30 @@ public class DuplicateIdActivityTest
         final InstrumentedAutoFillService.FillRequest request2 = sReplier.getNextFillRequest();
         Log.v(TAG, "request2: " + request2);
 
-        // Select other field to trigger new partition (because server didn't return 2nd field
-        // on 1st response)
+        // Select a new field to trigger new partition (because server return null on 1st response)
         sReplier.addResponse(NO_RESPONSE);
-        runShellCommand("input keyevent KEYCODE_TAB");
+        final DuplicateIdActivity activity = getActivity();
+        final EditText child = new EditText(activity);
+        activity.syncRunOnUiThread(() -> {
+            final View sibling = activity.findViewById(R.id.duplicate_id);
+            final ViewGroup parent = (ViewGroup) sibling.getParent();
+            parent.addView(child);
+            child.requestFocus();
+        });
 
         final InstrumentedAutoFillService.FillRequest request3 = sReplier.getNextFillRequest();
         Log.v(TAG, "request3: " + request3);
-        final AssistStructure.ViewNode[] views2 = findViews(request3);
+        final AssistStructure.ViewNode[] views2 = findViews(request3, 3);
         final AssistStructure.ViewNode recreatedView1 = views2[0];
         final AssistStructure.ViewNode recreatedView2 = views2[1];
+        final AssistStructure.ViewNode newView1 = views2[2];
         final AutofillId recreatedId1 = recreatedView1.getAutofillId();
         final AutofillId recreatedId2 = recreatedView2.getAutofillId();
+        final AutofillId newId1 = newView1.getAutofillId();
 
         Log.v(TAG, "restored view1=" + recreatedId1);
         Log.v(TAG, "restored view2=" + recreatedId2);
+        Log.v(TAG, "new view1=" + newId1);
 
         // For the restoring logic the two views are the same. Hence it might happen that the first
         // view is restored with the autofill id of the second view or the other way round.
@@ -144,5 +166,8 @@ public class DuplicateIdActivityTest
 
         // The views still have different autofill ids
         assertThat(recreatedId1).isNotEqualTo(recreatedId2);
+
+        // Assert id of new view
+        assertThat(newId1).isEqualTo(child.getAutofillId());
     }
 }
