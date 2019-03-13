@@ -623,6 +623,7 @@ public class MediaSession2Test {
 
         @Override
         public void onPostConnect(MediaSession2 session, MediaSession2.ControllerInfo controller) {
+            super.onPostConnect(session, controller);
             if (controller.getUid() != Process.myUid()) {
                 return;
             }
