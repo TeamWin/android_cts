@@ -106,7 +106,8 @@ public class StagedInstallTest {
     @Test
     public void testInstallStagedApk_Commit() throws Exception {
         prepareBroadcastReceiver();
-        int sessionId = stageSingleApk("StagedInstallTestAppAv1.apk");
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         unregisterBroacastReceiver();
@@ -117,6 +118,18 @@ public class StagedInstallTest {
     public void testInstallStagedApk_VerifyPostReboot() throws Exception {
         // TODO: test that the staged session is applied.
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
+        uninstall(TEST_APP_A);
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageSingleApk("StagedInstallTestAppAv1.apk");
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "There is already in-progress committed staged session");
+        InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller()
+                .abandonSession(sessionId);
     }
 
     private static long getInstalledVersion(String packageName) {
@@ -143,7 +156,7 @@ public class StagedInstallTest {
         return packageInstaller.createSession(sessionParams);
     }
 
-    private static int stageSingleApk(String apkFileName) throws Exception {
+    private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
         Context context = InstrumentationRegistry.getContext();
         PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
         int sessionId = createStagedSession(packageInstaller);
@@ -160,8 +173,38 @@ public class StagedInstallTest {
 
         // Commit the session (this will start the installation workflow).
         session.commit(LocalIntentSender.getIntentSender());
-        assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
-        return sessionId;
+        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+    }
+
+    private static final class StageSessionResult {
+        private final int sessionId;
+        private final Intent result;
+
+        private StageSessionResult(int sessionId, Intent result) {
+            this.sessionId = sessionId;
+            this.result = result;
+        }
+
+        public int getSessionId() {
+            return sessionId;
+        }
+
+        public String getErrorMessage() {
+            int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                    PackageInstaller.STATUS_FAILURE);
+            if (status == -1) {
+                throw new AssertionError("PENDING USER ACTION");
+            }
+            if (status == 0) {
+                throw new AssertionError("Result was successful");
+            }
+            return result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+        }
+
+        public StageSessionResult assertSuccessful() {
+            assertStatusSuccess(result);
+            return this;
+        }
     }
 
     private static void uninstall(String packageName) throws Exception {
