@@ -53,4 +53,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testFailInstallIfNoPermission() throws Exception {
         runPhase("testFailInstallIfNoPermission");
     }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress");
+    }
 }
