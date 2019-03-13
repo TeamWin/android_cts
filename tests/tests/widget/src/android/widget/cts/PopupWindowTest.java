@@ -355,7 +355,7 @@ public class PopupWindowTest {
     public void testShowAsDropDown() throws Throwable {
         final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
                 CONTENT_SIZE_DP));
-        popup.setClipToScreenEnabled(false);
+        popup.setIsClippedToScreen(false);
         popup.setOverlapAnchor(false);
         popup.setAnimationStyle(0);
         popup.setExitTransition(null);
@@ -387,7 +387,7 @@ public class PopupWindowTest {
     public void testShowAsDropDown_ClipToScreen() throws Throwable {
         final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
                 CONTENT_SIZE_DP));
-        popup.setClipToScreenEnabled(true);
+        popup.setIsClippedToScreen(true);
         popup.setOverlapAnchor(false);
         popup.setAnimationStyle(0);
         popup.setExitTransition(null);
@@ -419,7 +419,7 @@ public class PopupWindowTest {
     public void testShowAsDropDown_ClipToScreen_Overlap() throws Throwable {
         final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
                 CONTENT_SIZE_DP));
-        popup.setClipToScreenEnabled(true);
+        popup.setIsClippedToScreen(true);
         popup.setOverlapAnchor(true);
         popup.setAnimationStyle(0);
         popup.setExitTransition(null);
@@ -451,7 +451,7 @@ public class PopupWindowTest {
     public void testShowAsDropDown_ClipToScreen_Overlap_Offset() throws Throwable {
         final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
                 CONTENT_SIZE_DP));
-        popup.setClipToScreenEnabled(true);
+        popup.setIsClippedToScreen(true);
         popup.setOverlapAnchor(true);
         popup.setAnimationStyle(0);
         popup.setExitTransition(null);
@@ -502,7 +502,7 @@ public class PopupWindowTest {
         popup.setWidth(width);
         popup.setHeight(height);
 
-        popup.setClipToScreenEnabled(true);
+        popup.setIsClippedToScreen(true);
         popup.setOverlapAnchor(false);
         popup.setAnimationStyle(0);
         popup.setExitTransition(null);
@@ -1209,21 +1209,21 @@ public class PopupWindowTest {
     }
 
     @Test
-    public void testAccessClippingToScreenEnabled() {
+    public void testAccessIsClippedToScreen() {
         mPopupWindow = new PopupWindow(mActivity);
-        assertFalse(mPopupWindow.isClipToScreenEnabled());
+        assertFalse(mPopupWindow.isClippedToScreen());
 
-        mPopupWindow.setClipToScreenEnabled(true);
-        assertTrue(mPopupWindow.isClipToScreenEnabled());
+        mPopupWindow.setIsClippedToScreen(true);
+        assertTrue(mPopupWindow.isClippedToScreen());
     }
 
     @Test
-    public void testAccessLayoutInScreenEnabled() {
+    public void testAccessIsLaidOutInScreen() {
         mPopupWindow = new PopupWindow(mActivity);
-        assertFalse(mPopupWindow.isLayoutInScreenEnabled());
+        assertFalse(mPopupWindow.isLaidOutInScreen());
 
-        mPopupWindow.setLayoutInScreenEnabled(true);
-        assertTrue(mPopupWindow.isLayoutInScreenEnabled());
+        mPopupWindow.setIsLaidOutInScreen(true);
+        assertTrue(mPopupWindow.isLaidOutInScreen());
     }
 
     @Test
@@ -1490,7 +1490,7 @@ public class PopupWindowTest {
             mPopupWindow = createPopupWindow(createPopupContent(parentWidth*2, parentHeight*2));
             mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
             mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
-            mPopupWindow.setClipToScreenEnabled(true);
+            mPopupWindow.setIsClippedToScreen(true);
 
             showPopup(R.id.anchor_upper_left);
 
