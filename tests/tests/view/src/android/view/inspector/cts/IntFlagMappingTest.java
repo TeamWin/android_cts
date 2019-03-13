@@ -41,10 +41,9 @@ import java.util.Set;
 public final class IntFlagMappingTest {
     @Test
     public void testNonExclusiveFlags() {
-        IntFlagMapping mapping = new IntFlagMapping.Builder()
-                .addFlag("ONE", 1)
-                .addFlag("TWO", 2)
-                .build();
+        IntFlagMapping mapping = new IntFlagMapping();
+        mapping.add(1, 1, "ONE");
+        mapping.add(2, 2, "TWO");
 
         assertEmpty(mapping.get(0));
         assertEquals(setOf("ONE"), mapping.get(1));
@@ -55,11 +54,9 @@ public final class IntFlagMappingTest {
 
     @Test
     public void testMutuallyExclusiveFlags() {
-        IntFlagMapping mapping = new IntFlagMapping.Builder()
-                .addFlag("ONE", 1, 3)
-                .addFlag("TWO", 2, 3)
-                .build();
-
+        IntFlagMapping mapping = new IntFlagMapping();
+        mapping.add(3, 1, "ONE");
+        mapping.add(3, 2, "TWO");
 
         assertEmpty(mapping.get(0));
         assertEquals(setOf("ONE"), mapping.get(1));
@@ -70,12 +67,10 @@ public final class IntFlagMappingTest {
 
     @Test
     public void testMixedFlags() {
-        IntFlagMapping mapping = new IntFlagMapping.Builder()
-                .addFlag("ONE", 1, 3)
-                .addFlag("TWO", 2, 3)
-                .addFlag("FOUR", 4)
-                .build();
-
+        IntFlagMapping mapping = new IntFlagMapping();
+        mapping.add(3, 1, "ONE");
+        mapping.add(3, 2, "TWO");
+        mapping.add(4, 4, "FOUR");
 
         assertEmpty(mapping.get(0));
         assertEquals(setOf("ONE"), mapping.get(1));
@@ -89,7 +84,7 @@ public final class IntFlagMappingTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullName() {
-        new IntFlagMapping.Builder().addFlag(null, 0);
+        new IntFlagMapping().add(0, 0, null);
     }
 
     private static Set<String> setOf(String... values) {
