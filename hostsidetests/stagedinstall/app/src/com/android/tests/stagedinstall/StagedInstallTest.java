@@ -105,7 +105,6 @@ public class StagedInstallTest {
 
     @Test
     public void testInstallStagedApk_Commit() throws Exception {
-        uninstall(TEST_APP_A);
         prepareBroadcastReceiver();
         int sessionId = stageSingleApk("StagedInstallTestAppAv1.apk");
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
@@ -118,9 +117,6 @@ public class StagedInstallTest {
     public void testInstallStagedApk_VerifyPostReboot() throws Exception {
         // TODO: test that the staged session is applied.
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
-        // Cleanup.
-        // TODO: This should be done via a target preparer or similar.
-        uninstall(TEST_APP_A);
     }
 
     private static long getInstalledVersion(String packageName) {
