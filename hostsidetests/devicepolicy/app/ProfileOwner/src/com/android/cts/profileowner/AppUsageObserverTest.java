@@ -21,6 +21,7 @@ import android.content.Intent;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class AppUsageObserverTest extends BaseProfileOwnerTest {
@@ -57,12 +58,12 @@ public class AppUsageObserverTest extends BaseProfileOwnerTest {
                 InstrumentationRegistry.getContext(),
                 1, intent, 0);
 
-        usm.registerUsageSessionObserver(obsId, packages, 60, TimeUnit.SECONDS, 10,
-                TimeUnit.SECONDS, pendingIntent, null);
+        usm.registerUsageSessionObserver(obsId, packages, Duration.ofSeconds(60),
+                Duration.ofSeconds(10), pendingIntent, null);
         usm.unregisterUsageSessionObserver(obsId);
         try {
-            usm.registerUsageSessionObserver(obsId, packages, 59, TimeUnit.SECONDS, 10,
-                    TimeUnit.SECONDS, pendingIntent, null);
+            usm.registerUsageSessionObserver(obsId, packages, Duration.ofSeconds(59),
+                    Duration.ofSeconds(10), pendingIntent, null);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
             // Do nothing. Exception is expected.
@@ -92,12 +93,12 @@ public class AppUsageObserverTest extends BaseProfileOwnerTest {
 
         // Register too many UsageSessionObservers.
         for (int obsId = 0; obsId < OBSERVER_LIMIT; obsId++) {
-            usm.registerUsageSessionObserver(obsId, packages, 60, TimeUnit.MINUTES, 10,
-                    TimeUnit.SECONDS, pendingIntent, null);
+            usm.registerUsageSessionObserver(obsId, packages, Duration.ofSeconds(60),
+                    Duration.ofSeconds(10), pendingIntent, null);
         }
         try {
-            usm.registerUsageSessionObserver(OBSERVER_LIMIT, packages, 60, TimeUnit.MINUTES, 10,
-                    TimeUnit.SECONDS, pendingIntent, null);
+            usm.registerUsageSessionObserver(OBSERVER_LIMIT, packages, Duration.ofSeconds(60),
+                    Duration.ofSeconds(10), pendingIntent, null);
             fail("Should have thrown an IllegalStateException");
         } catch (IllegalStateException expected) {
             // Do nothing. Exception is expected.
