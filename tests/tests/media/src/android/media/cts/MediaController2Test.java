@@ -351,6 +351,11 @@ public class MediaController2Test {
             mOnCommandResultLatch.countDown();
         }
 
+        @Override
+        public void onPlaybackActiveChanged(MediaController2 controller, boolean playbackActive) {
+            super.onPlaybackActiveChanged(controller, playbackActive);
+        }
+
         public boolean awaitOnConnected(long waitTimeMs) {
             try {
                 return mOnConnectedLatch.await(waitTimeMs, TimeUnit.MILLISECONDS);
