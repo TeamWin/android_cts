@@ -50,7 +50,6 @@ import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.Xfermode;
 import android.os.LocaleList;
-import android.text.Hyphenator;
 import android.text.SpannedString;
 
 import androidx.test.InstrumentationRegistry;
@@ -1868,34 +1867,26 @@ public class PaintTest {
         Paint paint = new Paint();
 
         // By default, no hyphen edit is specified.
-        assertEquals(Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.unpackStartHyphenEdit(paint.getHyphenEdit()));
-        assertEquals(Hyphenator.END_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.unpackEndHyphenEdit(paint.getHyphenEdit()));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, paint.getStartHyphenEdit());
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, paint.getEndHyphenEdit());
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.END_HYPHEN_EDIT_NO_EDIT));
-        assertEquals(Hyphenator.START_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.unpackStartHyphenEdit(paint.getHyphenEdit()));
-        assertEquals(Hyphenator.END_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.unpackEndHyphenEdit(paint.getHyphenEdit()));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_INSERT_HYPHEN);
+        assertEquals(Paint.START_HYPHEN_EDIT_INSERT_HYPHEN, paint.getStartHyphenEdit());
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, paint.getEndHyphenEdit());
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN));
-        assertEquals(Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.unpackStartHyphenEdit(paint.getHyphenEdit()));
-        assertEquals(Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.unpackEndHyphenEdit(paint.getHyphenEdit()));
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN);
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, paint.getStartHyphenEdit());
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, paint.getEndHyphenEdit());
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN));
-        assertEquals(Hyphenator.START_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.unpackStartHyphenEdit(paint.getHyphenEdit()));
-        assertEquals(Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.unpackEndHyphenEdit(paint.getHyphenEdit()));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_INSERT_HYPHEN);
+        assertEquals(Paint.START_HYPHEN_EDIT_INSERT_HYPHEN, paint.getStartHyphenEdit());
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, paint.getEndHyphenEdit());
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN);
     }
 
     @Test
@@ -1914,41 +1905,48 @@ public class PaintTest {
 
         assertEquals(30.0f, paint.measureText("abc", 0, 3), 0.0f);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN);
         assertEquals(50.0f, paint.measureText("abc", 0, 3), 0.0f);  // "abc-" in visual.
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_INSERT_HYPHEN,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_HYPHEN));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_INSERT_HYPHEN);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN);
         assertEquals(70.0f, paint.measureText("abc", 0, 3), 0.0f);  // "-abc-" in visual.
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_ARMENIAN_HYPHEN));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_ARMENIAN_HYPHEN);
         assertEquals(60.0f, paint.measureText("abc", 0, 3), 0.0f);  // "abcU+058A" in visual.
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_MAQAF));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_MAQAF);
         assertEquals(70.0f, paint.measureText("abc", 0, 3), 0.0f);  // "abcU+05BE" in visual.
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_UCAS_HYPHEN));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_UCAS_HYPHEN);
         assertEquals(80.0f, paint.measureText("abc", 0, 3), 0.0f);  // "abcU+1400" in visual.
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_INSERT_ZWJ_AND_HYPHEN));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_INSERT_ZWJ_AND_HYPHEN);
         // "abcU+200D-" in visual. Note that ZWJ is zero width.
         assertEquals(50.0f, paint.measureText("abc", 0, 3), 0.0f);
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
 
-        paint.setHyphenEdit(Hyphenator.packHyphenEdit(
-                Hyphenator.START_HYPHEN_EDIT_NO_EDIT,
-                Hyphenator.END_HYPHEN_EDIT_REPLACE_WITH_HYPHEN));
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_REPLACE_WITH_HYPHEN);
         assertEquals(40.0f, paint.measureText("abc", 0, 3), 0.0f);  // "ab-" in visual.
+        paint.setStartHyphenEdit(Paint.START_HYPHEN_EDIT_NO_EDIT);
+        paint.setEndHyphenEdit(Paint.END_HYPHEN_EDIT_NO_EDIT);
     }
 
     @Test

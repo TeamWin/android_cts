@@ -27,6 +27,7 @@ import android.view.inspector.InspectionCompanion;
 import android.view.inspector.PropertyMapper;
 import android.view.inspector.PropertyReader;
 import android.view.inspector.StaticInspectionCompanionProvider;
+import android.widget.RelativeLayout;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -53,6 +54,16 @@ public class StaticInspectionCompanionProviderTest {
         InspectionCompanion<View> companion = mProvider.provide(View.class);
         assertNotNull(companion);
         assertEquals("android.view.View$InspectionCompanion", companion.getClass().getName());
+    }
+
+    @Test
+    public void testRelativeLayoutWorks() {
+        InspectionCompanion<RelativeLayout.LayoutParams> companion =
+                mProvider.provide(RelativeLayout.LayoutParams.class);
+        assertNotNull(companion);
+        assertEquals(
+                "android.widget.RelativeLayout$LayoutParams$InspectionCompanion",
+                companion.getClass().getName());
     }
 
     static class NestedClassTest {

@@ -67,12 +67,26 @@ public class SystemUtil {
      */
     public static String runShellCommand(Instrumentation instrumentation, String cmd)
             throws IOException {
+        return runShellCommand(instrumentation.getUiAutomation(), cmd);
+    }
+
+    /**
+     * Executes a shell command using shell user identity, and return the standard output in string
+     * <p>Note: calling this function requires API level 21 or above
+     * @param automation {@link UiAutomation} instance, obtained from a test running in
+     * instrumentation framework
+     * @param cmd the command to run
+     * @return the standard output of the command
+     * @throws Exception
+     */
+    public static String runShellCommand(UiAutomation automation, String cmd)
+            throws IOException {
         Log.v(TAG, "Running command: " + cmd);
         if (cmd.startsWith("pm grant ") || cmd.startsWith("pm revoke ")) {
             throw new UnsupportedOperationException("Use UiAutomation.grantRuntimePermission() "
                     + "or revokeRuntimePermission() directly, which are more robust.");
         }
-        ParcelFileDescriptor pfd = instrumentation.getUiAutomation().executeShellCommand(cmd);
+        ParcelFileDescriptor pfd = automation.executeShellCommand(cmd);
         byte[] buf = new byte[512];
         int bytesRead;
         FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);

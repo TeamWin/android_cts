@@ -24,7 +24,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -224,14 +223,12 @@ public class ToastTest {
         assertShowAndHide(mToast.getView());
         final long shortDuration = SystemClock.uptimeMillis() - start;
 
-        final UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
         final String originalSetting = Settings.Secure.getString(mContext.getContentResolver(),
                 SETTINGS_ACCESSIBILITY_UI_TIMEOUT);
         try {
             final int a11ySettingDuration = (int) shortDuration + 1000;
-            SystemUtil.runWithShellPermissionIdentity(uiAutomation,
-                    () -> Settings.Secure.putInt(mContext.getContentResolver(),
-                            SETTINGS_ACCESSIBILITY_UI_TIMEOUT, a11ySettingDuration));
+            putSecureSetting(SETTINGS_ACCESSIBILITY_UI_TIMEOUT,
+                    Integer.toString(a11ySettingDuration));
             waitForA11yRecommendedTimeoutChanged(mContext,
                     ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS, a11ySettingDuration);
             start = SystemClock.uptimeMillis();
@@ -241,9 +238,7 @@ public class ToastTest {
             final long a11yDuration = SystemClock.uptimeMillis() - start;
             assertTrue(a11yDuration >= a11ySettingDuration);
         } finally {
-            SystemUtil.runWithShellPermissionIdentity(uiAutomation,
-                    () -> Settings.Secure.putString(mContext.getContentResolver(),
-                            SETTINGS_ACCESSIBILITY_UI_TIMEOUT, originalSetting));
+            putSecureSetting(SETTINGS_ACCESSIBILITY_UI_TIMEOUT, originalSetting);
         }
     }
 
@@ -272,6 +267,13 @@ public class ToastTest {
         } finally {
             manager.removeAccessibilityServicesStateChangeListener(listener);
         }
+    }
+
+    private void putSecureSetting(String name, String value) {
+        final StringBuilder cmd = new StringBuilder("settings put secure ")
+                .append(name).append(" ")
+                .append(value);
+        SystemUtil.runShellCommand(cmd.toString());
     }
 
     @Test
