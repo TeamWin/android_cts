@@ -35,7 +35,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
     androidx.test.rules hamcrest-library \
     platform-test-annotations \
-    cts-amwm-util
+    cts-amwm-util \
+    CtsSurfaceValidatorLib
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 

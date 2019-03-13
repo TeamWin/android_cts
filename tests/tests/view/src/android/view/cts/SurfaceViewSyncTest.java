@@ -32,7 +32,7 @@ import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.view.cts.surfacevalidator.AnimationFactory;
 import android.view.cts.surfacevalidator.AnimationTestCase;
-import android.view.cts.surfacevalidator.CapturedActivity;
+import android.view.cts.surfacevalidator.CapturedActivityWithResource;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.ViewFactory;
 import android.widget.FrameLayout;
@@ -57,13 +57,13 @@ public class SurfaceViewSyncTest {
     private static final String TAG = "SurfaceViewSyncTests";
 
     @Rule
-    public ActivityTestRule<CapturedActivity> mActivityRule =
-            new ActivityTestRule<>(CapturedActivity.class);
+    public ActivityTestRule<CapturedActivityWithResource> mActivityRule =
+            new ActivityTestRule<>(CapturedActivityWithResource.class);
 
     @Rule
     public TestName mName = new TestName();
 
-    private CapturedActivity mActivity;
+    private CapturedActivityWithResource mActivity;
     private MediaPlayer mMediaPlayer;
 
     @Before

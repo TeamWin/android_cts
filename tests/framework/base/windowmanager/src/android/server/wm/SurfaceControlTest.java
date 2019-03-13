@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.view.cts;
+package android.server.wm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.cts.surfacevalidator.CapturedActivity;
@@ -29,6 +28,7 @@ import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 
 import org.junit.After;

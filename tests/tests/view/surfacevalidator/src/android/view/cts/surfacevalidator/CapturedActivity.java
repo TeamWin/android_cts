@@ -27,7 +27,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.media.MediaPlayer;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
@@ -44,7 +43,6 @@ import android.util.SparseArray;
 import android.view.Display;
 import android.view.PointerIcon;
 import android.view.View;
-import android.view.cts.R;
 import android.widget.FrameLayout;
 
 import androidx.test.InstrumentationRegistry;
@@ -79,8 +77,6 @@ public class CapturedActivity extends Activity {
 
     private static final String ACCEPT_RESOURCE_ID = "android:id/button1";
 
-    private MediaPlayer mMediaPlayer;
-
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private volatile boolean mOnEmbedded;
     private volatile boolean mOnWatch;
@@ -110,10 +106,6 @@ public class CapturedActivity extends Activity {
 
         mCountDownLatch = new CountDownLatch(1);
         startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
-
-        mMediaPlayer = MediaPlayer.create(this, R.raw.colors_video);
-        mMediaPlayer.setLooping(true);
-
     }
 
     public void dismissPermissionDialog() {
@@ -125,13 +117,6 @@ public class CapturedActivity extends Activity {
             Log.d(TAG, "found permission dialog after searching all windows, clicked");
             acceptButton.click();
         }
-    }
-
-    /**
-     * MediaPlayer pre-loaded with a video with no black pixels. Be kind, rewind.
-     */
-    public MediaPlayer getMediaPlayer() {
-        return mMediaPlayer;
     }
 
     @Override
@@ -315,7 +300,7 @@ public class CapturedActivity extends Activity {
 
         if (testCase.hasAnimation()) {
             float framesPerSecond = 1.0f * result.passFrames
-                / TimeUnit.MILLISECONDS.toSeconds(getCaptureDurationMs());
+                    / TimeUnit.MILLISECONDS.toSeconds(getCaptureDurationMs());
             assertTrue("Error, only " + result.passFrames
                     + " frames observed, virtual display only capturing at "
                     + framesPerSecond + " frames per second",

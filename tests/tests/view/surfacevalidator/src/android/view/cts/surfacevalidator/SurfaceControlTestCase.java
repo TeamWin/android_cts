@@ -29,15 +29,15 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
     private final FrameLayout.LayoutParams mLayoutParams;
     private final AnimationFactory mAnimationFactory;
     private final PixelChecker mPixelChecker;
-    
+
     private final int mBufferWidth;
     private final int mBufferHeight;
 
     private FrameLayout mParent;
     private ValueAnimator mAnimator;
 
-    public static abstract class ParentSurfaceConsumer {
-        abstract public void addChildren(SurfaceControl parent);
+    public abstract static class ParentSurfaceConsumer {
+        public abstract void addChildren(SurfaceControl parent);
     };
 
     private static class ParentSurfaceHolder implements SurfaceHolder.Callback {
