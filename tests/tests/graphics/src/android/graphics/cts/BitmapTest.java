@@ -1523,7 +1523,11 @@ public class BitmapTest {
         for (int i = 0; i < 2000; i++) {
             if (i % 100 == 5) {
                 assertNotLeaking(i, meminfoStart, meminfoEnd);
-                assertEquals(fdCount, getFdCount());
+                final int curFdCount = getFdCount();
+                if (curFdCount - fdCount > 5) {
+                    fail(String.format("FDs leaked. Expected=%d, current=%d, iteration=%d",
+                            fdCount, curFdCount, i));
+                }
             }
             test.run();
         }
