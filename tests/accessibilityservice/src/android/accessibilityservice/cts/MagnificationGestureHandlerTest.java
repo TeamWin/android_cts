@@ -18,6 +18,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.AsyncUtils.waitOn;
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
@@ -139,10 +140,7 @@ public class MagnificationGestureHandlerTest {
 
         setMagnificationEnabled(mOriginalIsMagnificationEnabled);
 
-        if (mService != null) {
-            mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
-            mService = null;
-        }
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelfAndRemove));
     }
 
     @Test

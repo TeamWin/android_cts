@@ -45,7 +45,9 @@ import androidx.test.rule.ActivityTestRule;
 import com.android.compatibility.common.util.TestUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 /**
  * Utilities useful when launching an activity to make sure it's all the way on the screen
@@ -168,6 +170,11 @@ public class ActivityLaunchUtils {
                 }
             }
         }
+        // List unexpected package names of default home screen that invoking ResolverActivity
+        final CharSequence homePackageNames = resolveInfos.stream()
+                .map(r -> r.activityInfo).filter(Objects::nonNull)
+                .map(a -> a.packageName).collect(Collectors.joining(", "));
+        Log.v(LOG_TAG, "No window matched with package names of home screen: " + homePackageNames);
         return false;
     }
 
