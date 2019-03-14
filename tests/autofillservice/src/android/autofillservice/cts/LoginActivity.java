@@ -24,6 +24,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -55,7 +56,6 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public static final String BACKDOOR_USERNAME = "LemmeIn";
     public static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
-    protected LinearLayout mRoot;
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -84,7 +84,6 @@ public class LoginActivity extends AbstractAutoFillActivity {
         super.onCreate(savedInstanceState);
         setContentView(getContentView());
 
-        mRoot = findViewById(R.id.root);
         mUsernameContainer = findViewById(R.id.username_container);
         mLoginButton = findViewById(R.id.login);
         mSaveButton = findViewById(R.id.save);
@@ -293,6 +292,15 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public void setFlags(int flags) {
         Log.d(TAG, "setFlags():" + flags);
         syncRunOnUiThread(() -> getWindow().setFlags(flags, flags));
+    }
+
+    /**
+     * Adds a child view to the root container.
+     */
+    public void addChild(View child) {
+        Log.d(TAG, "addChild(" + child + "): id=" + child.getAutofillId());
+        final ViewGroup root = (ViewGroup) mUsernameContainer.getParent();
+        syncRunOnUiThread(() -> root.addView(child));
     }
 
     /**

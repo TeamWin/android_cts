@@ -129,6 +129,12 @@ public final class CannedFillResponse {
             new Builder(ResponseType.NULL).build();
 
     /**
+     * Constant used to fail the test when an expected request was made.
+     */
+    public static final CannedFillResponse NO_MOAR_RESPONSES =
+            new Builder(ResponseType.NO_MORE).build();
+
+    /**
      * Constant used to emulate a timeout by not calling any method on {@link FillCallback}.
      */
     public static final CannedFillResponse DO_NOT_REPLY_RESPONSE =
@@ -278,6 +284,7 @@ public final class CannedFillResponse {
     public enum ResponseType {
         NORMAL,
         NULL,
+        NO_MORE,
         TIMEOUT,
         FAILURE
     }
@@ -707,6 +714,13 @@ public final class CannedFillResponse {
             public Builder setField(AutofillId autofillId, AutofillValue value) {
                 mFieldValuesById.put(autofillId, value);
                 return this;
+            }
+
+            /**
+             * Sets the canned value of a date field based on its {@code autofillId}.
+             */
+            public Builder setField(AutofillId autofillId, String text) {
+                return setField(autofillId, AutofillValue.forText(text));
             }
 
             /**
