@@ -22,6 +22,7 @@
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="teardown-command" value="pm uninstall com.android.tests.stagedinstall.testapp.A" />
+        <option name="teardown-command" value="pm uninstall com.android.tests.stagedinstall.testapp.B" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="com.android.tests.stagedinstall.host.StagedInstallTest" />
