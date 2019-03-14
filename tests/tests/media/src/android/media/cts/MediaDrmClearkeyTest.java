@@ -15,10 +15,7 @@
  */
 package android.media.cts;
 
-import android.content.pm.PackageManager;
-import android.media.CamcorderProfile;
 import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecList;
 import android.media.MediaDrm;
 import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaDrmException;
@@ -27,8 +24,7 @@ import android.net.Uri;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
-import android.view.SurfaceHolder;
-
+import android.view.Surface;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.json.JSONArray;
@@ -43,14 +39,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 
 /**
  * Tests of MediaPlayer streaming capabilities.
  */
-public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
+public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActivity> {
+
     private static final String TAG = MediaDrmClearkeyTest.class.getSimpleName();
 
     // Add additional keys here if the content has more keys.
@@ -60,16 +56,13 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
     private static final byte[] CLEAR_KEY_WEBM = "_CLEAR_KEY_WEBM_".getBytes();
 
-    private static final int CONNECTION_RETRIES = 10;
     private static final int NUMBER_OF_SECURE_STOPS = 10;
-    private static final int SLEEP_TIME_MS = 1000;
     private static final int VIDEO_WIDTH_CENC = 1280;
     private static final int VIDEO_HEIGHT_CENC = 720;
     private static final int VIDEO_WIDTH_WEBM = 352;
     private static final int VIDEO_HEIGHT_WEBM = 288;
     private static final int VIDEO_WIDTH_MPEG2TS = 320;
     private static final int VIDEO_HEIGHT_MPEG2TS = 240;
-    private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(25, TimeUnit.SECONDS);
     private static final String MIME_VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String MIME_VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
 
@@ -105,11 +98,13 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     private byte[] mKeySetId;
     private byte[] mSessionId;
     private Looper mLooper;
-    private MediaCodecClearKeyPlayer mMediaCodecPlayer;
     private MediaDrm mDrm = null;
     private final Object mLock = new Object();
-    private SurfaceHolder mSurfaceHolder;
     private boolean mLostStateReceived;
+
+    public MediaDrmClearkeyTest() {
+        super(MediaStubActivity.class);
+    }
 
     @Override
     protected void setUp() throws Exception {
@@ -122,10 +117,6 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-    }
-
-    private boolean isWatchDevice() {
-        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     private boolean deviceHasMediaDrm() {
@@ -193,7 +184,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
      */
     private void getKeys(MediaDrm drm, String initDataType,
             byte[] sessionId, byte[] drmInitData, int keyType, byte[][] clearKeyIds) {
-        MediaDrm.KeyRequest drmRequest = null;;
+        MediaDrm.KeyRequest drmRequest = null;
         try {
             drmRequest = drm.getKeyRequest(sessionId, drmInitData, initDataType,
                     keyType, null);
@@ -343,72 +334,6 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         drm.closeSession(sessionId);
     }
 
-    private boolean isResolutionSupported(String mime, String[] features,
-            int videoWidth, int videoHeight) {
-        if (ApiLevelUtil.isBefore(android.os.Build.VERSION_CODES.JELLY_BEAN)) {
-            if  (videoHeight <= 144) {
-                return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QCIF);
-            } else if (videoHeight <= 240) {
-                return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QVGA);
-            } else if (videoHeight <= 288) {
-                return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_CIF);
-            } else if (videoHeight <= 480) {
-                return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_480P);
-            } else if (videoHeight <= 720) {
-                return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_720P);
-            } else if (videoHeight <= 1080) {
-                return CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P);
-            } else {
-                return false;
-            }
-        }
-
-        MediaFormat format = MediaFormat.createVideoFormat(mime, videoWidth, videoHeight);
-        for (String feature: features) {
-            format.setFeatureEnabled(feature, true);
-        }
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
-        if (mcl.findDecoderForFormat(format) == null) {
-            Log.i(TAG, "could not find codec for " + format);
-            return false;
-        }
-        return true;
-    }
-
-    /*
-     * Verify if we can support playback resolution and has network connection.
-     * @return true if both conditions are true, else false
-     */
-    private boolean playbackPreCheck(String videoMime, String[] videoFeatures,
-            Uri videoUrl, int videoWidth, int videoHeight) {
-        if (!isResolutionSupported(videoMime, videoFeatures, videoWidth, videoHeight)) {
-            Log.i(TAG, "Device does not support " +
-                    videoWidth + "x" + videoHeight + " resolution for " + videoMime);
-            return false;
-        }
-
-        IConnectionStatus connectionStatus = new ConnectionStatus(mContext);
-        if (!connectionStatus.isAvailable()) {
-            throw new Error("Network is not available, reason: " +
-                    connectionStatus.getNotConnectedReason());
-        }
-
-        // If device is not online, recheck the status a few times.
-        int retries = 0;
-        while (!connectionStatus.isConnected()) {
-            if (retries++ >= CONNECTION_RETRIES) {
-                throw new Error("Device is not online, reason: " +
-                        connectionStatus.getNotConnectedReason());
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
-        }
-        connectionStatus.testConnection(videoUrl);
-        return true;
-    }
-
     /**
      * Tests clear key system playback.
      */
@@ -426,32 +351,23 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
         MediaDrm drm = null;
         mSessionId = null;
-        if (!scrambled) {
+        final boolean hasDrm = !scrambled && drmSchemeUuid != null;
+        if (hasDrm) {
             drm = startDrm(clearKeyIds, initDataType, drmSchemeUuid, keyType);
             mSessionId = openSession(drm);
         }
 
-        if (false == playbackPreCheck(videoMime, videoFeatures, videoUrl,
-                videoWidth, videoHeight)) {
-            Log.e(TAG, "Failed playback precheck");
+        if (!preparePlayback(videoMime, videoFeatures, audioUrl, audioEncrypted, videoUrl,
+                videoEncrypted, videoWidth, videoHeight, scrambled, mSessionId, getSurfaces())) {
             return;
         }
 
-        mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
-                getActivity().getSurfaceHolder(),
-                mSessionId, scrambled,
-                mContext.getResources());
-
-        mMediaCodecPlayer.setAudioDataSource(audioUrl, null, audioEncrypted);
-        mMediaCodecPlayer.setVideoDataSource(videoUrl, null, videoEncrypted);
-        mMediaCodecPlayer.start();
-        mMediaCodecPlayer.prepare();
-        if (!scrambled) {
+        if (hasDrm) {
             mDrmInitData = mMediaCodecPlayer.getDrmInitData();
             getKeys(mDrm, initDataType, mSessionId, mDrmInitData, keyType, clearKeyIds);
         }
 
-        if (!scrambled && keyType == MediaDrm.KEY_TYPE_OFFLINE) {
+        if (hasDrm && keyType == MediaDrm.KEY_TYPE_OFFLINE) {
             closeSession(drm, mSessionId);
             mSessionId = openSession(drm);
             if (mKeySetId.length > 0) {
@@ -464,21 +380,8 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
 
         // starts video playback
-        mMediaCodecPlayer.startThread();
-
-        long timeOut = System.currentTimeMillis() + PLAY_TIME_MS;
-        while (timeOut > System.currentTimeMillis() && !mMediaCodecPlayer.isEnded()) {
-            Thread.sleep(SLEEP_TIME_MS);
-            if (mMediaCodecPlayer.getCurrentPosition() >= mMediaCodecPlayer.getDuration() ) {
-                Log.d(TAG, "current pos = " + mMediaCodecPlayer.getCurrentPosition() +
-                        ">= duration = " + mMediaCodecPlayer.getDuration());
-                break;
-            }
-        }
-
-        Log.d(TAG, "playVideo player.reset()");
-        mMediaCodecPlayer.reset();
-        if (!scrambled) {
+        playUntilEnd();
+        if (hasDrm) {
             closeSession(drm, mSessionId);
             stopDrm(drm);
         }
@@ -509,7 +412,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
 
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
-                getActivity().getSurfaceHolder(),
+                getSurfaces(),
                 mSessionId, false /*scrambled */,
                 mContext.getResources());
 
@@ -591,7 +494,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
         // Test valid key status
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
-                getActivity().getSurfaceHolder(),
+                getSurfaces(),
                 mSessionId, false,
                 mContext.getResources());
         mMediaCodecPlayer.setAudioDataSource(CENC_AUDIO_URL, null, false);
@@ -634,7 +537,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
         // Test get offline keys
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
-                getActivity().getSurfaceHolder(),
+                getSurfaces(),
                 mSessionId, false,
                 mContext.getResources());
         mMediaCodecPlayer.setAudioDataSource(CENC_AUDIO_URL, null, false);
@@ -1089,7 +992,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             mSessionId = openSession(drm);
 
             mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
-                    getActivity().getSurfaceHolder(), mSessionId, false, mContext.getResources());
+                    getSurfaces(), mSessionId, false, mContext.getResources());
             mMediaCodecPlayer.setAudioDataSource(CENC_AUDIO_URL, null, false);
             mMediaCodecPlayer.setVideoDataSource(CENC_VIDEO_URL, null, true);
             mMediaCodecPlayer.start();
@@ -1324,5 +1227,9 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             }
         }
         return false;
+    }
+
+    private List<Surface> getSurfaces() {
+        return Arrays.asList(getActivity().getSurfaceHolder().getSurface());
     }
 }
