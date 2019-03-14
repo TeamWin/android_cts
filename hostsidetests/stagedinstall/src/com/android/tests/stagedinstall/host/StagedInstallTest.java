@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,6 +56,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @Ignore // TODO(b/127296534): enable the test after fixing the bug.
     public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
         runPhase("testFailInstallAnotherSessionAlreadyInProgress");
     }
