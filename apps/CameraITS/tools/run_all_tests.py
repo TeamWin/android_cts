@@ -58,7 +58,8 @@ NOT_YET_MANDATED = {
                 'test_tonemap_curve'
         ],
         'scene1': [
-                'test_ae_precapture_trigger'
+                'test_ae_precapture_trigger',
+                'test_channel_saturation'
         ],
         'scene2': [
                 'test_auto_per_frame_control'
