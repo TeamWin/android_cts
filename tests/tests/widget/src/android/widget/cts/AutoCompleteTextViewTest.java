@@ -21,6 +21,7 @@ import static android.widget.ListPopupWindow.INPUT_METHOD_NEEDED;
 import static android.widget.ListPopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.compatibility.common.util.WidgetTestUtils.sameCharSequence;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -657,34 +658,25 @@ public class AutoCompleteTextViewTest {
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
     }
 
+    @UiThreadTest
     @Test
-    public void setInputMethodMode_fromFocussable() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_FROM_FOCUSABLE);
-        });
-        mInstrumentation.waitForIdleSync();
-
+    public void setInputMethodMode_fromFocussable() {
+        mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_FROM_FOCUSABLE);
         assertThat(mAutoCompleteTextView.getInputMethodMode())
                 .isEqualTo(INPUT_METHOD_FROM_FOCUSABLE);
     }
 
+    @UiThreadTest
     @Test
-    public void setInputMethodMode_Needed() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_NEEDED);
-        });
-        mInstrumentation.waitForIdleSync();
-
+    public void setInputMethodMode_Needed() {
+        mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_NEEDED);
         assertThat(mAutoCompleteTextView.getInputMethodMode()).isEqualTo(INPUT_METHOD_NEEDED);
     }
 
+    @UiThreadTest
     @Test
-    public void setInputMethodMode_NotNeeded() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
-        });
-        mInstrumentation.waitForIdleSync();
-
+    public void setInputMethodMode_NotNeeded() {
+        mAutoCompleteTextView.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
         assertThat(mAutoCompleteTextView.getInputMethodMode()).isEqualTo(INPUT_METHOD_NOT_NEEDED);
     }
 

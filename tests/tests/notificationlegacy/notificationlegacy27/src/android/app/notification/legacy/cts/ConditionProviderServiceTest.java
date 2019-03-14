@@ -24,6 +24,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.TestCase.fail;
 
+import static org.junit.Assume.assumeFalse;
+
 import static java.lang.Thread.sleep;
 
 import android.app.ActivityManager;
@@ -65,6 +67,9 @@ public class ConditionProviderServiceTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        assumeFalse(mActivityManager.isLowRamDevice());
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         LegacyConditionProviderService.requestRebind(LegacyConditionProviderService.getId());
@@ -72,11 +77,14 @@ public class ConditionProviderServiceTest {
         mNm = (NotificationManager) mContext.getSystemService(
                 Context.NOTIFICATION_SERVICE);
         mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
     }
 
     @After
     public void tearDown() throws Exception {
+        if (mNm == null) {
+            // assumption in setUp is false, so mNm is not initialized
+            return;
+        }
         try {
             for (String id : ids) {
                 if (id != null) {

@@ -926,8 +926,7 @@ public class UsageStatsTest {
 
         try {
             mUsageStatsManager.registerUsageSessionObserver(observerId, packages,
-                    1, java.util.concurrent.TimeUnit.HOURS, 10,
-                    java.util.concurrent.TimeUnit.SECONDS, null, null);
+                    Duration.ofHours(1), Duration.ofSeconds(10), null, null);
             fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
         } catch (SecurityException e) {
             // Exception expected
@@ -935,7 +934,7 @@ public class UsageStatsTest {
 
         try {
             mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
-                    Duration.ofHours(1), Duration.ofHours(1), null);
+                    Duration.ofHours(1), Duration.ofHours(0), null);
             fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
         } catch (SecurityException e) {
             // Exception expected

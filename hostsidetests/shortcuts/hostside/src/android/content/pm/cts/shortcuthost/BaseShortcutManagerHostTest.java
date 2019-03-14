@@ -175,29 +175,6 @@ abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
         throw new IllegalStateException();
     }
 
-    /** Starts user {@code userId} and waits until it is in state RUNNING_UNLOCKED. */
-    protected void startUserAndWait(int userId) throws Exception {
-        getDevice().startUser(userId);
-
-        final String desiredState = "RUNNING_UNLOCKED";
-        final long USER_STATE_TIMEOUT_MS = 60_0000; // 1 minute
-        final long timeout = System.currentTimeMillis() + USER_STATE_TIMEOUT_MS;
-        final String command = String.format("am get-started-user-state %d", userId);
-        String output = "";
-        while (System.currentTimeMillis() <= timeout) {
-            output = getDevice().executeShellCommand(command);
-            if (output.contains(desiredState)) {
-                return;
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // Do nothing.
-            }
-        }
-        fail("User state of " + userId + " was '" + output + "' rather than " + desiredState);
-    }
-
     /**
      * Variant of {@link #assertContainsRegex(String,String,String)} using a
      * generic message.

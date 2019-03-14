@@ -184,6 +184,25 @@ public class MediaSession2Test {
     }
 
     @Test
+    public void testSession2Token_extrasNotSet() {
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .build()) {
+            Session2Token token = session.getSessionToken();
+            assertSame(Bundle.EMPTY, token.getExtras());
+        }
+    }
+
+    @Test
+    public void testSession2Token_extrasSetToNull() {
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setExtras(null)
+                .build()) {
+            Session2Token token = session.getSessionToken();
+            assertSame(Bundle.EMPTY, token.getExtras());
+        }
+    }
+
+    @Test
     public void testGetConnectedControllers_newController() throws Exception {
         Session2Callback sessionCallback = new Session2Callback();
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
@@ -623,6 +642,7 @@ public class MediaSession2Test {
 
         @Override
         public void onPostConnect(MediaSession2 session, MediaSession2.ControllerInfo controller) {
+            super.onPostConnect(session, controller);
             if (controller.getUid() != Process.myUid()) {
                 return;
             }

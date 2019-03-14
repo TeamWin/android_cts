@@ -17,12 +17,15 @@
 package com.android.tests.stagedinstall;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -37,6 +40,9 @@ import org.junit.runners.JUnit4;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This series of tests are meant to be driven by a host, since some of the interactions being
@@ -99,11 +105,12 @@ public class StagedInstallTest {
 
     @Test
     public void testInstallStagedApk_Commit() throws Exception {
-        uninstall(TEST_APP_A);
-        stageSingleApk("StagedInstallTestAppAv1.apk");
+        prepareBroadcastReceiver();
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        // TODO: test that isReady broadcast is received.
-        Thread.sleep(10000);
+        waitForIsReadyBroadcast(sessionId);
+        unregisterBroacastReceiver();
         // TODO: test that the staged Session is in place and is ready
     }
 
@@ -111,9 +118,18 @@ public class StagedInstallTest {
     public void testInstallStagedApk_VerifyPostReboot() throws Exception {
         // TODO: test that the staged session is applied.
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
-        // Cleanup.
-        // TODO: This should be done via a target preparer or similar.
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
         uninstall(TEST_APP_A);
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageSingleApk("StagedInstallTestAppAv1.apk");
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "There is already in-progress committed staged session");
+        InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller()
+                .abandonSession(sessionId);
     }
 
     private static long getInstalledVersion(String packageName) {
@@ -140,7 +156,7 @@ public class StagedInstallTest {
         return packageInstaller.createSession(sessionParams);
     }
 
-    private static int stageSingleApk(String apkFileName) throws Exception {
+    private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
         Context context = InstrumentationRegistry.getContext();
         PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
         int sessionId = createStagedSession(packageInstaller);
@@ -157,8 +173,38 @@ public class StagedInstallTest {
 
         // Commit the session (this will start the installation workflow).
         session.commit(LocalIntentSender.getIntentSender());
-        assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
-        return sessionId;
+        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+    }
+
+    private static final class StageSessionResult {
+        private final int sessionId;
+        private final Intent result;
+
+        private StageSessionResult(int sessionId, Intent result) {
+            this.sessionId = sessionId;
+            this.result = result;
+        }
+
+        public int getSessionId() {
+            return sessionId;
+        }
+
+        public String getErrorMessage() {
+            int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                    PackageInstaller.STATUS_FAILURE);
+            if (status == -1) {
+                throw new AssertionError("PENDING USER ACTION");
+            }
+            if (status == 0) {
+                throw new AssertionError("Result was successful");
+            }
+            return result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+        }
+
+        public StageSessionResult assertSuccessful() {
+            assertStatusSuccess(result);
+            return this;
+        }
     }
 
     private static void uninstall(String packageName) throws Exception {
@@ -183,5 +229,52 @@ public class StagedInstallTest {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
         }
+    }
+
+    private final BlockingQueue<PackageInstaller.SessionInfo> mSessionBroadcasts
+            = new LinkedBlockingQueue<>();
+
+    // TODO(b/124897340): Move the receiver to its own class and declare it in manifest, when this
+    //   will become an explicit broadcast.
+    private BroadcastReceiver mSessionUpdateReceiver = null;
+    private void prepareBroadcastReceiver() {
+        mSessionBroadcasts.clear();
+        mSessionUpdateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                PackageInstaller.SessionInfo info =
+                        intent.getParcelableExtra(PackageInstaller.EXTRA_SESSION);
+                if (info != null) {
+                    try {
+                        mSessionBroadcasts.put(info);
+                    } catch (InterruptedException e) {
+
+                    }
+                }
+            }
+        };
+        IntentFilter sessionUpdatedFilter =
+                new IntentFilter(PackageInstaller.ACTION_SESSION_UPDATED);
+        Context context = InstrumentationRegistry.getContext();
+        context.registerReceiver(mSessionUpdateReceiver, sessionUpdatedFilter);
+    }
+
+    private void waitForIsReadyBroadcast(int sessionId) {
+        try {
+            PackageInstaller.SessionInfo info =
+                    mSessionBroadcasts.poll(60, TimeUnit.SECONDS);
+            assertThat(info.getSessionId()).isEqualTo(sessionId);
+            assertThat(info.isStagedSessionReady()).isTrue();
+            assertThat(info.isStagedSessionApplied()).isFalse();
+            assertWithMessage(info.getStagedSessionErrorMessage())
+                    .that(info.isStagedSessionFailed()).isFalse();
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private void unregisterBroacastReceiver() {
+        Context context = InstrumentationRegistry.getContext();
+        context.unregisterReceiver(mSessionUpdateReceiver);
     }
 }
