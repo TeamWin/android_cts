@@ -104,26 +104,29 @@ public class SecurityTestCase extends DeviceTestCase {
         oomCatcher.stop(getDevice().getSerialNumber());
 
         getDevice().waitForDeviceAvailable(120 * 1000);
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        assertTrue("Phone has had a hard reset",
-            (System.currentTimeMillis()/1000 -
-                Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
-                    - kernelStartTime < 2));
-        //TODO(badash@): add ability to catch runtime restart
-        getDevice().executeAdbCommand("unroot");
 
         if (oomCatcher.isOomDetected()) {
+            // we don't need to check kernel start time if we intentionally rebooted because oom
+            updateKernelStartTime();
             switch (oomCatcher.getOomBehavior()) {
                 case FAIL_AND_LOG:
                     fail("The device ran out of memory.");
-                    return;
+                    break;
                 case PASS_AND_LOG:
                     Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG, "Skipping test.");
-                    return;
+                    break;
                 case FAIL_NO_LOG:
                     fail();
-                    return;
+                    break;
             }
+        } else {
+            String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+            assertTrue("Phone has had a hard reset",
+                (System.currentTimeMillis()/1000 -
+                    Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
+                        - kernelStartTime < 2));
+            //TODO(badash@): add ability to catch runtime restart
+            getDevice().executeAdbCommand("unroot");
         }
     }
 
