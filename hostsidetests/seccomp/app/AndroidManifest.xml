@@ -16,7 +16,8 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.seccomp.cts.app">
+    package="android.seccomp.cts.app"
+    android:targetSandboxVersion="2">
 
     <application android:zygotePreloadName=".ZygotePreload">
         <uses-library android:name="android.test.runner" />
