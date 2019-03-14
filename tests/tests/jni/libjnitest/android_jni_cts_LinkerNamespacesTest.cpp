@@ -185,15 +185,6 @@ static bool check_lib(JNIEnv* env,
   return true;
 }
 
-static bool is_bootstrap_bionic(const std::string& dir, const std::string& name) {
-  if (dir == kSystemLibraryPath + "/bootstrap") {
-    if (name == "libc.so" || name == "libdl.so" || name == "libm.so") {
-      return true;
-    }
-  }
-  return false;
-}
-
 static bool check_path(JNIEnv* env,
                        jclass clazz,
                        const std::string& library_path,
@@ -218,11 +209,6 @@ static bool check_path(JNIEnv* env,
     while ((dp = readdir(dirp.get())) != nullptr) {
       // skip "." and ".."
       if (strcmp(".", dp->d_name) == 0 || strcmp("..", dp->d_name) == 0) {
-        continue;
-      }
-      // TODO(b/123183824) remove this by disallowing bootstrap Bionic to
-      // app processes
-      if (is_bootstrap_bionic(dir, dp->d_name)) {
         continue;
       }
 
