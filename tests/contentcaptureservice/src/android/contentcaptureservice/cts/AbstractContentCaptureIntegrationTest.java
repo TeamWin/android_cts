@@ -250,17 +250,21 @@ public abstract class AbstractContentCaptureIntegrationTest
     protected A launchActivity() {
         Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
 
-        return getActivityTestRule().launchActivity(new Intent(sContext, mActivityClass));
+        return getActivityTestRule().launchActivity(getLaunchIntent());
     }
 
     protected A launchActivity(@Nullable Visitor<Intent> visitor) {
         Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
 
-        final Intent intent = new Intent(sContext, mActivityClass);
+        final Intent intent = getLaunchIntent();
         if (visitor != null) {
             visitor.visit(intent);
         }
         return getActivityTestRule().launchActivity(intent);
+    }
+
+    private Intent getLaunchIntent() {
+        return new Intent(sContext, mActivityClass);
     }
 
     @NonNull

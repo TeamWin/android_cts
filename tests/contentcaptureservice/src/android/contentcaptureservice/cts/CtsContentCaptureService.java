@@ -544,8 +544,21 @@ public class CtsContentCaptureService extends ContentCaptureService {
             return this;
         }
 
+        @NonNull
+        public EventsAssertor activityStopped(@NonNull ComponentName expectedActivity) {
+            assertNextEvent((event) -> assertActivityEvent(event, expectedActivity,
+                    ActivityEvent.TYPE_ACTIVITY_STOPPED), "no ACTIVITY_STOPPED event for %s",
+                    expectedActivity);
+            return this;
+        }
+
         private void assertNextEvent(@NonNull EventAssertion assertion, @NonNull String errorFormat,
                 @Nullable Object... errorArgs) {
+            if (mNextEvent >= mEvents.size()) {
+                throw new AssertionError("Reached the end of the events: "
+                        + String.format(errorFormat, errorArgs) + "\n. Events("
+                        + mEvents.size() + "): " + mEvents);
+            }
             do {
                 final int index = mNextEvent++;
                 final MyActivityEvent event = mEvents.get(index);

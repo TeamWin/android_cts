@@ -112,9 +112,10 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
 
         activity.assertDefaultEvents(session);
 
+        final ComponentName name = activity.getComponentName();
         service.assertThat()
-                .activityResumed(activity.getComponentName())
-                .activityPaused(activity.getComponentName());
+                .activityResumed(name)
+                .activityPaused(name);
     }
 
     @Test
