@@ -21,6 +21,8 @@ import static android.telephony.ServiceState.DUPLEX_MODE_UNKNOWN;
 import static android.telephony.ServiceState.STATE_IN_SERVICE;
 import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
 import static android.telephony.ServiceState.STATE_POWER_OFF;
+import static android.telephony.ServiceState.ROAMING_TYPE_DOMESTIC;
+import static android.telephony.ServiceState.ROAMING_TYPE_NOT_ROAMING;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -157,9 +159,32 @@ public class ServiceStateTest extends AndroidTestCase {
         assertNotEquals(serviceStateA, serviceStateC);
     }
 
+    public void testRoaming() {
+        ServiceState notRoaming = getServiceStateWithRoamingTypes(ROAMING_TYPE_NOT_ROAMING,
+                                                                    ROAMING_TYPE_NOT_ROAMING);
+        ServiceState dataRoaming = getServiceStateWithRoamingTypes(ROAMING_TYPE_DOMESTIC,
+                                                                    ROAMING_TYPE_NOT_ROAMING);
+        ServiceState voiceRoaming = getServiceStateWithRoamingTypes(ROAMING_TYPE_NOT_ROAMING,
+                                                                    ROAMING_TYPE_DOMESTIC);
+        ServiceState dataVoiceRoaming = getServiceStateWithRoamingTypes(ROAMING_TYPE_NOT_ROAMING,
+                                                                    ROAMING_TYPE_DOMESTIC);
+
+        assertFalse(notRoaming.getRoaming());
+        assertTrue(dataRoaming.getRoaming());
+        assertTrue(voiceRoaming.getRoaming());
+        assertTrue(dataVoiceRoaming.getRoaming());
+    }
+
     private ServiceState getServiceStateWithOperatorName(String name, String numeric) {
         ServiceState serviceState = new ServiceState();
         serviceState.setOperatorName(name, name, numeric);
+        return serviceState;
+    }
+
+    private ServiceState getServiceStateWithRoamingTypes(int dataRoaming, int voiceRoaming) {
+        ServiceState serviceState = new ServiceState();
+        serviceState.setDataRoamingType(dataRoaming);
+        serviceState.setVoiceRoamingType(voiceRoaming);
         return serviceState;
     }
 
