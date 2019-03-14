@@ -43,10 +43,11 @@ import java.util.TimerTask;
 
 import com.android.cts.verifier.audio.midilib.NativeMidiManager;
 
-import com.android.cts.verifier.audio.midilib.MidiEchoTestService;
 import com.android.cts.verifier.PassFailButtons;
 
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
+
+import com.android.midi.MidiEchoTestService;
 
 /*
  * A note about the USB MIDI device.
