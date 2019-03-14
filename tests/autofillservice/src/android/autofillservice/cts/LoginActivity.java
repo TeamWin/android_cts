@@ -56,6 +56,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public static final String BACKDOOR_USERNAME = "LemmeIn";
     public static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
+    private static LoginActivity sCurrentActivity;
+
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -77,6 +79,16 @@ public class LoginActivity extends AbstractAutoFillActivity {
      */
     public static String getWelcomeMessage(String username) {
         return String.format(WELCOME_TEMPLATE,  username);
+    }
+
+    /**
+     * Gests the latest instance.
+     *
+     * <p>Typically used in test cases that rotates the activity
+     */
+    @SuppressWarnings("unchecked") // Its up to caller to make sure it's setting the right one
+    public static <T extends LoginActivity> T getCurrentActivity() {
+        return (T) sCurrentActivity;
     }
 
     @Override
@@ -104,6 +116,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
             getAutofillManager().cancel();
         });
         mCancelButton.setOnClickListener((OnClickListener) v -> finish());
+
+        sCurrentActivity = this;
     }
 
     protected int getContentView() {
@@ -251,6 +265,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
      */
     public void onPassword(Visitor<EditText> v) {
         syncRunOnUiThread(() -> v.visit(mPasswordEditText));
+    }
+
+    /**
+     * Visits the {@code login} button in the UiThread.
+     */
+    public void onLogin(Visitor<Button> v) {
+        syncRunOnUiThread(() -> v.visit(mLoginButton));
     }
 
     /**
