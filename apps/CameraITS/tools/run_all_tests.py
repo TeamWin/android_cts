@@ -169,15 +169,17 @@ def main():
         dist:    [Experimental] chart distance in cm.
     """
 
-    all_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5",
+    all_scenes = ["scene0", "scene1", "scene2", "scene2b", "scene2c", "scene3", "scene4", "scene5",
                   "sensor_fusion"]
 
-    auto_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4"]
+    auto_scenes = ["scene0", "scene1", "scene2", "scene2b", "scene2c", "scene3", "scene4"]
 
     scene_req = {
         "scene0": None,
         "scene1": "A grey card covering at least the middle 30% of the scene",
         "scene2": "A picture containing human faces",
+        "scene2b": "A picture containing human faces",
+        "scene2c": "A picture containing human faces",
         "scene3": "The ISO 12233 chart",
         "scene4": "A specific test page of a circle covering at least the "
                   "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
