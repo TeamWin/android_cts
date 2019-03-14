@@ -90,6 +90,16 @@ public class BatteryConstraintTest extends ConstraintTest {
         }
     }
 
+    boolean hasBattery() throws Exception {
+        Intent batteryInfo = getContext().registerReceiver(
+                null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        boolean present = batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
+        if (!present) {
+            Log.i(TAG, "Device doesn't have a battery.");
+        }
+        return present;
+    }
+
     void setBatteryState(boolean plugged, int level) throws Exception {
         if (plugged) {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set ac 1");
@@ -208,6 +218,11 @@ public class BatteryConstraintTest extends ConstraintTest {
      * not plugged in but has sufficient power.
      */
     public void testBatteryNotLowConstraintExecutes_withoutPower() throws Exception {
+        // "Without power" test case is valid only for devices with a battery.
+        if (!hasBattery()) {
+            return;
+        }
+
         setBatteryState(false, 100);
         waitFor(2_000);
         verifyChargingState(false);
@@ -232,6 +247,11 @@ public class BatteryConstraintTest extends ConstraintTest {
      * the device is not on power.
      */
     public void testChargingConstraintFails() throws Exception {
+        // "Without power" test case is valid only for devices with a battery.
+        if (!hasBattery()) {
+            return;
+        }
+
         setBatteryState(false, 100);
         verifyChargingState(false);
 
@@ -271,6 +291,10 @@ public class BatteryConstraintTest extends ConstraintTest {
      * the battery level is critical and not on power.
      */
     public void testBatteryNotLowConstraintFails_withoutPower() throws Exception {
+        // "Without power" test case is valid only for devices with a battery.
+        if (!hasBattery()) {
+            return;
+        }
         if(getInstrumentation().getContext().getPackageManager().hasSystemFeature(FEATURE_WATCH) &&
                getInstrumentation().getContext().getPackageManager().hasSystemFeature(
                TWM_HARDWARE_FEATURE)) {
