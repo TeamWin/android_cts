@@ -23,6 +23,8 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.After;
 import org.junit.Before;
@@ -54,12 +56,12 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        runPhase("cleanUpStagedSessions");
+        runPhase("cleanUp");
     }
 
     @After
     public void tearDown() throws Exception {
-        runPhase("cleanUpStagedSessions");
+        runPhase("cleanUp");
     }
 
     /**

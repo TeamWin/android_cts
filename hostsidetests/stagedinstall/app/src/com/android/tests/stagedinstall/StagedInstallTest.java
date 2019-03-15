@@ -40,12 +40,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * This series of tests are meant to be driven by a host, since some of the interactions being
@@ -74,6 +81,7 @@ public class StagedInstallTest {
 
     private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
     private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
+    private static final String TEST_STATE_FILE = "/data/local/tmp/ctsstagedinstall/state";
 
     @Before
     public void adoptShellPermissions() {
@@ -97,7 +105,7 @@ public class StagedInstallTest {
     // purpose of this method to be called before and after each test case of
     // com.android.test.stagedinstall.host.StagedInstallTest to reduce tests flakiness.
     @Test
-    public void cleanUpStagedSessions() throws Exception {
+    public void cleanUp() throws Exception {
         PackageInstaller packageInstaller =
                 InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
         List<PackageInstaller.SessionInfo> stagedSessions = packageInstaller.getStagedSessions();
@@ -109,6 +117,9 @@ public class StagedInstallTest {
                 Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
             }
         }
+        uninstall(TEST_APP_A);
+        uninstall(TEST_APP_B);
+        Files.deleteIfExists(new File(TEST_STATE_FILE).toPath());
     }
 
     @Test
@@ -135,12 +146,14 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         unregisterBroadcastReceiver();
-        // TODO: test that the staged Session is in place and is ready
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
     }
 
     @Test
     public void testInstallStagedApk_VerifyPostReboot() throws Exception {
-        // TODO: test that the staged session is applied.
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
     }
 
@@ -178,7 +191,6 @@ public class StagedInstallTest {
 
     @Test
     public void testAbandonStagedApkBeforeReboot_CommitAndAbandon() throws Exception {
-        uninstall(TEST_APP_A);
         prepareBroadcastReceiver();
         int sessionId = stageSingleApk(
                 "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
@@ -270,6 +282,49 @@ public class StagedInstallTest {
         multiPackageSession.commit(LocalIntentSender.getIntentSender());
         return new StageSessionResult(
                 multiPackageSessionId, LocalIntentSender.getIntentSenderResult());
+    }
+
+    private static void assertSessionApplied(int sessionId) {
+        assertSessionState(sessionId,
+                (session) ->  assertThat(session.isStagedSessionApplied()).isTrue());
+    }
+
+    private static void assertSessionReady(int sessionId) {
+        assertSessionState(sessionId,
+                (session) ->  assertThat(session.isStagedSessionReady()).isTrue());
+    }
+
+    private static void assertSessionState(
+            int sessionId, Consumer<PackageInstaller.SessionInfo> assertion) {
+        Context context = InstrumentationRegistry.getContext();
+        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+
+        List<PackageInstaller.SessionInfo> sessions = packageInstaller.getStagedSessions();
+        boolean found = false;
+        for (PackageInstaller.SessionInfo session : sessions) {
+            if (session.getSessionId() == sessionId) {
+                assertion.accept(session);
+                found = true;
+            }
+        }
+        assertWithMessage("Expecting to find session in getStagedSession()")
+                .that(found).isTrue();
+
+        // Test also that getSessionInfo correctly returns the session.
+        PackageInstaller.SessionInfo sessionInfo = packageInstaller.getSessionInfo(sessionId);
+        assertion.accept(sessionInfo);
+    }
+
+    private static void storeSessionId(int sessionId) throws Exception {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TEST_STATE_FILE))) {
+            writer.write("" + sessionId);
+        }
+    }
+
+    private static int retrieveLastSessionId() throws Exception {
+        try (BufferedReader reader = new BufferedReader(new FileReader(TEST_STATE_FILE))) {
+            return Integer.parseInt(reader.readLine());
+        }
     }
 
     private static final class StageSessionResult {
