@@ -18,7 +18,6 @@ package android.autofillservice.cts.augmented;
 import static android.autofillservice.cts.Helper.allowOverlays;
 import static android.autofillservice.cts.Helper.disallowOverlays;
 
-import android.autofillservice.cts.AbstractAutoFillActivity;
 import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
@@ -38,10 +37,10 @@ import org.junit.BeforeClass;
 /////       by which class it extends.
 
 // Must be public because of the @ClassRule
-public abstract class AugmentedAutofillAutoActivityLaunchTestCase
-        <A extends AbstractAutoFillActivity> extends AutoFillServiceTestCase.AutoActivityLaunch<A> {
+public abstract class AugmentedAutofillManualActivityLaunchTestCase
+        extends AutoFillServiceTestCase.ManualActivityLaunch {
 
-    private static final String TAG = AugmentedAutofillAutoActivityLaunchTestCase.class
+    private static final String TAG = AugmentedAutofillManualActivityLaunchTestCase.class
             .getSimpleName();
 
     protected static AugmentedReplier sAugmentedReplier;
@@ -64,7 +63,6 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
 
     @Before
     public void setFixtures() {
-        mServiceWatcher = null;
         sAugmentedReplier = CtsAugmentedAutofillService.getAugmentedReplier();
         sAugmentedReplier.reset();
         CtsAugmentedAutofillService.resetStaticState();
@@ -77,12 +75,9 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
                         mServiceWatcher.waitOnDisconnected();
                     }
                 })
-                .add(() -> { return sAugmentedReplier.getExceptions(); });
-    }
-
-    @Override
-    protected int getNumberRetries() {
-        return 0; // A.K.A. "Optimistic Thinking"
+                .add(() -> {
+                    return sAugmentedReplier.getExceptions();
+                });
     }
 
     @Override
