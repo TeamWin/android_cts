@@ -81,12 +81,12 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
-    public void testGetSetSyntheticAppDetailsActivityEnabled() throws Exception {
+    public void testGetSetAppDetailsActivityEnabled() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testGetSetSyntheticAppDetailsActivityEnabled",
+                LAUNCHER_TESTS_CLASS, "testGetSetAppDetailsActivityEnabled",
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 }
