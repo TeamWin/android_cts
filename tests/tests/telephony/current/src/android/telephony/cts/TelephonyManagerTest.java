@@ -998,7 +998,7 @@ public class TelephonyManagerTest {
         // get NetworkRegistration object
         NetworkRegistrationState nwReg = mTelephonyManager.getServiceState()
                 .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_CS,
-                        AccessNetworkConstants.TransportType.WWAN);
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
         assertThat(nwReg).isNotNull();
         nwReg.isRoaming();
     }
@@ -1016,7 +1016,7 @@ public class TelephonyManagerTest {
         // get NetworkRegistration object for voice
         NetworkRegistrationState nwReg = mTelephonyManager.getServiceState()
                 .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_CS,
-                        AccessNetworkConstants.TransportType.WWAN);
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
         assertNotNull(nwReg);
         assertThat(nwReg.getRoamingType()).isIn(ROAMING_TYPES);
 
@@ -1024,7 +1024,7 @@ public class TelephonyManagerTest {
         // get NetworkRegistration object for voice
         nwReg = mTelephonyManager.getServiceState()
                 .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_PS,
-                        AccessNetworkConstants.TransportType.WWAN);
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
         assertThat(nwReg).isNotNull();
         assertThat(nwReg.getRoamingType()).isIn(ROAMING_TYPES);
     }
@@ -1042,14 +1042,14 @@ public class TelephonyManagerTest {
         // get NetworkRegistration object for voice
         NetworkRegistrationState nwReg = mTelephonyManager.getServiceState()
                 .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_CS,
-                        AccessNetworkConstants.TransportType.WWAN);
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
         assertThat(nwReg).isNotNull();
         assertThat(nwReg.getAccessNetworkTechnology()).isIn(NETWORK_TYPES);
 
         // get NetworkRegistation object for data
         nwReg = mTelephonyManager.getServiceState()
                 .getNetworkRegistrationState(NetworkRegistrationState.DOMAIN_PS,
-                        AccessNetworkConstants.TransportType.WWAN);
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
         assertThat(nwReg).isNotNull();
         assertThat(nwReg.getAccessNetworkTechnology()).isIn(NETWORK_TYPES);
     }
