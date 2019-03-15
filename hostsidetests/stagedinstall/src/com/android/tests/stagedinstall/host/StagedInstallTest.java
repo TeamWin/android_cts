@@ -90,6 +90,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testAbandonStagedApkBeforeReboot_VerifyPostReboot");
     }
 
+    @Test
+    public void testInstallMultipleStagedApks() throws Exception {
+        runPhase("testInstallMultipleStagedApks_Commit");
+        getDevice().reboot();
+        runPhase("testInstallMultipleStagedApks_VerifyPostReboot");
+    }
+
     private static final class FailedTestLogHook extends TestWatcher {
 
         private final BaseHostJUnit4Test mInstance;
@@ -120,5 +127,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
                 return "Failed to get staged sessions";
             }
         }
+
     }
 }

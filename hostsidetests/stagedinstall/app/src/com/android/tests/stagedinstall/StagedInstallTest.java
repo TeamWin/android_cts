@@ -30,6 +30,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -72,6 +73,7 @@ public class StagedInstallTest {
     private static final String TAG = "StagedInstallTest";
 
     private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
+    private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
 
     @Before
     public void adoptShellPermissions() {
@@ -143,6 +145,27 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testInstallMultipleStagedApks_Commit() throws Exception {
+        prepareBroadcastReceiver();
+        int sessionId = stageMultipleApks(
+                "StagedInstallTestAppAv1.apk",
+                "StagedInstallTestAppBv1.apk")
+                .assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
+        waitForIsReadyBroadcast(sessionId);
+        unregisterBroadcastReceiver();
+        // TODO: test that the staged Session is in place and is ready
+    }
+
+    @Test
+    public void testInstallMultipleStagedApks_VerifyPostReboot() throws Exception {
+        // TODO: test that the staged session is applied.
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
+    }
+
+    @Test
     public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
         int sessionId = stageSingleApk(
                 "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
@@ -187,12 +210,18 @@ public class StagedInstallTest {
 
     private static int createStagedSession() throws Exception {
         return createStagedSession(
-                InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller());
+                InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller(),
+                false);
     }
 
-    private static int createStagedSession(PackageInstaller packageInstaller) throws Exception {
+    private static int createStagedSession(
+            PackageInstaller packageInstaller,
+            boolean multiPackage) throws Exception {
         PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
                 PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        if (multiPackage) {
+            sessionParams.setMultiPackage();
+        }
         sessionParams.setStaged();
 
         return packageInstaller.createSession(sessionParams);
@@ -201,7 +230,19 @@ public class StagedInstallTest {
     private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
         Context context = InstrumentationRegistry.getContext();
         PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-        int sessionId = createStagedSession(packageInstaller);
+
+        Pair<Integer, PackageInstaller.Session> sessionPair =
+                prepareSingleApkStagedSession(packageInstaller, apkFileName);
+        // Commit the session (this will start the installation workflow).
+        Log.i(TAG, "Committing session for apk: " + apkFileName);
+        sessionPair.second.commit(LocalIntentSender.getIntentSender());
+        return new StageSessionResult(sessionPair.first, LocalIntentSender.getIntentSenderResult());
+    }
+
+    private static Pair<Integer, PackageInstaller.Session>
+            prepareSingleApkStagedSession(PackageInstaller packageInstaller, String apkFileName)
+            throws Exception {
+        int sessionId = createStagedSession(packageInstaller, false);
         PackageInstaller.Session session = packageInstaller.openSession(sessionId);
         try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
              InputStream is =
@@ -212,11 +253,23 @@ public class StagedInstallTest {
                 packageInSession.write(buffer, 0, n);
             }
         }
+        return new Pair<>(sessionId, session);
+    }
 
-        // Commit the session (this will start the installation workflow).
-        Log.i(TAG, "Committing session for apk: " + apkFileName);
-        session.commit(LocalIntentSender.getIntentSender());
-        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+    private static StageSessionResult stageMultipleApks(String... apkFileNames) throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        int multiPackageSessionId = createStagedSession(packageInstaller, true);
+        PackageInstaller.Session multiPackageSession = packageInstaller.openSession(
+                multiPackageSessionId);
+        for (String apkFileName : apkFileNames) {
+            Pair<Integer, PackageInstaller.Session> sessionPair =
+                    prepareSingleApkStagedSession(packageInstaller, apkFileName);
+            multiPackageSession.addChildSessionId(sessionPair.first);
+        }
+        multiPackageSession.commit(LocalIntentSender.getIntentSender());
+        return new StageSessionResult(
+                multiPackageSessionId, LocalIntentSender.getIntentSenderResult());
     }
 
     private static final class StageSessionResult {
