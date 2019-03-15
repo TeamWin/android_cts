@@ -41,8 +41,8 @@ import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrinterDiscoverySession;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiObject2;
 
 import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
@@ -131,8 +131,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
      */
     private void selectInAllPrintersActivity(@NonNull String printerName) throws Exception {
         while (true) {
-            UiObject printerItem = getUiDevice().findObject(
-                    new UiSelector().text(printerName));
+            UiObject2 printerItem = findUiObject(By.text(printerName));
 
             if (printerItem.isEnabled()) {
                 printerItem.click();
