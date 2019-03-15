@@ -35,6 +35,7 @@ public class SurfacePixelValidator2 {
     private static final String TAG = "SurfacePixelValidator";
 
     private static final int MAX_CAPTURED_FAILURES = 5;
+    private static final int PIXEL_STRIDE = 4;
 
     private final int mWidth;
     private final int mHeight;
@@ -57,9 +58,11 @@ public class SurfacePixelValidator2 {
         public void onImageAvailable(ImageReader reader) {
             Trace.beginSection("Read buffer");
             Image image = reader.acquireNextImage();
+
             Image.Plane plane = image.getPlanes()[0];
-            if (plane.getPixelStride() != 4) {
-                throw new IllegalStateException("pixel stride != 4? " + plane.getPixelStride());
+            if (plane.getPixelStride() != PIXEL_STRIDE) {
+                throw new IllegalStateException("pixel stride != " + PIXEL_STRIDE + "? "
+                                                + plane.getPixelStride());
             }
             int rowStride = plane.getRowStride();
             ByteBuffer buffer = plane.getBuffer();
@@ -78,12 +81,12 @@ public class SurfacePixelValidator2 {
 
             int blackishPixelCount = 0;
 
-            byte[] scanline = new byte[mBoundsToCheck.width() * 4];
+            final int bytesWidth = mBoundsToCheck.width() * PIXEL_STRIDE;
+            byte[] scanline = new byte[bytesWidth];
             for (int row = mBoundsToCheck.top; row < mBoundsToCheck.bottom; row++) {
-                buffer.position(rowStride * row + mBoundsToCheck.left);
+                buffer.position(rowStride * row + mBoundsToCheck.left * PIXEL_STRIDE);
                 buffer.get(scanline, 0, scanline.length);
-                for (int i = 0; i < mBoundsToCheck.width(); i += 4) {
-                    final int pixel = scanline[i];
+                for (int i = 0; i < bytesWidth; i += PIXEL_STRIDE) {
                     // Format is RGBA_8888 not ARGB_8888
                     final int red = scanline[i + 0] & 0xFF;
                     final int green = scanline[i + 1] & 0xFF;
