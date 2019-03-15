@@ -138,7 +138,6 @@ public class PaintFlagsDrawFilterTest {
 
         // Drawn without FILTER_BITMAP_FLAG, all pixels will be black or white.
         Paint simplePaint = new Paint();
-        simplePaint.setFilterBitmap(false);
         canvas.drawBitmap(grid, 0, 0, simplePaint);
 
         verifyContainsOnlyBlackAndWhite(dst);
