@@ -33,7 +33,7 @@ android_test {
     ],
 }
 
-android_app {
+android_test_helper_app {
     name: "AtomicInstallTestAppAv1",
 
     srcs:   ["testdata/apk/src/**/*java"],
@@ -41,7 +41,7 @@ android_app {
     manifest:   "testdata/apk/Av1.xml",
 }
 
-android_app {
+android_test_helper_app {
     name: "AtomicInstallTestAppBv1",
 
     srcs:   ["testdata/apk/src/**/*java"],
