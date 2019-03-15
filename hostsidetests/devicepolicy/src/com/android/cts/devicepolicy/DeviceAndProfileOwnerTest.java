@@ -19,11 +19,12 @@ package com.android.cts.devicepolicy;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import android.platform.test.annotations.RequiresDevice;
+import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
-
 import com.google.common.collect.ImmutableMap;
 
 import java.io.File;
@@ -31,10 +32,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import android.stats.devicepolicy.EventId;
 import java.util.stream.Collectors;
 
 /**
@@ -74,7 +74,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
     private static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
 
-    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
+    protected static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
     private static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
@@ -280,25 +280,34 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     /**
-     * Returns a list of delegation tests that are applicable to both device owner and profile
-     * owners. DO or PO specific tests should be added in the overridden method in subclass.
+     * Returns a list of delegation tests that should run. Add delegations tests applicable to both
+     * device owner and profile owners to this method directly. DO or PO specific tests should be
+     * added to {@link #getAdditionalDelegationTests} in the subclass.
      */
-    protected List<String> getDelegationTests() {
-        return new ArrayList<>(Arrays.asList(
-                ".AppRestrictionsDelegateTest",
-                ".CertInstallDelegateTest",
-                ".BlockUninstallDelegateTest",
-                ".PermissionGrantDelegateTest",
-                ".PackageAccessDelegateTest",
-                ".EnableSystemAppDelegateTest"));
+    private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
+        final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
+        result.put(".AppRestrictionsDelegateTest", null);
+        result.put(".CertInstallDelegateTest", null);
+        result.put(".BlockUninstallDelegateTest", null);
+        result.put(".PermissionGrantDelegateTest", null);
+        result.put(".PackageAccessDelegateTest", null);
+        result.put(".EnableSystemAppDelegateTest", null);
+        result.putAll(getAdditionalDelegationTests());
+        return result;
+    }
+
+    Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
+        return Collections.<String, DevicePolicyEventWrapper[]>emptyMap();
     }
 
     /**
-     * Returns a list of delegation scopes that are applicable to both device owner and profile
-     * owners. DO or PO specific scopes should be added in the overridden method in subclass.
+     * Returns a list of delegation scopes that are needed to run delegation tests. Add scopes
+     * which are applicable to both device owner and profile owners to this method directly.
+     * DO or PO specific scopes should be added to {@link #getAdditionalDelegationScopes}
+     * in the subclass.
      */
-    protected List<String> getDelegationScopes() {
-        return new ArrayList<>(Arrays.asList(
+    private List<String> getDelegationScopes() {
+        final List<String> result = new ArrayList<>(Arrays.asList(
                 DELEGATION_APP_RESTRICTIONS,
                 DELEGATION_CERT_INSTALL,
                 DELEGATION_BLOCK_UNINSTALL,
@@ -310,6 +319,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 // hence missing from getDelegationTests() on purpose.
                 DELEGATION_CERT_SELECTION
                 ));
+        result.addAll(getAdditionalDelegationScopes());
+        return result;
+    }
+
+    List<String> getAdditionalDelegationScopes() {
+        return Collections.<String>emptyList();
     }
 
     /**
@@ -320,8 +335,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      *    {@code testCannotAccessApis}. Once implemented, add the delegation scope and the test
      *    class name to {@link #getDelegationScopes}, {@link #getDelegationTests} to make the test
      *    run on DO/PO/PO on primary user.  If the test should only run on a subset of these
-     *    combinations, add them to the subclass's {@link #getDelegationScopes} and
-     *    {@link #getDelegationTests} intead.
+     *    combinations, add them to the subclass's {@link #getAdditionalDelegationScopes} and
+     *    {@link #getDelegationScopes} intead.
      *    <p>Alternatively, create a separate hostside method to drive the test, similar to
      *    {@link MixedDeviceOwnerTest#testDelegationPackageInstallation()} and
      *    {@link #testDelegationCertSelection}. This is preferred if the delegated functionalities
@@ -345,7 +360,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
 
         try {
-            final List<String> delegationTests = getDelegationTests();
+            final Map<String, DevicePolicyEventWrapper[]> delegationTests = getDelegationTests();
             // APIs are not accessible by default.
             executeDelegationTests(delegationTests, false /* negative result */);
 
@@ -377,7 +392,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
         setDelegatedScopes(CERT_INSTALLER_PKG, Arrays.asList(
                 DELEGATION_CERT_INSTALL, DELEGATION_CERT_SELECTION));
-        runDeviceTestsAsUser(CERT_INSTALLER_PKG, ".CertSelectionDelegateTest", mUserId);
+
+        assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(CERT_INSTALLER_PKG, ".CertSelectionDelegateTest", mUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.CHOOSE_PRIVATE_KEY_ALIAS_VALUE)
+                .setAdminPackageName(CERT_INSTALLER_PKG)
+                .setBoolean(true)
+                .build());
     }
 
     public void testPermissionGrant() throws Exception {
@@ -1684,11 +1705,21 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ".AppRestrictionsDelegateTest", testName, mUserId);
     }
 
-    private void executeDelegationTests(List<String> delegationTests, boolean positive)
+    private void executeDelegationTests(Map<String, DevicePolicyEventWrapper[]> delegationTests,
+            boolean positive)
             throws Exception {
-        for (String delegationTestClass : delegationTests) {
-            runDeviceTestsAsUser(DELEGATE_APP_PKG, delegationTestClass,
-                positive ? "testCanAccessApis" : "testCannotAccessApis", mUserId);
+        for (Map.Entry<String, DevicePolicyEventWrapper[]> entry : delegationTests.entrySet()) {
+            final String delegationTestClass = entry.getKey();
+            final DevicePolicyEventWrapper[] expectedMetrics = entry.getValue();
+            final DevicePolicyEventLogVerifier.Action testRun = () -> {
+                runDeviceTestsAsUser(DELEGATE_APP_PKG, delegationTestClass,
+                        positive ? "testCanAccessApis" : "testCannotAccessApis", mUserId);
+            };
+            if (expectedMetrics != null && positive) {
+                assertMetricsLogged(getDevice(), testRun, expectedMetrics);
+            } else {
+                testRun.apply();
+            }
         }
     }
 
