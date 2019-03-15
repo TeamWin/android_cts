@@ -22,24 +22,3 @@ java_test_host {
         "general-tests",
     ],
 }
-
-android_test_helper_app {
-    name: "CtsJvmtiRedefineClassesDeviceApp",
-    srcs: ["app/src/**/*.java"],
-    manifest: "app/AndroidManifest.xml",
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    dex_preopt: {
-        enabled: false,
-    },
-    optimize: {
-        enabled: false,
-    },
-    static_libs: ["CtsJvmtiDeviceAppBase"],
-    jni_libs: ["libctsjvmtiagent"],
-    compile_multilib: "both",
-    sdk_version: "test_current",
-}
