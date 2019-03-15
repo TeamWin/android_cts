@@ -23,24 +23,3 @@ java_test_host {
         "general-tests",
     ],
 }
-
-android_test_helper_app {
-    name: "CtsJvmtiTaggingDeviceApp",
-    dex_preopt: {
-        enabled: false,
-    },
-    optimize: {
-        enabled: false,
-    },
-    srcs: ["app/src/**/*.java"],
-    manifest: "app/AndroidManifest.xml",
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    static_libs: ["CtsJvmtiDeviceAppBase"],
-    jni_libs: ["libctsjvmtiagent"],
-    compile_multilib: "both",
-    sdk_version: "test_current",
-}

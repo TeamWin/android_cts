@@ -22,14 +22,3 @@ java_test_host {
         "general-tests",
     ],
 }
-
-android_test_helper_app {
-    name: "CtsJvmtiRunTest1939DeviceApp",
-    defaults: ["cts-run-jvmti-defaults"],
-    manifest: "app/AndroidManifest.xml",
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-}

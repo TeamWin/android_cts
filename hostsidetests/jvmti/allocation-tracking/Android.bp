@@ -22,24 +22,3 @@ java_test_host {
         "general-tests",
     ],
 }
-
-android_test_helper_app {
-    name: "CtsJvmtiTrackingDeviceApp",
-    dex_preopt: {
-        enabled: false,
-    },
-    optimize: {
-        enabled: false,
-    },
-    srcs: ["app/src/**/*.java"],
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    static_libs: ["CtsJvmtiDeviceAppBase"],
-    jni_libs: ["libctsjvmtiagent"],
-    compile_multilib: "both",
-    manifest: "app/AndroidManifest.xml",
-}
-
