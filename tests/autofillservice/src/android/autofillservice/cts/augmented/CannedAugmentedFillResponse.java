@@ -51,10 +51,12 @@ public final class CannedAugmentedFillResponse {
 
     private final AugmentedResponseType mResponseType;
     private final Map<AutofillId, Dataset> mDatasets;
+    private long mDelay;
 
     private CannedAugmentedFillResponse(@NonNull Builder builder) {
         mResponseType = builder.mResponseType;
         mDatasets = builder.mDatasets;
+        mDelay = builder.mDelay;
     }
 
     /**
@@ -72,6 +74,10 @@ public final class CannedAugmentedFillResponse {
 
     public AugmentedResponseType getResponseType() {
         return mResponseType;
+    }
+
+    public long getDelay() {
+        return mDelay;
     }
 
     /**
@@ -141,6 +147,7 @@ public final class CannedAugmentedFillResponse {
     public static final class Builder {
         private final Map<AutofillId, Dataset> mDatasets = new ArrayMap<>();
         private final AugmentedResponseType mResponseType;
+        private long mDelay;
 
         public Builder(@NonNull AugmentedResponseType type) {
             mResponseType = type;
@@ -158,6 +165,14 @@ public final class CannedAugmentedFillResponse {
             for (AutofillId id : ids) {
                 mDatasets.put(id, dataset);
             }
+            return this;
+        }
+
+        /**
+         * Sets the delay for onFillRequest().
+         */
+        public Builder setDelay(long delay) {
+            mDelay = delay;
             return this;
         }
 
