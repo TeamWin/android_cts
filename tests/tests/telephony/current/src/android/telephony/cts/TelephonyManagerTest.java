@@ -45,7 +45,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CellLocation;
-import android.telephony.NetworkRegistrationState;
+import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
@@ -385,8 +385,8 @@ public class TelephonyManagerTest {
     private void assertServiceStateSanitization(ServiceState state, boolean sanitizedForFineOnly) {
         if (state == null) return;
 
-        if (state.getNetworkRegistrationStates() != null) {
-            for (NetworkRegistrationState nrs : state.getNetworkRegistrationStates()) {
+        if (state.getNetworkRegistrationInfoList() != null) {
+            for (NetworkRegistrationInfo nrs : state.getNetworkRegistrationInfoList()) {
                 assertNull(nrs.getCellIdentity());
             }
         }

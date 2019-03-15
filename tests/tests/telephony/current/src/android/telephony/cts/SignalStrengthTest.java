@@ -15,7 +15,7 @@
  */
 package android.telephony.cts;
 
-import static android.telephony.NetworkRegistrationState.NR_STATUS_CONNECTED;
+import static android.telephony.NetworkRegistrationInfo.NR_STATUS_CONNECTED;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
