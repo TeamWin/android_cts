@@ -132,6 +132,27 @@ public class StagedInstallTest {
                 .abandonSession(sessionId);
     }
 
+    @Test
+    public void testAbandonStagedApkBeforeReboot_CommitAndAbandon() throws Exception {
+        uninstall(TEST_APP_A);
+        prepareBroadcastReceiver();
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        waitForIsReadyBroadcast(sessionId);
+        PackageInstaller.SessionInfo session = getStagedSessionInfo(sessionId);
+        assertThat(session.isStagedSessionReady()).isTrue();
+        abandonSession(sessionId);
+        session = getStagedSessionInfo(sessionId);
+        assertThat(session).isNull();
+        unregisterBroacastReceiver();
+    }
+
+    @Test
+    public void testAbandonStagedApkBeforeReboot_VerifyPostReboot() throws Exception {
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+    }
+
     private static long getInstalledVersion(String packageName) {
         Context context = InstrumentationRegistry.getContext();
         PackageManager pm = context.getPackageManager();
@@ -205,6 +226,35 @@ public class StagedInstallTest {
             assertStatusSuccess(result);
             return this;
         }
+    }
+
+    private static void abandonSession(int sessionId) {
+        Context context = InstrumentationRegistry.getContext();
+        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        packageInstaller.abandonSession(sessionId);
+    }
+
+    /**
+     * Returns the session by session Id, or null if no session is found.
+     */
+    private static PackageInstaller.SessionInfo getStagedSessionInfo(int sessionId) {
+        Context context = InstrumentationRegistry.getContext();
+        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        for (PackageInstaller.SessionInfo session : packageInstaller.getStagedSessions()) {
+            if (session.getSessionId() == sessionId) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * TODO: after fixing b/128513530, make sure this returns null after session is aborted
+     */
+    private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
+        Context context = InstrumentationRegistry.getContext();
+        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        return packageInstaller.getSessionInfo(sessionId);
     }
 
     private static void uninstall(String packageName) throws Exception {

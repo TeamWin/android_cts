@@ -60,4 +60,11 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
         runPhase("testFailInstallAnotherSessionAlreadyInProgress");
     }
+
+    @Test
+    public void testAbandonStagedApkBeforeReboot() throws Exception {
+        runPhase("testAbandonStagedApkBeforeReboot_CommitAndAbandon");
+        getDevice().reboot();
+        runPhase("testAbandonStagedApkBeforeReboot_VerifyPostReboot");
+    }
 }
