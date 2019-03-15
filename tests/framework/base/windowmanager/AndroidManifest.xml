@@ -35,7 +35,7 @@
         <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"/>
-        <activity android:name="android.server.wm.LayoutTestsActivity"
+        <activity android:name="android.server.wm.LayoutTests$TestActivity"
                   android:theme="@style/no_animation" />
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
                   android:theme="@style/no_starting_window" />
