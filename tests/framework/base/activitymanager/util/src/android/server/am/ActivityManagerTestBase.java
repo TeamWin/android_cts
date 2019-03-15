@@ -199,6 +199,7 @@ public abstract class ActivityManagerTestBase {
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
 
     private static Boolean sHasHomeScreen = null;
+    private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
@@ -461,6 +462,17 @@ public abstract class ActivityManagerTestBase {
         } catch (Resources.NotFoundException e) {
             // Assume there's a home screen.
             return false;
+        }
+    }
+
+    private boolean getSupportsSystemDecorsOnSecondaryDisplays() {
+        try {
+            return mContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier(
+                            "config_supportsSystemDecorsOnSecondaryDisplays", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume this device support system decorations.
+            return true;
         }
     }
 
@@ -845,6 +857,13 @@ public abstract class ActivityManagerTestBase {
             sHasHomeScreen = !noHomeScreen();
         }
         return sHasHomeScreen;
+    }
+
+    protected boolean supportsSystemDecorsOnSecondaryDisplays() {
+        if (sSupportsSystemDecorsOnSecondaryDisplays == null) {
+            sSupportsSystemDecorsOnSecondaryDisplays = getSupportsSystemDecorsOnSecondaryDisplays();
+        }
+        return sSupportsSystemDecorsOnSecondaryDisplays;
     }
 
     /**
