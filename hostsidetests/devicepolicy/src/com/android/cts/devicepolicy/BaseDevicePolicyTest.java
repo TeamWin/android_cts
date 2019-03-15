@@ -446,7 +446,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
 
         CollectingTestListener listener = new CollectingTestListener();
-        assertTrue(getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener));
+        getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener);
 
         final TestRunResult result = listener.getCurrentRunResults();
         if (result.isRunFailure()) {
