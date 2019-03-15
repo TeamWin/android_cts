@@ -29,6 +29,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -40,6 +41,7 @@ import org.junit.runners.JUnit4;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +69,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(JUnit4.class)
 public class StagedInstallTest {
 
+    private static final String TAG = "StagedInstallTest";
+
     private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
 
     @Before
@@ -85,6 +89,24 @@ public class StagedInstallTest {
                 .getInstrumentation()
                 .getUiAutomation()
                 .dropShellPermissionIdentity();
+    }
+
+    // This is marked as @Test to take advantage of @Before/@After methods of this class. Actual
+    // purpose of this method to be called before and after each test case of
+    // com.android.test.stagedinstall.host.StagedInstallTest to reduce tests flakiness.
+    @Test
+    public void cleanUpStagedSessions() throws Exception {
+        PackageInstaller packageInstaller =
+                InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+        List<PackageInstaller.SessionInfo> stagedSessions = packageInstaller.getStagedSessions();
+        for (PackageInstaller.SessionInfo sessionInfo : stagedSessions) {
+            try {
+                Log.i(TAG, "abandoning session " + sessionInfo.getSessionId());
+                packageInstaller.abandonSession(sessionInfo.getSessionId());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
+            }
+        }
     }
 
     @Test
@@ -110,7 +132,7 @@ public class StagedInstallTest {
                 "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
-        unregisterBroacastReceiver();
+        unregisterBroadcastReceiver();
         // TODO: test that the staged Session is in place and is ready
     }
 
@@ -122,7 +144,6 @@ public class StagedInstallTest {
 
     @Test
     public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
-        uninstall(TEST_APP_A);
         int sessionId = stageSingleApk(
                 "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
         StageSessionResult failedSessionResult = stageSingleApk("StagedInstallTestAppAv1.apk");
@@ -145,7 +166,7 @@ public class StagedInstallTest {
         abandonSession(sessionId);
         session = getStagedSessionInfo(sessionId);
         assertThat(session).isNull();
-        unregisterBroacastReceiver();
+        unregisterBroadcastReceiver();
     }
 
     @Test
@@ -193,6 +214,7 @@ public class StagedInstallTest {
         }
 
         // Commit the session (this will start the installation workflow).
+        Log.i(TAG, "Committing session for apk: " + apkFileName);
         session.commit(LocalIntentSender.getIntentSender());
         return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
     }
@@ -310,6 +332,7 @@ public class StagedInstallTest {
     }
 
     private void waitForIsReadyBroadcast(int sessionId) {
+        Log.i(TAG, "Waiting for session " + sessionId + " to be ready");
         try {
             PackageInstaller.SessionInfo info =
                     mSessionBroadcasts.poll(60, TimeUnit.SECONDS);
@@ -323,7 +346,7 @@ public class StagedInstallTest {
         }
     }
 
-    private void unregisterBroacastReceiver() {
+    private void unregisterBroadcastReceiver() {
         Context context = InstrumentationRegistry.getContext();
         context.unregisterReceiver(mSessionUpdateReceiver);
     }
