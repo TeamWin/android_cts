@@ -898,7 +898,7 @@ public class TextViewTest {
     public void testAccessPaintFlags() {
         mTextView = new TextView(mActivity);
         assertEquals(Paint.DEV_KERN_TEXT_FLAG | Paint.EMBEDDED_BITMAP_TEXT_FLAG
-                | Paint.ANTI_ALIAS_FLAG, mTextView.getPaintFlags());
+                | Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG, mTextView.getPaintFlags());
 
         mTextView.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG | Paint.FAKE_BOLD_TEXT_FLAG);
         assertEquals(Paint.UNDERLINE_TEXT_FLAG | Paint.FAKE_BOLD_TEXT_FLAG,
