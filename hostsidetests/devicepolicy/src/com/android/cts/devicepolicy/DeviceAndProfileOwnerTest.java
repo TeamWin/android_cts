@@ -836,18 +836,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testDisallowSetWallpaper_allowed");
     }
 
-    public void testDisallowSetUserIcon_allowed() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".CustomizationRestrictionsTest",
-                    "testDisallowSetUserIcon_allowed");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_USER_ICON_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-    }
-
     public void testDisallowAutofill_allowed() throws Exception {
         if (!mHasFeature) {
             return;
