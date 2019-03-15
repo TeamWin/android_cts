@@ -1571,6 +1571,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testAddAutomaticZenRule_configActivity() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1583,6 +1587,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testUpdateAutomaticZenRule_configActivity() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1597,6 +1605,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testRemoveAutomaticZenRule_configActivity() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1612,6 +1624,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1631,6 +1647,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState_turnOff() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1659,6 +1679,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState_deletedRule() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1683,6 +1707,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1916,6 +1944,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testShouldHideSilentStatusIcons() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
         try {
             mNotificationManager.shouldHideSilentStatusBarIcons();
             fail("Non-privileged apps should not get this information");
@@ -1930,6 +1962,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testMatchesCallFilter() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
