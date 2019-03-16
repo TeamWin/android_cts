@@ -59,6 +59,7 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
 
     @Before
     public void setFixtures() {
+        mServiceWatcher = null;
         sAugmentedReplier = CtsAugmentedAutofillService.getAugmentedReplier();
         sAugmentedReplier.reset();
         CtsAugmentedAutofillService.resetStaticState();
@@ -72,6 +73,11 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
                     }
                 })
                 .add(() -> { return sAugmentedReplier.getExceptions(); });
+    }
+
+    @Override
+    protected int getNumberRetries() {
+        return 0; // A.K.A. "Optimistic Thinking"
     }
 
     @Override

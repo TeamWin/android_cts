@@ -104,6 +104,7 @@ public final class CannedAugmentedFillResponse {
         final LayoutInflater inflater = LayoutInflater.from(context);
         final TextView rootView = (TextView) inflater.inflate(R.layout.augmented_autofill_ui, null);
 
+        Log.d(TAG, "Setting autofill UI text to:" + dataset.mPresentation);
         rootView.setText(dataset.mPresentation);
 
         rootView.setContentDescription(getContentDescriptionForUi(focusedId));
