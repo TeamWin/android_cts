@@ -80,7 +80,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    @Ignore // TODO(b/127296534): enable the test after fixing the bug.
     public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
         runPhase("testFailInstallAnotherSessionAlreadyInProgress");
     }
