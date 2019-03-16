@@ -17,18 +17,18 @@
 package android.processor.view.inspector.cts;
 
 import android.view.inspector.InspectableProperty.ValueType;
-import android.view.inspector.IntEnumMapping;
-import android.view.inspector.IntFlagMapping;
 import android.view.inspector.PropertyMapper;
 
 import java.util.HashMap;
+import java.util.Set;
+import java.util.function.IntFunction;
 
 class TestPropertyMapper implements PropertyMapper {
     private final HashMap<String, Integer> mPropertyIds = new HashMap<>();
     private final HashMap<String, Integer> mAttributeIds = new HashMap<>();
     private final HashMap<String, ValueType> mValueTypes = new HashMap<>();
-    private final HashMap<String, IntEnumMapping> mIntEnumMappings = new HashMap<>();
-    private final HashMap<String, IntFlagMapping> mIntFlagMappings = new HashMap<>();
+    private final HashMap<String, IntFunction<String>> mIntEnumMappings = new HashMap<>();
+    private final HashMap<String, IntFunction<Set<String>>> mIntFlagMappings = new HashMap<>();
     private int mNextId = 1;
 
     int getId(String name) {
@@ -43,11 +43,11 @@ class TestPropertyMapper implements PropertyMapper {
         return mValueTypes.getOrDefault(name, ValueType.NONE);
     }
 
-    IntEnumMapping getIntEnumMapping(String name) {
+    IntFunction<String> getIntEnumMapping(String name) {
         return mIntEnumMappings.get(name);
     }
 
-    IntFlagMapping getIntFlagMapping(String name) {
+    IntFunction<Set<String>> getIntFlagMapping(String name) {
         return mIntFlagMappings.get(name);
     }
 
@@ -105,13 +105,13 @@ class TestPropertyMapper implements PropertyMapper {
     }
 
     @Override
-    public int mapIntEnum(String name, int attributeId, IntEnumMapping intEnumMapping) {
+    public int mapIntEnum(String name, int attributeId, IntFunction<String> intEnumMapping) {
         mIntEnumMappings.put(name, intEnumMapping);
         return map(name, attributeId, ValueType.INT_ENUM);
     }
 
     @Override
-    public int mapIntFlag(String name, int attributeId, IntFlagMapping intFlagMapping) {
+    public int mapIntFlag(String name, int attributeId, IntFunction<Set<String>> intFlagMapping) {
         mIntFlagMappings.put(name, intFlagMapping);
         return map(name, attributeId, ValueType.INT_FLAG);
     }
