@@ -32,12 +32,14 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
 import android.util.Log;
-import android.view.SurfaceHolder;
-
+import android.view.Surface;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -82,7 +84,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private MediaDescrambler mVideoDescrambler;
     private MediaExtractor mAudioExtractor;
     private MediaExtractor mVideoExtractor;
-    private SurfaceHolder mSurfaceHolder;
+    private Deque<Surface> mSurfaces;
     private Thread mThread;
     private Uri mAudioUri;
     private Uri mVideoUri;
@@ -135,15 +137,16 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
      * Media player class to stream CENC content using MediaCodec class.
      */
     public MediaCodecClearKeyPlayer(
-            SurfaceHolder holder, byte[] sessionId, boolean scrambled, Resources resources) {
+            List<Surface> surfaces, byte[] sessionId, boolean scrambled, Resources resources) {
         mSessionId = sessionId;
         mScrambled = scrambled;
-        mSurfaceHolder = holder;
+        mSurfaces = new ArrayDeque<>(surfaces);
         mResources = resources;
         mState = STATE_IDLE;
         mThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                int n = 0;
                 while (mThreadStarted == true) {
                     doSomeWork();
                     if (mAudioTrackState != null) {
@@ -153,6 +156,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                         Thread.sleep(5);
                     } catch (InterruptedException ex) {
                         Log.d(TAG, "Thread interrupted");
+                    }
+                    if(++n % 1000 == 0) {
+                        cycleSurfaces();
                     }
                 }
                 if (mAudioTrackState != null) {
@@ -398,13 +404,13 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         if (!mScrambled) {
             codec.configure(
                     format,
-                    isVideo ? mSurfaceHolder.getSurface() : null,
+                    isVideo ? mSurfaces.getFirst() : null,
                     mCrypto,
                     0);
         } else {
             codec.configure(
                     format,
-                    isVideo ? mSurfaceHolder.getSurface() : null,
+                    isVideo ? mSurfaces.getFirst() : null,
                     0,
                     isVideo ? mVideoDescrambler : mAudioDescrambler);
         }
@@ -617,6 +623,23 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     + e.getErrorCode() + ", '" + e.getMessage() + "'");
         } catch (IllegalStateException e) {
             throw new Error("Aduio CodecState.feedInputBuffer IllegalStateException " + e);
+        }
+    }
+
+    private void cycleSurfaces() {
+        if (mSurfaces.size() > 1) {
+            final Surface s = mSurfaces.removeFirst();
+            mSurfaces.addLast(s);
+            for (CodecState c : mVideoCodecStates.values()) {
+                c.setOutputSurface(mSurfaces.getFirst());
+                /*
+                 * Calling InputSurface.clearSurface on an old `output` surface because after
+                 * MediaCodec has rendered to the old output surface, we need `edit`
+                 * (i.e. draw black on) the old output surface.
+                 */
+                InputSurface.clearSurface(s);
+                break;
+            }
         }
     }
 

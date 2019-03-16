@@ -20,7 +20,7 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
-
+import android.view.Surface;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
@@ -393,5 +393,12 @@ public class CodecState {
         if (mAudioTrack != null) {
             mAudioTrack.stop();
         }
+    }
+
+    public void setOutputSurface(Surface surface) {
+        if (mAudioTrack != null) {
+            throw new UnsupportedOperationException("Cannot set surface on audio codec");
+        }
+        mCodec.setOutputSurface(surface);
     }
 }
