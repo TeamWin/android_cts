@@ -40,6 +40,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.ComponentName;
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.DisconnectListener;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
@@ -192,6 +193,64 @@ public class ChildlessActivityTest
 
         final Session session2 = service.getFinishedSession(sessionId2);
         activity2.assertDefaultEvents(session2);
+    }
+
+
+    @Test
+    public void testLaunchAnotherActivity_onTopOfIt() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher1 = startWatcher();
+
+        // Launch 1st activity
+        final ChildlessActivity activity1 = launchActivity();
+        watcher1.waitFor(RESUMED);
+
+        // Launch and finish 2nd activity
+        final ActivityLauncher<LoginActivity> anotherActivityLauncher = new ActivityLauncher<>(
+                sContext, mActivitiesWatcher, LoginActivity.class);
+        final ActivityWatcher watcher2 = anotherActivityLauncher.getWatcher();
+        final LoginActivity activity2 = anotherActivityLauncher.launchActivity();
+
+        watcher2.waitFor(RESUMED);
+        activity2.finish();
+        watcher2.waitFor(DESTROYED);
+
+        // Finish 1st activity
+        activity1.finish();
+        watcher1.waitFor(DESTROYED);
+
+        // Assert the activity lifecycle events
+        final ComponentName name1 = activity1.getComponentName();
+        final ComponentName name2 = activity2.getComponentName();
+        service.assertThat()
+            .activityResumed(name1)
+            .activityPaused(name1)
+            .activityResumed(name2)
+            .activityStopped(name1)
+            .activityPaused(name2)
+            .activityResumed(name1)
+            .activityPaused(name1);
+
+        // Assert the sessions
+        final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();
+        assertThat(sessionIds).hasSize(2);
+        final ContentCaptureSessionId sessionId1 = sessionIds.get(0);
+        Log.v(TAG, "session id1: " + sessionId1);
+        final ContentCaptureSessionId sessionId2 = sessionIds.get(1);
+        Log.v(TAG, "session id2: " + sessionId2);
+
+        final Session session1 = service.getFinishedSession(sessionId1);
+        final List<ContentCaptureEvent> events1 = session1.getEvents();
+        Log.v(TAG, "events on " + activity1 + ": " + events1);
+        assertThat(events1).hasSize(4);
+        assertSessionResumed(events1, 0);
+        assertSessionPaused(events1, 1);
+        assertSessionResumed(events1, 2);
+        assertSessionPaused(events1, 3);
+
+        final Session session2 = service.getFinishedSession(sessionId2);
+        activity2.assertDefaultEvents(session2);
+
     }
 
     @Test
