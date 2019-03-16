@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.CannedFillResponse.FAIL;
+import static android.autofillservice.cts.CannedFillResponse.NO_MOAR_RESPONSES;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
@@ -32,6 +33,7 @@ import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.disallowOverlays;
 import static android.autofillservice.cts.Helper.dumpStructure;
+import static android.autofillservice.cts.Helper.findNodeByAutofillId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.isAutofillWindowFullScreen;
 import static android.autofillservice.cts.Helper.setUserComplete;
@@ -91,6 +93,7 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
+import android.widget.EditText;
 import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.RetryableException;
@@ -134,18 +137,76 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
-    public void testAutofillManuallyAfterServiceReturnedNoDatasets() throws Exception {
-        autofillAfterServiceReturnedNoDatasets(true);
+    public void testAutoFillNoDatasets_multipleFields_alwaysNull() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier
+            .addResponse(NO_RESPONSE)
+            .addResponse(NO_MOAR_RESPONSES);
+
+        // Trigger a
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        mUiBot.assertNoDatasetsEver();
+
+        // Tap back and forth to make sure no more requests are shown
+
+        mActivity.onPassword(View::requestFocus);
+        mUiBot.assertNoDatasetsEver();
+
+        mActivity.onUsername(View::requestFocus);
+        mUiBot.assertNoDatasetsEver();
+
+        mActivity.onPassword(View::requestFocus);
+        mUiBot.assertNoDatasetsEver();
     }
 
     @Test
     @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillAutomaticallyAfterServiceReturnedNoDatasets() throws Exception {
-        autofillAfterServiceReturnedNoDatasets(false);
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger autofill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Make sure UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Try again, in a field that was added after the first request
+        final EditText child = new EditText(mActivity);
+        mActivity.addChild(child);
+        final OneTimeTextWatcher watcher = new OneTimeTextWatcher("child", child,
+                "new view on the block");
+        child.addTextChangedListener(watcher);
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setField(child.getAutofillId(), "new view on the block")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.syncRunOnUiThread(() -> child.requestFocus());
+
+        sReplier.getNextFillRequest();
+
+        // Select the dataset.
+        mUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        watcher.assertAutoFilled();
     }
 
-    private void autofillAfterServiceReturnedNoDatasets(boolean manually) throws Exception {
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
+    public void testAutofillManuallyAfterServiceReturnedNoDatasets() throws Exception {
         // Set service.
         enableService();
 
@@ -167,17 +228,10 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 .setPresentation(createPresentation("The Dude"))
                 .build());
 
-        final int expectedFlags;
-        if (manually) {
-            expectedFlags = FLAG_MANUAL_REQUEST;
-            mActivity.forceAutofillOnUsername();
-        } else {
-            expectedFlags = 0;
-            requestFocusOnPassword();
-        }
+        mActivity.forceAutofillOnUsername();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        assertHasFlags(fillRequest.flags, expectedFlags);
+        assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
 
         // Select the dataset.
         mUiBot.selectDataset("The Dude");
@@ -189,16 +243,6 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     @Test
     @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutofillManuallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
-        autofillAndSaveAfterServiceReturnedNoDatasets(true);
-    }
-
-    @Test
-    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
-    public void testAutofillAutomaticallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
-        autofillAndSaveAfterServiceReturnedNoDatasets(false);
-    }
-
-    private void autofillAndSaveAfterServiceReturnedNoDatasets(boolean manually) throws Exception {
         // Set service.
         enableService();
 
@@ -218,7 +262,69 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.assertNoUnhandledFillRequests();
 
         // Try again, forcing it
-        saveOnlyTest(manually);
+        saveOnlyTest(/* manually= */ true);
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
+    public void testAutofillAutomaticallyAndSaveAfterServiceReturnedNoDatasets() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(NO_RESPONSE);
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger autofill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Make sure UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Try again, in a field that was added after the first request
+        final EditText child = new EditText(mActivity);
+        mActivity.addChild(child);
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableAutofillIds(SAVE_DATA_TYPE_PASSWORD,
+                        mActivity.getUsername().getAutofillId(),
+                        mActivity.getPassword().getAutofillId(),
+                        child.getAutofillId())
+                .build());
+        mActivity.syncRunOnUiThread(() -> child.requestFocus());
+
+        // Sanity check.
+        mUiBot.assertNoDatasetsEver();
+
+        // Wait for onFill() before proceeding, otherwise the fields might be changed before
+        // the session started
+        sReplier.getNextFillRequest();
+
+        // Set credentials...
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        mActivity.runOnUiThread(() -> child.setText("NOT MR.M"));
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        sReplier.assertNoUnhandledSaveRequests();
+        assertThat(saveRequest.datasetIds).isNull();
+
+        // Assert value of expected fields - should not be sanitized.
+        final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        assertTextAndValue(username, "malkovich");
+        final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+        assertTextAndValue(password, "malkovich");
+        final ViewNode childNode = findNodeByAutofillId(saveRequest.structure,
+                child.getAutofillId());
+        assertTextAndValue(childNode, "NOT MR.M");
     }
 
     /**
@@ -238,21 +344,10 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
         waitUntilDisconnected();
 
-        // Trigger autofill on password - should call service
-        sReplier.addResponse(NO_RESPONSE);
+        // Every other call should be ignored
         mActivity.onPassword(View::requestFocus);
-        sReplier.getNextFillRequest();
-        waitUntilDisconnected();
-
-        // Tap username again - should be ignored
         mActivity.onUsername(View::requestFocus);
-        sReplier.assertOnFillRequestNotCalled();
-        waitUntilDisconnected();
-
-        // Tap password again - should be ignored
         mActivity.onPassword(View::requestFocus);
-        sReplier.assertOnFillRequestNotCalled();
-        waitUntilDisconnected();
 
         // Trigger autofill by manually requesting username - should call service
         sReplier.addResponse(NO_RESPONSE);

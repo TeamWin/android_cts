@@ -16,9 +16,19 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+
+import android.stats.devicepolicy.EventId;
+
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
+
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Set of tests for device owner use cases that also apply to profile owners.
@@ -67,14 +77,32 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                         "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId));
     }
 
-    protected List<String> getDelegationTests() {
-        List<String> result = super.getDelegationTests();
-        result.add(".NetworkLoggingDelegateTest");
+    @Override
+    Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
+        final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
+        DevicePolicyEventWrapper[] expectedMetrics = new DevicePolicyEventWrapper[] {
+                new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_LOGGING_ENABLED_VALUE)
+                        .setAdminPackageName(DELEGATE_APP_PKG)
+                        .setBoolean(true)
+                        .setInt(1)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_NETWORK_LOGS_VALUE)
+                        .setAdminPackageName(DELEGATE_APP_PKG)
+                        .setBoolean(true)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_LOGGING_ENABLED_VALUE)
+                        .setAdminPackageName(DELEGATE_APP_PKG)
+                        .setBoolean(true)
+                        .setInt(0)
+                        .build(),
+        };
+        result.put(".NetworkLoggingDelegateTest", expectedMetrics);
         return result;
     }
 
-    protected List<String> getDelegationScopes() {
-        List<String> result = super.getDelegationScopes();
+    @Override
+    List<String> getAdditionalDelegationScopes() {
+        final List<String> result = new ArrayList<>();
         result.add(DELEGATION_NETWORK_LOGGING);
         // PackageInstallation delegation is missing from this since it's explicitly tested below.
         return result;
@@ -89,8 +117,18 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
 
             installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
-            setDelegatedScopes(PACKAGE_INSTALLER_PKG, Arrays.asList(DELEGATION_PACKAGE_INSTALLATION));
-            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".SilentPackageInstallTest", mUserId);
+            setDelegatedScopes(PACKAGE_INSTALLER_PKG,
+                    Arrays.asList(DELEGATION_PACKAGE_INSTALLATION));
+
+            assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".SilentPackageInstallTest",
+                            mUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_PACKAGE_VALUE)
+                    .setAdminPackageName(PACKAGE_INSTALLER_PKG)
+                    .build(),
+               new DevicePolicyEventWrapper.Builder(EventId.UNINSTALL_PACKAGE_VALUE)
+                    .setAdminPackageName(PACKAGE_INSTALLER_PKG)
+                    .build());
             // Uninstall of test packages happen in tearDown.
         } finally {
             String command = "rm " + TEST_APP_LOCATION + apk.getName();

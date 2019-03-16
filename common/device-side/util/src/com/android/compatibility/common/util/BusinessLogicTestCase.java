@@ -19,19 +19,17 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.rules.TestName;
-
 import android.app.Instrumentation;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
-import java.lang.reflect.Field;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+
 import java.io.File;
-import java.util.List;
+import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -51,7 +49,6 @@ public class BusinessLogicTestCase {
     @Before
     public void handleBusinessLogic() {
         loadBusinessLogic();
-        ensureAuthenticated();
         executeBusinessLogic();
     }
 
@@ -78,27 +75,6 @@ public class BusinessLogicTestCase {
         } else {
             mCanReadBusinessLogic = false;
         }
-    }
-
-    protected void ensureAuthenticated() {
-        if (!mCanReadBusinessLogic) {
-            // super class handles the condition that the service is unavailable.
-            return;
-        }
-
-        if (!mBusinessLogic.mConditionalTestsEnabled) {
-            skipTest("Execution of device specific tests is not enabled. "
-                    + "Enable with '--conditional-business-logic-tests-enabled'");
-        }
-
-        if (mBusinessLogic.isAuthorized()) {
-            // Run test as normal.
-            return;
-        }
-        String message = mBusinessLogic.getAuthenticationStatusMessage();
-
-        // Fail test since request was not authorized.
-        failTest(String.format("Unable to execute because %s.", message));
     }
 
     protected static Instrumentation getInstrumentation() {

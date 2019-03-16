@@ -47,6 +47,7 @@ import android.os.strictmode.NonSdkApiUsedViolation;
 import android.os.strictmode.UntaggedSocketViolation;
 import android.os.strictmode.Violation;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
@@ -80,7 +81,6 @@ import java.util.function.Consumer;
 
 /** Tests for {@link StrictMode} */
 @RunWith(AndroidJUnit4.class)
-@AppModeFull
 public class StrictModeTest {
     private static final String TAG = "StrictModeTest";
     private static final String REMOTE_SERVICE_ACTION = "android.app.REMOTESERVICE";
@@ -181,6 +181,7 @@ public class StrictModeTest {
     private static final class LimitedClass {}
 
     /** Insecure connection should be detected */
+    @AppModeFull
     @Test
     public void testCleartextNetwork() throws Exception {
         if (!hasInternetConnection()) {
@@ -273,6 +274,7 @@ public class StrictModeTest {
                 });
     }
 
+    @AppModeFull
     @Test
     public void testUntaggedSocketsHttp() throws Exception {
         if (!hasInternetConnection()) {
@@ -402,6 +404,7 @@ public class StrictModeTest {
                 () -> file.renameTo(new File(file.getParent(), "foobar")), assertDiskWritePolicy);
     }
 
+    @AppModeFull
     @Test
     public void testNetwork() throws Exception {
         if (!hasInternetConnection()) {
@@ -559,6 +562,30 @@ public class StrictModeTest {
 
         final Violation v = violations.poll(5, TimeUnit.SECONDS);
         assertTrue(v instanceof FileUriExposedViolation);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testNoCleartextHttpTrafficAllowed() throws Exception {
+        if (!hasInternetConnection()) {
+            Log.i(TAG, "testNoCleartextHttpTrafficAllowed() ignored on device without Internet");
+            return;
+        }
+
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder().detectCleartextNetwork().penaltyLog().build());
+
+        try {
+            inspectViolation(
+                    () ->
+                            ((HttpURLConnection) new URL("http://example.com/").openConnection())
+                                    .getResponseCode(),
+                    info -> assertThat(info.getViolationClass())
+                            .isAssignableTo(CleartextNetworkViolation.class));
+            fail("Instant app was able to send cleartext http traffic.");
+        } catch (IOException ex) {
+            // Expected
+        }
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)

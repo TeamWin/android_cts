@@ -8453,13 +8453,6 @@ public class TextViewTest {
         assertEquals(TextDirectionHeuristics.LOCALE, textView.getTextDirectionHeuristic());
     }
 
-    @Test
-    @UiThreadTest
-    public void testSameStyleFamilyExceptionIgnoringTest() {
-        mActivity.setContentView(R.layout.textview_family_with_the_same_style);
-        // The IllegalArgumentException must not happen.
-    }
-
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
         assertTrue(text.length() >= SMARTSELECT_END);
         mActivityRule.runOnUiThread(() -> {

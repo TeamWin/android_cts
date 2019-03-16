@@ -34,14 +34,17 @@ java_test_host {
     ],
 }
 
-android_test {
+android_test_helper_app {
     name: "StagedInstallTest",
 
     srcs:  ["app/src/**/*.java"],
 
     manifest : "app/AndroidManifest.xml",
 
-    java_resources:  [":StagedInstallTestAppAv1"],
+    java_resources:  [
+        ":StagedInstallTestAppAv1",
+        ":StagedInstallTestAppBv1",
+        ],
     static_libs: [
         "androidx.test.runner",
         "truth-prebuilt",
@@ -51,11 +54,19 @@ android_test {
 
 }
 
-android_app {
+android_test_helper_app {
     name: "StagedInstallTestAppAv1",
 
     srcs:   ["testdata/apk/src/**/*java"],
 
     manifest:   "testdata/apk/Av1.xml",
+}
+
+android_test_helper_app {
+    name: "StagedInstallTestAppBv1",
+
+    srcs:   ["testdata/apk/src/**/*java"],
+
+    manifest:   "testdata/apk/Bv1.xml",
 }
 

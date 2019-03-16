@@ -58,7 +58,8 @@ NOT_YET_MANDATED = {
                 'test_tonemap_curve'
         ],
         'scene1': [
-                'test_ae_precapture_trigger'
+                'test_ae_precapture_trigger',
+                'test_channel_saturation'
         ],
         'scene2': [
                 'test_auto_per_frame_control'
@@ -104,11 +105,17 @@ def calc_camera_fov(camera_id):
     """Determine the camera field of view from internal params."""
     with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
+        focal_ls = props['android.lens.info.availableFocalLengths']
+        if len(focal_ls) > 1:
+            print 'Doing capture to determine logical camera focal length'
+            cap = cam.do_capture(its.objects.auto_capture_request())
+            focal_l = cap['metadata']['android.lens.focalLength']
+        else:
+            focal_l = focal_ls[0]
+    sensor_size = props['android.sensor.info.physicalSize']
+    diag = math.sqrt(sensor_size['height'] ** 2 +
+                     sensor_size['width'] ** 2)
     try:
-        focal_l = props['android.lens.info.availableFocalLengths'][0]
-        sensor_size = props['android.sensor.info.physicalSize']
-        diag = math.sqrt(sensor_size['height'] ** 2 +
-                         sensor_size['width'] ** 2)
         fov = str(round(2 * math.degrees(math.atan(diag / (2 * focal_l))), 2))
     except ValueError:
         fov = str(0)

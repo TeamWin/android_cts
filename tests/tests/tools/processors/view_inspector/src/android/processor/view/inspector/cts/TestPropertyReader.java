@@ -37,11 +37,11 @@ class TestPropertyReader implements PropertyReader {
     }
 
     String getIntEnum(String name) {
-        return mPropertyMapper.getIntEnumMapping(name).get((Integer) get(name));
+        return mPropertyMapper.getIntEnumMapping(name).apply((Integer) get(name));
     }
 
     Set<String> getIntFlag(String name) {
-        return mPropertyMapper.getIntFlagMapping(name).get((Integer) get(name));
+        return mPropertyMapper.getIntFlagMapping(name).apply((Integer) get(name));
     }
 
     @Override

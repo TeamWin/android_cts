@@ -365,9 +365,7 @@ public class MediaCodecListTest extends AndroidTestCase {
 
         // Mandatory audio decoders
 
-        // flac decoder is not omx-based yet
-        // list.add(new CodecType(MediaFormat.MIMETYPE_AUDIO_FLAC, false, 8000));
-        // list.add(new CodecType(MediaFormat.MIMETYPE_AUDIO_FLAC, false, 48000));
+        list.add(new AudioCodec(MediaFormat.MIMETYPE_AUDIO_FLAC, false, 48000));
         list.add(new AudioCodec(MediaFormat.MIMETYPE_AUDIO_MPEG, false, 8000));  // mp3
         list.add(new AudioCodec(MediaFormat.MIMETYPE_AUDIO_MPEG, false, 48000)); // mp3
         list.add(new AudioCodec(MediaFormat.MIMETYPE_AUDIO_VORBIS, false, 8000));

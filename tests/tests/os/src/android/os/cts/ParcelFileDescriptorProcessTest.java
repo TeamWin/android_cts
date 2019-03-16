@@ -25,7 +25,6 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import com.google.common.util.concurrent.AbstractFuture;
@@ -39,7 +38,6 @@ import java.util.concurrent.TimeoutException;
 /**
  * Test various cross-process {@link ParcelFileDescriptor} interactions.
  */
-@AppModeFull
 public class ParcelFileDescriptorProcessTest extends AndroidTestCase {
 
     private Intent redIntent;
@@ -117,9 +115,12 @@ public class ParcelFileDescriptorProcessTest extends AndroidTestCase {
         context.stopService(redIntent);
         context.stopService(blueIntent);
 
-        final ActivityManager am = (ActivityManager) mContext.getSystemService(
-                Context.ACTIVITY_SERVICE);
-        am.killBackgroundProcesses(context.getPackageName());
+        // Instant Apps don't have the KILL_BACKGROUND_PROCESSES permission
+        if (!context.getPackageManager().isInstantApp()) {
+            final ActivityManager am = (ActivityManager) mContext.getSystemService(
+                    Context.ACTIVITY_SERVICE);
+            am.killBackgroundProcesses(context.getPackageName());
+        }
     }
 
     public void testPullPipeNormal() throws Exception {

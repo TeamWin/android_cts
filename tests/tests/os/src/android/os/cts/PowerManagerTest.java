@@ -28,7 +28,8 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 
-@AppModeFull
+@AppModeFull(reason = "Instant Apps don't have the WRITE_SECURE_SETTINGS permission "
+        + "required in tearDown for Global#putInt")
 public class PowerManagerTest extends AndroidTestCase {
     private static final String TAG = "PowerManagerTest";
     public static final long TIME = 3000;

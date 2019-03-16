@@ -17,11 +17,14 @@
 package android.autofillservice.cts.augmented;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.UiBot.LANDSCAPE;
+import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
 import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_FILL_TIMEOUT;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.DO_NOT_REPLY_AUGMENTED_RESPONSE;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
 
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
@@ -45,14 +48,14 @@ import org.junit.Test;
 import java.util.Set;
 
 public class AugmentedLoginActivityTest
-        extends AugmentedAutofillAutoActivityLaunchTestCase<LoginActivity> {
+        extends AugmentedAutofillAutoActivityLaunchTestCase<AugmentedLoginActivity> {
 
-    protected LoginActivity mActivity;
+    protected AugmentedLoginActivity mActivity;
 
     @Override
-    protected AutofillActivityTestRule<LoginActivity> getActivityRule() {
-        return new AutofillActivityTestRule<LoginActivity>(
-                LoginActivity.class) {
+    protected AutofillActivityTestRule<AugmentedLoginActivity> getActivityRule() {
+        return new AutofillActivityTestRule<AugmentedLoginActivity>(
+                AugmentedLoginActivity.class) {
             @Override
             protected void afterActivityLaunched() {
                 mActivity = getActivity();
@@ -199,6 +202,178 @@ public class AugmentedLoginActivityTest
 
         // Assert results
         listener.assertOnCancelCalled();
+    }
+
+
+    @Test
+    public void testAugmentedAutoFill_multipleRequests() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        mAugmentedUiBot.assertUiShown(usernameId, "req1");
+
+        // Move focus away to make sure Augmented Autofill UI is gone.
+        mActivity.onLogin(View::requestFocus);
+        mAugmentedUiBot.assertUiGone();
+
+        // Tap on password field
+        final EditText password = mActivity.getPassword();
+        final AutofillId passwordId = password.getAutofillId();
+        final AutofillValue passwordValue = password.getAutofillValue();
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req2")
+                        .build(), passwordId)
+                .build());
+        mActivity.onPassword(View::requestFocus);
+        mUiBot.assertNoDatasetsEver();
+        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
+
+        mAugmentedUiBot.assertUiShown(passwordId, "req2");
+
+        // Tap on username again...
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .setField(passwordId, "sweet")
+                        .build(), usernameId)
+                .build());
+
+        mActivity.onUsername(View::requestFocus);
+        final AugmentedFillRequest request3 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request3, mActivity, usernameId, usernameValue);
+        final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+
+        // ...and autofill this time
+        mActivity.expectAutoFill("dude", "sweet");
+        ui.click();
+        mActivity.assertAutoFilled();
+        mAugmentedUiBot.assertUiGone();
+    }
+
+    @Test
+    public void testAugmentedAutoFill_rotateDevice() throws Exception {
+        assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
+
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 1")
+                        .setField(usernameId, "dude1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        AugmentedLoginActivity currentActivity = mActivity;
+
+        // Assert request
+        assertBasicRequestInfo(request1, currentActivity, usernameId, usernameValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        mAugmentedUiBot.assertUiShown(usernameId, "Augment Me 1");
+
+        // 1st landscape rotation
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 2")
+                        .setField(usernameId, "dude2")
+                        .build(), usernameId)
+                .build());
+        mUiBot.setScreenOrientation(LANDSCAPE);
+        mUiBot.assertNoDatasetsEver();
+
+        // Must update currentActivity after each rotation because it generates a new instance
+        currentActivity = LoginActivity.getCurrentActivity();
+
+        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request2, currentActivity, usernameId, usernameValue);
+        mAugmentedUiBot.assertUiShown(usernameId, "Augment Me 2");
+
+        // Rotate back
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 3")
+                        .setField(usernameId, "dude3")
+                        .build(), usernameId)
+                .build());
+        mUiBot.setScreenOrientation(PORTRAIT);
+        mUiBot.assertNoDatasetsEver();
+        currentActivity = LoginActivity.getCurrentActivity();
+
+        final AugmentedFillRequest request3 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request3, currentActivity, usernameId, usernameValue);
+        mAugmentedUiBot.assertUiShown(usernameId, "Augment Me 3");
+
+        // 2nd landscape rotation
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 4")
+                        .setField(usernameId, "dude4")
+                        .build(), usernameId)
+                .build());
+        mUiBot.setScreenOrientation(LANDSCAPE);
+        mUiBot.assertNoDatasetsEver();
+        currentActivity = LoginActivity.getCurrentActivity();
+
+        final AugmentedFillRequest request4 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request4, currentActivity, usernameId, usernameValue);
+        mAugmentedUiBot.assertUiShown(usernameId, "Augment Me 4");
+
+        // Final rotation - should be enough....
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 5")
+                        .setField(usernameId, "dude5")
+                        .build(), usernameId)
+                .build());
+        mUiBot.setScreenOrientation(PORTRAIT);
+        mUiBot.assertNoDatasetsEver();
+        currentActivity = LoginActivity.getCurrentActivity();
+
+        final AugmentedFillRequest request5 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request5, mActivity, usernameId, usernameValue);
+        final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me 5");
+
+        // ..then autofill
+
+        // Must get the latest activity because each rotation creates a new object.
+        currentActivity.expectAutoFill("dude5");
+        ui.click();
+        mAugmentedUiBot.assertUiGone();
+        currentActivity.assertAutoFilled();
     }
 
     @Test

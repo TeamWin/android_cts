@@ -151,6 +151,8 @@ abstract class ReportProcessor {
         instrTest.setShellTimeout(shellTimeout);
         // disable rerun mode to avoid collecting tests first then running.
         instrTest.setRerunMode(false);
+        // disable isolated storage to access sdcard
+        instrTest.setIsolatedStorage(false);
         for (Entry<String, String> e : getArgs().entrySet()) {
             instrTest.addInstrumentationArg(e.getKey(), e.getValue());
         }

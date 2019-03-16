@@ -24,6 +24,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -55,7 +56,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public static final String BACKDOOR_USERNAME = "LemmeIn";
     public static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
-    protected LinearLayout mRoot;
+    private static LoginActivity sCurrentActivity;
+
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
@@ -79,12 +81,21 @@ public class LoginActivity extends AbstractAutoFillActivity {
         return String.format(WELCOME_TEMPLATE,  username);
     }
 
+    /**
+     * Gests the latest instance.
+     *
+     * <p>Typically used in test cases that rotates the activity
+     */
+    @SuppressWarnings("unchecked") // Its up to caller to make sure it's setting the right one
+    public static <T extends LoginActivity> T getCurrentActivity() {
+        return (T) sCurrentActivity;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentView());
 
-        mRoot = findViewById(R.id.root);
         mUsernameContainer = findViewById(R.id.username_container);
         mLoginButton = findViewById(R.id.login);
         mSaveButton = findViewById(R.id.save);
@@ -105,6 +116,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
             getAutofillManager().cancel();
         });
         mCancelButton.setOnClickListener((OnClickListener) v -> finish());
+
+        sCurrentActivity = this;
     }
 
     protected int getContentView() {
@@ -255,6 +268,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Visits the {@code login} button in the UiThread.
+     */
+    public void onLogin(Visitor<Button> v) {
+        syncRunOnUiThread(() -> v.visit(mLoginButton));
+    }
+
+    /**
      * Gets the {@code password} view.
      */
     public EditText getPassword() {
@@ -293,6 +313,15 @@ public class LoginActivity extends AbstractAutoFillActivity {
     public void setFlags(int flags) {
         Log.d(TAG, "setFlags():" + flags);
         syncRunOnUiThread(() -> getWindow().setFlags(flags, flags));
+    }
+
+    /**
+     * Adds a child view to the root container.
+     */
+    public void addChild(View child) {
+        Log.d(TAG, "addChild(" + child + "): id=" + child.getAutofillId());
+        final ViewGroup root = (ViewGroup) mUsernameContainer.getParent();
+        syncRunOnUiThread(() -> root.addView(child));
     }
 
     /**

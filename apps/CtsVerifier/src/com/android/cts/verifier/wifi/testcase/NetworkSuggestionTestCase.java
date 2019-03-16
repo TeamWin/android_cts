@@ -80,7 +80,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             builder.setBssid(MacAddress.fromString(scanResult.BSSID));
         }
         if (mSetRequiresAppInteraction) {
-            builder.setIsAppInteractionRequired();
+            builder.setIsAppInteractionRequired(true);
         }
         return builder.build();
     }

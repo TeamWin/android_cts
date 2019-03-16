@@ -31,6 +31,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.CannedFillResponse.ResponseType;
 import android.content.ComponentName;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -633,6 +634,13 @@ public class InstrumentedAutoFillService extends AutofillService {
                 if (response.getResponseType() == FAILURE) {
                     Log.d(TAG, "onFillRequest(): replying with failure");
                     callback.onFailure("D'OH!");
+                    return;
+                }
+
+                if (response.getResponseType() == ResponseType.NO_MORE) {
+                    Log.w(TAG, "onFillRequest(): replying with null when not expecting more");
+                    addException(new IllegalStateException("got unexpected request"));
+                    callback.onSuccess(null);
                     return;
                 }
 

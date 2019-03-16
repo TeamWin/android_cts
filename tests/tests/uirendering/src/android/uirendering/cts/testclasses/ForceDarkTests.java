@@ -16,6 +16,8 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.app.UiModeManager;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -25,6 +27,7 @@ import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClientView;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -39,21 +42,23 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ForceDarkTests extends ActivityTestBase {
-    static boolean sWasEnabled = false;
+    static int sPreviousUiMode = UiModeManager.MODE_NIGHT_NO;
 
     @BeforeClass
     public static void enableForceDark() {
-        // We need to ensure the value is set to the default, overriding any user preference
-        // temporarily
-        sWasEnabled = Boolean.parseBoolean(
-                SystemUtil.runShellCommand("getprop debug.hwui.force_dark_enabled"));
-        SystemUtil.runShellCommand("setprop debug.hwui.force_dark_enabled true");
+        // Temporarily override the ui mode
+        UiModeManager uiManager = (UiModeManager)
+                InstrumentationRegistry.getContext().getSystemService(Context.UI_MODE_SERVICE);
+        sPreviousUiMode = uiManager.getNightMode();
+        if (sPreviousUiMode != UiModeManager.MODE_NIGHT_YES) {
+            SystemUtil.runShellCommand("service call uimode 4 i32 2");
+        }
     }
 
     @AfterClass
     public static void restoreForceDarkSetting() {
-        if (!sWasEnabled) {
-            SystemUtil.runShellCommand("setprop debug.hwui.force_dark_enabled false");
+        if (sPreviousUiMode != UiModeManager.MODE_NIGHT_YES) {
+            SystemUtil.runShellCommand("service call uimode 4 i32 " + sPreviousUiMode);
         }
     }
 
