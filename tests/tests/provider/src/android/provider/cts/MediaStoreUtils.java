@@ -27,14 +27,20 @@ import android.provider.MediaStore.Downloads;
 import android.provider.MediaStore.MediaColumns;
 import android.text.format.DateUtils;
 
-import androidx.annotation.Nullable;
-import androidx.annotation.NonNull;
+import org.junit.Test;
 
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.util.Objects;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 public class MediaStoreUtils {
+    @Test
+    public void testStub() {
+    }
+
     /**
      * Create a new pending media item using the given parameters. Pending items
      * are expected to have a short lifetime, and owners should either
