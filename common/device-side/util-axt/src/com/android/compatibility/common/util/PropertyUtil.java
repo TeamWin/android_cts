@@ -53,12 +53,6 @@ public class PropertyUtil {
         return propertyEquals(BUILD_TYPE_PROPERTY, "user");
     }
 
-    /** Returns whether the device build is the factory ROM */
-    public static boolean isFactoryROM() {
-        // property should be undefined if and only if the product is factory ROM.
-        return getPropertyInt(FIRST_API_LEVEL) == INT_VALUE_IF_UNSET;
-    }
-
     /** Returns whether this build is built with dev-keys */
     public static boolean isDevKeysBuild() {
         for (String tag : Build.TAGS.split(",")) {
