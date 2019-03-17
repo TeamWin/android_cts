@@ -125,6 +125,9 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$NoDisplayActivity"
+                  android:theme="@android:style/Theme.NoDisplay" />
+
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SingleTopActivity"
                   android:launchMode="singleTop" />
 
