@@ -132,7 +132,7 @@ public class MediaStore_FilesTest {
                     Environment.DIRECTORY_MUSIC);
             stageDir.mkdirs();
             String b = stageDir.getAbsolutePath();
-            values.put(MediaColumns.DATA, b + "/testing");
+            values.put(MediaColumns.DATA, b + "/testing" + System.nanoTime());
             fileUri = mResolver.insert(allFilesUri, values);
             cursor = mResolver.query(fileUri, new String[] { MediaStore.Files.FileColumns.PARENT },
                     null, null, null);
