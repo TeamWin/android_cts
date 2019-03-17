@@ -20,6 +20,6 @@ package android.signature.cts;
 public class LogHelper {
 
     static void loge(String message, Exception exception) {
-        System.err.println(String.format("%s: %s", message, exception));
+        System.out.println(String.format("%s: %s", message, exception));
     }
 }
