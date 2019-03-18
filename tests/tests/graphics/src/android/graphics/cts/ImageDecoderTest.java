@@ -2429,6 +2429,23 @@ public class ImageDecoderTest {
             assertTrue(record.mimeType, ImageDecoder.isMimeTypeSupported(record.mimeType));
         }
 
+        for (String mimeType : new String[] {
+                "image/heic",
+                "image/vnd.wap.wbmp",
+                "image/x-sony-arw",
+                "image/x-canon-cr2",
+                "image/x-adobe-dng",
+                "image/x-nikon-nef",
+                "image/x-nikon-nrw",
+                "image/x-olympus-orf",
+                "image/x-fuji-raf",
+                "image/x-panasonic-rw2",
+                "image/x-pentax-pef",
+                "image/x-samsung-srw",
+        }) {
+            assertTrue(mimeType, ImageDecoder.isMimeTypeSupported(mimeType));
+        }
+
         assertFalse(ImageDecoder.isMimeTypeSupported("image/x-does-not-exist"));
     }
 }
