@@ -27,6 +27,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
+import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
@@ -34,7 +35,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Rational;
 import android.util.Range;
@@ -53,11 +53,14 @@ import java.util.regex.Pattern;
 import java.util.Set;
 
 import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Extended tests for static camera characteristics.
  */
-public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
+public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final String TAG = "ExChrsTest"; // must be short so next line doesn't throw
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
@@ -68,10 +71,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
      */
     private static final int MIN_ALLOWABLE_WHITELEVEL = 32; // must have sensor bit depth > 5
 
-    private CameraManager mCameraManager;
     private List<CameraCharacteristics> mCharacteristics;
     private String[] mIds; // include both standalone camera IDs and "hidden" physical camera IDs
-    private CameraErrorCollector mCollector;
 
     private static final Size FULLHD = new Size(1920, 1080);
     private static final Size FULLHD_ALT = new Size(1920, 1088);
@@ -79,6 +80,10 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     private static final Size VGA = new Size(640, 480);
     private static final Size QVGA = new Size(320, 240);
 
+    private static final long LOW_LATENCY_THRESHOLD_MS = 200;
+    private static final float LATENCY_TOLERANCE_FACTOR = 1.1f; // 10% tolerance
+    private static final int MAX_NUM_IMAGES = 5;
+    private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
     /*
      * HW Levels short hand
@@ -114,19 +119,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     private static final int HIGH_SPEED_FPS_UPPER_MIN = 120;
 
     @Override
-    public void setContext(Context context) {
-        super.setContext(context);
-        mCameraManager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
-        assertNotNull("Can't connect to camera manager", mCameraManager);
-    }
-
-    @Override
     protected void setUp() throws Exception {
         super.setUp();
         String[] ids = mCameraManager.getCameraIdList();
         ArrayList<String> allIds = new ArrayList<String>();
         mCharacteristics = new ArrayList<>();
-        mCollector = new CameraErrorCollector();
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull(String.format("Can't get camera characteristics from: ID %s", ids[i]),
@@ -150,16 +147,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        super.tearDown();
         mCharacteristics = null;
-
-        try {
-            mCollector.verify();
-        } catch (Throwable e) {
-            // When new Exception(e) is used, exception info will be printed twice.
-            throw new Exception(e.getMessage());
-        } finally {
-            super.tearDown();
-        }
     }
 
     /**
@@ -679,7 +668,85 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
         }
     }
 
-    public void testRecommendedStreamConfigurations() {
+    private void checkFormatLatency(int format, long latencyThresholdMs,
+            RecommendedStreamConfigurationMap configMap) throws Exception {
+        Set<Size> availableSizes = configMap.getOutputSizes(format);
+        assertNotNull(String.format("No available sizes for output format: %d", format),
+                availableSizes);
+
+        ImageReader previewReader = null;
+        long threshold = (long) (latencyThresholdMs * LATENCY_TOLERANCE_FACTOR);
+        // for each resolution, check that the end-to-end latency doesn't exceed the given threshold
+        for (Size sz : availableSizes) {
+            try {
+                // Create ImageReaders, capture session and requests
+                final ImageReader.OnImageAvailableListener mockListener = mock(
+                        ImageReader.OnImageAvailableListener.class);
+                createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mockListener);
+                Size previewSize = mOrderedPreviewSizes.get(0);
+                previewReader = createImageReader(previewSize, ImageFormat.YUV_420_888,
+                        MAX_NUM_IMAGES, new CameraTestUtils.ImageDropperListener());
+                Surface previewSurface = previewReader.getSurface();
+                List<Surface> surfaces = new ArrayList<Surface>();
+                surfaces.add(previewSurface);
+                surfaces.add(mReaderSurface);
+                createSession(surfaces);
+                CaptureRequest.Builder captureBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                captureBuilder.addTarget(previewSurface);
+                CaptureRequest request = captureBuilder.build();
+
+                // Let preview run for a while
+                startCapture(request, /*repeating*/ true, new SimpleCaptureCallback(), mHandler);
+                Thread.sleep(PREVIEW_RUN_MS);
+
+                // Start capture.
+                captureBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                captureBuilder.addTarget(mReaderSurface);
+                request = captureBuilder.build();
+
+                for (int i = 0; i < MAX_NUM_IMAGES; i++) {
+                    startCapture(request, /*repeating*/ false, new SimpleCaptureCallback(),
+                            mHandler);
+                    verify(mockListener, timeout(threshold).times(1)).onImageAvailable(
+                            any(ImageReader.class));
+                    reset(mockListener);
+                }
+
+                // stop capture.
+                stopCapture(/*fast*/ false);
+            } finally {
+                closeDefaultImageReader();
+
+                if (previewReader != null) {
+                    previewReader.close();
+                    previewReader = null;
+                }
+            }
+
+        }
+    }
+
+    private void verifyRecommendedLowLatencyConfiguration(String cameraId, CameraCharacteristics c,
+            RecommendedStreamConfigurationMap lowLatencyConfig) throws Exception {
+        verifyCommonRecommendedConfiguration(cameraId, c, lowLatencyConfig, /*checkNoInput*/ true,
+                /*checkNoHighRes*/ false, /*checkNoHighSpeed*/ true, /*checkNoPrivate*/ false,
+                /*checkNoDepth*/ true);
+
+        try {
+            openDevice(cameraId);
+
+            Set<Integer> formats = lowLatencyConfig.getOutputFormats();
+            for (Integer format : formats) {
+                checkFormatLatency(format.intValue(), LOW_LATENCY_THRESHOLD_MS, lowLatencyConfig);
+            }
+        } finally {
+            closeDevice(cameraId);
+        }
+
+    }
+
+    public void testRecommendedStreamConfigurations() throws Exception {
         int counter = 0;
         for (CameraCharacteristics c : mCharacteristics) {
             int[] actualCapabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
@@ -703,7 +770,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             try {
                 RecommendedStreamConfigurationMap map = c.getRecommendedStreamConfigurationMap(
-                        RecommendedStreamConfigurationMap.USECASE_RAW + 1);
+                        RecommendedStreamConfigurationMap.USECASE_LOW_LATENCY_SNAPSHOT + 1);
                 fail("Recommended configuration map shouldn't be available for invalid " +
                         "use case!");
             } catch (IllegalArgumentException e) {
@@ -728,9 +795,12 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             RecommendedStreamConfigurationMap zslConfig =
                     c.getRecommendedStreamConfigurationMap(
                     RecommendedStreamConfigurationMap.USECASE_ZSL);
+            RecommendedStreamConfigurationMap lowLatencyConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_LOW_LATENCY_SNAPSHOT);
             if ((previewConfig == null) && (videoRecordingConfig == null) &&
                     (videoSnapshotConfig == null) && (snapshotConfig == null) &&
-                    (rawConfig == null) && (zslConfig == null)) {
+                    (rawConfig == null) && (zslConfig == null) && (lowLatencyConfig == null)) {
                 Log.i(TAG, "Camera " + mIds[counter] +
                         " doesn't support recommended configurations, skipping test");
                 continue;
@@ -764,6 +834,10 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 assertNotNull(String.format("Mandatory recommended ZSL configuration map not " +
                         "found for: ID %s", mIds[counter]), zslConfig);
                 verifyRecommendedZSLConfiguration(mIds[counter], c, zslConfig);
+            }
+
+            if (lowLatencyConfig != null) {
+                verifyRecommendedLowLatencyConfiguration(mIds[counter], c, lowLatencyConfig);
             }
 
             counter++;
