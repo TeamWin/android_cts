@@ -51,7 +51,6 @@ import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.AmUtils;
 
@@ -750,85 +749,5 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 Arrays.asList(ON_NEW_INTENT, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
                 Arrays.asList(expectedSequence, extraPauseSequence), "newIntent");
-    }
-
-    @Test
-    public void testFinishInOnCreate() throws Exception {
-        verifyFinishAtStage(mResultActivityTestRule, ResultActivity.class,
-                EXTRA_FINISH_IN_ON_CREATE, "onCreate");
-    }
-
-    @Test
-    public void testFinishInOnCreateNoDisplay() throws Exception {
-        verifyFinishAtStage(mNoDisplayActivityTestRule, NoDisplayActivity.class,
-                EXTRA_FINISH_IN_ON_CREATE, "onCreate");
-    }
-
-    @Test
-    public void testFinishInOnStart() throws Exception {
-        verifyFinishAtStage(mResultActivityTestRule, ResultActivity.class,
-                EXTRA_FINISH_IN_ON_START, "onStart");
-    }
-
-    @Test
-    public void testFinishInOnStartNoDisplay() throws Exception {
-        verifyFinishAtStage(mNoDisplayActivityTestRule, NoDisplayActivity.class,
-                EXTRA_FINISH_IN_ON_START, "onStart");
-    }
-
-    @Test
-    public void testFinishInOnResume() throws Exception {
-        verifyFinishAtStage(mResultActivityTestRule, ResultActivity.class,
-                EXTRA_FINISH_IN_ON_RESUME, "onResume");
-    }
-
-    @Test
-    public void testFinishInOnResumeNoDisplay() throws Exception {
-        verifyFinishAtStage(mNoDisplayActivityTestRule, NoDisplayActivity.class,
-                EXTRA_FINISH_IN_ON_RESUME, "onResume");
-    }
-
-    private void verifyFinishAtStage(ActivityTestRule rule, Class<? extends Activity> activityClass,
-            String finishStageExtra, String stageName) {
-        final Intent intent = new Intent();
-        intent.putExtra(finishStageExtra, true);
-        rule.launchActivity(intent);
-
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
-                LifecycleVerifier.getLaunchAndDestroySequence(activityClass);
-        waitAndAssertActivityTransitions(activityClass, expectedSequence, "finish in " + stageName);
-    }
-
-    @Test
-    public void testFinishInOnPause() throws Exception {
-        verifyFinishAtStage(mResultActivityTestRule, ResultActivity.class,
-                EXTRA_FINISH_IN_ON_PAUSE, "onPause", mTranslucentActivityTestRule);
-    }
-
-    @Test
-    public void testFinishInOnStop() throws Exception {
-        verifyFinishAtStage(mResultActivityTestRule, ResultActivity.class,
-                EXTRA_FINISH_IN_ON_STOP, "onStop", mFirstActivityTestRule);
-    }
-
-    private void verifyFinishAtStage(ActivityTestRule rule, Class<? extends Activity> activityClass,
-            String finishStageExtra, String stageName, ActivityTestRule launchOnTopRule) {
-        final Intent intent = new Intent();
-        intent.putExtra(finishStageExtra, true);
-
-        // Activity will finish itself after onResume, so need to launch an extra activity on
-        // top to get it there.
-        final Activity testActivity = rule.launchActivity(intent);
-
-        // Wait for the activity to resume and gain top position
-        waitAndAssertActivityStates(state(testActivity, ON_TOP_POSITION_GAINED));
-
-        // Launch an activity on top, which will make the first one paused or stopped.
-        launchOnTopRule.launchActivity(new Intent());
-
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
-                LifecycleVerifier.getLaunchAndDestroySequence(activityClass);
-        waitAndAssertActivityTransitions(activityClass, expectedSequence, "finish in " + stageName);
-
     }
 }
