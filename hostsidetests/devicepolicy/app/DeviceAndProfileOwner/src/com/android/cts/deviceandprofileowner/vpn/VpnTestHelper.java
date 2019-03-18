@@ -23,7 +23,6 @@ import static android.system.OsConstants.SOCK_DGRAM;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
@@ -55,7 +54,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -158,10 +157,10 @@ public class VpnTestHelper {
             Context context, String packageName, boolean lockdown, boolean whitelist)
             throws PackageManager.NameNotFoundException {
         final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
-        final List<String> lockdownWhitelist;
+        final Set<String> lockdownWhitelist;
         if (lockdown) {
             lockdownWhitelist = whitelist ?
-                    Collections.singletonList(context.getPackageName()) : Collections.emptyList();
+                    Collections.singleton(context.getPackageName()) : Collections.emptySet();
         } else {
             lockdownWhitelist = null;
         }
@@ -170,7 +169,7 @@ public class VpnTestHelper {
         assertEquals(packageName, dpm.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT));
         assertEquals(lockdown, dpm.isAlwaysOnVpnLockdownEnabled(ADMIN_RECEIVER_COMPONENT));
         assertEquals(lockdownWhitelist,
-                    dpm.getAlwaysOnVpnLockdownWhitelist(ADMIN_RECEIVER_COMPONENT));
+                dpm.getAlwaysOnVpnLockdownWhitelist(ADMIN_RECEIVER_COMPONENT));
     }
 
     public static boolean isNetworkVpn(Context context) {
