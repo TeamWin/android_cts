@@ -553,7 +553,7 @@ public class MediaSession2Test {
                 session.cancelSessionCommand(controllerInfo, token);
             }
             assertTrue(sessionCallback.awaitOnCommandResult(WAIT_TIME_MS));
-            assertEquals(Session2Command.RESULT_INFO_SKIPPED,
+            assertEquals(Session2Command.Result.RESULT_INFO_SKIPPED,
                     sessionCallback.mCommandResult.getResultCode());
 
             controller.close();
