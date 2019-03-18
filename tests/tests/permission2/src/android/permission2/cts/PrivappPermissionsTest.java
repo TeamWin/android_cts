@@ -95,7 +95,8 @@ public class PrivappPermissionsTest extends AndroidTestCase {
             }
 
             PackageInfo factoryPkg = pm
-                    .getPackageInfo(packageName, MATCH_FACTORY_ONLY | GET_PERMISSIONS);
+                    .getPackageInfo(packageName, MATCH_FACTORY_ONLY | GET_PERMISSIONS
+                        | MATCH_UNINSTALLED_PACKAGES);
 
             assertNotNull("No system image version found for " + packageName, factoryPkg);
 
