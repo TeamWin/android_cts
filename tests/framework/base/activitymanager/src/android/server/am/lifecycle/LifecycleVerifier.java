@@ -59,20 +59,12 @@ class LifecycleVerifier {
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
-    static List<ActivityCallback> getLaunchSequence(
+    public static List<ActivityCallback> getLaunchSequence(
             Class<? extends Activity> activityClass) {
         return CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass)
                 ? Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                 ON_TOP_POSITION_GAINED)
                 : Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
-    }
-
-    static List<ActivityCallback> getLaunchAndDestroySequence(
-            Class<? extends Activity> activityClass) {
-        final List<ActivityCallback> expectedTransitions = new ArrayList<>();
-        expectedTransitions.addAll(getLaunchSequence(activityClass));
-        expectedTransitions.addAll(getResumeToDestroySequence(activityClass));
-        return expectedTransitions;
     }
 
     static void assertLaunchSequence(Class<? extends Activity> launchingActivity,
