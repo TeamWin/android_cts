@@ -25,10 +25,10 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_ASSET_DIR := $(LOCAL_PATH)/assets
+LOCAL_SRC_FILES := $(call all-java-files-under, ../MediaStorageApp/src/)
+LOCAL_ASSET_DIR := $(LOCAL_PATH)/../MediaStorageApp/assets
 
-LOCAL_PACKAGE_NAME := CtsMediaStorageApp
+LOCAL_PACKAGE_NAME := CtsMediaStorageApp28
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_DEX_PREOPT := false
