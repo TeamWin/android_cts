@@ -2239,6 +2239,27 @@
                 android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
         </activity>
 
+        <activity android:name=".qstiles.TileServiceVerifierActivity"
+                  android:label="@string/tiles_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_tiles" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+        </activity>
+
+        <service android:name=".qstiles.MockTileService"
+                 android:icon="@android:drawable/ic_dialog_alert"
+                 android:label="@string/tile_service_name"
+                 android:enabled="false"
+                 android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <activity android:name=".vr.VrListenerVerifierActivity"
             android:configChanges="uiMode"
             android:label="@string/vr_tests">

@@ -1792,6 +1792,7 @@
         itself according to the current rotation of the device.</string>
 
     <string name="test_category_notifications">Notifications</string>
+    <string name="test_category_tiles">Tiles</string>
     <string name="package_priority_test">Notification Package Priority Test</string>
     <string name="package_priority_info">This test checks that the NotificationManagerService respects
         user preferences about relative package priorities.
@@ -1868,6 +1869,18 @@
         dismiss them.
     </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
+    <string name="tile_service_name">Tile Service for CTS Verifier</string>
+    <string name="tiles_test">Tile Service Test</string>
+    <string name="tiles_info">This test checks that a Tile Service added by a third party
+        application is not immediately added to the current Quick Settings tiles but can be added
+        by the user.
+    </string>
+    <string name="tiles_adding_tile">Check that Tile Service is enabled</string>
+    <string name="tiles_not_added">Open Quick Settings and check that the Tile Service for CTS
+        Verifier is not visible in any page</string>
+    <string name="tiles_in_customizer">Open Quick Settings and click the button to customize Quick
+        Settings. Check that the Tile Service for CTS Verifier is available to be added</string>
+    <string name="tiles_removing_tile">Check that Tile Service is disabled</string>
     <string name="vr_tests">VR Tests</string>
     <string name="test_category_vr">VR</string>
     <string name="vr_test_title">VR Listener Test</string>
