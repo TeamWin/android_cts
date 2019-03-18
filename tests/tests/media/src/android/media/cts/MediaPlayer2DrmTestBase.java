@@ -603,6 +603,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                     "initData[" + drmScheme + "]: " + Arrays.toString(initData));
 
             Log.v(DRM_EVENT_CB_TAG, "onDrmInfo done!");
+            drmBuilder.setOptionalParameters(null);
             return drmBuilder.build();
         }
 
