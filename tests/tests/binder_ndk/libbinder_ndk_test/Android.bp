@@ -22,6 +22,11 @@ aidl_interface {
         "test_package/Foo.aidl",
     ],
     versions: ["1"],
+    backend: {
+        java: {
+            sdk_version: "28",
+        },
+    },
 }
 
 cc_defaults {
