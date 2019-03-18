@@ -1150,6 +1150,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)"
             + " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)"
             + " orientation=(\\d+)");
+    private static final Pattern sDisplayCutoutPattern = Pattern.compile(
+        "(.+): cutout=(true|false)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
     private static final Pattern sCurrentUiModePattern = Pattern.compile("mCurUiMode=0x(\\d+)");
@@ -1235,6 +1237,58 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             }
         }
         return null;
+    }
+
+    /** Check if a device has display cutout. */
+    boolean hasDisplayCutout() throws Exception {
+        // Launch an activity to report cutout state
+        final String logSeparator = clearLogcat();
+        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+
+        // Read the logs to check if cutout is present
+        final boolean displayCutoutPresent = getCutoutStateForActivity(
+            BROADCAST_RECEIVER_ACTIVITY, logSeparator);
+
+        // Finish activity
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mAmWmState.waitForWithAmState(mDevice, (state) -> !state.containsActivity(
+            BROADCAST_RECEIVER_ACTIVITY), "Waiting for activity to be removed");
+
+        return displayCutoutPresent;
+    }
+
+    /**
+     * Wait for activity to report cutout state in logs and return it. Will return {@code null}
+     * after timeout.
+     */
+    private boolean getCutoutStateForActivity(String activityName, String logSeparator)
+            throws DeviceNotAvailableException {
+        final String logTag = activityName;
+        for (int retry = 1; retry <= 5; retry++) {
+            final boolean result = readLastReportedCutoutState(logSeparator, logTag);
+            if (result) {
+                return result;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+        }
+        return false;
+    }
+
+    /** Read display cutout state from device logs. */
+    private boolean readLastReportedCutoutState(String logSeparator, String logTag)
+            throws DeviceNotAvailableException {
+        final String[] lines = getDeviceLogsForComponents(new String[]{logTag}, logSeparator);
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
+            final Matcher matcher = sDisplayCutoutPattern.matcher(line);
+            if (matcher.matches()) {
+                return "true".equals(matcher.group(2));
+            }
+        }
+        return false;
     }
 
     /** Waits for at least one onMultiWindowModeChanged event. */
