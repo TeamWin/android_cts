@@ -204,4 +204,7 @@
     <!-- fails only on angler/bullhead userdebug -->
     <option name="compatibility:exclude-filter" value="CtsLiblogTestCases liblog#wrap_mode_blocks" />
 
+    <!-- b/126515980 -->
+    <!-- fails on some devices because the IME blocks the screen, causing UIAutomator queries to fail -->
+    <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.SimpleSaveActivityTest#testTapLink_changeOrientationThenTapBack" />
 </configuration>
