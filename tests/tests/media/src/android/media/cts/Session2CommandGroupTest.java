@@ -46,7 +46,7 @@ public class Session2CommandGroupTest {
     public void testHasCommand() {
         Session2Command testCommand = new Session2Command(TEST_COMMAND_CODE_1);
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
-                .addCommand(TEST_COMMAND_CODE_1);
+                .addCommand(testCommand);
         Session2CommandGroup commandGroup = builder.build();
         assertTrue(commandGroup.hasCommand(TEST_COMMAND_CODE_1));
         assertTrue(commandGroup.hasCommand(testCommand));
@@ -55,13 +55,15 @@ public class Session2CommandGroupTest {
 
     @Test
     public void testGetCommands() {
+        Session2Command command1 = new Session2Command(TEST_COMMAND_CODE_1);
+        Session2Command command2 = new Session2Command(TEST_COMMAND_CODE_2);
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
-                .addCommand(TEST_COMMAND_CODE_1);
+                .addCommand(command1);
         Session2CommandGroup commandGroup = builder.build();
 
         Set<Session2Command> commands = commandGroup.getCommands();
-        assertTrue(commands.contains(new Session2Command(TEST_COMMAND_CODE_1)));
-        assertFalse(commands.contains(new Session2Command(TEST_COMMAND_CODE_2)));
+        assertTrue(commands.contains(command1));
+        assertFalse(commands.contains(command2));
     }
 
     @Test
@@ -69,7 +71,7 @@ public class Session2CommandGroupTest {
         final int expected = 0;
         Session2Command command = new Session2Command(TEST_COMMAND_CODE_1);
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
-                .addCommand(TEST_COMMAND_CODE_1);
+                .addCommand(command);
         Session2CommandGroup commandGroup = builder.build();
         assertEquals(expected, commandGroup.describeContents());
     }
@@ -77,8 +79,8 @@ public class Session2CommandGroupTest {
     @Test
     public void testWriteToParcel() {
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
-                .addCommand(TEST_COMMAND_CODE_1)
-                .addCommand(TEST_COMMAND_CODE_2);
+                .addCommand(new Session2Command(TEST_COMMAND_CODE_1))
+                .addCommand(new Session2Command(TEST_COMMAND_CODE_2));
         Session2CommandGroup commandGroup = builder.build();
         Parcel dest = Parcel.obtain();
         commandGroup.writeToParcel(dest, 0);
@@ -92,7 +94,7 @@ public class Session2CommandGroupTest {
     @Test
     public void testBuilder() {
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
-                .addCommand(TEST_COMMAND_CODE_1);
+                .addCommand(new Session2Command(TEST_COMMAND_CODE_1));
         Session2CommandGroup commandGroup = builder.build();
         Session2CommandGroup.Builder newBuilder = new Session2CommandGroup.Builder(commandGroup);
         Session2CommandGroup newCommandGroup = newBuilder.build();
@@ -101,16 +103,18 @@ public class Session2CommandGroupTest {
 
     @Test
     public void testAddAndRemoveCommand() {
-        Session2Command testCommand = new Session2Command(TEST_COMMAND_CODE_1);
+        Session2Command testCommand1 = new Session2Command(TEST_COMMAND_CODE_1);
+        Session2Command testCommand2 = new Session2Command(TEST_COMMAND_CODE_2);
+        Session2Command testCommand3 = new Session2Command(TEST_COMMAND_CODE_3);
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
-                .addCommand(testCommand)
-                .addCommand(TEST_COMMAND_CODE_2)
-                .addCommand(TEST_COMMAND_CODE_3);
-        builder.removeCommand(testCommand)
-                .removeCommand(TEST_COMMAND_CODE_2);
+                .addCommand(testCommand1)
+                .addCommand(testCommand2)
+                .addCommand(testCommand3);
+        builder.removeCommand(testCommand1)
+                .removeCommand(testCommand2);
         Session2CommandGroup commandGroup = builder.build();
-        assertFalse(commandGroup.hasCommand(testCommand));
-        assertFalse(commandGroup.hasCommand(TEST_COMMAND_CODE_2));
-        assertTrue(commandGroup.hasCommand(TEST_COMMAND_CODE_3));
+        assertFalse(commandGroup.hasCommand(testCommand1));
+        assertFalse(commandGroup.hasCommand(testCommand2));
+        assertTrue(commandGroup.hasCommand(testCommand3));
     }
 }
