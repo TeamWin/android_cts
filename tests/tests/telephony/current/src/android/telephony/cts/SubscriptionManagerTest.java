@@ -438,23 +438,6 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testSettingSubscriptionMeteredNess() throws Exception {
-        if (!isSupported()) return;
-
-        // Set subscription to be un-metered. This should fail
-        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
-        try {
-            mSm.setMetered(false, mSubId);
-            fail();
-        } catch (SecurityException expected) {
-        }
-
-        // Shouldn't crash.
-        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
-        info.isMetered();
-    }
-
-    @Test
     public void testGetOpportunisticSubscriptions() throws Exception {
         if (!isSupported()) return;
 
