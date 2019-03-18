@@ -89,9 +89,13 @@ public class PointerCaptureTest {
     }
 
     private void requestCaptureSync(View view) throws Throwable {
-        mActivityRule.runOnUiThread(view::requestPointerCapture);
-        PollingCheck.waitFor(TIMEOUT_DELTA,
-                () -> view.hasPointerCapture() && mActivity.hasPointerCapture());
+        PollingCheck.waitFor(TIMEOUT_DELTA, () -> {
+            try {
+                mActivityRule.runOnUiThread(view::requestPointerCapture);
+            } catch (Throwable e) {
+            }
+            return view.hasPointerCapture() && mActivity.hasPointerCapture();
+        });
     }
 
     private void requestCaptureSync() throws Throwable {
