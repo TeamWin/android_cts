@@ -124,6 +124,7 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
                         new CallScreeningService.CallResponse.Builder()
                         .setDisallowCall(true)
                         .setRejectCall(true)
+                        .setSilenceCall(false)
                         .setSkipCallLog(true)
                         .setSkipNotification(true)
                         .build();

@@ -76,6 +76,7 @@ public class CallScreeningServiceControl extends Service {
                 @Override
                 public void setCallResponse(boolean shouldDisallowCall,
                         boolean shouldRejectCall,
+                        boolean shouldSilenceCall,
                         boolean shouldSkipCallLog,
                         boolean shouldSkipNotification) {
                     Log.i(TAG, "setCallResponse");
@@ -84,6 +85,7 @@ public class CallScreeningServiceControl extends Service {
                             .setSkipCallLog(shouldSkipCallLog)
                             .setDisallowCall(shouldDisallowCall)
                             .setRejectCall(shouldRejectCall)
+                            .setSilenceCall(shouldSilenceCall)
                             .build();
                 }
 
@@ -127,6 +129,7 @@ public class CallScreeningServiceControl extends Service {
             new CallScreeningService.CallResponse.Builder()
                     .setDisallowCall(false)
                     .setRejectCall(false)
+                    .setSilenceCall(false)
                     .setSkipCallLog(false)
                     .setSkipNotification(false)
                     .build();
