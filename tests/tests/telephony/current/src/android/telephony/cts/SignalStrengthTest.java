@@ -15,15 +15,9 @@
  */
 package android.telephony.cts;
 
-import static android.telephony.NetworkRegistrationInfo.NR_STATUS_CONNECTED;
+import static android.telephony.NetworkRegistrationInfo.NR_STATE_CONNECTED;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.os.Parcel;
-import android.telephony.CellInfoCdma;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
@@ -40,7 +34,6 @@ import android.util.Log;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 
@@ -123,7 +116,7 @@ public class SignalStrengthTest extends AndroidTestCase {
     /** Check whether the device is LTE + NR dual connected */
     private boolean isUsingEnDc() {
         ServiceState ss = mTm.getServiceState();
-        return ss != null && ss.getNrStatus() == NR_STATUS_CONNECTED;
+        return ss != null && ss.getNrState() == NR_STATE_CONNECTED;
     }
 
     /** Get the CellSignalStrength class type that should be returned when using a network type */
