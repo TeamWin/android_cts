@@ -229,6 +229,7 @@ public class ChildlessActivityTest
             .activityStopped(name1)
             .activityPaused(name2)
             .activityResumed(name1)
+            .activityDestroyed(name2)
             .activityPaused(name1);
 
         // Assert the sessions
