@@ -17,7 +17,6 @@
 package android.telephony.ims.cts;
 
 import static android.provider.Telephony.RcsColumns.IS_RCS_TABLE_SCHEMA_CODE_COMPLETE;
-import static android.telephony.ims.cts.DefaultSmsAppHelper.setDefaultSmsApp;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -32,11 +31,17 @@ import androidx.test.InstrumentationRegistry;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RcsParticipantTest {
     RcsMessageStore mRcsMessageStore;
     Context mContext;
+
+    @BeforeClass
+    public static void ensureDefaultSmsApp() {
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+    }
 
     @Before
     public void setupTestEnvironment() {
@@ -53,15 +58,11 @@ public class RcsParticipantTest {
 
     @AfterClass
     public static void cleanup() {
-        setDefaultSmsApp(true);
         // TODO(b/123997749) should clean RCS message store here
-        setDefaultSmsApp(false);
     }
 
     @Test
     public void testCreateRcsParticipant_returnsValidParticipant() throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         String expectedCanonicalAddress = "+12223334444";
         String expectedAlias = "test_alias";
 
@@ -71,8 +72,6 @@ public class RcsParticipantTest {
     @Test
     public void testCreateRcsParticipant_shouldNotCrashForExistingCanonicalAddress()
             throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         String expectedCanonicalAddress = "+12223334444";
         String expectedAlias1 = "test_alias_1";
         String expectedAlias2 = "test_alias_2";

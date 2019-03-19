@@ -17,7 +17,6 @@
 package android.telephony.ims.cts;
 
 import static android.provider.Telephony.RcsColumns.IS_RCS_TABLE_SCHEMA_CODE_COMPLETE;
-import static android.telephony.ims.cts.DefaultSmsAppHelper.setDefaultSmsApp;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -45,6 +44,7 @@ import com.google.android.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.function.Predicate;
@@ -56,6 +56,12 @@ public class RcsEventTest {
     private RcsParticipant mParticipant1;
     private RcsParticipant mParticipant2;
     private RcsGroupThread mGroupThread;
+
+    @BeforeClass
+    public static void ensureDefaultSmsApp() {
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+    }
+
 
     @Before
     public void setupTestEnvironment() throws RcsMessageStoreException {
@@ -79,16 +85,12 @@ public class RcsEventTest {
 
     @AfterClass
     public static void cleanup() {
-        setDefaultSmsApp(true);
         // TODO(b/123997749) should clean RCS message store here
-        setDefaultSmsApp(false);
     }
 
     @Test
     public void testCreateRcsEvent_canSaveAndQueryGroupThreadParticipantJoinedEvent()
             throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         RcsGroupThreadParticipantJoinedEvent rcsGroupThreadParticipantJoinedEvent =
                 new RcsGroupThreadParticipantJoinedEvent(
                         mTimestamp, mGroupThread, mParticipant1, mParticipant2);
@@ -103,8 +105,6 @@ public class RcsEventTest {
     @Test
     public void testCreateRcsEvent_canSaveAndQueryGroupThreadNameChangedEvent()
             throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         RcsGroupThreadNameChangedEvent rcsGroupThreadNameChangedEvent =
                 new RcsGroupThreadNameChangedEvent(
                         mTimestamp, mGroupThread, mParticipant1, "newName");
@@ -119,8 +119,6 @@ public class RcsEventTest {
     @Test
     public void testCreateRcsEvent_canSaveAndQueryParticipantAliasChangedEvent()
             throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         RcsParticipantAliasChangedEvent rcsParticipantAliasChangedEvent
                 = new RcsParticipantAliasChangedEvent(mTimestamp, mParticipant1, "newAlias");
 
@@ -134,8 +132,6 @@ public class RcsEventTest {
     @Test
     public void testCreateRcsEvent_canSaveAndQueryGroupThreadParticipantLeftEvent()
             throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         RcsGroupThreadParticipantLeftEvent rcsGroupThreadParticipantLeftEvent =
                 new RcsGroupThreadParticipantLeftEvent(
                         mTimestamp, mGroupThread, mParticipant1, mParticipant2);
@@ -150,8 +146,6 @@ public class RcsEventTest {
     @Test
     public void testCreateRcsEvent_canSaveAndQueryGroupThreadIconChangedEvent()
             throws RcsMessageStoreException {
-        setDefaultSmsApp(true);
-
         Uri newIcon = Uri.parse("cool/new/icon");
 
         RcsGroupThreadIconChangedEvent rcsGroupThreadIconChangedEvent =
