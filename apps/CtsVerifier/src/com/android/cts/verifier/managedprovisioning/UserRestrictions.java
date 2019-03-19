@@ -31,7 +31,6 @@ import java.util.List;
 
 public class UserRestrictions {
     private static final String[] RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY = new String[] {
-        UserManager.DISALLOW_ADD_USER,
         UserManager.DISALLOW_ADJUST_VOLUME,
         UserManager.DISALLOW_APPS_CONTROL,
         UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
@@ -60,7 +59,6 @@ public class UserRestrictions {
     private static final ArrayMap<String, UserRestrictionItem> USER_RESTRICTION_ITEMS;
     static {
         final int[] restrictionLabels = new int[] {
-            R.string.disallow_add_user,
             R.string.disallow_adjust_volume,
             R.string.disallow_apps_control,
             R.string.disallow_config_cell_broadcasts,
@@ -87,7 +85,6 @@ public class UserRestrictions {
         };
 
         final int[] restrictionActions = new int[] {
-            R.string.disallow_add_user_action,
             R.string.disallow_adjust_volume_action,
             R.string.disallow_apps_control_action,
             R.string.disallow_config_cell_broadcasts_action,
@@ -114,7 +111,6 @@ public class UserRestrictions {
         };
 
         final String[] settingsIntentActions = new String[] {
-            Settings.ACTION_SETTINGS,
             Settings.ACTION_SOUND_SETTINGS,
             Settings.ACTION_APPLICATION_SETTINGS,
             Settings.ACTION_SETTINGS,
@@ -231,8 +227,6 @@ public class UserRestrictions {
     public static boolean isRestrictionValid(Context context, String restriction) {
         final PackageManager pm = context.getPackageManager();
         switch (restriction) {
-            case UserManager.DISALLOW_ADD_USER:
-                return UserManager.supportsMultipleUsers();
             case UserManager.DISALLOW_ADJUST_VOLUME:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
             case UserManager.DISALLOW_CONFIG_CELL_BROADCASTS:
