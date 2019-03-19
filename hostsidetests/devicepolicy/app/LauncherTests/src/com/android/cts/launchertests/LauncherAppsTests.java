@@ -55,6 +55,8 @@ public class LauncherAppsTests extends AndroidTestCase {
     public static final String SIMPLE_APP_PACKAGE = "com.android.cts.launcherapps.simpleapp";
     private static final String NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE =
             "com.android.cts.nolaunchableactivityapp";
+    private static final String NO_COMPONENT_APP_PACKAGE =
+            "com.android.cts.nocomponentapp";
 
     private static final String SYNTHETIC_APP_DETAILS_ACTIVITY = "android.app.AppDetailsActivity";
 
@@ -258,53 +260,21 @@ public class LauncherAppsTests extends AndroidTestCase {
         assertActivityInjected(MANAGED_PROFILE_PKG);
     }
 
-    private void assertActivityInjected(String targetPackage) {
-        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
-        boolean noLaunchableActivityAppFound = false;
-        for (LauncherActivityInfo activity : activities) {
-            if (!activity.getUser().equals(mUser)) {
-                continue;
-            }
-            ComponentName compName = activity.getComponentName();
-            if (compName.getPackageName().equals(targetPackage)) {
-                noLaunchableActivityAppFound = true;
-                // make sure it points to the synthetic app details activity
-                assertEquals(activity.getName(), SYNTHETIC_APP_DETAILS_ACTIVITY);
-                // make sure it's both exported and enabled
-                try {
-                    PackageManager pm = mInstrumentation.getContext().getPackageManager();
-                    ActivityInfo ai = pm.getActivityInfo(compName, /*flags=*/ 0);
-                    assertTrue("Component " + compName + " is not enabled", ai.enabled);
-                    assertTrue("Component " + compName + " is not exported", ai.exported);
-                } catch (NameNotFoundException e) {
-                    fail("Package " + compName.getPackageName() + " not found.");
-                }
-            }
-        }
-        assertTrue(noLaunchableActivityAppFound);
+    public void testNoComponentAppNotInjected() throws Exception {
+        // NoComponentApp is installed for duration of this test - make sure
+        // it's NOT present on the activity list
+        assertInjectedActivityNotFound(NO_COMPONENT_APP_PACKAGE);
     }
 
-    public void testNoTestAppInjectedActivityFound() throws Exception {
+    public void testDoPoNoTestAppInjectedActivityFound() throws Exception {
         // NoLaunchableActivityApp is installed for duration of this test - make sure
-        // it's NOT present on the activity list
+        // it's NOT present on the activity list For example, DO / PO mode won't show icons.
+        // This test is being called by DeviceOwnerTest.
         assertInjectedActivityNotFound(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE);
     }
 
     public void testProfileOwnerInjectedActivityNotFound() throws Exception {
         assertInjectedActivityNotFound(MANAGED_PROFILE_PKG);
-    }
-
-    private void assertInjectedActivityNotFound(String targetPackage) {
-        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
-        for (LauncherActivityInfo activity : activities) {
-            if (!activity.getUser().equals(mUser)) {
-                continue;
-            }
-            ComponentName compName = activity.getComponentName();
-            if (compName.getPackageName().equals(targetPackage)) {
-                fail("Injected activity found: " + compName.flattenToString());
-            }
-        }
     }
 
     public void testNoSystemAppHasSyntheticAppDetailsActivityInjected() throws Exception {
@@ -345,6 +315,32 @@ public class LauncherAppsTests extends AndroidTestCase {
         } catch (PackageManager.NameNotFoundException e) {
             // expected
         }
+    }
+
+    private void assertActivityInjected(String targetPackage) {
+        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
+        boolean noLaunchableActivityAppFound = false;
+        for (LauncherActivityInfo activity : activities) {
+            if (!activity.getUser().equals(mUser)) {
+                continue;
+            }
+            ComponentName compName = activity.getComponentName();
+            if (compName.getPackageName().equals(targetPackage)) {
+                noLaunchableActivityAppFound = true;
+                // make sure it points to the synthetic app details activity
+                assertEquals(activity.getName(), SYNTHETIC_APP_DETAILS_ACTIVITY);
+                // make sure it's both exported and enabled
+                try {
+                    PackageManager pm = mInstrumentation.getContext().getPackageManager();
+                    ActivityInfo ai = pm.getActivityInfo(compName, /*flags=*/ 0);
+                    assertTrue("Component " + compName + " is not enabled", ai.enabled);
+                    assertTrue("Component " + compName + " is not exported", ai.exported);
+                } catch (NameNotFoundException e) {
+                    fail("Package " + compName.getPackageName() + " not found.");
+                }
+            }
+        }
+        assertTrue(noLaunchableActivityAppFound);
     }
 
     @FunctionalInterface
@@ -453,5 +449,18 @@ public class LauncherAppsTests extends AndroidTestCase {
         mService.send(message);
 
         return mResult.waitForResult();
+    }
+
+    private void assertInjectedActivityNotFound(String targetPackage) {
+        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
+        for (LauncherActivityInfo activity : activities) {
+            if (!activity.getUser().equals(mUser)) {
+                continue;
+            }
+            ComponentName compName = activity.getComponentName();
+            if (compName.getPackageName().equals(targetPackage)) {
+                fail("Injected activity found: " + compName.flattenToString());
+            }
+        }
     }
 }
