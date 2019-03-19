@@ -1130,7 +1130,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         KeyInfo keyInfo = TestUtils.getKeyInfo(keyPair.getPrivate());
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getBlockModes()));
         MoreAsserts.assertContentsInAnyOrder(Arrays.asList(keyInfo.getDigests()),
-                KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA384);
+                KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA256);
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getSignaturePaddings()));
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getEncryptionPaddings()));
         assertSelfSignedCertificateSignatureVerifies(TEST_ALIAS_1);
