@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "NativeCursorWindow"
+#define TAG "NativeCursorWindow"
 
 #include <jni.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/mman.h>
-#include <linux/ashmem.h>
-#include <utils/Log.h>
+#include <errno.h>
+
+#include <android/log.h>
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
+#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
 struct Header {
     // Offset of the lowest unused byte in the window.
@@ -66,15 +71,32 @@ struct FieldSlot {
     } data;
 } __attribute((packed));
 
-JNIEXPORT jint JNICALL
-Java_android_content_cts_CursorWindowContentProvider_makeNativeCursorWindowFd(JNIEnv *env, jclass clazz,
-jint offset, jint size, jboolean isBlob) {
-    int fd = open("/dev/ashmem", O_RDWR | O_CLOEXEC);
-    ioctl(fd, ASHMEM_SET_NAME, "Fake CursorWindow");
+extern "C" JNIEXPORT jint JNICALL
+Java_android_content_cts_CursorWindowContentProvider_makeNativeCursorWindowFd(
+        JNIEnv *env, jclass clazz,
+        jstring filename, jint offset, jint size, jboolean isBlob) {
 
-    ioctl(fd, ASHMEM_SET_SIZE, 1024);
+    const char* chars = env->GetStringUTFChars(filename, NULL);
 
-    void *data = mmap(NULL, 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    ALOGI("opening %s", chars);
+
+    const int FILE_SIZE = 1024;
+
+    int fd = open(chars, O_CREAT | O_RDWR | O_CLOEXEC, 0700);
+    // env->ReleaseStringUTFChars(filename, chars); // too lazy; skip.
+
+    if (fd == -1) {
+        ALOGE("open(%s) failed: %d", chars, errno);
+        return -1;
+    }
+
+    ftruncate(fd, FILE_SIZE);
+
+    char* data = (char*) mmap(NULL, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (data == (char*) -1) {
+        ALOGE("mmap(%s) failed: %d", chars, errno);
+        return -1;
+    }
 
     struct Header *header = (struct Header *) data;
     unsigned rowSlotChunkOffset = sizeof(struct Header);
@@ -92,7 +114,7 @@ jint offset, jint size, jboolean isBlob) {
     fieldSlot->data.buffer.offset = offset;
     fieldSlot->data.buffer.size = size;
 
-    munmap(data, 1024);
+    munmap(data, FILE_SIZE);
 
     return fd;
 
