@@ -45,7 +45,9 @@ import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.TestNameUtils;
 import com.android.cts.mockime.MockImeSessionRule;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -276,6 +278,18 @@ public final class AutoFillServiceTestCase {
          */
         @NonNull
         protected abstract TestRule getMainTestRule();
+
+        @BeforeClass
+        public static void disableDefaultAugmentedService() {
+            Log.v(TAG, "@BeforeClass: disableDefaultAugmentedService()");
+            Helper.setDefaultAugmentedAutofillServiceEnabled(false);
+        }
+
+        @AfterClass
+        public static void enableDefaultAugmentedService() {
+            Log.v(TAG, "@AfterClass: enableDefaultAugmentedService()");
+            Helper.setDefaultAugmentedAutofillServiceEnabled(true);
+        }
 
         @Before
         public void prepareDevice() throws Exception {
