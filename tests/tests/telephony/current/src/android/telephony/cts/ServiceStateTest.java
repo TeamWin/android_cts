@@ -94,10 +94,6 @@ public class ServiceStateTest extends AndroidTestCase {
         stateParcel.setDataPosition(0);
         tempServiceState = new ServiceState(stateParcel);
         assertTrue(tempServiceState.equals(serviceState));
-
-        MockServiceState mockServiceState = new MockServiceState();
-        mockServiceState.copyFrom(serviceState);
-        assertTrue(mockServiceState.equals(serviceState));
     }
 
     public void testHashCode() {
@@ -135,12 +131,5 @@ public class ServiceStateTest extends AndroidTestCase {
         assertNull(s.getOperatorAlphaShort());
         assertNull(s.getOperatorNumeric());
         assertFalse(s.getIsManualSelection());
-    }
-
-    private class MockServiceState extends ServiceState {
-        @Override
-        protected void copyFrom(ServiceState s) {
-            super.copyFrom(s);
-        }
     }
 }
