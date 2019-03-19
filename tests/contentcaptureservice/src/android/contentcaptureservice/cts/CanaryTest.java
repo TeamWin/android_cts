@@ -64,4 +64,11 @@ public class CanaryTest {
         assertWithMessage("Should be enabled when resource '%s' is not empty (settings='%s')",
                 serviceName, enableSettings).that(hasService).isTrue();
     }
+
+    // TODO(b/128571561): temporary test to make sure  the CtsContentCaptureServiceTestCases is
+    // running - if nobody files a bug due to this failure, it means it isn't :-(
+    @Test
+    public void test_Y_U_NO_PASS_QUESTION_MARK() throws Exception {
+        throw new Exception("If you're seeing this error in an automated test, please file a bug");
+    }
 }
