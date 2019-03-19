@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -2831,6 +2832,28 @@ public class TimeTest {
         // With http://b/118835133 toMillis() returns -1.
         assertEquals(1540874912000L, t.toMillis(true /* ignoreDst */));
     }
+
+    @Test
+    public void test_bug118835133_fixEarliestRawOffsetValue() {
+        // This test confirms the behavior between Integer.MIN_VALUE seconds and the next
+        // transition. With zic <= 2014b there is no explicit transition at Integer.MIN_VALUE
+        // seconds. This test should pass regardless of zic version used as the Android behavior
+        // is stable for this zone as we have fixed the logic used to determine the offset before
+        // the first transition AND the first transition for the zone is after Integer.MIN_VALUE.
+        Time t = new Time("Africa/Abidjan");
+        // Jan 1, 1912 12:16:08 AM UTC / Jan 1, 1912 00:00:00 local time
+        long oldEarliestTransition = -1830383032 * 1000L;
+        long beforeOldEarliestTransition = oldEarliestTransition - TimeUnit.DAYS.toMillis(1);
+        t.set(beforeOldEarliestTransition);
+
+        // The expected local time equivalent to the oldEarliestTransition time minus 1 day and
+        // offset by -968 seconds.
+        Time expected = new Time("Africa/Abidjan");
+        Fields.set(expected, 1911, 11, 31, 0, 0, 0, 0 /* isDst */, -968, 364, 0);
+
+        Fields.verifyTimeEquals(expected, t);
+    }
+
     private static void verifyNormalizeResult(boolean normalizeArgument, Time toNormalize,
             Time expectedTime, long expectedTimeMillis) {
         long actualTimeMillis = toNormalize.normalize(normalizeArgument /* ignore isDst */);
@@ -2903,6 +2926,9 @@ public class TimeTest {
             return String.format(format.toString(), values.toArray());
         }
 
+        /**
+         * Set fields on the supplied time. month is [0-11].
+         */
         public static void setDateTime(Time t, int year, int month, int monthDay, int hour,
                 int minute, int second) {
             t.year = year;
@@ -2914,6 +2940,9 @@ public class TimeTest {
             t.allDay = false;
         }
 
+        /**
+         * See {@link #setDateTime(Time, int, int, int, int, int, int)} for array order.
+         */
         public static void setDateTime(Time t, int[] args) {
             assertEquals(6, args.length);
             setDateTime(t, args[0], args[1], args[2], args[3], args[4], args[5]);
@@ -2929,6 +2958,9 @@ public class TimeTest {
             t.weekDay = weekDay;
         }
 
+        /**
+         * Set fields on the supplied time. month is [0-11].
+         */
         public static void setAllDayDate(Time t, int year, int month, int monthDay) {
             t.year = year;
             t.month = month;
@@ -2936,12 +2968,18 @@ public class TimeTest {
             t.allDay = true;
         }
 
+        /**
+         * See {@link #set(Time, int, int, int, int, int, int, int, int, int, int)} for array order.
+         */
         public static void set(Time t, int[] args) {
             assertEquals(10, args.length);
             set(t, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8],
                     args[9]);
         }
 
+        /**
+         * Set fields on the supplied time. month is [0-11].
+         */
         public static void set(Time t, int year, int month, int monthDay, int hour, int minute,
                 int second, int isDst, int gmtoff, int yearDay, int weekDay) {
             setDateTime(t, year, month, monthDay, hour, minute, second);
