@@ -50,7 +50,6 @@ import static android.server.am.Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
-import static android.server.am.VirtualDisplayHelper.waitForDefaultDisplayState;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -447,7 +446,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
             // Wait more for display state change since turning the display ON may take longer
             // and reported after the activity launch.
-            waitForDefaultDisplayState(true /* wantOn */);
+            mAmWmState.waitFor(
+                    "***Waiting for display to turn on...",
+                    ()->{ return isDisplayOn(); });
             assertTrue("Display turns on", isDisplayOn());
             assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
         }
