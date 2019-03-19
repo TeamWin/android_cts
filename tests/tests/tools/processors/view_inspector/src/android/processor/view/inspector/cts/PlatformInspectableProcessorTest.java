@@ -27,8 +27,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.view.inspector.InspectableNodeName;
 import android.view.inspector.InspectableProperty;
-import android.view.inspector.InspectableProperty.EnumMap;
-import android.view.inspector.InspectableProperty.FlagMap;
+import android.view.inspector.InspectableProperty.EnumEntry;
 import android.view.inspector.InspectableProperty.ValueType;
 import android.view.inspector.InspectionCompanion;
 
@@ -442,8 +441,8 @@ public class PlatformInspectableProcessorTest {
         private int mValue;
 
         @InspectableProperty(enumMapping = {
-                @EnumMap(name = "ONE", value = 1),
-                @EnumMap(name = "TWO", value = 2)})
+                @InspectableProperty.EnumEntry(name = "ONE", value = 1),
+                @EnumEntry(name = "TWO", value = 2)})
         public int getValue() {
             return mValue;
         }
@@ -476,10 +475,10 @@ public class PlatformInspectableProcessorTest {
         private int mValue;
 
         @InspectableProperty(flagMapping = {
-                @FlagMap(name = "ONE", target = 0x1, mask = 0x3),
-                @FlagMap(name = "TWO", target = 0x2, mask = 0x3),
-                @FlagMap(name = "THREE", target = 0x3, mask = 0x3),
-                @FlagMap(name = "FOUR", target = 0x4)})
+                @InspectableProperty.FlagEntry(name = "ONE", target = 0x1, mask = 0x3),
+                @InspectableProperty.FlagEntry(name = "TWO", target = 0x2, mask = 0x3),
+                @InspectableProperty.FlagEntry(name = "THREE", target = 0x3, mask = 0x3),
+                @InspectableProperty.FlagEntry(name = "FOUR", target = 0x4)})
         public int getValue() {
             return mValue;
         }
