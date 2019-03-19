@@ -171,6 +171,15 @@ public class RoleManagerTest {
     private void respondToRoleRequest(boolean ok, boolean expectResultOk)
             throws InterruptedException, IOException {
         wakeUpScreen();
+        if (ok) {
+            UiObject2 item = sUiDevice.wait(Until.findObject(By.text(APP_PACKAGE_NAME)),
+                    TIMEOUT_MILLIS);
+            if (item == null) {
+                dumpWindowHierarchy();
+                fail("Cannot find item to click");
+            }
+            item.click();
+        }
         String buttonId = ok ? "android:id/button1" : "android:id/button2";
         UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
         if (button == null) {
