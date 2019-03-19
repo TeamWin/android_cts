@@ -980,7 +980,7 @@ public class TelephonyManagerTest {
     }
 
     private static void assertSetOpportunisticInvalidParameter(int value) {
-        assertThat(value).isEqualTo(TelephonyManager.SET_OPPORTUNISTIC_SUB_INVALID_PARAMETER);
+        assertThat(value).isEqualTo(TelephonyManager.SET_OPPORTUNISTIC_SUB_INACTIVE_SUBSCRIPTION);
     }
 
     /**
