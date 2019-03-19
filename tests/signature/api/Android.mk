@@ -23,7 +23,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := cts-$(subst .,-,$(1))
 LOCAL_MODULE_STEM := $(1)
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
 $$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
