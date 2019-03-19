@@ -21,7 +21,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := cts-hiddenapi_flags-csv
 LOCAL_MODULE_STEM := hiddenapi_flags.csv
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
 $(eval $(call copy-one-file,$(INTERNAL_PLATFORM_HIDDENAPI_FLAGS),$(LOCAL_BUILT_MODULE)))

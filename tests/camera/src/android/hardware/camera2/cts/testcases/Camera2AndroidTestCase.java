@@ -440,11 +440,15 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
     }
 
     protected CaptureRequest prepareCaptureRequest() throws Exception {
+        return prepareCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+    }
+
+    protected CaptureRequest prepareCaptureRequest(int template) throws Exception {
         List<Surface> outputSurfaces = new ArrayList<Surface>();
         Surface surface = mReader.getSurface();
         assertNotNull("Fail to get surface from ImageReader", surface);
         outputSurfaces.add(surface);
-        return prepareCaptureRequestForSurfaces(outputSurfaces, CameraDevice.TEMPLATE_PREVIEW)
+        return prepareCaptureRequestForSurfaces(outputSurfaces, template)
                 .build();
     }
 

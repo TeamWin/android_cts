@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.content.Context;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -25,6 +27,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.common.base.Preconditions;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Manages the state of a preference backed by {@link DeviceConfig}.
@@ -61,17 +65,22 @@ public final class DeviceConfigStateManager implements StateManager<String> {
                 mKey);
         DeviceConfig.addOnPropertyChangedListener(mNamespace, mContext.getMainExecutor(), listener);
 
-        DeviceConfig.setProperty(mNamespace, mKey, value, /* makeDefault= */ false);
+        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
+                mNamespace, mKey, value, /* makeDefault= */ false),
+                "android.permission.WRITE_DEVICE_CONFIG");
         listener.assertCalled();
     }
 
     @Override
     @Nullable
     public String get() {
-        final String value = DeviceConfig.getProperty(mNamespace, mKey);
-        debug("get", value);
+        final AtomicReference<String> reference = new AtomicReference<>();
+        runWithShellPermissionIdentity(()
+                -> reference.set(DeviceConfig.getProperty(mNamespace, mKey)),
+                "android.permission.READ_DEVICE_CONFIG");
+        debug("get", reference.get());
 
-        return value;
+        return reference.get();
     }
 
     private void debug(@NonNull String methodName, @NonNull String msg, Object...args) {

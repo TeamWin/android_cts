@@ -24,7 +24,7 @@ interface ICallScreeningControl {
 
     void setProviderCallIdentification(CharSequence name, CharSequence description,
             CharSequence details, in Icon icon, int confidence);
-    void setCallResponse(boolean shouldDisallowCall, boolean shouldRejectCall,
+    void setCallResponse(boolean shouldDisallowCall, boolean shouldRejectCall, boolean shouldSkipCall,
             boolean shouldSkipCallLog, boolean shouldSkipNotification);
     void waitForNuisanceReport(long timeoutMillis);
     boolean getIsNuisance();

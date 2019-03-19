@@ -202,7 +202,7 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
 
         // Tell the test app to block the call.
         mCallScreeningControl.setCallResponse(true /* shouldDisallowCall */,
-                true /* shouldRejectCall */, false /* shouldSkipCallLog */,
+                true /* shouldRejectCall */, false /* shouldSilenceCall */, false /* shouldSkipCallLog */,
                 true /* shouldSkipNotification */);
 
         addIncomingAndVerifyBlocked();
@@ -222,10 +222,44 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
 
         // Tell the test app to block the call; also try to skip logging the call.
         mCallScreeningControl.setCallResponse(true /* shouldDisallowCall */,
-                true /* shouldRejectCall */, true /* shouldSkipCallLog */,
+                true /* shouldRejectCall */, false /* shouldSilenceCall */, true /* shouldSkipCallLog */,
                 true /* shouldSkipNotification */);
 
         addIncomingAndVerifyBlocked();
+    }
+
+    /**
+     * Verifies that a {@link android.telecom.CallScreeningService} set the extra to silence a call.
+     * @throws Exception
+     */
+    public void testIncomingCallHasSilenceExtra() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        // Tell the test app to silence the call.
+        mCallScreeningControl.setCallResponse(false /* shouldDisallowCall */,
+            false /* shouldRejectCall */, true /* shouldSilenceCall */,
+            false /* shouldSkipCallLog */, false /* shouldSkipNotification */);
+
+        addIncomingAndVerifyCallExtraForSilence(true);
+    }
+
+    /**
+     * Verifies that a {@link android.telecom.CallScreeningService} did not set the extra to silence an incoming call.
+     * @throws Exception
+     */
+    public void testIncomingCallDoesNotHaveHaveSilenceExtra() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        // Tell the test app to not silence the call.
+        mCallScreeningControl.setCallResponse(false /* shouldDisallowCall */,
+                false /* shouldRejectCall */, false /* shouldSilenceCall */,
+                false /* shouldSkipCallLog */, false /* shouldSkipNotification */);
+
+        addIncomingAndVerifyCallExtraForSilence(false);
     }
 
     public void testProvideCallIdentificationForOutgoing() throws Exception {
@@ -414,6 +448,30 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         } else {
             fail("Blocked call was not logged.");
         }
+    }
+
+    private void addIncomingAndVerifyCallExtraForSilence(boolean expectedIsSilentRingingExtraSet) throws Exception {
+        Uri testNumber = addIncoming(false);
+
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        // Verify that the call extra matches expectation
+                        Call call = mInCallCallbacks.getService().getLastCall();
+                        return expectedIsSilentRingingExtraSet ==
+                                call.getDetails().getExtras().getBoolean(Call.EXTRA_SILENT_RINGING_REQUESTED);
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call extra - verification failed, expected the extra " +
+                        "EXTRA_SILENT_RINGING_REQUESTED to be set:" + expectedIsSilentRingingExtraSet
+        );
     }
 
     private CountDownLatch getCallLogEntryLatch() {
