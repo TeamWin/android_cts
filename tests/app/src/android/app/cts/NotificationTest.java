@@ -63,6 +63,7 @@ public class NotificationTest extends AndroidTestCase {
     private static final String URI_STRING = "uriString";
     private static final String ACTION_TITLE = "actionTitle";
     private static final int BUBBLE_HEIGHT = 300;
+    private static final int BUBBLE_HEIGHT_RESID = 31415;
     private static final int TOLERANCE = 200;
     private static final long TIMEOUT = 4000;
     private static final NotificationChannel CHANNEL = new NotificationChannel("id", "name",
@@ -661,6 +662,23 @@ public class NotificationTest extends AndroidTestCase {
         assertTrue(metadata.getSuppressInitialNotification());
     }
 
+    public void testBubbleMetadata_parcelResId() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata metadata =
+                new Notification.BubbleMetadata.Builder()
+                        .setDesiredHeightResId(BUBBLE_HEIGHT_RESID)
+                        .setIcon(icon)
+                        .setIntent(bubbleIntent)
+                        .build();
+        writeAndReadParcelable(metadata);
+        assertEquals(BUBBLE_HEIGHT_RESID, metadata.getDesiredHeightResId());
+        assertEquals(icon, metadata.getIcon());
+        assertEquals(bubbleIntent, metadata.getIntent());
+        assertFalse(metadata.getAutoExpandBubble());
+        assertFalse(metadata.getSuppressInitialNotification());
+    }
+
     public void testBubbleMetadataBuilder_throwForNoIntent() {
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata.Builder metadataBuilder =
@@ -732,6 +750,44 @@ public class NotificationTest extends AndroidTestCase {
         Notification.BubbleMetadata metadata = metadataBuilder.build();
         assertNotNull(metadata.getIcon());
         assertEquals(TYPE_RESOURCE, metadata.getIcon().getType());
+    }
+
+    public void testBubbleMetadataBuilder_replaceHeightRes() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                        .setDesiredHeight(BUBBLE_HEIGHT)
+                        .setDesiredHeightResId(BUBBLE_HEIGHT_RESID)
+                        .setIcon(icon)
+                        .setIntent(bubbleIntent)
+                        .setDeleteIntent(deleteIntent);
+
+        Notification.BubbleMetadata data = metadataBuilder.build();
+        // Desired height should be cleared
+        assertEquals(0, data.getDesiredHeight());
+        // Res id should be used
+        assertEquals(BUBBLE_HEIGHT_RESID, data.getDesiredHeightResId());
+    }
+
+    public void testBubbleMetadataBuilder_replaceHeightDp() {
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, 1);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                        .setDesiredHeightResId(BUBBLE_HEIGHT_RESID)
+                        .setDesiredHeight(BUBBLE_HEIGHT)
+                        .setIcon(icon)
+                        .setIntent(bubbleIntent)
+                        .setDeleteIntent(deleteIntent);
+
+        Notification.BubbleMetadata data = metadataBuilder.build();
+        // Desired height should be used
+        assertEquals(BUBBLE_HEIGHT, data.getDesiredHeight());
+        // Res id should be cleared
+        assertEquals(0, data.getDesiredHeightResId());
     }
 
     private static RemoteInput newDataOnlyRemoteInput() {
