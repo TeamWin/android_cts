@@ -117,7 +117,7 @@ public class AppPredictionServiceTest {
 
         // Ensure that future calls to the client fail
         assertFails(() -> client.notifyAppTargetEvent(null));
-        assertFails(() -> client.notifyLocationShown(null, null));
+        assertFails(() -> client.notifyLaunchLocationShown(null, null));
         assertFails(() -> client.registerPredictionUpdates(null, null));
         assertFails(() -> client.unregisterPredictionUpdates(null));
         assertFails(() -> client.requestPredictionUpdate());
@@ -177,7 +177,7 @@ public class AppPredictionServiceTest {
             AppTargetId id = target.getId();
             targetIds.add(id);
         }
-        client.notifyLocationShown(TEST_LAUNCH_LOCATION, targetIds);
+        client.notifyLaunchLocationShown(TEST_LAUNCH_LOCATION, targetIds);
         mReporter.awaitOnLocationShown();
         assertEquals(mReporter.mLocationsShown, TEST_LAUNCH_LOCATION);
         assertEquals(mReporter.mLocationsShownTargets, targetIds);
