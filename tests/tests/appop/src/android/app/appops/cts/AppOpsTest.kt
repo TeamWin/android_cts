@@ -3,7 +3,7 @@ package android.app.appops.cts
 /*
  * Copyright (C) 2014 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -19,6 +19,7 @@ package android.app.appops.cts
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 
@@ -30,9 +31,9 @@ import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_READ_SMS
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 
-import android.app.appops.cts.AppOpsUtils.Companion.allowedOperationLogged;
-import android.app.appops.cts.AppOpsUtils.Companion.rejectedOperationLogged;
-import android.app.appops.cts.AppOpsUtils.Companion.setOpMode;
+import android.app.appops.cts.AppOpsUtils.Companion.allowedOperationLogged
+import android.app.appops.cts.AppOpsUtils.Companion.rejectedOperationLogged
+import android.app.appops.cts.AppOpsUtils.Companion.setOpMode
 
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
@@ -43,7 +44,6 @@ import org.mockito.Mockito.verifyZeroInteractions
 import android.Manifest.permission
 import android.app.AppOpsManager
 import android.app.AppOpsManager.OnOpChangedListener
-import android.app.Instrumentation
 import android.content.Context
 import android.os.Process
 import androidx.test.runner.AndroidJUnit4
@@ -81,13 +81,13 @@ class AppOpsTest {
             permissionToOpStr[permission.READ_CALL_LOG] =
                     AppOpsManager.OPSTR_READ_CALL_LOG
             permissionToOpStr[permission.WRITE_CALL_LOG] =
-                   AppOpsManager.OPSTR_WRITE_CALL_LOG
+                    AppOpsManager.OPSTR_WRITE_CALL_LOG
             permissionToOpStr[permission.READ_CALENDAR] =
-                   AppOpsManager.OPSTR_READ_CALENDAR
+                    AppOpsManager.OPSTR_READ_CALENDAR
             permissionToOpStr[permission.WRITE_CALENDAR] =
-                   AppOpsManager.OPSTR_WRITE_CALENDAR
+                    AppOpsManager.OPSTR_WRITE_CALENDAR
             permissionToOpStr[permission.CALL_PHONE] =
-                   AppOpsManager.OPSTR_CALL_PHONE
+                    AppOpsManager.OPSTR_CALL_PHONE
             permissionToOpStr[permission.READ_SMS] =
                     AppOpsManager.OPSTR_READ_SMS
             permissionToOpStr[permission.RECEIVE_SMS] =
@@ -233,7 +233,7 @@ class AppOpsTest {
             // Package name doesn't match UID.
             mAppOps.checkPackage(Process.SYSTEM_UID, mOpPackageName)
             fail("SecurityException expected")
-        } catch (expected: SecurityException ) {
+        } catch (expected: SecurityException) {
         }
 
         try {
@@ -366,5 +366,50 @@ class AppOpsTest {
         mAppOps.noteOpNoThrow(OPSTR_READ_CALENDAR, Process.myUid(), mOpPackageName)
         assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO))
         assertTrue(mustBeLogged, rejectedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR))
+    }
+
+    @Test
+    fun testNonHistoricalStatePersistence() {
+        // Put a package and uid level data
+        runWithShellPermissionIdentity {
+            mAppOps.setMode(OPSTR_RECORD_AUDIO, Process.myUid(),
+                    mOpPackageName, MODE_IGNORED)
+            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), MODE_ERRORED)
+
+            // Write the data to disk and read it
+            mAppOps.reloadNonHistoricalState()
+        }
+
+        // Verify the uid state is preserved
+        assertSame(mAppOps.unsafeCheckOpNoThrow(OPSTR_RECORD_AUDIO,
+                Process.myUid(), mOpPackageName), MODE_ERRORED)
+
+        runWithShellPermissionIdentity {
+            // Clear the uid state
+            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(),
+                    AppOpsManager.opToDefaultMode(OPSTR_RECORD_AUDIO))
+        }
+
+        // Verify the package state is preserved
+        assertSame(mAppOps.unsafeCheckOpNoThrow(OPSTR_RECORD_AUDIO,
+                Process.myUid(), mOpPackageName), MODE_IGNORED)
+
+        runWithShellPermissionIdentity {
+            // Clear the uid state
+            val defaultMode = AppOpsManager.opToDefaultMode(OPSTR_RECORD_AUDIO)
+            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), defaultMode)
+            mAppOps.setMode(OPSTR_RECORD_AUDIO, Process.myUid(),
+                    mOpPackageName, defaultMode)
+        }
+    }
+
+    private fun runWithShellPermissionIdentity(command: () -> Unit) {
+        val uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation()
+        uiAutomation.adoptShellPermissionIdentity()
+        try {
+            command.invoke()
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
     }
 }
