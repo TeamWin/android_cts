@@ -605,14 +605,10 @@ public class KeyguardTests extends KeyguardTestBase {
      *        AOD is disabled for the default display, AOD status shouldn't be checked.
      */
     private void testScreenOffWhileOccludedStopsActivity(boolean assertAod) {
-        try (final LockScreenSession lockScreenSession
-                     = new LockScreenSession()) {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
-            if (assertAod) {
-                mAmWmState.assertAodShowing();
-            }
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             waitAndAssertTopResumedActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, DEFAULT_DISPLAY,
                     "Activity with showWhenLocked attribute should be resumed.");
@@ -621,6 +617,9 @@ public class KeyguardTests extends KeyguardTestBase {
                 mAmWmState.assertAodNotShowing();
             }
             lockScreenSession.sleepDevice();
+            if (assertAod) {
+                mAmWmState.assertAodShowing();
+            }
             mAmWmState.waitForAllStoppedActivities();
             assertSingleLaunchAndStop(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         }
