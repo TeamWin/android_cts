@@ -3252,13 +3252,18 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_set_user_icon">Setting the user icon</string>
     <string name="device_owner_set_user_icon_instruction">
-        This test verifies that the user icon can be set.\n
-        1. Press the set user icon button.\n
-        2. Press the go button to go to Settings.\n
-        3a. If there is a \"users\" section in Settings, check that the icon of the user \"owner\" is the CtsVerifier one and mark this test accordingly.\n
-        3b. If there is no \"users\" section, mark this test as passed.\n
+        This test verifies that the user icon can be set by the device owner, depending on whether the user restriction is set or not.\n
+        1. Press the \"Set user icon 1\" button.\n
+        2. Press the \"Go\" button to go to Settings.\n
+        3. If there is no \"users\" section, mark this test as passed.\n
+        4. If the icon of the user \"owner\" is not \"1\", mark this test as failed.\n
+        5. Press the \"Disallow set user icon\" button.\n
+        6. Press the \"Set user icon 2\" button.\n
+        7. Press the \"Go\" button to go to Settings. Verify that the icon can\'t be changed manually.\n
+        8. Check that the icon of the user \"owner\" is \"2\", and mark this test accordingly.
     </string>
-    <string name="device_owner_set_user_icon_button">Set user icon</string>
+    <string name="device_owner_set_user_icon_button">Set user icon 1</string>
+    <string name="device_owner_set_user_icon2_button">Set user icon 2</string>
 
     <string name="profile_owner_permission_lockdown_test_info">
         <b>
@@ -3575,6 +3580,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>
     <string name="disallow_share_location_action">Turning on location sharing</string>
+    <string name="disallow_set_user_icon">Disallow set user icon</string>
     <string name="disallow_uninstall_apps">Disallow uninstall apps</string>
     <string name="disallow_uninstall_apps_action">
         a. If testing in work profile: uninstall applications from the work profile (badged applications) other than CtsVerifier and system apps. \n
