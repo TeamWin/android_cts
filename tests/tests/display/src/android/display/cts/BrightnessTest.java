@@ -104,10 +104,6 @@ public class BrightnessTest {
 
             grantPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
 
-            // Sleep to work around a issue with events being recorded incorrectly
-            // on devices with sensors that require a warmup time.
-            Thread.sleep(2000);
-
             // Setup and remember some initial state.
             recordSliderEvents();
             waitForFirstSliderEvent();
