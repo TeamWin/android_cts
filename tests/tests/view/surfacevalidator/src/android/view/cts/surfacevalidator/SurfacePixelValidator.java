@@ -61,7 +61,7 @@ public class SurfacePixelValidator {
     private SparseArray<Bitmap> mFirstFailures = new SparseArray<>(MAX_CAPTURED_FAILURES);
 
     private Runnable mConsumeRunnable = new Runnable() {
-        int numSkipped = 0;
+        int mNumSkipped = 0;
         @Override
         public void run() {
             Trace.beginSection("consume buffer");
@@ -74,9 +74,9 @@ public class SurfacePixelValidator {
 
             boolean success = mPixelChecker.checkPixels(blackishPixelCount, mWidth, mHeight);
             synchronized (mResultLock) {
-                if (numSkipped < NUM_FIRST_FRAMES_SKIPPED) {
-                    numSkipped++;
-                    Log.d(TAG, "skipped frame nr " + numSkipped + ", success = " + success);
+                if (mNumSkipped < NUM_FIRST_FRAMES_SKIPPED) {
+                    mNumSkipped++;
+                    Log.d(TAG, "skipped frame nr " + mNumSkipped + ", success = " + success);
                 } else {
                     if (success) {
                         mResultSuccessFrames++;
