@@ -143,6 +143,14 @@ public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
                 ModularDrmTestType.V5_ASYNC_CALLBACKS_TEST);
     }
 
+    @LargeTest
+    public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V6_ASYNC_KEYREQUEST_ERR_TEST() throws Exception {
+        download(CENC_AUDIO_URL,
+                CENC_AUDIO_URL_DOWNLOADED,
+                RES_AUDIO,
+                ModularDrmTestType.V6_ASYNC_KEYREQUEST_ERR_TEST);
+    }
+
     // helpers
 
     private void stream(Uri uri, Resolution res, ModularDrmTestType testType) throws Exception {
