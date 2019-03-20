@@ -55,8 +55,10 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.provider.Settings.System;
 import android.test.InstrumentationTestCase;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.SoundEffectConstants;
+import com.android.internal.annotations.GuardedBy;
 
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +176,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testMicrophoneMuteIntent() throws Exception {
-        final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver();
+        final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
+                AudioManager.ACTION_MICROPHONE_MUTE_CHANGED);
         final boolean initialMicMute = mAudioManager.isMicrophoneMute();
         try {
             mContext.registerReceiver(receiver,
@@ -182,7 +185,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             // change the mic mute state
             mAudioManager.setMicrophoneMute(!initialMicMute);
             // verify a change was reported
-            final boolean intentFired = receiver.waitForMicMuteChanged(500/*ms*/);
+            final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
             assertTrue("ACTION_MICROPHONE_MUTE_CHANGED wasn't fired", intentFired);
             // verify the mic mute state is expected
             final boolean newMicMute = mAudioManager.isMicrophoneMute();
@@ -194,20 +197,54 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    public void testSpeakerphoneIntent() throws Exception {
+        final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
+                AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED);
+        final boolean initialSpeakerphoneState = mAudioManager.isSpeakerphoneOn();
+        try {
+            mContext.registerReceiver(receiver,
+                    new IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED));
+            // change the speakerphone state
+            mAudioManager.setSpeakerphoneOn(!initialSpeakerphoneState);
+            // verify a change was reported
+            final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
+            assertTrue("ACTION_SPEAKERPHONE_STATE_CHANGED wasn't fired", intentFired);
+            // verify the speakerphon state is expected
+            final boolean newSpeakerphoneState = mAudioManager.isSpeakerphoneOn();
+            assertTrue("new mic mute state not as expected ("
+                    + !initialSpeakerphoneState + ")",
+                    newSpeakerphoneState == !initialSpeakerphoneState);
+        } finally {
+            mContext.unregisterReceiver(receiver);
+            mAudioManager.setSpeakerphoneOn(initialSpeakerphoneState);
+        }
+    }
+
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
         private final SafeWaitObject mLock = new SafeWaitObject();
-        // state protected by mLock
+        // the action for the intent to check
+        private final String mAction;
+        @GuardedBy("mLock")
         private boolean mIntentReceived = false;
+
+        MyBlockingIntentReceiver(String action) {
+            mAction = action;
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (!TextUtils.equals(intent.getAction(), mAction)) {
+                // move along, this is not the action we're looking for
+                return;
+            }
             synchronized (mLock) {
                 mIntentReceived = true;
                 mLock.safeNotify();
             }
         }
 
-        public boolean waitForMicMuteChanged(long timeOutMs) {
+        public boolean waitForExpectedAction(long timeOutMs) {
             synchronized (mLock) {
                 try {
                     mLock.safeWait(timeOutMs);

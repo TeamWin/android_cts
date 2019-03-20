@@ -24,6 +24,8 @@ import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.DO_NOT_REPLY_AUGMENTED_RESPONSE;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
@@ -33,6 +35,7 @@ import android.autofillservice.cts.LoginActivity;
 import android.autofillservice.cts.OneTimeCancellationSignalListener;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.content.ComponentName;
+import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.util.ArraySet;
@@ -42,7 +45,6 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Set;
@@ -140,6 +142,36 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    public void testAutoFill_augmentedFillRequestCancelled() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue expectedFocusedValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .setDelay(AUGMENTED_FILL_TIMEOUT.ms() + 6000)
+                .build());
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        sAugmentedReplier.getNextFillRequest();
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAutoFill_mainServiceReturnedNull_augmentedAutofillTwoFields() throws Exception {
         // Set services
@@ -179,7 +211,6 @@ public class AugmentedLoginActivityTest
         mAugmentedUiBot.assertUiGone();
     }
 
-    @Ignore("blocked on b/122728762")
     @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testCancellationSignalCalledAfterTimeout() throws Exception {
@@ -191,14 +222,17 @@ public class AugmentedLoginActivityTest
         sReplier.addResponse(NO_RESPONSE);
         sAugmentedReplier.addResponse(DO_NOT_REPLY_AUGMENTED_RESPONSE);
         final OneTimeCancellationSignalListener listener =
-                new OneTimeCancellationSignalListener(AUGMENTED_FILL_TIMEOUT.ms() + 2000);
+                new OneTimeCancellationSignalListener(AUGMENTED_FILL_TIMEOUT.ms() + 5000);
 
         // Trigger autofill
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        // TODO(b/124456706): might need to wait until connected
-        sAugmentedReplier.getNextFillRequest().cancellationSignal.setOnCancelListener(listener);
+        final CancellationSignal cancellationSignal = sAugmentedReplier.getNextFillRequest()
+                .cancellationSignal;
+
+        assertThat(cancellationSignal).isNotNull();
+        cancellationSignal.setOnCancelListener(listener);
 
         // Assert results
         listener.assertOnCancelCalled();

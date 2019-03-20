@@ -122,7 +122,7 @@ public class SurfacePixelValidator2 {
                         // error, worth looking at...
                         Bitmap capture = Bitmap.wrapHardwareBuffer(
                                 image.getHardwareBuffer(), null)
-                            .copy(Bitmap.Config.ARGB_8888, false);
+                                .copy(Bitmap.Config.ARGB_8888, false);
                         mFirstFailures.put(totalFramesSeen, capture);
                     }
                 }

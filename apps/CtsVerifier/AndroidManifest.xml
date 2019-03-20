@@ -1259,6 +1259,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
         </activity>
@@ -1273,7 +1274,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.fingerprint" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.fingerprint:android.software.secure_lock_screen" />
         </activity>
 
         <activity android:name=".security.BiometricPromptBoundKeysTest"
@@ -1284,6 +1286,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
         </activity>
@@ -1299,7 +1302,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
-                    android:value="android.software.device_admin" />
+                    android:value="android.software.device_admin:android.software.secure_lock_screen" />
         </activity>
 
         <activity android:name=".security.LockConfirmBypassTest"
@@ -1313,7 +1316,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
-                    android:value="android.software.device_admin" />
+                       android:value="android.software.device_admin:android.software.secure_lock_screen" />
         </activity>
 
         <activity android:name=".security.SetNewPasswordComplexityTest"
@@ -1324,6 +1327,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.software.lockscreen_disabled" />
         </activity>

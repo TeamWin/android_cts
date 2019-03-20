@@ -46,6 +46,8 @@ import java.util.Arrays;
 public class AdaptiveIconDrawableTest {
 
     public static final String TAG = AdaptiveIconDrawableTest.class.getSimpleName();
+    public static final boolean DEBUG = false;
+
     public static void L(String s, Object... parts) {
         Log.d(TAG, (parts.length == 0) ? s : String.format(s, parts));
     }
@@ -196,11 +198,12 @@ public class AdaptiveIconDrawableTest {
         iconDrawable.draw(can_test);
         can_test.translate(left, top);
 
-
-        bm_org.compress(Bitmap.CompressFormat.PNG, 100,
-            new FileOutputStream(new File(dir, "adaptive-bm-original.png")));
-        bm_test.compress(Bitmap.CompressFormat.PNG, 100,
-            new FileOutputStream(new File(dir, "adaptive-bm-test.png")));
+        if (DEBUG) {
+            bm_org.compress(Bitmap.CompressFormat.PNG, 100,
+                    new FileOutputStream(new File(dir, "adaptive-bm-original.png")));
+            bm_test.compress(Bitmap.CompressFormat.PNG, 100,
+                    new FileOutputStream(new File(dir, "adaptive-bm-test.png")));
+        }
         Region region = new Region(new Rect(0, 0, width, height));
 
         Path circle = new Path();

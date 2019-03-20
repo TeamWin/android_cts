@@ -304,6 +304,15 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.view.cts.surfacevalidator.CapturedActivityWithResource"
+                  android:screenOrientation="locked"
+                  android:theme="@style/WhiteBackgroundTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.view.cts.HoverCtsActivity"
                   android:screenOrientation="locked">
             <intent-filter>

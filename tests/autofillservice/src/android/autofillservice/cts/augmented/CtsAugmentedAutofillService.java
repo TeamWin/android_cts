@@ -29,6 +29,7 @@ import android.content.Context;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.service.autofill.augmented.AugmentedAutofillService;
 import android.service.autofill.augmented.FillCallback;
 import android.service.autofill.augmented.FillController;
@@ -325,6 +326,10 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
         private void handleOnFillRequest(@NonNull Context context, @NonNull FillRequest request,
                 @NonNull CancellationSignal cancellationSignal, @NonNull FillController controller,
                 @NonNull FillCallback callback) {
+            final AugmentedFillRequest myRequest = new AugmentedFillRequest(request,
+                    cancellationSignal, controller, callback);
+            Log.d(TAG, "offering " + myRequest);
+            Helper.offer(mFillRequests, myRequest, AUGMENTED_CONNECTION_TIMEOUT.ms());
             try {
                 final CannedAugmentedFillResponse response;
                 try {
@@ -341,6 +346,13 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
                             + " received when no canned response was set.");
                     return;
                 }
+
+                // sleep for timeout tests.
+                final long delay = response.getDelay();
+                if (delay > 0) {
+                    SystemClock.sleep(response.getDelay());
+                }
+
                 if (response.getResponseType() == NULL) {
                     Log.d(TAG, "onFillRequest(): replying with null");
                     callback.onSuccess(null);
@@ -359,11 +371,6 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
                 callback.onSuccess(fillResponse);
             } catch (Throwable t) {
                 addException(t);
-            } finally {
-                final AugmentedFillRequest myRequest = new AugmentedFillRequest(request,
-                        cancellationSignal, controller, callback);
-                Log.d(TAG, "offering " + myRequest);
-                Helper.offer(mFillRequests, myRequest, AUGMENTED_CONNECTION_TIMEOUT.ms());
             }
         }
     }

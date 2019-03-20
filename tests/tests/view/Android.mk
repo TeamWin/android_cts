@@ -37,7 +37,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \
     platform-test-annotations \
     ub-uiautomator \
-    truth-prebuilt
+    truth-prebuilt \
+    CtsSurfaceValidatorLib
 
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++

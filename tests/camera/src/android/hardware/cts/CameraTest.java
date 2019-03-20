@@ -514,6 +514,7 @@ public class CameraTest extends Assert {
         initializeMessageLooper(cameraId);
         Parameters params = mCamera.getParameters();
         if(!params.isVideoStabilizationSupported()) {
+            terminateMessageLooper();
             return;
         }
         //Check whether we can support preview callbacks along with stabilization
