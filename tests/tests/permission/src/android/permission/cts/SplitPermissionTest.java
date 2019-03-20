@@ -23,9 +23,9 @@ import static android.Manifest.permission.READ_CONTACTS;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
-import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.permission.cts.PermissionUtils.getAppOp;
 import static android.permission.cts.PermissionUtils.getPermissionFlags;
+import static android.permission.cts.PermissionUtils.getPermissions;
 import static android.permission.cts.PermissionUtils.grantPermission;
 import static android.permission.cts.PermissionUtils.isGranted;
 import static android.permission.cts.PermissionUtils.setAppOp;
@@ -37,8 +37,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 
 import android.app.UiAutomation;
-import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.annotation.NonNull;
@@ -48,9 +46,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Tests how split permissions behave.
@@ -83,10 +78,8 @@ public class SplitPermissionTest {
     private static final String APK_LOCATION_BACKGROUND_29 =
             TMP_DIR + "CtsAppThatRequestsLocationAndBackgroundPermission29.apk";
 
-    private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
-    private static final String LOG_TAG = SplitPermissionTest.class.getSimpleName();
 
     /**
      * Revoke a permission from an app.
@@ -111,20 +104,6 @@ public class SplitPermissionTest {
         } else {
             setAppOp(packageName, permission, MODE_IGNORED);
         }
-    }
-
-    /**
-     * Get all permissions that an app requests. This includes the split permissions.
-     *
-     * @param packageName The package that requests the permissions.
-     *
-     * @return The permissions requested by the app
-     */
-    private @NonNull List<String> getPermissions(@NonNull String packageName) throws Exception {
-        PackageInfo appInfo = sContext.getPackageManager().getPackageInfo(packageName,
-                GET_PERMISSIONS);
-
-        return Arrays.asList(appInfo.requestedPermissions);
     }
 
     /**
