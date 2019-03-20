@@ -552,6 +552,14 @@ public class CtsContentCaptureService extends ContentCaptureService {
             return this;
         }
 
+        @NonNull
+        public EventsAssertor activityDestroyed(@NonNull ComponentName expectedActivity) {
+            assertNextEvent((event) -> assertActivityEvent(event, expectedActivity,
+                    ActivityEvent.TYPE_ACTIVITY_DESTROYED), "no ACTIVITY_DESTROYED event for %s",
+                    expectedActivity);
+            return this;
+        }
+
         private void assertNextEvent(@NonNull EventAssertion assertion, @NonNull String errorFormat,
                 @Nullable Object... errorArgs) {
             if (mNextEvent >= mEvents.size()) {
