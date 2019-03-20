@@ -937,6 +937,15 @@ public final class Helper {
     }
 
     /**
+     * Enables / disables the default augmented autofill service.
+     */
+    public static void setDefaultAugmentedAutofillServiceEnabled(boolean enabled) {
+        Log.d(TAG, "setDefaultAugmentedAutofillServiceEnabled(): " + enabled);
+        runShellCommand("cmd autofill set default-augmented-service-enabled 0 %s",
+                Boolean.toString(enabled));
+    }
+
+    /**
      * Gets the instrumentation context.
      */
     public static Context getContext() {
