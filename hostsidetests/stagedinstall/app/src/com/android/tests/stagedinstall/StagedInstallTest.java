@@ -209,6 +209,26 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
     }
 
+    @Test
+    public void testGetActiveStagedSesssion() throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
+        assertThat(session.getSessionId()).isEqualTo(sessionId);
+    }
+
+    @Test
+    public void testGetActiveStagedSessionNoSessionActive() throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
+        assertThat(session).isNull();
+    }
+
+    private static PackageInstaller getPackageInstaller() {
+      return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+    }
+
     private static long getInstalledVersion(String packageName) {
         Context context = InstrumentationRegistry.getContext();
         PackageManager pm = context.getPackageManager();
