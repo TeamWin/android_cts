@@ -17,9 +17,7 @@
 package android.jobscheduler.cts;
 
 import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
-import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STARTED;
-import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STOPPED;
-import static android.jobscheduler.cts.jobtestapp.TestJobService.JOB_PARAMS_EXTRA_KEY;
+import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 import static android.os.PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED;
 import static android.os.PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED;
 
@@ -28,14 +26,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.AppOpsManager;
-import android.app.job.JobParameters;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.jobscheduler.cts.jobtestapp.TestActivity;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
@@ -66,9 +61,6 @@ import org.junit.runner.RunWith;
 @LargeTest
 public class JobThrottlingTest {
     private static final String TAG = JobThrottlingTest.class.getSimpleName();
-    private static final String TEST_APP_PACKAGE = "android.jobscheduler.cts.jobtestapp";
-    private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestJobSchedulerReceiver";
-    private static final String TEST_APP_ACTIVITY = TEST_APP_PACKAGE + ".TestActivity";
     private static final long BACKGROUND_JOBS_EXPECTED_DELAY = 3_000;
     private static final long POLL_INTERVAL = 500;
     private static final long DEFAULT_WAIT_TIMEOUT = 1000;
@@ -85,7 +77,6 @@ public class JobThrottlingTest {
     private Context mContext;
     private UiDevice mUiDevice;
     private PowerManager mPowerManager;
-    private int mTestJobId;
     private int mTestPackageUid;
     private boolean mDeviceInDoze;
     private boolean mDeviceIdleEnabled;
@@ -97,22 +88,13 @@ public class JobThrottlingTest {
     /** Track whether WiFi was enabled in case we turn it off. */
     private boolean mInitialWiFiState;
 
-    /* accesses must be synchronized on itself */
-    private final TestJobStatus mTestJobStatus = new TestJobStatus();
+    private TestAppInterface mTestAppInterface;
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "Received action " + intent.getAction());
             switch (intent.getAction()) {
-                case ACTION_JOB_STARTED:
-                case ACTION_JOB_STOPPED:
-                    final JobParameters params = intent.getParcelableExtra(JOB_PARAMS_EXTRA_KEY);
-                    Log.d(TAG, "JobId: " + params.getJobId());
-                    synchronized (mTestJobStatus) {
-                        mTestJobStatus.running = ACTION_JOB_STARTED.equals(intent.getAction());
-                        mTestJobStatus.jobId = params.getJobId();
-                    }
-                    break;
                 case ACTION_DEVICE_IDLE_MODE_CHANGED:
                 case ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED:
                     synchronized (JobThrottlingTest.this) {
@@ -136,11 +118,9 @@ public class JobThrottlingTest {
         mPowerManager = mContext.getSystemService(PowerManager.class);
         mDeviceInDoze = mPowerManager.isDeviceIdleMode();
         mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
-        mTestJobId = (int) (SystemClock.uptimeMillis() / 1000);
-        mTestJobStatus.reset();
+        int testJobId = (int) (SystemClock.uptimeMillis() / 1000);
+        mTestAppInterface = new TestAppInterface(mContext, testJobId);
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ACTION_JOB_STARTED);
-        intentFilter.addAction(ACTION_JOB_STOPPED);
         intentFilter.addAction(ACTION_DEVICE_IDLE_MODE_CHANGED);
         intentFilter.addAction(ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED);
         mContext.registerReceiver(mReceiver, intentFilter);
@@ -166,10 +146,11 @@ public class JobThrottlingTest {
         toggleDeviceIdleState(true);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(true);
-        assertFalse("Job started without being tempwhitelisted", awaitJobStart(5_000));
+        assertFalse("Job started without being tempwhitelisted",
+                mTestAppInterface.awaitJobStart(5_000));
         tempWhitelistTestApp(5_000);
         assertTrue("Job with allow_while_idle flag did not start when the app was tempwhitelisted",
-                awaitJobStart(5_000));
+                mTestAppInterface.awaitJobStart(5_000));
     }
 
     @Test
@@ -177,14 +158,16 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         sendScheduleJobBroadcast(false);
-        assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         toggleDeviceIdleState(true);
-        assertTrue("Job did not stop on entering doze", awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not stop on entering doze",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
-        startAndKeepTestActivity();
+        mTestAppInterface.startAndKeepTestActivity();
         toggleDeviceIdleState(false);
         assertTrue("Job for foreground app did not start immediately when device exited doze",
-                awaitJobStart(3_000));
+                mTestAppInterface.awaitJobStart(3_000));
     }
 
     @Test
@@ -192,45 +175,51 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         sendScheduleJobBroadcast(false);
-        assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         toggleDeviceIdleState(true);
-        assertTrue("Job did not stop on entering doze", awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not stop on entering doze",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
         toggleDeviceIdleState(false);
         assertFalse("Job for background app started immediately when device exited doze",
-                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         Thread.sleep(BACKGROUND_JOBS_EXPECTED_DELAY - DEFAULT_WAIT_TIMEOUT);
         assertTrue("Job for background app did not start after the expected delay of "
-                + BACKGROUND_JOBS_EXPECTED_DELAY + "ms", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+                        + BACKGROUND_JOBS_EXPECTED_DELAY + "ms",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
     public void testJobStoppedWhenRestricted() throws Exception {
         sendScheduleJobBroadcast(false);
-        assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         setTestPackageRestricted(true);
         assertTrue("Job did not stop after test app was restricted",
-                awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
     public void testRestrictedJobStartedWhenUnrestricted() throws Exception {
         setTestPackageRestricted(true);
         sendScheduleJobBroadcast(false);
-        assertFalse("Job started for restricted app", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertFalse("Job started for restricted app",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         setTestPackageRestricted(false);
         assertTrue("Job did not start when app was unrestricted",
-                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
     public void testRestrictedJobAllowedWhenUidActive() throws Exception {
         setTestPackageRestricted(true);
         sendScheduleJobBroadcast(false);
-        assertFalse("Job started for restricted app", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        startAndKeepTestActivity();
+        assertFalse("Job started for restricted app",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        mTestAppInterface.startAndKeepTestActivity();
         assertTrue("Job did not start when app had an activity",
-                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
@@ -241,13 +230,16 @@ public class JobThrottlingTest {
         }
         setWifiState(true, mContext, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
-        sendScheduleJobBroadcast(false, true);
-        assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        mTestAppInterface.scheduleJob(false, true);
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
-        assertTrue("Job did not stop on thermal throttling", awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not stop on thermal throttling",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
         ThermalUtils.overrideThermalNotThrottling();
-        assertTrue("Job did not start back from throttling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not start back from throttling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
@@ -258,7 +250,7 @@ public class JobThrottlingTest {
         setTestPackageStandbyBucket(Bucket.NEVER);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
-        assertFalse("New job started in NEVER standby", awaitJobStart(3_000));
+        assertFalse("New job started in NEVER standby", mTestAppInterface.awaitJobStart(3_000));
     }
 
     @Test
@@ -269,7 +261,7 @@ public class JobThrottlingTest {
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
         assertTrue("New job in uid-active app failed to start in NEVER standby",
-                awaitJobStart(4_000));
+                mTestAppInterface.awaitJobStart(4_000));
     }
 
     @Test
@@ -279,7 +271,8 @@ public class JobThrottlingTest {
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(false);
         sendScheduleJobBroadcast(false);
-        assertTrue("New job failed to start with battery saver OFF", awaitJobStart(3_000));
+        assertTrue("New job failed to start with battery saver OFF",
+                mTestAppInterface.awaitJobStart(3_000));
     }
 
     @Test
@@ -289,7 +282,8 @@ public class JobThrottlingTest {
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(true);
         sendScheduleJobBroadcast(false);
-        assertFalse("New job started with battery saver ON", awaitJobStart(3_000));
+        assertFalse("New job started with battery saver ON",
+                mTestAppInterface.awaitJobStart(3_000));
     }
 
     @Test
@@ -301,7 +295,7 @@ public class JobThrottlingTest {
         tempWhitelistTestApp(6_000);
         sendScheduleJobBroadcast(false);
         assertTrue("New job in uid-active app failed to start with battery saver OFF",
-                awaitJobStart(3_000));
+                mTestAppInterface.awaitJobStart(3_000));
     }
 
     @Test
@@ -312,13 +306,14 @@ public class JobThrottlingTest {
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(true);
         sendScheduleJobBroadcast(false);
-        assertFalse("New job started with battery saver ON", awaitJobStart(3_000));
+        assertFalse("New job started with battery saver ON",
+                mTestAppInterface.awaitJobStart(3_000));
 
 
         // Then make the UID active. Now the job should run.
         tempWhitelistTestApp(120_000);
         assertTrue("New job in uid-active app failed to start with battery saver OFF",
-                awaitJobStart(120_000));
+                mTestAppInterface.awaitJobStart(120_000));
     }
 
     @After
@@ -329,12 +324,7 @@ public class JobThrottlingTest {
         if (mDeviceIdleEnabled) {
             toggleDeviceIdleState(false);
         }
-        final Intent cancelJobsIntent = new Intent(TestJobSchedulerReceiver.ACTION_CANCEL_JOBS);
-        cancelJobsIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
-        cancelJobsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.sendBroadcast(cancelJobsIntent);
-        mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
-        mContext.unregisterReceiver(mReceiver);
+        mTestAppInterface.cleanup();
         BatteryUtils.runDumpsysBatteryReset();
         removeTestAppFromTempWhitelist();
 
@@ -359,26 +349,8 @@ public class JobThrottlingTest {
         return false;
     }
 
-    private void startAndKeepTestActivity() {
-        final Intent testActivity = new Intent();
-        testActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        testActivity.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_ACTIVITY));
-        mContext.startActivity(testActivity);
-    }
-
-    private void sendScheduleJobBroadcast(boolean allowWhileIdle, boolean needNetwork)
-            throws Exception {
-        final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
-        scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, mTestJobId);
-        scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle);
-        scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_REQUIRE_NETWORK_ANY, needNetwork);
-        scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
-        mContext.sendBroadcast(scheduleJobIntent);
-    }
-
     private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
-        sendScheduleJobBroadcast(allowWhileIdle, false);
+        mTestAppInterface.scheduleJob(allowWhileIdle, false);
     }
 
     private void toggleDeviceIdleState(final boolean idle) throws Exception {
@@ -430,37 +402,12 @@ public class JobThrottlingTest {
         return waitUntilTrue(SHELL_TIMEOUT, () -> !isTestAppTempWhitelisted());
     }
 
-    private boolean awaitJobStart(long maxWait) throws Exception {
-        return waitUntilTrue(maxWait, () -> {
-            synchronized (mTestJobStatus) {
-                return (mTestJobStatus.jobId == mTestJobId) && mTestJobStatus.running;
-            }
-        });
-    }
-
-    private boolean awaitJobStop(long maxWait) throws Exception {
-        return waitUntilTrue(maxWait, () -> {
-            synchronized (mTestJobStatus) {
-                return (mTestJobStatus.jobId == mTestJobId) && !mTestJobStatus.running;
-            }
-        });
-    }
-
     private boolean waitUntilTrue(long maxWait, Condition condition) throws Exception {
         final long deadLine = SystemClock.uptimeMillis() + maxWait;
         do {
             Thread.sleep(POLL_INTERVAL);
         } while (!condition.isTrue() && SystemClock.uptimeMillis() < deadLine);
         return condition.isTrue();
-    }
-
-    private static final class TestJobStatus {
-        int jobId;
-        boolean running;
-
-        private void reset() {
-            running = false;
-        }
     }
 
     private interface Condition {
