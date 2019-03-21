@@ -16,6 +16,10 @@
 
 package android.app.cts;
 
+import android.app.cts.R;
+import static android.graphics.drawable.Icon.TYPE_ADAPTIVE_BITMAP;
+import static android.graphics.drawable.Icon.TYPE_RESOURCE;
+
 import android.app.Notification;
 import android.app.Notification.Action.Builder;
 import android.app.Notification.MessagingStyle;
@@ -27,6 +31,8 @@ import android.app.Person;
 import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -653,7 +659,6 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(deleteIntent, metadata.getDeleteIntent());
         assertTrue(metadata.getAutoExpandBubble());
         assertTrue(metadata.getSuppressInitialNotification());
-
     }
 
     public void testBubbleMetadataBuilder_throwForNoIntent() {
@@ -682,6 +687,51 @@ public class NotificationTest extends AndroidTestCase {
         } catch (IllegalStateException e) {
             // expected
         }
+    }
+
+    public void testBubbleMetadataBuilder_throwForBitmapIcon() {
+        Bitmap b = Bitmap.createBitmap(50, 25, Bitmap.Config.ARGB_8888);
+        new Canvas(b).drawColor(0xffff0000);
+        Icon icon = Icon.createWithBitmap(b);
+
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        try {
+            Notification.BubbleMetadata.Builder metadataBuilder =
+                    new Notification.BubbleMetadata.Builder()
+                            .setIcon(icon)
+                            .setIntent(bubbleIntent);
+            fail("Should have thrown IllegalArgumentException, invalid icon type (bitmap)");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    public void testBubbleMetadataBuilder_noThrowForAdaptiveBitmapIcon() {
+        Bitmap b = Bitmap.createBitmap(50, 25, Bitmap.Config.ARGB_8888);
+        new Canvas(b).drawColor(0xffff0000);
+        Icon icon = Icon.createWithAdaptiveBitmap(b);
+
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                        .setIcon(icon)
+                        .setIntent(bubbleIntent);
+        Notification.BubbleMetadata metadata = metadataBuilder.build();
+        assertNotNull(metadata.getIcon());
+        assertEquals(TYPE_ADAPTIVE_BITMAP, metadata.getIcon().getType());
+    }
+
+    public void testBubbleMetadataBuilder_noThrowForNonBitmapIcon() {
+        Icon icon = Icon.createWithResource(mContext, R.drawable.ic_android);
+
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                        .setIcon(icon)
+                        .setIntent(bubbleIntent);
+        Notification.BubbleMetadata metadata = metadataBuilder.build();
+        assertNotNull(metadata.getIcon());
+        assertEquals(TYPE_RESOURCE, metadata.getIcon().getType());
     }
 
     private static RemoteInput newDataOnlyRemoteInput() {
