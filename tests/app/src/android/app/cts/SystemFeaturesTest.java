@@ -527,7 +527,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
 
     public void testUsbAccessory() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
-                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) &&
+                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED) &&
                 !isAndroidEmulator() &&
@@ -559,7 +559,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
 
     public void testAudioOutputFeature() throws Exception {
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
-                mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             assertAvailable(PackageManager.FEATURE_AUDIO_OUTPUT);
         }
     }
