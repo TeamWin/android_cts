@@ -25,7 +25,6 @@ import static org.junit.Assert.fail;
 import android.R;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.view.inspector.InspectableNodeName;
 import android.view.inspector.InspectableProperty;
 import android.view.inspector.InspectableProperty.EnumEntry;
 import android.view.inspector.InspectableProperty.ValueType;
@@ -81,17 +80,6 @@ public class PlatformInspectableProcessorTest {
         mRandom = new Random();
         mPropertyMapper = new TestPropertyMapper();
         mPropertyReader = new TestPropertyReader(mPropertyMapper);
-    }
-
-    @InspectableNodeName("my_node")
-    class NodeNameTest {
-    }
-
-
-    @Test
-    public void testNodeName() {
-        assertEquals("my_node", loadCompanion(NodeNameTest.class).getNodeName());
-        assertNull(loadCompanion(IntPropertyTest.class).getNodeName());
     }
 
     class IntPropertyTest {
