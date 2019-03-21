@@ -28,7 +28,7 @@
         <uses-library android:name="android.test.runner" />
 
         <!-- Required to be default SMS app -->
-        <receiver android:name="android.telephony.ims.SmsApplicationReceiver"
+        <receiver android:name="android.telephony.ims.SmsApplicationSmsDeliverReceiver"
                   android:permission="android.permission.BROADCAST_SMS">
 
             <intent-filter>
@@ -38,7 +38,7 @@
         </receiver>
 
         <!-- Required to be default SMS app -->
-        <receiver android:name="android.telephony.ims.SmsApplicationReceiver"
+        <receiver android:name="android.telephony.ims.SmsApplicationWapPushDeliverReceiver"
                   android:permission="android.permission.BROADCAST_WAP_PUSH">
 
             <intent-filter>
