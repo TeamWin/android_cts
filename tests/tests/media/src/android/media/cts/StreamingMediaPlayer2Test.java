@@ -690,7 +690,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
             assertTrue("Stream has no timed ID3 track", i >= 0);
-            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), i);
+            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackInfos.get(i));
 
             synchronized (completion) {
                 completion.wait();
