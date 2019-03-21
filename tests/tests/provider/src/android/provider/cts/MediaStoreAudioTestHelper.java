@@ -97,8 +97,8 @@ public class MediaStoreAudioTestHelper {
         public static final String TITLE = "Jam";
         public static final int SIZE = 2737870;
         public static final String MIME_TYPE = "audio/x-mpeg";
-        public static final String DISPLAY_NAME = "Jam -Michael Jackson";
         public static final String FILE_NAME = "Jam.mp3";
+        public static final String DISPLAY_NAME = FILE_NAME;
         public static final long DATE_MODIFIED = System.currentTimeMillis() / 1000;
         public static final String GENRE = "POP";
 
@@ -160,8 +160,8 @@ public class MediaStoreAudioTestHelper {
         public static final String TITLE = "Jam";
         public static final int SIZE = 2737321;
         public static final String MIME_TYPE = "audio/x-mpeg";
-        public static final String DISPLAY_NAME = "Jam(Live)-Michael Jackson";
         public static final String FILE_NAME = "Jam_live.mp3";
+        public static final String DISPLAY_NAME = FILE_NAME;
         public static final long DATE_MODIFIED = System.currentTimeMillis() / 1000;
 
         @Override
