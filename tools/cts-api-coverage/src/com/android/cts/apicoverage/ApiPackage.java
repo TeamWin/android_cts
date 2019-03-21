@@ -84,34 +84,37 @@ class ApiPackage implements HasCoverage {
             Map.Entry<String, ApiClass> entry = it.next();
             ApiClass apiClass = entry.getValue();
             if (apiClass.getSuperClassName() != null) {
+                // Add the super class
                 String superClassName = apiClass.getSuperClassName();
-                // Split the fully qualified class name into package and class name.
-                String packageName = superClassName.substring(0, superClassName.lastIndexOf('.'));
-                String className = superClassName.substring(
-                        superClassName.lastIndexOf('.') + 1, superClassName.length());
-                if (packageMap.containsKey(packageName)) {
-                    ApiPackage apiPackage = packageMap.get(packageName);
-                    ApiClass superClass = apiPackage.getClass(className);
-                    if (superClass != null) {
-                        // Add the super class
-                        apiClass.setSuperClass(superClass);
-                    }
-                }
+                ApiClass superClass = findClass(packageMap, superClassName);
+                apiClass.setSuperClass(superClass);
             }
             for (String interfaceName : apiClass.getInterfaceNames()) {
-                // Split the fully qualified interface name into package and interface name.
-                String packageName = interfaceName.substring(0, interfaceName.lastIndexOf('.'));
-                String className = interfaceName.substring(
-                        interfaceName.lastIndexOf('.') + 1, interfaceName.length());
-                if (packageMap.containsKey(packageName)) {
-                    ApiPackage apiPackage = packageMap.get(packageName);
-                    ApiClass apiInterface = apiPackage.getClass(className);
-                    if (apiInterface != null) {
-                        // Add the interface
-                        apiClass.resolveInterface(interfaceName, apiInterface);
-                    }
-                }
+                // Add the interface
+                ApiClass apiInterface = findClass(packageMap, interfaceName);
+                apiClass.resolveInterface(interfaceName, apiInterface);
             }
         }
     }
+
+    /** Find a class that matches the fully qualified class name.  */
+    private ApiClass findClass(Map<String, ApiPackage> packageMap, String fullClassName) {
+        // Split the fully qualified class name into package and class name.
+        int delimiterIndex = fullClassName.lastIndexOf('.');
+        while (delimiterIndex > 0) {
+            String packageName = fullClassName.substring(0, delimiterIndex);
+            String className = fullClassName.substring(delimiterIndex + 1);
+            if (packageMap.containsKey(packageName)) {
+                ApiPackage apiPackage = packageMap.get(packageName);
+                ApiClass apiClass = apiPackage.getClass(className);
+                if (apiClass != null) {
+                    // api class found
+                    return apiClass;
+                }
+            }
+            delimiterIndex = fullClassName.lastIndexOf('.', delimiterIndex - 1);
+        }
+        return null;
+    }
 }
+
