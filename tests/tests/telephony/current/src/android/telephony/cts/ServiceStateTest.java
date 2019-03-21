@@ -18,6 +18,9 @@ package android.telephony.cts;
 import static android.telephony.ServiceState.DUPLEX_MODE_FDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_TDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_UNKNOWN;
+import static android.telephony.ServiceState.STATE_IN_SERVICE;
+import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
+import static android.telephony.ServiceState.STATE_POWER_OFF;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -36,45 +39,76 @@ public class ServiceStateTest extends AndroidTestCase {
     private static final int CHANNEL_NUMBER_BAND_33 = 36000;
     private static final int[] CELL_BANDWIDTH = {1, 2, 3};
 
-    public void testServiceState() {
+    public void testDescribeContents() {
         ServiceState serviceState = new ServiceState();
-
         assertEquals(0, serviceState.describeContents());
+    }
 
+    public void testSetStateOff() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setStateOff();
-        assertEquals(ServiceState.STATE_POWER_OFF, serviceState.getState());
+        assertEquals(STATE_POWER_OFF, serviceState.getState());
         checkOffStatus(serviceState);
+    }
 
+    public void testSetStateOutOfService() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setStateOutOfService();
-        assertEquals(ServiceState.STATE_OUT_OF_SERVICE, serviceState.getState());
+        assertEquals(STATE_OUT_OF_SERVICE, serviceState.getState());
         checkOffStatus(serviceState);
+    }
 
+    public void testSetState() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setState(ServiceState.STATE_IN_SERVICE);
         assertEquals(ServiceState.STATE_IN_SERVICE, serviceState.getState());
+    }
 
+    public void testGetRoaming() {
+        ServiceState serviceState = new ServiceState();
+        serviceState.setRoaming(false);
         assertFalse(serviceState.getRoaming());
         serviceState.setRoaming(true);
         assertTrue(serviceState.getRoaming());
+    }
 
+    public void testGetIsManualSelection() {
+        ServiceState serviceState = new ServiceState();
+        serviceState.setIsManualSelection(false);
         assertFalse(serviceState.getIsManualSelection());
         serviceState.setIsManualSelection(true);
         assertTrue(serviceState.getIsManualSelection());
+    }
 
+    public void testGetOperator() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setOperatorName(OPERATOR_ALPHA_LONG, OPERATOR_ALPHA_SHORT, OPERATOR_NUMERIC);
         assertEquals(OPERATOR_ALPHA_LONG, serviceState.getOperatorAlphaLong());
         assertEquals(OPERATOR_ALPHA_SHORT, serviceState.getOperatorAlphaShort());
         assertEquals(OPERATOR_NUMERIC, serviceState.getOperatorNumeric());
+    }
 
+    public void testGetCdma() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setCdmaSystemAndNetworkId(SYSTEM_ID, NETWORK_ID);
         assertEquals(SYSTEM_ID, serviceState.getCdmaSystemId());
         assertEquals(NETWORK_ID, serviceState.getCdmaNetworkId());
+    }
 
+    public void testGetChannelNumber() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setChannelNumber(CHANNEL_NUMBER_BAND_66);
         assertEquals(CHANNEL_NUMBER_BAND_66, serviceState.getChannelNumber());
+    }
 
+    public void testGetCellBandwidths() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setCellBandwidths(CELL_BANDWIDTH);
         assertEquals(CELL_BANDWIDTH, serviceState.getCellBandwidths());
+    }
 
+    public void testGetDuplexMode() {
+        ServiceState serviceState = new ServiceState();
         serviceState.setRilDataRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_GSM);
         assertEquals(DUPLEX_MODE_UNKNOWN, serviceState.getDuplexMode());
 
@@ -83,17 +117,24 @@ public class ServiceStateTest extends AndroidTestCase {
 
         serviceState.setChannelNumber(CHANNEL_NUMBER_BAND_33);
         assertEquals(DUPLEX_MODE_TDD, serviceState.getDuplexMode());
+    }
 
+    public void testToString() {
+        ServiceState serviceState = new ServiceState();
         assertNotNull(serviceState.toString());
+    }
 
-        ServiceState tempServiceState = new ServiceState(serviceState);
-        assertTrue(tempServiceState.equals(serviceState));
+    public void testCopyConstructor() {
+        ServiceState serviceState = getServiceStateWithOperatorName("name", "numeric");
+        assertEquals(serviceState, new ServiceState(serviceState));
+    }
 
+    public void testParcelConstructor() {
+        ServiceState serviceState = getServiceStateWithOperatorName("name", "numeric");
         Parcel stateParcel = Parcel.obtain();
         serviceState.writeToParcel(stateParcel, 0);
         stateParcel.setDataPosition(0);
-        tempServiceState = new ServiceState(stateParcel);
-        assertTrue(tempServiceState.equals(serviceState));
+        assertEquals(serviceState, new ServiceState(stateParcel));
     }
 
     public void testHashCode() {
