@@ -58,7 +58,7 @@ public class MediaController2Test {
 
     static final int ALLOWED_COMMAND_CODE = 100;
     static final Session2CommandGroup SESSION_ALLOWED_COMMANDS = new Session2CommandGroup.Builder()
-            .addCommand(ALLOWED_COMMAND_CODE).build();
+            .addCommand(new Session2Command(ALLOWED_COMMAND_CODE)).build();
     static final int SESSION_RESULT_CODE = 100;
     static final String SESSION_RESULT_KEY = "test_result_key";
     static final String SESSION_RESULT_VALUE = "test_result_value";
