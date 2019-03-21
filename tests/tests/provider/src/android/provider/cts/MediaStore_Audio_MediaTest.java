@@ -20,6 +20,7 @@ import static android.provider.cts.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
@@ -28,11 +29,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,10 +41,16 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import java.io.File;
+
+import androidx.test.InstrumentationRegistry;
+
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_MediaTest {
     private Context mContext;
     private ContentResolver mContentResolver;
+
+    private Uri mExternalAudio;
 
     @Parameter(0)
     public String mVolumeName;
@@ -60,6 +66,7 @@ public class MediaStore_Audio_MediaTest {
         mContentResolver = mContext.getContentResolver();
 
         Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalAudio = MediaStore.Audio.Media.getContentUri(mVolumeName);
     }
 
     @Test
@@ -154,5 +161,40 @@ public class MediaStore_Audio_MediaTest {
             int result = mContentResolver.delete(uri, null, null);
             assertEquals(1, result);
         }
+    }
+
+    @Test
+    public void testCanonicalize() throws Exception {
+        // Remove all audio left over from other tests
+        ProviderTestUtils.executeShellCommand(
+                "content delete --uri " + mExternalAudio,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+
+        // Publish some content
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final Uri a = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.testmp3_2, new File(dir, "a.mp3")), true);
+        final Uri b = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "b.mp3")), true);
+        final Uri c = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.testmp3_2, new File(dir, "c.mp3")), true);
+
+        // Confirm we can canonicalize and recover it
+        final Uri canonicalized = mContentResolver.canonicalize(b);
+        assertNotNull(canonicalized);
+        assertEquals(b, mContentResolver.uncanonicalize(canonicalized));
+
+        // Delete all items above
+        mContentResolver.delete(a, null, null);
+        mContentResolver.delete(b, null, null);
+        mContentResolver.delete(c, null, null);
+
+        // Confirm canonical item isn't found
+        assertNull(mContentResolver.uncanonicalize(canonicalized));
+
+        // Publish data again and confirm we can recover it
+        final Uri d = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "d.mp3")), true);
+        assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
     }
 }

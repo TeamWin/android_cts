@@ -305,8 +305,9 @@ public class CommandReceiverActivity extends Activity {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
                     }
-                    mDpm.setUserIcon(mAdmin, BitmapFactory.decodeResource(getResources(),
-                            com.android.cts.verifier.R.drawable.icon));
+                    int iconRes = intent.getIntExtra(EXTRA_VALUE,
+                            com.android.cts.verifier.R.drawable.icon);
+                    mDpm.setUserIcon(mAdmin, BitmapFactory.decodeResource(getResources(), iconRes));
                 } break;
                 case COMMAND_RETRIEVE_NETWORK_LOGS: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {

@@ -98,6 +98,20 @@ class ApiPackage implements HasCoverage {
                     }
                 }
             }
+            for (String interfaceName : apiClass.getInterfaceNames()) {
+                // Split the fully qualified interface name into package and interface name.
+                String packageName = interfaceName.substring(0, interfaceName.lastIndexOf('.'));
+                String className = interfaceName.substring(
+                        interfaceName.lastIndexOf('.') + 1, interfaceName.length());
+                if (packageMap.containsKey(packageName)) {
+                    ApiPackage apiPackage = packageMap.get(packageName);
+                    ApiClass apiInterface = apiPackage.getClass(className);
+                    if (apiInterface != null) {
+                        // Add the interface
+                        apiClass.resolveInterface(interfaceName, apiInterface);
+                    }
+                }
+            }
         }
     }
 }

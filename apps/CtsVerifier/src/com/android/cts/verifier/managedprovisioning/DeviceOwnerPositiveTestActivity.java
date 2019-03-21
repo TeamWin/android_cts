@@ -313,7 +313,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 new ButtonInfo[] {
                         new ButtonInfo(
                                 R.string.device_owner_set_user_icon_button,
-                                createSetUserIconIntent()),
+                                createSetUserIconIntent(R.drawable.user_icon_1)),
+                        new ButtonInfo(
+                                R.string.disallow_set_user_icon,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_SET_USER_ICON, true)),
+                        new ButtonInfo(
+                                R.string.device_owner_set_user_icon2_button,
+                                createSetUserIconIntent(R.drawable.user_icon_2)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
                                 new Intent(Settings.ACTION_SETTINGS))}));
@@ -465,10 +472,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 .putExtra(CommandReceiverActivity.EXTRA_ENFORCED, value);
     }
 
-    private Intent createSetUserIconIntent() {
+    private Intent createSetUserIconIntent(int iconRes) {
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
-                        CommandReceiverActivity.COMMAND_SET_USER_ICON);
+                        CommandReceiverActivity.COMMAND_SET_USER_ICON)
+                .putExtra(CommandReceiverActivity.EXTRA_VALUE, iconRes);
     }
 
     private Intent createEnableNetworkLoggingIntent() {

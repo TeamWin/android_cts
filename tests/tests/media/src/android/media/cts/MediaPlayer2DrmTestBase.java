@@ -26,6 +26,7 @@ import android.media.DataSourceDesc;
 import android.media.UriDataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
+import android.media.MediaPlayer2.DrmEventCallback;
 import android.media.MediaPlayer2.DrmInfo;
 import android.media.MediaPlayer2.DrmPreparationInfo;
 import android.media.MediaDrm.KeyRequest;
@@ -72,6 +73,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
     protected Monitor mOnPlaylistCompleted = new Monitor();
     protected Monitor mOnDrmInfoCalled = new Monitor();
     protected Monitor mOnDrmPreparedCalled = new Monitor();
+    protected Monitor mOnErrorCalled = new Monitor();
     protected int mCallStatus = MediaPlayer2.CALL_STATUS_NO_ERROR;
 
     protected Context mContext;
@@ -80,6 +82,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
     protected MediaPlayer2 mPlayer = null;
     protected MediaStubActivity mActivity;
 
+    private boolean mExpectError;
     protected ExecutorService mExecutor;
     protected MediaPlayer2.EventCallback mECb = new MediaPlayer2.EventCallback() {
         @Override
@@ -91,7 +94,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         @Override
         public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
-            fail("Media player had error " + what + " playing video");
+            assertTrue("Media player had error " + what + " playing video", mExpectError);
+            mOnErrorCalled.signal();
         }
 
         @Override
@@ -192,6 +196,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         V3_ASYNC_DRMPREPARED_TEST,
         V4_SYNC_OFFLINE_KEY,
         V5_ASYNC_CALLBACKS_TEST,
+        V6_ASYNC_KEYREQUEST_ERR_TEST,
     }
 
     // TODO: After living on these tests for a while, we can consider grouping them based on
@@ -264,6 +269,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             case V2_SYNC_CONFIG_TEST:
             case V3_ASYNC_DRMPREPARED_TEST:
             case V5_ASYNC_CALLBACKS_TEST:
+            case V6_ASYNC_KEYREQUEST_ERR_TEST:
                 playLoadedModularDrmVideo_Generic(file, width, height, playTime, testType);
                 break;
 
@@ -297,6 +303,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         mPlayer.setSurface(surfaceHolder.getSurface());
 
         try {
+            final AtomicBoolean drmCallbackError = new AtomicBoolean(false);
+            final List<DataSourceDesc> dsds = Collections.singletonList(dsd);
             switch (testType) {
                 case V0_SYNC_TEST:
                     preparePlayerAndDrm_V0_syncDrmSetup(dsd);
@@ -315,7 +323,16 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                     break;
 
                 case V5_ASYNC_CALLBACKS_TEST:
-                    preparePlayerAndDrm_V5_asyncDrmSetupCallbacks(dsd);
+                    DrmEventCallback eventCallback = new CtsDrmEventCallback(
+                            drmCallbackError, dsds, MediaDrm.KEY_TYPE_STREAMING);
+                    preparePlayerAndDrm_asyncDrmSetupCallbacks(eventCallback, drmCallbackError);
+                    break;
+
+                case V6_ASYNC_KEYREQUEST_ERR_TEST:
+                    mExpectError = true;
+                    DrmEventCallback misbehave = new CtsDrmBadServerResponseCallback(
+                            drmCallbackError, dsds, MediaDrm.KEY_TYPE_STREAMING);
+                    preparePlayerAndDrm_asyncDrmSetupCallbacks(misbehave , drmCallbackError);
                     break;
 
                 default:
@@ -545,7 +562,19 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         }
     }
 
-    private final class CtsDrmEventCallback extends MediaPlayer2.DrmEventCallback {
+    private class CtsDrmBadServerResponseCallback extends CtsDrmEventCallback {
+        CtsDrmBadServerResponseCallback(
+                AtomicBoolean drmCallbackError, List<DataSourceDesc> dsds, int keyType) {
+            super(drmCallbackError, dsds, keyType);
+        }
+
+        @Override
+        public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest req) {
+            return null;
+        }
+    }
+
+    private class CtsDrmEventCallback extends MediaPlayer2.DrmEventCallback {
         final String DRM_EVENT_CB_TAG = CtsDrmEventCallback.class.getSimpleName();
         final AtomicBoolean mDrmCallbackError;
         final List<DataSourceDesc> mDsds;
@@ -673,23 +702,22 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         }
     }
 
-    private void preparePlayerAndDrm_V5_asyncDrmSetupCallbacks(DataSourceDesc dsd)
-            throws InterruptedException {
-
-        final AtomicBoolean drmCallbackError = new AtomicBoolean(false);
-        List<DataSourceDesc> dsds = Collections.singletonList(dsd);
-        mPlayer.setDrmEventCallback(mExecutor,
-                new CtsDrmEventCallback(drmCallbackError, dsds, MediaDrm.KEY_TYPE_STREAMING));
-        Log.v(TAG, "preparePlayerAndDrm_V5: calling prepare()");
+    private void preparePlayerAndDrm_asyncDrmSetupCallbacks(DrmEventCallback eventCallback,
+            AtomicBoolean drmCallbackError) throws InterruptedException {
+        mPlayer.setDrmEventCallback(mExecutor, eventCallback);
+        Log.v(TAG, "preparePlayerAndDrm_asyncDrmSetupCallbacks: calling prepare()");
         mPlayer.prepare();
 
-        // Waiting till the player is prepared
-        mOnPreparedCalled.waitForSignal();
+        if (mExpectError) {
+            mOnErrorCalled.waitForSignal();
+        } else {
+            // Waiting till the player is prepared
+            mOnPreparedCalled.waitForSignal();
+        }
 
         // handle error (async) in main thread rather than callbacks
-        if (drmCallbackError.get()) {
-            fail("preparePlayerAndDrm_V5: setupDrm");
-        }
+        assertTrue("preparePlayerAndDrm_asyncDrmSetupCallbacks: setupDrm",
+                drmCallbackError.get() == mExpectError);
 
     }
 

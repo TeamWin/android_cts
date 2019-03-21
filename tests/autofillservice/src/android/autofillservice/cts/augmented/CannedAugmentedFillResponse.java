@@ -35,9 +35,11 @@ import android.view.autofill.AutofillValue;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.common.base.Preconditions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,11 +54,13 @@ public final class CannedAugmentedFillResponse {
     private final AugmentedResponseType mResponseType;
     private final Map<AutofillId, Dataset> mDatasets;
     private long mDelay;
+    private final Dataset mOnlyDataset;
 
     private CannedAugmentedFillResponse(@NonNull Builder builder) {
         mResponseType = builder.mResponseType;
         mDatasets = builder.mDatasets;
         mDelay = builder.mDelay;
+        mOnlyDataset = builder.mOnlyDataset;
     }
 
     /**
@@ -87,7 +91,12 @@ public final class CannedAugmentedFillResponse {
             @NonNull FillController controller) {
         final AutofillId focusedId = request.getFocusedId();
 
-        final Dataset dataset = mDatasets.get(focusedId);
+        final Dataset dataset;
+        if (mOnlyDataset != null) {
+            dataset = mOnlyDataset;
+        } else {
+            dataset = mDatasets.get(focusedId);
+        }
         if (dataset == null) {
             Log.d(TAG, "no dataset for field " + focusedId);
             return null;
@@ -118,8 +127,16 @@ public final class CannedAugmentedFillResponse {
         rootView.setOnClickListener((v) -> {
             Log.d(TAG, "Destroying window first");
             fillWindow.destroy();
-            final List<Pair<AutofillId, AutofillValue>> values = dataset.getValues();
-            Log.i(TAG, "Autofilling: " + AugmentedHelper.toString(values));
+            final List<Pair<AutofillId, AutofillValue>> values;
+            final AutofillValue onlyValue = dataset.getOnlyFieldValue();
+            if (onlyValue != null) {
+                Log.i(TAG, "Autofilling only value for " + focusedId + " as " + onlyValue);
+                values = new ArrayList<>(1);
+                values.add(new Pair<AutofillId, AutofillValue>(focusedId, onlyValue));
+            } else {
+                values = dataset.getValues();
+                Log.i(TAG, "Autofilling: " + AugmentedHelper.toString(values));
+            }
             controller.autofill(values);
         });
 
@@ -135,7 +152,8 @@ public final class CannedAugmentedFillResponse {
     @Override
     public String toString() {
         return "CannedAugmentedFillResponse: [type=" + mResponseType
-                + ",datasets=" + mDatasets
+                + ", onlyDataset=" + mOnlyDataset
+                + ", datasets=" + mDatasets
                 + "]";
     }
     public enum AugmentedResponseType {
@@ -148,6 +166,7 @@ public final class CannedAugmentedFillResponse {
         private final Map<AutofillId, Dataset> mDatasets = new ArrayMap<>();
         private final AugmentedResponseType mResponseType;
         private long mDelay;
+        private Dataset mOnlyDataset;
 
         public Builder(@NonNull AugmentedResponseType type) {
             mResponseType = type;
@@ -161,7 +180,11 @@ public final class CannedAugmentedFillResponse {
          * Sets the {@link Dataset} that will be filled when the given {@code ids} is focused and
          * the UI is tapped.
          */
+        @NonNull
         public Builder setDataset(@NonNull Dataset dataset, @NonNull AutofillId... ids) {
+            if (mOnlyDataset != null) {
+                throw new IllegalStateException("already called setOnlyDataset()");
+            }
             for (AutofillId id : ids) {
                 mDatasets.put(id, dataset);
             }
@@ -176,6 +199,22 @@ public final class CannedAugmentedFillResponse {
             return this;
         }
 
+        /**
+         * Sets the only dataset that will be returned.
+         *
+         * <p>Used when the test case doesn't know the autofill id of the focused field.
+         * @param dataset
+         */
+        @NonNull
+        public Builder setOnlyDataset(@NonNull Dataset dataset) {
+            if (!mDatasets.isEmpty()) {
+                throw new IllegalStateException("already called setDataset()");
+            }
+            mOnlyDataset = dataset;
+            return this;
+        }
+
+        @NonNull
         public CannedAugmentedFillResponse build() {
             return new CannedAugmentedFillResponse(this);
         }
@@ -189,21 +228,30 @@ public final class CannedAugmentedFillResponse {
     public static class Dataset {
         private final Map<AutofillId, AutofillValue> mFieldValuesById;
         private final String mPresentation;
+        private final AutofillValue mOnlyFieldValue;
 
         private Dataset(@NonNull Builder builder) {
             mFieldValuesById = builder.mFieldValuesById;
             mPresentation = builder.mPresentation;
+            mOnlyFieldValue = builder.mOnlyFieldValue;
         }
 
+        @NonNull
         public List<Pair<AutofillId, AutofillValue>> getValues() {
             return mFieldValuesById.entrySet().stream()
                     .map((entry) -> (new Pair<>(entry.getKey(), entry.getValue())))
                     .collect(Collectors.toList());
         }
 
+        @Nullable
+        public AutofillValue getOnlyFieldValue() {
+            return mOnlyFieldValue;
+        }
+
         @Override
         public String toString() {
             return "Dataset: [presentation=" + mPresentation
+                    + ", onlyField=" + mOnlyFieldValue
                     + ", fields=" + mFieldValuesById
                     + "]";
         }
@@ -212,6 +260,7 @@ public final class CannedAugmentedFillResponse {
             private final Map<AutofillId, AutofillValue> mFieldValuesById = new ArrayMap<>();
 
             private final String mPresentation;
+            private AutofillValue mOnlyFieldValue;
 
             public Builder(@NonNull String presentation) {
                 mPresentation = Preconditions.checkNotNull(presentation);
@@ -220,10 +269,28 @@ public final class CannedAugmentedFillResponse {
             /**
              * Sets the value that will be autofilled on the field with {@code id}.
              */
-            public Builder setField(@NonNull AutofillId id, String text) {
+            public Builder setField(@NonNull AutofillId id, @NonNull String text) {
+                if (mOnlyFieldValue != null) {
+                    throw new IllegalStateException("already called setOnlyField()");
+                }
                 mFieldValuesById.put(id, AutofillValue.forText(text));
                 return this;
             }
+
+            /**
+             * Sets this dataset to return the given {@code text} for the focused field.
+             *
+             * <p>Used when the test case doesn't know the autofill id of the focused field.
+             */
+            public Builder setOnlyField(@NonNull String text) {
+                if (!mFieldValuesById.isEmpty()) {
+                    throw new IllegalStateException("already called setField()");
+                }
+                mOnlyFieldValue = AutofillValue.forText(text);
+                return this;
+            }
+
+
             public Dataset build() {
                 return new Dataset(this);
             }

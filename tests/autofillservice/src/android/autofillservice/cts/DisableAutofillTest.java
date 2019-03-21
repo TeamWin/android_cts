@@ -20,7 +20,6 @@ import static android.autofillservice.cts.Timeouts.ACTIVITY_RESURRECTION;
 import static android.autofillservice.cts.Timeouts.CALLBACK_NOT_CALLED_TIMEOUT_MS;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.content.Intent;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
@@ -36,22 +35,6 @@ import org.junit.Test;
 public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityLaunch {
 
     private static final String TAG = "DisableAutofillTest";
-
-    private SimpleSaveActivity startSimpleSaveActivity() throws Exception {
-        final Intent intent = new Intent(mContext, SimpleSaveActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mUiBot.assertShownByRelativeId(SimpleSaveActivity.ID_LABEL);
-        return SimpleSaveActivity.getInstance();
-    }
-
-    private PreSimpleSaveActivity startPreSimpleSaveActivity() throws Exception {
-        final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
-        return PreSimpleSaveActivity.getInstance();
-    }
 
     /**
      * Defines what to do after the activity being tested is launched.

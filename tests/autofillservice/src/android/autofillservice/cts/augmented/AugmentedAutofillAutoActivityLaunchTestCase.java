@@ -32,6 +32,11 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+/////
+///// NOTE: changes in this class should also be applied to
+/////       AugmentedAutofillManualActivityLaunchTestCase, which is exactly the same as this except
+/////       by which class it extends.
+
 // Must be public because of the @ClassRule
 public abstract class AugmentedAutofillAutoActivityLaunchTestCase
         <A extends AbstractAutoFillActivity> extends AutoFillServiceTestCase.AutoActivityLaunch<A> {

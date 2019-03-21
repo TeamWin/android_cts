@@ -44,9 +44,6 @@ import android.support.test.uiautomator.UiSelector;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingParams;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingSession;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +53,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaStorageTest {
@@ -254,7 +254,7 @@ public class MediaStorageTest {
                 collectionUri, displayName, "audio/mpeg");
         final Uri pendingUri = MediaStoreUtils.createPending(context, params);
         try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
-            try (InputStream in = context.getResources().openRawResource(R.raw.testmp3);
+            try (InputStream in = context.getResources().getAssets().open("testmp3.mp3");
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
             }

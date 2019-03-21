@@ -45,7 +45,9 @@ import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.TestNameUtils;
 import com.android.cts.mockime.MockImeSessionRule;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -146,6 +148,22 @@ public final class AutoFillServiceTestCase {
                     };
                 }
             };
+        }
+
+        protected SimpleSaveActivity startSimpleSaveActivity() throws Exception {
+            final Intent intent = new Intent(mContext, SimpleSaveActivity.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            mUiBot.assertShownByRelativeId(SimpleSaveActivity.ID_LABEL);
+            return SimpleSaveActivity.getInstance();
+        }
+
+        protected PreSimpleSaveActivity startPreSimpleSaveActivity() throws Exception {
+            final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            mUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
+            return PreSimpleSaveActivity.getInstance();
         }
     }
 
@@ -276,6 +294,18 @@ public final class AutoFillServiceTestCase {
          */
         @NonNull
         protected abstract TestRule getMainTestRule();
+
+        @BeforeClass
+        public static void disableDefaultAugmentedService() {
+            Log.v(TAG, "@BeforeClass: disableDefaultAugmentedService()");
+            Helper.setDefaultAugmentedAutofillServiceEnabled(false);
+        }
+
+        @AfterClass
+        public static void enableDefaultAugmentedService() {
+            Log.v(TAG, "@AfterClass: enableDefaultAugmentedService()");
+            Helper.setDefaultAugmentedAutofillServiceEnabled(true);
+        }
 
         @Before
         public void prepareDevice() throws Exception {

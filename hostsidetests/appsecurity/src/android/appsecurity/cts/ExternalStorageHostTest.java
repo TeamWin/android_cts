@@ -62,9 +62,13 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String MULTIUSER_APK = "CtsMultiUserStorageApp.apk";
     private static final String MULTIUSER_PKG = "com.android.cts.multiuserstorageapp";
     private static final String MULTIUSER_CLASS = MULTIUSER_PKG + ".MultiUserStorageTest";
+
     private static final String MEDIA_APK = "CtsMediaStorageApp.apk";
     private static final String MEDIA_PKG = "com.android.cts.mediastorageapp";
     private static final String MEDIA_CLASS = MEDIA_PKG + ".MediaStorageTest";
+    private static final String MEDIA28_APK = "CtsMediaStorageApp28.apk";
+    private static final String MEDIA28_PKG = "com.android.cts.mediastorageapp28";
+    private static final String MEDIA28_CLASS = MEDIA28_PKG + ".MediaStorageTest";
 
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
@@ -72,6 +76,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String APK_B = "CtsStorageAppB.apk";
     private static final String CLASS = "com.android.cts.storageapp.StorageTest";
 
+    private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
+    private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
     private static final String PERM_READ_MEDIA_AUDIO = "android.permission.READ_MEDIA_AUDIO";
     private static final String PERM_READ_MEDIA_VIDEO = "android.permission.READ_MEDIA_VIDEO";
     private static final String PERM_READ_MEDIA_IMAGES = "android.permission.READ_MEDIA_IMAGES";
@@ -545,6 +551,23 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testMediaNone28() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA28_APK);
+        for (int user : mUsers) {
+            updatePermissions(MEDIA28_PKG, user, new String[] {
+                    PERM_READ_EXTERNAL_STORAGE,
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, false);
+            updateRole(MEDIA28_PKG, user, ROLE_GALLERY, false);
+
+            runDeviceTests(MEDIA28_PKG, MEDIA_CLASS, "testMediaNone", user);
+        }
+    }
+
+    @Test
     public void testMediaRead() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
@@ -563,6 +586,23 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testMediaRead28() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA28_APK);
+        for (int user : mUsers) {
+            updatePermissions(MEDIA28_PKG, user, new String[] {
+                    PERM_READ_EXTERNAL_STORAGE,
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, true);
+            updateRole(MEDIA28_PKG, user, ROLE_GALLERY, false);
+
+            runDeviceTests(MEDIA28_PKG, MEDIA_CLASS, "testMediaRead", user);
+        }
+    }
+
+    @Test
     public void testMediaWrite() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
@@ -577,6 +617,23 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, true);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaWrite", user);
+        }
+    }
+
+    @Test
+    public void testMediaWrite28() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA28_APK);
+        for (int user : mUsers) {
+            updatePermissions(MEDIA28_PKG, user, new String[] {
+                    PERM_READ_EXTERNAL_STORAGE,
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, true);
+            updateRole(MEDIA28_PKG, user, ROLE_GALLERY, true);
+
+            runDeviceTests(MEDIA28_PKG, MEDIA_CLASS, "testMediaWrite", user);
         }
     }
 
