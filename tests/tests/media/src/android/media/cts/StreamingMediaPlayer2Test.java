@@ -358,8 +358,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -421,8 +421,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -517,8 +517,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             assertTrue(mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR);
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -598,8 +598,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             final AtomicInteger counter = new AtomicInteger();
             String stream_url = mServer.getAssetUrl("prog_index.m3u8");
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
             mPlayer.setScreenOnWhilePlaying(true);
@@ -764,8 +764,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
         try {
             String path = mServer.getDelayedAssetUrl("noiseandchirps.ogg", 15000);
             final Uri uri = Uri.parse(path);
-            mp.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mp.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             MediaPlayer2.EventCallback ecb =

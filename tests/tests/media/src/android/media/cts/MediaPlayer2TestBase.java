@@ -107,8 +107,8 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                     new AudioAttributes.Builder().build();
             mp.setAudioAttributes(aa);
             mp.setAudioSessionId(audioSessionId);
-            mp.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(context, uri)
+            mp.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
             if (holder != null) {
                 mp.setDisplay(holder);
@@ -164,7 +164,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             mp.setAudioAttributes(aa);
             mp.setAudioSessionId(audioSessionId);
 
-            mp.setDataSource(new FileDataSourceDesc.Builder()
+            mp.setDataSource(new DataSourceDesc.Builder()
                     .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
                         afd.getStartOffset(), afd.getLength())
                     .build());
@@ -333,7 +333,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
 
         AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
         try {
-            mPlayer.setDataSource(new FileDataSourceDesc.Builder()
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
                     .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
                         afd.getStartOffset(), afd.getLength())
                     .build());
@@ -349,7 +349,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         }
 
         AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
-        FileDataSourceDesc fdsd = new FileDataSourceDesc.Builder()
+        DataSourceDesc fdsd = new DataSourceDesc.Builder()
                 .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
                         afd.getStartOffset(), afd.getLength())
                 .build();
@@ -379,8 +379,8 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         final Uri uri = Uri.parse(path);
         for (int i = 0; i < STREAM_RETRIES; i++) {
           try {
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
             playLoadedVideo(width, height, playTime);
             playedSuccessfully = true;
@@ -413,9 +413,8 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         boolean playedSuccessfully = false;
         for (int i = 0; i < STREAM_RETRIES; i++) {
             try {
-                mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                        .setDataSource(getInstrumentation().getTargetContext(),
-                            uri, headers, cookies)
+                mPlayer.setDataSource(new DataSourceDesc.Builder()
+                        .setDataSource(uri, headers, cookies)
                         .build());
                 playLoadedVideo(width, height, playTime);
                 playedSuccessfully = true;
