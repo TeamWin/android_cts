@@ -20,6 +20,7 @@ import static android.provider.cts.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -398,5 +399,40 @@ public class MediaStore_Images_MediaTest {
             assertTrue(c.isNull(0));
             assertTrue(c.isNull(1));
         }
+    }
+
+    @Test
+    public void testCanonicalize() throws Exception {
+        // Remove all audio left over from other tests
+        ProviderTestUtils.executeShellCommand(
+                "content delete --uri " + mExternalImages,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+
+        // Publish some content
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final Uri a = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "a.jpg")), true);
+        final Uri b = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "b.jpg")), true);
+        final Uri c = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "c.jpg")), true);
+
+        // Confirm we can canonicalize and recover it
+        final Uri canonicalized = mContentResolver.canonicalize(b);
+        assertNotNull(canonicalized);
+        assertEquals(b, mContentResolver.uncanonicalize(canonicalized));
+
+        // Delete all items above
+        mContentResolver.delete(a, null, null);
+        mContentResolver.delete(b, null, null);
+        mContentResolver.delete(c, null, null);
+
+        // Confirm canonical item isn't found
+        assertNull(mContentResolver.uncanonicalize(canonicalized));
+
+        // Publish data again and confirm we can recover it
+        final Uri d = ProviderTestUtils.scanFile(
+                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "d.jpg")), true);
+        assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
     }
 }

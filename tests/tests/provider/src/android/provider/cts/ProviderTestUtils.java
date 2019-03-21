@@ -180,7 +180,7 @@ public class ProviderTestUtils {
                 "android.provider.cts");
     }
 
-    static void stageFile(int resId, File file) throws IOException {
+    static File stageFile(int resId, File file) throws IOException {
         // The caller may be trying to stage into a location only available to
         // the shell user, so we need to perform the entire copy as the shell
         if (FileUtils.contains(Environment.getStorageDirectory(), file)) {
@@ -210,6 +210,7 @@ public class ProviderTestUtils {
                 FileUtils.copy(source, target);
             }
         }
+        return file;
     }
 
     static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
