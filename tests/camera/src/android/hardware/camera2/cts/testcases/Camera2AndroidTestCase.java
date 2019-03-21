@@ -431,12 +431,12 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         }
     }
 
-    protected boolean checkImageReaderSessionConfiguration() throws Exception {
+    protected void checkImageReaderSessionConfiguration(String msg) throws Exception {
         List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
         outputConfigs.add(new OutputConfiguration(mReaderSurface));
 
-        return checkSessionConfiguration(mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
-                SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true);
+        checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
+                SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true, msg);
     }
 
     protected CaptureRequest prepareCaptureRequest() throws Exception {

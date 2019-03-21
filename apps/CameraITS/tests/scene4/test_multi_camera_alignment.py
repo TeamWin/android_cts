@@ -275,12 +275,6 @@ def main():
         w, h = its.objects.get_available_output_sizes(
                 'yuv', props, match_ar_size=max_raw_size)[0]
 
-        # Do 3A and get the values
-        s, e, _, _, fd = cam.do_3a(get_results=True,
-                                   lock_ae=True, lock_awb=True)
-        e *= 2  # brighten RAW images
-        req = its.objects.manual_capture_request(s, e, fd, True, props)
-
         # get physical camera properties
         ids = its.caps.logical_multi_camera_physical_ids(props)
         props_physical = {}
@@ -292,6 +286,16 @@ def main():
         out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
                         {'format': 'raw', 'physicalCamera': ids[0]},
                         {'format': 'raw', 'physicalCamera': ids[1]}]
+
+        out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
+        its.caps.skip_unless(out_surfaces_supported)
+
+        # Do 3A and get the values
+        s, e, _, _, fd = cam.do_3a(get_results=True,
+                                   lock_ae=True, lock_awb=True)
+        e *= 2  # brighten RAW images
+        req = its.objects.manual_capture_request(s, e, fd, True, props)
+
         _, cap_raw[ids[0]], cap_raw[ids[1]] = cam.do_capture(req, out_surfaces)
 
     size_raw = {}

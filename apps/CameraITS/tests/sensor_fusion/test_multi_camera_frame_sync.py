@@ -123,6 +123,9 @@ def _collect_data():
                         {"format": "yuv", "width": W, "height": H,
                          "physicalCamera": ids[1]}]
 
+        out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
+        its.caps.skip_unless(out_surfaces_supported)
+
         capture_1_list, capture_2_list = cam.do_capture(
             [req]*NUM_CAPTURES, out_surfaces)
 

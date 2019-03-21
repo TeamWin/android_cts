@@ -162,69 +162,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Test for making sure the required logical output combinations for each hardware level and
-     * capability work as expected.
-     */
-    public void testMandatoryLogicalOutputCombinations() throws Exception {
-        /**
-         * Tables for maximum sizes to try for each hardware level and capability.
-         *
-         * Keep in sync with the tables in
-         * frameworks/base/core/java/android/hardware/camera2/CameraDevice.java#createCaptureSession
-         *
-         * Each row of the table is a set of (format, max resolution) pairs, using the below consts
-         */
-
-        final int[][] RAW_COMBINATIONS = {
-            // No-preview DNG capture.
-            {RAW,  MAXIMUM },
-            // Standard DNG capture.
-            {PRIV, PREVIEW,  RAW,  MAXIMUM },
-            // In-app processing plus DNG capture.
-            {YUV,  PREVIEW,  RAW,  MAXIMUM },
-            // Video recording with DNG capture.
-            {PRIV, PREVIEW,  PRIV, PREVIEW,  RAW, MAXIMUM},
-            // Preview with in-app processing and DNG capture.
-            {PRIV, PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM},
-            // Two-input in-app processing plus DNG capture.
-            {YUV,  PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM},
-            // Still capture with simultaneous JPEG and DNG.
-            {PRIV, PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM},
-            // In-app processing with simultaneous JPEG and DNG.
-            {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
-        };
-
-        final int[][][] TABLES = { RAW_COMBINATIONS };
-
-        sanityCheckConfigurationTables(TABLES);
-
-        for (String id : mCameraIds) {
-            openDevice(id);
-
-            // Find the concrete max sizes for each format/resolution combination
-            MaxStreamSizes maxSizes = new MaxStreamSizes(mStaticInfo, id, getContext());
-
-            String streamConfigurationMapString =
-                    mStaticInfo.getCharacteristics().get(
-                            CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).toString();
-            if (VERBOSE) {
-                Log.v(TAG, "StreamConfigurationMap: " + streamConfigurationMapString);
-            }
-
-            // Then run higher-level tests if applicable
-            if (!mStaticInfo.isHardwareLevelLegacy()) {
-                if (mStaticInfo.isLogicalMultiCamera()) {
-                    for (int[] config : RAW_COMBINATIONS) {
-                        testMultiCameraOutputCombination(id, config, maxSizes);
-                    }
-                }
-            }
-
-            closeDevice(id);
-        }
-    }
-
-    /**
      * Test for making sure the mandatory stream combinations work as expected.
      */
     public void testMandatoryOutputCombinations() throws Exception {
@@ -242,9 +179,36 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             try {
                 for (MandatoryStreamCombination combination : combinations) {
                     if (!combination.isReprocessable()) {
-                        testMandatoryStreamCombination(id, combination);
+                        testMandatoryStreamCombination(id, mStaticInfo,
+                                null/*physicalCameraId*/, combination);
                     }
                 }
+
+                // Make sure mandatory stream combinations for each physical camera work
+                // as expected.
+                if (mStaticInfo.isLogicalMultiCamera()) {
+                    Set<String> physicalCameraIds =
+                            mStaticInfo.getCharacteristics().getPhysicalCameraIds();
+                    for (String physicalId : physicalCameraIds) {
+                        if (Arrays.asList(mCameraIds).contains(physicalId)) {
+                            // If physicalId is advertised in camera ID list, do not need to test
+                            // its stream combination through logical camera.
+                            continue;
+                        }
+                        StaticMetadata physicalStaticInfo = mAllStaticInfo.get(physicalId);
+                        MandatoryStreamCombination[] phyCombinations =
+                                physicalStaticInfo.getCharacteristics().get(
+                                        CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+
+                        for (MandatoryStreamCombination combination : phyCombinations) {
+                            if (!combination.isReprocessable()) {
+                                testMandatoryStreamCombination(id, physicalStaticInfo,
+                                        physicalId, combination);
+                            }
+                        }
+                    }
+                }
+
             } finally {
                 closeDevice(id);
             }
@@ -257,8 +221,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             List<ImageReader> rawTargets, List<ImageReader> heicTargets,
             List<OutputConfiguration> outputConfigs,
             int numBuffers, boolean substituteY8, boolean substituteHeic,
-            MandatoryStreamInformation overrideStreamInfo,
-            List<String> overridePhysicalCameraIds, List<Size> overridePhysicalCameraSizes) {
+            String overridePhysicalCameraId) {
 
         ImageDropperListener imageDropperListener = new ImageDropperListener();
 
@@ -277,102 +240,94 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
             Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
 
-            int numConfigs = 1;
-            if ((overrideStreamInfo == streamInfo) && overridePhysicalCameraIds != null &&
-                    overridePhysicalCameraIds.size() > 1) {
-                numConfigs = overridePhysicalCameraIds.size();
-            }
-            for (int j = 0; j < numConfigs; j++) {
-                targetSize = (numConfigs == 1) ? targetSize : overridePhysicalCameraSizes.get(j);
-                switch (format) {
-                    case ImageFormat.PRIVATE: {
-                        SurfaceTexture target = new SurfaceTexture(/*random int*/1);
-                        target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
-                        OutputConfiguration config = new OutputConfiguration(new Surface(target));
-                        if (numConfigs > 1) {
-                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
-                        }
-                        outputConfigs.add(config);
-                        privTargets.add(target);
-                        break;
+            switch (format) {
+                case ImageFormat.PRIVATE: {
+                    SurfaceTexture target = new SurfaceTexture(/*random int*/1);
+                    target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                    OutputConfiguration config = new OutputConfiguration(new Surface(target));
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    case ImageFormat.JPEG: {
-                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                targetSize.getHeight(), format, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                        if (numConfigs > 1) {
-                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
-                        }
-                        outputConfigs.add(config);
-                        jpegTargets.add(target);
-                        break;
-                    }
-                    case ImageFormat.YUV_420_888: {
-                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                targetSize.getHeight(), format, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                        if (numConfigs > 1) {
-                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
-                        }
-                        outputConfigs.add(config);
-                        yuvTargets.add(target);
-                        break;
-                    }
-                    case ImageFormat.Y8: {
-                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                targetSize.getHeight(), format, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                        if (numConfigs > 1) {
-                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
-                        }
-                        outputConfigs.add(config);
-                        y8Targets.add(target);
-                        break;
-                    }
-                    case ImageFormat.RAW_SENSOR: {
-                        // targetSize could be null in the logical camera case where only
-                        // physical camera supports RAW stream.
-                        if (targetSize != null) {
-                            ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                    targetSize.getHeight(), format, numBuffers);
-                            target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                            OutputConfiguration config =
-                                    new OutputConfiguration(target.getSurface());
-                            if (numConfigs > 1) {
-                                config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
-                            }
-                            outputConfigs.add(config);
-                            rawTargets.add(target);
-                        }
-                        break;
-                    }
-                    case ImageFormat.HEIC: {
-                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                targetSize.getHeight(), format, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                        if (numConfigs > 1) {
-                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
-                        }
-                        outputConfigs.add(config);
-                        heicTargets.add(target);
-                        break;
-                    }
-                    default:
-                        fail("Unknown output format " + format);
+                    outputConfigs.add(config);
+                    privTargets.add(target);
+                    break;
                 }
+                case ImageFormat.JPEG: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    jpegTargets.add(target);
+                    break;
+                }
+                case ImageFormat.YUV_420_888: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    yuvTargets.add(target);
+                    break;
+                }
+                case ImageFormat.Y8: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    y8Targets.add(target);
+                    break;
+                }
+                case ImageFormat.RAW_SENSOR: {
+                    // targetSize could be null in the logical camera case where only
+                    // physical camera supports RAW stream.
+                    if (targetSize != null) {
+                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                targetSize.getHeight(), format, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config =
+                                new OutputConfiguration(target.getSurface());
+                        if (overridePhysicalCameraId != null) {
+                            config.setPhysicalCameraId(overridePhysicalCameraId);
+                        }
+                        outputConfigs.add(config);
+                        rawTargets.add(target);
+                    }
+                    break;
+                }
+                case ImageFormat.HEIC: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    heicTargets.add(target);
+                    break;
+                }
+                default:
+                    fail("Unknown output format " + format);
             }
         }
     }
 
-    private void testMandatoryStreamCombination(String cameraId,
-            MandatoryStreamCombination combination) throws Exception {
+    private void testMandatoryStreamCombination(String cameraId, StaticMetadata staticInfo,
+            String physicalCameraId, MandatoryStreamCombination combination) throws Exception {
         // Check whether substituting YUV_888 format with Y8 format
         boolean substituteY8 = false;
-        if (mStaticInfo.isMonochromeWithY8()) {
+        if (staticInfo.isMonochromeWithY8()) {
             List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
             for (MandatoryStreamInformation streamInfo : streamsInfo) {
                 if (streamInfo.getFormat() == ImageFormat.YUV_420_888) {
@@ -384,7 +339,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         // Check whether substituting JPEG format with HEIC format
         boolean substituteHeic = false;
-        if (mStaticInfo.isHeicSupported()) {
+        if (staticInfo.isHeicSupported()) {
             List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
             for (MandatoryStreamInformation streamInfo : streamsInfo) {
                 if (streamInfo.getFormat() == ImageFormat.JPEG) {
@@ -395,173 +350,35 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
 
         // Test camera output combination
-        Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
-                " on camera: " + cameraId);
-        testMandatoryStreamCombination(cameraId, combination, /*substituteY8*/false,
-                /*substituteHeic*/false);
+        String log = "Testing mandatory stream combination: " + combination.getDescription() +
+                " on camera: " + cameraId;
+        if (physicalCameraId != null) {
+            log += ", physical sub-camera: " + physicalCameraId;
+        }
+        Log.i(TAG, log);
+        testMandatoryStreamCombination(cameraId, staticInfo, physicalCameraId, combination,
+                /*substituteY8*/false, /*substituteHeic*/false);
 
         if (substituteY8) {
-            Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
-                    " on camera: " + cameraId + " with Y8");
-            testMandatoryStreamCombination(cameraId, combination, /*substituteY8*/true,
-                    /*substituteHeic*/false);
+            Log.i(TAG, log + " with Y8");
+            testMandatoryStreamCombination(cameraId, staticInfo, physicalCameraId, combination,
+                    /*substituteY8*/true, /*substituteHeic*/false);
         }
 
         if (substituteHeic) {
-            Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
-                    " on camera: " + cameraId + " with HEIC");
-            testMandatoryStreamCombination(cameraId, combination,
+            Log.i(TAG, log + " with HEIC");
+            testMandatoryStreamCombination(cameraId, staticInfo, physicalCameraId, combination,
                     /*substituteY8*/false, /*substituteHeic*/true);
-        }
-
-        // Test substituting YUV_888/RAW with physical streams for logical camera
-        if (mStaticInfo.isLogicalMultiCamera()) {
-            Log.i(TAG, String.format("Testing logical Camera %s, combination: %s",
-                    cameraId, combination.getDescription()));
-
-            testMultiCameraOutputCombination(cameraId, combination, /*substituteY8*/false);
-
-            if (substituteY8) {
-                testMultiCameraOutputCombination(cameraId, combination, /*substituteY8*/true);
-            }
-        }
-    }
-
-    private void testMultiCameraOutputCombination(String cameraId,
-            MandatoryStreamCombination combination, boolean substituteY8) throws Exception {
-
-        // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
-        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
-        final int MIN_RESULT_COUNT = 3;
-        Set<String> physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-
-        List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
-        for (MandatoryStreamInformation streamInfo : streamsInfo) {
-            int format = streamInfo.getFormat();
-            if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
-                format = ImageFormat.Y8;
-            }
-            if (format != ImageFormat.YUV_420_888 && format != ImageFormat.Y8 &&
-                    format != ImageFormat.RAW_SENSOR) {
-                continue;
-            }
-
-            // Find physical cameras with matching size.
-            Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
-            availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
-            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
-
-            List<String> physicalCamerasForSize = new ArrayList<String>();
-            List<Size> physicalCameraSizes = new ArrayList<Size>();
-            for (String physicalId : physicalCameraIds) {
-                Size[] sizes = mAllStaticInfo.get(physicalId).getAvailableSizesForFormatChecked(
-                        format, StaticMetadata.StreamDirection.Output);
-                if (targetSize != null) {
-                    if (Arrays.asList(sizes).contains(targetSize)) {
-                        physicalCameraSizes.add(targetSize);
-                        physicalCamerasForSize.add(physicalId);
-                    }
-                } else if (format == ImageFormat.RAW_SENSOR && sizes.length > 0) {
-                    physicalCamerasForSize.add(physicalId);
-                    physicalCameraSizes.add(CameraTestUtils.getMaxSize(sizes));
-                }
-                if (physicalCamerasForSize.size() == 2) {
-                    break;
-                }
-            }
-            if (physicalCamerasForSize.size() < 2) {
-                continue;
-            }
-
-            // Set up outputs
-            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
-            List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
-            List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
-            List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
-            List<ImageReader> y8Targets = new ArrayList<ImageReader>();
-            List<ImageReader> rawTargets = new ArrayList<ImageReader>();
-            List<ImageReader> heicTargets = new ArrayList<ImageReader>();
-
-            setupConfigurationTargets(streamsInfo, privTargets, jpegTargets, yuvTargets,
-                    y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT,
-                    substituteY8, /*substituteHeic*/false, streamInfo, physicalCamerasForSize,
-                    physicalCameraSizes);
-
-            boolean haveSession = false;
-            try {
-                CaptureRequest.Builder requestBuilder =
-                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-
-                for (OutputConfiguration c : outputConfigs) {
-                    requestBuilder.addTarget(c.getSurface());
-                }
-
-                CameraCaptureSession.CaptureCallback mockCaptureCallback =
-                        mock(CameraCaptureSession.CaptureCallback.class);
-
-                assertTrue(String.format("Session configuration query %s failed",
-                        combination.getDescription()),
-                        checkSessionConfiguration(mCamera, mHandler, outputConfigs,
-                        /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
-                        /*expectedResult*/ true));
-
-                createSessionByConfigs(outputConfigs);
-                haveSession = true;
-                CaptureRequest request = requestBuilder.build();
-                mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
-
-                verify(mockCaptureCallback,
-                        timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
-                        .onCaptureCompleted(
-                            eq(mCameraSession),
-                            eq(request),
-                            isA(TotalCaptureResult.class));
-                verify(mockCaptureCallback, never()).
-                        onCaptureFailed(
-                            eq(mCameraSession),
-                            eq(request),
-                            isA(CaptureFailure.class));
-
-            } catch (Throwable e) {
-                mCollector.addMessage(String.format("Output combination: %s failed due to: %s",
-                        combination.getDescription(), e.getMessage()));
-            }
-            if (haveSession) {
-                try {
-                    Log.i(TAG, String.format("Done camera %s, combination: %s, closing session",
-                                    cameraId, combination.getDescription()));
-                    stopCapture(/*fast*/false);
-                } catch (Throwable e) {
-                    mCollector.addMessage(
-                        String.format("Closing down for output combination: %s failed due to: %s",
-                                combination.getDescription(), e.getMessage()));
-                }
-            }
-
-            for (SurfaceTexture target : privTargets) {
-                target.release();
-            }
-            for (ImageReader target : jpegTargets) {
-                target.close();
-            }
-            for (ImageReader target : yuvTargets) {
-                target.close();
-            }
-            for (ImageReader target : y8Targets) {
-                target.close();
-            }
-            for (ImageReader target : rawTargets) {
-                target.close();
-            }
         }
     }
 
     private void testMandatoryStreamCombination(String cameraId,
+            StaticMetadata staticInfo, String physicalCameraId,
             MandatoryStreamCombination combination,
             boolean substituteY8, boolean substituteHeic) throws Exception {
 
         // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
-        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
+        final int TIMEOUT_FOR_RESULT_MS = (staticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
         final int MIN_RESULT_COUNT = 3;
 
         // Set up outputs
@@ -575,9 +392,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         setupConfigurationTargets(combination.getStreamsInformation(), privTargets, jpegTargets,
                 yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT,
-                substituteY8, substituteHeic,
-                null /*overrideStreamInfo*/, null /*overridePhysicalCameraIds*/,
-                null /* overridePhysicalCameraSizes) */);
+                substituteY8, substituteHeic, physicalCameraId);
 
         boolean haveSession = false;
         try {
@@ -591,10 +406,26 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             CameraCaptureSession.CaptureCallback mockCaptureCallback =
                     mock(CameraCaptureSession.CaptureCallback.class);
 
-            assertTrue(String.format("Session configuration query fro combination: %s failed",
-                    combination.getDescription()), checkSessionConfiguration(mCamera,
-                    mHandler, outputConfigs, /*inputConfig*/ null,
-                    SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
+            if (physicalCameraId == null) {
+                checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs,
+                        /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                        true/*defaultSupport*/, String.format(
+                        "Session configuration query from combination: %s failed",
+                        combination.getDescription()));
+            } else {
+                SessionConfigSupport sessionConfigSupport = isSessionConfigSupported(
+                        mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
+                        SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
+                assertTrue(
+                        String.format("Session configuration query from combination: %s failed",
+                        combination.getDescription()), !sessionConfigSupport.error);
+                if (!sessionConfigSupport.callSupported) {
+                    return;
+                }
+                assertTrue(
+                        String.format("Session configuration must be supported for combination: " +
+                        "%s", combination.getDescription()), sessionConfigSupport.configSupported);
+            }
 
             createSessionByConfigs(outputConfigs);
             haveSession = true;
@@ -758,8 +589,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()), privTargets,
                     jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs,
                     NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,  substituteHeic,
-                    null /*overrideStreamInfo*/, null /*overridePhysicalCameraIds*/,
-                    null /* overridePhysicalCameraSizes) */);
+                    null/*overridePhysicalCameraId*/);
 
             outputSurfaces.ensureCapacity(outputConfigs.size());
             for (OutputConfiguration config : outputConfigs) {
@@ -788,10 +618,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             inputReader.setOnImageAvailableListener(inputReaderListener, mHandler);
             outputSurfaces.add(inputReader.getSurface());
 
-            assertTrue(String.format("Session configuration query %s failed",
-                    combination.getDescription()),
-                    checkSessionConfigurationWithSurfaces(mCamera, mHandler, outputSurfaces,
-                    inputConfig, SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
+            checkSessionConfigurationWithSurfaces(mCamera, mHandler, outputSurfaces,
+                    inputConfig, SessionConfiguration.SESSION_REGULAR, /*defaultSupport*/ true,
+                    String.format("Session configuration query %s failed",
+                    combination.getDescription()));
 
             // Verify we can create a reprocessable session with the input and all outputs.
             BlockingSessionCallback sessionListener = new BlockingSessionCallback();
@@ -2160,129 +1990,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 default:
                     b.append("UNK]");
                     break;
-            }
-        }
-    }
-
-    private void testMultiCameraOutputCombination(String cameraId, int[] config,
-        MaxStreamSizes maxSizes) throws Exception {
-
-        // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
-        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
-        final int MIN_RESULT_COUNT = 3;
-        Set<String> physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
-
-        for (int i = 0; i < config.length; i += 2) {
-            int format = config[i];
-            int sizeLimit = config[i+1];
-            if (format != YUV && format != Y8 && format != RAW) {
-                continue;
-            }
-
-            // Find physical cameras with matching size.
-            Size targetSize = (format == YUV) ? maxSizes.maxYuvSizes[sizeLimit] :
-                    (format == Y8) ? maxSizes.maxY8Sizes[sizeLimit] :
-                    maxSizes.maxRawSize;
-            List<String> physicalCamerasForSize = new ArrayList<String>();
-            List<Size> physicalCameraSizes = new ArrayList<Size>();
-            for (String physicalId : physicalCameraIds) {
-                Size[] sizes = mAllStaticInfo.get(physicalId).getAvailableSizesForFormatChecked(
-                        format, StaticMetadata.StreamDirection.Output);
-                if (targetSize != null) {
-                    if (Arrays.asList(sizes).contains(targetSize)) {
-                        physicalCameraSizes.add(targetSize);
-                        physicalCamerasForSize.add(physicalId);
-                    }
-                } else if (format == RAW && sizes.length > 0) {
-                    physicalCamerasForSize.add(physicalId);
-                    physicalCameraSizes.add(CameraTestUtils.getMaxSize(sizes));
-                }
-                if (physicalCamerasForSize.size() == 2) {
-                    break;
-                }
-            }
-            if (physicalCamerasForSize.size() < 2) {
-                continue;
-            }
-
-            // Set up outputs
-            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
-            List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
-            List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
-            List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
-            List<ImageReader> y8Targets = new ArrayList<ImageReader>();
-            List<ImageReader> rawTargets = new ArrayList<ImageReader>();
-            List<ImageReader> heicTargets = new ArrayList<ImageReader>();
-
-            setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                    y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT, i,
-                    physicalCamerasForSize, physicalCameraSizes);
-
-            boolean haveSession = false;
-            try {
-                CaptureRequest.Builder requestBuilder =
-                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-
-                for (OutputConfiguration c : outputConfigs) {
-                    requestBuilder.addTarget(c.getSurface());
-                }
-
-                CameraCaptureSession.CaptureCallback mockCaptureCallback =
-                        mock(CameraCaptureSession.CaptureCallback.class);
-
-                assertTrue(String.format("Session configuration query %s failed",
-                        MaxStreamSizes.configToString(config)),
-                        checkSessionConfiguration(mCamera, mHandler, outputConfigs,
-                        /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
-                        /*expectedResult*/ true));
-
-                createSessionByConfigs(outputConfigs);
-                haveSession = true;
-                CaptureRequest request = requestBuilder.build();
-                mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
-
-                verify(mockCaptureCallback,
-                        timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
-                        .onCaptureCompleted(
-                            eq(mCameraSession),
-                            eq(request),
-                            isA(TotalCaptureResult.class));
-                verify(mockCaptureCallback, never()).
-                        onCaptureFailed(
-                            eq(mCameraSession),
-                            eq(request),
-                            isA(CaptureFailure.class));
-
-            } catch (Throwable e) {
-                mCollector.addMessage(String.format("Output combination %s failed due to: %s",
-                        MaxStreamSizes.configToString(config), e.getMessage()));
-            }
-            if (haveSession) {
-                try {
-                    Log.i(TAG, String.format("Done with camera %s, config %s, closing session",
-                                    cameraId, MaxStreamSizes.configToString(config)));
-                    stopCapture(/*fast*/false);
-                } catch (Throwable e) {
-                    mCollector.addMessage(
-                        String.format("Closing down for output combination %s failed due to: %s",
-                                MaxStreamSizes.configToString(config), e.getMessage()));
-                }
-            }
-
-            for (SurfaceTexture target : privTargets) {
-                target.release();
-            }
-            for (ImageReader target : jpegTargets) {
-                target.close();
-            }
-            for (ImageReader target : yuvTargets) {
-                target.close();
-            }
-            for (ImageReader target : y8Targets) {
-                target.close();
-            }
-            for (ImageReader target : rawTargets) {
-                target.close();
             }
         }
     }

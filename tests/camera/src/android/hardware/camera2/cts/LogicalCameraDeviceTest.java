@@ -37,6 +37,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.Image;
@@ -135,8 +136,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Test for making sure that streaming from physical streams work as expected, and
-     * FPS isn't slowed down.
+     * Test for making sure that streaming from physical streams work as expected.
      */
     @Test
     public void testBasicPhysicalStreaming() throws Exception {
@@ -230,6 +230,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         readerListenerLogical, mHandler);
                 outputConfigs.add(new OutputConfiguration(yuvTargetLogical.getSurface()));
                 imageReaderListeners.add(readerListenerLogical);
+
+                SessionConfigSupport sessionConfigSupport = isSessionConfigSupported(
+                        mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
+                        SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
+                assertTrue("Session configuration query for logical camera failed with error",
+                        !sessionConfigSupport.error);
+                if (!sessionConfigSupport.callSupported || !sessionConfigSupport.configSupported) {
+                    continue;
+                }
 
                 mSessionListener = new BlockingSessionCallback();
                 mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
@@ -348,6 +357,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     outputConfigs.add(config);
                     imageReaders.add(yuvTarget);
                     imageReaderListeners.add(readerListener);
+                }
+
+                SessionConfigSupport sessionConfigSupport = isSessionConfigSupported(
+                        mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
+                        SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
+                assertTrue("Session configuration query for logical camera failed with error",
+                        !sessionConfigSupport.error);
+                if (!sessionConfigSupport.callSupported || !sessionConfigSupport.configSupported) {
+                    continue;
                 }
 
                 CaptureRequest.Builder requestBuilder =
@@ -853,6 +871,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             physicalTargets.add(physicalTarget);
         }
 
+        SessionConfigSupport sessionConfigSupport = isSessionConfigSupported(
+                mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
+                SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
+        assertTrue("Session configuration query for logical camera failed with error",
+                !sessionConfigSupport.error);
+        if (!sessionConfigSupport.callSupported || !sessionConfigSupport.configSupported) {
+            return;
+        }
+
         mSessionListener = new BlockingSessionCallback();
         mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
                 mSessionListener, mHandler);
@@ -975,13 +1002,13 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         double logicalAvgDurationMs2 = (logicalTimestamps2[NUM_FRAMES_CHECKED-1] -
                 logicalTimestamps2[0])/(NS_PER_MS*(NUM_FRAMES_CHECKED-1));
 
-        mCollector.expectLessOrEqual("The average frame duration increase of all physical "
-                + "streams is larger than threshold: "
-                + String.format("increase = %.2f, threshold = %.2f",
-                  (logicalAvgDurationMs2 - logicalAvgDurationMs)/logicalAvgDurationMs,
-                  FRAME_DURATION_THRESHOLD),
-                logicalAvgDurationMs*(1+FRAME_DURATION_THRESHOLD),
-                logicalAvgDurationMs2);
+        // Check framerate slow down with physical streams, but do not enforce.
+        double fpsRatio = (logicalAvgDurationMs2 - logicalAvgDurationMs)/logicalAvgDurationMs;
+        if (fpsRatio > FRAME_DURATION_THRESHOLD) {
+            Log.w(TAG, "The average frame duration with concurrent physical streams is" +
+                logicalAvgDurationMs2 + " ms vs " + logicalAvgDurationMs +
+                " ms for logical streams only");
+        }
 
         // Stop preview
         if (mSession != null) {

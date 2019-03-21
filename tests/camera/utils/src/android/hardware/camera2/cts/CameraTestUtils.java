@@ -2679,27 +2679,51 @@ public class CameraTestUtils extends Assert {
         }
     }
 
-    /**
-     * Query whether a particular stream combination is supported.
-     */
-    public static boolean checkSessionConfigurationWithSurfaces(CameraDevice camera,
-            Handler handler, List<Surface> outputSurfaces, InputConfiguration inputConfig,
-            int operatingMode, boolean expectedResult) {
-        List<OutputConfiguration> outConfigurations = new ArrayList<>(outputSurfaces.size());
-        for (Surface surface : outputSurfaces) {
-            outConfigurations.add(new OutputConfiguration(surface));
-        }
+    public final static class SessionConfigSupport {
+        public final boolean error;
+        public final boolean callSupported;
+        public final boolean configSupported;
 
-        return checkSessionConfiguration(camera, handler, outConfigurations, inputConfig,
-                operatingMode, expectedResult);
+        public SessionConfigSupport(boolean error,
+                boolean callSupported, boolean configSupported) {
+            this.error = error;
+            this.callSupported = callSupported;
+            this.configSupported = configSupported;
+        }
     }
 
     /**
      * Query whether a particular stream combination is supported.
      */
-    public static boolean checkSessionConfiguration(CameraDevice camera, Handler handler,
-            List<OutputConfiguration> outputConfigs, InputConfiguration inputConfig,
-            int operatingMode, boolean expectedResult) {
+    public static void checkSessionConfigurationWithSurfaces(CameraDevice camera,
+            Handler handler, List<Surface> outputSurfaces, InputConfiguration inputConfig,
+            int operatingMode, boolean defaultSupport, String msg) {
+        List<OutputConfiguration> outConfigurations = new ArrayList<>(outputSurfaces.size());
+        for (Surface surface : outputSurfaces) {
+            outConfigurations.add(new OutputConfiguration(surface));
+        }
+
+        checkSessionConfigurationSupported(camera, handler, outConfigurations,
+                inputConfig, operatingMode, defaultSupport, msg);
+    }
+
+    public static void checkSessionConfigurationSupported(CameraDevice camera,
+            Handler handler, List<OutputConfiguration> outputConfigs,
+            InputConfiguration inputConfig, int operatingMode, boolean defaultSupport,
+            String msg) {
+        SessionConfigSupport sessionConfigSupported =
+                isSessionConfigSupported(camera, handler, outputConfigs, inputConfig,
+                operatingMode, defaultSupport);
+
+        assertTrue(msg, !sessionConfigSupported.error && sessionConfigSupported.configSupported);
+    }
+
+    /**
+     * Query whether a particular stream combination is supported.
+     */
+    public static SessionConfigSupport isSessionConfigSupported(CameraDevice camera,
+            Handler handler, List<OutputConfiguration> outputConfigs,
+            InputConfiguration inputConfig, int operatingMode, boolean defaultSupport) {
         boolean ret;
         BlockingSessionCallback sessionListener = new BlockingSessionCallback();
 
@@ -2712,15 +2736,19 @@ public class CameraTestUtils extends Assert {
         try {
             ret = camera.isSessionConfigurationSupported(sessionConfig);
         } catch (UnsupportedOperationException e) {
-            // Camera doesn't support session configuration query, return expected result
-            return true;
+            // Camera doesn't support session configuration query
+            return new SessionConfigSupport(false/*error*/,
+                    false/*callSupported*/, defaultSupport/*configSupported*/);
         } catch (IllegalArgumentException e) {
-            return false;
+            return new SessionConfigSupport(true/*error*/,
+                    false/*callSupported*/, false/*configSupported*/);
         } catch (android.hardware.camera2.CameraAccessException e) {
-            return false;
+            return new SessionConfigSupport(true/*error*/,
+                    false/*callSupported*/, false/*configSupported*/);
         }
 
-        return !(expectedResult ^ ret);
+        return new SessionConfigSupport(false/*error*/,
+                true/*callSupported*/, ret/*configSupported*/);
     }
 
     /**
