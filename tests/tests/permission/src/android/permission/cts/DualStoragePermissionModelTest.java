@@ -41,6 +41,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static java.util.stream.Collectors.toList;
 
+import android.platform.test.annotations.AppModeFull;
+
 import androidx.annotation.NonNull;
 
 import org.junit.After;
@@ -48,8 +50,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Verify changes to the storage permission model when it swiches from one mode to the other
+ * Verify changes to the storage permission model when it switches from one mode to the other
  */
+@AppModeFull(reason = "This tests the behavior of a different app, not this app.")
 public class DualStoragePermissionModelTest {
     /** The package name of all apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthataccessesstorage";
