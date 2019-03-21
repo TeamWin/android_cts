@@ -60,7 +60,7 @@ public class DataSourceDescTest extends AndroidTestCase {
 
     public void testUriDataSourceDescWithNullArguments() {
         try {
-            UriDataSourceDesc uriDsd = (UriDataSourceDesc) new DataSourceDesc.Builder()
+            DataSourceDesc uriDsd =  new DataSourceDesc.Builder()
                 .setDataSource((Uri) null)
                 .build();
         } catch (IllegalArgumentException e) {
