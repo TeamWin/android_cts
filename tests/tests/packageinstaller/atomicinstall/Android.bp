@@ -25,7 +25,7 @@ android_test {
         "androidx.test.runner",
         "truth-prebuilt",
     ],
-    sdk_version: "current",
+    sdk_version: "test_current",
     test_suites: [
         "cts",
         "vts",
