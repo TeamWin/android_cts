@@ -291,7 +291,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         mPlayer.registerEventCallback(mExecutor, mECb);
         Log.v(TAG, "playLoadedVideo: setDataSource()");
-        DataSourceDesc dsd = new UriDataSourceDesc.Builder().setDataSource(mContext, file).build();
+        DataSourceDesc dsd = new DataSourceDesc.Builder().setDataSource(file).build();
         mPlayer.setDataSource(dsd);
         mSetDataSourceCallCompleted.waitForSignal();
         if (mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR) {
@@ -735,7 +735,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         final AtomicBoolean drmCallbackError = new AtomicBoolean(false);
         UriDataSourceDesc.Builder dsdBuilder = new UriDataSourceDesc.Builder();
-        DataSourceDesc dsd = dsdBuilder.setDataSource(mContext, file).build();
+        DataSourceDesc dsd = dsdBuilder.setDataSource(file).build();
         DataSourceDesc dsd2 = dsdBuilder.build();
         List<DataSourceDesc> dsds = Arrays.asList(dsd, dsd2);
 
