@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephonyprovider;
+package android.telephony.ims;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -24,7 +24,7 @@ import android.content.Intent;
  * This receiver is used to provide the interface required for a default SMS application. It
  * intentionally has no custom behavior.
  */
-public class TelephonyProviderReceiver extends BroadcastReceiver {
+public class SmsApplicationWapPushDeliverReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // Do nothing
