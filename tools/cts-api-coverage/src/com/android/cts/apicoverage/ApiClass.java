@@ -19,7 +19,10 @@ package com.android.cts.apicoverage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** Representation of a class in the API with constructors and methods. */
 class ApiClass implements Comparable<ApiClass>, HasCoverage {
@@ -39,6 +42,8 @@ class ApiClass implements Comparable<ApiClass>, HasCoverage {
     private final String mSuperClassName;
 
     private ApiClass mSuperClass;
+
+    private Map<String, ApiClass> mInterfaceMap = new HashMap<String, ApiClass>();
 
     /**
      * @param name The name of the class
@@ -81,10 +86,21 @@ class ApiClass implements Comparable<ApiClass>, HasCoverage {
 
     public void setSuperClass(ApiClass superClass) { mSuperClass = superClass; }
 
+    public void addInterface(String interfaceName) {
+        mInterfaceMap.put(interfaceName, null);
+    }
+
+    public void resolveInterface(String interfaceName, ApiClass apiInterface) {
+        mInterfaceMap.replace(interfaceName, apiInterface);
+    }
+
+    public Set<String> getInterfaceNames() {
+        return mInterfaceMap.keySet();
+    }
+
     public void addConstructor(ApiConstructor constructor) {
         mApiConstructors.add(constructor);
     }
-
 
     public Collection<ApiConstructor> getConstructors() {
         return Collections.unmodifiableList(mApiConstructors);
@@ -113,6 +129,15 @@ class ApiClass implements Comparable<ApiClass>, HasCoverage {
         if (mSuperClass != null) {
             // Mark matching methods in the super class
             mSuperClass.markMethodCovered(name, parameterTypes, returnType, coveredbyApk);
+        }
+        if (!mInterfaceMap.isEmpty()) {
+            // Mark matching methods in the interfaces
+            for (String interfaceName : mInterfaceMap.keySet()) {
+                ApiClass mInterface = mInterfaceMap.get(interfaceName);
+                if (mInterface != null) {
+                    mInterface.markMethodCovered(name, parameterTypes, returnType, coveredbyApk);
+                }
+            }
         }
         ApiMethod apiMethod = getMethod(name, parameterTypes, returnType);
         if (apiMethod != null) {
