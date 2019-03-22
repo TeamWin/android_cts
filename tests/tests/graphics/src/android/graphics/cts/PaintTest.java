@@ -812,14 +812,38 @@ public class PaintTest {
         }
     }
 
+    private void testIsFilterBitmap(Paint orig) {
+        Paint p = new Paint(orig);
+        assertEquals(orig.isFilterBitmap(), p.isFilterBitmap());
+
+        p = new Paint();
+        p.set(orig);
+        assertEquals(orig.isFilterBitmap(), p.isFilterBitmap());
+    }
+
     @Test
     public void testSetFilterBitmap() {
         Paint p = new Paint();
+        assertTrue(p.isFilterBitmap());
+        testIsFilterBitmap(p);
 
         p.setFilterBitmap(true);
         assertTrue(p.isFilterBitmap());
 
         p.setFilterBitmap(false);
+        assertFalse(p.isFilterBitmap());
+        testIsFilterBitmap(p);
+
+        p.reset();
+        assertTrue(p.isFilterBitmap());
+
+        p.setFilterBitmap(false);
+        assertFalse(p.isFilterBitmap());
+
+        p.setFlags(Paint.FILTER_BITMAP_FLAG);
+        assertTrue(p.isFilterBitmap());
+
+        p.setFlags(~Paint.FILTER_BITMAP_FLAG);
         assertFalse(p.isFilterBitmap());
     }
 
@@ -1125,7 +1149,8 @@ public class PaintTest {
         assertEquals(Paint.ANTI_ALIAS_FLAG, p.getFlags());
 
         p.reset();
-        assertEquals(Paint.DEV_KERN_TEXT_FLAG | Paint.EMBEDDED_BITMAP_TEXT_FLAG, p.getFlags());
+        assertEquals(Paint.FILTER_BITMAP_FLAG | Paint.DEV_KERN_TEXT_FLAG
+                    | Paint.EMBEDDED_BITMAP_TEXT_FLAG, p.getFlags());
         assertEquals(null, p.getColorFilter());
         assertEquals(null, p.getMaskFilter());
         assertEquals(null, p.getPathEffect());
