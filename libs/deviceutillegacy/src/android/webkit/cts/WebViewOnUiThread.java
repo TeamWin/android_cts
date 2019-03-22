@@ -17,6 +17,7 @@
 package android.webkit.cts;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Picture;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -557,6 +558,38 @@ public class WebViewOnUiThread extends WebViewSyncLoader {
      */
     public WebView getWebView() {
         return mWebView;
+    }
+
+    /**
+     * Wait for the current state of the DOM to be ready to render on the next draw.
+     */
+    public void waitForDOMReadyToRender() {
+        final SettableFuture<Void> future = SettableFuture.create();
+        postVisualStateCallback(0, new VisualStateCallback() {
+            @Override
+            public void onComplete(long requestId) {
+                future.set(null);
+            }
+        });
+        WebkitUtils.waitForFuture(future);
+    }
+
+    /**
+     * Capture a bitmap representation of the current WebView state.
+     *
+     * This synchronises so that the bitmap contents reflects the current DOM state, rather than
+     * potentially capturing a previously generated frame.
+     */
+    public Bitmap captureBitmap() {
+        getSettings().setOffscreenPreRaster(true);
+        waitForDOMReadyToRender();
+        return WebkitUtils.onMainThreadSync(() -> {
+            Bitmap bitmap = Bitmap.createBitmap(mWebView.getWidth(), mWebView.getHeight(),
+                    Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            mWebView.draw(canvas);
+            return bitmap;
+        });
     }
 
     /**
