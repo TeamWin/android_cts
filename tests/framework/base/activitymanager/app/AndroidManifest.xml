@@ -462,6 +462,19 @@
                   android:exported="true"
                   android:launchMode="singleInstance" />
 
+        <service
+            android:name="android.server.am.LiveWallpaper"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService">
+                </action>
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/wallpaper">
+            </meta-data>
+        </service>
+
         <!-- Disable home activities by default or it may disturb other tests by
              showing ResolverActivity when start home activity -->
         <activity-alias android:name=".HomeActivity"
