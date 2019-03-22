@@ -41,10 +41,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-@Ignore("Can be enabled only after b/126946674 is fixed")
+/** Tests in this class are ignored until b/126946674 is fixed. */
 @RunWith(AndroidJUnit4.class)
 public class LauncherAppsTest {
 
@@ -76,6 +77,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_isNull() {
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
@@ -84,6 +86,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_isNotNull() {
         registerDefaultObserver();
@@ -93,6 +96,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_isNullOnUnregister() {
         registerDefaultObserver();
@@ -103,6 +107,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_getTotalUsageLimit() {
         registerDefaultObserver();
@@ -113,6 +118,7 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_getTotalUsageRemaining() {
         registerDefaultObserver();
@@ -123,10 +129,11 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
     public void testGetAppUsageLimit_smallestLimitReturned() {
         registerDefaultObserver();
-        registerObserver(1, 5);
+        registerObserver(1, Duration.ofMinutes(5), Duration.ofMinutes(0));
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
                 SETTINGS_PACKAGE, USER_HANDLE);
         try {
@@ -138,12 +145,13 @@ public class LauncherAppsTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/126946674 is fixed")
     @AppModeFull(reason = "Need special permission")
-    public void testGetAppUsageLimit_allowsZeroLimit() {
-        registerObserver(DEFAULT_OBSERVER_ID, 0);
+    public void testGetAppUsageLimit_zeroUsageRemaining() {
+        registerObserver(DEFAULT_OBSERVER_ID, Duration.ofMinutes(1), Duration.ofMinutes(1));
         final LauncherApps.AppUsageLimit limit = mLauncherApps.getAppUsageLimit(
                 SETTINGS_PACKAGE, USER_HANDLE);
-        assertNotNull("An observer with a time limit of 0 was not registered.", limit);
+        assertNotNull("An observer with an exhaused time limit was not registered.", limit);
         assertEquals("Usage remaining expected to be 0.", 0, limit.getUsageRemaining());
     }
 
@@ -156,13 +164,14 @@ public class LauncherAppsTest {
     }
 
     private void registerDefaultObserver() {
-        registerObserver(DEFAULT_OBSERVER_ID, DEFAULT_TIME_LIMIT);
+        registerObserver(DEFAULT_OBSERVER_ID, Duration.ofMinutes(DEFAULT_TIME_LIMIT),
+                Duration.ofMinutes(0));
     }
 
-    private void registerObserver(int observerId, long timeLimitInMinutes) {
+    private void registerObserver(int observerId, Duration timeLimit, Duration timeUsed) {
         SystemUtil.runWithShellPermissionIdentity(() ->
                 mUsageStatsManager.registerAppUsageLimitObserver(
-                        observerId, SETTINGS_PACKAGE_GROUP, timeLimitInMinutes, TimeUnit.MINUTES,
+                        observerId, SETTINGS_PACKAGE_GROUP, timeLimit, timeUsed,
                         PendingIntent.getActivity(mContext, -1, new Intent(), 0)));
     }
 
