@@ -40,7 +40,6 @@ import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
-import android.companion.CompanionDeviceManager;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Context;
@@ -2057,7 +2056,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationListenerService listener = new TestNotificationListener();
         listener.onListenerConnected();
 
-        listener.onStatusBarIconsBehaviorChanged(false);
+        listener.onSilentStatusBarIconsVisibilityChanged(false);
 
         listener.onNotificationPosted(null);
         listener.onNotificationPosted(null, null);
