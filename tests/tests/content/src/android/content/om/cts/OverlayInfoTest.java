@@ -38,37 +38,42 @@ public class OverlayInfoTest {
 
     private static final String PKG_NAME = "source package name";
     private static final String TARGET_PKG_NAME = "target package name";
+    private static final String TARGET_OVERLAYABLE_NAME = "target package name";
     private static final String CATEGORY = "sample category";
     private static final String BASE_CODE_PATH = "base code path";
 
     @Test
     public void testEnsureValidState() {
-        OverlayInfo info = new OverlayInfo(PKG_NAME, TARGET_PKG_NAME, CATEGORY, BASE_CODE_PATH,
-            0, 0, 0, true);
+        OverlayInfo info = new OverlayInfo(PKG_NAME, TARGET_PKG_NAME, TARGET_OVERLAYABLE_NAME,
+                CATEGORY, BASE_CODE_PATH,
+                0, 0, 0, true);
         assertNotNull(info);
     }
 
     @Test
     public void testEnsureValidState_fail() {
         try {
-            OverlayInfo info = new OverlayInfo(null, TARGET_PKG_NAME, CATEGORY, BASE_CODE_PATH,
-                0, 0, 0, true);
+            OverlayInfo info = new OverlayInfo(null, TARGET_PKG_NAME, TARGET_OVERLAYABLE_NAME,
+                    CATEGORY, BASE_CODE_PATH,
+                    0, 0, 0, true);
             fail("Should throw exception.");
         } catch (IllegalArgumentException e) {
             // no op, working as intended.
         }
 
         try {
-            OverlayInfo info = new OverlayInfo(PKG_NAME, null, CATEGORY, BASE_CODE_PATH,
-                0, 0, 0, true);
+            OverlayInfo info = new OverlayInfo(PKG_NAME, null, TARGET_OVERLAYABLE_NAME, CATEGORY,
+                    BASE_CODE_PATH,
+                    0, 0, 0, true);
             fail("Should throw exception.");
         } catch (IllegalArgumentException e) {
             // no op, working as intended.
         }
 
         try {
-            OverlayInfo info = new OverlayInfo(PKG_NAME, TARGET_PKG_NAME, CATEGORY, null,
-                0, 0, 0, true);
+            OverlayInfo info = new OverlayInfo(PKG_NAME, TARGET_PKG_NAME, TARGET_OVERLAYABLE_NAME,
+                    CATEGORY, null,
+                    0, 0, 0, true);
             fail("Should throw exception.");
         } catch (IllegalArgumentException e) {
             // no op, working as intended.
@@ -77,8 +82,9 @@ public class OverlayInfoTest {
 
     @Test
     public void testWriteToParcel() {
-        OverlayInfo info = new OverlayInfo(PKG_NAME, TARGET_PKG_NAME, CATEGORY, BASE_CODE_PATH,
-            0, 0, 0, true);
+        OverlayInfo info = new OverlayInfo(PKG_NAME, TARGET_PKG_NAME, TARGET_OVERLAYABLE_NAME,
+                CATEGORY, BASE_CODE_PATH,
+                0, 0, 0, true);
         Parcel p = Parcel.obtain();
         info.writeToParcel(p, 0);
         p.setDataPosition(0);
@@ -87,6 +93,7 @@ public class OverlayInfoTest {
 
         assertEquals(info.packageName, copyInfo.packageName);
         assertEquals(info.targetPackageName, copyInfo.targetPackageName);
+        assertEquals(info.targetOverlayableName, copyInfo.targetOverlayableName);
         assertEquals(info.category, copyInfo.category);
         assertEquals(info.baseCodePath, copyInfo.baseCodePath);
         assertEquals(info.state, copyInfo.state);
