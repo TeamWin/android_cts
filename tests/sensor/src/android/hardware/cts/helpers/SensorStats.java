@@ -18,6 +18,7 @@ package android.hardware.cts.helpers;
 
 import android.hardware.Sensor;
 import android.hardware.cts.helpers.sensoroperations.SensorOperation;
+import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedWriter;
@@ -38,6 +39,7 @@ import java.util.Set;
  * together so that they form a tree.
  */
 public class SensorStats {
+    private static final String TAG = "SensorStats";
     public static final String DELIMITER = "__";
 
     public static final String ERROR = "error";
@@ -144,19 +146,35 @@ public class SensorStats {
         }
     }
 
+    /* Checks if external storage is available for read and write */
+    private boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
+    }
+
     /**
      * Utility method to log the stats to a file. Will overwrite the file if it already exists.
      */
-    public void logToFile(String fileName) throws IOException {
-        File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
-        File logFile = new File(statsDirectory, fileName);
-        final Map<String, Object> flattened = flatten();
-        FileWriter fileWriter = new FileWriter(logFile, false /* append */);
-        try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
-            for (String key : getSortedKeys(flattened)) {
-                Object value = flattened.get(key);
-                writer.write(String.format("%s: %s\n", key, getValueString(value)));
+    public void logToFile(String fileName) {
+        if (!isExternalStorageWritable()) {
+            Log.w(TAG,
+                "External storage unavailable, skipping log to file: " + fileName);
+            return;
+        }
+
+        try {
+            File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
+            File logFile = new File(statsDirectory, fileName);
+            final Map<String, Object> flattened = flatten();
+            FileWriter fileWriter = new FileWriter(logFile, false /* append */);
+            try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
+                for (String key : getSortedKeys(flattened)) {
+                    Object value = flattened.get(key);
+                    writer.write(String.format("%s: %s\n", key, getValueString(value)));
+                }
             }
+        } catch(IOException e) {
+            Log.w(TAG, "Unable to write to file: " + fileName, e);
         }
     }
 
