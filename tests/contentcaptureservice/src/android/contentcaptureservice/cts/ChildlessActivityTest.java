@@ -1081,7 +1081,7 @@ public class ChildlessActivityTest
                     // The service cannot re-enable itself, so we use settings instead.
                     setFeatureEnabledBySettings(true);
                 } else {
-                    service.disableContentCaptureServices();
+                    service.disableSelf();
                 }
                 break;
             case BY_SETTINGS:
