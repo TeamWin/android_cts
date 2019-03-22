@@ -144,7 +144,7 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         final BlankActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
-        service.disableContentCaptureServices();
+        service.disableSelf();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
