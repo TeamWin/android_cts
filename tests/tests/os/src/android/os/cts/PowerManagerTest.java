@@ -66,7 +66,7 @@ public class PowerManagerTest extends AndroidTestCase {
     public void setUp() {
         // store the current value so we can restore it
         ContentResolver resolver = getContext().getContentResolver();
-        mInitialPowerSaverMode = Global.getInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, 0);
+        mInitialPowerSaverMode = Global.getInt(resolver, Global.AUTOMATIC_POWER_SAVE_MODE, 0);
         mInitialDynamicPowerSavingsEnabled =
                 Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_ENABLED, 0);
         mInitialThreshold =
@@ -80,7 +80,7 @@ public class PowerManagerTest extends AndroidTestCase {
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify we can change it to dynamic.
-            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, mInitialPowerSaverMode);
+            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVE_MODE, mInitialPowerSaverMode);
             Global.putInt(resolver,
                     Global.DYNAMIC_POWER_SAVINGS_ENABLED, mInitialDynamicPowerSavingsEnabled);
             Global.putInt(resolver,
@@ -94,16 +94,16 @@ public class PowerManagerTest extends AndroidTestCase {
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify we can change it to percentage.
-            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, 0);
+            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVE_MODE, 0);
             assertEquals(
-                    PowerManager.POWER_SAVER_MODE_PERCENTAGE,
-                    manager.getPowerSaveMode());
+                    PowerManager.POWER_SAVE_MODE_TRIGGER_PERCENTAGE,
+                    manager.getPowerSaveModeTrigger());
 
             // Verify we can change it to dynamic.
-            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, 1);
+            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVE_MODE, 1);
             assertEquals(
-                    PowerManager.POWER_SAVER_MODE_DYNAMIC,
-                    manager.getPowerSaveMode());
+                    PowerManager.POWER_SAVE_MODE_TRIGGER_DYNAMIC,
+                    manager.getPowerSaveModeTrigger());
         });
     }
 
@@ -113,12 +113,12 @@ public class PowerManagerTest extends AndroidTestCase {
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify settings are actually updated.
-            manager.setDynamicPowerSavings(true, 80);
+            manager.setDynamicPowerSaveHint(true, 80);
             assertEquals(1, Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_ENABLED, 0));
             assertEquals(80, Global.getInt(resolver,
                     Global.DYNAMIC_POWER_SAVINGS_DISABLE_THRESHOLD, 0));
 
-            manager.setDynamicPowerSavings(false, 20);
+            manager.setDynamicPowerSaveHint(false, 20);
             assertEquals(0, Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_ENABLED, 1));
             assertEquals(20, Global.getInt(resolver,
                     Global.DYNAMIC_POWER_SAVINGS_DISABLE_THRESHOLD, 0));
