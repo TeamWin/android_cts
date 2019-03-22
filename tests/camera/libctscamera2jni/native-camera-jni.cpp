@@ -2141,6 +2141,18 @@ testCameraDeviceSessionOpenAndCloseNative(
             goto cleanup;
         }
 
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
+        }
+
         ret = testCase.openCamera(cameraId);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
@@ -2276,6 +2288,18 @@ testCameraDeviceSharedOutputUpdate(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);
@@ -2522,6 +2546,18 @@ testCameraDeviceSimplePreviewNative(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);
@@ -3042,6 +3078,18 @@ bool nativeImageReaderTestBase(
             goto cleanup;
         }
 
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
+        }
+
         ret = testCase.openCamera(cameraId);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
@@ -3439,6 +3487,18 @@ testStillCaptureNative(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);
