@@ -22,8 +22,6 @@ import android.content.res.AssetFileDescriptor;
 import android.hardware.Camera;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
-import android.media.CallbackDataSourceDesc;
-import android.media.DataSourceCallback;
 import android.media.DataSourceDesc;
 import android.media.FileDataSourceDesc;
 import android.media.MediaFormat;
@@ -34,17 +32,21 @@ import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
 import android.media.SubtitleData;
 import android.media.SyncParams;
-import android.media.UriDataSourceDesc;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
 import android.media.cts.R;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
+import android.os.ProxyFileDescriptorCallback;
+import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.system.ErrnoException;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -2274,8 +2276,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 PackageManager.FEATURE_MICROPHONE);
     }
 
-    // Smoke test playback from a DataSourceCallback.
-    public void testPlaybackFromADataSourceCallback() throws Exception {
+    // Smoke test playback from a ProxyFileDescriptorCallback.
+    public void testPlaybackFromProxyFileDescriptorCallback() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         final int duration = 10000;
 
@@ -2283,13 +2285,21 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
 
-        TestDataSourceCallback dataSource =
-                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
+        HandlerThread callbackThread = new HandlerThread("ProxyFileDescriptorCallbackThread");
+        callbackThread.start();
+        Handler handler = new Handler(callbackThread.getLooper());
+
+        TestProxyFileDescriptorCallback callback =
+                TestProxyFileDescriptorCallback.fromAssetFd(mResources.openRawResourceFd(resid));
         // Test returning -1 from getSize() to indicate unknown size.
-        dataSource.returnFromGetSize(-1);
-        mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build());
+        callback.returnFromGetSize(-1);
+
+        StorageManager storageManager =
+                (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        ParcelFileDescriptor pfd = storageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
+
+        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(pfd).build());
         playLoadedVideo(null, null, -1);
         assertTrue(mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
@@ -2322,8 +2332,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         // Test reset.
         mPlayer.reset();
+
+        ParcelFileDescriptor pfd2 = storageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
         mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
+                .setDataSource(pfd2)
                 .build());
 
         mPlayer.registerEventCallback(mExecutor, ecb);
@@ -2343,9 +2356,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         while (mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING) {
             Thread.sleep(SLEEP_TIME);
         }
+
+        callbackThread.quitSafely();
+        callbackThread.join();
     }
 
-    public void testNullDataSourceCallbackIsRejected() throws Exception {
+    public void testNullDataSourceDescIsRejected() throws Exception {
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
@@ -2363,7 +2379,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertTrue(mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR);
     }
 
-    public void testDataSourceCallbackIsClosedOnReset() throws Exception {
+    public void testProxyFileDescriptorCallbackIsClosedOnReset() throws Exception {
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
@@ -2375,27 +2391,49 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         };
         mPlayer.registerEventCallback(mExecutor, ecb);
 
-        TestDataSourceCallback dataSource = new TestDataSourceCallback(new byte[0]);
-        mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build());
+        HandlerThread callbackThread = new HandlerThread("ProxyFileDescriptorCallbackThread");
+        callbackThread.start();
+        Handler handler = new Handler(callbackThread.getLooper());
+
+        TestProxyFileDescriptorCallback callback =
+                new TestProxyFileDescriptorCallback(new byte[0]);
+
+        StorageManager storageManager =
+                (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        ParcelFileDescriptor pfd = storageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
+
+        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(pfd).build());
+
         mOnPlayCalled.waitForSignal();
         mPlayer.reset();
-        assertTrue(dataSource.isClosed());
+
+        callbackThread.quitSafely();
+        callbackThread.join();
+        assertTrue(callback.isClosed());
     }
 
-    public void testPlaybackFailsIfDataSourceCallbackThrows() throws Exception {
+    public void testPlaybackFailsIfProxyFileDescriptorCallbackThrows() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
             return;
         }
 
         setOnErrorListener();
-        TestDataSourceCallback dataSource =
-                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
-        mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build());
+
+        HandlerThread callbackThread = new HandlerThread("ProxyFileDescriptorCallbackThread");
+        callbackThread.start();
+        Handler handler = new Handler(callbackThread.getLooper());
+
+        TestProxyFileDescriptorCallback callback =
+                TestProxyFileDescriptorCallback.fromAssetFd(mResources.openRawResourceFd(resid));
+
+        StorageManager storageManager =
+                (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        ParcelFileDescriptor pfd = storageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
+
+        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(pfd).build());
 
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
@@ -2413,43 +2451,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mPlayer.prepare();
         mOnPrepareCalled.waitForSignal();
 
-        dataSource.throwFromReadAt();
+        callback.throwFromReadAt();
         mPlayer.play();
         assertTrue(mOnErrorCalled.waitForSignal());
-    }
 
-    public void testPlaybackFailsIfDataSourceCallbackReturnsAnError() throws Exception {
-        final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
-        if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
-            return;
-        }
-
-        TestDataSourceCallback dataSource =
-                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
-        mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build());
-
-        setOnErrorListener();
-        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
-            @Override
-            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
-                if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
-                    mOnPrepareCalled.signal();
-                }
-            }
-        };
-        synchronized (mEventCbLock) {
-            mEventCallbacks.add(ecb);
-        }
-
-        mOnPrepareCalled.reset();
-        mPlayer.prepare();
-        mOnPrepareCalled.waitForSignal();
-
-        dataSource.returnFromReadAt(-2);
-        mPlayer.play();
-        assertTrue(mOnErrorCalled.waitForSignal());
+        callbackThread.quitSafely();
+        callbackThread.join();
     }
 
     public void testClose() throws Exception {
@@ -2514,29 +2521,30 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     public void testConsecutiveSeeks() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
-        final TestDataSourceCallback source =
-                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
         final Monitor readAllowed = new Monitor();
-        DataSourceCallback dataSource = new DataSourceCallback() {
+        ProxyFileDescriptorCallback callback = new ProxyFileDescriptorCallback() {
+            TestProxyFileDescriptorCallback mTestSource =
+                    TestProxyFileDescriptorCallback.fromAssetFd(
+                            mResources.openRawResourceFd(resid));
+
             @Override
-            public int readAt(long position, byte[] buffer, int offset, int size)
-                    throws IOException {
+            public int onRead(long offset, int size, byte[] data) throws ErrnoException {
                 try {
                     readAllowed.waitForSignal();
                 } catch (InterruptedException e) {
                     fail();
                 }
-                return source.readAt(position, buffer, offset, size);
+                return mTestSource.onRead(offset, size, data);
             }
 
             @Override
-            public long getSize() throws IOException {
-                return source.getSize();
+            public long onGetSize() throws ErrnoException {
+                return mTestSource.onGetSize();
             }
 
             @Override
-            public void close() throws IOException {
-                source.close();
+            public void onRelease() {
+                mTestSource.onRelease();
             }
         };
         final Monitor labelReached = new Monitor();
@@ -2568,9 +2576,16 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         mOnErrorCalled.reset();
 
-        mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build());
+        HandlerThread callbackThread = new HandlerThread("ProxyFileDescriptorCallbackThread");
+        callbackThread.start();
+        Handler handler = new Handler(callbackThread.getLooper());
+
+        StorageManager storageManager =
+                (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        ParcelFileDescriptor pfd = storageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
+
+        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(pfd).build());
 
         // prepare() will be pending until readAllowed is signaled.
         mPlayer.prepare();
@@ -2624,6 +2639,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 commandsCompleted.get(1));
 
         mPlayer.reset();
+
+        callbackThread.quitSafely();
+        callbackThread.join();
     }
 
     public void testFileDataSourceDesc() throws Exception {
@@ -2650,18 +2668,6 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertEquals(endPosMs, fdsd2.getEndPosition());
 
         afd.close();
-    }
-
-    public void testCallbackDataSourceDesc() throws Exception {
-        TestDataSourceCallback dataSource = new TestDataSourceCallback(new byte[0]);
-        CallbackDataSourceDesc cbdsd = (CallbackDataSourceDesc) new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build();
-        assertEquals(dataSource, cbdsd.getDataSourceCallback());
-
-        CallbackDataSourceDesc cbdsd2 = (CallbackDataSourceDesc) new DataSourceDesc.Builder(cbdsd)
-                .build();
-        assertEquals(dataSource, cbdsd2.getDataSourceCallback());
     }
 
     public void testStartEndPositions() throws Exception {
@@ -2761,31 +2767,41 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         final Monitor readRequested = new Monitor();
         final Monitor readAllowed = new Monitor();
-        DataSourceCallback dataSource = new DataSourceCallback() {
-            TestDataSourceCallback mTestSource =
-                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
+        ProxyFileDescriptorCallback callback = new ProxyFileDescriptorCallback() {
+            TestProxyFileDescriptorCallback mTestSource =
+                    TestProxyFileDescriptorCallback.fromAssetFd(
+                            mResources.openRawResourceFd(resid));
+
             @Override
-            public int readAt(long position, byte[] buffer, int offset, int size)
-                    throws IOException {
+            public int onRead(long offset, int size, byte[] data) throws ErrnoException {
                 try {
                     readRequested.signal();
                     readAllowed.waitForSignal();
                 } catch (InterruptedException e) {
                     fail();
                 }
-                return mTestSource.readAt(position, buffer, offset, size);
+                return mTestSource.onRead(offset, size, data);
             }
 
             @Override
-            public long getSize() throws IOException {
-                return mTestSource.getSize();
+            public long onGetSize() throws ErrnoException {
+                return mTestSource.onGetSize();
             }
 
             @Override
-            public void close() throws IOException {
-                mTestSource.close();
+            public void onRelease() {
+                mTestSource.onRelease();
             }
         };
+
+        HandlerThread callbackThread = new HandlerThread("ProxyFileDescriptorCallbackThread");
+        callbackThread.start();
+        Handler handler = new Handler(callbackThread.getLooper());
+
+        StorageManager storageManager =
+                (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        ParcelFileDescriptor pfd = storageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, handler);
 
         final ArrayList<Integer> commandsCompleted = new ArrayList<>();
         setOnErrorListener();
@@ -2821,10 +2837,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mOnPrepareCalled.reset();
         mOnErrorCalled.reset();
 
-        mPlayer.setDataSource(new DataSourceDesc.Builder()
-                .setDataSource(dataSource)
-                .build());
-
+        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(pfd).build());
 
         // prepare() will be pending until readAllowed is signaled.
         mPlayer.prepare();
@@ -2855,6 +2868,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertEquals(MediaPlayer2.CALL_COMPLETED_PREPARE, (int) commandsCompleted.get(1));
         assertEquals(MediaPlayer2.CALL_COMPLETED_PAUSE, (int) commandsCompleted.get(2));
         assertEquals(0, mOnErrorCalled.getNumSignal());
+
+        callbackThread.quitSafely();
+        callbackThread.join();
     }
 
     public void testHandleFileDataSourceDesc() throws Exception {
