@@ -914,7 +914,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     "Testing Camera %s for abandoning surface of a repeating request", id));
 
             openDevice(id);
+            if (!mStaticInfo.isColorOutputSupported()) {
+                Log.i(TAG, "Camera " + id + " does not support color output, skipping");
+                continue;
+            }
+
             try {
+
                 SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
                 Surface previewSurface = new Surface(preview);
 
