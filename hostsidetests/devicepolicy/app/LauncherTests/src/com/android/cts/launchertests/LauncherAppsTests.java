@@ -57,6 +57,8 @@ public class LauncherAppsTests extends AndroidTestCase {
             "com.android.cts.nolaunchableactivityapp";
     private static final String NO_COMPONENT_APP_PACKAGE =
             "com.android.cts.nocomponentapp";
+    private static final String NO_PERMISSION_APP_PACKAGE =
+            "com.android.cts.nopermissionapp";
 
     private static final String SYNTHETIC_APP_DETAILS_ACTIVITY = "android.app.AppDetailsActivity";
 
@@ -264,6 +266,12 @@ public class LauncherAppsTests extends AndroidTestCase {
         // NoComponentApp is installed for duration of this test - make sure
         // it's NOT present on the activity list
         assertInjectedActivityNotFound(NO_COMPONENT_APP_PACKAGE);
+    }
+
+    public void testNoPermissionAppNotInjected() throws Exception {
+        // NoPermissionApp is installed for duration of this test - make sure
+        // it's NOT present on the activity list
+        assertInjectedActivityNotFound(NO_PERMISSION_APP_PACKAGE);
     }
 
     public void testDoPoNoTestAppInjectedActivityFound() throws Exception {

@@ -60,3 +60,28 @@ LOCAL_MANIFEST_FILE := no_component_AndroidManifest.xml
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_PACKAGE)
+
+# Build for no permission app
+include $(CLEAR_VARS)
+
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+# When built, explicitly put it in the data partition.
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_DEX_PREOPT := false
+
+LOCAL_PROGUARD_ENABLED := disabled
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
+
+LOCAL_PACKAGE_NAME := CtsNoPermissionApp
+
+LOCAL_MANIFEST_FILE := no_permission_AndroidManifest.xml
+
+LOCAL_SDK_VERSION := current
+
+include $(BUILD_PACKAGE)
