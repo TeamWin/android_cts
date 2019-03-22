@@ -99,6 +99,24 @@
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
+
+        <!-- Mock IME -->
+        <service
+            android:name="com.android.cts.mockime.MockIme"
+            android:label="Mock IME"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+        <provider
+            android:authorities="com.android.cts.mockime.provider"
+            android:name="com.android.cts.mockime.SettingsProvider">
+        </provider>
+
     </application>
 
     <instrumentation
