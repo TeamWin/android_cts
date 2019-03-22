@@ -42,6 +42,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+import com.android.compatibility.common.util.DeviceConfigStateManager;
 import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
@@ -64,6 +65,10 @@ public abstract class AbstractContentCaptureIntegrationTest
         <A extends AbstractContentCaptureActivity> {
 
     private static final String TAG = AbstractContentCaptureIntegrationTest.class.getSimpleName();
+
+    protected static final DeviceConfigStateManager sKillSwitchManager =
+            new DeviceConfigStateManager(sContext, DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
+            ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
 
     private final String mTag = getClass().getSimpleName();
 
@@ -103,12 +108,14 @@ public abstract class AbstractContentCaptureIntegrationTest
                 return CtsContentCaptureService.getExceptions();
             });
 
+    private final DeviceConfigStateChangerRule mKillSwitchKillerRule =
+            new DeviceConfigStateChangerRule(sKillSwitchManager, "true");
+
     private final SettingsStateChangerRule mFeatureEnablerRule = new SettingsStateChangerRule(
             sContext, CONTENT_CAPTURE_ENABLED, "1");
 
     @Rule
     public final RuleChain mLookAllTheseRules = RuleChain
-            //
             // mRequiredServiceRule should be first so the test can be skipped right away
             .outerRule(mRequiredServiceRule)
 
@@ -116,14 +123,15 @@ public abstract class AbstractContentCaptureIntegrationTest
             .around(mVerboseLoggingRule)
 
             // enable it as soon as possible, as it have to wait for the listener
+            .around(mKillSwitchKillerRule)
             .around(mFeatureEnablerRule)
-            //
+
             // mLoggingRule wraps the test but doesn't interfere with it
             .around(mLoggingRule)
-            //
+
             // mSafeCleanerRule will catch errors
             .around(mSafeCleanerRule)
-            //
+
             // Finally, let subclasses set their own rule
             .around(getMainTestRule());
 
