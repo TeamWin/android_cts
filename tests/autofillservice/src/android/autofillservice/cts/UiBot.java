@@ -705,8 +705,15 @@ final class UiBot {
      * UI elements after the device is rotated to landscape.
      *
      * <p>{@link #resetScreenResolution()} should always be called too.
+     *
+     * @deprecated this method should not be necessarily anymore as we're using a MockIme.
      */
+    @Deprecated // TODO: remove once we're sure no more OEM is getting failure due to screen size
     void setScreenResolution() {
+        if (true) {
+            Log.w(TAG, "setScreenResolution(): ignored");
+            return;
+        }
         assumeMinimumResolution(500);
 
         runShellCommand("wm size 1080x1920");
@@ -715,8 +722,15 @@ final class UiBot {
 
     /**
      * Resets screen resolution.
+     *
+     * @deprecated this method should not be necessarily anymore as we're using a MockIme.
      */
+    @Deprecated // TODO: remove once we're sure no more OEM is getting failure due to screen size
     void resetScreenResolution() {
+        if (true) {
+            Log.w(TAG, "resetScreenResolution(): ignored");
+            return;
+        }
         runShellCommand("wm density reset");
         runShellCommand("wm size reset");
     }
