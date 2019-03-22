@@ -16,6 +16,7 @@
 package android.hardware.cts.helpers;
 
 import android.hardware.Sensor;
+import android.os.Environment;
 import android.util.Log;
 import java.io.File;
 import java.io.IOException;
@@ -255,7 +256,7 @@ public class SensorCtsHelper {
      * @return A {@link File} representing a root directory to store sensor tests data.
      */
     public static File getSensorTestDataDirectory() throws IOException {
-        File dataDirectory = new File(System.getenv("EXTERNAL_STORAGE"), "sensorTests/");
+        File dataDirectory = new File(Environment.getExternalStorageDirectory(), "sensorTests/");
         return createDirectoryStructure(dataDirectory);
     }
 
