@@ -27,9 +27,15 @@ public class TestMediaCodec extends SecurityTestCase {
     final static int TIMEOUT_SEC = 9 * 60;
     final static String RESOURCE_ROOT = "/";
     final static String TMP_FILE_PATH = "/data/local/tmp/";
-    final static String HEVCDEC_BINARY = "testhevcdec";
-    final static String AVCDEC_BINARY = "testavcdec";
-    final static String MPEG2DEC_BINARY = "testmpeg2dec";
+    final static String HEVCDEC_BINARY = "testhevc";
+    final static String AVCDEC_BINARY = "testavc";
+    final static String MPEG2DEC_BINARY = "testmpeg2";
+    final static String HEVCDEC_MEMOVERFLOW_BINARY = "testhevc_mem1";
+    final static String AVCDEC_MEMOVERFLOW_BINARY = "testavc_mem1";
+    final static String MPEG2DEC_MEMOVERFLOW_BINARY = "testmpeg2_mem1";
+    final static String HEVCDEC_MEMUNDERFLOW_BINARY = "testhevc_mem2";
+    final static String AVCDEC_MEMUNDERFLOW_BINARY = "testavc_mem2";
+    final static String MPEG2DEC_MEMUNDERFLOW_BINARY = "testmpeg2_mem2";
 
     /***********************************************************
     To prevent merge conflicts, add HEVC decoder tests for N
@@ -162,6 +168,144 @@ public class TestMediaCodec extends SecurityTestCase {
     }
 
     /**
+    * Calls HEVC decoder memory overflow and underflow tests
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runHevcDecodeMemTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runHevcDecodeMemOverflowTest(inputFiles, arguments, device, errPattern);
+       runHevcDecodeMemUnderflowTest(inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls runDecodeTest with HEVC decoder overflow test binary name argument
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runHevcDecodeMemOverflowTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runDecodeTest(HEVCDEC_MEMOVERFLOW_BINARY, inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls runDecodeTest with HEVC decoder underflow test binary name argument
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runHevcDecodeMemUnderflowTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runDecodeTest(HEVCDEC_MEMUNDERFLOW_BINARY, inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls MPEG2 decoder memory overflow and underflow tests
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runMpeg2DecodeMemTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runMpeg2DecodeMemOverflowTest(inputFiles, arguments, device,
+               errPattern);
+       runMpeg2DecodeMemUnderflowTest(inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls runDecodeTest with MPEG2 decoder overflow test binary name argument
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runMpeg2DecodeMemOverflowTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runDecodeTest(MPEG2DEC_MEMOVERFLOW_BINARY, inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls runDecodeTest with MPEG2 decoder underflow test binary name argument
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runMpeg2DecodeMemUnderflowTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runDecodeTest(MPEG2DEC_MEMUNDERFLOW_BINARY, inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls AVC decoder memory overflow and underflow tests
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runAvcDecodeMemTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runAvcDecodeMemOverflowTest(inputFiles, arguments, device, errPattern);
+       runAvcDecodeMemUnderflowTest(inputFiles, arguments, device, errPattern);
+   }
+
+   /**
+    * Calls runDecodeTest with AVC decoder overflow test binary name argument
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runAvcDecodeMemOverflowTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runDecodeTest(AVCDEC_MEMOVERFLOW_BINARY, inputFiles, arguments, device,
+               errPattern);
+   }
+
+   /**
+    * Calls runDecodeTest with AVC decoder underflow test binary name argument
+    *
+    * @param inputFiles files required as input
+    * @param arguments arguments for running the binary
+    * @param device device to be run on
+    * @param errPattern error patterns to be checked for
+    */
+   public static void runAvcDecodeMemUnderflowTest(String inputFiles[],
+           String arguments, ITestDevice device, String errPattern[])
+           throws Exception {
+       runDecodeTest(AVCDEC_MEMUNDERFLOW_BINARY, inputFiles, arguments, device,
+               errPattern);
+   }
+
+    /**
      * Checks for linker errors
      *
      * @param binaryName name of the decoder binary
@@ -185,9 +329,9 @@ public class TestMediaCodec extends SecurityTestCase {
             String logcat) throws Exception {
         String genericCrashPattern[] = {
                 ".*name: " + binaryName + "  >>> " + TMP_FILE_PATH + binaryName
-                        + " <<<.*SIGABRT.*",
+                        + " <<<\n.*SIGABRT.*",
                 ".*name: " + binaryName + "  >>> " + TMP_FILE_PATH + binaryName
-                        + " <<<.*SIGSEGV.*"};
+                        + " <<<\n.*SIGSEGV.*"};
         AdbUtils.checkCrash(genericCrashPattern, logcat);
         if (errPattern != null) {
             AdbUtils.checkCrash(errPattern, logcat);
