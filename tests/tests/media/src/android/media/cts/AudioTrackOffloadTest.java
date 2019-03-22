@@ -18,6 +18,7 @@
 package android.media.cts;
 
 import android.content.res.AssetFileDescriptor;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -37,33 +38,42 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
     private static final int PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
 
+    private static final AudioAttributes DEFAULT_ATTR = new AudioAttributes.Builder().build();
+
+    private static final AudioFormat DEFAULT_FORMAT = new AudioFormat.Builder()
+            .setEncoding(AudioFormat.ENCODING_MP3)
+            .setSampleRate(44100)
+            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+            .build();
 
     public void testIsOffloadSupportedNullFormat() throws Exception {
         try {
-            final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(null);
+            final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(null,
+                    DEFAULT_ATTR);
             fail("Shouldn't be able to use null AudioFormat in isOffloadedPlaybackSupported()");
-        } catch (IllegalArgumentException e) {
-            // ok, IAE is expected here
+        } catch (NullPointerException e) {
+            // ok, NPE is expected here
+        }
+    }
+
+    public void testIsOffloadSupportedNullAttributes() throws Exception {
+        try {
+            final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(
+                    DEFAULT_FORMAT, null);
+            fail("Shouldn't be able to use null AudioAttributes in isOffloadedPlaybackSupported()");
+        } catch (NullPointerException e) {
+            // ok, NPE is expected here
         }
     }
 
 
     public void testExerciseIsOffloadSupported() throws Exception {
-        final AudioFormat af = new AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_MP3)
-                .setSampleRate(44100)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-                .build();
-        final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(af);
+        final boolean offloadableFormat =
+                AudioManager.isOffloadedPlaybackSupported(DEFAULT_FORMAT, DEFAULT_ATTR);
     }
 
 
     public void testAudioTrackOffload() throws Exception {
-        final AudioFormat formatToOffload = new AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_MP3)
-                .setSampleRate(44100)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-                .build();
         AudioTrack track = null;
 
         try (AssetFileDescriptor mp3ToOffload = getContext().getResources()
@@ -71,7 +81,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
              InputStream mp3InputStream = mp3ToOffload.createInputStream()) {
 
             long mp3ToOffloadLength = mp3ToOffload.getLength();
-            if (!AudioManager.isOffloadedPlaybackSupported(formatToOffload)) {
+            if (!AudioManager.isOffloadedPlaybackSupported(DEFAULT_FORMAT, DEFAULT_ATTR)) {
                 Log.i(TAG, "skipping test testPlayback");
                 // cannot test if offloading is not supported
                 return;
@@ -79,7 +89,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
             // format is offloadable, test playback head is progressing
             track = new AudioTrack.Builder()
-                    .setAudioFormat(formatToOffload)
+                    .setAudioAttributes(DEFAULT_ATTR)
+                    .setAudioFormat(DEFAULT_FORMAT)
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .setBufferSizeInBytes(MP3_BUFF_SIZE)
                     .setOffloadedPlayback(true).build();
