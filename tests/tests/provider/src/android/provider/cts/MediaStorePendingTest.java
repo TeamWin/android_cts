@@ -283,7 +283,7 @@ public class MediaStorePendingTest {
             final PendingParams params = new PendingParams(mExternalAudio,
                     displayName, "audio/ogg");
             for (String dir : everything) {
-                params.setPrimaryDirectory(dir);
+                params.setPath(dir);
                 if (allowedAudio.contains(dir)) {
                     assertCreatePending(params);
                 } else {
@@ -295,7 +295,7 @@ public class MediaStorePendingTest {
             final PendingParams params = new PendingParams(mExternalVideo,
                     displayName, "video/ogg");
             for (String dir : everything) {
-                params.setPrimaryDirectory(dir);
+                params.setPath(dir);
                 if (allowedVideo.contains(dir)) {
                     assertCreatePending(params);
                 } else {
@@ -307,7 +307,7 @@ public class MediaStorePendingTest {
             final PendingParams params = new PendingParams(mExternalImages,
                     displayName, "image/png");
             for (String dir : everything) {
-                params.setPrimaryDirectory(dir);
+                params.setPath(dir);
                 if (allowedImages.contains(dir)) {
                     assertCreatePending(params);
                 } else {
@@ -319,7 +319,7 @@ public class MediaStorePendingTest {
             final PendingParams params = new PendingParams(mExternalDownloads,
                         displayName, "video/ogg");
             for (String dir : everything) {
-                params.setPrimaryDirectory(dir);
+                params.setPath(dir);
                 if (allowedDownloads.contains(dir)) {
                     assertCreatePending(params);
                 } else {
@@ -362,30 +362,13 @@ public class MediaStorePendingTest {
     public void testDirectories_Primary() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(mExternalImages, displayName, "image/png");
-        params.setPrimaryDirectory(Environment.DIRECTORY_DCIM);
+        params.setPath(Environment.DIRECTORY_DCIM);
 
         final Uri uri = execPending(params, R.raw.scenery);
         assertEquals(Environment.DIRECTORY_DCIM, getRawFile(uri).getParentFile().getName());
 
         // Verify that shady paths don't work
-        params.setPrimaryDirectory("foo/bar");
-        assertNotCreatePending(params);
-    }
-
-    @Test
-    public void testDirectories_Secondary() throws Exception {
-        final String displayName = "cts" + System.nanoTime();
-        final PendingParams params = new PendingParams(mExternalImages, displayName, "image/png");
-        params.setSecondaryDirectory("Kittens");
-
-        final Uri uri = execPending(params, R.raw.scenery);
-        final File rawFile = getRawFile(uri);
-        assertEquals("Kittens", rawFile.getParentFile().getName());
-        assertEquals(Environment.DIRECTORY_PICTURES,
-                rawFile.getParentFile().getParentFile().getName());
-
-        // Verify that shady paths don't work
-        params.setSecondaryDirectory("foo/bar");
+        params.setPath("foo/../bar");
         assertNotCreatePending(params);
     }
 
@@ -393,8 +376,7 @@ public class MediaStorePendingTest {
     public void testDirectories_PrimarySecondary() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(mExternalImages, displayName, "image/png");
-        params.setPrimaryDirectory(Environment.DIRECTORY_DCIM);
-        params.setSecondaryDirectory("Kittens");
+        params.setPath("DCIM/Kittens");
 
         final Uri uri = execPending(params, R.raw.scenery);
         final File rawFile = getRawFile(uri);
