@@ -23,7 +23,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.media.DataSourceDesc;
-import android.media.UriDataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmEventCallback;
@@ -734,7 +733,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         surfaceHolder.setKeepScreenOn(true);
 
         final AtomicBoolean drmCallbackError = new AtomicBoolean(false);
-        UriDataSourceDesc.Builder dsdBuilder = new UriDataSourceDesc.Builder();
+        DataSourceDesc.Builder dsdBuilder = new DataSourceDesc.Builder();
         DataSourceDesc dsd = dsdBuilder.setDataSource(file).build();
         DataSourceDesc dsd2 = dsdBuilder.build();
         List<DataSourceDesc> dsds = Arrays.asList(dsd, dsd2);
