@@ -413,6 +413,12 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo done!");
                 return null;
             }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest request) {
+                return null;
+            }
+
         });
 
         Log.v(TAG, "preparePlayerAndDrm_V1: calling prepare()");
@@ -456,6 +462,18 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                     Log.v(TAG, "preparePlayerAndDrm_V2: onDrmConfig EXCEPTION " + e);
                 }
             }
+
+            @Override
+            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd,
+                    DrmInfo drmInfo) {
+                return null;
+            }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest request) {
+                return null;
+            }
+
         });
 
         Log.v(TAG, "preparePlayerAndDrm_V2: calling prepare()");
@@ -544,6 +562,11 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 mOnDrmPreparedCalled.signal();
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmPrepared done!");
             }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest request) {
+                return null;
+            }
         });
 
         Log.v(TAG, "preparePlayerAndDrm_V3: calling prepare()");
@@ -604,9 +627,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
             // setting up with the first supported UUID
             // instead of supportedSchemes[0] in GTS
-            DrmPreparationInfo.Builder drmBuilder = new DrmPreparationInfo.Builder();
             UUID drmScheme = CLEARKEY_SCHEME_UUID;
-            drmBuilder.setUuid(drmScheme);
+            DrmPreparationInfo.Builder drmBuilder = new DrmPreparationInfo.Builder(drmScheme);
             if (mOfflineKeySetId != null && mOfflineKeySetId.length > 0) {
                 drmBuilder.setKeySetId(mOfflineKeySetId);
                 return drmBuilder.build();
@@ -842,6 +864,18 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                                 }
                                 drmPrepared.signal();
                             }
+
+                            @Override
+                            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd,
+                                    DrmInfo drmInfo) {
+                                return null;
+                            }
+
+                            @Override
+                            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd,
+                                    KeyRequest request) {
+                                return null;
+                            }
                         });
                         mPlayer.prepareDrm(dsd, drmScheme);
                         drmPrepared.waitForSignal();
@@ -945,6 +979,18 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                             prepareDrmFailed.set(true);
                         }
                         drmPrepared.signal();
+                    }
+
+                    @Override
+                    public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd,
+                            DrmInfo drmInfo) {
+                        return null;
+                    }
+
+                    @Override
+                    public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd,
+                            KeyRequest request) {
+                        return null;
                     }
                 });
                 mPlayer.prepareDrm(dsd, drmScheme);
