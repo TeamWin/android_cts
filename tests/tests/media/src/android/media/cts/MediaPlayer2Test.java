@@ -27,10 +27,11 @@ import android.media.FileDataSourceDesc;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer2;
+import android.media.MediaPlayer2.SubtitleData;
+import android.media.MediaPlayer2.TrackInfo;
 import android.media.MediaRecorder;
 import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
-import android.media.SubtitleData;
 import android.media.SyncParams;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
@@ -1742,8 +1743,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     private void readSubtitleTracks() throws Exception {
         mSubtitleTrackIndex.clear();
-        List<MediaPlayer2.TrackInfo> trackInfos =
-                mPlayer.getTrackInfo(mPlayer.getCurrentDataSource());
+        List<TrackInfo> trackInfos = mPlayer.getTrackInfo(mPlayer.getCurrentDataSource());
         if (trackInfos == null || trackInfos.size() == 0) {
             return;
         }
@@ -1751,8 +1751,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         Vector<Integer> subtitleTrackIndex = new Vector<>();
         for (int i = 0; i < trackInfos.size(); ++i) {
             assertTrue(trackInfos.get(i) != null);
-            if (trackInfos.get(i).getTrackType() ==
-                    MediaPlayer2.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {
+            if (trackInfos.get(i).getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {
                 assertTrue(trackInfos.get(i).getLanguage() != null);
                 assertTrue(trackInfos.get(i).getFormat() != null);
                 subtitleTrackIndex.add(i);
@@ -1762,23 +1761,29 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mSubtitleTrackIndex.addAll(subtitleTrackIndex);
     }
 
-    private void selectSubtitleTrack(int index) throws Exception {
-        int trackIndex = mSubtitleTrackIndex.get(index);
-        // test both selectTrack API
-        if (index == 0) {
-            mPlayer.selectTrack(trackIndex);
-        } else {
-            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackIndex);
-        }
-        mSelectedSubtitleIndex = index;
+    private TrackInfo getSubtitleTrackInfo(int subtitleIndex) {
+        int trackIndex = mSubtitleTrackIndex.get(subtitleIndex);
+        List<TrackInfo> trackInfos = mPlayer.getTrackInfo();
+        final TrackInfo trackInfo = trackInfos.get(trackIndex);
+        return trackInfo;
     }
 
-    private void deselectSubtitleTrack(int index) throws Exception {
-        int trackIndex = mSubtitleTrackIndex.get(index);
+    private void selectSubtitleTrack(int subtitleIndex) throws Exception {
+        final TrackInfo trackInfo = getSubtitleTrackInfo(subtitleIndex);
+        // test both selectTrack API
+        if (subtitleIndex == 0) {
+            mPlayer.selectTrack(trackInfo);
+        } else {
+            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackInfo);
+        }
+        mSelectedSubtitleIndex = subtitleIndex;
+    }
+
+    private void deselectSubtitleTrack(int subtitleIndex) throws Exception {
         mOnDeselectTrackCalled.reset();
-        mPlayer.deselectTrack(mPlayer.getCurrentDataSource(), trackIndex);
+        mPlayer.deselectTrack(mPlayer.getCurrentDataSource(), getSubtitleTrackInfo(subtitleIndex));
         mOnDeselectTrackCalled.waitForSignal();
-        if (mSelectedSubtitleIndex == index) {
+        if (mSelectedSubtitleIndex == subtitleIndex) {
             mSelectedSubtitleIndex = -1;
         }
     }
@@ -1857,12 +1862,10 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             assertTrue(mOnSubtitleDataCalled.waitForSignal(2500));
 
             // Check selected track
-            assertTrue(
-                    mPlayer.getSelectedTrack(MediaPlayer2.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) > 0);
-            assertTrue(
-                    mPlayer.getSelectedTrack(
-                          mPlayer.getCurrentDataSource(),
-                          MediaPlayer2.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) > 0);
+            final int trackTypeSubtitle = TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE;
+            final DataSourceDesc currentDataSource = mPlayer.getCurrentDataSource();
+            assertTrue(mPlayer.getSelectedTrack(trackTypeSubtitle) != null);
+            assertTrue(mPlayer.getSelectedTrack(currentDataSource, trackTypeSubtitle) != null);
 
             // Try deselecting track.
             deselectSubtitleTrack(i);
