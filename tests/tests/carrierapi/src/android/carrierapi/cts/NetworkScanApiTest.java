@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -147,7 +148,9 @@ public class NetworkScanApiTest {
                         case EVENT_NETWORK_SCAN_START:
                             Log.d(TAG, "request network scan");
                             mNetworkScan = mTelephonyManager.requestNetworkScan(
-                                    mNetworkScanRequest, mNetworkScanCallback);
+                                    mNetworkScanRequest,
+                                    AsyncTask.SERIAL_EXECUTOR,
+                                    mNetworkScanCallback);
                             break;
                         default:
                             Log.d(TAG, "Unknown Event " + msg.what);
