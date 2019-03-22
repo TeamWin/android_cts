@@ -1042,21 +1042,18 @@ class PreviewTestCase {
         return createCaptureSessionWithLog(extraOutputs, isPreviewShared, sessionParameters);
     }
 
-    camera_status_t createCaptureSessionWithLog(
+    camera_status_t createCaptureSessionOutputContainer(
             const std::vector<ACaptureSessionOutput*> extraOutputs,
+            ACaptureSessionOutputContainer** outputs,
             bool isPreviewShared = false, ACaptureRequest *sessionParameters = nullptr) {
-        if (mSession) {
-            LOG_ERROR(errorString, "Cannot create session before closing existing one");
+        if (!mMgrInited || (!mImgReaderInited && !mPreviewInited) || !outputs) {
+            LOG_ERROR(errorString, "Cannot create session output container. mgrInit %d "
+                    "readerInit %d previewInit %d outputs %p",
+                    mMgrInited, mImgReaderInited, mPreviewInited, outputs);
             return ACAMERA_ERROR_UNKNOWN;
         }
 
-        if (!mMgrInited || (!mImgReaderInited && !mPreviewInited)) {
-            LOG_ERROR(errorString, "Cannot create session. mgrInit %d readerInit %d previewInit %d",
-                    mMgrInited, mImgReaderInited, mPreviewInited);
-            return ACAMERA_ERROR_UNKNOWN;
-        }
-
-        camera_status_t ret = ACaptureSessionOutputContainer_create(&mOutputs);
+        camera_status_t ret = ACaptureSessionOutputContainer_create(outputs);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Create capture session output container failed. ret %d", ret);
             return ret;
@@ -1066,7 +1063,7 @@ class PreviewTestCase {
             ret = ACaptureSessionOutput_create(mImgReaderAnw, &mImgReaderOutput);
             if (ret != ACAMERA_OK || mImgReaderOutput == nullptr) {
                 LOG_ERROR(errorString,
-                        "Sesssion image reader output create fail! ret %d output %p",
+                        "Session image reader output create fail! ret %d output %p",
                         ret, mImgReaderOutput);
                 if (ret == ACAMERA_OK) {
                     ret = ACAMERA_ERROR_UNKNOWN; // ret OK but output is null
@@ -1074,17 +1071,17 @@ class PreviewTestCase {
                 return ret;
             }
 
-            ret = ACaptureSessionOutputContainer_add(mOutputs, mImgReaderOutput);
+            ret = ACaptureSessionOutputContainer_add(*outputs, mImgReaderOutput);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Sesssion image reader output add failed! ret %d", ret);
+                LOG_ERROR(errorString, "Session image reader output add failed! ret %d", ret);
                 return ret;
             }
         }
 
         for (auto extraOutput : extraOutputs) {
-            ret = ACaptureSessionOutputContainer_add(mOutputs, extraOutput);
+            ret = ACaptureSessionOutputContainer_add(*outputs, extraOutput);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Sesssion image reader output add failed! ret %d", ret);
+                LOG_ERROR(errorString, "Session image reader output add failed! ret %d", ret);
                 return ret;
             }
         }
@@ -1097,7 +1094,7 @@ class PreviewTestCase {
             }
             if (ret != ACAMERA_OK || mPreviewOutput == nullptr) {
                 LOG_ERROR(errorString,
-                        "Sesssion preview output create fail! ret %d output %p",
+                        "Session preview output create fail! ret %d output %p",
                         ret, mPreviewOutput);
                 if (ret == ACAMERA_OK) {
                     ret = ACAMERA_ERROR_UNKNOWN; // ret OK but output is null
@@ -1105,11 +1102,35 @@ class PreviewTestCase {
                 return ret;
             }
 
-            ret = ACaptureSessionOutputContainer_add(mOutputs, mPreviewOutput);
+            ret = ACaptureSessionOutputContainer_add(*outputs, mPreviewOutput);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Sesssion preview output add failed! ret %d", ret);
+                LOG_ERROR(errorString, "Session preview output add failed! ret %d", ret);
                 return ret;
             }
+        }
+        return ret;
+    }
+
+    camera_status_t createCaptureSessionWithLog(
+            const std::vector<ACaptureSessionOutput*> extraOutputs,
+            bool isPreviewShared = false, ACaptureRequest *sessionParameters = nullptr) {
+        if (mSession) {
+            LOG_ERROR(errorString, "Cannot create session before closing existing one");
+            return ACAMERA_ERROR_UNKNOWN;
+        }
+
+        camera_status_t ret = createCaptureSessionOutputContainer(
+                extraOutputs, &mOutputs, isPreviewShared, sessionParameters);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Failed to create session output container! ret %d", ret);
+            return ret;
+        }
+
+        ret = ACameraDevice_isSessionConfigurationSupported(mDevice, mOutputs);
+        if (ret != ACAMERA_OK && ret != ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
+            LOG_ERROR(errorString, "isSessionConfigurationSupported must return either OK "
+                    "or UNSUPPORTED_OPERATION, but returns %d", ret);
+            return ret;
         }
 
         ret = ACameraDevice_createCaptureSessionWithSessionParameters(
