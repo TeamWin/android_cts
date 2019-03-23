@@ -18,7 +18,6 @@ package android.telephony.cts;
 import static android.telephony.ServiceState.DUPLEX_MODE_FDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_TDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_UNKNOWN;
-import static android.telephony.ServiceState.STATE_IN_SERVICE;
 import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
 import static android.telephony.ServiceState.STATE_POWER_OFF;
 import static android.telephony.ServiceState.ROAMING_TYPE_DOMESTIC;
@@ -28,8 +27,12 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
+import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
+
+import java.util.List;
 
 public class ServiceStateTest extends AndroidTestCase {
     private static final String OPERATOR_ALPHA_LONG = "CtsOperatorLong";
@@ -197,5 +200,40 @@ public class ServiceStateTest extends AndroidTestCase {
         assertNull(s.getOperatorAlphaShort());
         assertNull(s.getOperatorNumeric());
         assertFalse(s.getIsManualSelection());
+    }
+
+    public void testGetRegistrationInfo() {
+        ServiceState serviceState = new ServiceState();
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+
+        assertEquals(nri, serviceState.getNetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN));
+        assertNull(serviceState.getNetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN));
+        assertNull(serviceState.getNetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_CS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN));
+        assertNull(serviceState.getNetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_CS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN));
+
+        List<NetworkRegistrationInfo> nris = serviceState.getNetworkRegistrationInfoList();
+        assertEquals(1, nris.size());
+        assertEquals(nri, nris.get(0));
+
+        nri = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_IWLAN)
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WLAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+        assertEquals(nri, serviceState.getNetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN));
+
     }
 }
