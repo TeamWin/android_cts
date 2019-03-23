@@ -31,6 +31,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Downloads;
 import android.provider.MediaStore.Files;
@@ -59,6 +60,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class MediaStore_DownloadsTest {
     private static final String TAG = MediaStore_DownloadsTest.class.getSimpleName();

@@ -35,6 +35,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.MediaStoreUtils.PendingParams;
@@ -60,6 +61,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStorePendingTest {
     private Context mContext;

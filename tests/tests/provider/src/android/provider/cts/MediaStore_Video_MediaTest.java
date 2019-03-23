@@ -30,6 +30,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.VideoColumns;
@@ -49,6 +50,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.io.IOException;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Video_MediaTest {
     private Context mContext;
