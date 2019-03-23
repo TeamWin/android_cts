@@ -24,21 +24,9 @@ import android.test.AndroidTestCase;
  */
 public class MediaTimestampTest extends AndroidTestCase {
     public void testMediaTimestamp() {
-        MediaTimestamp timestamp = new MediaTimestamp.Builder()
-            .setMediaTimestamp(1000, 2000, 2.0f)
-            .build();
+        MediaTimestamp timestamp = new MediaTimestamp(1000, 2000, 2.0f);
         assertEquals(1000, timestamp.getAnchorMediaTimeUs());
         assertEquals(2000, timestamp.getAnchorSystemNanoTime());
         assertEquals(2.0f, timestamp.getMediaClockRate());
-    }
-
-    public void testMediaTimestampCopyCtor() {
-        MediaTimestamp timestamp = new MediaTimestamp.Builder()
-            .setMediaTimestamp(10000, 20000, 1.0f)
-            .build();
-        MediaTimestamp copy = new MediaTimestamp.Builder(timestamp).build();
-        assertEquals(10000, copy.getAnchorMediaTimeUs());
-        assertEquals(20000, copy.getAnchorSystemNanoTime());
-        assertEquals(1.0f, copy.getMediaClockRate());
     }
 }

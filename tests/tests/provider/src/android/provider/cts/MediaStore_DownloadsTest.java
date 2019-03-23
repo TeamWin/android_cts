@@ -185,7 +185,7 @@ public class MediaStore_DownloadsTest {
             cursor.moveToNext();
             assertEquals(mimeType,
                     cursor.getString(cursor.getColumnIndex(Downloads.MIME_TYPE)));
-            assertEquals(displayName,
+            assertEquals(displayName + ".html",
                     cursor.getString(cursor.getColumnIndex(Downloads.DISPLAY_NAME)));
             assertEquals(downloadUri.toString(),
                     cursor.getString(cursor.getColumnIndex(Downloads.DOWNLOAD_URI)));

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import android.content.Context;
 import android.content.om.IOverlayManager;
 import android.content.om.OverlayManager;
+import android.os.UserHandle;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -53,18 +54,20 @@ public class OverlayManagerTest {
     @Test
     public void testSetEnabledExclusiveInCategory() throws Exception {
         String packageName = "overlay source package name";
-        int userId = 10;
+        int userId = UserHandle.myUserId();
+        UserHandle user = UserHandle.of(userId);
         verify(mMockService, times(0)).setEnabledExclusiveInCategory(packageName, userId);
-        mManager.setEnabledExclusiveInCategory(packageName, userId);
+        mManager.setEnabledExclusiveInCategory(packageName, user);
         verify(mMockService, times(1)).setEnabledExclusiveInCategory(packageName, userId);
     }
 
     @Test
     public void testGetOverlayInfosForTarget() throws Exception {
         String targetPackageName = "overlay target package name";
-        int userId = 10;
+        int userId = UserHandle.myUserId();
+        UserHandle user = UserHandle.of(userId);
         verify(mMockService, times(0)).getOverlayInfosForTarget(targetPackageName, userId);
-        mManager.getOverlayInfosForTarget(targetPackageName, userId);
+        mManager.getOverlayInfosForTarget(targetPackageName, user);
         verify(mMockService, times(1)).getOverlayInfosForTarget(targetPackageName, userId);
     }
 }

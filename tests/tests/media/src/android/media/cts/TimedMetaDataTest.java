@@ -28,27 +28,14 @@ public class TimedMetaDataTest extends AndroidTestCase {
     private static final String RAW_METADATA = "RAW_METADATA";
 
     public void testTimedMetaData() {
-        TimedMetaData metadata = new TimedMetaData.Builder()
-            .setTimedMetaData(1000, RAW_METADATA.getBytes())
-            .build();
+        TimedMetaData metadata = new TimedMetaData(1000, RAW_METADATA.getBytes());
         assertEquals(1000, metadata.getTimestamp());
         assertEquals(RAW_METADATA, new String(metadata.getMetaData(), StandardCharsets.UTF_8));
     }
 
-    public void testTimedMetaDataCopyCtor() {
-        TimedMetaData metadata = new TimedMetaData.Builder()
-            .setTimedMetaData(2000, RAW_METADATA.getBytes())
-            .build();
-        TimedMetaData copy = new TimedMetaData.Builder(metadata).build();
-        assertEquals(2000, copy.getTimestamp());
-        assertEquals(RAW_METADATA, new String(copy.getMetaData(), StandardCharsets.UTF_8));
-    }
-
     public void testTimedMetaDataNullMetaData() {
         try {
-            TimedMetaData metadata = new TimedMetaData.Builder()
-                .setTimedMetaData(0, null)
-                .build();
+            TimedMetaData metadata = new TimedMetaData(0, null);
         } catch (IllegalArgumentException e) {
             // Expected
             return;

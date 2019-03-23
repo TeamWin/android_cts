@@ -36,16 +36,14 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.per_frame_control(props) and
-                             its.caps.raw16(props) and
                              its.caps.logical_multi_camera(props))
         ids = its.caps.logical_multi_camera_physical_ids(props)
-        max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         for i in ids:
             physical_props = cam.get_camera_properties_by_id(i)
             its.caps.skip_unless(not its.caps.mono_camera(physical_props))
             yuv_sizes[i] = its.objects.get_available_output_sizes(
-                    'yuv', physical_props, match_ar_size=max_raw_size)
-            if i == ids[0]:
+                    'yuv', physical_props)
+            if i == ids[0]:  # get_available_output_sizes returns sorted list
                 yuv_match_sizes = yuv_sizes[i]
             else:
                 list(set(yuv_sizes[i]).intersection(yuv_match_sizes))

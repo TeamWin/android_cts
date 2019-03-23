@@ -40,7 +40,6 @@ import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
-import android.companion.CompanionDeviceManager;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Context;
@@ -1879,6 +1878,64 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
 
         findPostedNotification(0);
+
+        final Intent revokeIntent = new Intent();
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
+        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(revokeIntent);
+        Thread.sleep(1000);
+    }
+
+    public void testNotificationDelegate_grantAndReadChannels() throws Exception {
+        // grant this test permission to post
+        final Intent activityIntent = new Intent();
+        activityIntent.setPackage(DELEGATOR);
+        activityIntent.setAction(Intent.ACTION_MAIN);
+        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        // wait for the activity to launch and finish
+        mContext.startActivity(activityIntent);
+        Thread.sleep(500);
+
+        List<NotificationChannel> channels =
+                mContext.createPackageContextAsUser(DELEGATOR, /* flags= */ 0, mContext.getUser())
+                        .getSystemService(NotificationManager.class)
+                        .getNotificationChannels();
+
+        assertNotNull(channels);
+
+        final Intent revokeIntent = new Intent();
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
+        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(revokeIntent);
+        Thread.sleep(500);
+    }
+
+    public void testNotificationDelegate_grantAndReadChannel() throws Exception {
+        // grant this test permission to post
+        final Intent activityIntent = new Intent();
+        activityIntent.setPackage(DELEGATOR);
+        activityIntent.setAction(Intent.ACTION_MAIN);
+        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        // wait for the activity to launch and finish
+        mContext.startActivity(activityIntent);
+        Thread.sleep(500);
+
+        NotificationChannel channel =
+                mContext.createPackageContextAsUser(DELEGATOR, /* flags= */ 0, mContext.getUser())
+                        .getSystemService(NotificationManager.class)
+                        .getNotificationChannel("channel");
+
+        assertNotNull(channel);
+
+        final Intent revokeIntent = new Intent();
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
+        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(revokeIntent);
+        Thread.sleep(500);
     }
 
     public void testNotificationDelegate_grantAndRevoke() throws Exception {
@@ -1890,7 +1947,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(activityIntent);
-        Thread.sleep(1000);
+        Thread.sleep(500);
 
         assertTrue(mNotificationManager.canNotifyAsPackage(DELEGATOR));
 
@@ -1898,7 +1955,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
-        Thread.sleep(1000);
+        Thread.sleep(500);
 
         try {
             // send notification
@@ -1999,7 +2056,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationListenerService listener = new TestNotificationListener();
         listener.onListenerConnected();
 
-        listener.onStatusBarIconsBehaviorChanged(false);
+        listener.onSilentStatusBarIconsVisibilityChanged(false);
 
         listener.onNotificationPosted(null);
         listener.onNotificationPosted(null, null);

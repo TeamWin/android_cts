@@ -118,7 +118,7 @@ public class MediaStore_Video_MediaTest {
         values.put(Media.RESOLUTION, "176x144");
         values.put(Media.TAGS, "cts, test");
         values.put(Media.DATA, externalVideoPath);
-        values.put(Media.DISPLAY_NAME, "testvideo");
+        values.put(Media.DISPLAY_NAME, "testvideo.3gp");
         values.put(Media.MIME_TYPE, "video/3gpp");
         values.put(Media.SIZE, numBytes);
         values.put(Media.TITLE, "testvideo");
@@ -151,7 +151,7 @@ public class MediaStore_Video_MediaTest {
             assertEquals("176x144", c.getString(c.getColumnIndex(Media.RESOLUTION)));
             assertEquals("cts, test", c.getString(c.getColumnIndex(Media.TAGS)));
             assertEquals(externalVideoPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testvideo", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals("testvideo.3gp", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("video/3gpp", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testvideo", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));

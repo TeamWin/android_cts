@@ -177,14 +177,14 @@ public class PermissionUtils {
         if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
             // The app-op for background location is encoded into the mode of the foreground
             // location
-            if (isPermissionGranted(ACCESS_COARSE_LOCATION, packageName)) {
+            if (isPermissionGranted(packageName, ACCESS_COARSE_LOCATION)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
             }
         } else if (permission.equals(ACCESS_COARSE_LOCATION)) {
             // The app-op for location depends on the state of the bg location
-            if (isPermissionGranted(ACCESS_BACKGROUND_LOCATION, packageName)) {
+            if (isPermissionGranted(packageName, ACCESS_BACKGROUND_LOCATION)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);

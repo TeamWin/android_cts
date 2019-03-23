@@ -24,7 +24,7 @@ import android.content.Intent;
  * This receiver is used to provide the interface required for a default SMS application. It
  * intentionally has no custom behavior.
  */
-public class TelephonyProviderReceiver extends BroadcastReceiver {
+public class TelephonyProviderWapPushDeliverReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // Do nothing
