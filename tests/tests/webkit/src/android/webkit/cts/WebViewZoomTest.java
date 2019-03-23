@@ -16,9 +16,11 @@
 
 package android.webkit.cts;
 
+import android.net.http.SslError;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
 import android.test.ActivityInstrumentationTestCase2;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -55,6 +57,8 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
         mWebView = activity.getWebView();
         if (mWebView == null)
             return;
+        mOnUiThread = new WebViewOnUiThread(mWebView);
+        mOnUiThread.requestFocus();
 
         new PollingCheck() {
             @Override
@@ -62,7 +66,7 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
                     return activity.hasWindowFocus();
             }
         }.run();
-        mOnUiThread = new WebViewOnUiThread(mWebView);
+
         mWebViewClient = new ScaleChangedWebViewClient();
         mOnUiThread.setWebViewClient(mWebViewClient);
 
@@ -82,11 +86,6 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
         super.tearDown();
     }
 
-    private void startWebServer(boolean secure) throws Exception {
-        assertNull(mWebServer);
-        mWebServer = new CtsTestServer(getActivity(), secure);
-    }
-
     private void stopWebServer() throws Exception {
         assertNotNull(mWebServer);
         ThreadPolicy oldPolicy = StrictMode.getThreadPolicy();
@@ -101,7 +100,10 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
 
     private void setUpPage() throws Exception {
         assertFalse(mWebViewClient.onScaleChangedCalled());
-        startWebServer(false);
+        assertNull(mWebServer);
+        // Pass CtsTestserver.SslMode.TRUST_ANY_CLIENT to make the server serve https URLs yet do
+        // not ask client for client authentication.
+        mWebServer = new CtsTestServer(getActivity(), CtsTestServer.SslMode.TRUST_ANY_CLIENT);
         mOnUiThread.loadUrlAndWaitForCompletion(
                 mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
         pollingCheckForCanZoomIn();
@@ -367,6 +369,11 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         public boolean onScaleChangedCalled() {
             return mCallQueue.size() > 0;
+        }
+
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            // We know the CtsTestServer gave us fake credential, so we ignore the SSL error.
+            handler.proceed();
         }
     }
 }
