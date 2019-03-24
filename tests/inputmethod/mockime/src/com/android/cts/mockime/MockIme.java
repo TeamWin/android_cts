@@ -42,8 +42,12 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.inputmethod.CompletionInfo;
+import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputBinding;
+import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -125,36 +129,146 @@ public final class MockIme extends InputMethodService {
                             + " should be handled on the main thread");
                 }
                 switch (command.getName()) {
-                    case "commitText": {
-                        final CharSequence text = command.getExtras().getString("text");
+                    case "getTextBeforeCursor": {
+                        final int n = command.getExtras().getInt("n");
+                        final int flag = command.getExtras().getInt("flag");
+                        return getCurrentInputConnection().getTextBeforeCursor(n, flag);
+                    }
+                    case "getTextAfterCursor": {
+                        final int n = command.getExtras().getInt("n");
+                        final int flag = command.getExtras().getInt("flag");
+                        return getCurrentInputConnection().getTextAfterCursor(n, flag);
+                    }
+                    case "getSelectedText": {
+                        final int flag = command.getExtras().getInt("flag");
+                        return getCurrentInputConnection().getSelectedText(flag);
+                    }
+                    case "getCursorCapsMode": {
+                        final int reqModes = command.getExtras().getInt("reqModes");
+                        return getCurrentInputConnection().getCursorCapsMode(reqModes);
+                    }
+                    case "getExtractedText": {
+                        final ExtractedTextRequest request =
+                                command.getExtras().getParcelable("request");
+                        final int flags = command.getExtras().getInt("flags");
+                        return getCurrentInputConnection().getExtractedText(request, flags);
+                    }
+                    case "deleteSurroundingText": {
+                        final int beforeLength = command.getExtras().getInt("beforeLength");
+                        final int afterLength = command.getExtras().getInt("afterLength");
+                        return getCurrentInputConnection().deleteSurroundingText(
+                                beforeLength, afterLength);
+                    }
+                    case "deleteSurroundingTextInCodePoints": {
+                        final int beforeLength = command.getExtras().getInt("beforeLength");
+                        final int afterLength = command.getExtras().getInt("afterLength");
+                        return getCurrentInputConnection().deleteSurroundingTextInCodePoints(
+                                beforeLength, afterLength);
+                    }
+                    case "setComposingText": {
+                        final CharSequence text = command.getExtras().getCharSequence("text");
                         final int newCursorPosition =
                                 command.getExtras().getInt("newCursorPosition");
-                        getCurrentInputConnection().commitText(text, newCursorPosition);
-                        break;
+                        return getCurrentInputConnection().setComposingText(
+                                text, newCursorPosition);
+                    }
+                    case "setComposingRegion": {
+                        final int start = command.getExtras().getInt("start");
+                        final int end = command.getExtras().getInt("end");
+                        return getCurrentInputConnection().setComposingRegion(start, end);
+                    }
+                    case "finishComposingText":
+                        return getCurrentInputConnection().finishComposingText();
+                    case "commitText": {
+                        final CharSequence text = command.getExtras().getCharSequence("text");
+                        final int newCursorPosition =
+                                command.getExtras().getInt("newCursorPosition");
+                        return getCurrentInputConnection().commitText(text, newCursorPosition);
+                    }
+                    case "commitCompletion": {
+                        final CompletionInfo text = command.getExtras().getParcelable("text");
+                        return getCurrentInputConnection().commitCompletion(text);
+                    }
+                    case "commitCorrection": {
+                        final CorrectionInfo correctionInfo =
+                                command.getExtras().getParcelable("correctionInfo");
+                        return getCurrentInputConnection().commitCorrection(correctionInfo);
+                    }
+                    case "setSelection": {
+                        final int start = command.getExtras().getInt("start");
+                        final int end = command.getExtras().getInt("end");
+                        return getCurrentInputConnection().setSelection(start, end);
+                    }
+                    case "performEditorAction": {
+                        final int editorAction = command.getExtras().getInt("editorAction");
+                        return getCurrentInputConnection().performEditorAction(editorAction);
+                    }
+                    case "performContextMenuAction": {
+                        final int id = command.getExtras().getInt("id");
+                        return getCurrentInputConnection().performContextMenuAction(id);
+                    }
+                    case "beginBatchEdit":
+                        return getCurrentInputConnection().beginBatchEdit();
+                    case "endBatchEdit":
+                        return getCurrentInputConnection().endBatchEdit();
+                    case "sendKeyEvent": {
+                        final KeyEvent event = command.getExtras().getParcelable("event");
+                        return getCurrentInputConnection().sendKeyEvent(event);
+                    }
+                    case "clearMetaKeyStates": {
+                        final int states = command.getExtras().getInt("states");
+                        return getCurrentInputConnection().clearMetaKeyStates(states);
+                    }
+                    case "reportFullscreenMode": {
+                        final boolean enabled = command.getExtras().getBoolean("enabled");
+                        return getCurrentInputConnection().reportFullscreenMode(enabled);
+                    }
+                    case "performPrivateCommand": {
+                        final String action = command.getExtras().getString("action");
+                        final Bundle data = command.getExtras().getBundle("data");
+                        return getCurrentInputConnection().performPrivateCommand(action, data);
+                    }
+                    case "requestCursorUpdates": {
+                        final int cursorUpdateMode = command.getExtras().getInt("cursorUpdateMode");
+                        return getCurrentInputConnection().requestCursorUpdates(cursorUpdateMode);
+                    }
+                    case "getHandler":
+                        return getCurrentInputConnection().getHandler();
+                    case "closeConnection":
+                        getCurrentInputConnection().closeConnection();
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    case "commitContent": {
+                        final InputContentInfo inputContentInfo =
+                                command.getExtras().getParcelable("inputContentInfo");
+                        final int flags = command.getExtras().getInt("flags");
+                        final Bundle opts = command.getExtras().getBundle("opts");
+                        return getCurrentInputConnection().commitContent(
+                                inputContentInfo, flags, opts);
                     }
                     case "setBackDisposition": {
                         final int backDisposition =
                                 command.getExtras().getInt("backDisposition");
                         setBackDisposition(backDisposition);
-                        break;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "requestHideSelf": {
                         final int flags = command.getExtras().getInt("flags");
                         requestHideSelf(flags);
-                        break;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "requestShowSelf": {
                         final int flags = command.getExtras().getInt("flags");
                         requestShowSelf(flags);
-                        break;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "sendDownUpKeyEvents": {
                         final int keyEventCode = command.getExtras().getInt("keyEventCode");
                         sendDownUpKeyEvents(keyEventCode);
-                        break;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                 }
             }
+            return ImeEvent.RETURN_VALUE_UNAVAILABLE;
         });
     }
 
@@ -523,7 +637,7 @@ public final class MockIme extends InputMethodService {
         private void recordEventInternal(@NonNull String eventName, @NonNull Runnable runnable,
                 @NonNull Bundle arguments) {
             recordEventInternal(eventName, () -> {
-                runnable.run(); return null;
+                runnable.run(); return ImeEvent.RETURN_VALUE_UNAVAILABLE;
             }, arguments);
         }
 
@@ -541,7 +655,8 @@ public final class MockIme extends InputMethodService {
             // Send enter event
             sendEventInternal(new ImeEvent(eventName, nestLevel, mThreadName,
                     mThreadId, mIsMainThread, enterTimestamp, 0, enterWallTime,
-                    0, enterState, null, arguments, null));
+                    0, enterState, null, arguments,
+                    ImeEvent.RETURN_VALUE_UNAVAILABLE));
             ++mNestLevel;
             T result;
             try {
@@ -673,10 +788,10 @@ public final class MockIme extends InputMethodService {
         }
 
         public void onHandleCommand(
-                @NonNull ImeCommand command, @NonNull Runnable runnable) {
+                @NonNull ImeCommand command, @NonNull Supplier<Object> resultSupplier) {
             final Bundle arguments = new Bundle();
             arguments.putBundle("command", command.toBundle());
-            recordEventInternal("onHandleCommand", runnable, arguments);
+            recordEventInternal("onHandleCommand", resultSupplier, arguments);
         }
 
         public void onInputViewLayoutChanged(@NonNull ImeLayoutInfo imeLayoutInfo,
