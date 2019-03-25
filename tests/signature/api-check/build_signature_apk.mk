@@ -61,15 +61,7 @@ cts_signature_module_deps := $(subst .,-,$(cts_signature_module_deps))
 cts_signature_module_deps := $(addprefix cts-,$(cts_signature_module_deps))
 cts_signature_module_deps := $(subst -all-api-zip,-all.api,$(cts_signature_module_deps))
 
-ifndef ENABLE_DEFAULT_TEST_LOCATION
-# Construct path to dependency.
-#   Join module name directory and file name and prefix with TARGET_OUT_TESTCASES
-LOCAL_ADDITIONAL_DEPENDENCIES += \
-    $(addprefix $(TARGET_OUT_TESTCASES)/,\
-        $(join $(cts_signature_module_deps),$(addprefix /,$(LOCAL_SIGNATURE_API_FILES))))
-else
 LOCAL_REQUIRED_MODULES := $(cts_signature_module_deps)
-endif
 
 LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
