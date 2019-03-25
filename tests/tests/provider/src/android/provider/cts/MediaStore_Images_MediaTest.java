@@ -411,12 +411,12 @@ public class MediaStore_Images_MediaTest {
 
         // Publish some content
         final File dir = ProviderTestUtils.stageDir(mVolumeName);
-        final Uri a = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "a.jpg")), true);
-        final Uri b = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "b.jpg")), true);
-        final Uri c = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "c.jpg")), true);
+        final Uri a = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "a.jpg")));
+        final Uri b = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "b.jpg")));
+        final Uri c = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "c.jpg")));
 
         // Confirm we can canonicalize and recover it
         final Uri canonicalized = mContentResolver.canonicalize(b);
@@ -432,8 +432,8 @@ public class MediaStore_Images_MediaTest {
         assertNull(mContentResolver.uncanonicalize(canonicalized));
 
         // Publish data again and confirm we can recover it
-        final Uri d = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "d.jpg")), true);
+        final Uri d = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "d.jpg")));
         assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
     }
 }

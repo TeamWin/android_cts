@@ -349,7 +349,7 @@ public class MediaStore_DownloadsTest {
     }
 
     private void verifyScannedDownload(File file) throws Exception {
-        final Uri mediaStoreUri = ProviderTestUtils.scanFile(file, false);
+        final Uri mediaStoreUri = ProviderTestUtils.scanFile(file);
         Log.e(TAG, "Scanned file " + file.getAbsolutePath() + ": " + mediaStoreUri);
         mAddedUris.add(mediaStoreUri);
         assertArrayEquals("File hashes should match for " + file + " and " + mediaStoreUri,

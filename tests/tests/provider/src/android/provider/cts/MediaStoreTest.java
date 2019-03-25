@@ -182,7 +182,7 @@ public class MediaStoreTest {
         final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
                 "cts" + System.nanoTime() + ".jpg");
         ProviderTestUtils.stageFile(R.raw.volantis, file);
-        inside = ProviderTestUtils.scanFile(file, true);
+        inside = ProviderTestUtils.scanFileFromShell(file);
         outside = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
 
         {
