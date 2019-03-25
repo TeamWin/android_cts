@@ -29,10 +29,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,8 +46,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 
-import androidx.test.InstrumentationRegistry;
-
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_MediaTest {
     private Context mContext;

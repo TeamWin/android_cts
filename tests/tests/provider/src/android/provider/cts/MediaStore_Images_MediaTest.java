@@ -43,6 +43,8 @@ import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 import android.util.Size;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Assume;
@@ -59,8 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import androidx.test.InstrumentationRegistry;
-
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";

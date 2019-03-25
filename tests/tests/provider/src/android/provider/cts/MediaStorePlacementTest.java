@@ -26,9 +26,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,8 +43,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.util.Optional;
 
-import androidx.test.InstrumentationRegistry;
-
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStorePlacementTest {
     static final String TAG = "MediaStorePlacementTest";
