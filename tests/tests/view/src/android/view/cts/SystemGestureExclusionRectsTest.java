@@ -41,8 +41,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -133,10 +135,12 @@ public class SystemGestureExclusionRectsTest {
 
         assertEquals("reached expected animated destination", prev.right, 35);
 
-        // Make sure we don't get any more callbacks after removing the VTO listener
-        final List<List<Rect>> oldResults = new ArrayList<>(results);
+        // Make sure we don't get any more callbacks after removing the VTO listener.
+        // Capture values on the UI thread to avoid races.
+        final List<List<Rect>> oldResults = new ArrayList<>();
         final CountDownLatch secondDoneAnimating = new CountDownLatch(1);
         mActivityRule.runOnUiThread(() -> {
+            oldResults.addAll(results);
             final View v = activity.findViewById(R.id.animating_view);
             final ViewTreeObserver vto = v.getViewTreeObserver();
             vto.removeOnSystemGestureExclusionRectsChangedListener(vtoListener);
@@ -146,6 +150,57 @@ public class SystemGestureExclusionRectsTest {
         assertTrue("didn't finish second animation", secondDoneAnimating.await(3, SECONDS));
 
         assertEquals("got unexpected exclusion rects", oldResults, results);
+    }
+
+    /**
+     * Test that the system internals correctly handle cycling between exclusion rects present
+     * and rects absent.
+     */
+    @Test
+    public void removingRects() throws Throwable {
+        final Activity activity = mActivityRule.getActivity();
+        for (int i = 0; i < 3; i++) {
+            final GestureExclusionLatcher[] setter = new GestureExclusionLatcher[1];
+            mActivityRule.runOnUiThread(() -> {
+                final View v = activity.findViewById(R.id.animating_view);
+                setter[0] = GestureExclusionLatcher.watching(v.getViewTreeObserver());
+                v.setSystemGestureExclusionRects(Lists.newArrayList(new Rect(0, 0, 5, 5)));
+            });
+            assertTrue("set rects timeout", setter[0].await(3, SECONDS));
+
+            final GestureExclusionLatcher[] unsetter = new GestureExclusionLatcher[1];
+            mActivityRule.runOnUiThread(() -> {
+                final View v = activity.findViewById(R.id.animating_view);
+                unsetter[0] = GestureExclusionLatcher.watching(v.getViewTreeObserver());
+                v.setSystemGestureExclusionRects(Collections.emptyList());
+            });
+            assertTrue("unset rects timeout", unsetter[0].await(3, SECONDS));
+        }
+    }
+
+    private static class GestureExclusionLatcher implements Consumer<List<Rect>> {
+        private final CountDownLatch mLatch = new CountDownLatch(1);
+        private final ViewTreeObserver mVto;
+
+        public static GestureExclusionLatcher watching(ViewTreeObserver vto) {
+            final GestureExclusionLatcher latcher = new GestureExclusionLatcher(vto);
+            vto.addOnSystemGestureExclusionRectsChangedListener(latcher);
+            return latcher;
+        }
+
+        private GestureExclusionLatcher(ViewTreeObserver vto) {
+            mVto = vto;
+        }
+
+        public boolean await(long time, TimeUnit unit) throws InterruptedException {
+            return mLatch.await(time, unit);
+        }
+
+        @Override
+        public void accept(List<Rect> rects) {
+            mLatch.countDown();
+            mVto.removeOnSystemGestureExclusionRectsChangedListener(this);
+        }
     }
 
     private static class AnimationDoneListener extends AnimatorListenerAdapter {
