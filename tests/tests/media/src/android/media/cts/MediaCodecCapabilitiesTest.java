@@ -174,6 +174,19 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testVp9DecoderCapabilitiesOnTv() throws Exception {
+        if (isTv() && MediaUtils.hasHardwareCodec(MIMETYPE_VIDEO_VP9, /* encode = */ false)) {
+            // CDD [5.3.7.4/T-1-1]
+            assertTrue(MediaUtils.canDecodeVideo(MIMETYPE_VIDEO_VP9, 1920, 1080, 60 /* fps */,
+                    VP9Profile0, null, null));
+            if (MediaUtils.canDecodeVideo(MIMETYPE_VIDEO_VP9, 3840, 2160, 60 /* fps */)) {
+                // CDD [5.3.7.5/T-2-1]
+                assertTrue(MediaUtils.canDecodeVideo(MIMETYPE_VIDEO_VP9, 3840, 2160, 60 /* fps */,
+                        VP9Profile0, null, null));
+            }
+        }
+    }
+
     public void testAvcBaseline1() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileBaseline, AVCLevel1)) {
             return; // skip
