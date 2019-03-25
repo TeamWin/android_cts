@@ -178,6 +178,14 @@ public class ServiceStateTest extends AndroidTestCase {
         assertTrue(dataVoiceRoaming.getRoaming());
     }
 
+    public void testIsManualSelection() {
+        ServiceState serviceState = new ServiceState();
+        serviceState.setIsManualSelection(false);
+        assertFalse(serviceState.getIsManualSelection());
+        serviceState.setIsManualSelection(true);
+        assertTrue(serviceState.getIsManualSelection());
+    }
+
     private ServiceState getServiceStateWithOperatorName(String name, String numeric) {
         ServiceState serviceState = new ServiceState();
         serviceState.setOperatorName(name, name, numeric);
