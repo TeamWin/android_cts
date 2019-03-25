@@ -22,6 +22,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 import java.util.Scanner;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -116,6 +117,8 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     private static final String SHIM_A_LIB = "libGLES_" + SHIM_A + ".so";
     private static final String SHIM_B_LIB = "libGLES_" + SHIM_B + ".so";
     private static final String SHIM_C_LIB = "libGLES_" + SHIM_C + ".so";
+
+    private static boolean initialized = false;
 
     // This is how long we'll scan the log for a result before giving up. This limit will only
     // be reached if something has gone wrong
@@ -229,6 +232,17 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layer_app");
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers", "\'\'");
         mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers", "\'\'");
+    }
+
+    /**
+     * Clean up before starting any tests
+     */
+    @Before
+    public void init() throws Exception {
+        if (!initialized) {
+            cleanup();
+            initialized = true;
+        }
     }
 
     /**
