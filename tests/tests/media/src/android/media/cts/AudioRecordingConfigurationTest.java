@@ -248,10 +248,9 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
                 configs.get(0), unmarshalledConf);
     }
 
-    class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
+    static class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
         boolean mCalled = false;
         List<AudioRecordingConfiguration> mConfigs;
-        final AudioManager mAM;
         final int mTestSource;
         final int mTestSession;
 
@@ -261,7 +260,6 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         }
 
         MyAudioRecordingCallback(int session, int source) {
-            mAM = new AudioManager(getContext());
             mTestSource = source;
             mTestSession = session;
         }
