@@ -174,12 +174,12 @@ public class MediaStore_Audio_MediaTest {
 
         // Publish some content
         final File dir = ProviderTestUtils.stageDir(mVolumeName);
-        final Uri a = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.testmp3_2, new File(dir, "a.mp3")), true);
-        final Uri b = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "b.mp3")), true);
-        final Uri c = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.testmp3_2, new File(dir, "c.mp3")), true);
+        final Uri a = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testmp3_2, new File(dir, "a.mp3")));
+        final Uri b = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "b.mp3")));
+        final Uri c = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testmp3_2, new File(dir, "c.mp3")));
 
         // Confirm we can canonicalize and recover it
         final Uri canonicalized = mContentResolver.canonicalize(b);
@@ -195,8 +195,8 @@ public class MediaStore_Audio_MediaTest {
         assertNull(mContentResolver.uncanonicalize(canonicalized));
 
         // Publish data again and confirm we can recover it
-        final Uri d = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "d.mp3")), true);
+        final Uri d = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "d.mp3")));
         assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
     }
 }
