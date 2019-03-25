@@ -68,17 +68,47 @@ public class ValidateTestsAbi {
         /**
          * This binary only exists in 32-bit.
          */
-        BINARY_EXCEPTIONS.add("testavcdec32");
+        BINARY_EXCEPTIONS.add("testhevc32");
 
         /**
          * This binary only exists in 32-bit.
          */
-        BINARY_EXCEPTIONS.add("testhevcdec32");
+        BINARY_EXCEPTIONS.add("testavc32");
 
         /**
          * This binary only exists in 32-bit.
          */
-        BINARY_EXCEPTIONS.add("testmpeg2dec32");
+        BINARY_EXCEPTIONS.add("testmpeg232");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("testhevc_mem132");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("testavc_mem132");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("testmpeg2_mem132");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("testhevc_mem232");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("testavc_mem232");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("testmpeg2_mem232");
     }
 
     /**
