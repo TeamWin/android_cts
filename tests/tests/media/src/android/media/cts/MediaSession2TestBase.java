@@ -24,17 +24,18 @@ import android.media.MediaController2;
 import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
-import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
+import android.media.SessionCommand2;
 import android.media.SessionCommandGroup2;
 import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.HandlerThread;
 import android.os.ResultReceiver;
+
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

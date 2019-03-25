@@ -25,12 +25,12 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
-    android-support-test \
+    androidx.test.rules \
     mockito-target-minus-junit4 \
     hamcrest-library \
     android-common \
-    compatibility-device-util \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     platform-test-annotations
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs

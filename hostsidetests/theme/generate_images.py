@@ -133,7 +133,7 @@ def do_capture(setup, device_serial):
     print("Generating images on " + device_serial + "...")
     try:
         (out, err) = device.run_instrumentation_test(
-            "android.theme.app/android.support.test.runner.AndroidJUnitRunner")
+            "android.theme.app/androidx.test.runner.AndroidJUnitRunner")
     except KeyboardInterrupt:
         raise
     except:

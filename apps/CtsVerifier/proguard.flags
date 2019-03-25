@@ -38,6 +38,6 @@
 -dontwarn com.android.org.bouncycastle.**
 -dontwarn com.android.okhttp.**
 -dontwarn org.opencv.**
--dontwarn android.support.test.internal.runner.hidden.ExposedInstrumentationApi
+-dontwarn androidx.test.internal.runner.hidden.ExposedInstrumentationApi
 
 -dontwarn java.lang.management.**

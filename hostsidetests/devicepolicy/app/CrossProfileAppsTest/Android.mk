@@ -28,8 +28,8 @@ LOCAL_JAVA_LIBRARIES := cts-junit
 
 LOCAL_STATIC_JAVA_LIBRARIES = \
 	androidx.legacy_legacy-support-v4 \
-	ctstestrunner \
-	android-support-test \
+	ctstestrunner-axt \
+	androidx.test.rules \
 	truth-prebuilt \
 	ub-uiautomator
 

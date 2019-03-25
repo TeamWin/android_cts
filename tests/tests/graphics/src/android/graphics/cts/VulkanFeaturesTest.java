@@ -23,10 +23,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CddTest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +39,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.UnsupportedEncodingException;
-import com.android.compatibility.common.util.CddTest;
 
 /**
  * Test that the Vulkan loader is present, supports the required extensions, and that system

@@ -17,9 +17,10 @@
 package android.jank.cts;
 
 import android.os.Bundle;
-import android.support.test.jank.JankTestBase;
-import android.support.test.jank.WindowContentFrameStatsMonitor;
 import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.jank.JankTestBase;
+import androidx.test.jank.WindowContentFrameStatsMonitor;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;

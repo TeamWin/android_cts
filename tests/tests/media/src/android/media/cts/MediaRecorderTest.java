@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.*;
+
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -22,19 +24,17 @@ import android.graphics.Paint;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.EncoderCapabilities;
+import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
-import android.media.EncoderCapabilities.VideoEncoderCap;
-import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
-import android.media.MediaMetadataRetriever;
 import android.media.MicrophoneInfo;
 import android.opengl.GLES20;
 import android.os.ConditionVariable;
@@ -42,13 +42,13 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.util.Log;
 import android.view.Surface;
 
-import android.util.Log;
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -57,15 +57,12 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.InterruptedException;
 import java.lang.Runnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
 @SmallTest
 @RequiresDevice

@@ -17,8 +17,9 @@ package android.accessibilityservice.cts;
 import android.accessibilityservice.AccessibilityButtonController;
 import android.app.Instrumentation;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

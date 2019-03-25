@@ -36,7 +36,7 @@ LOCAL_SRC_FILES := \
     $(call all-named-files-under,Components.java, translucentappsdk26) \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
+    androidx.test.rules hamcrest-library \
     cts-amwm-util
 
 LOCAL_CTS_TEST_PACKAGE := android.server

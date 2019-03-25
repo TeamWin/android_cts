@@ -27,8 +27,8 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-	compatibility-device-util \
-	ctstestrunner \
+	compatibility-device-util-axt \
+	ctstestrunner-axt \
 	guava
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)

@@ -63,7 +63,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     )
     private boolean mSkipDeviceAdminFeatureCheck = false;
 
-    private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
     protected static final int USER_SYSTEM = 0; // From the UserHandle class.
 

@@ -37,11 +37,12 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.RemoteException;
-import android.platform.test.annotations.AppModeFull;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;

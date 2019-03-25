@@ -30,10 +30,11 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.view.nano.DisplayInfoProto;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
-import android.view.nano.DisplayInfoProto;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.server.wm.nano.AppTransitionProto;
 import com.android.server.wm.nano.AppWindowTokenProto;
