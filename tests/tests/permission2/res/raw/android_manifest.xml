@@ -2857,6 +2857,11 @@
     <permission android:name="android.permission.STATUS_BAR_SERVICE"
         android:protectionLevel="signature" />
 
+    <!-- Allows an application to trigger bugreports via the shell app (which uses bugreport API)
+    @hide -->
+    <permission android:name="android.permission.TRIGGER_SHELL_BUGREPORT"
+        android:protectionLevel="signature" />
+
     <!-- Allows an application to bind to third party quick settings tiles.
          <p>Should only be requested by the System, should be required by
          TileService declarations.-->
