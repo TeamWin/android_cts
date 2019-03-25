@@ -40,7 +40,10 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(call module-installed-files, \
     CtsSignedConfigTestAppV1 \
+    CtsSignedConfigTestAppV1_instant \
     CtsSignedConfigTestAppV2 \
+    CtsSignedConfigTestAppV2_instant \
+    CtsSignedConfigTestApp2V1 \
     CtsSignedConfigTestApp2V2 \
     CtsSignedConfigTestAppV1_badsignature \
     CtsSignedConfigTestAppV1_badb64_config \
