@@ -52,6 +52,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        NewOutgoingCallBroadcastReceiver.reset();
         mContext = getInstrumentation().getContext();
         if (mShouldTestTelecom) {
             // Register and enable the CTS ConnectionService; we want to be able to test a managed
@@ -326,6 +327,9 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         assertFalse(mTelecomManager.isInManagedCall());
         // But there should be a call (including self-managed).
         assertTrue(mTelecomManager.isInCall());
+
+        // Expect that the new outgoing call broadcast did not fire for the self-managed calls.
+        assertFalse(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
 
         setDisconnectedAndVerify(connection);
     }

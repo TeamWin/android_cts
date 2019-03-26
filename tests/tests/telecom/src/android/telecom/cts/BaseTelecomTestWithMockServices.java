@@ -461,6 +461,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // that placing the call has fully completed.
         final int expectedConnectionCount = currentConnectionCount + 1;
         assertCSConnections(expectedConnectionCount);
+
+        // Ensure the new outgoing call broadcast fired for the outgoing call.
+        assertTrue(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
+        // CTS test does not have read call log permission so should not get the phone number.
+        assertNull(NewOutgoingCallBroadcastReceiver.getReceivedNumber());
     }
 
     int getNumberOfConnections() {
