@@ -30,6 +30,10 @@
     Bug: 67109014 android.intent.action.BADGE_COUNT_UPDATE // Samsung is sending
     //new corrected intent and the old intent in P.
     //Target date for fix is under disucssion for BADGE_COUNT_UPDATE
+    Bug: 128424060 android.intent.action.TIMELINE_POST_VISIT_BADGE //
+    //Maps(version: 10.11.1~10.13) was sending this intent and
+    //from version 10.14 newer intent 'com.google.android.apps.gmm.TIMELINE_POST_VISIT_BADGE'
+    //is being sent.
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -44,5 +48,6 @@
       <value>android.intent.action.ACTION_AIRPLANE_MODE_CHANGED</value>
       <value>android.intent.action.View</value>
       <value>android.intent.action.BADGE_COUNT_UPDATE</value>
+      <value>android.intent.action.TIMELINE_POST_VISIT_BADGE</value>
     </entry>
 </dynamicConfig>
