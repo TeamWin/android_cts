@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.graphics.Insets;
 import android.graphics.Rect;
+import android.os.Parcel;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -94,5 +95,16 @@ public class InsetsTest {
         Insets insets1 = Insets.of(1, 10, 100, 1000);
         Insets insets2 = Insets.of(1000, 100, 10, 1);
         assertEquals(Insets.max(insets2, insets1), Insets.of(1000, 100, 100, 1000));
+    }
+
+    @Test
+    public void testParcel() {
+        Insets inset = Insets.of(1, 3, 5, 7);
+        final Parcel parcel = Parcel.obtain();
+        inset.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        assertEquals(inset, Insets.CREATOR.createFromParcel(parcel));
+        assertEquals(parcel.dataSize(), parcel.dataPosition());
+        parcel.recycle();
     }
 }
