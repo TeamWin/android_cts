@@ -48,6 +48,7 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -83,6 +84,9 @@ public class StagedInstallTest {
     private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
     private File mTestStateFile = new File(InstrumentationRegistry.getTargetContext().getFilesDir(),
             "ctsstagedinstall_state");
+
+    private static final Duration WAIT_FOR_SESSION_REMOVED_TTL = Duration.ofSeconds(10);
+    private static final Duration SLEEP_DURATION = Duration.ofMillis(200);
 
     @Before
     public void adoptShellPermissions() {
@@ -200,7 +204,23 @@ public class StagedInstallTest {
         PackageInstaller.SessionInfo session = getStagedSessionInfo(sessionId);
         assertThat(session.isStagedSessionReady()).isTrue();
         abandonSession(sessionId);
-        session = getStagedSessionInfo(sessionId);
+        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        // Allow the session to be removed from PackageInstaller
+        Duration spentWaiting = Duration.ZERO;
+        while (spentWaiting.compareTo(WAIT_FOR_SESSION_REMOVED_TTL) < 0) {
+            session = getSessionInfo(sessionId);
+            if (session == null) {
+                Log.i(TAG, "Done waiting after " + spentWaiting);
+                break;
+            }
+            try {
+                Thread.sleep(SLEEP_DURATION.toMillis());
+                spentWaiting = spentWaiting.plus(SLEEP_DURATION);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        }
         assertThat(session).isNull();
         unregisterBroadcastReceiver();
     }
@@ -399,9 +419,6 @@ public class StagedInstallTest {
         return null;
     }
 
-    /**
-     * TODO: after fixing b/128513530, make sure this returns null after session is aborted
-     */
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
         Context context = InstrumentationRegistry.getContext();
         PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
