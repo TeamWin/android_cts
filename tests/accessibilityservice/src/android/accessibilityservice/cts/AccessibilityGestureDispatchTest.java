@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.AsyncUtils.awaitCancellation;
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.ceil;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
@@ -136,7 +137,7 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        mService.runOnServiceSync(() -> mService.disableSelf());
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
         super.tearDown();
     }
 

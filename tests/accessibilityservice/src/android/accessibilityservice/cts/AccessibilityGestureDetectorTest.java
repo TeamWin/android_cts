@@ -14,6 +14,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
@@ -104,7 +105,7 @@ public class AccessibilityGestureDetectorTest {
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;
         }
-        mService.runOnServiceSync(() -> mService.disableSelf());
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test
