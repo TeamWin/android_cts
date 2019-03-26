@@ -23,6 +23,7 @@ import static android.server.am.UiDeviceUtils.pressWakeupButton;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Surface;
@@ -30,6 +31,7 @@ import android.view.SurfaceControl;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
+import android.view.cts.surfacevalidator.RectChecker;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 
 import androidx.test.filters.LargeTest;
@@ -137,12 +139,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
-                    }
-                });
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
     }
 
     /**
@@ -161,12 +158,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.BLACK) { //10000
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount == 0;
-                    }
-                });
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.WHITE));
     }
 
     /**
@@ -185,12 +177,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.WHITE) { //10000
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
-                    }
-                });
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.WHITE));
     }
 
     /**
@@ -211,12 +198,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
-                    }
-                });
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
     }
 
     /**
@@ -240,11 +222,6 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.GREEN) { //10000
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
-                    }
-                });
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.GREEN));
     }
 }
