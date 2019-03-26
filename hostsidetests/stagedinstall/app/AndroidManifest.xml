@@ -20,6 +20,11 @@
     <application>
         <receiver android:name="com.android.tests.stagedinstall.LocalIntentSender"
                   android:exported="true" />
+        <receiver android:name="com.android.tests.stagedinstall.SessionUpdateBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.content.pm.action.SESSION_UPDATED"/>
+            </intent-filter>
+        </receiver>
         <uses-library android:name="android.test.runner" />
     </application>
 
@@ -27,5 +32,4 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="com.android.tests.stagedinstall"
                      android:label="StagedInstall Test"/>
-
 </manifest>
