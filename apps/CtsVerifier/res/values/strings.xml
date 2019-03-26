@@ -1437,7 +1437,9 @@
     <string name="wifi_test">Wi-Fi Test</string>
     <string name="wifi_test_info">
         The Wi-Fi tests requires an open (no security) access point in the environment along with the DUT.
-        The DUT should also not have any saved wifi networks that are visible in the environment.
+        \nPlease perform a network settings reset between each test to reset platform\'s internal state which
+        might interfere with the test flow.\nNavigate to \"Settings -> System -> Reset Options -> Reset Wi-Fi,
+        mobile &amp; Bluetooth\" to perform a network settings reset.
     </string>
     <string name="wifi_location_not_enabled">Wi-Fi / Location Mode is not enabled</string>
     <string name="wifi_location_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
