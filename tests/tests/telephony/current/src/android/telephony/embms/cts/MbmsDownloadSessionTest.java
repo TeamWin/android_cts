@@ -16,6 +16,11 @@
 
 package android.telephony.embms.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.MbmsDownloadSession;
@@ -28,8 +33,11 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Test;
 
 public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
+
+    @Test
     public void testDuplicateSession() throws Exception {
         try {
             MbmsDownloadSession failure = MbmsDownloadSession.create(
@@ -40,6 +48,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         }
     }
 
+    @Test
     public void testRequestUpdateDownloadServices() throws Exception {
         List<String> testClasses = Arrays.asList("class1", "class2");
         mDownloadSession.requestUpdateFileServices(testClasses);
@@ -63,6 +72,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         }
     }
 
+    @Test
     public void testClose() throws Exception {
         mDownloadSession.close();
 
@@ -79,6 +89,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(1, closeCalls.size());
     }
 
+    @Test
     public void testSetTempFileDirectory() throws Exception {
         String tempFileDirName = "CTSTestDir";
         File tempFileRootDirectory = new File(mContext.getFilesDir(), tempFileDirName);
@@ -93,6 +104,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         tempFileRootDirectory.delete();
     }
 
+    @Test
     public void testSetInvalidTempFileRoot() throws Exception {
         File tempFileRootDirectory = new File(mContext.getFilesDir(), "NNN-DoesNotExist");
         tempFileRootDirectory.delete();
@@ -138,6 +150,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         tempFileRootDirectory.delete();
     }
 
+    @Test
     public void testResetDownloadKnowledge() throws Exception {
         DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.resetDownloadKnowledge(request);
@@ -149,6 +162,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
                 CtsDownloadService.ARGUMENT_DOWNLOAD_REQUEST));
     }
 
+    @Test
     public void testGetDownloadStatus() throws Exception {
         DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.requestDownloadState(request, CtsDownloadService.FILE_INFO_1);
@@ -162,6 +176,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
                 CtsDownloadService.ARGUMENT_FILE_INFO));
     }
 
+    @Test
     public void testCancelDownload() throws Exception {
         DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.cancelDownload(request);
@@ -173,6 +188,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
                 CtsDownloadService.ARGUMENT_DOWNLOAD_REQUEST));
     }
 
+    @Test
     public void testListPendingDownloads() throws Exception {
         File tempFileRootDir = new File(mContext.getFilesDir(), "CtsTestDir");
         tempFileRootDir.mkdir();
@@ -186,6 +202,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(request, downloads.get(0));
     }
 
+    @Test
     public void testSetTempFileDirFailure() throws Exception {
         String tempFileDirName = "CTSTestDir101010";
         File tempFileRootDirectory = new File(mContext.getFilesDir(), tempFileDirName);
@@ -198,6 +215,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertNotSame(mDownloadSession.getTempFileRootDirectory(), tempFileDirName);
     }
 
+    @Test
     public void testDownloadRequestSerialization() throws Exception {
         Intent intent = new Intent("sample_intent_action");
         DownloadRequest request = downloadRequestTemplate.setAppIntent(intent).build();
@@ -207,6 +225,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(request, newRequest);
     }
 
+    @Test
     public void testErrorDelivery() throws Exception {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);

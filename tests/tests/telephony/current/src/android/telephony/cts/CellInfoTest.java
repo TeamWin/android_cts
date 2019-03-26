@@ -15,6 +15,15 @@
  */
 package android.telephony.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
@@ -42,9 +51,11 @@ import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Pair;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -55,7 +66,7 @@ import java.util.concurrent.Executor;
  * TODO(chesnutt): test onCellInfoChanged() once the implementation
  * of async callbacks is complete (see http://b/13788638)
  */
-public class CellInfoTest extends AndroidTestCase{
+public class CellInfoTest {
     private static final String TAG = "android.telephony.cts.CellInfoTest";
 
     // Maximum and minimum possible RSSI values(in dbm).
@@ -197,9 +208,8 @@ public class CellInfoTest extends AndroidTestCase{
                 || ss.getState() == ServiceState.STATE_EMERGENCY_ONLY);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
         Pair<Integer, Integer> verPair = mTm.getRadioHalVersion();
@@ -210,6 +220,7 @@ public class CellInfoTest extends AndroidTestCase{
      * Test to ensure that the PhoneStateListener receives callbacks every time that new CellInfo
      * is received and not otherwise.
      */
+    @Test
     public void testPhoneStateListenerCallback() throws Throwable {
         CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
         // Prime the system by requesting a CellInfoUpdate
@@ -256,6 +267,7 @@ public class CellInfoTest extends AndroidTestCase{
         }
     }
 
+    @Test
     public void testCellInfo() throws Throwable {
         if(!(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
