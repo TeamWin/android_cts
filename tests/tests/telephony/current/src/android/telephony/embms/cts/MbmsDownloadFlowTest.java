@@ -16,6 +16,10 @@
 
 package android.telephony.embms.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,10 +34,14 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
     private File tempFileRootDir;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         super.setUp();
         tempFileRootDir = new File(mContext.getFilesDir(), "CtsTestDir");
@@ -41,13 +49,14 @@ public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
         mDownloadSession.setTempFileRootDirectory(tempFileRootDir);
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         recursiveDelete(tempFileRootDir);
         tempFileRootDir = null;
         super.tearDown();
     }
 
+    @Test
     public void testSingleFileDownloadFlow() throws Exception {
         MbmsDownloadReceiverTest.AppIntentCapture captor =
                 new MbmsDownloadReceiverTest.AppIntentCapture(mContext, mHandler);
@@ -63,6 +72,7 @@ public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
         checkDownloadResultAck(1);
     }
 
+    @Test
     public void testFileInSubdirectoryDownloadFlow() throws Exception {
         MbmsDownloadReceiverTest.AppIntentCapture captor =
                 new MbmsDownloadReceiverTest.AppIntentCapture(mContext, mHandler);
@@ -86,6 +96,7 @@ public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
         checkDownloadResultAck(1);
     }
 
+    @Test
     public void testMultiFileDownloadFlow() throws Exception {
         MbmsDownloadReceiverTest.AppIntentCapture captor =
                 new MbmsDownloadReceiverTest.AppIntentCapture(mContext, mHandler);

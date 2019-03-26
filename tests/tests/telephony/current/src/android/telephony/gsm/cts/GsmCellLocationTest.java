@@ -16,17 +16,23 @@
 
 package android.telephony.gsm.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.os.Bundle;
 import android.telephony.gsm.GsmCellLocation;
-import android.test.AndroidTestCase;
+import org.junit.Test;
 
-public class GsmCellLocationTest extends AndroidTestCase {
+public class GsmCellLocationTest {
 
     private static final int CID_VALUE = 20;
     private static final int LAC_VALUE = 10;
     private static final int INVALID_CID = -1;
     private static final int INVALID_LAC = -1;
 
+    @Test
     public void testGsmCellLocation() {
         Bundle bundle = new Bundle();
 
