@@ -41,7 +41,7 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
     private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
     public static final String EXTRA_FOREGROUND_SERVICE_TYPE = "ForegroundService.type";
     public static final int COMMAND_START_FOREGROUND_WITH_TYPE = 1;
-    private int mNotificationId = 0;
+    private int mNotificationId = 10;
 
     /** Returns the channel id for this service */
     @Override

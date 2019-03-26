@@ -153,7 +153,7 @@ public class CommandReceiver extends BroadcastReceiver {
 
     private static void sendCommand(Context context, Intent intent) {
         Log.d(TAG, "Sending broadcast " + intent);
-        context.sendBroadcast(intent);
+        context.sendOrderedBroadcast(intent, null);
     }
 
     private ServiceConnection addServiceConnection(final String packageName) {
