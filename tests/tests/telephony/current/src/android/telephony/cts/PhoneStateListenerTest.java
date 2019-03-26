@@ -15,6 +15,14 @@
  */
 package android.telephony.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 import android.os.Looper;
 import android.telephony.CellInfo;
@@ -32,13 +40,16 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
-import static com.google.common.truth.Truth.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-public class PhoneStateListenerTest extends AndroidTestCase{
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class PhoneStateListenerTest {
 
     public static final long WAIT_TIME = 1000;
 
@@ -97,23 +108,22 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         }
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mTelephonyManager =
                 (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         if (mListener != null) {
             // unregister the listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         }
     }
 
+    @Test
     public void testPhoneStateListener() {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -129,6 +139,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
      * registration. There is no simple way to emulate state changes for testing the listeners.
      */
 
+    @Test
     public void testOnServiceStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -166,6 +177,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnServiceStateChangedCalled);
     }
 
+    @Test
     public void testOnSignalStrengthChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -203,6 +215,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnSignalStrengthChangedCalled);
     }
 
+    @Test
     public void testOnSignalStrengthsChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -251,6 +264,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         mSignalStrength.getLevel();
     }
 
+    @Test
     public void testOnMessageWaitingIndicatorChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -293,6 +307,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
      * The tests below rely on the framework to immediately call the installed listener upon
      * registration. There is no simple way to emulate state changes for testing the listeners.
      */
+    @Test
     public void testOnPreciseCallStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -339,6 +354,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
      * The tests below rely on the framework to immediately call the installed listener upon
      * registration. There is no simple way to emulate state changes for testing the listeners.
      */
+    @Test
     public void testOnCallDisconnectCauseChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -382,6 +398,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
      * The tests below rely on the framework to immediately call the installed listener upon
      * registration. There is no simple way to emulate state changes for testing the listeners.
      */
+    @Test
     public void testOnImsCallDisconnectCauseChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -420,6 +437,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
     }
 
+    @Test
     public void testOnPhoneStateListenerExecutorWithSrvccChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -462,6 +480,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
     * The tests below rely on the framework to immediately call the installed listener upon
     * registration. There is no simple way to emulate state changes for testing the listeners.
     */
+    @Test
     public void testOnRadioPowerStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -504,6 +523,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
      * The tests below rely on the framework to immediately call the installed listener upon
      * registration. There is no simple way to emulate state changes for testing the listeners.
      */
+    @Test
     public void testOnVoiceActivationStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -548,6 +568,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
     * The tests below rely on the framework to immediately call the installed listener upon
     * registration. There is no simple way to emulate state changes for testing the listeners.
     */
+    @Test
     public void testOnPreciseDataConnectionStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -594,6 +615,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         mPreciseDataConnectionState.getDataConnectionFailCause();
     }
 
+    @Test
     public void testOnCallForwardingIndicatorChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -633,6 +655,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnCallForwardingIndicatorChangedCalled);
     }
 
+    @Test
     public void testOnCellLocationChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -670,6 +693,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnCellLocationChangedCalled);
     }
 
+    @Test
     public void testOnCallStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -707,6 +731,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnCallStateChangedCalled);
     }
 
+    @Test
     public void testOnDataConnectionStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -755,6 +780,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnDataConnectionStateChangedWithNetworkTypeCalled);
     }
 
+    @Test
     public void testOnDataActivity() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -792,6 +818,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnDataActivityCalled);
     }
 
+    @Test
     public void testOnCellInfoChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -829,6 +856,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnCellInfoChangedCalled);
     }
 
+    @Test
     public void testOnUserMobileDataStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -867,6 +895,7 @@ public class PhoneStateListenerTest extends AndroidTestCase{
         assertTrue(mOnUserMobileDataStateChanged);
     }
 
+    @Test
     public void testOnActiveDataSubscriptionIdChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
