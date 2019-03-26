@@ -210,7 +210,7 @@ public class MediaStore_DownloadsTest {
     public void testUpdateDownload() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(
-                Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
+                Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gpp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
 
