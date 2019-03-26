@@ -14,6 +14,8 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
+
 import android.accessibilityservice.AccessibilityButtonController;
 import android.app.Instrumentation;
 import android.platform.test.annotations.AppModeFull;
@@ -60,7 +62,7 @@ public class AccessibilityButtonTest {
 
     @After
     public void tearDown() {
-        mService.runOnServiceSync(() -> mService.disableSelf());
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test

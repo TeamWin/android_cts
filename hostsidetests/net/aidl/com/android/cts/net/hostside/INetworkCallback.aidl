@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package android.telephony.gsm.cts;
+package com.android.cts.net.hostside;
 
-import android.telephony.gsm.SmsMessage;
-import android.test.AndroidTestCase;
+import android.net.Network;
 
-@SuppressWarnings("deprecation")
-public class SmsMessage_SubmitPduTest extends AndroidTestCase {
-
-    public void testToString() {
-        SmsMessage.SubmitPdu sp = new SmsMessage.SubmitPdu();
-        assertNotNull(sp.toString());
-    }
+interface INetworkCallback {
+    void onBlockedStatusChanged(in Network network, boolean blocked);
+    void onAvailable(in Network network);
+    void onLost(in Network network);
 }

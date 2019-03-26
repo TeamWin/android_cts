@@ -16,6 +16,8 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
+
 import static org.junit.Assert.assertTrue;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -63,7 +65,7 @@ public class AccessibilityOverlayTest {
 
     @After
     public void tearDown() {
-        mService.runOnServiceSync(() -> mService.disableSelf());
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test

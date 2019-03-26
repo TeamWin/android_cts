@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_AUTO;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_HIDDEN;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_IGNORE_HARD_KEYBOARD;
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -65,9 +66,7 @@ public class AccessibilitySoftKeyboardModesTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mService != null) {
-            mService.runOnServiceSync(() -> mService.disableSelf());
-        }
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test

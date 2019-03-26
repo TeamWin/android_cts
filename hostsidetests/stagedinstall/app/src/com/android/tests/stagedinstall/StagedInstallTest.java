@@ -81,7 +81,8 @@ public class StagedInstallTest {
 
     private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
     private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
-    private static final String TEST_STATE_FILE = "/data/local/tmp/ctsstagedinstall/state";
+    private File mTestStateFile = new File(InstrumentationRegistry.getTargetContext().getFilesDir(),
+            "ctsstagedinstall_state");
 
     @Before
     public void adoptShellPermissions() {
@@ -119,7 +120,7 @@ public class StagedInstallTest {
         }
         uninstall(TEST_APP_A);
         uninstall(TEST_APP_B);
-        Files.deleteIfExists(new File(TEST_STATE_FILE).toPath());
+        Files.deleteIfExists(mTestStateFile.toPath());
     }
 
     @Test
@@ -207,6 +208,26 @@ public class StagedInstallTest {
     @Test
     public void testAbandonStagedApkBeforeReboot_VerifyPostReboot() throws Exception {
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+    }
+
+    @Test
+    public void testGetActiveStagedSesssion() throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
+        assertThat(session.getSessionId()).isEqualTo(sessionId);
+    }
+
+    @Test
+    public void testGetActiveStagedSessionNoSessionActive() throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
+        assertThat(session).isNull();
+    }
+
+    private static PackageInstaller getPackageInstaller() {
+      return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
     }
 
     private static long getInstalledVersion(String packageName) {
@@ -315,14 +336,14 @@ public class StagedInstallTest {
         assertion.accept(sessionInfo);
     }
 
-    private static void storeSessionId(int sessionId) throws Exception {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TEST_STATE_FILE))) {
+    private void storeSessionId(int sessionId) throws Exception {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(mTestStateFile))) {
             writer.write("" + sessionId);
         }
     }
 
-    private static int retrieveLastSessionId() throws Exception {
-        try (BufferedReader reader = new BufferedReader(new FileReader(TEST_STATE_FILE))) {
+    private int retrieveLastSessionId() throws Exception {
+        try (BufferedReader reader = new BufferedReader(new FileReader(mTestStateFile))) {
             return Integer.parseInt(reader.readLine());
         }
     }

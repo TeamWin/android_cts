@@ -89,7 +89,10 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 | Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         final Activity secondLaunchActivity = mFirstActivityTestRule.launchActivity(intent);
-        waitAndAssertActivityStates(state(secondLaunchActivity, ON_RESUME));
+        mAmWmState.waitForActivityState(secondLaunchActivity.getComponentName(), STATE_RESUMED);
+        assertEquals("The activity should be started and be resumed",
+                getActivityName(secondLaunchActivity.getComponentName()),
+                mAmWmState.getAmState().getTopActivityName(0));
     }
 
     /**

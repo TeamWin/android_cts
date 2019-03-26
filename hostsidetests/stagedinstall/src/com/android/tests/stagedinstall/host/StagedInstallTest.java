@@ -98,6 +98,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallMultipleStagedApks_VerifyPostReboot");
     }
 
+    @Test
+    public void testGetActiveStagedSesssion() throws Exception {
+        runPhase("testGetActiveStagedSesssion");
+    }
+
+    @Test
+    public void testGetActiveStagedSessionNoSessionActive() throws Exception {
+        runPhase("testGetActiveStagedSessionNoSessionActive");
+    }
+
     private static final class FailedTestLogHook extends TestWatcher {
 
         private final BaseHostJUnit4Test mInstance;

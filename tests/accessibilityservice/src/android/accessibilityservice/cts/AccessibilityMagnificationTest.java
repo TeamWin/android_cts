@@ -16,6 +16,8 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
+
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyFloat;
 import static org.mockito.Mockito.eq;
@@ -27,13 +29,10 @@ import android.accessibilityservice.AccessibilityService.MagnificationController
 import android.accessibilityservice.AccessibilityService.MagnificationController.OnMagnificationChangedListener;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
-import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
-import android.util.DisplayMetrics;
-import android.view.WindowManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -64,10 +63,7 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        if (mService != null) {
-            mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
-            mService = null;
-        }
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelfAndRemove));
 
         super.tearDown();
     }
