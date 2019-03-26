@@ -88,8 +88,18 @@ public class MockEuiccService extends EuiccService {
             boolean forceDeactivateSim,
             @Nullable Bundle resolvedBundle) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return null;
+
+        int cardId = 1;
+
+        if (subscription.getEncodedActivationCode() != null) {
+            return new DownloadSubscriptionResult(
+                    EuiccService.RESULT_OK, 0 /*resolvableErrors*/, cardId);
+        } else {
+            return new DownloadSubscriptionResult(
+                    EuiccService.RESULT_RESOLVABLE_ERRORS,
+                    EuiccService.RESULT_RESOLVABLE_ERRORS,
+                    cardId);
+        }
     }
 
     @Override
