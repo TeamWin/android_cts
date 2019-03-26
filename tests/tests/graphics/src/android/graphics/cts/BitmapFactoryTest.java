@@ -18,11 +18,13 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -397,6 +399,52 @@ public class BitmapFactoryTest {
         assertEquals(originalSize, pass.getAllocationByteCount());
         assertSame(start, pass);
         assertTrue(pass.isMutable());
+    }
+
+    @Test
+    public void testDecodeReuseAttempt() {
+        // BitmapFactory "silently" ignores an immutable inBitmap. (It does print a log message.)
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = false;
+
+        Bitmap start = BitmapFactory.decodeResource(mRes, R.drawable.start, options);
+        assertFalse(start.isMutable());
+
+        options.inBitmap = start;
+        Bitmap pass = BitmapFactory.decodeResource(mRes, R.drawable.pass, options);
+        assertNotNull(pass);
+        assertNotEquals(start, pass);
+    }
+
+    @Test
+    public void testDecodeReuseRecycled() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
+
+        Bitmap start = BitmapFactory.decodeResource(mRes, R.drawable.start, options);
+        assertNotNull(start);
+        start.recycle();
+
+        options.inBitmap = start;
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            BitmapFactory.decodeResource(mRes, R.drawable.pass, options);
+        });
+    }
+
+    @Test
+    public void testDecodeReuseHardware() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.HARDWARE;
+
+        Bitmap start = BitmapFactory.decodeResource(mRes, R.drawable.start, options);
+        assertNotNull(start);
+
+        options.inBitmap = start;
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            BitmapFactory.decodeResource(mRes, R.drawable.pass, options);
+        });
     }
 
     /**
