@@ -17,6 +17,9 @@ package android.server.wm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
+import static android.server.am.UiDeviceUtils.pressUnlockButton;
+import static android.server.am.UiDeviceUtils.pressWakeupButton;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -64,6 +67,9 @@ public class SurfaceControlTest {
 
     @Before
     public void setup() {
+        pressWakeupButton();
+        pressUnlockButton();
+
         mActivity = mActivityRule.getActivity();
         mActivity.dismissPermissionDialog();
     }
@@ -105,10 +111,14 @@ public class SurfaceControlTest {
         s.unlockCanvasAndPost(c);
     }
 
-    private SurfaceControl buildDefaultRedSurface(SurfaceControl parent) {
+    private SurfaceControl buildDefaultSurface(SurfaceControl parent, int color) {
         final SurfaceControl sc = buildDefaultSurface(parent);
-        fillWithColor(sc, Color.RED);
+        fillWithColor(sc, color);
         return sc;
+    }
+
+    private SurfaceControl buildDefaultRedSurface(SurfaceControl parent) {
+        return buildDefaultSurface(parent, Color.RED);
     }
 
     /**
@@ -160,10 +170,34 @@ public class SurfaceControlTest {
     }
 
     /**
+     * Like testHide but we reparent the surface off-screen instead.
+     */
+    @Test
+    public void testReparentOff() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+
+                        new SurfaceControl.Transaction().reparent(sc, null).apply();
+
+                        sc.release();
+                    }
+                },
+                new PixelChecker(PixelColor.WHITE) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    /**
      * Here we use the same red-surface set up but construct it off-screen and then re-parent it.
      */
     @Test
-    public void testReparent() throws Throwable {
+    public void testReparentOn() throws Throwable {
         verifyTest(
                 new SurfaceControlTestCase.ParentSurfaceConsumer () {
                     @Override
@@ -178,6 +212,35 @@ public class SurfaceControlTest {
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    /**
+     * Test that a surface with Layer "2" appears over a surface with Layer "1".
+     */
+    @Test
+    public void testSetLayer() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        final SurfaceControl sc2 = buildDefaultSurface(parent, Color.GREEN);
+
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setVisibility(sc2, true)
+                            .setLayer(sc, 1)
+                            .setLayer(sc2, 2)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+                new PixelChecker(PixelColor.GREEN) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
