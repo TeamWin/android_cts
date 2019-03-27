@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAdminService1",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
@@ -32,7 +32,7 @@ android_test {
     manifest: "package1/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAdminService2",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
@@ -52,7 +52,7 @@ android_test {
     manifest: "package2/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAdminService3",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
@@ -72,7 +72,7 @@ android_test {
     manifest: "package3/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAdminService4",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
@@ -92,7 +92,7 @@ android_test {
     manifest: "package4/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAdminServiceB",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
