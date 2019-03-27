@@ -38,6 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.content.res.ColorStateList;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -328,11 +329,19 @@ public class DrawableContainerTest {
         Drawable dr = spy(new ColorDrawable(Color.GREEN));
         addAndSelectDrawable(dr);
 
-        verify(dr, times(1)).setTintMode(Mode.SRC_OVER);
+        verify(dr, times(1)).setTintMode(BlendMode.SRC_OVER);
+    }
 
-        mDrawableContainer.setTintList(null);
-        mDrawableContainer.setTintMode(null);
-        verify(dr, times(1)).setTintMode(null);
+    @Test
+    public void testSetBlendMode() {
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
+        mDrawableContainer.setTint(Color.BLACK);
+        mDrawableContainer.setTintMode(BlendMode.SRC_OVER);
+
+        Drawable dr = spy(new ColorDrawable(Color.GREEN));
+        addAndSelectDrawable(dr);
+
+        verify(dr, times(1)).setTintMode(BlendMode.SRC_OVER);
     }
 
     @Test
@@ -875,10 +884,13 @@ public class DrawableContainerTest {
     // Since Mockito can't mock or spy on protected methods, we have a custom extension
     // of Drawable to track calls to protected methods. This class also has empty implementations
     // of the base abstract methods.
-    private class MockDrawable extends Drawable {
+    public class MockDrawable extends Drawable {
         private boolean mHasCalledOnBoundsChanged;
         private boolean mHasCalledOnStateChanged;
         private boolean mHasCalledOnLevelChanged;
+        private boolean mHasOnApplyBlendModeChanged;
+
+        private BlendMode mBlendMode = null;
 
         private Insets mInsets = null;
 
@@ -920,10 +932,20 @@ public class DrawableContainerTest {
             return mHasCalledOnLevelChanged;
         }
 
+        public BlendMode getBlendMode() {
+            return mBlendMode;
+        }
+
         public void reset() {
             mHasCalledOnLevelChanged = false;
             mHasCalledOnStateChanged = false;
             mHasCalledOnBoundsChanged = false;
+        }
+
+        @Override
+        public void setTintMode(BlendMode blendMode) {
+            mHasOnApplyBlendModeChanged = true;
+            mBlendMode = blendMode;
         }
 
         @Override
