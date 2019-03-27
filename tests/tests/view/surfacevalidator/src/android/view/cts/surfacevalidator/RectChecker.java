@@ -20,41 +20,64 @@ import android.media.Image;
 import android.os.Trace;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+
 
 public class RectChecker extends PixelChecker {
-    private PixelColor mPixelColor;
-    private Rect mTargetRect;
+    private ArrayList<Target> mTargets = new ArrayList<Target>();
 
     private static final int PIXEL_STRIDE = 4;
+    
+    public static class Target {
+        PixelColor mPixelColor;
+        Rect mTargetRect;
+        
+        public Target(Rect r, int p) {
+            mPixelColor = new PixelColor(p);
+            mTargetRect = r;
+        }
+    };
 
-    public RectChecker(Rect targetRect, int color) {
-        mPixelColor = new PixelColor(color);
-        mTargetRect = targetRect;
+    public RectChecker(Target... targets) {
+        for (Target t : targets) {
+            mTargets.add(t);
+        }
     }
 
-    PixelColor getColor() {
-        return mPixelColor;
+    public RectChecker(Rect r, int p) {
+        this(new Target(r, p));
     }
 
-    public boolean validatePlane(Image.Plane plane, Rect boundsToCheck, int width, int height) {
+    public boolean validatePlane(Image.Plane plane, Rect boundsToCheck,
+            int width, int height) {
+        for (Target t : mTargets) {
+            if (validatePlaneForTarget(t, plane, boundsToCheck, width, height) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean validatePlaneForTarget(Target t, Image.Plane plane, Rect boundsToCheck,
+            int width, int height) {
         int rowStride = plane.getRowStride();
         ByteBuffer buffer = plane.getBuffer();
 
         Trace.beginSection("check");
 
-        int startY = boundsToCheck.top + mTargetRect.top;
-        int endY = mTargetRect.bottom;
-        int startX = (boundsToCheck.left + mTargetRect.left) * PIXEL_STRIDE;
-        int bytesWidth = mTargetRect.width() * PIXEL_STRIDE;
+        int startY = boundsToCheck.top + t.mTargetRect.top;
+        int endY = t.mTargetRect.bottom;
+        int startX = (boundsToCheck.left + t.mTargetRect.left) * PIXEL_STRIDE;
+        int bytesWidth = t.mTargetRect.width() * PIXEL_STRIDE;
 
-        final short maxAlpha = getColor().mMaxAlpha;
-        final short minAlpha = getColor().mMinAlpha;
-        final short maxRed = getColor().mMaxRed;
-        final short minRed = getColor().mMinRed;
-        final short maxGreen = getColor().mMaxGreen;
-        final short minGreen = getColor().mMinGreen;
-        final short maxBlue = getColor().mMaxBlue;
-        final short minBlue = getColor().mMinBlue;
+        final short maxAlpha = t.mPixelColor.mMaxAlpha;
+        final short minAlpha = t.mPixelColor.mMinAlpha;
+        final short maxRed = t.mPixelColor.mMaxRed;
+        final short minRed = t.mPixelColor.mMinRed;
+        final short maxGreen = t.mPixelColor.mMaxGreen;
+        final short minGreen = t.mPixelColor.mMinGreen;
+        final short maxBlue = t.mPixelColor.mMaxBlue;
+        final short minBlue = t.mPixelColor.mMinBlue;
 
         byte[] scanline = new byte[bytesWidth];
         for (int row = startY; row < endY; row++) {

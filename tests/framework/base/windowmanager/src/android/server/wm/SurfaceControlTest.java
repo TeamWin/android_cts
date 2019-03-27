@@ -46,10 +46,11 @@ import org.junit.rules.TestName;
 @LargeTest
 @Presubmit
 public class SurfaceControlTest {
-    private static final int DEFAULT_LAYOUT_WIDTH = 100;
-    private static final int DEFAULT_LAYOUT_HEIGHT = 100;
+    private static final int DEFAULT_LAYOUT_WIDTH = 640;
+    private static final int DEFAULT_LAYOUT_HEIGHT = 480;
     private static final int DEFAULT_BUFFER_WIDTH = 640;
     private static final int DEFAULT_BUFFER_HEIGHT = 480;
+    private static final int DEFAULT_SURFACE_SIZE = 100;
 
     @Rule
     public ActivityTestRule<CapturedActivity> mActivityRule =
@@ -98,7 +99,7 @@ public class SurfaceControlTest {
 
     private SurfaceControl buildDefaultSurface(SurfaceControl parent) {
         return new SurfaceControl.Builder()
-            .setBufferSize(DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT)
+            .setBufferSize(DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE)
             .setName("CTS surface")
             .setParent(parent)
             .build();
@@ -223,5 +224,77 @@ public class SurfaceControlTest {
                     }
                 },
                 new RectChecker(new Rect(0, 0, 100, 100), PixelColor.GREEN));
+    }
+
+    /**
+     * Try setting the position of a surface with the top-left corner off-screen.
+     */
+    @Test
+    public void testSetGeometry_dstBoundsOffScreen() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setGeometry(sc, null, new Rect(-50, -50, 50, 50), Surface.ROTATION_0)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+
+                // The rect should be offset by 50 pixels
+                new RectChecker(
+                        new RectChecker.Target(new Rect(0, 0, 50, 50), PixelColor.RED),
+                        new RectChecker.Target(new Rect(50, 50, 150, 150), PixelColor.WHITE)));
+    }
+
+    /**
+     * Try setting the position of a surface with the top-left corner on-screen.
+     */
+    @Test
+    public void testSetGeometry_dstBoundsOnScreen() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setGeometry(sc, null, new Rect(50, 50, 150, 150), Surface.ROTATION_0)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+
+                // The rect should be offset by 50 pixels
+                new RectChecker(
+                        new RectChecker.Target(new Rect(50, 50, 150, 150), PixelColor.RED)));
+    }
+
+    /**
+     * Try scaling a surface
+     */
+    @Test
+    public void testSetGeometry_dstBoundsScaled() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setGeometry(sc, null,
+                                    new Rect(0, 0, DEFAULT_SURFACE_SIZE * 2, DEFAULT_SURFACE_SIZE*2),
+                                    Surface.ROTATION_0)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+
+                // The rect should be offset by 50 pixels
+                new RectChecker(
+                        new RectChecker.Target(new Rect(0, 0, 200, 200), PixelColor.RED)));
     }
 }
