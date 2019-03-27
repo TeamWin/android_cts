@@ -93,6 +93,7 @@ public class BatteryUtils {
 
         } else {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
+            putGlobalSetting(Global.LOW_POWER_MODE, "0");
             putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
             waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
             waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
