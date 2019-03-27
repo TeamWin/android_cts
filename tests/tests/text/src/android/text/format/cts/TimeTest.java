@@ -35,13 +35,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -2825,12 +2829,121 @@ public class TimeTest {
     }
 
     @Test
-    public void test_bug118835133() {
-        Time t = new Time("Asia/Singapore");
-        Fields.set(t, 2018, 9, 30, 12, 48, 32, 0 /* isDst */, 0, 0, 0);
-        // With http://b/118835133 toMillis() returns -1.
-        assertEquals(1540874912000L, t.toMillis(true /* ignoreDst */));
+    public void test_bug118835133_valuesCloseToInt32Saturation() {
+        // With http://b/118835133 toMillis() returns -1. This is the original bug case.
+        LocalDateTime localDateTime = LocalDateTime.of(2018, Month.OCTOBER, 30, 12, 48, 32);
+        assertLocalTimeMillis("Asia/Singapore", localDateTime, 1540874912000L);
+
+        // The following tests check the upper limits of what we support. There's no guarantee
+        // we can't deal with values higher that this but the exact value depends on the version of
+        // zic being used as a transition at exactly Integer.MAX_VALUE can affect our ability to
+        // deal with times. So, we just assert what we know we must be able to do to catch major
+        // regressions. The following timezones are chosen because of their respective geographical
+        // locations (positive / negative offset from UTC) plus whether they had transitions at
+        // Integer.MAX_VALUE with zic > 2014b. The transitions could change in future but there's
+        // nothing we can do about that.
+
+        // Positive offset, has MAX_VALUE transition with zic 2018e.
+        checkUpperSupportedLimit("Asia/Singapore");
+        // Negative offset, has MAX_VALUE transition with zic 2018e.
+        checkUpperSupportedLimit("America/Argentina/Buenos_Aires");
+        // Positive offset, has no MAX_VALUE transition with zic 2018e.
+        checkUpperSupportedLimit("Asia/Shanghai");
+        // Negative offset, has no MAX_VALUE transition with zic 2018e.
+        checkUpperSupportedLimit("America/Los_Angeles");
+
+        // See comment above, but for Integer.MIN_VALUE / lower bound. Most zones have a MIN_VALUE
+        // transition with zic 2018e so it is harder to test zones without them so we just cover the
+        // same ones as we do for upper bound above.
+
+        // Positive offset, has MIN_VALUE transition with zic 2018e.
+        checkLowerSupportedLimit("Asia/Singapore");
+        checkLowerSupportedLimit("Asia/Shanghai");
+        // Negative offset, has MIN_VALUE transition with zic 2018e.
+        checkLowerSupportedLimit("America/Argentina/Buenos_Aires");
+        checkLowerSupportedLimit("America/Los_Angeles");
     }
+
+    private static void checkUpperSupportedLimit(String timeZoneId) {
+        // Integer.MAX_VALUE == Jan 19, 2038 03:14:07 GMT.
+        LocalDateTime max32BitTime = LocalDateTime.of(2038, Month.JANUARY, 19, 3, 14, 7);
+
+        // We take off one extra day in all cases because we can't guarantee we can handle
+        // exactly Integer.MAX_VALUE in all cases due to integer overflow when applying zone
+        // offsets. It gets fiddly if we try to be exact and this is good enough.
+        LocalDateTime testLocalTime = max32BitTime.minusDays(1);
+
+        long expectedMillis = calculateExpectedMillis(timeZoneId, testLocalTime);
+        assertLocalTimeMillis(timeZoneId, testLocalTime, expectedMillis);
+    }
+
+    private static void checkLowerSupportedLimit(String timeZoneId) {
+        // Integer.MIN_VALUE == 13 Dec 1901 20:45:52 GMT.
+        LocalDateTime min32BitTime = LocalDateTime.of(1901, Month.DECEMBER, 13, 20, 45, 52);
+
+        // We add on one extra day in all cases because we can't guarantee we can handle
+        // exactly Integer.MIN_VALUE in all cases due to integer underflow when applying
+        // zone offsets.  It gets fiddly if we try to be exact and this is good enough.
+        LocalDateTime testLocalTime = min32BitTime.plusDays(1);
+
+        long expectedMillis = calculateExpectedMillis(timeZoneId, testLocalTime);
+        assertLocalTimeMillis(timeZoneId, testLocalTime, expectedMillis);
+    }
+
+    private static long calculateExpectedMillis(String timeZoneId, LocalDateTime localDateTime) {
+        // We use java.util.TimeZone with Calendar because that's the same data as used by Time and
+        // so they should generally agree. ICU, and java.time which is backed by ICU on Android, are
+        // generally better because they handle things outside of the Integer range.
+        TimeZone tz = TimeZone.getTimeZone(timeZoneId);
+        Calendar calendar = new GregorianCalendar(tz);
+        calendar.set(
+                localDateTime.getYear(),
+                localDateTime.getMonthValue() - 1 /* calendar uses [0-11] */,
+                localDateTime.getDayOfMonth(),
+                localDateTime.getHour(),
+                localDateTime.getMinute(),
+                localDateTime.getSecond()
+        );
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private static void assertLocalTimeMillis(String timeZoneId, LocalDateTime testLocalTime,
+            long expectedMillis) {
+
+        Time t = new Time(timeZoneId);
+        Fields.set(t,
+                testLocalTime.getYear(),
+                testLocalTime.getMonthValue() - 1 /* Time class uses [0-11] */,
+                testLocalTime.getDayOfMonth(),
+                testLocalTime.getHour(),
+                testLocalTime.getMinute(),
+                testLocalTime.getSecond(),
+                0 /* isDst */, 0, 0, 0);
+        assertEquals(expectedMillis, t.toMillis(true /* ignoreDst */));
+    }
+
+    @Test
+    public void test_bug118835133_fixEarliestRawOffsetValue() {
+        // This test confirms the behavior between Integer.MIN_VALUE seconds and the next
+        // transition. With zic <= 2014b there is no explicit transition at Integer.MIN_VALUE
+        // seconds. This test should pass regardless of zic version used as the Android behavior
+        // is stable for this zone as we have fixed the logic used to determine the offset before
+        // the first transition AND the first transition for the zone is after Integer.MIN_VALUE.
+        Time t = new Time("Africa/Abidjan");
+        // Jan 1, 1912 12:16:08 AM UTC / Jan 1, 1912 00:00:00 local time
+        long oldEarliestTransition = -1830383032 * 1000L;
+        long beforeOldEarliestTransition = oldEarliestTransition - TimeUnit.DAYS.toMillis(1);
+        t.set(beforeOldEarliestTransition);
+
+        // The expected local time equivalent to the oldEarliestTransition time minus 1 day and
+        // offset by -968 seconds.
+        Time expected = new Time("Africa/Abidjan");
+        Fields.set(expected, 1911, 11, 31, 0, 0, 0, 0 /* isDst */, -968, 364, 0);
+
+        Fields.verifyTimeEquals(expected, t);
+    }
+
     private static void verifyNormalizeResult(boolean normalizeArgument, Time toNormalize,
             Time expectedTime, long expectedTimeMillis) {
         long actualTimeMillis = toNormalize.normalize(normalizeArgument /* ignore isDst */);
@@ -2903,6 +3016,9 @@ public class TimeTest {
             return String.format(format.toString(), values.toArray());
         }
 
+        /**
+         * Set fields on the supplied time. month is [0-11].
+         */
         public static void setDateTime(Time t, int year, int month, int monthDay, int hour,
                 int minute, int second) {
             t.year = year;
@@ -2914,6 +3030,9 @@ public class TimeTest {
             t.allDay = false;
         }
 
+        /**
+         * See {@link #setDateTime(Time, int, int, int, int, int, int)} for array order.
+         */
         public static void setDateTime(Time t, int[] args) {
             assertEquals(6, args.length);
             setDateTime(t, args[0], args[1], args[2], args[3], args[4], args[5]);
@@ -2929,6 +3048,9 @@ public class TimeTest {
             t.weekDay = weekDay;
         }
 
+        /**
+         * Set fields on the supplied time. month is [0-11].
+         */
         public static void setAllDayDate(Time t, int year, int month, int monthDay) {
             t.year = year;
             t.month = month;
@@ -2936,12 +3058,18 @@ public class TimeTest {
             t.allDay = true;
         }
 
+        /**
+         * See {@link #set(Time, int, int, int, int, int, int, int, int, int, int)} for array order.
+         */
         public static void set(Time t, int[] args) {
             assertEquals(10, args.length);
             set(t, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8],
                     args[9]);
         }
 
+        /**
+         * Set fields on the supplied time. month is [0-11].
+         */
         public static void set(Time t, int year, int month, int monthDay, int hour, int minute,
                 int second, int isDst, int gmtoff, int yearDay, int weekDay) {
             setDateTime(t, year, month, monthDay, hour, minute, second);
