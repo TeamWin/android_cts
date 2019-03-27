@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
 
-    public static final String TAG = CtsRootlessGpuDebugHostTest.class.getSimpleName();
+    public static final String TAG = "RootlessGpuDebugDeviceActivity";
 
     /**
      * A reference to the device under test.
@@ -129,11 +129,11 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     }
 
     /**
-     * Grab and format the process ID of requested app.
+     * Return current timestamp in format accepted by logcat
      */
-    private String getPID(String app) throws Exception {
-        String pid = mDevice.executeAdbCommand("shell", "pidof", app);
-        return removeWhitespace(pid);
+    private String getTime() throws Exception {
+        // logcat will accept "MM-DD hh:mm:ss.mmm"
+        return mDevice.executeShellCommand("date +\"%m-%d %H:%M:%S.%3N\"");
     }
 
     /**
@@ -162,14 +162,14 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         public int lineNumber;
     }
 
-    private LogScanResult scanLog(String pid, String searchString) throws Exception {
-        return scanLog(pid, searchString, "");
+    private LogScanResult scanLog(String tag, String searchString, String appStartTime) throws Exception {
+        return scanLog(tag, searchString, "", appStartTime);
     }
 
     /**
-     * Scan the logcat for requested process ID, returning if found and which line
+     * Scan the logcat for requested layer tag, returning if found and which line
      */
-    private LogScanResult scanLog(String pid, String searchString, String endString) throws Exception {
+    private LogScanResult scanLog(String tag, String searchString, String endString, String appStartTime) throws Exception {
 
         LogScanResult result = new LogScanResult();
         result.found = false;
@@ -186,8 +186,13 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
             // Give our activity a chance to run and fill the log
             Thread.sleep(1000);
 
-            // Pull the logcat for a single process
-            String logcat = mDevice.executeAdbCommand("logcat", "-v", "brief", "-d", "--pid=" + pid, "*:V");
+            // Pull the logcat since the app started, filter for tags
+            // This command should look something like this:
+            // adb logcat -d -t '03-27 21:35:05.392' -s "RootlessGpuDebugDeviceActivity,nullLayerC"
+            String logcat = mDevice.executeShellCommand(
+                    "logcat -d " +
+                    "-t '" + removeWhitespace(appStartTime) + "' " +
+                    "-s \"" + tag + "\"");
             int lineNumber = 0;
             Scanner apkIn = new Scanner(logcat);
             while (apkIn.hasNextLine()) {
@@ -270,20 +275,18 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                 "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
 
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
+        // Kick off our DEBUG app
+        String appStartTime = getTime();
+        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = "nullCreateInstance called in " + LAYER_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A + "," + LAYER_B, searchStringA, appStartTime);
         Assert.assertTrue("LayerA was not loaded", resultA.found);
 
         String searchStringB = "nullCreateInstance called in " + LAYER_B;
-        LogScanResult resultB = scanLog(pid, searchStringB);
+        LogScanResult resultB = scanLog(TAG + "," + LAYER_A + "," + LAYER_B, searchStringB, appStartTime);
         Assert.assertTrue("LayerB was not loaded", resultB.found);
 
         Assert.assertTrue("LayerA should be loaded before LayerB", resultA.lineNumber < resultB.lineNumber);
@@ -310,15 +313,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
 
         // Kick off our RELEASE app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(RELEASE_APP);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was enumerated", resultA.found);
     }
 
@@ -343,15 +343,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was enumerated", resultA.found);
     }
 
@@ -376,15 +373,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was enumerated", resultA.found);
     }
 
@@ -409,15 +403,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure layerA is not loaded
         String searchStringA = "nullCreateInstance called in " + LAYER_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was loaded", resultA.found);
     }
 
@@ -438,19 +429,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_C_NAME);
 
         // Kick off our RELEASE app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(RELEASE_APP);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = LAYER_A_NAME + "loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was enumerated", resultA.found);
 
         String searchStringC = "nullCreateInstance called in " + LAYER_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
+        LogScanResult resultC = scanLog(TAG + "," + LAYER_C, searchStringC, appStartTime);
         Assert.assertTrue("LayerC was not loaded", resultC.found);
     }
 
@@ -481,19 +469,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_B_NAME);
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure only layerA is loaded
         String searchStringA = "nullCreateInstance called in " + LAYER_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertTrue("LayerA was not loaded", resultA.found);
 
         String searchStringB = "nullCreateInstance called in " + LAYER_B;
-        LogScanResult resultB = scanLog(pid, searchStringB);
+        LogScanResult resultB = scanLog(TAG + "," + LAYER_B, searchStringB, appStartTime);
         Assert.assertFalse("LayerB was loaded", resultB.found);
     }
 
@@ -512,15 +497,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layer_app", LAYERS_APP);
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Check that our external layer was loaded
         String searchStringC = "nullCreateInstance called in " + LAYER_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
+        LogScanResult resultC = scanLog(TAG + "," + LAYER_C, searchStringC, appStartTime);
         Assert.assertTrue("LayerC was not loaded", resultC.found);
     }
 
@@ -548,19 +530,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                                   "sh", "-c", "\'cat", ">", SHIM_B_LIB, ";", "chmod", "700", SHIM_B_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = "glesLayer_eglChooseConfig called in " + SHIM_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A + "," + SHIM_B, searchStringA, appStartTime);
         Assert.assertTrue("glesLayer1 was not loaded", resultA.found);
 
         String searchStringB = "glesLayer_eglChooseConfig called in " + SHIM_B;
-        LogScanResult resultB = scanLog(pid, searchStringB);
+        LogScanResult resultB = scanLog(TAG + "," + SHIM_A + "," + SHIM_B, searchStringB, appStartTime);
         Assert.assertTrue("glesLayer2 was not loaded", resultB.found);
 
         Assert.assertTrue("glesLayer1 should be loaded before glesLayer2", resultA.lineNumber < resultB.lineNumber);
@@ -588,15 +567,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                                    "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'", "||", "echo", "run-as", "failed");
 
         // Kick off our RELEASE app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(RELEASE_APP);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = SHIM_A + " loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A, searchStringA, appStartTime);
         Assert.assertFalse(SHIM_A + " was enumerated", resultA.found);
     }
 
@@ -620,15 +596,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                                   "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = SHIM_A + " loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A, searchStringA, appStartTime);
         Assert.assertFalse(SHIM_A + " was enumerated", resultA.found);
     }
 
@@ -652,15 +625,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                                   "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = SHIM_A + " loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A, searchStringA, appStartTime);
         Assert.assertFalse("ShimA was enumerated", resultA.found);
     }
 
@@ -684,15 +654,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                                   "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure layerA is not loaded
         String searchStringA = "glesLayer_eglChooseConfig called in " + SHIM_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A, searchStringA, appStartTime);
         Assert.assertFalse("ShimA was loaded", resultA.found);
     }
 
@@ -713,19 +680,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + SHIM_C_LIB);
 
         // Kick off our RELEASE app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(RELEASE_APP);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = SHIM_A + "loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A, searchStringA, appStartTime);
         Assert.assertFalse("ShimA was enumerated", resultA.found);
 
         String searchStringC = "glesLayer_eglChooseConfig called in " + SHIM_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
+        LogScanResult resultC = scanLog(TAG + "," + SHIM_C, searchStringC, appStartTime);
         Assert.assertTrue("ShimC was not loaded", resultC.found);
     }
 
@@ -754,19 +718,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + SHIM_B_LIB);
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Ensure only layerA is loaded
         String searchStringA = "glesLayer_eglChooseConfig called in " + SHIM_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
+        LogScanResult resultA = scanLog(TAG + "," + SHIM_A, searchStringA, appStartTime);
         Assert.assertTrue("ShimA was not loaded", resultA.found);
 
         String searchStringB = "glesLayer_eglChooseConfig called in " + SHIM_B;
-        LogScanResult resultB = scanLog(pid, searchStringB);
+        LogScanResult resultB = scanLog(TAG + "," + SHIM_B, searchStringB, appStartTime);
         Assert.assertFalse("ShimB was loaded", resultB.found);
     }
 
@@ -785,15 +746,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layer_app", LAYERS_APP);
 
         // Kick off our DEBUG app
+        String appStartTime = getTime();
         mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
 
         // Check that our external layer was loaded
         String searchStringC = "glesLayer_eglChooseConfig called in " + SHIM_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
+        LogScanResult resultC = scanLog(TAG + "," + SHIM_C, searchStringC, appStartTime);
         Assert.assertTrue("ShimC was not loaded", resultC.found);
     }
 
