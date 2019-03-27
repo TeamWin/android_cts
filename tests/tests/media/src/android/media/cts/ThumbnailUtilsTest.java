@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(AndroidJUnit4.class)
 public class ThumbnailUtilsTest {
     private static final Size[] TEST_SIZES = new Size[] {
