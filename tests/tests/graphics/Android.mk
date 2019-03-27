@@ -29,7 +29,8 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     ctsdeviceutillegacy-axt \
     ctstestrunner-axt \
     androidx.annotation_annotation \
-    junit
+    junit \
+    testng
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
     androidx.core_core
