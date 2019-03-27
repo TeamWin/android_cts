@@ -39,6 +39,7 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.ImageView;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
@@ -240,6 +241,7 @@ public class AnimatedVectorDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testAddCallbackBeforeStart() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // The AVD has a duration as 100ms.
@@ -257,6 +259,7 @@ public class AnimatedVectorDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testAddCallbackAfterTrigger() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // The AVD has a duration as 100ms.
@@ -278,6 +281,7 @@ public class AnimatedVectorDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testAddCallbackAfterStart() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // The AVD has a duration as 100ms.
@@ -317,6 +321,7 @@ public class AnimatedVectorDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testClearCallback() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
 
