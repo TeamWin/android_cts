@@ -29,9 +29,9 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.legacy_legacy-support-v4 \
-    ctstestrunner \
+    ctstestrunner-axt \
     ub-uiautomator \
-    android-support-test
+    androidx.test.rules
 
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 

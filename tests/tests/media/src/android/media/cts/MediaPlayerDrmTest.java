@@ -15,53 +15,15 @@
  */
 package android.media.cts;
 
-import android.media.cts.R;
-
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.graphics.Rect;
-import android.hardware.Camera;
-import android.media.AudioManager;
-import android.media.MediaCodec;
-import android.media.MediaDataSource;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnErrorListener;
-import android.media.MediaRecorder;
-import android.media.MediaTimestamp;
-import android.media.PlaybackParams;
-import android.media.SubtitleData;
-import android.media.SyncParams;
-import android.media.TimedText;
-import android.media.audiofx.AudioEffect;
-import android.media.audiofx.Visualizer;
 import android.net.Uri;
 import android.os.Environment;
-import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.ServiceManager;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
-import android.util.Log;
 
-import com.android.compatibility.common.util.MediaUtils;
+import androidx.test.filters.SmallTest;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.UUID;
-import java.util.Vector;
-import java.util.concurrent.CountDownLatch;
-
-import junit.framework.AssertionFailedError;
 
 /**
  * Tests for the MediaPlayer API and local video/audio playback.

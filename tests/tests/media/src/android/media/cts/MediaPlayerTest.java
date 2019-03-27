@@ -16,21 +16,16 @@
 package android.media.cts;
 
 import android.app.ActivityManager;
-import android.media.cts.R;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.AudioManager;
-import android.media.MediaCodec;
 import android.media.MediaDataSource;
-import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.media.MediaPlayer.OnTimedTextListener;
 import android.media.MediaRecorder;
@@ -41,27 +36,28 @@ import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
+import android.media.cts.R;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+
 import com.android.compatibility.common.util.MediaUtils;
+
+import junit.framework.AssertionFailedError;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -73,7 +69,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import junit.framework.AssertionFailedError;
 
 /**
  * Tests for the MediaPlayer API and local video/audio playback.

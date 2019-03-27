@@ -1,18 +1,20 @@
 package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
-import static android.support.test.runner.lifecycle.Stage.CREATED;
-import static android.support.test.runner.lifecycle.Stage.DESTROYED;
-import static android.support.test.runner.lifecycle.Stage.PAUSED;
-import static android.support.test.runner.lifecycle.Stage.PRE_ON_CREATE;
-import static android.support.test.runner.lifecycle.Stage.RESUMED;
-import static android.support.test.runner.lifecycle.Stage.STARTED;
-import static android.support.test.runner.lifecycle.Stage.STOPPED;
+
+import static androidx.test.runner.lifecycle.Stage.CREATED;
+import static androidx.test.runner.lifecycle.Stage.DESTROYED;
+import static androidx.test.runner.lifecycle.Stage.PAUSED;
+import static androidx.test.runner.lifecycle.Stage.PRE_ON_CREATE;
+import static androidx.test.runner.lifecycle.Stage.RESUMED;
+import static androidx.test.runner.lifecycle.Stage.STARTED;
+import static androidx.test.runner.lifecycle.Stage.STOPPED;
 
 import android.app.Activity;
-import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
-import android.support.test.runner.lifecycle.Stage;
 import android.util.Pair;
+
+import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
+import androidx.test.runner.lifecycle.Stage;
 
 import java.util.ArrayList;
 import java.util.List;

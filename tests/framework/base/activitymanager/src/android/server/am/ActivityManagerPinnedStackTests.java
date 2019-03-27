@@ -65,6 +65,7 @@ import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressWindowButton;
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -86,17 +87,20 @@ import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
 import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.settings.SettingsSession;
-import android.support.test.filters.FlakyTest;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Size;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.junit.Ignore;
-import org.junit.Test;
 
 /**
  * Build/Install/Run:

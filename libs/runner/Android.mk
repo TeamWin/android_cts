@@ -16,6 +16,8 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# The legacy library that brings in android-support-test transitively
+
 LOCAL_STATIC_JAVA_LIBRARIES := cts-test-runner
 
 LOCAL_MODULE_TAGS := optional
@@ -25,3 +27,19 @@ LOCAL_MODULE := ctstestrunner
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
+# The library variant that brings in androidx.test transitively
+include $(CLEAR_VARS)
+
+LOCAL_STATIC_JAVA_LIBRARIES := cts-test-runner-axt
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE := ctstestrunner-axt
+
+LOCAL_SDK_VERSION := current
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+

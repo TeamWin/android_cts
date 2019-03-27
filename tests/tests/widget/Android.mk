@@ -23,11 +23,11 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
     androidx.annotation_annotation \
-    android-support-test \
+    androidx.test.rules \
     mockito-target-minus-junit4 \
     android-common \
-    compatibility-device-util \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     platform-test-annotations
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs

@@ -3,9 +3,10 @@ package android.server.am.settings;
 import android.content.ContentResolver;
 import android.net.Uri;
 import android.provider.Settings.SettingNotFoundException;
-import androidx.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
 
 import java.util.HashMap;
 import java.util.Map;

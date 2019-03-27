@@ -25,20 +25,21 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.VectorDrawable;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
-
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
 import android.widget.FrameLayout;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
 import java.util.concurrent.CountDownLatch;
-import android.animation.Animator;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
