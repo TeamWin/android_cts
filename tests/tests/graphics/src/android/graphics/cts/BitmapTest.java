@@ -2020,7 +2020,7 @@ public class BitmapTest {
         Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
         int fdCount = -1;
         for (int i = 0; i < 2000; i++) {
-            if (i == 2) {
+            if (i == 4) {
                 // Not really the "start" but by having done a couple
                 // we've fully initialized any state that may be required,
                 // so memory usage should be stable now
@@ -2031,7 +2031,7 @@ public class BitmapTest {
             if (i % 100 == 5) {
                 assertNotLeaking(i, meminfoStart, meminfoEnd);
                 final int curFdCount = getFdCount();
-                if (curFdCount - fdCount > 5) {
+                if (curFdCount - fdCount > 10) {
                     fail(String.format("FDs leaked. Expected=%d, current=%d, iteration=%d",
                             fdCount, curFdCount, i));
                 }
@@ -2039,7 +2039,10 @@ public class BitmapTest {
             test.run();
         }
         assertNotLeaking(2000, meminfoStart, meminfoEnd);
-        assertEquals(fdCount, getFdCount());
+        final int curFdCount = getFdCount();
+        if (curFdCount - fdCount > 10) {
+            fail(String.format("FDs leaked. Expected=%d, current=%d", fdCount, curFdCount));
+        }
     }
 
     @Test

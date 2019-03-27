@@ -22,6 +22,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-feature android:name="android.hardware.camera" />
 
     <application android:label="Android TestCase"
@@ -312,6 +313,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
+                 android:foregroundServiceType="mediaProjection"
+                 android:enabled="true">
+        </service>
 
         <activity android:name="android.view.cts.HoverCtsActivity"
                   android:screenOrientation="locked">

@@ -20,12 +20,8 @@ import static android.autofillservice.cts.Helper.disallowOverlays;
 
 import android.autofillservice.cts.AbstractAutoFillActivity;
 import android.autofillservice.cts.AutoFillServiceTestCase;
-import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
 import android.content.AutofillOptions;
-import android.os.SystemClock;
-import android.util.ArraySet;
-import android.util.Log;
 import android.view.autofill.AutofillManager;
 
 import org.junit.AfterClass;
@@ -40,9 +36,6 @@ import org.junit.BeforeClass;
 // Must be public because of the @ClassRule
 public abstract class AugmentedAutofillAutoActivityLaunchTestCase
         <A extends AbstractAutoFillActivity> extends AutoFillServiceTestCase.AutoActivityLaunch<A> {
-
-    private static final String TAG = AugmentedAutofillAutoActivityLaunchTestCase.class
-            .getSimpleName();
 
     protected static AugmentedReplier sAugmentedReplier;
     protected AugmentedUiBot mAugmentedUiBot;
@@ -91,27 +84,12 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
     }
 
     protected CtsAugmentedAutofillService enableAugmentedService() throws InterruptedException {
-        return enableAugmentedService(/* whitelistSelf= */ true);
-    }
-
-    protected CtsAugmentedAutofillService enableAugmentedService(boolean whitelistSelf)
-            throws InterruptedException {
         if (mServiceWatcher != null) {
             throw new IllegalStateException("There Can Be Only One!");
         }
 
         mServiceWatcher = CtsAugmentedAutofillService.setServiceWatcher();
         AugmentedHelper.setAugmentedService(CtsAugmentedAutofillService.SERVICE_NAME);
-
-        // TODO(b/124456706): instead of sleeping it should wait for onConnected()
-        SystemClock.sleep(1000);
-
-        if (whitelistSelf) {
-            Log.d(TAG, "Whitelisting " + Helper.MY_PACKAGE + " for augmented autofill");
-            final ArraySet<String> packages = new ArraySet<>(1);
-            packages.add(Helper.MY_PACKAGE);
-            getAutofillManager().setAugmentedAutofillWhitelist(packages, /* activities= */ null);
-        }
 
         CtsAugmentedAutofillService service = mServiceWatcher.waitOnConnected();
         service.waitUntilConnected();

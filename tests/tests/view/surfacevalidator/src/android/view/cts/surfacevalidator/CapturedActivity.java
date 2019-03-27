@@ -19,8 +19,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -32,6 +34,7 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -81,6 +84,7 @@ public class CapturedActivity extends Activity {
     private volatile boolean mOnEmbedded;
     private volatile boolean mOnWatch;
     private CountDownLatch mCountDownLatch;
+    private boolean mProjectionServiceBound = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -105,7 +109,7 @@ public class CapturedActivity extends Activity {
                 (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
         mCountDownLatch = new CountDownLatch(1);
-        startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
+        bindMediaProjectionService();
     }
 
     public void dismissPermissionDialog() {
@@ -119,6 +123,27 @@ public class CapturedActivity extends Activity {
         }
     }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
+            dismissPermissionDialog();
+            mProjectionServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mProjectionServiceBound = false;
+        }
+    };
+
+    private void bindMediaProjectionService() {
+        Intent intent = new Intent(this, LocalMediaProjectionService.class);
+        startService(intent);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -126,6 +151,10 @@ public class CapturedActivity extends Activity {
         if (mMediaProjection != null) {
             mMediaProjection.stop();
             mMediaProjection = null;
+        }
+        if (mProjectionServiceBound) {
+            unbindService(mConnection);
+            mProjectionServiceBound = false;
         }
     }
 
