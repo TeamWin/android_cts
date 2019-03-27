@@ -35,17 +35,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.zone.ZoneOffsetTransition;
+import java.time.zone.ZoneRules;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -1255,17 +1261,19 @@ public class TimeTest {
     public void testSetToNow() {
         Time t = new Time(Time.TIMEZONE_UTC);
 
-        // Time works in seconds so all millis values have to be divided by 1000, otherwise
-        // the greater accuracy of System.currentTimeMillis() causes the test to fail.
-
-        long lowerBound = System.currentTimeMillis() / 1000;
+        Instant lowerBound = Instant.now();
 
         t.setToNow();
 
-        long upperBound = System.currentTimeMillis() / 1000;
+        Instant upperBound = Instant.now();
 
-        long actual = t.toMillis(true /* ignore isDst */) / 1000;
-        assertTrue(lowerBound <= actual && actual <= upperBound);
+        // Time.toMillis() only works in seconds so lower/upper/toMillis() are converted to seconds,
+        // otherwise the greater accuracy from using milliseconds for lowerBound/upperBound can
+        // cause the test to fail.
+        long actualSeconds =
+                Instant.ofEpochMilli(t.toMillis(true /* ignore isDst */)).getEpochSecond();
+        assertTrue(lowerBound.getEpochSecond() <= actualSeconds
+                && actualSeconds <= upperBound.getEpochSecond());
     }
 
     @Test
@@ -1412,7 +1420,7 @@ public class TimeTest {
 
         // Try each minute from one minute before the skipped hour until one after.
         for (int i = -1; i <= 60; i++) {
-            int minutesInMillis = i * 60000;
+            int minutesInMillis = (int) Duration.ofMinutes(i).toMillis();
             int[] timeFields = new int[] { 2007, 2, 11, 2, i, 0, -999 /* not used */, 9, 9, 9 };
 
             Time time = new Time(timezone);
@@ -1482,7 +1490,7 @@ public class TimeTest {
 
         // Try each minute from one minute before the duplicated hour until one after.
         for (int i = -1; i <= 60; i++) {
-            int minutesInMillis = i * 60000;
+            int minutesInMillis = (int) Duration.ofMinutes(i).toMillis();
 
             Time time = new Time(PstPdt.ID);
             int[] timeFields = new int[] { 2007, 10, 4, 1, i, 0, -999 /* not used */, 9, 9, 9};
@@ -1788,23 +1796,24 @@ public class TimeTest {
 
     @Test
     public void testSetMillis_utc() {
+        Instant baseTime = Instant.ofEpochSecond(0);
         String tz = Time.TIMEZONE_UTC;
         Time t = new Time(tz);
-        t.set(1000L);
+        t.set(baseTime.plus(1, ChronoUnit.SECONDS).toEpochMilli());
 
         Time expected = new Time(tz);
         Fields.set(expected, 1970, 0, 1, 0, 0, 1, 0 /* isDst */, 0, 0, 4);
         Fields.verifyTimeEquals(expected, t);
 
-        t.set(2000L);
+        t.set(baseTime.plus(2, ChronoUnit.SECONDS).toEpochMilli());
         Fields.set(expected, 1970, 0, 1, 0, 0, 2, 0 /* isDst */, 0, 0, 4);
         Fields.verifyTimeEquals(expected, t);
 
-        t.set(1000L * 60);
+        t.set(baseTime.plus(1, ChronoUnit.MINUTES).toEpochMilli());
         Fields.set(expected, 1970, 0, 1, 0, 1, 0, 0 /* isDst */, 0, 0, 4);
         Fields.verifyTimeEquals(expected, t);
 
-        t.set((1000L * 60 * 60 * 24) + 1000L);
+        t.set(baseTime.plus(1, ChronoUnit.DAYS).plus(1, ChronoUnit.SECONDS).toEpochMilli());
         Fields.set(expected, 1970, 0, 2, 0, 0, 1, 0 /* isDst */, 0, 1, 5);
         Fields.verifyTimeEquals(expected, t);
     }
@@ -1956,7 +1965,7 @@ public class TimeTest {
     public void testSetJulianDay() {
         Time time = new Time();
 
-        // For each day of the year in 2008, and for each timezone,
+        // For each 20th day of the year in 2008, and for each timezone,
         // test that we can set the Julian day correctly.
         for (int monthDay = 1; monthDay <= 366; monthDay += 20) {
             for (int zoneIndex = 0; zoneIndex < mTimeZones.length; zoneIndex++) {
@@ -1991,7 +2000,7 @@ public class TimeTest {
                     continue;
                 }
                 int day = Time.getJulianDay(millis, time.gmtoff);
-                assertEquals("Error: gmtoff " + (time.gmtoff / 3600.0) + " day " + julianDay
+                assertEquals("Error: gmtoff " + time.gmtoff + " day " + julianDay
                                 + " millis " + millis+ " " + time.format("%B %d, %Y")
                                 + " " + time.timezone,
                         day, julianDay);
@@ -2182,7 +2191,7 @@ public class TimeTest {
 
         // Try each minute from one minute before the skipped hour until one after.
         for (int i = -1; i <= 60; i++) {
-            int minutesInMillis = i * 60000;
+            int minutesInMillis = (int) Duration.ofMinutes(i).toMillis();
             int[] dateTimeArgs = new int[] { 2007, 2, 11, 2, i, 0 };
 
             int[] normalizedAdjustedBackwardDateTimeArgs;
@@ -2373,7 +2382,7 @@ public class TimeTest {
                 normalizedAdjustedForwardDateTimeArgs =  null;
             }
 
-            int minutesInMillis = i * 60000;
+            int minutesInMillis = (int) Duration.ofMinutes(i).toMillis();
 
             // isDst = 0, normalize(true)
             Fields.setDateTime(time, dateTimeArgs);
@@ -2923,6 +2932,108 @@ public class TimeTest {
         assertEquals(expectedMillis, t.toMillis(true /* ignoreDst */));
     }
 
+    /**
+     * This is a test to ensure that Time generally works in the time period that apps will be
+     * interested in. There are various specific tests that exist to catch known edge cases but this
+     * test gives more general coverage looking for obvious issues in simple cases. Inspired by
+     * b/118835133 which revealed there was an obvious problem with recent dates in some zones after
+     * Android was upgraded to a newer zic tool.
+     */
+    @Test
+    public void test_toMillisAndNormalizeGenerallyWork() {
+        String[] tzIds = TimeZone.getAvailableIDs();
+        for (String tzId : tzIds) {
+            TimeZone timeZone = TimeZone.getTimeZone(tzId);
+            Calendar calendar = new GregorianCalendar(timeZone);
+            for (long timeInMillis : calculateToMillisTestTimes(tzId)) {
+                // We use Calendar to obtain local time fields for timeInMillis.
+                calendar.setTimeInMillis(timeInMillis);
+
+                Time time = new Time(tzId);
+                Fields.setDateTime(time, calendar);
+
+                // Now we check that Time can work out the time in millis from the local time fields
+                // we give it.
+                assertEquals("toMillis() must match calendar in " + tzId + " at "
+                        + time, calendar.getTimeInMillis(), time.toMillis(true /* ignoreDst */));
+
+                // Repeat with normalize(), which allows us to also check isDst / gmtoff.
+                long normalizedMillis = time.normalize(true /* ignoreDst */);
+                assertEquals("normalize() must match calendar in " + tzId + " at "
+                        + time, calendar.getTimeInMillis(), normalizedMillis);
+                assertEquals("isDst failed to match calendar in " + tzId + " at "
+                        + time, timeZone.inDaylightTime(new Date(timeInMillis)), (time.isDst != 0));
+                assertEquals(timeZone.getOffset(timeInMillis),
+                        Duration.ofSeconds(time.gmtoff).toMillis());
+            }
+        }
+    }
+
+    private static List<Long> calculateToMillisTestTimes(String tzId) {
+        List<Long> times = new ArrayList<>();
+
+        // Some local times can be ambiguous (when there's a "fall back") or missing (when there's
+        // a "spring forward"). Calendar and Time may reasonably do different things for these. We
+        // try to avoid those cases by picking the middle of intervals with a given offset, or at
+        // least a day away from a transition if we can't do that.
+
+        // java.time is used to calculate times below. java.time is built on ICU on Android
+        // which is independently developed. It enables us to get to the transition / interval
+        // information we need to generate mid-points using public APIs, something we can't
+        // currently do any other way.
+
+        // Start generating times using the interval around 1970, then iterate through following
+        // intervals. Stop when we get close to the top of the supported range for Time.
+        final Instant startTime = Instant.ofEpochSecond(0);
+        final Instant stopTime = Instant.ofEpochSecond(Integer.MAX_VALUE).minus(1, ChronoUnit.DAYS);
+
+        ZoneId zoneId = ZoneId.of(tzId);
+        ZoneRules rules = zoneId.getRules();
+        ZoneOffsetTransition low = rules.previousTransition(startTime);
+        if (low == null) {
+            low = rules.nextTransition(startTime);
+            if (low == null) {
+                // Make sure we always test some times even for simple time zones without
+                // transitions.
+                return Arrays.asList(startTime.toEpochMilli(), stopTime.toEpochMilli());
+            }
+        }
+
+        ZoneOffsetTransition high;
+        while ((high = rules.nextTransition(low.getInstant())) != null) {
+            Instant highTime = high.getInstant();
+            if (highTime.isAfter(stopTime)) {
+                break;
+            }
+
+            Instant lowTime = low.getInstant();
+            Instant midPointTime = calculateMidPoint(highTime, lowTime);
+            if (midPointTime.isBefore(startTime)) {
+                // Avoid the first-loop case where the mid point can be before the start time.
+                // The next transition must be after start time so use a time before that.
+                times.add(highTime.minus(1, ChronoUnit.DAYS).toEpochMilli());
+            } else {
+                times.add(midPointTime.toEpochMilli());
+            }
+
+            low = high;
+        }
+
+        // Add a time for the last interval we encountered. We either ran out of transitions or the
+        // end point of the next transition is above the stop time.
+        Instant finalTime = low.getInstant().plus(1, ChronoUnit.DAYS);
+        if (finalTime.isAfter(startTime) && finalTime.isBefore(stopTime)) {
+            times.add(finalTime.toEpochMilli());
+        }
+        return times;
+    }
+
+    private static Instant calculateMidPoint(Instant highStart, Instant lowStart) {
+        // Use seconds so we don't end up with half seconds that Time can't deal with.
+        long midPointSeconds = (lowStart.getEpochSecond() + highStart.getEpochSecond()) / 2;
+        return Instant.ofEpochSecond(midPointSeconds);
+    }
+
     @Test
     public void test_bug118835133_fixEarliestRawOffsetValue() {
         // This test confirms the behavior between Integer.MIN_VALUE seconds and the next
@@ -2932,9 +3043,9 @@ public class TimeTest {
         // the first transition AND the first transition for the zone is after Integer.MIN_VALUE.
         Time t = new Time("Africa/Abidjan");
         // Jan 1, 1912 12:16:08 AM UTC / Jan 1, 1912 00:00:00 local time
-        long oldEarliestTransition = -1830383032 * 1000L;
-        long beforeOldEarliestTransition = oldEarliestTransition - TimeUnit.DAYS.toMillis(1);
-        t.set(beforeOldEarliestTransition);
+        Instant oldEarliestTransition = Instant.ofEpochSecond(-1830383032);
+        Instant beforeOldEarliestTransition = oldEarliestTransition.minus(Duration.ofDays(1));
+        t.set(beforeOldEarliestTransition.toEpochMilli());
 
         // The expected local time equivalent to the oldEarliestTransition time minus 1 day and
         // offset by -968 seconds.
@@ -3017,7 +3128,7 @@ public class TimeTest {
         }
 
         /**
-         * Set fields on the supplied time. month is [0-11].
+         * Set date/time fields (only) on the supplied time. month is [0-11].
          */
         public static void setDateTime(Time t, int year, int month, int monthDay, int hour,
                 int minute, int second) {
@@ -3028,6 +3139,19 @@ public class TimeTest {
             t.minute = minute;
             t.second = second;
             t.allDay = false;
+        }
+
+        /**
+         * Set date/time fields (only) on the supplied time using the equivalent Calendar fields.
+         */
+        public static void setDateTime(Time t, Calendar calendar) {
+            setDateTime(t,
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH),
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    calendar.get(Calendar.SECOND));
         }
 
         /**
@@ -3095,7 +3219,7 @@ public class TimeTest {
         }
 
         public static int getUtcOffsetMillis(boolean isDst) {
-            return getUtcOffsetSeconds(isDst) * 1000;
+            return (int) Duration.ofSeconds(getUtcOffsetSeconds(isDst)).toMillis();
         }
     }
 
