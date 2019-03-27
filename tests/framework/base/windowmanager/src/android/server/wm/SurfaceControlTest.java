@@ -17,9 +17,9 @@ package android.server.wm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static android.server.am.UiDeviceUtils.pressHomeButton;
-import static android.server.am.UiDeviceUtils.pressUnlockButton;
-import static android.server.am.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.UiDeviceUtils.pressUnlockButton;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -244,7 +244,7 @@ public class SurfaceControlTest {
                     }
                 },
 
-                // The rect should be offset by 50 pixels
+                // The rect should be offset by -50 pixels
                 new RectChecker(
                         new RectChecker.Target(new Rect(0, 0, 50, 50), PixelColor.RED),
                         new RectChecker.Target(new Rect(50, 50, 150, 150), PixelColor.WHITE)));
@@ -284,7 +284,7 @@ public class SurfaceControlTest {
                     public void addChildren(SurfaceControl parent) {
                         final SurfaceControl sc = buildDefaultRedSurface(parent);
                         new SurfaceControl.Transaction().setVisibility(sc, true)
-                            .setGeometry(sc, null,
+                            .setGeometry(sc, new Rect(0, 0, DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE),
                                     new Rect(0, 0, DEFAULT_SURFACE_SIZE * 2, DEFAULT_SURFACE_SIZE*2),
                                     Surface.ROTATION_0)
                             .apply();
@@ -293,7 +293,6 @@ public class SurfaceControlTest {
                     }
                 },
 
-                // The rect should be offset by 50 pixels
                 new RectChecker(
                         new RectChecker.Target(new Rect(0, 0, 200, 200), PixelColor.RED)));
     }
