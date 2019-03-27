@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -41,6 +42,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.ContextThemeWrapper;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -708,6 +710,35 @@ public class GradientDrawableTest {
         assertEquals(0, colors[0]);
         assertEquals(context.getColor(R.color.colorPrimary), colors[1]);
         assertEquals(context.getColor(R.color.colorPrimaryDark), colors[2]);
+    }
+
+    @Test
+    public void testRadialInflationWithThemeAndNonThemeResources() {
+        final Context context = new ContextThemeWrapper(InstrumentationRegistry.getTargetContext(),
+                R.style.Theme_MixedGradientTheme);
+
+        GradientDrawable drawable = (GradientDrawable)
+                context.getDrawable(R.drawable.gradientdrawable_mix_theme);
+
+        // Verify that despite multiple inflation passes are done to inflate both
+        // the non-theme attributes as well as the themed attributes
+        assertEquals(GradientDrawable.RADIAL_GRADIENT, drawable.getGradientType());
+        assertEquals(87.0f, drawable.getGradientRadius(), 0.0f);
+    }
+
+    @Test
+    public void testRadialGradientWithInvalidRadius() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        GradientDrawable radiusDrawable = (GradientDrawable)
+                context.getDrawable(R.drawable.gradientdrawable_invalid_radius);
+
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            radiusDrawable.setBounds(0, 0, 10, 10);
+            radiusDrawable.draw(canvas);
+        });
     }
 
     private void verifyPreloadDensityInner(Resources res, int densityDpi)
