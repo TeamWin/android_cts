@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
+android_test_helper_app {
     name: "CtsAccountCheckTestOnlyOwnerApp",
     defaults: ["cts_defaults"],
     // Tag this module as a cts test artifact
@@ -33,7 +33,7 @@ android_test {
     manifest: "TestOnlyOwner/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsAccountCheckNonTestOnlyOwnerApp",
     defaults: ["cts_defaults"],
     // Tag this module as a cts test artifact
@@ -54,7 +54,7 @@ android_test {
     manifest: "NonTestOnlyOwner/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsAccountCheckTestOnlyOwnerUpdateApp",
     defaults: ["cts_defaults"],
     // Tag this module as a cts test artifact
