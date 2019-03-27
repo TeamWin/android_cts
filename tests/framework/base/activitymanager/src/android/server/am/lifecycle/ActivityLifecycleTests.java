@@ -346,6 +346,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getLaunchActivityBuilder().execute();
 
         waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_STOP));
 
         // Finish top activity and verify that activity below became focused.
         getLifecycleLog().clear();
