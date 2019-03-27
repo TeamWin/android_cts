@@ -59,6 +59,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     private static final String TAG = "MultiViewTest";
     private final static long WAIT_FOR_COMMAND_TO_COMPLETE = 5000; //ms
     private final static long PREVIEW_TIME_MS = 2000;
+    private final static long PREVIEW_FLUSH_TIME_MS = 1000;
     private final static int NUM_SURFACE_SWITCHES = 30;
     private final static int IMG_READER_COUNT = 2;
     private final static int YUV_IMG_READER_COUNT = 3;
@@ -861,24 +862,47 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                     continue;
                 }
 
+                // mTextureView[0..2] each shared 1/3 of the horizontal space but their size can
+                // differ up to one pixel if the total width is not divisible by 3. Here we try to
+                // pick two of them that have matching size.
+                Size size0 = new Size(mTextureView[0].getWidth(), mTextureView[0].getHeight());
+                Size size1 = new Size(mTextureView[1].getWidth(), mTextureView[1].getHeight());
+                Size size2 = new Size(mTextureView[2].getWidth(), mTextureView[2].getHeight());
+                Log.v(TAG, "Size0: " + size0 + ", Size1: " + size1 + ", size2: " + size2);
+
+                int viewIdx0 = 0;
+                int viewIdx1 = 1;
+                if (!size0.equals(size1)) {
+                    assertTrue("No matching view sizes! Size0: " + size0 +
+                            ", Size1: " + size1 + ", size2: " + size2,
+                            size0.equals(size2) || size1.equals(size2));
+                    if (size0.equals(size2)) {
+                        viewIdx0 = 0;
+                        viewIdx1 = 2;
+                    } else {
+                        viewIdx0 = 1;
+                        viewIdx1 = 2;
+                    }
+                }
+
                 Size previewSize = getOrderedPreviewSizes(id).get(0);
-                List<TextureView> views = Arrays.asList(mTextureView[0]);
+                List<TextureView> views = Arrays.asList(mTextureView[viewIdx0]);
 
                 // view[0] is normal camera -> TextureView path
                 // view[1] is camera -> ImageReader -> TextureView path
                 SurfaceTexture surfaceTexture0 = getAvailableSurfaceTexture(
-                        WAIT_FOR_COMMAND_TO_COMPLETE, mTextureView[0]);
+                        WAIT_FOR_COMMAND_TO_COMPLETE, mTextureView[viewIdx0]);
                 assertNotNull("Unable to get preview surface texture 0", surfaceTexture0);
                 surfaceTexture0.setDefaultBufferSize(
                         previewSize.getWidth(), previewSize.getHeight());
 
                 SurfaceTexture surfaceTexture1 = getAvailableSurfaceTexture(
-                        WAIT_FOR_COMMAND_TO_COMPLETE, mTextureView[1]);
+                        WAIT_FOR_COMMAND_TO_COMPLETE, mTextureView[viewIdx1]);
                 assertNotNull("Unable to get preview surface texture 1", surfaceTexture1);
                 surfaceTexture1.setDefaultBufferSize(
                         previewSize.getWidth(), previewSize.getHeight());
 
-                updatePreviewDisplayRotation(previewSize, mTextureView[1]);
+                updatePreviewDisplayRotation(previewSize, mTextureView[viewIdx1]);
 
                 reader = ImageReader.newInstance(
                         previewSize.getWidth(), previewSize.getHeight(),
@@ -898,7 +922,9 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 startTextureViewPreview(id, views, reader);
                 SystemClock.sleep(PREVIEW_TIME_MS);
                 stopRepeating(id);
-
+                // Extra sleep to make sure all previous preview frames are delivered to
+                // SurfaceTexture
+                SystemClock.sleep(PREVIEW_FLUSH_TIME_MS);
 
                 Surface preview = new Surface(surfaceTexture0);
                 CaptureRequest.Builder requestBuilder = getCaptureBuilder(id,
@@ -908,8 +934,8 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
                 CameraPreviewListener stListener0 = new CameraPreviewListener();
                 CameraPreviewListener stListener1 = new CameraPreviewListener();
-                mTextureView[0].setSurfaceTextureListener(stListener0);
-                mTextureView[1].setSurfaceTextureListener(stListener1);
+                mTextureView[viewIdx0].setSurfaceTextureListener(stListener0);
+                mTextureView[viewIdx1].setSurfaceTextureListener(stListener1);
 
                 // do a single capture
                 capture(id, requestBuilder.build(), resultListener);
@@ -918,8 +944,8 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 stListener1.waitForPreviewDone(WAIT_FOR_COMMAND_TO_COMPLETE);
 
                 // get bitmap from both TextureView and compare
-                Bitmap bitmap0 = mTextureView[0].getBitmap();
-                Bitmap bitmap1 = mTextureView[1].getBitmap();
+                Bitmap bitmap0 = mTextureView[viewIdx0].getBitmap();
+                Bitmap bitmap1 = mTextureView[viewIdx1].getBitmap();
                 BitmapUtils.BitmapCompareResult result =
                         BitmapUtils.compareBitmap(bitmap0, bitmap1);
 
