@@ -2261,6 +2261,11 @@
                     android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
 
+        <service
+                android:name="com.android.cts.verifier.sensors.DeviceSuspendTestActivity$DeviceSuspendTestService"
+                android:label="@string/snsr_device_suspend_service"
+                android:icon="@drawable/icon" />
+
         <receiver android:name="com.android.cts.verifier.sensors.DeviceSuspendTestActivity$AlarmReceiver">
         </receiver>
 
