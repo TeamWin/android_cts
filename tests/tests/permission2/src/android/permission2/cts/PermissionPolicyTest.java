@@ -224,9 +224,6 @@ public class PermissionPolicyTest extends AndroidTestCase {
             while (it.hasNext()) {
                 final PermissionInfo pi = it.next();
                 switch (pi.name) {
-                    case android.Manifest.permission.READ_MEDIA_AUDIO:
-                    case android.Manifest.permission.READ_MEDIA_VIDEO:
-                    case android.Manifest.permission.READ_MEDIA_IMAGES:
                     case android.Manifest.permission.ACCESS_MEDIA_LOCATION:
                     case android.Manifest.permission.WRITE_OBB:
                         it.remove();
