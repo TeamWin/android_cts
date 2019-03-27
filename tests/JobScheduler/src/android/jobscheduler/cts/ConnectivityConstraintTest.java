@@ -114,6 +114,8 @@ public class ConnectivityConstraintTest extends ConstraintTest {
                 mWifiManager.isWifiEnabled() == mInitialWiFiState);
 
         mContext.unregisterReceiver(receiver);
+
+        super.tearDown();
     }
 
     // --------------------------------------------------------------------------------------------
