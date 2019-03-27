@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /** Representation of a class in the API with constructors and methods. */
@@ -116,33 +117,26 @@ class ApiClass implements Comparable<ApiClass>, HasCoverage {
             // Mark matching constructors in the superclass
             mSuperClass.markConstructorCovered(parameterTypes, coveredbyApk);
         }
-        ApiConstructor apiConstructor = getConstructor(parameterTypes);
-        if (apiConstructor != null) {
-            apiConstructor.setCovered(coveredbyApk);
-        }
-
+        Optional<ApiConstructor> apiConstructor = getConstructor(parameterTypes);
+        apiConstructor.ifPresent(constructor -> constructor.setCovered(coveredbyApk));
     }
 
     /** Look for a matching method and if found and mark it as covered */
-    public void markMethodCovered(
-            String name, List<String> parameterTypes, String returnType, String coveredbyApk) {
+    public void markMethodCovered(String name, List<String> parameterTypes, String coveredbyApk) {
         if (mSuperClass != null) {
             // Mark matching methods in the super class
-            mSuperClass.markMethodCovered(name, parameterTypes, returnType, coveredbyApk);
+            mSuperClass.markMethodCovered(name, parameterTypes, coveredbyApk);
         }
         if (!mInterfaceMap.isEmpty()) {
             // Mark matching methods in the interfaces
-            for (String interfaceName : mInterfaceMap.keySet()) {
-                ApiClass mInterface = mInterfaceMap.get(interfaceName);
+            for (ApiClass mInterface : mInterfaceMap.values()) {
                 if (mInterface != null) {
-                    mInterface.markMethodCovered(name, parameterTypes, returnType, coveredbyApk);
+                    mInterface.markMethodCovered(name, parameterTypes, coveredbyApk);
                 }
             }
         }
-        ApiMethod apiMethod = getMethod(name, parameterTypes, returnType);
-        if (apiMethod != null) {
-            apiMethod.setCovered(coveredbyApk);
-        }
+        Optional<ApiMethod> apiMethod = getMethod(name, parameterTypes);
+        apiMethod.ifPresent(method -> method.setCovered(coveredbyApk));
     }
 
     public Collection<ApiMethod> getMethods() {
@@ -182,17 +176,16 @@ class ApiClass implements Comparable<ApiClass>, HasCoverage {
         return getTotalMethods();
     }
 
-    private ApiMethod getMethod(String name, List<String> parameterTypes, String returnType) {
+    private Optional<ApiMethod> getMethod(String name, List<String> parameterTypes) {
         for (ApiMethod method : mApiMethods) {
             boolean methodNameMatch = name.equals(method.getName());
             boolean parameterTypeMatch =
                     compareParameterTypes(method.getParameterTypes(), parameterTypes);
-            boolean returnTypeMatch = compareType(method.getReturnType(), returnType);
-            if (methodNameMatch && parameterTypeMatch && returnTypeMatch) {
-                return method;
+            if (methodNameMatch && parameterTypeMatch) {
+                return Optional.of(method);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -267,12 +260,12 @@ class ApiClass implements Comparable<ApiClass>, HasCoverage {
         return type.length() == 3 && isGenericType(type.substring(0, 1)) && isArrayType(type);
     }
 
-    private ApiConstructor getConstructor(List<String> parameterTypes) {
+    private Optional<ApiConstructor> getConstructor(List<String> parameterTypes) {
         for (ApiConstructor constructor : mApiConstructors) {
             if (compareParameterTypes(constructor.getParameterTypes(), parameterTypes)) {
-                return constructor;
+                return Optional.of(constructor);
             }
         }
-        return null;
+        return Optional.empty();
     }
 }
