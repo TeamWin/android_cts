@@ -23,7 +23,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_MULTILIB := both
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-under, src) \
+                    ../ForceStopHelperApp/src/com/android/cts/forcestophelper/Constants.java
 
 LOCAL_AIDL_INCLUDES := \
     frameworks/native/aidl/gui
@@ -109,6 +110,7 @@ pre-installed-apps := \
     CtsEmptyDeviceAdmin \
     CtsEmptyDeviceOwner \
     CtsPermissionApp \
+    CtsForceStopHelper \
     NotificationBot
 
 # Apps to be installed as Instant App using adb install --instant
