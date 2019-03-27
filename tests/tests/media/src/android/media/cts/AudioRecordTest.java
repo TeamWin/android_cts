@@ -27,13 +27,16 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioRecord.OnRecordPositionUpdateListener;
+import android.media.AudioRecordingConfiguration;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.media.MediaSyncEvent;
 import android.media.MicrophoneInfo;
+import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -59,14 +62,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 import java.util.List;
+
 
 @RunWith(AndroidJUnit4.class)
 public class AudioRecordTest {
     private final static String TAG = "AudioRecordTest";
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private AudioRecord mAudioRecord;
-    private int mHz = 44100;
+    private static final int SAMPLING_RATE_HZ = 44100;
     private boolean mIsOnMarkerReachedCalled;
     private boolean mIsOnPeriodicNotificationCalled;
     private boolean mIsHandleMessageCalled;
@@ -81,6 +86,7 @@ public class AudioRecordTest {
             super.handleMessage(msg);
         }
     };
+    private static final int RECORD_DURATION_MS = 500;
 
     @Before
     public void setUp() throws Exception {
@@ -101,12 +107,17 @@ public class AudioRecordTest {
                 Looper.prepare();
                 mLooper = Looper.myLooper();
                 synchronized(this) {
-                    mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, mHz,
-                            AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                            AudioFormat.ENCODING_PCM_16BIT,
-                            AudioRecord.getMinBufferSize(mHz,
-                                    AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                                    AudioFormat.ENCODING_PCM_16BIT) * 10);
+                    mAudioRecord = new AudioRecord.Builder()
+                                    .setAudioFormat(new AudioFormat.Builder()
+                                        .setSampleRate(SAMPLING_RATE_HZ)
+                                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build())
+                                    .setAudioSource(MediaRecorder.AudioSource.DEFAULT)
+                                    .setBufferSizeInBytes(
+                                        AudioRecord.getMinBufferSize(SAMPLING_RATE_HZ,
+                                              AudioFormat.CHANNEL_IN_MONO,
+                                              AudioFormat.ENCODING_PCM_16BIT) * 10)
+                                    .build();
                     this.notify();
                 }
                 Looper.loop();
@@ -144,10 +155,10 @@ public class AudioRecordTest {
         assertEquals(AudioFormat.CHANNEL_IN_MONO,
                 mAudioRecord.getChannelConfiguration());
         assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
-        assertEquals(mHz, mAudioRecord.getSampleRate());
+        assertEquals(SAMPLING_RATE_HZ, mAudioRecord.getSampleRate());
         assertEquals(AudioRecord.RECORDSTATE_STOPPED, mAudioRecord.getRecordingState());
 
-        int bufferSize = AudioRecord.getMinBufferSize(mHz,
+        int bufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE_HZ,
                 AudioFormat.CHANNEL_CONFIGURATION_DEFAULT, AudioFormat.ENCODING_PCM_16BIT);
         assertTrue(bufferSize > 0);
     }
@@ -937,6 +948,69 @@ public class AudioRecordTest {
         for (MicrophoneInfo activeMicrophone : activeMicrophones) {
             printMicrophoneInfo(activeMicrophone);
         }
+    }
+
+    private Executor mExec = new Executor() {
+        @Override
+        public void execute(Runnable command) {
+            command.run();
+        }
+    };
+
+    @Test
+    public void testAudioRecordInfoCallback() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+        AudioRecordingConfigurationTest.MyAudioRecordingCallback callback =
+                new AudioRecordingConfigurationTest.MyAudioRecordingCallback(
+                        mAudioRecord.getAudioSessionId(), MediaRecorder.AudioSource.DEFAULT);
+        mAudioRecord.registerAudioRecordingCallback(mExec, callback);
+        mAudioRecord.startRecording();
+        assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
+
+        try {
+            Thread.sleep(RECORD_DURATION_MS);
+        } catch (InterruptedException e) {
+        }
+        assertTrue(callback.mCalled);
+        assertTrue(callback.mConfigs.size() <= 1);
+        if (callback.mConfigs.size() == 1) {
+            checkRecordingConfig(callback.mConfigs.get(0));
+        }
+
+        mAudioRecord.unregisterAudioRecordingCallback(callback);
+    }
+
+    @Test
+    public void testGetActiveRecordingConfiguration() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+        mAudioRecord.startRecording();
+        assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
+
+        try {
+            Thread.sleep(RECORD_DURATION_MS);
+        } catch (InterruptedException e) {
+        }
+
+        AudioRecordingConfiguration config = mAudioRecord.getActiveRecordingConfiguration();
+        checkRecordingConfig(config);
+    }
+
+    private static void checkRecordingConfig(AudioRecordingConfiguration config) {
+        assertNotNull(config);
+        AudioFormat format = config.getClientFormat();
+        assertEquals(AudioFormat.CHANNEL_IN_MONO, format.getChannelMask());
+        assertEquals(AudioFormat.ENCODING_PCM_16BIT, format.getEncoding());
+        assertEquals(SAMPLING_RATE_HZ, format.getSampleRate());
+        assertEquals(MediaRecorder.AudioSource.MIC, config.getAudioSource());
+        assertNotNull(config.getAudioDevice());
+        assertNotNull(config.getClientEffects());
+        assertNotNull(config.getEffects());
+        // no requirement here, just testing the API
+        config.isClientSilenced();
     }
 
     private AudioRecord createAudioRecord(
