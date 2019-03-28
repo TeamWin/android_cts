@@ -31,6 +31,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.BeforeAfterRule;
 import com.android.compatibility.common.util.OnFailureRule;
 
@@ -62,9 +63,7 @@ public class BatterySavingTestBase {
     private final BeforeAfterRule mInitializeAndCleanupRule = new BeforeAfterRule() {
         @Override
         protected void onBefore(Statement base, Description description) throws Throwable {
-            // Don't run any battery saver tests on wear.
-            final PackageManager pm = getPackageManager();
-            Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
+            BatteryUtils.assumeBatterySaverFeature();
 
             turnOnScreen(true);
         }
