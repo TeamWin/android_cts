@@ -18,7 +18,7 @@
 
 // === App 1 ===
 
-android_test {
+android_test_helper_app {
     name: "CtsCorpOwnedManagedProfile",
     defaults: ["cts_defaults"],
     srcs: [
@@ -47,7 +47,7 @@ android_test {
 }
 
 // === App 2 ===
-android_test {
+android_test_helper_app {
     name: "CtsCorpOwnedManagedProfile2",
     defaults: ["cts_defaults"],
     srcs: [
