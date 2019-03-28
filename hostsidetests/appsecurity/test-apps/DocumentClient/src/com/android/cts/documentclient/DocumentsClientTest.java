@@ -101,6 +101,15 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertTrue("First list item",
                 new UiObject(docList.childSelector(new UiSelector())).waitForExists(TIMEOUT));
 
+        try {
+            //Enfornce to set the list mode
+            //Because UiScrollable can't reach the real bottom (when WEB_LINKABLE_FILE item) in grid mode when screen landscape mode
+            new UiObject(new UiSelector().resourceId("com.android.documentsui:id/option_menu_list")).click();
+            mDevice.waitForIdle();
+        }catch (UiObjectNotFoundException e){
+            //do nothing, already be in list mode.
+        }
+
         // Now scroll around to find our item
         new UiScrollable(docList).scrollIntoView(new UiSelector().text(label));
         return new UiObject(docList.childSelector(new UiSelector().text(label)));
