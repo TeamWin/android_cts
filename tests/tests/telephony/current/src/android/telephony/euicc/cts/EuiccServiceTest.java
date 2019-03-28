@@ -17,14 +17,19 @@
 package android.telephony.euicc.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.service.euicc.DownloadSubscriptionResult;
+import android.service.euicc.EuiccService;
+import android.service.euicc.IDownloadSubscriptionCallback;
 import android.service.euicc.IEuiccService;
 import android.service.euicc.IGetEidCallback;
+import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.cts.MockEuiccService.IMockEuiccServiceCallback;
 
 import androidx.test.InstrumentationRegistry;
@@ -43,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class EuiccServiceTest {
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000 /* 2 sec */;
+
+    private static final int MOCK_SLOT_ID = 1;
 
     private IEuiccService mEuiccServiceBinder;
     private IMockEuiccServiceCallback mCallback;
@@ -95,11 +102,43 @@ public class EuiccServiceTest {
         mCountDownLatch = new CountDownLatch(1);
 
         mEuiccServiceBinder.getEid(
-                1 /*cardId*/,
+                MOCK_SLOT_ID,
                 new IGetEidCallback.Stub() {
                     @Override
                     public void onSuccess(String eid) {
                         assertEquals(MockEuiccService.MOCK_EID, eid);
+                        mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnDownloadSubscription() throws Exception {
+        String activationCode = "1$SMDP.GSMA.COM$04386-A1B2C-A74Y8-3F815";
+        DownloadableSubscription subscription =
+                DownloadableSubscription.forActivationCode(activationCode);
+
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.downloadSubscription(
+                MOCK_SLOT_ID,
+                subscription,
+                true /*switchAfterDownload*/,
+                true /*forceDeactivateSim*/,
+                null /*resolvedBundle*/,
+                new IDownloadSubscriptionCallback.Stub() {
+                    @Override
+                    public void onComplete(DownloadSubscriptionResult result) {
+                        assertNotNull(result);
+                        assertEquals(EuiccService.RESULT_OK, result.getResult());
                         mCountDownLatch.countDown();
                     }
                 });
