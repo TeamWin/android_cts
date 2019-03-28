@@ -58,10 +58,14 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
 import android.util.Size;
+import android.util.SparseBooleanArray;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -252,6 +256,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mPresentationDisplay = false;
         private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
+        // Used to restore the supportSystemDecors state of the simulate displays.
+        private final SparseBooleanArray mSimulateSystemDecors = new SparseBooleanArray();
         private boolean mMustBeCreated = true;
         private Size mSimulationDisplaySize = new Size(1024 /* width */, 768 /* height */);
 
@@ -335,6 +341,15 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         @Override
         public void close() throws Exception {
+            if (mSimulateSystemDecors.size() > 0) {
+                final WindowManager wm = mContext.getSystemService(WindowManager.class);
+                for (int index = mSimulateSystemDecors.size() - 1; index >= 0; index--) {
+                    final int displayId = mSimulateSystemDecors.keyAt(index);
+                    final boolean shouldShow = mSimulateSystemDecors.valueAt(index);
+                    SystemUtil.runWithShellPermissionIdentity(() ->
+                        wm.setShouldShowSystemDecors(displayId, shouldShow));
+                }
+            }
             mOverlayDisplayDeviceSession.close();
             if (mVirtualDisplayCreated) {
                 destroyVirtualDisplays();
@@ -355,7 +370,22 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             // Create virtual display with custom density dpi and specified size.
             mOverlayDisplayDeviceSession.set(mSimulationDisplaySize + "/" + mDensityDpi);
 
-            return assertAndGetNewDisplays(1, originalDs);
+            final List<ActivityDisplay> newDisplays = assertAndGetNewDisplays(1, originalDs);
+            if (mShowSystemDecorations) {
+                final WindowManager wm = mContext.getSystemService(WindowManager.class);
+                for (ActivityDisplay display : newDisplays) {
+                    SystemUtil.runWithShellPermissionIdentity(() -> {
+                        mSimulateSystemDecors.append(display.mId,
+                                wm.shouldShowSystemDecors(display.mId));
+                        wm.setShouldShowSystemDecors(display.mId, true);
+                        TestUtils.waitUntil("Waiting for display show system decors",
+                                5 /* timeoutSecond */,
+                                () -> wm.shouldShowSystemDecors(display.mId));
+                    });
+                }
+            }
+
+            return newDisplays;
         }
 
         /**

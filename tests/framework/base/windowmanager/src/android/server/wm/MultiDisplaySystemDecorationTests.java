@@ -111,9 +111,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
             TestJournalContainer.start();
 
-            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
-                    .setShowSystemDecorations(true)
-                    .createDisplay();
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
 
             wallpaperSession.setWallpaperComponent(TEST_LIVE_WALLPAPER_SERVICE);
             final String TARGET_ENGINE_DISPLAY_ID = ENGINE_DISPLAY_ID + newDisplay.mId;
@@ -131,23 +130,24 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         try (final ChangeWallpaperSession wallpaperSession = new ChangeWallpaperSession();
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
 
+            final ActivityDisplay nonSystemDisplay = virtualDisplaySession
+                    .setPublicDisplay(true).setShowSystemDecorations(true).createDisplay();
+
+            final ActivityDisplay decoredSystemDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
+
             final Bitmap tmpWallpaper = wallpaperSession.getTestBitmap();
             wallpaperSession.setImageWallpaper(tmpWallpaper);
 
-            final ActivityDisplay noDecorDisplay = virtualDisplaySession.setPublicDisplay(true)
-                    .setShowSystemDecorations(false).createDisplay();
-            // Tests when the system decor flag is included in that display, the wallpaper must
-            // be displayed on the secondary display. And at the same time we do not need to wait
-            // for the wallpaper which should not to be displayed.
-            final ActivityDisplay decorDisplay = virtualDisplaySession.setPublicDisplay(true)
-                    .setShowSystemDecorations(true).createDisplay();
-            mAmWmState.waitForWithWmState((state) -> isWallpaperOnDisplay(state, decorDisplay.mId),
+            mAmWmState.waitForWithWmState(
+                    (state) -> isWallpaperOnDisplay(state, decoredSystemDisplay.mId),
                     "Waiting for wallpaper window to show");
-            assertTrue("Wallpaper must be displayed on secondary display with system decor flag",
-                    isWallpaperOnDisplay(mAmWmState.getWmState(), decorDisplay.mId));
 
-            assertFalse("Wallpaper must not be displayed on the display without system decor flag",
-                    isWallpaperOnDisplay(mAmWmState.getWmState(), noDecorDisplay.mId));
+            assertTrue("Wallpaper must be displayed on system owned display with system decor flag",
+                    isWallpaperOnDisplay(mAmWmState.getWmState(), decoredSystemDisplay.mId));
+
+            assertFalse("Wallpaper must not be displayed on the non-system owned display",
+                    isWallpaperOnDisplay(mAmWmState.getWmState(), nonSystemDisplay.mId));
         }
     }
 
