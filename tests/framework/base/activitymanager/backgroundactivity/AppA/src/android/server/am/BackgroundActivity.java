@@ -11,22 +11,17 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 
-package android.telephony.ims;
+package android.server.am;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+import android.app.Activity;
 
 /**
- * This receiver is used to provide the interface required for a default SMS application. It
- * intentionally has no custom behavior.
+ * A background activity that will be launched, for testing if app is able to start background
+ * activity.
  */
-public class SmsApplicationReceiver extends BroadcastReceiver {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        // Do nothing
-    }
+public class BackgroundActivity extends Activity {
+
 }

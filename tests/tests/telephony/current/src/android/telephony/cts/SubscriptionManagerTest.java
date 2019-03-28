@@ -36,13 +36,11 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.os.ParcelUuid;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -56,11 +54,15 @@ import org.junit.runner.RunWith;
 
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 public class SubscriptionManagerTest {
@@ -359,23 +361,25 @@ public class SubscriptionManagerTest {
 
         // Set subscription group with current sub Id. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
-        int[] subGroup = new int[] {mSubId};
+        List<Integer> subGroup = new ArrayList();
+        subGroup.add(mSubId);
         try {
-            mSm.setSubscriptionGroup(subGroup);
+            mSm.createSubscriptionGroup(subGroup);
             fail();
         } catch (SecurityException expected) {
         }
 
         // Getting subscriptions in group should return null as setSubscriptionGroup
         // should fail.
-        assertNull(mSm.getSubscriptionsInGroup(mSubId));
+        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
+        assertNull(info.getGroupUuid());
 
         // Remove from subscription group with current sub Id. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
         try {
-            mSm.removeSubscriptionsFromGroup(subGroup);
+            mSm.removeSubscriptionsFromGroup(subGroup, null);
             fail();
-        } catch (SecurityException expected) {
+        } catch (NullPointerException expected) {
         }
     }
 
@@ -384,20 +388,20 @@ public class SubscriptionManagerTest {
         if (!isSupported()) return;
 
         // Set subscription group with current sub Id.
-        int[] subGroup = new int[] {mSubId};
-        String uuid = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
-                (sm) -> sm.setSubscriptionGroup(subGroup));
+        List<Integer> subGroup = new ArrayList();
+        subGroup.add(mSubId);
+        ParcelUuid uuid = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.createSubscriptionGroup(subGroup));
 
         // Getting subscriptions in group.
-        List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(mSubId);
+        List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
         assertNotNull(infoList);
         assertEquals(1, infoList.size());
         assertEquals(uuid, infoList.get(0).getGroupUuid());
 
         // Remove from subscription group with current sub Id.
-        boolean success = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
-                (sm) -> sm.removeSubscriptionsFromGroup(subGroup));
-        assertTrue(success);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.removeSubscriptionsFromGroup(subGroup, uuid));
     }
 
     @Test

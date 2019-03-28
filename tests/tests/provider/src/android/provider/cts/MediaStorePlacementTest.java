@@ -26,10 +26,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -41,7 +41,9 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
+import java.util.Optional;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStorePlacementTest {
     static final String TAG = "MediaStorePlacementTest";
@@ -92,13 +94,13 @@ public class MediaStorePlacementTest {
         }
 
         // Make sure shady paths can't be passed in
-        for (String column : new String[] {
-                MediaColumns.DISPLAY_NAME,
-                MediaColumns.PRIMARY_DIRECTORY,
-                MediaColumns.SECONDARY_DIRECTORY
+        for (String probe : new String[] {
+                "path/.to/dir",
+                ".dir",
+                "path/../dir",
         }) {
             final ContentValues values = new ContentValues();
-            values.put(column, "path/to/file");
+            values.put(MediaColumns.RELATIVE_PATH, probe);
             try {
                 mContentResolver.update(uri, values, null, null);
                 fail();
@@ -115,7 +117,7 @@ public class MediaStorePlacementTest {
         // Movement within same MIME type is okay
         final File before = ProviderTestUtils.getRelativeFile(uri);
         final String name = "CTS" +  System.nanoTime() + ".JPEG";
-        assertTrue(updatePlacement(uri, Pair.create(MediaColumns.DISPLAY_NAME, name)));
+        assertTrue(updatePlacement(uri, null, Optional.of(name)));
 
         final File after = ProviderTestUtils.getRelativeFile(uri);
         assertEquals(before.getParent(), after.getParent());
@@ -133,7 +135,7 @@ public class MediaStorePlacementTest {
         // Movement across MIME types is not okay; verify that original MIME
         // type remains intact
         final String name = "cts" +  System.nanoTime() + ".png";
-        assertTrue(updatePlacement(uri, Pair.create(MediaColumns.DISPLAY_NAME, name)));
+        assertTrue(updatePlacement(uri, null, Optional.of(name)));
 
         final File after = ProviderTestUtils.getRelativeFile(uri);
         assertTrue(after.getName().startsWith(name));
@@ -150,32 +152,31 @@ public class MediaStorePlacementTest {
 
         {
             assertTrue(updatePlacement(uri,
-                    Pair.create(MediaColumns.PRIMARY_DIRECTORY, null)));
+                    Optional.ofNullable(null), null));
             final File after = ProviderTestUtils.getRelativeFile(uri);
             assertEquals("Pictures", after.getParent());
         }
         {
             assertTrue(updatePlacement(uri,
-                    Pair.create(MediaColumns.PRIMARY_DIRECTORY, Environment.DIRECTORY_DCIM),
-                    Pair.create(MediaColumns.SECONDARY_DIRECTORY, "Vacation")));
+                    Optional.of("DCIM/Vacation"), null));
             final File after = ProviderTestUtils.getRelativeFile(uri);
             assertEquals("DCIM/Vacation", after.getParent());
         }
         {
             assertTrue(updatePlacement(uri,
-                    Pair.create(MediaColumns.SECONDARY_DIRECTORY, "Misc")));
+                    Optional.of("DCIM/Misc"), null));
             final File after = ProviderTestUtils.getRelativeFile(uri);
             assertEquals("DCIM/Misc", after.getParent());
         }
         {
             assertTrue(updatePlacement(uri,
-                    Pair.create(MediaColumns.PRIMARY_DIRECTORY, Environment.DIRECTORY_PICTURES)));
+                    Optional.of("Pictures/Misc"), null));
             final File after = ProviderTestUtils.getRelativeFile(uri);
             assertEquals("Pictures/Misc", after.getParent());
         }
         {
             assertTrue(updatePlacement(uri,
-                    Pair.create(MediaColumns.SECONDARY_DIRECTORY, null)));
+                    Optional.of("Pictures"), null));
             final File after = ProviderTestUtils.getRelativeFile(uri);
             assertEquals("Pictures", after.getParent());
         }
@@ -187,19 +188,19 @@ public class MediaStorePlacementTest {
                 mExternalImages, "image/jpeg");
 
         assertFalse(updatePlacement(uri,
-                Pair.create(MediaColumns.PRIMARY_DIRECTORY, "Random")));
+                Optional.of("Random"), null));
         assertFalse(updatePlacement(uri,
-                Pair.create(MediaColumns.PRIMARY_DIRECTORY, Environment.DIRECTORY_ALARMS)));
+                Optional.of(Environment.DIRECTORY_ALARMS), null));
     }
 
-    private boolean updatePlacement(Uri uri, Pair<?, ?>... args) throws Exception {
+    private boolean updatePlacement(Uri uri, Optional<String> path, Optional<String> displayName)
+            throws Exception {
         final ContentValues values = new ContentValues();
-        for (Pair<?, ?> arg : args) {
-            if (arg.second != null) {
-                values.put(String.valueOf(arg.first), String.valueOf(arg.second));
-            } else {
-                values.putNull(String.valueOf(arg.first));
-            }
+        if (path != null) {
+            values.put(MediaColumns.RELATIVE_PATH, path.orElse(null));
+        }
+        if (displayName != null) {
+            values.put(MediaColumns.DISPLAY_NAME, displayName.orElse(null));
         }
         try {
             return (mContentResolver.update(uri, values, null, null) == 1);

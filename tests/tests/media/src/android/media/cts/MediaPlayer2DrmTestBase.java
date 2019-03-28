@@ -23,7 +23,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.media.DataSourceDesc;
-import android.media.UriDataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmEventCallback;
@@ -291,7 +290,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         mPlayer.registerEventCallback(mExecutor, mECb);
         Log.v(TAG, "playLoadedVideo: setDataSource()");
-        DataSourceDesc dsd = new UriDataSourceDesc.Builder().setDataSource(mContext, file).build();
+        DataSourceDesc dsd = new DataSourceDesc.Builder().setDataSource(file).build();
         mPlayer.setDataSource(dsd);
         mSetDataSourceCallCompleted.waitForSignal();
         if (mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR) {
@@ -414,6 +413,12 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo done!");
                 return null;
             }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest request) {
+                return null;
+            }
+
         });
 
         Log.v(TAG, "preparePlayerAndDrm_V1: calling prepare()");
@@ -457,6 +462,18 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                     Log.v(TAG, "preparePlayerAndDrm_V2: onDrmConfig EXCEPTION " + e);
                 }
             }
+
+            @Override
+            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd,
+                    DrmInfo drmInfo) {
+                return null;
+            }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest request) {
+                return null;
+            }
+
         });
 
         Log.v(TAG, "preparePlayerAndDrm_V2: calling prepare()");
@@ -545,6 +562,11 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 mOnDrmPreparedCalled.signal();
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmPrepared done!");
             }
+
+            @Override
+            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd, KeyRequest request) {
+                return null;
+            }
         });
 
         Log.v(TAG, "preparePlayerAndDrm_V3: calling prepare()");
@@ -605,9 +627,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
             // setting up with the first supported UUID
             // instead of supportedSchemes[0] in GTS
-            DrmPreparationInfo.Builder drmBuilder = new DrmPreparationInfo.Builder();
             UUID drmScheme = CLEARKEY_SCHEME_UUID;
-            drmBuilder.setUuid(drmScheme);
+            DrmPreparationInfo.Builder drmBuilder = new DrmPreparationInfo.Builder(drmScheme);
             if (mOfflineKeySetId != null && mOfflineKeySetId.length > 0) {
                 drmBuilder.setKeySetId(mOfflineKeySetId);
                 return drmBuilder.build();
@@ -734,8 +755,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         surfaceHolder.setKeepScreenOn(true);
 
         final AtomicBoolean drmCallbackError = new AtomicBoolean(false);
-        UriDataSourceDesc.Builder dsdBuilder = new UriDataSourceDesc.Builder();
-        DataSourceDesc dsd = dsdBuilder.setDataSource(mContext, file).build();
+        DataSourceDesc.Builder dsdBuilder = new DataSourceDesc.Builder();
+        DataSourceDesc dsd = dsdBuilder.setDataSource(file).build();
         DataSourceDesc dsd2 = dsdBuilder.build();
         List<DataSourceDesc> dsds = Arrays.asList(dsd, dsd2);
 
@@ -843,6 +864,18 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                                 }
                                 drmPrepared.signal();
                             }
+
+                            @Override
+                            public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd,
+                                    DrmInfo drmInfo) {
+                                return null;
+                            }
+
+                            @Override
+                            public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd,
+                                    KeyRequest request) {
+                                return null;
+                            }
                         });
                         mPlayer.prepareDrm(dsd, drmScheme);
                         drmPrepared.waitForSignal();
@@ -946,6 +979,18 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                             prepareDrmFailed.set(true);
                         }
                         drmPrepared.signal();
+                    }
+
+                    @Override
+                    public DrmPreparationInfo onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd,
+                            DrmInfo drmInfo) {
+                        return null;
+                    }
+
+                    @Override
+                    public byte[] onDrmKeyRequest(MediaPlayer2 mp, DataSourceDesc dsd,
+                            KeyRequest request) {
+                        return null;
                     }
                 });
                 mPlayer.prepareDrm(dsd, drmScheme);

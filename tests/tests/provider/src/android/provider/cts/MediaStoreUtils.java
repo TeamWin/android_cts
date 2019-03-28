@@ -19,7 +19,6 @@ package android.provider.cts;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.MediaStore.DownloadColumns;
@@ -108,45 +107,11 @@ public class MediaStoreUtils {
                     (System.currentTimeMillis() + DateUtils.DAY_IN_MILLIS) / 1000);
         }
 
-        /**
-         * Optionally set the primary directory under which this pending item
-         * should be persisted. Only specific well-defined directories from
-         * {@link Environment} are allowed based on the media type being
-         * inserted.
-         * <p>
-         * For example, when creating pending {@link MediaStore.Images.Media}
-         * items, only {@link Environment#DIRECTORY_PICTURES} or
-         * {@link Environment#DIRECTORY_DCIM} are allowed.
-         * <p>
-         * You may leave this value undefined to store the media in a default
-         * location. For example, when this value is left undefined, pending
-         * {@link MediaStore.Audio.Media} items are stored under
-         * {@link Environment#DIRECTORY_MUSIC}.
-         *
-         * @see MediaColumns#PRIMARY_DIRECTORY
-         */
-        public void setPrimaryDirectory(@Nullable String primaryDirectory) {
-            if (primaryDirectory == null) {
-                this.insertValues.remove(MediaColumns.PRIMARY_DIRECTORY);
+        public void setPath(@Nullable String path) {
+            if (path == null) {
+                this.insertValues.remove(MediaColumns.RELATIVE_PATH);
             } else {
-                this.insertValues.put(MediaColumns.PRIMARY_DIRECTORY, primaryDirectory);
-            }
-        }
-
-        /**
-         * Optionally set the secondary directory under which this pending item
-         * should be persisted. Any valid directory name is allowed.
-         * <p>
-         * You may leave this value undefined to store the media as a direct
-         * descendant of the {@link #setPrimaryDirectory(String)} location.
-         *
-         * @see MediaColumns#SECONDARY_DIRECTORY
-         */
-        public void setSecondaryDirectory(@Nullable String secondaryDirectory) {
-            if (secondaryDirectory == null) {
-                this.insertValues.remove(MediaColumns.SECONDARY_DIRECTORY);
-            } else {
-                this.insertValues.put(MediaColumns.SECONDARY_DIRECTORY, secondaryDirectory);
+                this.insertValues.put(MediaColumns.RELATIVE_PATH, path);
             }
         }
 

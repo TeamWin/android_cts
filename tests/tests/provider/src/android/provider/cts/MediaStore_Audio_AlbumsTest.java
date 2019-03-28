@@ -31,6 +31,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Albums;
 import android.provider.MediaStore.Audio.Media;
@@ -51,6 +52,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.io.IOException;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_AlbumsTest {
     private Context mContext;

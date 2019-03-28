@@ -133,6 +133,13 @@ public abstract class BasePermissionsTest {
                     Manifest.permission.RECEIVE_MMS, "@android:string/permgrouplab_sms");
             sPermissionToLabelResNameMap.put(
                     "android.permission.READ_CELL_BROADCASTS", "@android:string/permgrouplab_sms");
+            // Storage
+            sPermissionToLabelResNameMap.put(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    "@android:string/permgrouplab_storage");
+            sPermissionToLabelResNameMap.put(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    "@android:string/permgrouplab_storage");
             // Music
             sPermissionToLabelResNameMap.put(
                     Manifest.permission.READ_MEDIA_AUDIO,
@@ -204,6 +211,13 @@ public abstract class BasePermissionsTest {
             sPermissionToLabelResNameMap.put(
                     "android.permission.READ_CELL_BROADCASTS",
                     "@android:string/permlab_readCellBroadcasts");
+            // Storage
+            sPermissionToLabelResNameMap.put(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    "@android:string/permgrouplab_storage");
+            sPermissionToLabelResNameMap.put(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    "@android:string/permgrouplab_storage");
             // Music
             sPermissionToLabelResNameMap.put(
                     Manifest.permission.READ_MEDIA_AUDIO,

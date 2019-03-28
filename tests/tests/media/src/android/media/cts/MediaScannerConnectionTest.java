@@ -16,9 +16,6 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
-
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.media.MediaScannerConnection;
@@ -32,8 +29,6 @@ import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaScannerConnectionTest extends AndroidTestCase {

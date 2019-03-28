@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import android.content.Context;
+import android.media.DataSourceDesc;
 import android.media.UriDataSourceDesc;
 import android.net.Uri;
 import android.test.AndroidTestCase;
@@ -43,40 +44,27 @@ public class DataSourceDescTest extends AndroidTestCase {
         java.util.Vector<HttpCookie> cookies = new java.util.Vector<HttpCookie>();
         cookies.add(cookie);
 
-        UriDataSourceDesc uriDsd = new UriDataSourceDesc.Builder()
-            .setDataSource(mContext, uri, headers, cookies)
+        UriDataSourceDesc uriDsd = (UriDataSourceDesc) new DataSourceDesc.Builder()
+            .setDataSource(uri, headers, cookies)
             .build();
-        assertEquals(mContext, uriDsd.getContext());
         assertEquals(uri, uriDsd.getUri());
         assertEquals(headers, uriDsd.getHeaders());
         assertEquals(cookies, uriDsd.getCookies());
 
-        UriDataSourceDesc uriDsd2 = new UriDataSourceDesc.Builder(uriDsd)
+        UriDataSourceDesc uriDsd2 = (UriDataSourceDesc) new DataSourceDesc.Builder(uriDsd)
             .build();
-        assertEquals(mContext, uriDsd2.getContext());
         assertEquals(uri, uriDsd2.getUri());
         assertEquals(headers, uriDsd2.getHeaders());
         assertEquals(cookies, uriDsd2.getCookies());
     }
 
     public void testUriDataSourceDescWithNullArguments() {
-        String file = "file://foo";
-        Uri uri = Uri.parse(file);
-
         try {
-            UriDataSourceDesc uriDsd = new UriDataSourceDesc.Builder()
-                .setDataSource(null, uri)
+            DataSourceDesc uriDsd =  new DataSourceDesc.Builder()
+                .setDataSource((Uri) null)
                 .build();
         } catch (IllegalArgumentException e) {
             // Expected
-            try {
-                UriDataSourceDesc uriDsd2 = new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, null)
-                    .build();
-            } catch (IllegalArgumentException e2) {
-                // Expected
-                return;
-            }
         }
         fail();
     }

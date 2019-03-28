@@ -27,7 +27,7 @@ import android.text.TextPaint;
  */
 public class TextPaintTest extends AndroidTestCase {
     private static final int DEFAULT_PAINT_FLAGS = TextPaint.DEV_KERN_TEXT_FLAG
-            | TextPaint.EMBEDDED_BITMAP_TEXT_FLAG;
+            | TextPaint.EMBEDDED_BITMAP_TEXT_FLAG | TextPaint.FILTER_BITMAP_FLAG;
 
     public void testConstructor() {
         TextPaint textPaint;

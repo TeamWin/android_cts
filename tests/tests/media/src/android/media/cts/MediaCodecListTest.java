@@ -31,6 +31,7 @@ import android.media.MediaFormat;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.util.Size;
 
 import androidx.test.filters.SmallTest;
 
@@ -622,6 +623,7 @@ public class MediaCodecListTest extends AndroidTestCase {
             MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 720, 1280);
         portraitHd240Format.setInteger(MediaFormat.KEY_FRAME_RATE, 240);
 
+        /* common-sense checks */
         assertTrue(VideoCapabilities.PerformancePoint.HD_30.covers(hd25Format));
         assertTrue(VideoCapabilities.PerformancePoint.HD_25.covers(hd25Format));
         assertFalse(VideoCapabilities.PerformancePoint.HD_24.covers(hd25Format));
@@ -633,11 +635,90 @@ public class MediaCodecListTest extends AndroidTestCase {
         assertFalse(VideoCapabilities.PerformancePoint.HD_200.covers(portraitHd240Format));
         assertTrue(VideoCapabilities.PerformancePoint.FHD_240.covers(portraitHd240Format));
         assertFalse(VideoCapabilities.PerformancePoint.FHD_200.covers(portraitHd240Format));
+
+        /* test macroblock size and conversion support */
+        VideoCapabilities.PerformancePoint bigBlockFHD30_120 =
+            new VideoCapabilities.PerformancePoint(1920, 1080, 30, 120, new Size(128, 64));
+        assertEquals(120, bigBlockFHD30_120.getMaxFrameRate());
+        assertEquals(8160, bigBlockFHD30_120.getMaxMacroBlocks());
+        assertEquals(244800, bigBlockFHD30_120.getMaxMacroBlockRate());
+
+        VideoCapabilities.PerformancePoint bigRotBlockFHD30_120 =
+            new VideoCapabilities.PerformancePoint(1920, 1080, 30, 120, new Size(64, 128));
+        assertEquals(120, bigRotBlockFHD30_120.getMaxFrameRate());
+        assertEquals(8640, bigRotBlockFHD30_120.getMaxMacroBlocks());
+        assertEquals(259200, bigRotBlockFHD30_120.getMaxMacroBlockRate());
+
+        /* test conversion logic */
+        {
+            /* 900*900@25-50 */
+            VideoCapabilities.PerformancePoint unusual =
+                new VideoCapabilities.PerformancePoint(900, 900, 25, 50, new Size(1, 1));
+            assertEquals(50, unusual.getMaxFrameRate());
+            assertEquals(3249, unusual.getMaxMacroBlocks());
+            assertEquals(81225, unusual.getMaxMacroBlockRate());
+
+            /* becomes 960*1024@25-50 */
+            VideoCapabilities.PerformancePoint converted1 =
+                new VideoCapabilities.PerformancePoint(unusual, new Size(128, 64));
+            assertEquals(50, converted1.getMaxFrameRate());
+            assertEquals(3840, converted1.getMaxMacroBlocks());
+            assertEquals(96000, converted1.getMaxMacroBlockRate());
+
+            /* becomes 1024*960@25-50 */
+            VideoCapabilities.PerformancePoint converted2 =
+                new VideoCapabilities.PerformancePoint(unusual, new Size(64, 128));
+            assertEquals(50, converted2.getMaxFrameRate());
+            assertEquals(3840, converted2.getMaxMacroBlocks());
+            assertEquals(96000, converted2.getMaxMacroBlockRate());
+
+            /* becomes 1024*1024@25-50 */
+            VideoCapabilities.PerformancePoint converted3 =
+                new VideoCapabilities.PerformancePoint(converted1, new Size(64, 128));
+            assertEquals(50, converted3.getMaxFrameRate());
+            assertEquals(4096, converted3.getMaxMacroBlocks());
+            assertEquals(102400, converted3.getMaxMacroBlockRate());
+
+            assertEquals(converted1, converted2);
+            assertEquals(converted2, converted1);
+            assertEquals(converted1, converted3);
+            assertEquals(converted3, converted1);
+            assertTrue(converted1.covers(converted2));
+            assertTrue(converted2.covers(converted1));
+            assertTrue(converted2.covers(converted3));
+            assertTrue(converted3.covers(converted2));
+        }
+
+        // big macroblock size does not impact standard performance points as the dimensions are set
+        VideoCapabilities.PerformancePoint bigBlockFHD30 =
+            new VideoCapabilities.PerformancePoint(1920, 1080, 30, 30, new Size(128, 64));
+
+        assertTrue(bigBlockFHD30.covers(VideoCapabilities.PerformancePoint.FHD_30));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_30.covers(bigBlockFHD30));
+        assertTrue(bigBlockFHD30.equals(VideoCapabilities.PerformancePoint.FHD_30));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_30.equals(bigBlockFHD30));
+
+        // but it impacts the case where dimensions differ
+        assertFalse(bigBlockFHD30.covers(new VideoCapabilities.PerformancePoint(1080, 1920, 30)));
+        assertFalse(bigBlockFHD30.covers(new VideoCapabilities.PerformancePoint(1936, 1072, 30)));
+        assertFalse(bigBlockFHD30.covers(new VideoCapabilities.PerformancePoint(1280, 720, 63)));
+        assertTrue(bigBlockFHD30_120.covers(new VideoCapabilities.PerformancePoint(1280, 720, 63)));
+        assertFalse(bigBlockFHD30_120.covers(new VideoCapabilities.PerformancePoint(1280, 720, 64)));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_30.covers(
+                new VideoCapabilities.PerformancePoint(1080, 1920, 30)));
+        assertTrue(VideoCapabilities.PerformancePoint.FHD_30.covers(
+                new VideoCapabilities.PerformancePoint(1936, 1072, 30)));
+        assertTrue(new VideoCapabilities.PerformancePoint(1920, 1080, 30, 120, new Size(1, 1))
+                   .covers(new VideoCapabilities.PerformancePoint(1280, 720, 68)));
     }
 
     public void verifyPerformancePoints(
             MediaCodecInfo info, String mediaType,
             List<VideoCapabilities.PerformancePoint> points) {
+        // Components must list all supported standard performance points unless those performance
+        // points are covered by other listed standard performance points.
+
+
         // TODO: verify performance points listed conform to the requirements ... once those
         // requirements are agreed upon.
     }
@@ -717,9 +798,7 @@ public class MediaCodecListTest extends AndroidTestCase {
                     }
                 } else {
                     for (VideoCapabilities.PerformancePoint p : pps) {
-                        Log.d(TAG, "got performance point "
-                                + p.macroBlocks + "block @ " + p.macroBlockRate / p.macroBlocks
-                                + "fps (max " + p.frameRate + "fps)");
+                        Log.d(TAG, "got performance point " + p);
                     }
                 }
             }

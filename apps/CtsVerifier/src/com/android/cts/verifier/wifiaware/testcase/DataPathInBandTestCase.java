@@ -166,8 +166,7 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
 
         // 6. request network
         WifiAwareNetworkSpecifier.Builder nsBuilder =
-                new WifiAwareNetworkSpecifier.Builder().setDiscoverySession(
-                        mWifiAwareDiscoverySession).setPeerHandle(mPeerHandle);
+                new WifiAwareNetworkSpecifier.Builder(mWifiAwareDiscoverySession, mPeerHandle);
         if (!mIsSecurityOpen) {
             nsBuilder.setPskPassphrase(PASSPHRASE);
         }
@@ -354,8 +353,7 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
 
         // 5. Request network
         WifiAwareNetworkSpecifier.Builder nsBuilder =
-                new WifiAwareNetworkSpecifier.Builder().setDiscoverySession(
-                        mWifiAwareDiscoverySession).setPeerHandle(mPeerHandle);
+                new WifiAwareNetworkSpecifier.Builder(mWifiAwareDiscoverySession, mPeerHandle);
         if (!mIsSecurityOpen) {
             nsBuilder.setPskPassphrase(PASSPHRASE).setPort(port).setTransportProtocol(
                     6); // 6 == TCP

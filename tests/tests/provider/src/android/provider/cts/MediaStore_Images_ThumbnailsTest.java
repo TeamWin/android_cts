@@ -42,6 +42,7 @@ import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
@@ -69,6 +70,7 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Images_ThumbnailsTest {
     private ArrayList<Uri> mRowsAdded;

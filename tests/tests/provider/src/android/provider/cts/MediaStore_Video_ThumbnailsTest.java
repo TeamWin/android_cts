@@ -37,6 +37,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Video.Media;
@@ -62,6 +63,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Video_ThumbnailsTest {
     private static final String TAG = "MediaStore_Video_ThumbnailsTest";

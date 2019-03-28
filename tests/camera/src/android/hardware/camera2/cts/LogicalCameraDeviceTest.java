@@ -97,6 +97,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     Log.i(TAG, "Camera " + id + " is legacy, skipping");
                     continue;
                 }
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
 
                 openDevice(id);
                 Size yuvSize = mOrderedPreviewSizes.get(0);
