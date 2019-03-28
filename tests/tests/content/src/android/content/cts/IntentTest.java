@@ -1278,6 +1278,7 @@ public class IntentTest extends AndroidTestCase {
         final String title = "title String";
         target = Intent.createChooser(mIntent, title);
         assertEquals(title, target.getStringExtra(Intent.EXTRA_TITLE));
+        assertNotNull(target.resolveActivity(mPm));
     }
 
     public void testGetFloatArrayExtra() {
