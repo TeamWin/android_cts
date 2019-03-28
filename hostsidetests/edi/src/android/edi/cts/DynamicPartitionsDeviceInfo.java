@@ -39,13 +39,13 @@ public class DynamicPartitionsDeviceInfo extends DeviceInfo {
         CommandResult commandResult = device.executeShellV2Command(
                 "lpdump --json");
         if (commandResult.getExitCode() == null) {
-            CLog.w("lpdump exit code is null");
+            CLog.e("lpdump exit code is null");
             return;
         }
         if (commandResult.getExitCode() != 0) {
-            CLog.w("lpdump returns %d: %s", commandResult.getExitCode(),
+            CLog.e("lpdump returns %d: %s", commandResult.getExitCode(),
                    commandResult.getStderr());
-            // TODO(b/126233777): Fail here to ensure that lpdump --json is correct.
+            return;
         }
 
         if (commandResult.getExitCode() == 0 && !commandResult.getStderr().isEmpty()) {
@@ -57,15 +57,13 @@ public class DynamicPartitionsDeviceInfo extends DeviceInfo {
         if (output == null) output = "";
         output = output.trim();
         if (output.isEmpty()) {
-            CLog.w("lpdump --json does not generate anything");
-            // TODO(b/126233777): Fail here to ensure that lpdump --json is correct.
-            output = "{}";
+            CLog.e("lpdump --json does not generate anything");
+            return;
         }
 
         if (!isJsonString(output)) {
-            CLog.w("lpdump --json does not generate a valid JSON string: %s", output);
-            // TODO(b/126233777): Fail here to ensure that lpdump --json is correct.
-            output = "{}";
+            CLog.e("lpdump --json does not generate a valid JSON string: %s", output);
+            return;
         }
 
         try (FileWriter writer = new FileWriter(jsonFile)) {
