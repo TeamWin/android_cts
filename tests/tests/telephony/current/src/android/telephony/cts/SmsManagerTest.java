@@ -18,7 +18,6 @@ package android.telephony.cts;
 
 import static com.android.compatibility.common.util.BlockedNumberUtil.deleteBlockedNumber;
 import static com.android.compatibility.common.util.BlockedNumberUtil.insertBlockedNumber;
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyString;
@@ -32,6 +31,7 @@ import static org.junit.Assert.assertThat;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.app.role.RoleManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -42,6 +42,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.CursorWindow;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
@@ -55,14 +56,11 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.android.internal.telephony.SmsApplication;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.StringBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
@@ -488,9 +486,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
 
     private void testSmsAccessAboutDefaultApp(String pkg, boolean accessRestrictionEnabled)
             throws Exception {
-        String originalSmsApp = Settings.Secure.getString(
-                getInstrumentation().getContext().getContentResolver(),
-                Settings.Secure.SMS_DEFAULT_APPLICATION);
+        String originalSmsApp = getSmsApp();
         assertNotEquals(pkg, originalSmsApp);
         assertCanAccessSms(pkg, !accessRestrictionEnabled);
         try {
@@ -524,13 +520,22 @@ public class SmsManagerTest extends InstrumentationTestCase {
         return getInstrumentation().getContext().getPackageManager().getPackageUid(pkg, 0);
     }
 
+    private String getSmsApp() throws Exception {
+        return executeWithShellPermissionIdentity(() -> getInstrumentation()
+                .getContext()
+                .getSystemService(RoleManager.class)
+                .getRoleHolders(RoleManager.ROLE_SMS)
+                .get(0));
+    }
+
     private void setSmsApp(String pkg) throws Exception {
         executeWithShellPermissionIdentity(() -> {
             Context context = getInstrumentation().getContext();
-            Settings.Secure.putString(context.getContentResolver(),
-                    Settings.Secure.SMS_DEFAULT_APPLICATION, pkg);
-            // Modifying settings by-passes SmsApplication, so we try to fix it with this.
-            SmsApplication.getDefaultSmsApplication(context, true);
+            CompletableFuture<Boolean> result = new CompletableFuture<>();
+            context.getSystemService(RoleManager.class).addRoleHolderAsUser(
+                    RoleManager.ROLE_SMS, pkg, RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                    context.getUser(), AsyncTask.THREAD_POOL_EXECUTOR, result::complete);
+            assertTrue(result.get(5, TimeUnit.SECONDS));
         });
     }
 
