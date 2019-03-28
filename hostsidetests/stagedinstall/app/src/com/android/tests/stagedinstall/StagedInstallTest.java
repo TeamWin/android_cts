@@ -16,6 +16,8 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.tests.stagedinstall.PackageInstallerSessionInfoSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -322,12 +324,12 @@ public class StagedInstallTest {
 
     private static void assertSessionApplied(int sessionId) {
         assertSessionState(sessionId,
-                (session) ->  assertThat(session.isStagedSessionApplied()).isTrue());
+                (session) -> assertThat(session).isStagedSessionApplied());
     }
 
     private static void assertSessionReady(int sessionId) {
         assertSessionState(sessionId,
-                (session) ->  assertThat(session.isStagedSessionReady()).isTrue());
+                (session) -> assertThat(session).isStagedSessionReady());
     }
 
     private static void assertSessionState(
