@@ -31,6 +31,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -327,8 +328,17 @@ public class BitmapDrawableTest {
         d.setTintMode(Mode.SRC_OVER);
         assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
-        d.setTintList(null);
-        d.setTintMode(null);
+    }
+
+    @Test
+    public void testSetBlendMode() {
+        final InputStream source = mContext.getResources().openRawResource(R.raw.testimage);
+        final BitmapDrawable d = new BitmapDrawable(source);
+
+        d.setTint(Color.BLACK);
+        d.setTintMode(BlendMode.SRC_OVER);
+        assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
+
     }
 
     @Test

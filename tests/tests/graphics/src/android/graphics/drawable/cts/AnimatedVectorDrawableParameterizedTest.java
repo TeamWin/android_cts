@@ -35,6 +35,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
@@ -116,6 +117,7 @@ public class AnimatedVectorDrawableParameterizedTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testAnimationOnLayer() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
@@ -280,6 +282,7 @@ public class AnimatedVectorDrawableParameterizedTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testInfiniteAVD() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
