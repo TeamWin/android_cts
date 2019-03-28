@@ -5,6 +5,12 @@
       "options": [
         {
           "exclude-filter": "android.os.cts.UsbDebuggingTest#testUsbDebugging"
+        },
+        {
+          "exclude-filter": "android.os.cts.DebugTest#testGetAndReset"
+        },
+        {
+          "exclude-filter": "android.os.cts.StrictModeTest#testNonSdkApiUsage"
         }
       ]
     }
