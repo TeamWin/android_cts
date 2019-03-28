@@ -81,12 +81,20 @@ public class CtsAngleCommon {
         return map;
     }
 
+    static String getGlobalSetting(ITestDevice device, String globalSetting) throws Exception {
+        return device.getSetting("global", globalSetting);
+    }
+
+    static void setGlobalSetting(ITestDevice device, String globalSetting, String value) throws Exception {
+        device.setSetting("global", globalSetting, value);
+    }
+
     static void clearSettings(ITestDevice device) throws Exception {
-        device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_ALL_USE_ANGLE, "0");
-        device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
-        device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
-        device.setSetting("global", CtsAngleCommon.SETTINGS_GLOBAL_WHITELIST, "\"\"");
-        CtsAngleCommon.setProperty(device, CtsAngleCommon.PROPERTY_TEMP_RULES_FILE, "\"\"");
+        setGlobalSetting(device, SETTINGS_GLOBAL_ALL_USE_ANGLE, "0");
+        setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
+        setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
+        setGlobalSetting(device, SETTINGS_GLOBAL_WHITELIST, "\"\"");
+        setProperty(device, PROPERTY_TEMP_RULES_FILE, "\"\"");
     }
 
     static boolean isAngleLoadable(ITestDevice device) throws Exception {
