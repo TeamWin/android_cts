@@ -228,7 +228,7 @@ public class MagnifierTest {
         assertEquals(elevation, magnifier.getElevation(), 0.01f);
         final float zoom = 1.25f;
         assertEquals(zoom, magnifier.getZoom(), 0.01f);
-        final int verticalOffset = dpToPixelSize(-42f);
+        final int verticalOffset = -dpToPixelSize(42f);
         assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
         final int horizontalOffset = dpToPixelSize(0f);
         assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
@@ -257,7 +257,7 @@ public class MagnifierTest {
         assertEquals(elevation, magnifier.getElevation(), 0.01f);
         final float zoom = 1.25f;
         assertEquals(zoom, magnifier.getZoom(), 0.01f);
-        final int verticalOffset = dpToPixelSize(-42f);
+        final int verticalOffset = -dpToPixelSize(42f);
         assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
         final int horizontalOffset = dpToPixelSize(0f);
         assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
