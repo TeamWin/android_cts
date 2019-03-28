@@ -68,7 +68,7 @@ data class RendererTest(
 
 private fun verify(verifier: BitmapVerifier, setup: HardwareRenderer.() -> Unit) {
     val reader = ImageReader.newInstance(
-        TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
         HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
     val renderer = HardwareRenderer()
     var image: Image? = null
@@ -146,7 +146,7 @@ private fun fetchMemoryInfo(): Debug.MemoryInfo {
 class HardwareRendererTests : ActivityTestBase() {
     @Test
     fun testBasicDrawCpuConsumer() {
-        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
         assertNotNull(reader)
         val renderer = HardwareRenderer()
@@ -195,7 +195,7 @@ class HardwareRendererTests : ActivityTestBase() {
 
     @Test
     fun testBasicDrawGpuConsumer() {
-        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
             HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
         assertNotNull(reader)
         val renderer = HardwareRenderer()
@@ -254,7 +254,7 @@ class HardwareRendererTests : ActivityTestBase() {
 
     @Test
     fun testSetStopped() {
-        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
         assertNotNull(reader)
         val renderer = HardwareRenderer()
@@ -279,7 +279,7 @@ class HardwareRendererTests : ActivityTestBase() {
     @Test
     @Ignore // TODO: Re-enable, see b/124520175
     fun testNoSurface() {
-        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
         assertNotNull(reader)
         val renderer = HardwareRenderer()
@@ -305,7 +305,7 @@ class HardwareRendererTests : ActivityTestBase() {
     @LargeTest
     @Test
     fun testClearContent() {
-        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
         assertNotNull(reader)
         val renderer = HardwareRenderer()
@@ -348,7 +348,7 @@ class HardwareRendererTests : ActivityTestBase() {
 
     @Test
     fun testDestroy() {
-        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 2,
+        val reader = ImageReader.newInstance(TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
         assertNotNull(reader)
         val renderer = HardwareRenderer()
@@ -408,5 +408,79 @@ class HardwareRendererTests : ActivityTestBase() {
                         return CompareUtils.verifyPixelGrayScale(observedColor, 1)
                     }
                 })
+    }
+
+    @Test
+    fun testLotsOfBuffers() {
+        val colorForIndex = { i: Int ->
+            Color.argb(255, 10 * i, 6 * i, 2 * i)
+        }
+        val testColors = IntArray(20, colorForIndex)
+
+        val reader = ImageReader.newInstance(
+                TEST_WIDTH, TEST_HEIGHT, PixelFormat.RGBA_8888, testColors.size,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT)
+        assertNotNull(reader)
+        val renderer = HardwareRenderer()
+        val images = ArrayList<Image>()
+
+        try {
+            val content = RenderNode("content")
+            content.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT)
+            renderer.setContentRoot(content)
+            renderer.setSurface(reader.surface)
+
+            testColors.forEach {
+                val canvas = content.beginRecording()
+                canvas.drawColor(it)
+                content.endRecording()
+
+                val syncResult = renderer.createRenderRequest()
+                        .setWaitForPresent(true)
+                        .syncAndDraw()
+                assertEquals(HardwareRenderer.SYNC_OK, syncResult)
+                // TODO: Add API to avoid this
+                Thread.sleep(32)
+            }
+
+            for (i in 0 until testColors.size) {
+                val image = reader.acquireNextImage()
+                assertNotNull(image)
+                images.add(image)
+            }
+
+            assertEquals(testColors.size, images.size)
+
+            images.forEachIndexed { index, image ->
+                val planes = image.planes
+                assertNotNull(planes)
+                assertEquals(1, planes.size)
+                val plane = planes[0]
+                assertEquals(4, plane.pixelStride)
+                assertTrue((TEST_WIDTH * 4) <= plane.rowStride)
+
+                val buffer = plane.buffer
+                val red = buffer.get().toInt() and 0xFF
+                val green = buffer.get().toInt() and 0xFF
+                val blue = buffer.get().toInt() and 0xFF
+                val alpha = buffer.get().toInt() and 0xFF
+
+                val expectedColor = colorForIndex(index)
+
+                assertEquals(Color.red(expectedColor), red, "red")
+                assertEquals(Color.green(expectedColor), green, "green")
+                assertEquals(Color.blue(expectedColor), blue, "blue")
+                assertEquals(255, alpha, "alpha")
+            }
+        } finally {
+            images.forEach {
+                try {
+                    it.close()
+                } catch (ex: Throwable) {}
+            }
+            images.clear()
+            renderer.destroy()
+            reader.close()
+        }
     }
 }
