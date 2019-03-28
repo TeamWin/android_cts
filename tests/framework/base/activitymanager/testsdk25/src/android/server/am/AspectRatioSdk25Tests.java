@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.rule.ActivityTestRule;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,6 +47,7 @@ public class AspectRatioSdk25Tests extends AspectRatioTestsBase {
                     false /* initialTouchMode */, false /* launchActivity */);
 
     @Test
+    @FlakyTest(bugId = 129464550)
     public void testMaxAspectRatioPreOActivity() {
         runAspectRatioTest(mSdk25MaxAspectRatioActivity, (actual, displayId, size) -> {
             assertThat(actual, lessThanOrEqualToInexact(MAX_PRE_O_ASPECT_RATIO));
