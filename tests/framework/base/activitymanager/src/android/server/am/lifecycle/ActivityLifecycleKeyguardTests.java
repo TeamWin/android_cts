@@ -25,6 +25,8 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUM
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
@@ -45,9 +47,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
     @Test
     public void testSingleLaunch() throws Exception {
-        if (!supportsSecureLock()) {
-            return;
-        }
+        assumeTrue(supportsSecureLock());
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
@@ -60,9 +60,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
     @Test
     public void testKeyguardShowHide() throws Exception {
-        if (!supportsSecureLock()) {
-            return;
-        }
+        assumeTrue(supportsSecureLock());
 
         // Launch first activity and wait for resume
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -84,9 +82,8 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
     @Test
     public void testKeyguardShowHideOverSplitScreen() throws Exception {
-        if (!supportsSecureLock() || !supportsSplitScreenMultiWindow()) {
-            return;
-        }
+        assumeTrue(supportsSecureLock());
+        assumeTrue(supportsSplitScreenMultiWindow());
 
         final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));

@@ -1987,6 +1987,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
+        assumeTrue(supportsSecureLock());
+
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
