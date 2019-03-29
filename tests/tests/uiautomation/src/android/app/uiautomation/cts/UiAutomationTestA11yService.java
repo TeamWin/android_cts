@@ -15,6 +15,9 @@
 package android.app.uiautomation.cts;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.Intent;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
@@ -22,12 +25,20 @@ import android.view.accessibility.AccessibilityEvent;
  * services
  */
 public class UiAutomationTestA11yService extends AccessibilityService {
+    private static String LOG_TAG = "UiAutomationTest";
     public static Object sWaitObjectForConnecting = new Object();
 
     public static UiAutomationTestA11yService sConnectedInstance;
 
     @Override
+    public boolean onUnbind(Intent intent) {
+        Log.v(LOG_TAG, "onUnbind [" + this + "]");
+        return false;
+    }
+
+    @Override
     public void onDestroy() {
+        Log.v(LOG_TAG, "onDestroy ["  + this + "]");
     }
 
     @Override
@@ -45,6 +56,7 @@ public class UiAutomationTestA11yService extends AccessibilityService {
             sConnectedInstance = this;
             sWaitObjectForConnecting.notifyAll();
         }
+        Log.v(LOG_TAG, "onServiceConnected ["  + this + "]");
     }
 
     public boolean isConnected() {
