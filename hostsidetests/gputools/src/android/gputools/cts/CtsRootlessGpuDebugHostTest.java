@@ -124,6 +124,8 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     // be reached if something has gone wrong
     private static final long LOG_SEARCH_TIMEOUT_MS = 5000;
 
+    private static final long SETTING_APPLY_TIMEOUT_MS = 5000;
+
     private String removeWhitespace(String input) {
         return input.replaceAll(System.getProperty("line.separator"), "").trim();
     }
@@ -134,6 +136,56 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     private String getTime() throws Exception {
         // logcat will accept "MM-DD hh:mm:ss.mmm"
         return mDevice.executeShellCommand("date +\"%m-%d %H:%M:%S.%3N\"");
+    }
+
+    /**
+     * Apply a setting and ensure it sticks before continuing
+     */
+    private void applySetting(String setting, String value) throws Exception {
+        mDevice.executeShellCommand("settings put global " + setting + " " + value);
+
+        long hostStartTime = System.currentTimeMillis();
+        while (((System.currentTimeMillis() - hostStartTime) < SETTING_APPLY_TIMEOUT_MS)) {
+
+            // Give the setting a chance to apply
+            Thread.sleep(1000);
+
+            // Read it back, make sure it has applied
+            String returnedValue = mDevice.executeShellCommand("settings get global " + setting);
+            if ((returnedValue != null) && (returnedValue.trim().equals(value))) {
+                return;
+            }
+        }
+
+        // If this assert fires, try increasing the timeout
+        Assert.fail("Unable to set global setting (" + setting + ") to (" + value + ") before timout (" +
+                SETTING_APPLY_TIMEOUT_MS + "ms)");
+    }
+
+    /**
+     * Delete a setting and ensure it goes away before continuing
+     */
+    private void deleteSetting(String setting) throws Exception {
+        mDevice.executeShellCommand("shell settings delete global " + setting);
+
+        long hostStartTime = System.currentTimeMillis();
+        while (((System.currentTimeMillis() - hostStartTime) < SETTING_APPLY_TIMEOUT_MS)) {
+
+            // Give the setting a chance to apply
+            Thread.sleep(1000);
+
+            // Read it back, make sure it is gone
+            String returnedValue = mDevice.executeShellCommand("settings get global " + setting);
+            if ((returnedValue == null) ||
+                (returnedValue.trim().isEmpty()) ||
+                (returnedValue.trim().equals("null"))) {
+                return;
+            }
+        }
+
+        // If this assert fires, try increasing the timeout
+        Assert.fail("Unable to delete global setting (" + setting + ") before timout (" +
+                SETTING_APPLY_TIMEOUT_MS + "ms)");
     }
 
     /**
@@ -258,9 +310,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugLayerLoadVulkan() throws Exception {
 
         // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
 
         // Copy the layers from our LAYERS APK to tmp
         setupLayer(LAYER_A_LIB);
@@ -300,9 +352,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testReleaseLayerLoadVulkan() throws Exception {
 
         // Set up a layers to be loaded for RELEASE app
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", RELEASE_APP);
+        applySetting("gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(LAYER_A_LIB);
@@ -330,9 +382,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugNotEnabledVulkan() throws Exception {
 
         // Ensure the global layer enable settings is NOT enabled
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "0");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_A_NAME);
+        applySetting("enable_gpu_debug_layers", "0");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers", LAYER_A_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(LAYER_A_LIB);
@@ -360,9 +412,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugWrongAppVulkan() throws Exception {
 
         // Ensure the gpu_debug_app does not match what we launch
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_A_NAME);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", RELEASE_APP);
+        applySetting("gpu_debug_layers", LAYER_A_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(LAYER_A_LIB);
@@ -390,9 +442,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugNoLayersEnabledVulkan() throws Exception {
 
         // Ensure the global layer enable settings is NOT enabled
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", "foo");
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers", "foo");
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(LAYER_A_LIB);
@@ -419,11 +471,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testSystemPropertyEnableVulkan() throws Exception {
 
         // Set up layerA to be loaded, but not layerB or layerC
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        // Switch back to delete once b/117555066 is fixed
-        //mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
-        mDevice.executeShellCommand("settings put global gpu_debug_layers ''");
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", RELEASE_APP);
+        deleteSetting("gpu_debug_layers");
 
         // Enable layerC (which is packaged with the RELEASE app) with system properties
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_C_NAME);
@@ -449,9 +499,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testSystemPropertyIgnoreVulkan() throws Exception {
 
         // Set up layerA to be loaded, but not layerB
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_A_NAME);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers", LAYER_A_NAME);
 
         // Copy the layers from our LAYERS APK
         setupLayer(LAYER_A_LIB);
@@ -489,12 +539,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugLayerLoadExternalVulkan() throws Exception {
 
         // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_C_NAME);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers", LAYER_C_NAME);
 
         // Specify the external app that hosts layers
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layer_app", LAYERS_APP);
+        applySetting("gpu_debug_layer_app", LAYERS_APP);
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
@@ -515,9 +565,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugLayerLoadGLES() throws Exception {
 
         // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", SHIM_A_LIB + ":" + SHIM_B_LIB);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers_gles", SHIM_A_LIB + ":" + SHIM_B_LIB);
 
         // Copy the layers from our LAYERS APK to tmp
         setupLayer(SHIM_A_LIB);
@@ -553,11 +603,10 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testReleaseLayerLoadGLES() throws Exception {
 
         // Set up a layers to be loaded for RELEASE app
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", SHIM_A_LIB + ":" + SHIM_B_LIB);
-        // Remove this once b/117555066 has been fixed
-        mDevice.executeShellCommand("settings put global gpu_debug_layer_app ''");
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", RELEASE_APP);
+        applySetting("gpu_debug_layers_gles", SHIM_A_LIB + ":" + SHIM_B_LIB);
+        deleteSetting("gpu_debug_layer_app");
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(SHIM_A_LIB);
@@ -584,9 +633,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugNotEnabledGLES() throws Exception {
 
         // Ensure the global layer enable settings is NOT enabled
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "0");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", SHIM_A_LIB);
+        applySetting("enable_gpu_debug_layers", "0");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers_gles", SHIM_A_LIB);
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(SHIM_A_LIB);
@@ -613,9 +662,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugWrongAppGLES() throws Exception {
 
         // Ensure the gpu_debug_app does not match what we launch
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", SHIM_A_LIB);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", RELEASE_APP);
+        applySetting("gpu_debug_layers_gles", SHIM_A_LIB);
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(SHIM_A_LIB);
@@ -642,9 +691,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugNoLayersEnabledGLES() throws Exception {
 
         // Ensure the global layer enable settings is NOT enabled
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", "foo");
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers_gles", "foo");
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(SHIM_A_LIB);
@@ -670,11 +719,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testSystemPropertyEnableGLES() throws Exception {
 
         // Set up layerA to be loaded, but not layerB or layerC
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        // Switch back to delete once b/117555066 is fixed
-        //mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
-        mDevice.executeShellCommand("settings put global gpu_debug_layers_gles ''");
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", RELEASE_APP);
+        deleteSetting("gpu_debug_layers_gles");
 
         // Enable layerC (which is packaged with the RELEASE app) with system properties
         mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + SHIM_C_LIB);
@@ -700,9 +747,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testSystemPropertyIgnoreGLES() throws Exception {
 
         // Set up layerA to be loaded, but not layerB
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", SHIM_A_LIB);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers_gles", SHIM_A_LIB);
 
         // Copy the layers from our LAYERS APK
         setupLayer(SHIM_A_LIB);
@@ -738,12 +785,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     public void testDebugLayerLoadExternalGLES() throws Exception {
 
         // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers_gles", SHIM_C_LIB);
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers_gles", SHIM_C_LIB);
 
         // Specify the external app that hosts layers
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layer_app", LAYERS_APP);
+        applySetting("gpu_debug_layer_app", LAYERS_APP);
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
