@@ -41,7 +41,8 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
 
     private final String TAG = this.getClass().getSimpleName();
 
-    File mRulesFile;
+    private File mRulesFile;
+    private String mWhiteList;
 
     // Rules Files
     private static final String RULES_FILE_EMPTY = "emptyRules.json";
@@ -57,23 +58,25 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
 
         Assert.assertTrue(getDevice().pushFile(mRulesFile, DEVICE_TEMP_RULES_FILE_PATH));
 
-        setProperty(getDevice(), PROPERTY_TEMP_RULES_FILE,
-                DEVICE_TEMP_RULES_FILE_PATH);
+        setProperty(getDevice(), PROPERTY_TEMP_RULES_FILE, DEVICE_TEMP_RULES_FILE_PATH);
     }
 
     @Before
     public void setUp() throws Exception {
         clearSettings(getDevice());
 
+        mWhiteList = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST);
+
         // Application must be whitelisted to load temp rules
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST,
-                ANGLE_DRIVER_TEST_PKG + "," +
-                        ANGLE_DRIVER_TEST_SEC_PKG);
+                ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG);
     }
 
     @After
     public void tearDown() throws Exception {
         clearSettings(getDevice());
+
+        setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST, mWhiteList);
 
         FileUtil.deleteFile(mRulesFile);
     }
@@ -89,7 +92,7 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
 
         installPackage(ANGLE_DRIVER_TEST_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_NATIVE_METHOD);
     }
@@ -106,11 +109,11 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
         installPackage(ANGLE_DRIVER_TEST_APP);
         installPackage(ANGLE_DRIVER_TEST_SEC_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_ANGLE_METHOD);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
                 ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_NATIVE_METHOD);
     }

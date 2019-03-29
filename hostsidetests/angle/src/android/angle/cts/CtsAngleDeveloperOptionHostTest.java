@@ -54,7 +54,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
         Assert.assertEquals(
                 "Developer option '" + SETTINGS_GLOBAL_DRIVER_VALUES +
-                        "' was not set correctly: '" + driverValue + "'",
+                        "' was not set correctly: '" + devOption + "'",
                 driverValue, devOption);
     }
 
@@ -68,8 +68,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
                 driver + ") with method '" + sDriverTestMethodMap.get(driver) + "'");
 
-        runDeviceTests(pkgName,
-                pkgName + "." + ANGLE_DRIVER_TEST_CLASS,
+        waitThenRunDeviceTests(this, pkgName, pkgName + "." + ANGLE_DRIVER_TEST_CLASS,
                 sDriverTestMethodMap.get(driver));
     }
 
@@ -103,10 +102,10 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         installPackage(ANGLE_DRIVER_TEST_APP);
         installPackage(ANGLE_DRIVER_TEST_SEC_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_ANGLE_METHOD);
-        runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
                 ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_ANGLE_METHOD);
     }
@@ -123,7 +122,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
 
         installPackage(ANGLE_DRIVER_TEST_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_DEFAULT_METHOD);
     }
@@ -140,7 +139,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
 
         installPackage(ANGLE_DRIVER_TEST_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_ANGLE_METHOD);
     }
@@ -157,7 +156,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
 
         installPackage(ANGLE_DRIVER_TEST_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_NATIVE_METHOD);
     }
@@ -176,11 +175,11 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         installPackage(ANGLE_DRIVER_TEST_APP);
         installPackage(ANGLE_DRIVER_TEST_SEC_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_DEFAULT_METHOD);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
                 ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_DEFAULT_METHOD);
     }
@@ -196,7 +195,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
 
         installPackage(ANGLE_DRIVER_TEST_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_DEFAULT_METHOD);
     }
@@ -238,11 +237,11 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         installPackage(ANGLE_DRIVER_TEST_APP);
         installPackage(ANGLE_DRIVER_TEST_SEC_APP);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_ANGLE_METHOD);
 
-        runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
+        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
                 ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_NATIVE_METHOD);
     }
@@ -275,8 +274,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
                 CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
                         firstDriver + ") with method '" + sDriverTestMethodMap.get(firstDriver) + "'");
 
-                runDeviceTests(
-                        ANGLE_DRIVER_TEST_SEC_PKG,
+                waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
                         ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                         sDriverTestMethodMap.get(firstDriver));
 
@@ -290,8 +288,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
                 CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
                         secondDriver + ") with method '" + sDriverTestMethodMap.get(secondDriver) + "'");
 
-                runDeviceTests(
-                        ANGLE_DRIVER_TEST_SEC_PKG,
+                waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
                         ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                         sDriverTestMethodMap.get(secondDriver));
 
@@ -303,8 +300,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
                 CLog.logAndDisplay(LogLevel.INFO, "Validating: PKG name = '" +
                         devOptionPkg + "', driver value = '" + devOptionValue + "'");
 
-                runDeviceTests(
-                        ANGLE_DRIVER_TEST_PKG,
+                waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
                         ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                         ANGLE_DRIVER_TEST_ANGLE_METHOD);
             }
