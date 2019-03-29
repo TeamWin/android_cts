@@ -21,14 +21,10 @@ import static android.provider.cts.MediaStoreTest.TAG;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
-import android.content.ContentProviderClient;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
@@ -231,29 +227,16 @@ public class ProviderTestUtils {
         }
     }
 
-    static Uri scanFile(File file, boolean originatedFromShell) throws Exception {
-        final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
-                .getContentResolver();
-        try (ContentProviderClient cpc = resolver
-                .acquireContentProviderClient(MediaStore.AUTHORITY)) {
-            final Bundle in = new Bundle();
-            in.putParcelable(Intent.EXTRA_STREAM, Uri.fromFile(file));
-            in.putBoolean(MediaStore.EXTRA_ORIGINATED_FROM_SHELL, originatedFromShell);
-            final Bundle out = cpc.call(MediaStore.AUTHORITY, MediaStore.SCAN_FILE_CALL, null, in);
-            return out.getParcelable(Intent.EXTRA_STREAM);
-        }
+    static Uri scanFile(File file) throws Exception {
+        return MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
+    }
+
+    static Uri scanFileFromShell(File file) throws Exception {
+        return MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
     }
 
     static void scanVolume(File file) throws Exception {
-        final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
-                .getContentResolver();
-        try (ContentProviderClient cpc = resolver
-                .acquireContentProviderClient(MediaStore.AUTHORITY)) {
-            final Bundle in = new Bundle();
-            in.putParcelable(Intent.EXTRA_STREAM, Uri.fromFile(file));
-            in.putBoolean(Intent.EXTRA_LOCAL_ONLY, true);
-            cpc.call(MediaStore.AUTHORITY, MediaStore.SCAN_VOLUME_CALL, null, in);
-        }
+        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(), file);
     }
 
     public static byte[] hash(InputStream in) throws Exception {

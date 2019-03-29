@@ -29,6 +29,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore.Audio.Playlists;
 import android.util.Log;
 
@@ -43,6 +44,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_PlaylistsTest {
     private Context mContext;

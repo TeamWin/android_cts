@@ -16,8 +16,12 @@
 
 package android.server.am;
 
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ENTRY_POINT_ALIAS_ACTIVITY;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
@@ -73,6 +77,23 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     @FlakyTest
     public void testDashW_Indirect() throws Exception {
         testDashW(ENTRY_POINT_ALIAS_ACTIVITY, SINGLE_TASK_ACTIVITY);
+    }
+
+    @Test
+    public void testDashW_FinishingTop() {
+        // Start LaunchingActivity and TestActivity
+        getLaunchActivityBuilder().setLaunchingActivity(LAUNCHING_ACTIVITY)
+                .setTargetActivity(TEST_ACTIVITY).execute();
+
+        // Return to home
+        pressHomeButton();
+
+        // Start LaunchingActivity again and finish TestActivity
+        final int flags =
+                FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_SINGLE_TOP;
+        final String result = executeShellCommand(
+                "am start -W -f " + flags + " -n " + getActivityName(LAUNCHING_ACTIVITY));
+        verifyShellOutput(result, LAUNCHING_ACTIVITY, false);
     }
 
     private void testDashW(final ComponentName entryActivity, final ComponentName actualActivity)

@@ -29,6 +29,12 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.view.KeyEvent;
+import android.view.inputmethod.CompletionInfo;
+import android.view.inputmethod.CorrectionInfo;
+import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.GuardedBy;
@@ -253,11 +259,273 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
-     * Lets {@link MockIme} to call
-     * {@link android.view.inputmethod.InputConnection#commitText(CharSequence, int)} with the given
+     * Common logic to send a special command to {@link MockIme}.
+     *
+     * @param commandName command to be passed to {@link MockIme}
+     * @param params {@link Bundle} to be passed to {@link MockIme} as a parameter set of
+     *               {@code commandName}
+     * @return {@link ImeCommand} that is sent to {@link MockIme}.  It can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    private ImeCommand callCommandInternal(@NonNull String commandName, @NonNull Bundle params) {
+        final ImeCommand command = new ImeCommand(
+                commandName, SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = new Intent();
+        intent.setPackage(MockIme.getComponentName().getPackageName());
+        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
+        intent.putExtras(command.toBundle());
+        mContext.sendBroadcast(intent);
+        return command;
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#getTextBeforeCursor(int, int)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().getTextBeforeCursor(n, flag)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnCharSequenceValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param n to be passed as the {@code n} parameter.
+     * @param flag to be passed as the {@code flag} parameter.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetTextBeforeCursor(int n, int flag) {
+        final Bundle params = new Bundle();
+        params.putInt("n", n);
+        params.putInt("flag", flag);
+        return callCommandInternal("getTextBeforeCursor", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#getTextAfterCursor(int, int)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().getTextAfterCursor(n, flag)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnCharSequenceValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param n to be passed as the {@code n} parameter.
+     * @param flag to be passed as the {@code flag} parameter.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetTextAfterCursor(int n, int flag) {
+        final Bundle params = new Bundle();
+        params.putInt("n", n);
+        params.putInt("flag", flag);
+        return callCommandInternal("getTextAfterCursor", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#getSelectedText(int)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().getSelectedText(flag)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnCharSequenceValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param flag to be passed as the {@code flag} parameter.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetSelectedText(int flag) {
+        final Bundle params = new Bundle();
+        params.putInt("flag", flag);
+        return callCommandInternal("getSelectedText", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#getCursorCapsMode(int)} with the given
      * parameters.
      *
+     * <p>This triggers {@code getCurrentInputConnection().getCursorCapsMode(reqModes)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnIntegerValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param reqModes to be passed as the {@code reqModes} parameter.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetCursorCapsMode(int reqModes) {
+        final Bundle params = new Bundle();
+        params.putInt("reqModes", reqModes);
+        return callCommandInternal("getCursorCapsMode", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#getExtractedText(ExtractedTextRequest, int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().getExtractedText(request, flags)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnParcelableValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param request to be passed as the {@code request} parameter
+     * @param flags to be passed as the {@code flags} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetExtractedText(@Nullable ExtractedTextRequest request, int flags) {
+        final Bundle params = new Bundle();
+        params.putParcelable("request", request);
+        params.putInt("flags", flags);
+        return callCommandInternal("getExtractedText", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#deleteSurroundingText(int, int)} with the
+     * given parameters.
+     *
+     * <p>This triggers
+     * {@code getCurrentInputConnection().deleteSurroundingText(beforeLength, afterLength)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param beforeLength to be passed as the {@code beforeLength} parameter
+     * @param afterLength to be passed as the {@code afterLength} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callDeleteSurroundingText(int beforeLength, int afterLength) {
+        final Bundle params = new Bundle();
+        params.putInt("beforeLength", beforeLength);
+        params.putInt("afterLength", afterLength);
+        return callCommandInternal("deleteSurroundingText", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().deleteSurroundingTextInCodePoints(
+     * beforeLength, afterLength)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param beforeLength to be passed as the {@code beforeLength} parameter
+     * @param afterLength to be passed as the {@code afterLength} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callDeleteSurroundingTextInCodePoints(int beforeLength, int afterLength) {
+        final Bundle params = new Bundle();
+        params.putInt("beforeLength", beforeLength);
+        params.putInt("afterLength", afterLength);
+        return callCommandInternal("deleteSurroundingTextInCodePoints", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#setComposingText(CharSequence, int)} with
+     * the given parameters.
+     *
+     * <p>This triggers
+     * {@code getCurrentInputConnection().setComposingText(text, newCursorPosition)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param text to be passed as the {@code text} parameter
+     * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callSetComposingText(@Nullable CharSequence text, int newCursorPosition) {
+        final Bundle params = new Bundle();
+        params.putCharSequence("text", text);
+        params.putInt("newCursorPosition", newCursorPosition);
+        return callCommandInternal("setComposingText", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#setComposingRegion(int, int)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().setComposingRegion(start, end)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param start to be passed as the {@code start} parameter
+     * @param end to be passed as the {@code end} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callSetComposingRegion(int start, int end) {
+        final Bundle params = new Bundle();
+        params.putInt("start", start);
+        params.putInt("end", end);
+        return callCommandInternal("setComposingRegion", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#finishComposingText()} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().finishComposingText()}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callFinishComposingText() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("finishComposingText", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#commitText(CharSequence, int)} with the
+     * given parameters.
+     *
      * <p>This triggers {@code getCurrentInputConnection().commitText(text, newCursorPosition)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
      *
      * @param text to be passed as the {@code text} parameter
      * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
@@ -266,60 +534,399 @@ public class MockImeSession implements AutoCloseable {
      *         wait until this event is handled by {@link MockIme}
      */
     @NonNull
-    public ImeCommand callCommitText(@NonNull CharSequence text, int newCursorPosition) {
+    public ImeCommand callCommitText(@Nullable CharSequence text, int newCursorPosition) {
         final Bundle params = new Bundle();
         params.putCharSequence("text", text);
         params.putInt("newCursorPosition", newCursorPosition);
-        final ImeCommand command = new ImeCommand(
-                "commitText", SystemClock.elapsedRealtimeNanos(), true, params);
-        final Intent intent = new Intent();
-        intent.setPackage(MockIme.getComponentName().getPackageName());
-        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
+        return callCommandInternal("commitText", params);
     }
 
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#commitCompletion(CompletionInfo)} with
+     * the given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().commitCompletion(text)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param text to be passed as the {@code text} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callCommitCompletion(@Nullable CompletionInfo text) {
+        final Bundle params = new Bundle();
+        params.putParcelable("text", text);
+        return callCommandInternal("commitCompletion", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#commitCorrection(CorrectionInfo)} with
+     * the given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().commitCorrection(correctionInfo)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param correctionInfo to be passed as the {@code correctionInfo} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callCommitCorrection(@Nullable CorrectionInfo correctionInfo) {
+        final Bundle params = new Bundle();
+        params.putParcelable("correctionInfo", correctionInfo);
+        return callCommandInternal("commitCorrection", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#setSelection(int, int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().setSelection(start, end)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param start to be passed as the {@code start} parameter
+     * @param end to be passed as the {@code end} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSetSelection(int start, int end) {
+        final Bundle params = new Bundle();
+        params.putInt("start", start);
+        params.putInt("end", end);
+        return callCommandInternal("setSelection", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#performEditorAction(int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().performEditorAction(editorAction)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param editorAction to be passed as the {@code editorAction} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callPerformEditorAction(int editorAction) {
+        final Bundle params = new Bundle();
+        params.putInt("editorAction", editorAction);
+        return callCommandInternal("performEditorAction", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#performContextMenuAction(int)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().performContextMenuAction(id)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param id to be passed as the {@code id} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callPerformContextMenuAction(int id) {
+        final Bundle params = new Bundle();
+        params.putInt("id", id);
+        return callCommandInternal("performContextMenuAction", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#beginBatchEdit()} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().beginBatchEdit()}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callBeginBatchEdit() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("beginBatchEdit", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#endBatchEdit()} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().endBatchEdit()}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callEndBatchEdit() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("endBatchEdit", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#sendKeyEvent(KeyEvent)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().sendKeyEvent(event)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param event to be passed as the {@code event} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSendKeyEvent(@Nullable KeyEvent event) {
+        final Bundle params = new Bundle();
+        params.putParcelable("event", event);
+        return callCommandInternal("sendKeyEvent", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#clearMetaKeyStates(int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().sendKeyEvent(event)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param states to be passed as the {@code states} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callClearMetaKeyStates(int states) {
+        final Bundle params = new Bundle();
+        params.putInt("states", states);
+        return callCommandInternal("clearMetaKeyStates", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#reportFullscreenMode(boolean)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().reportFullscreenMode(enabled)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param enabled to be passed as the {@code enabled} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callReportFullscreenMode(boolean enabled) {
+        final Bundle params = new Bundle();
+        params.putBoolean("enabled", enabled);
+        return callCommandInternal("reportFullscreenMode", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#performPrivateCommand(String, Bundle)}
+     * with the given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().performPrivateCommand(action, data)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param action to be passed as the {@code action} parameter
+     * @param data to be passed as the {@code data} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callPerformPrivateCommand(@Nullable String action, Bundle data) {
+        final Bundle params = new Bundle();
+        params.putString("action", action);
+        params.putBundle("data", data);
+        return callCommandInternal("performPrivateCommand", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#requestCursorUpdates(int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().requestCursorUpdates(cursorUpdateMode)}.
+     * </p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param cursorUpdateMode to be passed as the {@code cursorUpdateMode} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callRequestCursorUpdates(int cursorUpdateMode) {
+        final Bundle params = new Bundle();
+        params.putInt("cursorUpdateMode", cursorUpdateMode);
+        return callCommandInternal("requestCursorUpdates", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#getHandler()} with the given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().getHandler()}.</p>
+     *
+     * <p>Use {@link ImeEvent#isNullReturnValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API was {@code null} or not.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callGetHandler() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("getHandler", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#closeConnection()} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().closeConnection()}.</p>
+     *
+     * <p>Return value information is not available for this command.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callCloseConnection() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("closeConnection", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#commitContent(InputContentInfo, int, Bundle)} with the given
+     * parameters.
+     *
+     * <p>This triggers
+     * {@code getCurrentInputConnection().commitContent(inputContentInfo, flags, opts)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * @param inputContentInfo to be passed as the {@code inputContentInfo} parameter
+     * @param flags to be passed as the {@code flags} parameter
+     * @param opts to be passed as the {@code opts} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callCommitContent(@NonNull InputContentInfo inputContentInfo, int flags,
+            @Nullable Bundle opts) {
+        final Bundle params = new Bundle();
+        params.putParcelable("inputContentInfo", inputContentInfo);
+        params.putInt("flags", flags);
+        params.putBundle("opts", opts);
+        return callCommandInternal("commitContent", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link android.inputmethodservice.InputMethodService#setBackDisposition(int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code setBackDisposition(backDisposition)}.</p>
+     *
+     * @param backDisposition to be passed as the {@code backDisposition} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
     @NonNull
     public ImeCommand callSetBackDisposition(int backDisposition) {
         final Bundle params = new Bundle();
         params.putInt("backDisposition", backDisposition);
-        final ImeCommand command = new ImeCommand(
-                "setBackDisposition", SystemClock.elapsedRealtimeNanos(), true, params);
-        final Intent intent = new Intent();
-        intent.setPackage(MockIme.getComponentName().getPackageName());
-        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
+        return callCommandInternal("setBackDisposition", params);
     }
 
+    /**
+     * Lets {@link MockIme} to call
+     * {@link android.inputmethodservice.InputMethodService#requestHideSelf(int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code requestHideSelf(flags)}.</p>
+     *
+     * @param flags to be passed as the {@code flags} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
     @NonNull
     public ImeCommand callRequestHideSelf(int flags) {
         final Bundle params = new Bundle();
         params.putInt("flags", flags);
-        final ImeCommand command = new ImeCommand(
-                "requestHideSelf", SystemClock.elapsedRealtimeNanos(), true, params);
-        final Intent intent = new Intent();
-        intent.setPackage(MockIme.getComponentName().getPackageName());
-        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
+        return callCommandInternal("requestHideSelf", params);
     }
 
+    /**
+     * Lets {@link MockIme} to call
+     * {@link android.inputmethodservice.InputMethodService#requestShowSelf(int)} with the given
+     * parameters.
+     *
+     * <p>This triggers {@code requestShowSelf(flags)}.</p>
+     *
+     * @param flags to be passed as the {@code flags} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
     @NonNull
     public ImeCommand callRequestShowSelf(int flags) {
         final Bundle params = new Bundle();
         params.putInt("flags", flags);
-        final ImeCommand command = new ImeCommand(
-                "requestShowSelf", SystemClock.elapsedRealtimeNanos(), true, params);
-        final Intent intent = new Intent();
-        intent.setPackage(MockIme.getComponentName().getPackageName());
-        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
+        return callCommandInternal("requestShowSelf", params);
     }
 
     /**
@@ -336,13 +943,6 @@ public class MockImeSession implements AutoCloseable {
     public ImeCommand callSendDownUpKeyEvents(int keyEventCode) {
         final Bundle params = new Bundle();
         params.putInt("keyEventCode", keyEventCode);
-        final ImeCommand command = new ImeCommand(
-                "sendDownUpKeyEvents", SystemClock.elapsedRealtimeNanos(), true, params);
-        final Intent intent = new Intent();
-        intent.setPackage(MockIme.getComponentName().getPackageName());
-        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
+        return callCommandInternal("sendDownUpKeyEvents", params);
     }
 }

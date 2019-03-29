@@ -21,6 +21,10 @@ import static android.server.am.Components.HOME_ACTIVITY;
 import static android.server.am.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.am.Components.SINGLE_HOME_ACTIVITY;
 import static android.server.am.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
+import static android.server.am.Components.TEST_LIVE_WALLPAPER_SERVICE;
+import static android.server.am.Components.TestLiveWallpaperKeys.COMPONENT;
+import static android.server.am.Components.TestLiveWallpaperKeys.ENGINE_DISPLAY_ID;
+import static android.server.am.StateLogger.logAlways;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
@@ -33,18 +37,23 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.WallpaperManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.server.am.WindowManagerState.WindowState;
 import android.text.TextUtils;
 import android.view.WindowManager;
@@ -55,6 +64,7 @@ import android.widget.LinearLayout;
 
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
@@ -95,16 +105,38 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
 
     // Wallpaper related tests
     /**
+     * Test WallpaperService.Engine#getDisplayContext can work on secondary display.
+     */
+    @Test
+    public void testWallpaperGetDisplayContext() throws Exception {
+        try (final ChangeWallpaperSession wallpaperSession = new ChangeWallpaperSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+
+            TestJournalContainer.start();
+
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(true)
+                    .createDisplay();
+
+            wallpaperSession.setWallpaperComponent(TEST_LIVE_WALLPAPER_SERVICE);
+            final String TARGET_ENGINE_DISPLAY_ID = ENGINE_DISPLAY_ID + newDisplay.mId;
+            final TestJournalProvider.TestJournal journal = TestJournalContainer.get(COMPONENT);
+            TestUtils.waitUntil("Waiting for wallpaper engine bounded", 5 /* timeoutSecond */,
+                    () -> journal.extras.getBoolean(TARGET_ENGINE_DISPLAY_ID));
+        }
+    }
+
+    /**
      * Tests that wallpaper shows on secondary displays.
      */
     @Test
     public void testWallpaperShowOnSecondaryDisplays() throws Exception {
-        mAmWmState.computeState(true);
-        final WindowManagerState.WindowState wallpaper =
-                mAmWmState.getWmState().findFirstWindowWithType(TYPE_WALLPAPER);
-        // Skip if there is no wallpaper.
-        assumeNotNull(wallpaper);
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final ChangeWallpaperSession wallpaperSession = new ChangeWallpaperSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+
+            final Bitmap tmpWallpaper = wallpaperSession.getTestBitmap();
+            wallpaperSession.setImageWallpaper(tmpWallpaper);
+
             final ActivityDisplay noDecorDisplay = virtualDisplaySession.setPublicDisplay(true)
                     .setShowSystemDecorations(false).createDisplay();
             // Tests when the system decor flag is included in that display, the wallpaper must
@@ -119,6 +151,42 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
 
             assertFalse("Wallpaper must not be displayed on the display without system decor flag",
                     isWallpaperOnDisplay(mAmWmState.getWmState(), noDecorDisplay.mId));
+        }
+    }
+
+    private class ChangeWallpaperSession implements AutoCloseable {
+        private final WallpaperManager mWallpaperManager;
+        private Bitmap mTestBitmap;
+
+        public ChangeWallpaperSession() {
+            mWallpaperManager = WallpaperManager.getInstance(mContext);
+        }
+
+        public Bitmap getTestBitmap() {
+            if (mTestBitmap == null) {
+                mTestBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+                final Canvas canvas = new Canvas(mTestBitmap);
+                canvas.drawColor(Color.BLUE);
+            }
+            return mTestBitmap;
+        }
+
+        public void setImageWallpaper(Bitmap bitmap) throws Exception {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setBitmap(bitmap));
+        }
+
+        public void setWallpaperComponent(ComponentName componentName) throws Exception {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setWallpaperComponent(componentName));
+        }
+
+        @Override
+        public void close() throws Exception {
+            SystemUtil.runWithShellPermissionIdentity(mWallpaperManager::clearWallpaper);
+            if (mTestBitmap != null) {
+                mTestBitmap.recycle();
+            }
         }
     }
 

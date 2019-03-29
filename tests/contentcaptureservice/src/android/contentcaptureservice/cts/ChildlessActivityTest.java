@@ -49,7 +49,6 @@ import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatche
 import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.DeviceConfig;
 import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillId;
@@ -65,14 +64,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
-import com.android.compatibility.common.util.DeviceConfigStateManager;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -87,14 +81,6 @@ public class ChildlessActivityTest
     private static final ActivityTestRule<ChildlessActivity> sActivityRule = new ActivityTestRule<>(
             ChildlessActivity.class, false, false);
 
-    private static final DeviceConfigStateManager sDeviceConfigManager =
-            new DeviceConfigStateManager(sContext, DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
-            ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
-
-    private static final RuleChain sMyRules = RuleChain
-            .outerRule(new DeviceConfigStateChangerRule(sDeviceConfigManager, "true"))
-            .around(sActivityRule);
-
     public ChildlessActivityTest() {
         super(ChildlessActivity.class);
     }
@@ -102,11 +88,6 @@ public class ChildlessActivityTest
     @Override
     protected ActivityTestRule<ChildlessActivity> getActivityTestRule() {
         return sActivityRule;
-    }
-
-    @Override
-    protected TestRule getMainTestRule() {
-        return sMyRules;
     }
 
     @Before
@@ -1081,7 +1062,7 @@ public class ChildlessActivityTest
                     // The service cannot re-enable itself, so we use settings instead.
                     setFeatureEnabledBySettings(true);
                 } else {
-                    service.disableContentCaptureServices();
+                    service.disableSelf();
                 }
                 break;
             case BY_SETTINGS:
@@ -1269,7 +1250,7 @@ public class ChildlessActivityTest
     private void setFeatureEnabledByDeviceConfig(@Nullable String value) {
         Log.d(TAG, "setFeatureEnabledByDeviceConfig(): " + value);
 
-        sDeviceConfigManager.set(value);
+        sKillSwitchManager.set(value);
     }
 
     @NonNull

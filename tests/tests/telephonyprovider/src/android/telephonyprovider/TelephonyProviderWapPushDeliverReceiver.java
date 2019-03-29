@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package android.telephony.gsm.cts;
+package android.telephonyprovider;
 
-import android.telephony.gsm.SmsMessage;
-import android.test.AndroidTestCase;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 
-@SuppressWarnings("deprecation")
-public class SmsMessage_SubmitPduTest extends AndroidTestCase {
-
-    public void testToString() {
-        SmsMessage.SubmitPdu sp = new SmsMessage.SubmitPdu();
-        assertNotNull(sp.toString());
+/**
+ * This receiver is used to provide the interface required for a default SMS application. It
+ * intentionally has no custom behavior.
+ */
+public class TelephonyProviderWapPushDeliverReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        // Do nothing
     }
 }

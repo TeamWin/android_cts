@@ -139,6 +139,32 @@ public class LocationManagerTest extends InstrumentationTestCase {
         doTestGetLocationUpdates_withListener("my coarse provider name");
     }
 
+    public void testGnssProvidedClock() throws Exception {
+        String providerName = LocationManager.GPS_PROVIDER;
+        try {
+            addTestProvider(providerName, Criteria.ACCURACY_COARSE, true,
+                    false, true);
+            Location location = new Location(providerName);
+            long elapsed = SystemClock.elapsedRealtimeNanos();
+            location.setLatitude(0);
+            location.setLongitude(0);
+            location.setAccuracy(0);
+            location.setElapsedRealtimeNanos(elapsed);
+            location.setTime(1);
+            mManager.setTestProviderLocation(providerName, location);
+            assertTrue(SystemClock.currentGnssTimeClock().millis() < 1000);
+
+            location.setTime(java.lang.System.currentTimeMillis());
+            location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+            mManager.setTestProviderLocation(providerName, location);
+            Thread.sleep(200);
+            long clockms = SystemClock.currentGnssTimeClock().millis();
+            assertTrue(System.currentTimeMillis() - clockms < 1000);
+        } finally {
+            removeTestProvider(providerName);
+        }
+    }
+
 
     private void doTestGetLocationUpdates_withIntent(String providerName) {
         try {

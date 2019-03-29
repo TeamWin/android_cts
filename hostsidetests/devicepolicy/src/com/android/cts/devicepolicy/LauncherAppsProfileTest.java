@@ -128,7 +128,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
         // Run tests to check SimpleApp exists in both profile and main user.
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testNoTestAppInjectedActivityFound",
+                LAUNCHER_TESTS_CLASS, "testDoPoNoTestAppInjectedActivityFound",
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber));
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testNoLaunchableActivityAppHasAppDetailsActivityInjected",

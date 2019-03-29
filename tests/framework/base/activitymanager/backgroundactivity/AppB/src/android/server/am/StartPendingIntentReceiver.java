@@ -11,22 +11,29 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 
-package android.telephonyprovider;
+package android.server.am;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
 /**
- * This receiver is used to provide the interface required for a default SMS application. It
- * intentionally has no custom behavior.
+ * Receive pending intent from AppA and launch it
  */
-public class TelephonyProviderReceiver extends BroadcastReceiver {
+public class StartPendingIntentReceiver extends BroadcastReceiver {
+    private static final String PENDING_INTENT_EXTRA = "PENDING_INTENT_EXTRA";
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        // Do nothing
+        PendingIntent pendingIntent = intent.getParcelableExtra(PENDING_INTENT_EXTRA);
+        try {
+            pendingIntent.send();
+        } catch (PendingIntent.CanceledException e) {
+            e.printStackTrace();
+        }
     }
 }

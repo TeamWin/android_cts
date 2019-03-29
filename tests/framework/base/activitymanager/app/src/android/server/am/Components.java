@@ -122,6 +122,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
     public static final ComponentName TEST_ACTIVITY_WITH_SAME_AFFINITY =
             component("TestActivityWithSameAffinity");
+    public static final ComponentName TEST_LIVE_WALLPAPER_SERVICE = component("LiveWallpaper");
     public static final ComponentName TOP_LEFT_LAYOUT_ACTIVITY = component("TopLeftLayoutActivity");
     public static final ComponentName TOP_RIGHT_LAYOUT_ACTIVITY =
             component("TopRightLayoutActivity");
@@ -179,6 +180,16 @@ public class Components extends ComponentsBase {
             component("SingleTaskInstanceDisplayActivity2");
     public static final ComponentName SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3 =
             component("SingleTaskInstanceDisplayActivity3");
+
+
+    /**
+     * The keys are used for TestJournalProvider when testing wallpaper component.
+     */
+    public static class TestLiveWallpaperKeys {
+        public static final String COMPONENT = "LiveWallpaper";
+        public static final String ENGINE_CREATED = "engine_created";
+        public static final String ENGINE_DISPLAY_ID = "engine_display_Id";
+    }
 
     /**
      * Action and extra key constants for {@link #TEST_ACTIVITY}.

@@ -31,6 +31,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Downloads;
 import android.provider.MediaStore.Files;
@@ -59,6 +60,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class MediaStore_DownloadsTest {
     private static final String TAG = MediaStore_DownloadsTest.class.getSimpleName();
@@ -185,7 +187,7 @@ public class MediaStore_DownloadsTest {
             cursor.moveToNext();
             assertEquals(mimeType,
                     cursor.getString(cursor.getColumnIndex(Downloads.MIME_TYPE)));
-            assertEquals(displayName,
+            assertEquals(displayName + ".html",
                     cursor.getString(cursor.getColumnIndex(Downloads.DISPLAY_NAME)));
             assertEquals(downloadUri.toString(),
                     cursor.getString(cursor.getColumnIndex(Downloads.DOWNLOAD_URI)));
@@ -347,7 +349,7 @@ public class MediaStore_DownloadsTest {
     }
 
     private void verifyScannedDownload(File file) throws Exception {
-        final Uri mediaStoreUri = ProviderTestUtils.scanFile(file, false);
+        final Uri mediaStoreUri = ProviderTestUtils.scanFile(file);
         Log.e(TAG, "Scanned file " + file.getAbsolutePath() + ": " + mediaStoreUri);
         mAddedUris.add(mediaStoreUri);
         assertArrayEquals("File hashes should match for " + file + " and " + mediaStoreUri,

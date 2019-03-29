@@ -55,7 +55,7 @@ public class PredictionService extends AppPredictionService {
     }
 
     @Override
-    public void onLocationShown(AppPredictionSessionId sessionId, String launchLocation,
+    public void onLaunchLocationShown(AppPredictionSessionId sessionId, String launchLocation,
             List<AppTargetId> targetIds) {
         mReporter.onLocationShown(sessionId, launchLocation, targetIds);
     }

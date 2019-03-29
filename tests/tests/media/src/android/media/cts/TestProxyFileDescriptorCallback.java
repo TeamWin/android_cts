@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Android Open Source Project
+ * Copyright 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,21 @@
 package android.media.cts;
 
 import android.content.res.AssetFileDescriptor;
-import android.media.cts.TestUtils.Monitor;
-import android.media.DataSourceCallback;
+import android.os.ProxyFileDescriptorCallback;
 import android.platform.test.annotations.AppModeFull;
+import android.system.ErrnoException;
+import android.system.OsConstants;
 import android.util.Log;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * A DataSourceCallback that reads from a byte array for use in tests.
+ * A ProxyFileDescriptorCallback that reads from a byte array for use in tests.
  */
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class TestDataSourceCallback extends DataSourceCallback {
-    private static final String TAG = "TestDataSourceCallback";
+public class TestProxyFileDescriptorCallback extends ProxyFileDescriptorCallback {
+    private static final String TAG = "TestProxyFileDescriptorCallback";
 
     private byte[] mData;
 
@@ -42,7 +42,8 @@ public class TestDataSourceCallback extends DataSourceCallback {
     private boolean mIsClosed;
 
     // Read an asset fd into a new byte array data source. Closes afd.
-    public static TestDataSourceCallback fromAssetFd(AssetFileDescriptor afd) throws IOException {
+    public static TestProxyFileDescriptorCallback fromAssetFd(AssetFileDescriptor afd)
+            throws IOException {
         try {
             InputStream in = afd.createInputStream();
             final int size = (int) afd.getDeclaredLength();
@@ -53,41 +54,40 @@ public class TestDataSourceCallback extends DataSourceCallback {
                 numRead = in.read(data, writeIndex, size - writeIndex);
                 writeIndex += numRead;
             } while (numRead >= 0);
-            return new TestDataSourceCallback(data);
+            return new TestProxyFileDescriptorCallback(data);
         } finally {
             afd.close();
         }
     }
 
-    public TestDataSourceCallback(byte[] data) {
+    public TestProxyFileDescriptorCallback(byte[] data) {
         mData = data;
     }
 
     @Override
-    public synchronized int readAt(long position, byte[] buffer, int offset, int size)
-            throws IOException {
+    public int onRead(long offset, int size, byte[] data) throws ErrnoException {
         if (mThrowFromReadAt) {
-            throw new IOException("Test exception from readAt()");
+            throw new ErrnoException("onRead", OsConstants.EIO);
         }
         if (mReturnFromReadAt != null) {
             return mReturnFromReadAt;
         }
 
         // Clamp reads past the end of the source.
-        if (position >= mData.length) {
-            return -1; // -1 indicates EOF
+        if (offset >= mData.length) {
+            return 0; // 0 indicates EOF
         }
-        if (position + size > mData.length) {
-            size -= (position + size) - mData.length;
+        if (offset + size > mData.length) {
+            size -= (offset + size) - mData.length;
         }
-        System.arraycopy(mData, (int)position, buffer, offset, size);
+        System.arraycopy(mData, (int)offset, data, 0, size);
         return size;
     }
 
     @Override
-    public synchronized long getSize() throws IOException {
+    public long onGetSize() throws ErrnoException {
         if (mThrowFromGetSize) {
-            throw new IOException("Test exception from getSize()");
+            throw new ErrnoException("onGetSize", OsConstants.EIO);
         }
         if (mReturnFromGetSize != null) {
             return mReturnFromGetSize;
@@ -97,10 +97,9 @@ public class TestDataSourceCallback extends DataSourceCallback {
         return mData.length;
     }
 
-    // Note: it's fine to keep using this data source after closing it.
     @Override
-    public synchronized void close() {
-        Log.v(TAG, "close()");
+    public void onRelease() {
+        Log.d(TAG, "onRelease()");
         mIsClosed = true;
     }
 
