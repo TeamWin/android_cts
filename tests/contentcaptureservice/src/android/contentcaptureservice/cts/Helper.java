@@ -43,6 +43,7 @@ public final class Helper {
     public static final long GENERIC_TIMEOUT_MS = 10_000;
 
     public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
+    public static final String OTHER_PACKAGE = "NOT.android.contentcaptureservice.cts";
 
     public static final long MY_EPOCH = SystemClock.uptimeMillis();
 
