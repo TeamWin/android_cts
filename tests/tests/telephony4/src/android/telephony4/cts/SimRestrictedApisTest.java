@@ -239,4 +239,19 @@ public class SimRestrictedApisTest extends AndroidTestCase {
         } catch (SecurityException expected) {
         }
     }
+
+    /**
+     * Tests the TelephonyManager.getUiccCardsInfo() API. This makes a call to  getUiccCardsInfo()
+     * API and expects a SecurityException since the test apk is not signed by certficate on the
+     * SIM.
+     */
+    public void testGetUiccCardsInfo() {
+        try {
+            if (isSimCardPresent()) {
+                mTelephonyManager.getUiccCardsInfo();
+                fail("Expected SecurityException. App doesn't have carrier privileges.");
+            }
+        } catch (SecurityException expected) {
+        }
+    }
 }
