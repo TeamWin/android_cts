@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nonnull;
 
 public class CarrierApiTest extends AndroidTestCase {
     private static final String TAG = "CarrierApiTest";
@@ -78,16 +79,24 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final int MAX_LOGICAL_CHANNEL = 3;
     // Class bytes. The logical channel used should be included for bits b2b1. TS 102 221 Table 11.5
     private static final int CLA_GET_RESPONSE = 0x00;
+    private static final int CLA_MANAGE_CHANNEL = 0x00;
     private static final int CLA_SELECT = 0x00;
     private static final int CLA_STATUS = 0x80;
     // APDU Instruction Bytes. TS 102 221 Section 10.1.2
     private static final int COMMAND_GET_RESPONSE = 0xC0;
+    private static final int COMMAND_MANAGE_CHANNEL = 0x70;
     private static final int COMMAND_SELECT = 0xA4;
     private static final int COMMAND_STATUS = 0xF2;
     // Status words. TS 102 221 Section 10.2.1
     private static final byte[] STATUS_NORMAL = {(byte) 0x90, (byte) 0x00};
     private static final String STATUS_NORMAL_STRING = "9000";
     private static final String STATUS_BYTES_REMAINING = "61";
+    private static final String STATUS_WARNING_A = "62";
+    private static final String STATUS_WARNING_B = "63";
+    private static final String STATUS_FILE_NOT_FOUND = "6a82";
+    private static final String STATUS_FUNCTION_NOT_SUPPORTED = "6a81";
+    private static final String STATUS_INCORRECT_PARAMETERS = "6a86";
+    private static final String STATUS_WRONG_CLASS = "6e00";
     // File ID for the master file. TS 102 221
     private static final String MF_FILE_ID = "3F00";
     // File ID for the MF Access Rule Reference. TS 102 221
@@ -541,6 +550,82 @@ public class CarrierApiTest extends AndroidTestCase {
         mTelephonyManager.iccCloseLogicalChannel(channel);
     }
 
+    /**
+     * Tests several invalid APDU instructions over a logical channel and makes sure appropriate
+     * errors are returned from the UICC.
+     */
+    public void testIccTransmitApduLogicalChannelWithInvalidInputs() {
+        if (!hasCellular) return;
+
+        // An open LC is required for transmitting apdu commands. This opens an LC to the MF.
+        IccOpenLogicalChannelResponse logicalChannel = mTelephonyManager.iccOpenLogicalChannel("");
+        int channel = logicalChannel.getChannel();
+
+        // Make some invalid APDU commands and make sure they fail as expected.
+        // Use an invalid p1 value for Status apdu
+        int cla = CLA_STATUS | channel;
+        int p1 = 0xFF; // only '00', '01', and '02' are allowed
+        int p2 = 0; // same response parameters as the SELECT in the iccOpenLogicalChannel() above
+        int p3 = 0; // length of 'data' payload
+        String data = "";
+        String response = mTelephonyManager
+                .iccTransmitApduLogicalChannel(channel, cla, COMMAND_STATUS, p1, p2, p3, data);
+        assertEquals(STATUS_INCORRECT_PARAMETERS, response);
+
+        // Select a file that doesn't exist
+        cla = CLA_SELECT;
+        p1 = 0x00; // select by file ID
+        p2 = 0x0C; // no data returned
+        p3 = 0x02; // length of 'data' payload
+        data = "FFFF"; // invalid file ID
+        response = mTelephonyManager
+                .iccTransmitApduLogicalChannel(channel, cla, COMMAND_SELECT, p1, p2, p3, data);
+        assertEquals(STATUS_FILE_NOT_FOUND, response);
+
+        // Manage channel with incorrect p1 parameter
+        cla = CLA_MANAGE_CHANNEL | channel;
+        p1 = 0x83; // Only '80' or '00' allowed for Manage Channel p1
+        p2 = channel; // channel to be closed
+        p3 = 0; // length of 'data' payload
+        data = "";
+        response = mTelephonyManager
+            .iccTransmitApduLogicalChannel(channel, cla, COMMAND_MANAGE_CHANNEL, p1, p2, p3, data);
+        assertEquals(STATUS_FUNCTION_NOT_SUPPORTED, response);
+
+        // Use an incorrect class byte for Status apdu
+        cla = 0xFF;
+        p1 = 0; // no indication of application status
+        p2 = 0; // same response parameters as the SELECT in the iccOpenLogicalChannel() above
+        p3 = 0; // length of 'data' payload
+        data = "";
+        response = mTelephonyManager
+            .iccTransmitApduLogicalChannel(channel, cla, COMMAND_STATUS, p1, p2, p3, data);
+        assertEquals(STATUS_WRONG_CLASS, response);
+
+        // Provide a data field that is longer than described for Select apdu
+        cla = CLA_SELECT | channel;
+        p1 = 0; // select by file ID
+        p2 = 0x0C; // no data returned
+        p3 = 0x04; // data passed is actually 2 bytes long
+        data = "3F00"; // valid ID
+        response = mTelephonyManager
+            .iccTransmitApduLogicalChannel(channel, cla, COMMAND_SELECT, p1, p2, p3, data);
+        assertTrue(isErrorResponse(response));
+
+        // Use an invalid instruction
+        cla = 0;
+        p1 = 0;
+        p2 = 0;
+        p3 = 0;
+        data = "";
+        int invalidInstruction = 0xFF; // see TS 102 221 Table 10.5 for valid instructions
+        response = mTelephonyManager
+            .iccTransmitApduLogicalChannel(channel, cla, invalidInstruction, p1, p2, p3, data);
+        assertTrue(isErrorResponse(response));
+
+        mTelephonyManager.iccCloseLogicalChannel(channel);
+    }
+
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
         // The assigned channel should be between the min and max allowed channel numbers
         int channel = response.getChannel();
@@ -560,6 +645,20 @@ public class CarrierApiTest extends AndroidTestCase {
     private boolean containsFileId(FcpTemplate fcpTemplate, String fileId) {
         return fcpTemplate.getTlvs().stream().anyMatch(tlv ->
                 tlv.getTag() == FILE_IDENTIFIER && tlv.getValue().equals(fileId));
+    }
+
+    /**
+     * Returns true iff {@code response} indicates an error with the previous APDU.
+     *
+     * @param response The APDU response to be checked.
+     *
+     * @return true iff the given response indicates an error occurred
+     */
+    private boolean isErrorResponse(@Nonnull String response) {
+        return !(STATUS_NORMAL_STRING.equals(response) ||
+            response.startsWith(STATUS_WARNING_A) ||
+            response.startsWith(STATUS_WARNING_B) ||
+            response.startsWith(STATUS_BYTES_REMAINING));
     }
 
     private static class IntentReceiver extends BroadcastReceiver {
