@@ -67,6 +67,8 @@
     android.intent.action.REGISTER_HFA
     android.intent.action.ActionHfaReminder
         Fixed in Honeywell's release build at Nov 25.
+    Bug: 129348724 android.intent.action.DEFINE (public in API 29)
+    Bug: 129348724 android.intent.action.TRANSLATE (public in API 29)
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -116,5 +118,7 @@
       <value>android.intent.action.ActionSetMbbInterval</value>
       <value>android.intent.action.REGISTER_HFA</value>
       <value>android.intent.action.ActionHfaReminder</value>
+      <value>android.intent.action.DEFINE</value>
+      <value>android.intent.action.TRANSLATE</value>
     </entry>
 </dynamicConfig>
