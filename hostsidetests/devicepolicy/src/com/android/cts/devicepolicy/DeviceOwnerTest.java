@@ -560,7 +560,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     mPrimaryUserId);
 
             // Reboot while in kiosk mode and then unlock the device
-            getDevice().reboot();
+            rebootAndWaitUntilReady();
 
             // Try to open settings via adb
             executeShellCommand("am start -a android.settings.SETTINGS");
