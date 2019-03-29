@@ -814,10 +814,10 @@ public class DrawableTest {
         // Setting a BlendMode should delegate to the PorterDuff.Mode API
         TestTintDrawable testTintDrawable = new TestTintDrawable();
         testTintDrawable.setTintMode(BlendMode.LUMINOSITY);
-        // 0 times invoking setTintMode because there is no equivalent for the luminosity blend mode
-        // on older API levels
-        assertEquals(0, testTintDrawable.getNumTimesTintModeInvoked());
-        assertEquals(1, testTintDrawable.getNumTimesBlendModeInvoked());
+        // 1 time invoking setTintMode because the default is applied if there is no equivalent for
+        // the luminosity blend mode on older API levels
+        assertEquals(1, testTintDrawable.getNumTimesTintModeInvoked());
+        assertEquals(2, testTintDrawable.getNumTimesBlendModeInvoked());
     }
 
     @Test
@@ -862,6 +862,20 @@ public class DrawableTest {
 
         assertEquals(1, test.getNumTimesTintModeInvoked());
         assertEquals(0, test.getNumTimesBlendModeInvoked());
+    }
+
+    @Test
+    public void testNullPorterDuffReturnsDefaultBlendMode() {
+        TestNullBlendModeDrawable d = new TestNullBlendModeDrawable();
+        d.setTintMode((PorterDuff.Mode) null);
+        assertEquals(BlendMode.SRC_IN, d.mode);
+    }
+
+    @Test
+    public void testNullBlendModeReturnsDefaultPorterDuffMode() {
+        TestNullPorterDuffDrawable d = new TestNullPorterDuffDrawable();
+        d.setTintMode((BlendMode) null);
+        assertEquals(PorterDuff.Mode.SRC_IN, d.mode);
     }
 
     // Since Mockito can't mock or spy on protected methods, we have a custom extension
@@ -949,6 +963,66 @@ public class DrawableTest {
 
         public int getNumTimesBlendModeInvoked() {
             return mSetBlendModeInvoked;
+        }
+    }
+
+    private static class TestNullPorterDuffDrawable extends Drawable {
+
+        public PorterDuff.Mode mode;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public void setTintMode(PorterDuff.Mode tintMode) {
+            mode = tintMode;
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+    }
+
+    private static class TestNullBlendModeDrawable extends Drawable {
+
+        public BlendMode mode;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public void setTintMode(BlendMode blendMode) {
+            mode = blendMode;
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
         }
     }
 
