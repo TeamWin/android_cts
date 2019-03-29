@@ -27,6 +27,7 @@ import android.view.Gravity;
 public class DialogTestActivity extends Activity {
 
     AlertDialog mDialog;
+    int mSize;
 
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -44,6 +45,7 @@ public class DialogTestActivity extends Activity {
     private void setupTest(Intent intent) {
         String testCase = intent.getStringExtra(
                 "android.server.FrameTestApp.DialogTestCase");
+        mSize = getSize();
         switch (testCase) {
            case "MatchParent": {
                testMatchParent();
@@ -129,23 +131,23 @@ public class DialogTestActivity extends Activity {
 
     private void testExplicitSize() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = 200;
-            params.height = 200;
+            params.width = mSize;
+            params.height = mSize;
         });
     }
 
     private void testExplicitSizeTopLeftGravity() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = 200;
-            params.height = 200;
+            params.width = mSize;
+            params.height = mSize;
             params.gravity = Gravity.TOP | Gravity.LEFT;
         });
     }
 
     private void testExplicitSizeBottomRightGravity() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = 200;
-            params.height = 200;
+            params.width = mSize;
+            params.height = mSize;
             params.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         });
     }
@@ -197,10 +199,15 @@ public class DialogTestActivity extends Activity {
             params.gravity = Gravity.LEFT | Gravity.TOP;
             params.horizontalMargin = .25f;
             params.verticalMargin = .35f;
-            params.width = 200;
-            params.height = 200;
+            params.width = mSize;
+            params.height = mSize;
             params.x = 0;
             params.y = 0;
         });
+    }
+
+    private int getSize() {
+        float density = getResources().getDisplayMetrics().density;
+        return (int)(200 * density);
     }
 }
