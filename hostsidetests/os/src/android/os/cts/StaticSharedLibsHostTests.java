@@ -176,6 +176,40 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         }
     }
 
+    public void testLoadCodeAndResourcesFromSharedLibraryRecursivelyUpdate() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        try {
+            // Install library dependency
+            assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+            // Install the library
+            assertNull(install(STATIC_LIB_PROVIDER1_APK));
+            // Install the client
+            assertNull(install(STATIC_LIB_CONSUMER1_APK));
+            // Try to load code and resources
+            runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
+                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "testLoadCodeAndResources");
+            // Install library dependency
+            assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK, true));
+            // Try to load code and resources
+            runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
+                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "testLoadCodeAndResources");
+            // Install the library
+            assertNull(install(STATIC_LIB_PROVIDER1_APK, true));
+            // Try to load code and resources
+            runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
+                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "testLoadCodeAndResources");
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
+    }
+
     @AppModeInstant
     public void testCannotUninstallUsedSharedLibrary1InstantMode() throws Exception {
         mInstantMode = true;
@@ -644,7 +678,11 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     }
 
     private String install(String apk) throws DeviceNotAvailableException, FileNotFoundException {
-        return getDevice().installPackage(mBuildHelper.getTestFile(apk), false, false,
+        return install(apk, false);
+    }
+    private String install(String apk, boolean reinstall)
+            throws DeviceNotAvailableException, FileNotFoundException {
+        return getDevice().installPackage(mBuildHelper.getTestFile(apk), reinstall, false,
                 apk.contains("consumer") && mInstantMode ? "--instant" : "");
     }
 }
