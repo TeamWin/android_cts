@@ -146,6 +146,9 @@ public class AppPredictionServiceTest {
         // Ensure we don't get updates after the listeners are unregistered
         assertFalse(cb.requestAndWaitForTargets(createPredictions(),
                 () -> client.requestPredictionUpdate()));
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     @Test
@@ -164,6 +167,9 @@ public class AppPredictionServiceTest {
             mReporter.awaitOnAppTargetEvent();
         }
         assertEquals(mReporter.mEvents, events);
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     @Test
@@ -181,6 +187,9 @@ public class AppPredictionServiceTest {
         mReporter.awaitOnLocationShown();
         assertEquals(mReporter.mLocationsShown, TEST_LAUNCH_LOCATION);
         assertEquals(mReporter.mLocationsShownTargets, targetIds);
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     @Test
@@ -202,6 +211,9 @@ public class AppPredictionServiceTest {
         assertTrue(cb.requestAndWaitForTargets(sortedTargets,
                 () -> client.sortTargets(shuffledTargets,
                         Executors.newSingleThreadExecutor(), cb)));
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     private void assertFails(Runnable r) {
