@@ -272,6 +272,13 @@ public class SystemFeaturesTest {
     }
 
     @Test
+    public void testGamepadFeature() {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            assertAvailable(PackageManager.FEATURE_GAMEPAD);
+        }
+    }
+
+    @Test
     public void testLiveWallpaperFeature() {
         try {
             Intent intent = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
