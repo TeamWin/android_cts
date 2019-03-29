@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.support.test.uiautomator.UiDevice;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -31,6 +32,8 @@ import com.android.compatibility.common.util.CddTest;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@link ActivityInstrumentationTestCase2} that tests {@link ActivityManager#getMemoryClass()}
@@ -156,12 +159,35 @@ public class ActivityManagerMemoryClassTest
 
     @CddTest(requirement="3.7")
     public void testGetMemoryClass() throws Exception {
+        UiDevice uiDevice = UiDevice.getInstance(getInstrumentation());
+        int density = resetDensityIfNeeded(uiDevice);
+
         int memoryClass = getMemoryClass();
         int screenDensity = getScreenDensity();
         int screenSize = getScreenSize();
         assertMemoryForScreenDensity(memoryClass, screenDensity, screenSize);
 
         runHeapTestApp(memoryClass);
+
+        restoreDensityIfNeeded(uiDevice, density);
+    }
+
+    private int resetDensityIfNeeded(UiDevice device) throws Exception {
+        final String output = device.executeShellCommand("wm density");
+         final Pattern p = Pattern.compile("Override density: (\\d+)");
+         final Matcher m = p.matcher(output);
+         if (m.find()) {
+             device.executeShellCommand("wm density reset");
+             int restoreDensity = Integer.parseInt(m.group(1));
+             return restoreDensity;
+         }
+         return -1;
+    }
+
+    private void restoreDensityIfNeeded(UiDevice device, int restoreDensity) throws Exception {
+        if (restoreDensity > 0) {
+            device.executeShellCommand("wm density " + restoreDensity);
+        }
     }
 
     private int getMemoryClass() {
