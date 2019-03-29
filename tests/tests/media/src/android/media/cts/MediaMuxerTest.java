@@ -50,6 +50,7 @@ public class MediaMuxerTest extends AndroidTestCase {
     private static final float BAD_LATITUDE = 91.0f;
     private static final float BAD_LONGITUDE = -181.0f;
     private static final float TOLERANCE = 0.0002f;
+    private static final long OFFSET_TIME_US = 29 * 60 * 1000000L; // 29 minutes
     private Resources mResources;
 
     @Override
@@ -293,8 +294,9 @@ public class MediaMuxerTest extends AndroidTestCase {
             simulateVideoFramesDropIssuesAndMux(sourceId, outputFile, 2 /* track index */,
                 MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             verifyAFewSamplesTimestamp(sourceId, outputFile);
-            verifySamplesMatch(sourceId, outputFile, 1000000 /* sample at 1 sec */);
-            verifySamplesMatch(sourceId, outputFile, 7000000 /* sample at 7 sec */);
+            verifySamplesMatch(sourceId, outputFile, 66667 /* sample around 0 sec */, 0);
+            verifySamplesMatch(
+                    sourceId, outputFile, 8033333 /*  sample around 8 sec */, OFFSET_TIME_US);
         } finally {
             new File(outputFile).delete();
         }
@@ -655,13 +657,14 @@ public class MediaMuxerTest extends AndroidTestCase {
      * Uses 2 MediaExtractor, seeking to the same position, reads the sample and
      * makes sure the samples match.
      */
-    private void verifySamplesMatch(int srcMedia, String testMediaPath,
-            int seekToUs) throws IOException {
+    private void verifySamplesMatch(int srcMedia, String testMediaPath, int seekToUs,
+            long offsetTimeUs) throws IOException {
         AssetFileDescriptor testFd = mResources.openRawResourceFd(srcMedia);
         MediaExtractor extractorSrc = new MediaExtractor();
         extractorSrc.setDataSource(testFd.getFileDescriptor(),
                 testFd.getStartOffset(), testFd.getLength());
         int trackCount = extractorSrc.getTrackCount();
+        final int videoTrackIndex = 0;
 
         MediaExtractor extractorTest = new MediaExtractor();
         extractorTest.setDataSource(testMediaPath);
@@ -680,22 +683,34 @@ public class MediaMuxerTest extends AndroidTestCase {
                 fail("format didn't match on track No." + i +
                         formatSrc.toString() + "\n" + formatTest.toString());
             }
-            extractorSrc.selectTrack(i);
-            extractorTest.selectTrack(i);
-        }
-        // Pick a time and try to compare the frame.
-        extractorSrc.seekTo(seekToUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-        extractorTest.seekTo(seekToUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            extractorSrc.selectTrack(videoTrackIndex);
+            extractorTest.selectTrack(videoTrackIndex);
 
-        int bufferSize = MAX_SAMPLE_SIZE;
-        ByteBuffer byteBufSrc = ByteBuffer.allocate(bufferSize);
-        ByteBuffer byteBufTest = ByteBuffer.allocate(bufferSize);
+            // Pick a time and try to compare the frame.
+            extractorSrc.seekTo(seekToUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            extractorTest.seekTo(seekToUs + offsetTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
-        extractorSrc.readSampleData(byteBufSrc, 0);
-        extractorTest.readSampleData(byteBufTest, 0);
+            int bufferSize = MAX_SAMPLE_SIZE;
+            ByteBuffer byteBufSrc = ByteBuffer.allocate(bufferSize);
+            ByteBuffer byteBufTest = ByteBuffer.allocate(bufferSize);
 
-        if (!(byteBufSrc.equals(byteBufTest))) {
-            fail("byteBuffer didn't match");
+            int srcBufSize = extractorSrc.readSampleData(byteBufSrc, 0);
+            int testBufSize = extractorTest.readSampleData(byteBufTest, 0);
+
+            if (!(byteBufSrc.equals(byteBufTest))) {
+                if (VERBOSE) {
+                    Log.d(TAG,
+                            "srcTrackIndex:" + extractorSrc.getSampleTrackIndex()
+                                    + "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                    Log.d(TAG,
+                            "srcTSus:" + extractorSrc.getSampleTime()
+                                    + " testTSus:" + extractorTest.getSampleTime());
+                    Log.d(TAG, "srcBufSize:" + srcBufSize + "testBufSize:" + testBufSize);
+                }
+                fail("byteBuffer didn't match");
+            }
+            extractorSrc.unselectTrack(i);
+            extractorTest.unselectTrack(i);
         }
         extractorSrc.release();
         extractorTest.release();
@@ -739,10 +754,9 @@ public class MediaMuxerTest extends AndroidTestCase {
         int videoSampleCount = 0;
         // Counting frame index values starting from 1
         final int muxAllTypeVideoFramesUntilIndex = 136; // I/P/B frames passed as it is until this
-        final int muxAllTypeVideoFramesFromIndex = 157; // I/P/B frames passed as it is from this
+        final int muxAllTypeVideoFramesFromIndex = 171; // I/P/B frames passed as it is from this
         final int pFrameBeforeARandomBframeIndex = 137;
         final int bFrameAfterPFrameIndex = pFrameBeforeARandomBframeIndex+1;
-        final int oneFrameDurationUs = 33333; // 30 fps input clip, one frame durationUs = 33333.
 
         ByteBuffer dstBuf = ByteBuffer.allocate(bufferSize);
         BufferInfo bufferInfo = new BufferInfo();
@@ -767,19 +781,18 @@ public class MediaMuxerTest extends AndroidTestCase {
                     if (VERBOSE) {
                         Log.i(TAG, "videoSampleCount : " + videoSampleCount);
                     }
-                    if (videoSampleCount <= muxAllTypeVideoFramesUntilIndex ||
-                            videoSampleCount == bFrameAfterPFrameIndex ||
-                            videoSampleCount >= muxAllTypeVideoFramesFromIndex) {
+                    if (videoSampleCount <= muxAllTypeVideoFramesUntilIndex
+                            || videoSampleCount == bFrameAfterPFrameIndex) {
                         // Write frame as it is.
                         muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
-                    } else if (videoSampleCount == pFrameBeforeARandomBframeIndex) {
-                        // Adjust time stamp for this P frame to a few frames later, say 15
-                        bufferInfo.presentationTimeUs += oneFrameDurationUs * 15;
+                    } else if (videoSampleCount == pFrameBeforeARandomBframeIndex
+                            || videoSampleCount >= muxAllTypeVideoFramesFromIndex) {
+                        // Adjust time stamp for this P frame to a few frames later, say ~5seconds
+                        bufferInfo.presentationTimeUs += OFFSET_TIME_US;
                         muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
-                    }
-                    else {
+                    } else {
                         // Skip frames after bFrameAfterPFrameIndex
-                        // and before muxAllTypeVideoFramesFromIndex, 139 to 156.
+                        // and before muxAllTypeVideoFramesFromIndex.
                         if (VERBOSE) {
                             Log.i(TAG, "skipped this frame");
                         }
@@ -813,7 +826,7 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     private void verifyAFewSamplesTimestamp(int srcMediaId, String testMediaPath)
             throws IOException {
-        final int numFramesTSCheck = 20; // Num frames to be checked for its timestamps
+        final int numFramesTSCheck = 10; // Num frames to be checked for its timestamps
 
         AssetFileDescriptor srcFd = mResources.openRawResourceFd(srcMediaId);
         MediaExtractor extractorSrc = new MediaExtractor();
@@ -824,33 +837,42 @@ public class MediaMuxerTest extends AndroidTestCase {
 
         int trackCount = extractorSrc.getTrackCount();
         for (int i = 0; i < trackCount; i++) {
+            MediaFormat format = extractorSrc.getTrackFormat(i);
             extractorSrc.selectTrack(i);
             extractorTest.selectTrack(i);
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                // Check time stamps for numFramesTSCheck frames from 33333us.
+                checkNumFramesTimestamp(33333, 0, numFramesTSCheck, extractorSrc, extractorTest);
+                // Check time stamps for numFramesTSCheck frames from 9333333 -
+                // sync frame after framedrops at index 172 of video track.
+                checkNumFramesTimestamp(
+                        9333333, OFFSET_TIME_US, numFramesTSCheck, extractorSrc, extractorTest);
+            } else if (format.getString(MediaFormat.KEY_MIME).startsWith("audio/")) {
+                // Check timestamps for all audio frames. Test file has 427 audio frames.
+                checkNumFramesTimestamp(0, 0, 427, extractorSrc, extractorTest);
+            }
+            extractorSrc.unselectTrack(i);
+            extractorTest.unselectTrack(i);
         }
-        // Check time stamps for numFramesTSCheck frames from start(0).
-        checkNumFramesTimestamp(0, numFramesTSCheck, extractorSrc, extractorTest);
-        // Check time stamps for numFramesTSCheck frames from 6000000 -
-        // sync frame after framedrops at index 172 of video track.
-        checkNumFramesTimestamp(6000000, numFramesTSCheck, extractorSrc, extractorTest);
 
         extractorSrc.release();
         extractorTest.release();
         srcFd.close();
     }
 
-    private void checkNumFramesTimestamp(long seekTimeUs, int numFrames,
-        MediaExtractor extractorSrc, MediaExtractor extractorTest) {
+    private void checkNumFramesTimestamp(long seekTimeUs, long offsetTimeUs, int numFrames,
+            MediaExtractor extractorSrc, MediaExtractor extractorTest) {
         long srcSampleTimeUs = -1;
         long testSampleTimeUs = -1;
         extractorSrc.seekTo(seekTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-        extractorTest.seekTo(seekTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        extractorTest.seekTo(seekTimeUs + offsetTimeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
         while (numFrames-- > 0 ) {
             srcSampleTimeUs = extractorSrc.getSampleTime();
             testSampleTimeUs = extractorTest.getSampleTime();
             if(srcSampleTimeUs == -1 || testSampleTimeUs == -1){
                 fail("either of tracks reached end of stream");
             }
-            if (srcSampleTimeUs != testSampleTimeUs ) {
+            if ((srcSampleTimeUs + offsetTimeUs) != testSampleTimeUs) {
                 if (VERBOSE) {
                     Log.d(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
                         "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
