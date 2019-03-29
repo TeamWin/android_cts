@@ -34,6 +34,8 @@
     //Maps(version: 10.11.1~10.13) was sending this intent and
     //from version 10.14 newer intent 'com.google.android.apps.gmm.TIMELINE_POST_VISIT_BADGE'
     //is being sent.
+    Bug: 129348724 android.intent.action.DEFINE (public in API 29)
+    Bug: 129348724 android.intent.action.TRANSLATE (public in API 29)
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -49,5 +51,7 @@
       <value>android.intent.action.View</value>
       <value>android.intent.action.BADGE_COUNT_UPDATE</value>
       <value>android.intent.action.TIMELINE_POST_VISIT_BADGE</value>
+      <value>android.intent.action.DEFINE</value>
+      <value>android.intent.action.TRANSLATE</value>
     </entry>
 </dynamicConfig>
