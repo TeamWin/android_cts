@@ -44,7 +44,12 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     private static final String TEST_APP_PACKAGE_NAME = "android.cts.signedconfig.app";
     private static final String TEST_APP_PACKAGE2_NAME = "android.cts.signedconfig.app2";
     private static final String TEST_APP_APK_NAME_V1 = "CtsSignedConfigTestAppV1.apk";
+    private static final String TEST_APP_APK_NAME_V1_INSTANT =
+            "CtsSignedConfigTestAppV1_instant.apk";
     private static final String TEST_APP_APK_NAME_V2 = "CtsSignedConfigTestAppV2.apk";
+    private static final String TEST_APP_APK_NAME_V2_INSTANT =
+            "CtsSignedConfigTestAppV2_instant.apk";
+    private static final String TEST_APP_APK_NAME_PACKAGE2_V1 = "CtsSignedConfigTestApp2V1.apk";
     private static final String TEST_APP_APK_NAME_PACKAGE2_V2 = "CtsSignedConfigTestApp2V2.apk";
     private static final String TEST_APP_APK_NAME_V1_BAD_SIGNATURE =
             "CtsSignedConfigTestAppV1_badsignature.apk";
@@ -59,6 +64,8 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
 
     private static final String SETTING_BLACKLIST_EXEMPTIONS = "hidden_api_blacklist_exemptions";
     private static final String SETTING_SIGNED_CONFIG_VERSION = "signed_config_version";
+
+    private static final String ARG_INSTANT = "--instant";
 
     private IBuildInfo mCtsBuild;
     private ITestDevice mDevice;
@@ -130,14 +137,22 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitForDevice(1);
     }
 
-    private void installPackage(String apkName)
+    private void installPackage(String apkName, String... extraArgs)
             throws FileNotFoundException, DeviceNotAvailableException {
-        assertThat(getDevice().installPackage(getTestApk(apkName), false)).isNull();
+        assertThat(getDevice().installPackage(getTestApk(apkName), false, extraArgs)).isNull();
     }
 
     @Test
     public void testConfigAppliedOnInstall() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
+        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+                "LClass1;->method1(,LClass1;->field1:");
+    }
+
+    @Test
+    public void testConfigAppliedOnInstallInstant() throws Exception {
+        installPackage(TEST_APP_APK_NAME_V1_INSTANT, ARG_INSTANT);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
         assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
                 "LClass1;->method1(,LClass1;->field1:");
@@ -154,8 +169,39 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     }
 
     @Test
+    public void testConfigUpgradedOnInstallInstant() throws Exception {
+        installPackage(TEST_APP_APK_NAME_PACKAGE2_V1);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
+        installPackage(TEST_APP_APK_NAME_V2_INSTANT, ARG_INSTANT);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
+        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+                "LClass2;->method2(,LClass2;->field2:");
+    }
+
+    @Test
+    public void testConfigUpgradedOnInstallAfterInstant() throws Exception {
+        installPackage(TEST_APP_APK_NAME_V1_INSTANT, ARG_INSTANT);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
+        installPackage(TEST_APP_APK_NAME_V2);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
+        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+                "LClass2;->method2(,LClass2;->field2:");
+    }
+
+    @Test
     public void testConfigRemainsAfterUninstall() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
+        waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
+        getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
+        waitForDevice(5);
+        assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION)).isEqualTo("1");
+        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+                "LClass1;->method1(,LClass1;->field1:");
+    }
+
+    @Test
+    public void testConfigRemainsAfterUninstallInstant() throws Exception {
+        installPackage(TEST_APP_APK_NAME_V1_INSTANT, ARG_INSTANT);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         waitForDevice(5);

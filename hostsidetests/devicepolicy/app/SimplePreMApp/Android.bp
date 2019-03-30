@@ -14,7 +14,7 @@
 
 // This app is meant for testing device policy permission APIs on legacy apps (pre-M)
 
-android_test {
+android_test_helper_app {
     name: "CtsSimplePreMApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],

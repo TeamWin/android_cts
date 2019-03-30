@@ -38,6 +38,7 @@ import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
@@ -94,6 +95,8 @@ public class ServiceTest extends ActivityTestsBase {
     private Intent mIsolatedService;
     private Intent mExternalService;
     private Executor mContextMainExecutor;
+    private HandlerThread mBackgroundThread;
+    private Executor mBackgroundThreadExecutor;
 
     private IBinder mStateReceiver;
 
@@ -147,6 +150,7 @@ public class ServiceTest extends ActivityTestsBase {
         private final boolean mSetReporter;
         private boolean mMonitor;
         private int mCount;
+        private Thread mOnServiceConnectedThread;
 
         public TestConnection(boolean expectDisconnect, boolean setReporter) {
             mExpectDisconnect = expectDisconnect;
@@ -158,8 +162,13 @@ public class ServiceTest extends ActivityTestsBase {
             mMonitor = v;
         }
 
+        public Thread getOnServiceConnectedThread() {
+            return mOnServiceConnectedThread;
+        }
+
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            mOnServiceConnectedThread = Thread.currentThread();
             if (mSetReporter) {
                 Parcel data = Parcel.obtain();
                 data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
@@ -215,6 +224,7 @@ public class ServiceTest extends ActivityTestsBase {
         private int mUid;
         private int mPid;
         private int mPpid;
+        private Thread mOnServiceConnectedThread;
 
         public IsolatedConnection() {
             mUid = mPid = -1;
@@ -344,9 +354,14 @@ public class ServiceTest extends ActivityTestsBase {
             return value;
         }
 
+        public Thread getOnServiceConnectedThread() {
+            return mOnServiceConnectedThread;
+        }
+
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             synchronized (this) {
+                mOnServiceConnectedThread = Thread.currentThread();
                 mService = service;
                 mUid = getUidIpc();
                 mPid = getPidIpc();
@@ -649,6 +664,19 @@ public class ServiceTest extends ActivityTestsBase {
         mContextMainExecutor = mContext.getMainExecutor();
     }
 
+    private void setupBackgroundThread() {
+        HandlerThread thread  = new HandlerThread("ServiceTestBackgroundThread");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
+        mBackgroundThread = thread;
+        mBackgroundThreadExecutor = new Executor() {
+            @Override
+            public void execute(Runnable runnable) {
+                handler.post(runnable);
+            }
+        };
+    }
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
@@ -658,6 +686,11 @@ public class ServiceTest extends ActivityTestsBase {
         mContext.stopService(mLocalGrantedService);
         mContext.stopService(mLocalService_ApplicationHasPermission);
         mContext.stopService(mExternalService);
+        if (mBackgroundThread != null) {
+            mBackgroundThread.quitSafely();
+        }
+        mBackgroundThread = null;
+        mBackgroundThreadExecutor = null;
     }
 
     private class MockBinder extends Binder {
@@ -740,6 +773,19 @@ public class ServiceTest extends ActivityTestsBase {
 
     public void testLocalBindClass() throws Exception {
         bindExpectResult(mLocalService);
+    }
+
+    public void testBindServiceWithExecutor() throws Exception {
+      setupBackgroundThread();
+
+      TestConnection conn = new TestConnection(true, false);
+      mExpectedServiceState = STATE_START_1;
+      mContext.bindService(
+          mLocalService, Context.BIND_AUTO_CREATE, mBackgroundThreadExecutor, conn);
+      waitForResultOrThrow(DELAY, EXIST_CONN_TO_RECEIVE_SERVICE);
+      assertEquals(mBackgroundThread, conn.getOnServiceConnectedThread());
+
+      mContext.unbindService(conn);
     }
 
     /* Just the Intent for a foreground service */
@@ -1166,6 +1212,16 @@ public class ServiceTest extends ActivityTestsBase {
                 mContext.unbindService(conn1a);
             }
         }
+    }
+
+    public void testBindIsolatedServiceOnBackgroundThread() throws Exception {
+        setupBackgroundThread();
+        IsolatedConnection conn = new IsolatedConnection();
+        mContext.bindIsolatedService(mIsolatedService, Context.BIND_AUTO_CREATE,
+            "background_instance", mBackgroundThreadExecutor, conn);
+        conn.waitForService(DELAY);
+        assertEquals(mBackgroundThread, conn.getOnServiceConnectedThread());
+        mContext.unbindService(conn);
     }
 
     static final int BINDING_WEAK = 0;

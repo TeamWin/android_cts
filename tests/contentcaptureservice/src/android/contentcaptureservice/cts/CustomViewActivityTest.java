@@ -26,23 +26,30 @@ import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknown
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewsDisappeared;
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
+import static android.contentcaptureservice.cts.Helper.OTHER_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+import static android.view.contentcapture.ContentCaptureCondition.FLAG_IS_REGEX;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewStructure;
 import android.view.autofill.AutofillId;
+import android.view.contentcapture.ContentCaptureCondition;
 import android.view.contentcapture.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.ContentCaptureSession;
 
 import androidx.annotation.NonNull;
@@ -52,6 +59,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
@@ -402,6 +410,48 @@ public class CustomViewActivityTest extends
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
         // TODO(b/122315042): assert other views disappeared
+    }
+
+    @Test
+    public void testContentCaptureConditions() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final Set<ContentCaptureCondition> conditions = new ArraySet<>(1);
+        final LocusId locusId = new LocusId("Locus At me!");
+        conditions.add(new ContentCaptureCondition(locusId, FLAG_IS_REGEX));
+        service.setContentCaptureConditions(MY_PACKAGE, conditions);
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureManager mgr = activity.getContentCaptureManager();
+        final Set<ContentCaptureCondition> actualConditions = mgr.getContentCaptureConditions();
+        assertThat(actualConditions).isNotNull();
+        assertThat(actualConditions).hasSize(1);
+
+        final ContentCaptureCondition actualCondition = actualConditions.iterator().next();
+        assertThat(actualCondition).isNotNull();
+        assertThat(actualCondition.getLocusId()).isEqualTo(locusId);
+        assertThat(actualCondition.getFlags()).isEqualTo(FLAG_IS_REGEX);
+    }
+
+    @Test
+    public void testContentCaptureConditions_otherPackage() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final Set<ContentCaptureCondition> conditions = new ArraySet<>(1);
+        final LocusId locusId = new LocusId("Locus At me!");
+        conditions.add(new ContentCaptureCondition(locusId, FLAG_IS_REGEX));
+        service.setContentCaptureConditions(OTHER_PACKAGE, conditions);
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureManager mgr = activity.getContentCaptureManager();
+        final Set<ContentCaptureCondition> actualConditions = mgr.getContentCaptureConditions();
+        assertThat(actualConditions).isNull();
     }
 
     /**

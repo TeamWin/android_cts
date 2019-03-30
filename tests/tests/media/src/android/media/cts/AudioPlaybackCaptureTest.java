@@ -206,6 +206,16 @@ public class AudioPlaybackCaptureTest {
         } else {
             testPlaybackCapture(ALLOW_CAPTURE_BY_SYSTEM, playbackUsage, dataPresent);
             testPlaybackCapture(ALLOW_CAPTURE_BY_NONE, playbackUsage, dataPresent);
+
+            try {
+                mAudioManager.setAllowedCapturePolicy(ALLOW_CAPTURE_BY_SYSTEM);
+                testPlaybackCapture(ALLOW_CAPTURE_BY_ALL, playbackUsage, dataPresent);
+                mAudioManager.setAllowedCapturePolicy(ALLOW_CAPTURE_BY_NONE);
+                testPlaybackCapture(ALLOW_CAPTURE_BY_ALL, playbackUsage, dataPresent);
+            } finally {
+                // Do not impact followup test is case of failure
+                mAudioManager.setAllowedCapturePolicy(ALLOW_CAPTURE_BY_ALL);
+            }
         }
     }
 

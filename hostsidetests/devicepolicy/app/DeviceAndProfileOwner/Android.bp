@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp23",
     defaults: ["cts_defaults"],
     platform_apis: true,
@@ -40,7 +40,7 @@ android_test {
     manifest: "api23/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp25",
     defaults: ["cts_defaults"],
     platform_apis: true,
@@ -68,7 +68,7 @@ android_test {
     manifest: "api25/AndroidManifest.xml",
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp",
     defaults: ["cts_defaults"],
     platform_apis: true,

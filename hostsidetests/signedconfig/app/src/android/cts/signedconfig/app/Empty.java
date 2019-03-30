@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.cts.test.signedconfig.app;
+package android.cts.signedconfig.app;
 
-public class Empty {
+import android.app.Activity;
+
+public class Empty extends Activity {
 
 }
