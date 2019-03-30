@@ -55,6 +55,11 @@ import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -70,6 +75,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Process;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
@@ -83,6 +89,10 @@ import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
+
+import com.android.cts.mockime.ImeCommand;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
@@ -101,6 +111,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
     private static final String TAG = "LoginActivityTest";
+    private static final long MOCK_IME_TIMEOUT_MS = 5_000;
 
     @Rule
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =
@@ -1018,6 +1029,73 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
         runShellCommand("input keyevent KEYCODE_A");
+        sUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void filterText_usingKeyboard() throws Exception {
+        sMockImeSessionRule.assumeAvailable();
+        Log.v(TAG, "filterText_usingKeyboard(): Good News, Everyone! MockIme is available!");
+
+        final String AA = "Two A's";
+        final String AB = "A and B";
+        final String B = "Only B";
+
+        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aa")
+                        .setPresentation(createPresentation(AA))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab")
+                        .setPresentation(createPresentation(AB))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "b")
+                        .setPresentation(createPresentation(B))
+                        .build())
+                .build());
+
+        final ImeEventStream stream = mockImeSession.openEventStream();
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Wait until the MockIme gets bound to the TestActivity.
+        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
+        expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
+                MOCK_IME_TIMEOUT_MS);
+
+        // With no filter text all datasets should be shown
+        sUiBot.assertDatasets(AA, AB, B);
+
+        // Only two datasets start with 'a'
+        final ImeCommand cmd1 = mockImeSession.callCommitText("a", 1);
+        expectCommand(stream, cmd1, MOCK_IME_TIMEOUT_MS);
+        sUiBot.assertDatasets(AA, AB);
+
+        // Only one dataset start with 'aa'
+        final ImeCommand cmd2 = mockImeSession.callCommitText("a", 1);
+        expectCommand(stream, cmd2, MOCK_IME_TIMEOUT_MS);
+        sUiBot.assertDatasets(AA);
+
+        // Only two datasets start with 'a'
+        runShellCommand("input keyevent KEYCODE_DEL"); // NOTE: MockIme on O doesn't support it
+        sUiBot.assertDatasets(AA, AB);
+
+        // With no filter text all datasets should be shown
+        runShellCommand("input keyevent KEYCODE_DEL"); // NOTE: MockIme on O doesn't support it
+        sUiBot.assertDatasets(AA, AB, B);
+
+        // No dataset start with 'aaa'
+        final ImeCommand cmd5 = mockImeSession.callCommitText("aaa", 1);
+        expectCommand(stream, cmd5, MOCK_IME_TIMEOUT_MS);
         sUiBot.assertNoDatasets();
     }
 

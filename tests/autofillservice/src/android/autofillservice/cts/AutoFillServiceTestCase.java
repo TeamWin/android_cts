@@ -32,10 +32,13 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.android.cts.mockime.MockImeSessionRule;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -45,12 +48,17 @@ import java.util.List;
  * Base class for all other tests.
  */
 @RunWith(AndroidJUnit4.class)
-abstract class AutoFillServiceTestCase {
+// Must be public because of MockImeSessionRule
+public abstract class AutoFillServiceTestCase {
     private static final String TAG = "AutoFillServiceTestCase";
 
     protected static UiBot sUiBot;
 
     protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
+
+    @ClassRule
+    public static final MockImeSessionRule sMockImeSessionRule =
+            new MockImeSessionRule(/* ignoreInitException= */ true);
 
     @Rule
     public final RetryRule mRetryRule = new RetryRule(2);
