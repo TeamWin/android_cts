@@ -16,25 +16,29 @@
 
 package android.permission.cts;
 
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_MEDIA_STORAGE;
 
+import android.app.UiAutomation;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.CallLog;
 import android.provider.Contacts;
 import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -220,32 +224,68 @@ public class ProviderPermissionTest extends AndroidTestCase {
     /**
      * The {@link android.Manifest.permission#WRITE_MEDIA_STORAGE} permission is
      * a very powerful permission that grants raw storage access to all devices,
-     * and as such it's only appropriate to be granted to the media stack. Any
-     * apps with a user-visible component (such as Camera or Gallery apps) must
-     * go through public {@link MediaStore} APIs, to ensure that users have
-     * meaningful permission controls.
+     * and as such it's only appropriate to be granted to the media stack.
      * <p>
-     * For example, if the end user revokes the "Music" permission from an app,
-     * but that app still has raw access to music via
-     * {@link android.Manifest.permission#WRITE_MEDIA_STORAGE}, that would be a
-     * privacy incident.
+     * CDD now requires that all apps requesting this permission also hold the
+     * "Storage" runtime permission, to give users visibility into the
+     * capabilities of each app, and control over those capabilities.
+     * <p>
+     * If the end user revokes the "Storage" permission from an app, but that
+     * app still has raw access to storage via {@code WRITE_MEDIA_STORAGE}, that
+     * would be a CDD violation and a privacy incident.
      */
-    public void testMediaStackPermissions() throws Exception {
-        // The only apps holding this permission should be the internal media
-        // stack, and the best way to identify them is having no launchable UI.
+    public void testWriteMediaStorage() throws Exception {
+        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         final PackageManager pm = getContext().getPackageManager();
         final List<PackageInfo> pkgs = pm
                 .getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES);
         for (PackageInfo pkg : pkgs) {
             final boolean isSystem = pkg.applicationInfo.uid == android.os.Process.SYSTEM_UID;
             final boolean hasFrontDoor = pm.getLaunchIntentForPackage(pkg.packageName) != null;
-            final boolean hasPermission = pm.checkPermission(WRITE_MEDIA_STORAGE,
+            final boolean grantedMedia = pm.checkPermission(WRITE_MEDIA_STORAGE,
                     pkg.packageName) == PackageManager.PERMISSION_GRANTED;
-            if (!isSystem && hasFrontDoor && hasPermission) {
-                fail("Found " + pkg.packageName + " holding WRITE_MEDIA_STORAGE permission while "
-                        + "also having user-visible UI; this permission must only be held by "
-                        + "the core media stack, and must not be granted to user-launchable apps");
+
+            if (!isSystem && hasFrontDoor && grantedMedia) {
+                final boolean requestsStorage = contains(pkg.requestedPermissions,
+                        WRITE_EXTERNAL_STORAGE);
+                if (!requestsStorage) {
+                    fail("Found " + pkg.packageName + " holding WRITE_MEDIA_STORAGE permission "
+                            + "without also requesting WRITE_EXTERNAL_STORAGE; these permissions "
+                            + "must be requested together");
+                }
+
+                final boolean grantedStorage = pm.checkPermission(WRITE_EXTERNAL_STORAGE,
+                        pkg.packageName) == PackageManager.PERMISSION_GRANTED;
+                if (grantedStorage) {
+                    final int flags;
+                    ui.adoptShellPermissionIdentity("android.permission.GET_RUNTIME_PERMISSIONS");
+                    try {
+                        flags = pm.getPermissionFlags(WRITE_EXTERNAL_STORAGE, pkg.packageName,
+                                UserHandle.SYSTEM);
+                    } finally {
+                        ui.dropShellPermissionIdentity();
+                    }
+
+                    final boolean isFixed = (flags & (PackageManager.FLAG_PERMISSION_USER_FIXED
+                            | PackageManager.FLAG_PERMISSION_POLICY_FIXED
+                            | PackageManager.FLAG_PERMISSION_SYSTEM_FIXED)) != 0;
+                    if (isFixed) {
+                        fail("Found " + pkg.packageName + " holding WRITE_EXTERNAL_STORAGE in a "
+                                + "fixed state; this permission must be revokable by the user");
+                    }
+                }
             }
         }
+    }
+
+    private static boolean contains(String[] haystack, String needle) {
+        if (haystack != null) {
+            for (String test : haystack) {
+                if (Objects.equals(test, needle)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
