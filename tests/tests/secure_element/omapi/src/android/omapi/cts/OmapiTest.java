@@ -21,6 +21,18 @@ package android.omapi.cts;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.se.omapi.Channel;
+import android.se.omapi.Reader;
+import android.se.omapi.SEService;
+import android.se.omapi.SEService.OnConnectedListener;
+import android.se.omapi.Session;
+
+import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.PropertyUtil;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,16 +46,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
-
-import android.content.pm.PackageManager;
-import android.se.omapi.Channel;
-import android.se.omapi.Reader;
-import android.se.omapi.SEService;
-import android.se.omapi.SEService.OnConnectedListener;
-import android.se.omapi.Session;
-import android.support.test.InstrumentationRegistry;
-import android.os.Build;
-import com.android.compatibility.common.util.PropertyUtil;
 
 public class OmapiTest {
 

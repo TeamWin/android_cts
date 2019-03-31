@@ -30,8 +30,8 @@ LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_l
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs android.test.mock
 
 LOCAL_STATIC_JAVA_LIBRARIES :=  \
-    compatibility-device-util \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     services.core \
     junit \
     truth-prebuilt \
@@ -40,7 +40,7 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
 LOCAL_STATIC_ANDROID_LIBRARIES := androidx.legacy_legacy-support-v4
 
 # Use multi-dex as the compatibility-common-util-devicesidelib dependency
-# on compatibility-device-util pushes us beyond 64k methods.
+# on compatibility-device-util-axt pushes us beyond 64k methods.
 LOCAL_JACK_FLAGS := --multi-dex native
 LOCAL_DX_FLAGS := --multi-dex
 

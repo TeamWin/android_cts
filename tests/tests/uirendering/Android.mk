@@ -27,11 +27,11 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctsdeviceutillegacy \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctsdeviceutillegacy-axt \
+    ctstestrunner-axt \
     mockito-target-minus-junit4 \
-    android-support-test
+    androidx.test.rules
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

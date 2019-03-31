@@ -15,14 +15,19 @@
  */
 package android.carrierapi.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.os.Parcel;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.telephony.AccessNetworkConstants;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
@@ -30,10 +35,12 @@ import android.telephony.CellInfoWcdma;
 import android.telephony.NetworkScan;
 import android.telephony.NetworkScanRequest;
 import android.telephony.RadioAccessSpecifier;
-import android.telephony.AccessNetworkConstants;
 import android.telephony.TelephonyManager;
 import android.telephony.TelephonyScanManager;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,15 +48,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Build, install and run the tests by running the commands below:

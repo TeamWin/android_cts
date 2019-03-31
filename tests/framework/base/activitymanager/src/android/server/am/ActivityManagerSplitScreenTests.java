@@ -26,7 +26,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
@@ -55,7 +54,8 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;

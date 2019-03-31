@@ -40,10 +40,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -58,6 +54,11 @@ import android.widget.ListPopupWindow;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;

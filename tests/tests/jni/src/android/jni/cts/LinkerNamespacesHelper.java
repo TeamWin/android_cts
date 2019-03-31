@@ -16,6 +16,14 @@
 
 package android.jni.cts;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+
+import androidx.test.InstrumentationRegistry;
+
+import dalvik.system.PathClassLoader;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,12 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.support.test.InstrumentationRegistry;
-import dalvik.system.PathClassLoader;
 
 class LinkerNamespacesHelper {
     private final static String PUBLIC_CONFIG_DIR = "/system/etc/";

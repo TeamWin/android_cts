@@ -30,7 +30,6 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
@@ -62,15 +61,15 @@ import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
-import android.support.test.filters.FlakyTest;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.TimeUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

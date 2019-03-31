@@ -538,7 +538,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     mPrimaryUserId);
 
             // Reboot while in kiosk mode and then unlock the device
-            getDevice().reboot();
+            rebootAndWaitUntilReady();
 
             // Check that kiosk mode is working and can't be interrupted
             runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
@@ -560,7 +560,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     mPrimaryUserId);
 
             // Reboot while in kiosk mode and then unlock the device
-            getDevice().reboot();
+            rebootAndWaitUntilReady();
 
             // Try to open settings via adb
             executeShellCommand("am start -a android.settings.SETTINGS");

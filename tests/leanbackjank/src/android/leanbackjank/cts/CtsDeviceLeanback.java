@@ -19,12 +19,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.leanbackjank.app.IntentKeys;
 import android.os.SystemClock;
-import android.support.test.jank.GfxMonitor;
-import android.support.test.jank.JankTest;
-import android.support.test.jank.WindowContentFrameStatsMonitor;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.Until;
-import android.util.Log;
+
+import androidx.test.jank.GfxMonitor;
+import androidx.test.jank.JankTest;
+import androidx.test.jank.WindowContentFrameStatsMonitor;
 
 public class CtsDeviceLeanback extends CtsJankTestBase {
     private static final String TAG = "CtsDeviceLeanback";

@@ -16,11 +16,12 @@
 
 package android.autofillservice.cts.common;
 
-import androidx.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 

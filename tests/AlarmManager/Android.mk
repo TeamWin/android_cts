@@ -22,7 +22,7 @@ LOCAL_MODULE_TAGS := optional
 # When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator android-support-test compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator androidx.test.rules compatibility-device-util-axt
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_SRC_FILES += $(call all-java-files-under, app/src)

@@ -36,7 +36,7 @@ import java.util.Map;
 
 public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildReceiver {
     private static final String ANDROID_JUNIT_RUNNER_CLASS =
-            "android.support.test.runner.AndroidJUnitRunner";
+            "androidx.test.runner.AndroidJUnitRunner";
 
     private static final String STATIC_LIB_PROVIDER_RECURSIVE_APK =
             "CtsStaticSharedLibProviderRecursive.apk";

@@ -18,7 +18,6 @@ package android.car.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -27,19 +26,19 @@ import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
-import com.android.compatibility.common.util.FeatureUtil;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RequiresDevice

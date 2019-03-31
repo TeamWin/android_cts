@@ -22,12 +22,12 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.ViewConfiguration;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
 
 public class ConfigurationScreenLayoutTest
         extends ActivityInstrumentationTestCase2<OrientationActivity> {
