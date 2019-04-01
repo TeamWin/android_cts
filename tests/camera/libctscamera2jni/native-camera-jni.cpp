@@ -405,6 +405,21 @@ class CaptureResultListener {
         thiz->mResultCondition.notify_one();
     }
 
+    static void onLogicalCameraCaptureFailed(void* obj, ACameraCaptureSession* /*session*/,
+            ACaptureRequest* /*request*/, ALogicalCameraCaptureFailure* failure) {
+        ALOGV("%s", __FUNCTION__);
+        if ((obj == nullptr) || (failure == nullptr)) {
+            return;
+        }
+        if (failure->physicalCameraId != nullptr) {
+            ALOGV("%s: physicalCameraId: %s", __FUNCTION__, failure->physicalCameraId);
+        }
+        CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mLastFailedFrameNumber = failure->captureFailure.frameNumber;
+        thiz->mResultCondition.notify_one();
+    }
+
     static void onCaptureSequenceCompleted(void* obj, ACameraCaptureSession* /*session*/,
             int sequenceId, int64_t frameNumber) {
         ALOGV("%s", __FUNCTION__);
@@ -1498,7 +1513,7 @@ class PreviewTestCase {
         CaptureResultListener::onCaptureStart,
         CaptureResultListener::onCaptureProgressed,
         CaptureResultListener::onLogicalCameraCaptureCompleted,
-        CaptureResultListener::onCaptureFailed,
+        CaptureResultListener::onLogicalCameraCaptureFailed,
         CaptureResultListener::onCaptureSequenceCompleted,
         CaptureResultListener::onCaptureSequenceAborted,
         CaptureResultListener::onCaptureBufferLost
