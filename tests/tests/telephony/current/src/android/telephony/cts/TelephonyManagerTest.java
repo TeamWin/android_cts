@@ -692,7 +692,8 @@ public class TelephonyManagerTest {
     @Test
     public void testGetTac() {
         String tac = mTelephonyManager.getTypeAllocationCode();
-        String imei = mTelephonyManager.getImei();
+        String imei = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getImei());
 
         if (tac == null || imei == null) {
             return;
@@ -712,7 +713,8 @@ public class TelephonyManagerTest {
     @Test
     public void testGetMc() {
         String mc = mTelephonyManager.getManufacturerCode();
-        String meid = mTelephonyManager.getMeid();
+        String meid = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getMeid());
 
         if (mc == null || meid == null) {
             return;
@@ -1091,6 +1093,77 @@ public class TelephonyManagerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
                             AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+        }
+    }
+
+    @Test
+    public void testIccOpenLogicalChannelBySlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccOpenLogicalChannelBySlot(0, null, 0));
+        } catch (IllegalArgumentException e) {
+            // IllegalArgumentException is okay, just not SecurityException
+        }
+    }
+
+    @Test
+    public void testIccCloseLogicalChannelBySlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelBySlot(0, 0));
+        } catch (IllegalArgumentException e) {
+            // IllegalArgumentException is okay, just not SecurityException
+        }
+    }
+
+    @Test
+    public void testIccTransmitApduLogicalChannelBySlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccTransmitApduLogicalChannelBySlot(
+                            0 /* slotIndex */,
+                            0 /* channel */,
+                            0 /* cla */,
+                            0 /* instruction */,
+                            0 /* p1 */,
+                            0 /* p2 */,
+                            0 /* p3 */,
+                            null /* data */));
+        } catch (IllegalArgumentException e ) {
+            // IllegalArgumentException is okay, just not SecurityException
+        }
+    }
+
+    @Test
+    public void testIccTransmitApduBasicChannelBySlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccTransmitApduBasicChannelBySlot(
+                            0 /* slotIndex */,
+                            0 /* cla */,
+                            0 /* instruction */,
+                            0 /* p1 */,
+                            0 /* p2 */,
+                            0 /* p3 */,
+                            null /* data */));
+        } catch (IllegalArgumentException e ) {
+            // IllegalArgumentException is okay, just not SecurityException
         }
     }
 
