@@ -122,7 +122,8 @@ class CtsAngleCommon {
         // APK Global.Settings updates are the same for everyone.
         Thread.sleep(TEST_WAIT_TIME_MS);
         // Run the ANGLE activity so it'll clear up any 'default' settings.
-        device.executeShellCommand("am start -S -W -a \"" + action + "\"");
+        device.executeShellCommand("am start --user " + device.getCurrentUser() +
+                " -S -W -a \"" + action + "\"");
         Thread.sleep(TEST_WAIT_TIME_MS);
     }
 
