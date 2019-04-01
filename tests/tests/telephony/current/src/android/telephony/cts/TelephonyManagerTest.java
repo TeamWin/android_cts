@@ -873,12 +873,33 @@ public class TelephonyManagerTest {
      * Tests that a SecurityException is thrown when trying to access UiccCardsInfo.
      */
     @Test
-    public void testGetUiccCardsInfo() {
+    public void testGetUiccCardsInfoException() {
         try {
             // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
             List<UiccCardInfo> infos = mTelephonyManager.getUiccCardsInfo();
             fail("Expected SecurityException. App does not have carrier privileges");
         } catch (SecurityException e) {
+        }
+    }
+
+    /**
+     * Tests that UiccCardsInfo methods don't crash.
+     */
+    @Test
+    public void testGetUiccCardsInfo() {
+        // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
+        List<UiccCardInfo> infos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getUiccCardsInfo());
+        // test that these methods don't crash
+        if (infos.size() > 0) {
+            UiccCardInfo info = infos.get(0);
+            info.getIccId();
+            info.getEid();
+            info.isRemovable();
+            info.isEuicc();
+            info.getCardId();
+            info.getSlotIndex();
         }
     }
 
