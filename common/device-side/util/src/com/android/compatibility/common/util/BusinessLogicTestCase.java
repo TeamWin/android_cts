@@ -19,19 +19,21 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.rules.TestName;
-
 import android.app.Instrumentation;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
-import java.lang.reflect.Field;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+
 import java.io.File;
-import java.util.List;
+import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -41,6 +43,9 @@ public class BusinessLogicTestCase {
 
     /* String marking the beginning of the parameter in a test name */
     private static final String PARAM_START = "[";
+
+    public static final String CONTENT_PROVIDER =
+            String.format("%s://android.tradefed.contentprovider", ContentResolver.SCHEME_CONTENT);
 
     /* Test name rule that tracks the current test method under execution */
     @Rule public TestName mTestCase = new TestName();
@@ -71,6 +76,20 @@ public class BusinessLogicTestCase {
     }
 
     protected void loadBusinessLogic() {
+        String uriPath = String.format("%s/%s", CONTENT_PROVIDER, BusinessLogic.DEVICE_FILE);
+        Uri sdcardUri = Uri.parse(uriPath);
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        try {
+            ContentResolver resolver = appContext.getContentResolver();
+            ParcelFileDescriptor descriptor = resolver.openFileDescriptor(sdcardUri, "r");
+            mBusinessLogic = BusinessLogicFactory.createFromFile(
+                    new ParcelFileDescriptor.AutoCloseInputStream(descriptor));
+            return;
+        } catch (FileNotFoundException e) {
+            // Log the error and use the fallback too
+            Log.e("BusinessLogicTestCase", "Error while using content provider for config", e);
+        }
+        // Fallback to reading the business logic directly.
         File businessLogicFile = new File(BusinessLogic.DEVICE_FILE);
         if (businessLogicFile.canRead()) {
             mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);
