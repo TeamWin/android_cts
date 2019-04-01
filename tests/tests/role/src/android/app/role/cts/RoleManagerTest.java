@@ -43,6 +43,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
@@ -82,6 +83,7 @@ public class RoleManagerTest {
 
     private static final String ROLE_NAME = RoleManager.ROLE_MUSIC;
 
+    private static final String APP_APK_PATH = "/data/local/tmp/cts/role/CtsRoleTestApp.apk";
     private static final String APP_PACKAGE_NAME = "android.app.role.cts.app";
     private static final String APP_IS_ROLE_HELD_ACTIVITY_NAME = APP_PACKAGE_NAME
             + ".IsRoleHeldActivity";
@@ -128,6 +130,21 @@ public class RoleManagerTest {
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
     }
 
+    @Before
+    public void installApp() throws Exception {
+        installPackage(APP_APK_PATH);
+    }
+
+    @After
+    public void uninstallApp() throws Exception {
+        uninstallPackage(APP_PACKAGE_NAME);
+    }
+
+    @Before
+    public void wakeUpScreen() throws IOException {
+        runShellCommand(sInstrumentation, "input keyevent KEYCODE_WAKEUP");
+    }
+
     @Test
     public void requestRoleIntentHasPermissionControllerPackage() throws Exception {
         Intent intent = sRoleManager.createRequestRoleIntent(ROLE_NAME);
@@ -145,7 +162,7 @@ public class RoleManagerTest {
 
     @FlakyTest
     @Test
-    public void requestRoleAndRejectThenIsNotRoleHolder() throws Exception {
+    public void requestRoleAndDenyThenIsNotRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -154,11 +171,112 @@ public class RoleManagerTest {
 
     @FlakyTest
     @Test
-    public void requestRoleAndApproveThenIsRoleHolder() throws Exception {
+    public void requestRoleAndAllowThenIsRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
 
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
+    }
+
+    @FlakyTest
+    @Test
+    public void requestRoleFirstTimeNoDontAskAgain() throws Exception {
+        requestRole(ROLE_NAME);
+        UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
+
+        assertThat(dontAskAgainCheck).isNull();
+
+        respondToRoleRequest(false);
+    }
+
+    @FlakyTest
+    @Test
+    public void requestRoleAndDenyThenHasDontAskAgain() throws Exception {
+        requestRole(ROLE_NAME);
+        respondToRoleRequest(false);
+
+        requestRole(ROLE_NAME);
+        UiObject2 dontAskAgainCheck = findDontAskAgainCheck();
+
+        assertThat(dontAskAgainCheck).isNotNull();
+
+        respondToRoleRequest(false);
+    }
+
+    @FlakyTest
+    @Test
+    public void requestRoleAndDenyWithDontAskAgainReturnsCanceled() throws Exception {
+        requestRole(ROLE_NAME);
+        respondToRoleRequest(false);
+
+        requestRole(ROLE_NAME);
+        findDontAskAgainCheck().click();
+        Pair<Integer, Intent> result = clickButtonAndWaitForResult(true);
+
+        assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
+    }
+
+    @FlakyTest
+    @Test
+    public void requestRoleAndDenyWithDontAskAgainThenDeniedAutomatically() throws Exception {
+        requestRole(ROLE_NAME);
+        respondToRoleRequest(false);
+
+        requestRole(ROLE_NAME);
+        findDontAskAgainCheck().click();
+        clickButtonAndWaitForResult(true);
+
+        requestRole(ROLE_NAME);
+        Pair<Integer, Intent> result = waitForResult();
+
+        assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
+    }
+
+    @FlakyTest
+    @Test
+    public void requestRoleAndDenyWithDontAskAgainAndClearDataThenShowsUiWithoutDontAskAgain()
+            throws Exception {
+        requestRole(ROLE_NAME);
+        respondToRoleRequest(false);
+
+        requestRole(ROLE_NAME);
+        findDontAskAgainCheck().click();
+        clickButtonAndWaitForResult(true);
+
+        clearPackageData(APP_PACKAGE_NAME);
+        // Wait for the don't ask again to be forgotten.
+        Thread.sleep(2000);
+
+        requestRole(ROLE_NAME);
+        UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
+
+        assertThat(dontAskAgainCheck).isNull();
+
+        respondToRoleRequest(false);
+    }
+
+    @FlakyTest
+    @Test
+    public void requestRoleAndDenyWithDontAskAgainAndReinstallThenShowsUiWithoutDontAskAgain()
+            throws Exception {
+        requestRole(ROLE_NAME);
+        respondToRoleRequest(false);
+
+        requestRole(ROLE_NAME);
+        findDontAskAgainCheck().click();
+        clickButtonAndWaitForResult(true);
+
+        uninstallPackage(APP_PACKAGE_NAME);
+        // Wait for the don't ask again to be forgotten.
+        Thread.sleep(2000);
+        installPackage(APP_APK_PATH);
+
+        requestRole(ROLE_NAME);
+        UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
+
+        assertThat(dontAskAgainCheck).isNull();
+
+        respondToRoleRequest(false);
     }
 
     private void requestRole(@NonNull String roleName) {
@@ -168,10 +286,8 @@ public class RoleManagerTest {
         mActivityRule.getActivity().startActivityToWaitForResult(intent);
     }
 
-    private void respondToRoleRequest(boolean ok, boolean expectResultOk)
-            throws InterruptedException, IOException {
-        wakeUpScreen();
-        if (ok) {
+    private void respondToRoleRequest(boolean allow) throws InterruptedException, IOException {
+        if (allow) {
             UiObject2 item = sUiDevice.wait(Until.findObject(By.text(APP_PACKAGE_NAME)),
                     TIMEOUT_MILLIS);
             if (item == null) {
@@ -180,26 +296,34 @@ public class RoleManagerTest {
             }
             item.click();
         }
-        String buttonId = ok ? "android:id/button1" : "android:id/button2";
+        Pair<Integer, Intent> result = clickButtonAndWaitForResult(allow);
+        int expectedResult = allow ? Activity.RESULT_OK : Activity.RESULT_CANCELED;
+
+        assertThat(result.first).isEqualTo(expectedResult);
+    }
+
+    @Nullable
+    private UiObject2 findDontAskAgainCheck(boolean expected) {
+        return sUiDevice.wait(Until.findObject(By.text("Don\u2019t ask again")), expected
+                ? TIMEOUT_MILLIS : UNEXPECTED_TIMEOUT_MILLIS);
+    }
+
+    @Nullable
+    private UiObject2 findDontAskAgainCheck() {
+        return findDontAskAgainCheck(true);
+    }
+
+    @NonNull
+    private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
+            InterruptedException {
+        String buttonId = positive ? "android:id/button1" : "android:id/button2";
         UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
         if (button == null) {
             dumpWindowHierarchy();
             fail("Cannot find button to click");
         }
         button.click();
-        Pair<Integer, Intent> result = mActivityRule.getActivity().waitForActivityResult(
-                TIMEOUT_MILLIS);
-        int expectedResult = expectResultOk ? Activity.RESULT_OK : Activity.RESULT_CANCELED;
-
-        assertThat(result.first).isEqualTo(expectedResult);
-    }
-
-    private void respondToRoleRequest(boolean ok) throws InterruptedException, IOException {
-        respondToRoleRequest(ok, ok);
-    }
-
-    private void wakeUpScreen() throws IOException {
-        runShellCommand(sInstrumentation, "input keyevent KEYCODE_WAKEUP");
+        return waitForResult();
     }
 
     private void dumpWindowHierarchy() throws InterruptedException, IOException {
@@ -212,6 +336,23 @@ public class RoleManagerTest {
             Thread.sleep(10);
             Log.w(LOG_TAG, line);
         }
+    }
+
+    @NonNull
+    private Pair<Integer, Intent> waitForResult() throws InterruptedException {
+        return mActivityRule.getActivity().waitForActivityResult(TIMEOUT_MILLIS);
+    }
+
+    private static void clearPackageData(@NonNull String packageName) {
+        runShellCommand("pm clear " + packageName);
+    }
+
+    private void installPackage(@NonNull String apkPath) {
+        runShellCommand("pm install -r " + apkPath);
+    }
+
+    private void uninstallPackage(@NonNull String packageName) {
+        runShellCommand("pm uninstall " + packageName);
     }
 
     @Test
