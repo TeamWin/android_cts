@@ -190,7 +190,7 @@ static bool checkMessage(sp<InputChannel> server, sp<InputChannel> client, int t
 int main() {
     sp<InputChannel> server, client;
 
-    status_t result = InputChannel::openInputChannelPair("channel name", server, client);
+    status_t result = InputChannel::openInputChannelPair(String8("channel name").string(), server, client);
     if (result != OK) {
         ALOGE("Could not open input channel pair");
         return 0;
