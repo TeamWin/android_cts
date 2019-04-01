@@ -23,6 +23,7 @@ import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
 import static android.telephony.IccOpenLogicalChannelResponse.STATUS_UNKNOWN_ERROR;
 import static android.carrierapi.cts.FcpTemplate.FILE_IDENTIFIER;
 import static android.carrierapi.cts.IccUtils.bytesToHexString;
+import static android.carrierapi.cts.IccUtils.hexStringToBytes;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderClient;
@@ -624,6 +625,58 @@ public class CarrierApiTest extends AndroidTestCase {
         assertTrue(isErrorResponse(response));
 
         mTelephonyManager.iccCloseLogicalChannel(channel);
+    }
+
+    /**
+     * This test sends several valid APDU commands over the basic channel (channel 0).
+     */
+    public void testIccTransmitApduBasicChannel() {
+        if (!hasCellular) return;
+
+        // select the MF
+        int cla = CLA_SELECT;
+        int p1 = 0; // select EF by FID
+        int p2 = 0x0C; // requesting FCP template
+        int p3 = 2; // length of 'data' payload
+        String data = MF_FILE_ID;
+        String response = mTelephonyManager
+            .iccTransmitApduBasicChannel(cla, COMMAND_SELECT, p1, p2, p3, data);
+        assertEquals(STATUS_NORMAL_STRING, response);
+
+        // get the Status of the current file/directory
+        cla = CLA_STATUS;
+        p1 = 0; // no indication of application status
+        p2 = 0; // same response parameters as the SELECT in the iccOpenLogicalChannel() above
+        p3 = 0; // length of 'data' payload
+        data = "";
+        response = mTelephonyManager
+            .iccTransmitApduBasicChannel(cla, COMMAND_STATUS, p1, p2, p3, data);
+        FcpTemplate fcpTemplate = FcpTemplate.parseFcpTemplate(response);
+        assertTrue(containsFileId(fcpTemplate, MF_FILE_ID));
+
+        // Manually open a logical channel
+        cla = CLA_MANAGE_CHANNEL;
+        p1 = 0; // open a logical channel
+        p2 = 0; // '00' for open command
+        p3 = 0; // length of data payload
+        data = "";
+        response = mTelephonyManager
+            .iccTransmitApduBasicChannel(cla, COMMAND_MANAGE_CHANNEL, p1, p2, p3, data);
+        // response is in the format | 1 byte: channel number | 2 bytes: status word |
+        String responseStatus = response.substring(2);
+        assertEquals(STATUS_NORMAL_STRING, responseStatus);
+
+        // Close the open channel
+        byte[] responseBytes = hexStringToBytes(response);
+        int channel = responseBytes[0];
+        cla = CLA_MANAGE_CHANNEL;
+        p1 = 0x80; // close a logical channel
+        p2 = channel; // the channel to be closed
+        p3 = 0; // length of data payload
+        data = "";
+        response = mTelephonyManager
+            .iccTransmitApduBasicChannel(cla, COMMAND_MANAGE_CHANNEL, p1, p2, p3, data);
+        assertEquals(STATUS_NORMAL_STRING, response);
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
