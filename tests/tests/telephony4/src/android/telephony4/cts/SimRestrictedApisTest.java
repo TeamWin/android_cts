@@ -83,6 +83,22 @@ public class SimRestrictedApisTest extends AndroidTestCase {
     }
 
     /**
+     * Tests the TelephonyManager.iccOpenLogicalChannelBySlot() API. This makes a call to
+     * iccOpenLogicalChannelBySlot() API and expects a SecurityException since the test apk is not
+     * signed by certificate on the SIM.
+     */
+    public void testIccOpenLogicalChannelBySlot() {
+        try {
+            if (isSimCardPresent()) {
+                mTelephonyManager.iccCloseLogicalChannelBySlot(0,
+                        mTelephonyManager.iccOpenLogicalChannel("").getChannel());
+                fail("Expected SecurityException. App doesn't have carrier privileges.");
+            }
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
      * Tests the TelephonyManager.iccCloseLogicalChannel() API. This makes a call to
      * iccCloseLogicalChannel() API and expects a SecurityException since the test apk is not signed
      * by certificate on the SIM.
@@ -91,6 +107,51 @@ public class SimRestrictedApisTest extends AndroidTestCase {
         try {
             if (isSimCardPresent()) {
                 mTelephonyManager.iccCloseLogicalChannel(0);
+                fail("Expected SecurityException. App doesn't have carrier privileges.");
+            }
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
+     * Tests the TelephonyManager.iccCloseLogicalChannelBySlot() API. This makes a call to
+     * iccCloseLogicalChannelBySlot() API and expects a SecurityException since the test apk is not
+     * signed by certificate on the SIM.
+     */
+    public void testIccCloseLogicalChannelBySlot() {
+        try {
+            if (isSimCardPresent()) {
+                mTelephonyManager.iccCloseLogicalChannelBySlot(0, 0);
+                fail("Expected SecurityException. App doesn't have carrier privileges.");
+            }
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
+     * Tests the TelephonyManager.iccTransmitApduBasicChannel() API. This makes a call to
+     * iccTransmitApduBasicChannel() API and expects a SecurityException since the test apk is not
+     * signed by a certificate on the SIM.
+     */
+    public void testIccTransmitApduBasicChannel() {
+        try {
+            if (isSimCardPresent()) {
+                mTelephonyManager.iccTransmitApduBasicChannel(0, 0, 0, 0, 0, "");
+                fail("Expected SecurityException. App doesn't have carrier privileges.");
+            }
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
+     * Tests the TelephonyManager.iccTransmitApduBasicChannelBySlot() API. This makes a call to
+     * iccTransmitApduBasicChannelBySlot() API and expects a SecurityException since the test apk is
+     * not signed by a certificate on the SIM.
+     */
+    public void testIccTransmitApduBasicChannelBySlot() {
+        try {
+            if (isSimCardPresent()) {
+                mTelephonyManager.iccTransmitApduBasicChannelBySlot(0, 0, 0, 0, 0, 0, "");
                 fail("Expected SecurityException. App doesn't have carrier privileges.");
             }
         } catch (SecurityException expected) {
@@ -113,14 +174,14 @@ public class SimRestrictedApisTest extends AndroidTestCase {
     }
 
     /**
-     * Tests the TelephonyManager.iccTransmitApduBasicChannel() API. This makes a call to
-     * iccTransmitApduBasicChannel() API and expects a SecurityException since the test apk is not
-     * signed by a certificate on the SIM.
+     * Tests the TelephonyManager.iccTransmitApduLogicalChannelBySlot() API. This makes a call to
+     * iccTransmitApduLogicalChannelBySlot() API and expects a SecurityException since the test apk
+     * is not signed by a certificate on the SIM.
      */
-    public void testIccTransmitApduBasicChannel() {
+    public void testIccTransmitApduLogicalChannelBySlot() {
         try {
             if (isSimCardPresent()) {
-                mTelephonyManager.iccTransmitApduBasicChannel(0, 0, 0, 0, 0, "");
+                mTelephonyManager.iccTransmitApduLogicalChannelBySlot(0, 0, 0, 0, 0, 0, 0, "");
                 fail("Expected SecurityException. App doesn't have carrier privileges.");
             }
         } catch (SecurityException expected) {
