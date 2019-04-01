@@ -22,7 +22,6 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.IBinder;
-import android.telecom.CallIdentification;
 import android.telecom.CallScreeningService;
 import android.text.TextUtils;
 import android.util.Log;
@@ -45,32 +44,12 @@ public class CallScreeningServiceControl extends Service {
             new android.telecom.cts.screeningtestapp.ICallScreeningControl.Stub() {
                 @Override
                 public void reset() {
-                    mCallIdentification = null;
-                    mNuisanceCallUri = null;
-                    mIsNuisanceReportReceived = false;
                     mCallResponse = new CallScreeningService.CallResponse.Builder()
                             .setDisallowCall(false)
                             .setRejectCall(false)
                             .setSkipCallLog(false)
                             .setSkipNotification(false)
                             .build();
-                }
-
-                @Override
-                public void setProviderCallIdentification(CharSequence name,
-                        CharSequence description, CharSequence details, Icon icon, int confidence) {
-                    Log.i(TAG, "setProviderCallIdentification: got test id info");
-                    if (TextUtils.isEmpty(name)) {
-                        mCallIdentification = null;
-                    } else {
-                        mCallIdentification = new CallIdentification.Builder()
-                                .setName(name)
-                                .setDetails(details)
-                                .setDescription(description)
-                                .setPhoto(icon)
-                                .setNuisanceConfidence(confidence)
-                                .build();
-                    }
                 }
 
                 @Override
@@ -88,43 +67,8 @@ public class CallScreeningServiceControl extends Service {
                             .setSilenceCall(shouldSilenceCall)
                             .build();
                 }
-
-                @Override
-                public void waitForNuisanceReport(long timeoutMillis) {
-                    try {
-                        mNuisanceLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public boolean getIsNuisance() {
-                    return mIsNuisanceCall;
-                }
-
-                @Override
-                public Uri getNuisanceCallHandle() {
-                    return mNuisanceCallUri;
-                }
-
-                @Override
-                public int getNuisanceCallType() {
-                    return mNuisanceCallType;
-                }
-
-                @Override
-                public int getNuisanceCallDuration() {
-                    return mNuisanceCallDuration;
-                }
-
-                @Override
-                public boolean isNuisanceReportReceived() {
-                    return mIsNuisanceReportReceived;
-                }
             };
 
-    private CallIdentification mCallIdentification = null;
     private CallScreeningService.CallResponse mCallResponse =
             new CallScreeningService.CallResponse.Builder()
                     .setDisallowCall(false)
@@ -133,12 +77,6 @@ public class CallScreeningServiceControl extends Service {
                     .setSkipCallLog(false)
                     .setSkipNotification(false)
                     .build();
-    private CountDownLatch mNuisanceLatch = new CountDownLatch(1);
-    private boolean mIsNuisanceCall;
-    private int mNuisanceCallType;
-    private int mNuisanceCallDuration;
-    private Uri mNuisanceCallUri;
-    private boolean mIsNuisanceReportReceived = false;
 
     public static CallScreeningServiceControl getInstance() {
         return sCallScreeningServiceControl;
@@ -161,23 +99,7 @@ public class CallScreeningServiceControl extends Service {
         return false;
     }
 
-    public CallIdentification getCallIdentification() {
-        return mCallIdentification;
-    }
-
     public CallScreeningService.CallResponse getCallResponse() {
         return mCallResponse;
     }
-
-    public void handleNuisanceStatusChanged(Uri handle, int callDuration, int callType,
-            boolean isNuisance) {
-        mNuisanceCallUri = handle;
-        mIsNuisanceCall = isNuisance;
-        mNuisanceCallDuration = callDuration;
-        mNuisanceCallType = callType;
-        mIsNuisanceReportReceived = true;
-        Log.i(TAG, "handleNuisanceStatusChanged - got nuisance report");
-        mNuisanceLatch.countDown();
-    }
-
 }
