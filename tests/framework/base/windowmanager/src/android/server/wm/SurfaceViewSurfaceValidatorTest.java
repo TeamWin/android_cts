@@ -83,7 +83,6 @@ public class SurfaceViewSurfaceValidatorTest {
         SurfaceControlTestCase t = new SurfaceControlTestCase(psc, null,
                 pixelChecker, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                 DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT);
-        t.setOnTop(true);
         mActivity.verifyTest(t, mName);
     }
 }

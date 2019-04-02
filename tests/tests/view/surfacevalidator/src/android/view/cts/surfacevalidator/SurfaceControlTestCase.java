@@ -36,7 +36,6 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
     private FrameLayout mParent;
     private ValueAnimator mAnimator;
 
-    private boolean mOnTop;
     public abstract static class ParentSurfaceConsumer {
         public abstract void addChildren(SurfaceControl parent);
     };
@@ -81,16 +80,11 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
         return mPixelChecker;
     }
 
-    public void setOnTop(boolean onTop) {
-        mOnTop = onTop;
-    }
-
     public void start(Context context, FrameLayout parent) {
         View view = mViewFactory.createView(context);
         if (mViewFactory.mCallback instanceof ParentSurfaceHolder) {
             ParentSurfaceHolder psh = (ParentSurfaceHolder) mViewFactory.mCallback;
             psh.mSurfaceView = (SurfaceView) view;
-            psh.mSurfaceView.setZOrderOnTop(mOnTop);
         }
 
         mParent = parent;
@@ -123,6 +117,9 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
 
         public View createView(Context context) {
             SurfaceView surfaceView = new SurfaceView(context);
+            if (mCallback instanceof ParentSurfaceHolder) {
+                surfaceView.setZOrderOnTop(true);
+            }
 
             // prevent transparent region optimization, which is invalid for a SurfaceView moving
             // around
