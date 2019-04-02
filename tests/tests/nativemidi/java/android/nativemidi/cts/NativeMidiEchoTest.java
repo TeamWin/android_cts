@@ -27,6 +27,8 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.midi.MidiEchoTestService;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,9 +44,6 @@ import java.util.Random;
 @RunWith(AndroidJUnit4.class)
 public class NativeMidiEchoTest {
     private static final String TAG = "NativeMidiEchoTest";
-
-    public static final String TEST_MANUFACTURER = "AndroidCTS";
-    public static final String ECHO_PRODUCT = "NativeMidiEcho";
 
     private static final long NANOS_PER_MSEC = 1000L * 1000L;
 
@@ -133,16 +132,17 @@ public class NativeMidiEchoTest {
 
      protected void setUpEchoServer() throws Exception {
         Log.i(TAG, "++ setUpEchoServer()");
-        MidiDeviceInfo echoInfo = findEchoDevice();
+        MidiDeviceInfo echoInfo = MidiEchoTestService.findEchoDevice(mContext);
 
         // Open device.
         MyTestOpenCallback callback = new MyTestOpenCallback();
         mMidiManager.openDevice(echoInfo, callback, null);
         mEchoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
-        Assert.assertNotNull("could not open " + ECHO_PRODUCT, mEchoDevice);
+        Assert.assertNotNull(
+                "could not open " + MidiEchoTestService.getEchoServerName(), mEchoDevice);
 
         // Query echo service directly to see if it is getting status updates.
-        NativeMidiEchoTestService echoService = NativeMidiEchoTestService.getInstance();
+        MidiEchoTestService echoService = MidiEchoTestService.getInstance();
 
         mTestContext = allocTestContext();
         Assert.assertTrue("couldn't allocate test context.", mTestContext != 0);
@@ -163,7 +163,7 @@ public class NativeMidiEchoTest {
     protected void tearDownEchoServer() throws IOException {
         Log.i(TAG, "++ tearDownEchoServer()");
         // Query echo service directly to see if it is getting status updates.
-        NativeMidiEchoTestService echoService = NativeMidiEchoTestService.getInstance();
+        MidiEchoTestService echoService = MidiEchoTestService.getInstance();
 
         int result;
 
@@ -186,27 +186,27 @@ public class NativeMidiEchoTest {
     }
 
     // Search through the available devices for the ECHO loop-back device.
-    protected MidiDeviceInfo findEchoDevice() {
-        MidiDeviceInfo[] infos = mMidiManager.getDevices();
-        MidiDeviceInfo echoInfo = null;
-        for (MidiDeviceInfo info : infos) {
-            Bundle properties = info.getProperties();
-            String manufacturer = (String) properties.get(
-                    MidiDeviceInfo.PROPERTY_MANUFACTURER);
-
-            if (TEST_MANUFACTURER.equals(manufacturer)) {
-                String product = (String) properties.get(
-                        MidiDeviceInfo.PROPERTY_PRODUCT);
-                if (ECHO_PRODUCT.equals(product)) {
-                    echoInfo = info;
-                    break;
-                }
-            }
-        }
-        Assert.assertNotNull("could not find " + ECHO_PRODUCT, echoInfo);
-        return echoInfo;
-    }
-
+//    protected MidiDeviceInfo findEchoDevice() {
+//        MidiDeviceInfo[] infos = mMidiManager.getDevices();
+//        MidiDeviceInfo echoInfo = null;
+//        for (MidiDeviceInfo info : infos) {
+//            Bundle properties = info.getProperties();
+//            String manufacturer = (String) properties.get(
+//                    MidiDeviceInfo.PROPERTY_MANUFACTURER);
+//
+//            if (TEST_MANUFACTURER.equals(manufacturer)) {
+//                String product = (String) properties.get(
+//                        MidiDeviceInfo.PROPERTY_PRODUCT);
+//                if (MidiEchoTestService.getEchoServerName().equals(product)) {
+//                    echoInfo = info;
+//                    break;
+//                }
+//            }
+//        }
+//        Assert.assertNotNull("could not find " + MidiEchoTestService.getEchoServerName(), echoInfo);
+//        return echoInfo;
+//    }
+//
     @Before
     public void setUp() throws Exception {
         Log.i(TAG, "++ setUp() mContext:" + mContext);

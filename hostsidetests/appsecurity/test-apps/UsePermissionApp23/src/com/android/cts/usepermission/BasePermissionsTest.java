@@ -140,17 +140,6 @@ public abstract class BasePermissionsTest {
             sPermissionToLabelResNameMap.put(
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     "@android:string/permgrouplab_storage");
-            // Music
-            sPermissionToLabelResNameMap.put(
-                    Manifest.permission.READ_MEDIA_AUDIO,
-                    "@android:string/permgrouplab_aural");
-            // Photo's and Video
-            sPermissionToLabelResNameMap.put(
-                    Manifest.permission.READ_MEDIA_IMAGES,
-                    "@android:string/permgrouplab_visual");
-            sPermissionToLabelResNameMap.put(
-                    Manifest.permission.READ_MEDIA_VIDEO,
-                    "@android:string/permgrouplab_visual");
             // Location
             sPermissionToLabelResNameMap.put(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -218,17 +207,6 @@ public abstract class BasePermissionsTest {
             sPermissionToLabelResNameMap.put(
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     "@android:string/permgrouplab_storage");
-            // Music
-            sPermissionToLabelResNameMap.put(
-                    Manifest.permission.READ_MEDIA_AUDIO,
-                    "@android:string/permgrouplab_aural");
-            // Photo's and Video
-            sPermissionToLabelResNameMap.put(
-                    Manifest.permission.READ_MEDIA_IMAGES,
-                    "@android:string/permgrouplab_visual");
-            sPermissionToLabelResNameMap.put(
-                    Manifest.permission.READ_MEDIA_VIDEO,
-                    "@android:string/permgrouplab_visual");
             // Location
             sPermissionToLabelResNameMap.put(
                     Manifest.permission.ACCESS_FINE_LOCATION,

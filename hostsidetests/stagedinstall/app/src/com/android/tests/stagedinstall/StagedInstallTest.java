@@ -80,6 +80,7 @@ public class StagedInstallTest {
 
     private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
     private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
+
     private File mTestStateFile = new File(InstrumentationRegistry.getTargetContext().getFilesDir(),
             "ctsstagedinstall_state");
 
@@ -243,6 +244,57 @@ public class StagedInstallTest {
         assertThat(session).isNull();
     }
 
+    @Test
+    public void testStagedInstallDowngrade_DowngradeNotRequested_Fails_Commit()  throws Exception {
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        installNonStaged("StagedInstallTestAppAv2.apk");
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeNotRequested_Fails_VerifyPostReboot()
+            throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+        // INSTALL_REQUEST_DOWNGRADE wasn't set, so app shouldn't be downgraded.
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeRequested_Commit() throws Exception {
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        installNonStaged("StagedInstallTestAppAv2.apk");
+        int sessionId = stageDowngradeSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeRequested_DebugBuild_VerifyPostReboot()
+            throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        // App should be downgraded.
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot()
+            throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+        // App shouldn't be downgraded.
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+    }
+
     private static PackageInstaller getPackageInstaller() {
       return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
     }
@@ -258,23 +310,37 @@ public class StagedInstallTest {
         }
     }
 
+    // It becomes harder to maintain this variety of install-related helper methods.
+    // TODO(ioffe): refactor install-related helper methods into a separate utility.
     private static int createStagedSession() throws Exception {
         return createStagedSession(
                 InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller(),
-                false);
+                false, false);
     }
 
     private static int createStagedSession(
             PackageInstaller packageInstaller,
-            boolean multiPackage) throws Exception {
+            boolean multiPackage, boolean isDowngrade) throws Exception {
         PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
                 PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         if (multiPackage) {
             sessionParams.setMultiPackage();
         }
         sessionParams.setStaged();
+        sessionParams.setRequestDowngrade(isDowngrade);
 
         return packageInstaller.createSession(sessionParams);
+    }
+
+    private static StageSessionResult stageDowngradeSingleApk(String apkFileName) throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+
+        Pair<Integer, PackageInstaller.Session> sessionPair =
+                prepareSingleApkStagedSession(packageInstaller, apkFileName, true);
+        // Commit the session (this will start the installation workflow).
+        Log.i(TAG, "Committing downgrade session for apk: " + apkFileName);
+        sessionPair.second.commit(LocalIntentSender.getIntentSender());
+        return new StageSessionResult(sessionPair.first, LocalIntentSender.getIntentSenderResult());
     }
 
     private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
@@ -282,7 +348,7 @@ public class StagedInstallTest {
         PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
 
         Pair<Integer, PackageInstaller.Session> sessionPair =
-                prepareSingleApkStagedSession(packageInstaller, apkFileName);
+                prepareSingleApkStagedSession(packageInstaller, apkFileName, false);
         // Commit the session (this will start the installation workflow).
         Log.i(TAG, "Committing session for apk: " + apkFileName);
         sessionPair.second.commit(LocalIntentSender.getIntentSender());
@@ -290,31 +356,24 @@ public class StagedInstallTest {
     }
 
     private static Pair<Integer, PackageInstaller.Session>
-            prepareSingleApkStagedSession(PackageInstaller packageInstaller, String apkFileName)
+            prepareSingleApkStagedSession(PackageInstaller packageInstaller, String apkFileName,
+            boolean isDowngrade)
             throws Exception {
-        int sessionId = createStagedSession(packageInstaller, false);
+        int sessionId = createStagedSession(packageInstaller, false, isDowngrade);
         PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-        try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
-             InputStream is =
-                     StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
-            byte[] buffer = new byte[4096];
-            int n;
-            while ((n = is.read(buffer)) >= 0) {
-                packageInSession.write(buffer, 0, n);
-            }
-        }
+        writeApk(session, apkFileName);
         return new Pair<>(sessionId, session);
     }
 
     private static StageSessionResult stageMultipleApks(String... apkFileNames) throws Exception {
         Context context = InstrumentationRegistry.getContext();
         PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-        int multiPackageSessionId = createStagedSession(packageInstaller, true);
+        int multiPackageSessionId = createStagedSession(packageInstaller, true, false);
         PackageInstaller.Session multiPackageSession = packageInstaller.openSession(
                 multiPackageSessionId);
         for (String apkFileName : apkFileNames) {
             Pair<Integer, PackageInstaller.Session> sessionPair =
-                    prepareSingleApkStagedSession(packageInstaller, apkFileName);
+                    prepareSingleApkStagedSession(packageInstaller, apkFileName, false);
             multiPackageSession.addChildSessionId(sessionPair.first);
         }
         multiPackageSession.commit(LocalIntentSender.getIntentSender());
@@ -330,6 +389,11 @@ public class StagedInstallTest {
     private static void assertSessionReady(int sessionId) {
         assertSessionState(sessionId,
                 (session) -> assertThat(session).isStagedSessionReady());
+    }
+
+    private static void assertSessionFailed(int sessionId) {
+        assertSessionState(sessionId,
+                (session) -> assertThat(session).isStagedSessionFailed());
     }
 
     private static void assertSessionState(
@@ -365,6 +429,31 @@ public class StagedInstallTest {
         }
     }
 
+    private static void installNonStaged(String apkFileName) throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        int sessionId = packageInstaller.createSession(sessionParams);
+        PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+        writeApk(session, apkFileName);
+        session.commit(LocalIntentSender.getIntentSender());
+        assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
+    }
+
+    private static void writeApk(PackageInstaller.Session session, String apkFileName)
+            throws Exception {
+        try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
+             InputStream is =
+                     StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
+            byte[] buffer = new byte[4096];
+            int n;
+            while ((n = is.read(buffer)) >= 0) {
+                packageInSession.write(buffer, 0, n);
+            }
+        }
+    }
+
+    // TODO(ioffe): not really-tailored to staged install, rename to InstallResult?
     private static final class StageSessionResult {
         private final int sessionId;
         private final Intent result;

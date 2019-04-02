@@ -500,12 +500,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.CAMERA
         ));
 
-        if (mContext.getApplicationInfo().targetSdkVersion <= Build.VERSION_CODES.Q) {
-            perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        } else {
-            perms.add(Manifest.permission.READ_MEDIA_AUDIO);
-            perms.add(Manifest.permission.READ_MEDIA_IMAGES);
-        }
+        perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
         // Grant all permissions
         grantPermissions(perms.toArray(new String[perms.size()]));
@@ -672,14 +667,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
         ));
 
-        if (mContext.getApplicationInfo().targetSdkVersion <= Build.VERSION_CODES.Q) {
-            perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            perms.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        } else {
-            perms.add(Manifest.permission.READ_MEDIA_VIDEO);
-            perms.add(Manifest.permission.READ_MEDIA_IMAGES);
-            perms.add(Manifest.permission.READ_MEDIA_AUDIO);
-        }
+        perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        perms.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         assertPermissionsGrantState(perms.toArray(new String[perms.size()]), grantState);
     }
 

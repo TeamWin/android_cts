@@ -22,14 +22,6 @@ interface ICallScreeningControl {
     // Reset the state of the service
     void reset();
 
-    void setProviderCallIdentification(CharSequence name, CharSequence description,
-            CharSequence details, in Icon icon, int confidence);
-    void setCallResponse(boolean shouldDisallowCall, boolean shouldRejectCall, boolean shouldSkipCall,
-            boolean shouldSkipCallLog, boolean shouldSkipNotification);
-    void waitForNuisanceReport(long timeoutMillis);
-    boolean getIsNuisance();
-    Uri getNuisanceCallHandle();
-    int getNuisanceCallType();
-    int getNuisanceCallDuration();
-    boolean isNuisanceReportReceived();
+    void setCallResponse(boolean shouldDisallowCall, boolean shouldRejectCall,
+            boolean shouldSkipCall, boolean shouldSkipCallLog, boolean shouldSkipNotification);
 }
