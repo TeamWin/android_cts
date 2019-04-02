@@ -81,11 +81,13 @@ public class CarrierApiTest extends AndroidTestCase {
     // Class bytes. The logical channel used should be included for bits b2b1. TS 102 221 Table 11.5
     private static final int CLA_GET_RESPONSE = 0x00;
     private static final int CLA_MANAGE_CHANNEL = 0x00;
+    private static final int CLA_READ_BINARY = 0x00;
     private static final int CLA_SELECT = 0x00;
     private static final int CLA_STATUS = 0x80;
     // APDU Instruction Bytes. TS 102 221 Section 10.1.2
     private static final int COMMAND_GET_RESPONSE = 0xC0;
     private static final int COMMAND_MANAGE_CHANNEL = 0x70;
+    private static final int COMMAND_READ_BINARY = 0xB0;
     private static final int COMMAND_SELECT = 0xA4;
     private static final int COMMAND_STATUS = 0xF2;
     // Status words. TS 102 221 Section 10.2.1
@@ -98,6 +100,8 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String STATUS_FUNCTION_NOT_SUPPORTED = "6a81";
     private static final String STATUS_INCORRECT_PARAMETERS = "6a86";
     private static final String STATUS_WRONG_CLASS = "6e00";
+    // File ID for the EF ICCID. TS 102 221
+    private static final String ICCID_FILE_ID = "2FE2";
     // File ID for the master file. TS 102 221
     private static final String MF_FILE_ID = "3F00";
     // File ID for the MF Access Rule Reference. TS 102 221
@@ -623,6 +627,34 @@ public class CarrierApiTest extends AndroidTestCase {
         response = mTelephonyManager
             .iccTransmitApduLogicalChannel(channel, cla, invalidInstruction, p1, p2, p3, data);
         assertTrue(isErrorResponse(response));
+
+        mTelephonyManager.iccCloseLogicalChannel(channel);
+    }
+
+    /**
+     * This test ensures that files can be read off the UICC. This helps to test the SIM booting
+     * process, as it process involves several file-reads. The ICCID is one of the first files read.
+     */
+    public void testApduFileRead() {
+        // Open a logical channel and select the MF.
+        IccOpenLogicalChannelResponse logicalChannel = mTelephonyManager.iccOpenLogicalChannel("");
+        int channel = logicalChannel.getChannel();
+
+        // Select the ICCID. TS 102 221 Section 13.2
+        int p1 = 0; // select by file ID
+        int p2 = 0x0C; // no data returned
+        int p3 = 2; // length of 'data' payload
+        String response = mTelephonyManager.iccTransmitApduLogicalChannel(
+                channel, CLA_SELECT, COMMAND_SELECT, p1, p2, p3, ICCID_FILE_ID);
+        assertEquals(STATUS_NORMAL_STRING, response);
+
+        // Read the contents of the ICCID.
+        p1 = 0; // 0-byte offset
+        p2 = 0; // 0-byte offset
+        p3 = 0; // length of 'data' payload
+        response = mTelephonyManager.iccTransmitApduLogicalChannel(
+                channel, CLA_READ_BINARY, COMMAND_READ_BINARY, p1, p2, p3, "");
+        assertTrue(response.endsWith(STATUS_NORMAL_STRING));
 
         mTelephonyManager.iccCloseLogicalChannel(channel);
     }
