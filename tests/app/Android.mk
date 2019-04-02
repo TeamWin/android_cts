@@ -45,9 +45,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsAppTestCases
 
-# Disable from Test Mapping Temporarily until b/124731615 is fixed.
-LOCAL_PRESUBMIT_DISABLED := true
-
 LOCAL_INSTRUMENTATION_FOR := CtsAppTestStubs
 
 LOCAL_SDK_VERSION := test_current
