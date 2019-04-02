@@ -36,12 +36,10 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.os.ParcelUuid;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -53,11 +51,15 @@ import org.junit.runner.RunWith;
 
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 public class SubscriptionManagerTest {
@@ -336,23 +338,25 @@ public class SubscriptionManagerTest {
 
         // Set subscription group with current sub Id. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
-        int[] subGroup = new int[] {mSubId};
+        List<Integer> subGroup = new ArrayList();
+        subGroup.add(mSubId);
         try {
-            mSm.setSubscriptionGroup(subGroup);
+            mSm.createSubscriptionGroup(subGroup);
             fail();
         } catch (SecurityException expected) {
         }
 
         // Getting subscriptions in group should return null as setSubscriptionGroup
         // should fail.
-        assertNull(mSm.getSubscriptionsInGroup(mSubId));
+        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
+        assertNull(info.getGroupUuid());
 
         // Remove from subscription group with current sub Id. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
         try {
-            mSm.removeSubscriptionsFromGroup(subGroup);
+            mSm.removeSubscriptionsFromGroup(subGroup, null);
             fail();
-        } catch (SecurityException expected) {
+        } catch (NullPointerException expected) {
         }
     }
 
