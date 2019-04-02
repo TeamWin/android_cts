@@ -75,9 +75,11 @@ public class PackageSignatureTest extends AndroidTestCase {
         wellKnownSignatures.add(getSignature(R.raw.sig_shared));
         wellKnownSignatures.add(getSignature(R.raw.sig_testkey));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys));
+        wellKnownSignatures.add(getSignature(R.raw.sig_networkstack));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_media));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_platform));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_shared));
+        wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_networkstack));
         return wellKnownSignatures;
     }
 
