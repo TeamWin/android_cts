@@ -23,6 +23,13 @@
 // exit status code
 #define EXIT_VULNERABLE 113
 
+#define FAIL_CHECK(condition) \
+  if (!(condition)) { \
+    fprintf(stderr, "Check failed:\n\t" #condition "\n\tLine: %d\n", \
+            __LINE__); \
+    exit(EXIT_FAILURE); \
+  }
+
 time_t start_timer(void);
 int timer_active(time_t timer_started);
 
