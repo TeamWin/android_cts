@@ -176,7 +176,13 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+
+        <!-- overwrite the default gradient type to be radial in the theme -->
+        <item name="GradientType">1</item>
     </style>
+
+    <!-- default gradient type of linear -->
+    <attr name="GradientType" format="integer">0</attr>
 
     <style name="WhiteBackgroundNoWindowAnimation"
            parent="@android:style/Theme.Holo.NoActionBar.Fullscreen">

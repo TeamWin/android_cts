@@ -366,6 +366,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             mPlayer.setScreenOnWhilePlaying(true);
 
             mOnBufferingUpdateCalled.reset();
+            AtomicInteger percent = new AtomicInteger(0);
             MediaPlayer2.EventCallback ecb =
                 new MediaPlayer2.EventCallback() {
                     @Override
@@ -378,6 +379,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
                             mOnPrepareCalled.signal();
                         } else if (what == MediaPlayer2.MEDIA_INFO_BUFFERING_UPDATE) {
+                            percent.set(extra);
                             mOnBufferingUpdateCalled.signal();
                         }
                     }
@@ -395,6 +397,10 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                 assertFalse(mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             } else {
                 mOnBufferingUpdateCalled.waitForSignal();
+                if (percent.get() > 0) {
+                    assertTrue(mPlayer.getBufferedPosition() > 0);
+                    assertTrue(mPlayer.getBufferedPosition(mPlayer.getCurrentDataSource()) > 0);
+                }
                 mPlayer.play();
                 Thread.sleep(SLEEP_TIME);
             }

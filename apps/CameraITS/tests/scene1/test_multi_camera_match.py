@@ -55,18 +55,39 @@ def main():
         print 'Matched YUV size: (%d, %d)' % (w, h)
 
         # do 3a and create requests
-        avail_fls = props['android.lens.info.availableFocalLengths']
+        avail_fls = sorted(props['android.lens.info.availableFocalLengths'],
+                           reverse=True)
         cam.do_3a()
         reqs = []
         for i, fl in enumerate(avail_fls):
             reqs.append(its.objects.auto_capture_request())
             reqs[i]['android.lens.focalLength'] = fl
+            if i > 0:
+                # Calculate the active sensor region for a non-cropped image
+                zoom = avail_fls[0] / fl
+                a = props['android.sensor.info.activeArraySize']
+                ax, ay = a['left'], a['top']
+                aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
+
+                # Calculate a center crop region.
+                assert zoom >= 1
+                cropw = aw / zoom
+                croph = ah / zoom
+                crop_region = {
+                        'left': aw / 2 - cropw / 2,
+                        'top': ah / 2 - croph / 2,
+                        'right': aw / 2 + cropw / 2,
+                        'bottom': ah / 2 + croph / 2
+                }
+                reqs[i]['android.scaler.cropRegion'] = crop_region
 
         # capture YUVs
         y_means = {}
         msg = ''
         fmt = [{'format': 'yuv', 'width': w, 'height': h}]
         caps = cam.do_capture(reqs, fmt)
+        if not isinstance(caps, list):
+            caps = [caps]  # handle canonical case where caps is not list
 
         for i, fl in enumerate(avail_fls):
             img = its.image.convert_capture_to_rgb_image(caps[i], props=props)

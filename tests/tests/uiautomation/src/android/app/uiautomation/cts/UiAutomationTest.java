@@ -50,6 +50,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,6 +69,10 @@ public class UiAutomationTest {
     // Used to enable/disable accessibility services
     private static final String COMPONENT_NAME_SEPARATOR = ":";
     private static final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
+
+    @Rule
+    public final UiAutomationLogRule mLogRule = new UiAutomationLogRule(
+            UiAutomationTest.class.getSimpleName());
 
     @Before
     public void setUp() throws Exception {

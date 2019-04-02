@@ -60,14 +60,16 @@ public final class DeviceConfigStateManager implements StateManager<String> {
     @Override
     public void set(@Nullable String value) {
         debug("set", value);
+        runWithShellPermissionIdentity(() -> setWithPermissionsGranted(value),
+                "android.permission.READ_DEVICE_CONFIG", "android.permission.WRITE_DEVICE_CONFIG");
+    }
 
+    private void setWithPermissionsGranted(@Nullable String value) {
         final OneTimeDeviceConfigListener listener = new OneTimeDeviceConfigListener(mNamespace,
                 mKey);
         DeviceConfig.addOnPropertyChangedListener(mNamespace, mContext.getMainExecutor(), listener);
 
-        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
-                mNamespace, mKey, value, /* makeDefault= */ false),
-                "android.permission.WRITE_DEVICE_CONFIG");
+        DeviceConfig.setProperty(mNamespace, mKey, value, /* makeDefault= */ false);
         listener.assertCalled();
     }
 

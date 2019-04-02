@@ -22,6 +22,8 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "truth-prebuilt",
+        "hamcrest",
+        "hamcrest-library",
     ],
 
     data:   [
@@ -43,8 +45,9 @@ android_test_helper_app {
 
     java_resources:  [
         ":StagedInstallTestAppAv1",
+        ":StagedInstallTestAppAv2",
         ":StagedInstallTestAppBv1",
-        ],
+    ],
     static_libs: [
         "androidx.test.runner",
         "truth-prebuilt",
@@ -63,10 +66,17 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "StagedInstallTestAppAv2",
+
+    srcs:   ["testdata/apk/src/**/*java"],
+
+    manifest:   "testdata/apk/Av2.xml",
+}
+
+android_test_helper_app {
     name: "StagedInstallTestAppBv1",
 
     srcs:   ["testdata/apk/src/**/*java"],
 
     manifest:   "testdata/apk/Bv1.xml",
 }
-

@@ -26,6 +26,7 @@ import androidx.test.InstrumentationRegistry;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class LocalIntentSender extends BroadcastReceiver {
     private static final BlockingQueue<Intent> sIntentSenderResults = new LinkedBlockingQueue<>();
@@ -49,6 +50,6 @@ public class LocalIntentSender extends BroadcastReceiver {
      * Returns the most recent Intent sent by a LocalIntentSender.
      */
     static Intent getIntentSenderResult() throws InterruptedException {
-        return sIntentSenderResults.take();
+        return sIntentSenderResults.poll(5, TimeUnit.SECONDS);
     }
 }

@@ -18,14 +18,15 @@ package com.android.tests.stagedinstall.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assume.assumeThat;
+
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -106,6 +107,29 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testGetActiveStagedSessionNoSessionActive() throws Exception {
         runPhase("testGetActiveStagedSessionNoSessionActive");
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeNotRequested_Fails() throws Exception {
+        runPhase("testStagedInstallDowngrade_DowngradeNotRequested_Fails_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngrade_DowngradeNotRequested_Fails_VerifyPostReboot");
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeRequested_DebugBuild() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+        runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngrade_DowngradeRequested_DebugBuild_VerifyPostReboot");
+    }
+
+    @Test
+    public void testStagedInstallDowngrade_DowngradeRequested_UserBuild() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot");
     }
 
     private static final class FailedTestLogHook extends TestWatcher {

@@ -39,7 +39,6 @@ import android.os.UserHandle;
 
 import android.provider.CallLog;
 import android.telecom.Call;
-import android.telecom.CallIdentification;
 import android.telecom.CallScreeningService;
 import android.telecom.TelecomManager;
 import android.telecom.cts.screeningtestapp.CallScreeningServiceControl;
@@ -62,14 +61,7 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
             "android.telecom.cts.screeningtestapp/"
                     + "android.telecom.cts.screeningtestapp.CtsCallScreeningService";
     private static final int ASYNC_TIMEOUT = 10000;
-    private static final String ROLE_CALL_SCREENING = "android.app.role.CALL_SCREENING";
-    private static final CallIdentification SAMPLE_CALL_ID = new CallIdentification.Builder()
-            .setName("Joe's Laundromat")
-            .setDescription("1234 Dirtysocks Lane, Cleanville, USA")
-            .setDetails("Open 24 hrs; free parking")
-            .setPhoto(null)
-            .setNuisanceConfidence(CallIdentification.CONFIDENCE_LIKELY_NOT_NUISANCE)
-            .build();
+    private static final String ROLE_CALL_SCREENING = RoleManager.ROLE_CALL_SCREENING;
 
     private ICallScreeningControl mCallScreeningControl;
     private RoleManager mRoleManager;
@@ -108,84 +100,6 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
 
         if (!TextUtils.isEmpty(mPreviousCallScreeningPackage)) {
             addRoleHolder(ROLE_CALL_SCREENING, mPreviousCallScreeningPackage);
-        }
-    }
-
-    /**
-     * Verifies that a {@link android.telecom.CallScreeningService} can provide call identification
-     * information and that it will be passed on to the {@link android.telecom.InCallService}.
-     * Also verifies that the call identification information is logged to the call log as expected.
-     * @throws Exception
-     */
-    public void testProvideCallIdentificationForIncoming() throws Exception {
-        if (!shouldTestTelecom(mContext)) {
-            return;
-        }
-
-        // Tell the test app to set its call id info.
-        mCallScreeningControl.setProviderCallIdentification(
-                SAMPLE_CALL_ID.getName(),
-                SAMPLE_CALL_ID.getDescription(),
-                SAMPLE_CALL_ID.getDetails(),
-                SAMPLE_CALL_ID.getPhoto(),
-                SAMPLE_CALL_ID.getNuisanceConfidence());
-
-        // Setup content observer to notify us when we call log entry is added.
-        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
-
-        Uri phoneNumber = createRandomTestNumber();
-        // Create a new incoming call.
-        addAndVerifyNewIncomingCall(phoneNumber, null);
-
-        // Wait for call id to be passed back to InCallService
-        assertCallIdentification(SAMPLE_CALL_ID, TEST_APP_NAME, TEST_APP_PACKAGE);
-
-        // Disconnect the call
-        mInCallCallbacks.getService().rejectAllCalls();
-        assertNumCalls(mInCallCallbacks.getService(), 0);
-
-        // Wait for it to log.
-        waitOnAllHandlers(getInstrumentation());
-
-        // Wait for call log update.
-        callLogEntryLatch.await();
-
-        // Query the latest entry into the call log and verify the call identification information
-        // was logged appropriately
-        Cursor callsCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
-                null, null, CallLog.Calls._ID + " DESC limit 1;");
-        int numberIndex = callsCursor.getColumnIndex(CallLog.Calls.NUMBER);
-        int callTypeIndex = callsCursor.getColumnIndex(CallLog.Calls.TYPE);
-        int blockReasonIndex = callsCursor.getColumnIndex(CallLog.Calls.BLOCK_REASON);
-        int callIdAppNameIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_APP_NAME);
-        int callIdPackageNameIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_PACKAGE_NAME);
-        int callIdNameIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_NAME);
-        int callIdDescriptionIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_DESCRIPTION);
-        int callIdDetailsIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_DETAILS);
-        int callIdConfidenceIndex = callsCursor.getColumnIndex(
-                CallLog.Calls.CALL_ID_NUISANCE_CONFIDENCE);
-        if (callsCursor.moveToNext()) {
-            String number = callsCursor.getString(numberIndex);
-            int callType = callsCursor.getInt(callTypeIndex);
-            int blockReason = callsCursor.getInt(blockReasonIndex);
-            String idAppName = callsCursor.getString(callIdAppNameIndex);
-            String idPackage = callsCursor.getString(callIdPackageNameIndex);
-            String name = callsCursor.getString(callIdNameIndex);
-            String description = callsCursor.getString(callIdDescriptionIndex);
-            String details = callsCursor.getString(callIdDetailsIndex);
-            int confidence = callsCursor.getInt(callIdConfidenceIndex);
-            // Make sure nobody sneaky tries to pre-populate the call log and fudge the tests.
-            assertEquals(phoneNumber.getSchemeSpecificPart(), number);
-            assertEquals(CallLog.Calls.REJECTED_TYPE, callType);
-            assertEquals(CallLog.Calls.BLOCK_REASON_NOT_BLOCKED, blockReason);
-            assertEquals(TEST_APP_NAME, idAppName);
-            assertEquals(TEST_APP_PACKAGE, idPackage);
-            assertEquals(SAMPLE_CALL_ID.getName(), name);
-            assertEquals(SAMPLE_CALL_ID.getDetails(), details);
-            assertEquals(SAMPLE_CALL_ID.getDescription(), description);
-            assertEquals(SAMPLE_CALL_ID.getNuisanceConfidence(), confidence);
-        } else {
-            fail("Call was not logged; bee-boop");
         }
     }
 
@@ -262,119 +176,7 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         addIncomingAndVerifyCallExtraForSilence(false);
     }
 
-    public void testProvideCallIdentificationForOutgoing() throws Exception {
-        if (!shouldTestTelecom(mContext)) {
-            return;
-        }
-        Uri phoneNumber = placeOutgoingCall();
-
-        // Query the latest entry into the call log and verify the call identification information
-        // was logged appropriately
-        Cursor callsCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
-                null, null, CallLog.Calls._ID + " DESC limit 1;");
-        int numberIndex = callsCursor.getColumnIndex(CallLog.Calls.NUMBER);
-        int callTypeIndex = callsCursor.getColumnIndex(CallLog.Calls.TYPE);
-        int blockReasonIndex = callsCursor.getColumnIndex(CallLog.Calls.BLOCK_REASON);
-        int callIdAppNameIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_APP_NAME);
-        int callIdPackageNameIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_PACKAGE_NAME);
-        int callIdNameIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_NAME);
-        int callIdDescriptionIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_DESCRIPTION);
-        int callIdDetailsIndex = callsCursor.getColumnIndex(CallLog.Calls.CALL_ID_DETAILS);
-        int callIdConfidenceIndex = callsCursor.getColumnIndex(
-                CallLog.Calls.CALL_ID_NUISANCE_CONFIDENCE);
-        if (callsCursor.moveToNext()) {
-            String number = callsCursor.getString(numberIndex);
-            int callType = callsCursor.getInt(callTypeIndex);
-            int blockReason = callsCursor.getInt(blockReasonIndex);
-            String idAppName = callsCursor.getString(callIdAppNameIndex);
-            String idPackage = callsCursor.getString(callIdPackageNameIndex);
-            String name = callsCursor.getString(callIdNameIndex);
-            String description = callsCursor.getString(callIdDescriptionIndex);
-            String details = callsCursor.getString(callIdDetailsIndex);
-            int confidence = callsCursor.getInt(callIdConfidenceIndex);
-            // Make sure nobody sneaky tries to pre-populate the call log and fudge the tests.
-            assertEquals(phoneNumber.getSchemeSpecificPart(), number);
-            assertEquals(CallLog.Calls.OUTGOING_TYPE, callType);
-            assertEquals(CallLog.Calls.BLOCK_REASON_NOT_BLOCKED, blockReason);
-            assertEquals(TEST_APP_NAME, idAppName);
-            assertEquals(TEST_APP_PACKAGE, idPackage);
-            assertEquals(SAMPLE_CALL_ID.getName(), name);
-            assertEquals(SAMPLE_CALL_ID.getDetails(), details);
-            assertEquals(SAMPLE_CALL_ID.getDescription(), description);
-            assertEquals(SAMPLE_CALL_ID.getNuisanceConfidence(), confidence);
-        } else {
-            fail("Call was not logged; bee-boop");
-        }
-    }
-
-    /**
-     * Verify parceling and unparceling of {@link CallIdentification} information.
-     */
-    public void testParcelUnparcel() {
-        Parcel p = Parcel.obtain();
-        SAMPLE_CALL_ID.writeToParcel(p, 0);
-        p.setDataPosition(0);
-        CallIdentification unparceled = SAMPLE_CALL_ID.CREATOR.createFromParcel(p);
-        assertEquals(SAMPLE_CALL_ID, unparceled);
-    }
-
-    /**
-     * Verifies operation of the {@link TelecomManager#reportNuisanceCallStatus(Uri, boolean)} API
-     * for an outgoing call; should not be possible to report as nuisance.
-     * @throws Exception
-     */
-    public void testReportNuisanceInvalid() throws Exception {
-        if (!shouldTestTelecom(mContext)) {
-            return;
-        }
-        Uri phoneNumber = placeOutgoingCall();
-
-        // Report the call as a nuisance call.
-        mTelecomManager.reportNuisanceCallStatus(phoneNumber, true);
-
-        // Block on the control service and wait for the nuisance report; we don't expect one so we
-        // will only wait a short time to avoid this test blocking for a long time.
-        mCallScreeningControl.waitForNuisanceReport(TestUtils.WAIT_FOR_NUISANCE_REPORT_TIMEOUT_MS);
-
-        // We should not have gotten a response back.
-        assertFalse(mCallScreeningControl.isNuisanceReportReceived());
-    }
-
-    /**
-     * Verifies operation of the {@link TelecomManager#reportNuisanceCallStatus(Uri, boolean)} API
-     * for an incoming call.
-     * @throws Exception
-     */
-    public void testReportNuisanceIncoming() throws Exception {
-        if (!shouldTestTelecom(mContext)) {
-            return;
-        }
-        Uri phoneNumber = addIncoming(true /* disconnectImmediately */);
-
-        // Disconnect the incoming call so it can be logged.
-        mInCallCallbacks.getService().disconnectAllCalls();
-        assertNumCalls(mInCallCallbacks.getService(), 0);
-
-        // Report the call as a nuisance call.
-        mTelecomManager.reportNuisanceCallStatus(phoneNumber, true);
-
-        // Block on the control service and wait for the nuisance report; we will potentially wait
-        // longer because we really do expect something here.
-        mCallScreeningControl.waitForNuisanceReport(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
-
-        // We should have gotten a response back.
-        assertTrue(mCallScreeningControl.isNuisanceReportReceived());
-    }
-
     private Uri placeOutgoingCall() throws Exception {
-        // Tell the test app to set its call id info.
-        mCallScreeningControl.setProviderCallIdentification(
-                SAMPLE_CALL_ID.getName(),
-                SAMPLE_CALL_ID.getDescription(),
-                SAMPLE_CALL_ID.getDetails(),
-                SAMPLE_CALL_ID.getPhoto(),
-                SAMPLE_CALL_ID.getNuisanceConfidence());
-
         // Setup content observer to notify us when we call log entry is added.
         CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
 
@@ -383,9 +185,6 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, phoneNumber);
         // Create a new outgoing call.
         placeAndVerifyCall(extras);
-
-        // Wait for call id to be passed back to InCallService
-        assertCallIdentification(SAMPLE_CALL_ID, TEST_APP_NAME, TEST_APP_PACKAGE);
 
         mInCallCallbacks.getService().disconnectAllCalls();
         assertNumCalls(mInCallCallbacks.getService(), 0);
@@ -450,7 +249,8 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         }
     }
 
-    private void addIncomingAndVerifyCallExtraForSilence(boolean expectedIsSilentRingingExtraSet) throws Exception {
+    private void addIncomingAndVerifyCallExtraForSilence(boolean expectedIsSilentRingingExtraSet)
+            throws Exception {
         Uri testNumber = addIncoming(false);
 
         waitUntilConditionIsTrueOrTimeout(
@@ -465,13 +265,14 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
                         // Verify that the call extra matches expectation
                         Call call = mInCallCallbacks.getService().getLastCall();
                         return expectedIsSilentRingingExtraSet ==
-                                call.getDetails().getExtras().getBoolean(Call.EXTRA_SILENT_RINGING_REQUESTED);
+                                call.getDetails().getExtras().getBoolean(
+                                        Call.EXTRA_SILENT_RINGING_REQUESTED);
                     }
                 },
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Call extra - verification failed, expected the extra " +
-                        "EXTRA_SILENT_RINGING_REQUESTED to be set:" + expectedIsSilentRingingExtraSet
-        );
+                        "Call extra - verification failed, expected the extra " +
+                        "EXTRA_SILENT_RINGING_REQUESTED to be set:" +
+                        expectedIsSilentRingingExtraSet);
     }
 
     private CountDownLatch getCallLogEntryLatch() {
@@ -516,41 +317,6 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
             fail("Failed to get control interface -- bind error");
         }
         bindLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-    }
-
-    private void assertCallIdentification(final CallIdentification expectedIdentification,
-            final String expectedAppName, final String expectedPackageName) {
-        waitUntilConditionIsTrueOrTimeout(
-                new Condition() {
-                    @Override
-                    public Object expected() {
-                        return true;
-                    }
-
-                    @Override
-                    public Object actual() {
-                        CallIdentification callIdentification = mInCallCallbacks.getService()
-                                .getLastCall()
-                                .getDetails()
-                                .getCallIdentification();
-                        return ((expectedIdentification == null) == (callIdentification == null))
-                                && expectedIdentification.getNuisanceConfidence()
-                                        == callIdentification.getNuisanceConfidence()
-                                && expectedIdentification.getName().equals(
-                                        callIdentification.getName())
-                                && expectedIdentification.getDescription().equals(
-                                        callIdentification.getDescription())
-                                && expectedIdentification.getDetails().equals(
-                                        callIdentification.getDetails())
-                                && expectedAppName.equals(
-                                        callIdentification.getCallScreeningAppName())
-                                && expectedPackageName.equals(
-                                        callIdentification.getCallScreeningPackageName());
-                    }
-                },
-                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Expected call Id " + expectedIdentification
-        );
     }
 
     /**

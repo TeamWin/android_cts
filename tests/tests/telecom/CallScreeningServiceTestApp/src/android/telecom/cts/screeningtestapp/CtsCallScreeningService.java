@@ -21,7 +21,6 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.IBinder;
 import android.telecom.Call;
-import android.telecom.CallIdentification;
 import android.telecom.CallScreeningService;
 
 import android.text.TextUtils;
@@ -49,12 +48,6 @@ public class CtsCallScreeningService extends CallScreeningService {
         Log.i(TAG, "onScreenCall");
         CallScreeningServiceControl control = CallScreeningServiceControl.getInstance();
         if (control != null) {
-            CallIdentification callIdentification = control.getCallIdentification();
-            if (callIdentification != null ) {
-                Log.i(TAG, "onScreenCall: providing call id " + callIdentification);
-                provideCallIdentification(callDetails, control.getCallIdentification());
-            }
-
             respondToCall(callDetails, control.getCallResponse());
         } else {
             Log.w(TAG, "No control interface.");

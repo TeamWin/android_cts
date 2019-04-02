@@ -84,6 +84,14 @@ std::string initGLES() {
     EGLint numConfigs;
     EGLint format;
 
+    // Check for the EGL_ANDROID_GLES_layers
+    std::string display_extensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    if (display_extensions.find("EGL_ANDROID_GLES_layers") == std::string::npos)
+    {
+        result = "Did not find EGL_ANDROID_GLES_layers extension";
+        return result;
+    }
+
     if ((display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
         result = "eglGetDisplay() returned error " + std::to_string(eglGetError());
         return result;

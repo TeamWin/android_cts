@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -624,6 +625,20 @@ public class BitmapRegionDecoderTest {
         InputStream is = obtainInputStream(RES_IDS[0]);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
         decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
+    }
+
+    @Test
+    public void testRecycledBitmapIn() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        Bitmap bitmap = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Config.ARGB_8888);
+        bitmap.recycle();
+
+        opts.inBitmap = bitmap;
+        InputStream is = obtainInputStream(RES_IDS[0]);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        assertThrows(IllegalArgumentException.class, () -> {
+            decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
+        });
     }
 
     private void compareRegionByRegion(BitmapRegionDecoder decoder,

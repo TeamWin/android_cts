@@ -19,6 +19,10 @@ package android.media.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_ALL;
+import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
+import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -26,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.media.AudioAttributes;
 import android.media.AudioAttributes.AttributeUsage;
+import android.media.AudioAttributes.CapturePolicy;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioPlaybackCaptureConfiguration;
@@ -123,7 +128,7 @@ public class AudioPlaybackCaptureTest {
         return audioRecord;
     }
 
-    private MediaPlayer createMediaPlayer(boolean allowCapture, int resid,
+    private MediaPlayer createMediaPlayer(@CapturePolicy int capturePolicy, int resid,
                                           @AttributeUsage int usage) {
         MediaPlayer mediaPlayer = MediaPlayer.create(
                 mActivity,
@@ -131,7 +136,7 @@ public class AudioPlaybackCaptureTest {
                 new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .setUsage(usage)
-                    .setAllowCapture(allowCapture)
+                    .setAllowedCapturePolicy(capturePolicy)
                     .build(),
                 mAudioManager.generateAudioSessionId());
         mediaPlayer.setLooping(true);
@@ -161,10 +166,10 @@ public class AudioPlaybackCaptureTest {
         return onlySilence;
     }
 
-    public void testPlaybackCapture(boolean allowCapture,
+    public void testPlaybackCapture(@CapturePolicy int capturePolicy,
                                     @AttributeUsage int playbackUsage,
                                     boolean dataPresent) throws Exception {
-        MediaPlayer mediaPlayer = createMediaPlayer(allowCapture, R.raw.testwav_16bit_44100hz,
+        MediaPlayer mediaPlayer = createMediaPlayer(capturePolicy, R.raw.testwav_16bit_44100hz,
                                                     playbackUsage);
         if (mPlaybackBeforeCapture) {
             mediaPlayer.start();
@@ -190,6 +195,27 @@ public class AudioPlaybackCaptureTest {
         } else {
             assertTrue("Expected silence, but some data was recorded",
                        onlySilence(rawBuffer.asShortBuffer()));
+        }
+    }
+
+    public void testPlaybackCapture(boolean allowCapture,
+                                    @AttributeUsage int playbackUsage,
+                                    boolean dataPresent) throws Exception {
+        if (allowCapture) {
+            testPlaybackCapture(ALLOW_CAPTURE_BY_ALL, playbackUsage, dataPresent);
+        } else {
+            testPlaybackCapture(ALLOW_CAPTURE_BY_SYSTEM, playbackUsage, dataPresent);
+            testPlaybackCapture(ALLOW_CAPTURE_BY_NONE, playbackUsage, dataPresent);
+
+            try {
+                mAudioManager.setAllowedCapturePolicy(ALLOW_CAPTURE_BY_SYSTEM);
+                testPlaybackCapture(ALLOW_CAPTURE_BY_ALL, playbackUsage, dataPresent);
+                mAudioManager.setAllowedCapturePolicy(ALLOW_CAPTURE_BY_NONE);
+                testPlaybackCapture(ALLOW_CAPTURE_BY_ALL, playbackUsage, dataPresent);
+            } finally {
+                // Do not impact followup test is case of failure
+                mAudioManager.setAllowedCapturePolicy(ALLOW_CAPTURE_BY_ALL);
+            }
         }
     }
 
@@ -305,7 +331,7 @@ public class AudioPlaybackCaptureTest {
     public void testCaptureExcludeUid() throws Exception {
         mAPCTestConfig.excludeUids = new int[]{ 0 };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
-        testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
 
         mAPCTestConfig.excludeUids = new int[]{ mUid };

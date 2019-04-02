@@ -983,6 +983,20 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 logicalAvgDurationMs*(1+FRAME_DURATION_THRESHOLD),
                 logicalAvgDurationMs2);
 
+        if (VERBOSE) {
+            while (simpleResultListenerDual.hasMoreFailures()) {
+                ArrayList<CaptureFailure> failures =
+                    simpleResultListenerDual.getCaptureFailures(/*maxNumFailures*/ 1);
+                for (CaptureFailure failure : failures) {
+                    String physicalCameraId = failure.getPhysicalCameraId();
+                    if (physicalCameraId != null) {
+                        Log.v(TAG, "Capture result failure for physical camera id: " +
+                                physicalCameraId);
+                    }
+                }
+            }
+        }
+
         // Stop preview
         if (mSession != null) {
             mSession.close();

@@ -21,8 +21,26 @@ include $(LOCAL_PATH)/build_signedconfig_apk.mk
 
 
 include $(CLEAR_VARS)
+LOCAL_PACKAGE_NAME := CtsSignedConfigTestAppV1_instant
+LOCAL_MANIFEST_FILE := version1_instant_AndroidManifest.xml
+include $(LOCAL_PATH)/build_signedconfig_apk.mk
+
+
+include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsSignedConfigTestAppV2
 LOCAL_MANIFEST_FILE := version2_AndroidManifest.xml
+include $(LOCAL_PATH)/build_signedconfig_apk.mk
+
+
+include $(CLEAR_VARS)
+LOCAL_PACKAGE_NAME := CtsSignedConfigTestAppV2_instant
+LOCAL_MANIFEST_FILE := version2_instant_AndroidManifest.xml
+include $(LOCAL_PATH)/build_signedconfig_apk.mk
+
+
+include $(CLEAR_VARS)
+LOCAL_PACKAGE_NAME := CtsSignedConfigTestApp2V1
+LOCAL_MANIFEST_FILE := version1_package2_AndroidManifest.xml
 include $(LOCAL_PATH)/build_signedconfig_apk.mk
 
 

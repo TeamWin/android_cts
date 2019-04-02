@@ -272,6 +272,13 @@ public class SystemFeaturesTest {
     }
 
     @Test
+    public void testGamepadFeature() {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            assertAvailable(PackageManager.FEATURE_GAMEPAD);
+        }
+    }
+
+    @Test
     public void testLiveWallpaperFeature() {
         try {
             Intent intent = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
@@ -306,31 +313,6 @@ public class SystemFeaturesTest {
             assertAvailable(PackageManager.FEATURE_RAM_LOW);
         } else {
             assertAvailable(PackageManager.FEATURE_RAM_NORMAL);
-        }
-    }
-
-    @Test
-    public void testOffHostCardEmulationFeatures() {
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(mContext);
-        if (nfcAdapter != null) {
-            List<String> offHostSE = nfcAdapter.getSupportedOffHostSecureElements();
-            if (mPackageManager.hasSystemFeature(
-                    PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_UICC)) {
-                assertTrue(offHostSE.contains("SIM"));
-            } else {
-                assertFalse(offHostSE.contains("SIM"));
-            }
-
-            if (mPackageManager.hasSystemFeature(
-                    PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_ESE)) {
-                assertTrue(offHostSE.contains("eSE"));
-            } else {
-                assertFalse(offHostSE.contains("eSE"));
-            }
-        } else {
-            assertNotAvailable(PackageManager.FEATURE_NFC);
-            assertNotAvailable(PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_UICC);
-            assertNotAvailable(PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_ESE);
         }
     }
 

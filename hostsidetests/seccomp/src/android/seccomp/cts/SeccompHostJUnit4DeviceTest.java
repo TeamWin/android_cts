@@ -45,7 +45,6 @@ public class SeccompHostJUnit4DeviceTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        installPackage(TEST_APP);
     }
 
     @Test
@@ -65,7 +64,6 @@ public class SeccompHostJUnit4DeviceTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
-        uninstallPackage(getDevice(), TEST_PKG);
     }
 
 }
