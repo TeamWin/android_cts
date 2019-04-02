@@ -711,7 +711,8 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         mOnUiThread.clearSslPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         // Page loaded OK...
-        assertTrue(webViewClient.wasOnReceivedSslErrorCalled());
+        assertTrue("onReceivedSslError should be called",
+                webViewClient.wasOnReceivedSslErrorCalled());
         assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
         assertEquals(0, webViewClient.onReceivedErrorCode());
     }

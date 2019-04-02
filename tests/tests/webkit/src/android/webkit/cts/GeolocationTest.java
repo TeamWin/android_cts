@@ -453,8 +453,8 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
         // Load the same URL again
         loadUrlAndUpdateLocation(URL_1);
         PollingCheck.check("JS didn't get position", POLLING_TIMEOUT, receivedLocation);
-        // Assert prompt for geolocation permission is not called the second time
-        assertFalse(chromeClientAcceptAlways.mReceivedRequest);
+        assertFalse("Prompt for geolocation permission should not be called the second time",
+                chromeClientAcceptAlways.mReceivedRequest);
         // Check that the permission is in GeolocationPermissions
         BooleanCheck trueCheck = new BooleanCheck(true);
         GeolocationPermissions.getInstance().getAllowed(URL_1, trueCheck);
@@ -616,8 +616,8 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
             }
         };
         PollingCheck.check("JS got position", POLLING_TIMEOUT, locationDenied);
-        // The geolocation permission prompt should not be called
-        assertFalse(chromeClientAcceptAlways.mReceivedRequest);
+        assertFalse("The geolocation permission prompt should not be called",
+                chromeClientAcceptAlways.mReceivedRequest);
     }
 
     // Object added to the page via AddJavascriptInterface() that is used by the test Javascript to

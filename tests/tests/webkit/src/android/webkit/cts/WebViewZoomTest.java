@@ -191,11 +191,12 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         float currScale = mOnUiThread.getScale();
 
-        // can zoom in or out although zoom support is disabled in web settings
-        assertTrue(mOnUiThread.zoomIn());
+        assertTrue("Zoom out should succeed although zoom support is disabled in web settings",
+                mOnUiThread.zoomIn());
         currScale = mWebViewClient.expectZoomIn(currScale);
 
-        assertTrue(mOnUiThread.zoomOut());
+        assertTrue("Zoom out should succeed although zoom support is disabled in web settings",
+                mOnUiThread.zoomOut());
         currScale = mWebViewClient.expectZoomOut(currScale);
     }
 
