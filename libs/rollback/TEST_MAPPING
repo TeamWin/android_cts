@@ -1,7 +1,10 @@
 {
-  "presubmit": [
+  "imports": [
     {
-      "name": "CtsRollbackManagerTestCases"
+      "path": "cts/tests/rollback"
+    },
+    {
+      "path": "cts/hostsidetests/rollback"
     }
   ]
 }
