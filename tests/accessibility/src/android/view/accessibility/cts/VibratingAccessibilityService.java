@@ -18,19 +18,29 @@ package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.content.Intent;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
  * Stub accessibility service that reports itself as providing haptic feedback.
  */
 public class VibratingAccessibilityService extends AccessibilityService {
+    private static final String LOG_TAG = VibratingAccessibilityService.class.getSimpleName();
     public static Object sWaitObjectForConnecting = new Object();
 
     public static VibratingAccessibilityService sConnectedInstance;
 
     @Override
+    public boolean onUnbind(Intent intent) {
+        Log.v(LOG_TAG, "onUnbind [" + this + "]");
+        return false;
+    }
+
+    @Override
     public void onDestroy() {
         sConnectedInstance = null;
+        Log.v(LOG_TAG, "onDestroy ["  + this + "]");
     }
 
     @Override
@@ -43,6 +53,7 @@ public class VibratingAccessibilityService extends AccessibilityService {
             sConnectedInstance = this;
             sWaitObjectForConnecting.notifyAll();
         }
+        Log.v(LOG_TAG, "onServiceConnected ["  + this + "]");
     }
 
     @Override
