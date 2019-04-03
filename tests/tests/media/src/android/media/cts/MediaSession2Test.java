@@ -209,8 +209,10 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             Controller2Callback callback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(mContext,
-                    session.getSessionToken(), sHandlerExecutor, callback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, callback)
+                            .build();
             assertTrue(callback.awaitOnConnected(WAIT_TIME_MS));
 
             List<MediaSession2.ControllerInfo> controllers = session.getConnectedControllers();
@@ -233,8 +235,10 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             Controller2Callback callback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(mContext,
-                    session.getSessionToken(), sHandlerExecutor, callback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, callback)
+                            .build();
             assertTrue(callback.awaitOnConnected(WAIT_TIME_MS));
             controller.close();
             assertTrue(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS));
@@ -300,8 +304,11 @@ public class MediaSession2Test {
                     return commandResult;
                 }
             };
-            MediaController2 controller1 = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, callback1);
+
+            MediaController2 controller1 =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, callback1)
+                            .build();
 
             final CountDownLatch latch2 = new CountDownLatch(1);
             Controller2Callback callback2 = new Controller2Callback() {
@@ -315,8 +322,10 @@ public class MediaSession2Test {
                     return commandResult;
                 }
             };
-            MediaController2 controller2 = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, callback2);
+            MediaController2 controller2 =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, callback2)
+                            .build();
 
             // 2. Wait until all the controllers are connected.
             assertTrue(callback1.awaitOnConnected(WAIT_TIME_MS));
@@ -338,8 +347,14 @@ public class MediaSession2Test {
                 .build()) {
             // Test onConnect
             Controller2Callback controllerCallback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            Bundle testConnectionHints = new Bundle();
+            testConnectionHints.putString("test_key", "test_value");
+
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setConnectionHints(testConnectionHints)
+                            .setControllerCallback(sHandlerExecutor, controllerCallback)
+                            .build();
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
             assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
             assertEquals(session, sessionCallback.mSession);
@@ -351,6 +366,7 @@ public class MediaSession2Test {
             assertEquals(Process.myPid(), remoteUserInfo.getPid());
             assertEquals(Process.myUid(), remoteUserInfo.getUid());
             assertEquals(mContext.getPackageName(), remoteUserInfo.getPackageName());
+            assertTrue(TestUtils.equals(testConnectionHints, controllerInfo.getConnectionHints()));
 
             // Test onDisconnect
             controller.close();
@@ -368,8 +384,10 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             Controller2Callback controllerCallback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, controllerCallback)
+                            .build();
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
             assertTrue(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS));
             assertEquals(Process.myUid(), sessionCallback.mController.getUid());
@@ -389,9 +407,12 @@ public class MediaSession2Test {
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
-            Controller2Callback controllerCallback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            Controller2Callback callback = new Controller2Callback();
+
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, callback)
+                            .build();
             assertFalse(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS));
         }
     }
@@ -404,8 +425,10 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             Controller2Callback controllerCallback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, controllerCallback)
+                            .build();
             // Wait for connection
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
             assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
@@ -459,8 +482,10 @@ public class MediaSession2Test {
                     return commandResult;
                 }
             };
-            MediaController2 controller = new MediaController2(
-                    mContext, session.getSessionToken(), sHandlerExecutor, controllerCallback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, controllerCallback)
+                            .build();
             // Wait for connection
             assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
@@ -503,8 +528,10 @@ public class MediaSession2Test {
             assertEquals(testInitialPlaybackActive, session.isPlaybackActive());
 
             Controller2Callback controllerCallback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(mContext, session.getSessionToken(),
-                    sHandlerExecutor, controllerCallback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, controllerCallback)
+                            .build();
             // Wait for connection
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
 
@@ -531,8 +558,10 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             Controller2Callback controllerCallback = new Controller2Callback();
-            MediaController2 controller = new MediaController2(mContext, session.getSessionToken(),
-                    sHandlerExecutor, controllerCallback);
+            MediaController2 controller =
+                    new MediaController2.Builder(mContext, session.getSessionToken())
+                            .setControllerCallback(sHandlerExecutor, controllerCallback)
+                            .build();
             // Wait for connection
             assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
