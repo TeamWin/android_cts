@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -86,7 +87,8 @@ public class TelephonyManagerTest {
             fail("An app targeting pre-Q with the READ_PHONE_STATE permission granted must "
                     + "receive null (or "
                     + Build.UNKNOWN
-                    + " for Build#getSerial) when querying for device identifiers");
+                    + " for Build#getSerial) when querying for device identifiers, caught "
+                    + "SecurityException instead: " + e);
         }
     }
 }
