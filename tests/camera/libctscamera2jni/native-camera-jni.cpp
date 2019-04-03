@@ -1128,7 +1128,8 @@ class PreviewTestCase {
 
     camera_status_t createCaptureSessionWithLog(
             const std::vector<ACaptureSessionOutput*> extraOutputs,
-            bool isPreviewShared = false, ACaptureRequest *sessionParameters = nullptr) {
+            bool isPreviewShared = false, ACaptureRequest *sessionParameters = nullptr,
+            bool sessionConfigurationDefault = true) {
         if (mSession) {
             LOG_ERROR(errorString, "Cannot create session before closing existing one");
             return ACAMERA_ERROR_UNKNOWN;
@@ -1145,6 +1146,10 @@ class PreviewTestCase {
         if (ret != ACAMERA_OK && ret != ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
             LOG_ERROR(errorString, "isSessionConfigurationSupported must return either OK "
                     "or UNSUPPORTED_OPERATION, but returns %d", ret);
+            return ret;
+        }
+
+        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION && !sessionConfigurationDefault) {
             return ret;
         }
 
@@ -2933,8 +2938,11 @@ bool nativeCameraDeviceLogicalPhysicalStreaming(
             goto cleanup;
         }
 
-        ret = testCase.createCaptureSessionWithLog(readerSessionOutputs);
-        if (ret != ACAMERA_OK) {
+        ret = testCase.createCaptureSessionWithLog(readerSessionOutputs, false /*isPreviewShared*/,
+                nullptr /*sessionParameters*/, false /*sessionConfigurationDefault*/);
+        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
+            continue;
+        } else if (ret != ACAMERA_OK) {
             // Don't log error here. testcase did it
             goto cleanup;
         }

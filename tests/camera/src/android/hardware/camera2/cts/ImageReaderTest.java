@@ -1025,8 +1025,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 }
 
                 if (checkSession) {
-                    assertTrue("Camera capture session validation for format: " + format +
-                            " failed", checkImageReaderSessionConfiguration());
+                    checkImageReaderSessionConfiguration(
+                            "Camera capture session validation for format: " + format + "failed");
                 }
 
                 // Start capture.
