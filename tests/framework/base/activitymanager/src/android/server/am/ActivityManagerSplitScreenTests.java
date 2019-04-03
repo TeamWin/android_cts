@@ -40,6 +40,7 @@ import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -487,6 +488,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                         mAmWmState.getWmState().getDefaultDisplayLastTransition());
                 pressHomeButton();
                 mAmWmState.waitForHomeActivityVisible();
+                mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
                 assertEquals(TRANSIT_WALLPAPER_OPEN,
                         mAmWmState.getWmState().getDefaultDisplayLastTransition());
