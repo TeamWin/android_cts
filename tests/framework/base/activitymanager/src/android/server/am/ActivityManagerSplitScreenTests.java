@@ -458,6 +458,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 129839681)
     public void testMinimizeAndUnminimizeThenGoingHome() throws Exception {
         // Rotate the screen to check that minimize, unminimize, dismiss the docked stack and then
         // going home has the correct app transition
