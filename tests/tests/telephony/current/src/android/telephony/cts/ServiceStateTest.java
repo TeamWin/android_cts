@@ -254,5 +254,17 @@ public class ServiceStateTest extends AndroidTestCase {
         assertEquals(nri, serviceState.getNetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN));
 
+        nris = serviceState.getNetworkRegistrationInfoListForDomain(
+                NetworkRegistrationInfo.DOMAIN_PS);
+        assertEquals(2, nris.size());
+        assertEquals(nri, nris.get(1));
+
+        nris = serviceState.getNetworkRegistrationInfoList();
+        assertEquals(2, nris.size());
+
+        nris = serviceState.getNetworkRegistrationInfoListForTransportType(
+                AccessNetworkConstants.TRANSPORT_TYPE_WLAN);
+        assertEquals(1, nris.size());
+        assertEquals(nri, nris.get(0));
     }
 }
