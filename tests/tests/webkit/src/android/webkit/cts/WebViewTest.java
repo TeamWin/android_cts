@@ -16,6 +16,10 @@
 
 package android.webkit.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -1195,8 +1199,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final String currentUrl = mOnUiThread.getUrl();
         assertEquals("Current URL (" + currentUrl + ") should be a data URI", 0,
                 mOnUiThread.getUrl().indexOf("data:text/html"));
-        assertTrue("Current URL (" + currentUrl + ") should contain the simple HTML we loaded",
-                mOnUiThread.getUrl().indexOf("simple html") > 0);
+        assertThat("Current URL (" + currentUrl + ") should contain the simple HTML we loaded",
+                mOnUiThread.getUrl().indexOf("simple html"), greaterThan(0));
     }
 
     public void testLoadDataWithBaseUrl_unencodedContentHttpBaseUrl() throws Throwable {
@@ -1411,25 +1415,25 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // Focus "all" in the second page and assert that the view scrolls.
         mOnUiThread.findNext(true);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() > previousScrollY);
+        assertThat(mOnUiThread.getScrollY(), greaterThan(previousScrollY));
         previousScrollY = mOnUiThread.getScrollY();
 
         // Focus "all" in the first page and assert that the view scrolls.
         mOnUiThread.findNext(true);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() < previousScrollY);
+        assertThat(mOnUiThread.getScrollY(), lessThan(previousScrollY));
         previousScrollY = mOnUiThread.getScrollY();
 
         // Focus "all" in the second page and assert that the view scrolls.
         mOnUiThread.findNext(false);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() > previousScrollY);
+        assertThat(mOnUiThread.getScrollY(), greaterThan(previousScrollY));
         previousScrollY = mOnUiThread.getScrollY();
 
         // Focus "all" in the first page and assert that the view scrolls.
         mOnUiThread.findNext(false);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() < previousScrollY);
+        assertThat(mOnUiThread.getScrollY(), lessThan(previousScrollY));
         previousScrollY = mOnUiThread.getScrollY();
 
         // clear the result
@@ -2060,8 +2064,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         int half = dimension / 2;
         Rect rect = new Rect(half, half, half + 1, half + 1);
         assertTrue(mOnUiThread.requestChildRectangleOnScreen(mWebView, rect, true));
-        assertTrue(mOnUiThread.getScrollX() > origX);
-        assertTrue(mOnUiThread.getScrollY() > origY);
+        assertThat(mOnUiThread.getScrollX(), greaterThan(origX));
+        assertThat(mOnUiThread.getScrollY(), greaterThan(origY));
     }
 
     public void testSetDownloadListener() throws Throwable {
@@ -2322,7 +2326,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 });
         try {
             WebkitUtils.waitForFuture(result);
-            assertTrue(file.length() > 0);
+            assertThat(file.length(), greaterThan(0L));
             FileInputStream in = new FileInputStream(file);
             byte[] b = new byte[PDF_PREAMBLE.length()];
             in.read(b);
@@ -2371,7 +2375,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 });
         try {
             WebkitUtils.waitForFuture(result);
-            assertTrue(file.length() > 0);
+            assertThat(file.length(), greaterThan(0L));
             PdfRenderer renderer = new PdfRenderer(
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY));
             assertEquals(5, renderer.getPageCount());
