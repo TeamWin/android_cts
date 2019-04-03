@@ -31,6 +31,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -194,13 +195,15 @@ public final class IdleUidTest {
 
     private static void makeMyPackageActive() throws IOException {
         final String command = "cmd media.camera reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName();
+                +  InstrumentationRegistry.getTargetContext().getPackageName()
+                        + " --user " + Process.myUserHandle().getIdentifier();
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
     private static void makeMyPackageIdle() throws IOException {
         final String command = "cmd media.camera set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle";
+                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle"
+                        + " --user " + Process.myUserHandle().getIdentifier();
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 }
