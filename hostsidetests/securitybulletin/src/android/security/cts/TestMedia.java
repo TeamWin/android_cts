@@ -33,6 +33,14 @@ public class TestMedia extends SecurityTestCase {
      * before any existing test methods
      ****************************************************************/
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testPocCVE_2017_0684() throws Exception {
+        String errPattern[] = {
+                "name: le.h264.encoder  >>> /system/bin/mediaserver <<<"
+                        + "\n.*?(SIGSEGV)",
+                "name: media.codec  >>> omx@1.0-service <<<\n.*?(SIGSEGV)"};
+        runMediaTest("CVE-2017-0684", null, null, getDevice(), errPattern);
+    }
 
     /****************************************************************
      * To prevent merge conflicts, add tests for O below this comment,
