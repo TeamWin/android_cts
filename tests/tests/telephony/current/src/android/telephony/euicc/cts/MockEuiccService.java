@@ -26,6 +26,7 @@ import android.service.euicc.GetDownloadableSubscriptionMetadataResult;
 import android.service.euicc.GetEuiccProfileInfoListResult;
 import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccInfo;
+import android.telephony.euicc.EuiccManager;
 import android.telephony.euicc.EuiccManager.OtaStatus;
 
 /** Dummy implementation of {@link EuiccService} for testing. */
@@ -55,8 +56,7 @@ public class MockEuiccService extends EuiccService {
     @Override
     public @OtaStatus int onGetOtaStatus(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return 0;
+        return EuiccManager.EUICC_OTA_SUCCEEDED;
     }
 
     @Override
