@@ -530,6 +530,33 @@ class ItsSession(object):
             raise its.error.Error('3A failed to converge')
         return ae_sens, ae_exp, awb_gains, awb_transform, af_dist
 
+    def is_stream_combination_supported(self, out_surfaces):
+        """Query whether a output surfaces combination is supported by the camera device.
+
+        This function hooks up to the isSessionConfigurationSupported() camera API
+        to query whether a particular stream combination is supported.
+
+        Refer to do_capture function for specification of out_surfaces field.
+        """
+        cmd = {}
+        cmd['cmdName'] = 'isStreamCombinationSupported'
+
+        if not isinstance(out_surfaces, list):
+            cmd['outputSurfaces'] = [out_surfaces]
+        else:
+            cmd['outputSurfaces'] = out_surfaces
+        formats = [c['format'] if 'format' in c else 'yuv'
+                   for c in cmd['outputSurfaces']]
+        formats = [s if s != 'jpg' else 'jpeg' for s in formats]
+
+        self.sock.send(json.dumps(cmd) + '\n')
+
+        data,_ = self.__read_response_from_socket()
+        if data['tag'] != 'streamCombinationSupport':
+            its.error.Error('Failed to query stream combination')
+
+        return data['strValue'] == 'supportedCombination'
+
     def do_capture(self, cap_request,
             out_surfaces=None, reprocess_format=None, repeat_request=None):
         """Issue capture request(s), and read back the image(s) and metadata.
