@@ -72,7 +72,6 @@ public class SensorParameterRangeTest extends SensorTestCase {
     private static final int ACCELEROMETER_MIN_FIFO_LENGTH = 3000;
     private static final int UNCAL_MAGNETOMETER_MIN_FIFO_LENGTH = 600;
     private static final int PRESSURE_MIN_FIFO_LENGTH = 300;
-    private static final int GAME_ROTATION_VECTOR_MIN_FIFO_LENGTH = 300;
     private static final int PROXIMITY_SENSOR_MIN_FIFO_LENGTH = 100;
     private static final int STEP_DETECTOR_MIN_FIFO_LENGTH = 100;
 
@@ -195,11 +194,6 @@ public class SensorParameterRangeTest extends SensorTestCase {
     public void testPressureFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(Sensor.TYPE_PRESSURE, PRESSURE_MIN_FIFO_LENGTH);
-    }
-
-    public void testGameRotationVectorFifoLength() throws Throwable {
-        if (!mHasHifiSensors) return;
-        checkMinFifoLength(Sensor.TYPE_GAME_ROTATION_VECTOR, GAME_ROTATION_VECTOR_MIN_FIFO_LENGTH);
     }
 
     public void testProximityFifoLength() throws Throwable {
