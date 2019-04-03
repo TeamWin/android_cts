@@ -54,18 +54,19 @@ public class NativeSystemFontTest {
     @Test
     public void testMatchFamilyStyleCharacter() {
         Pair<File, Integer> fontForA = NativeSystemFontHelper.matchFamilyStyleCharacter(
-                "sans", 400, false, "en-US", "A");
+                "sans", 400, false, "en-US", 0 /* default family variant */, "A");
         Pair<File, Integer> fontForB = NativeSystemFontHelper.matchFamilyStyleCharacter(
-                "sans", 400, false, "en-US", "B");
+                "sans", 400, false, "en-US", 0 /* default family variant */, "B");
         assertEquals(fontForA, fontForB);
     }
 
     @Test
     public void testMatchFamilyStyleCharacter_fallback() {
         Pair<File, Integer> fontForA = NativeSystemFontHelper.matchFamilyStyleCharacter(
-                "Unknown-Generic-Family", 400, false, "en-US", "A");
+                "Unknown-Generic-Family", 400, false, "en-US", 0 /* default family variant */, "A");
         Pair<File, Integer> fontForB = NativeSystemFontHelper.matchFamilyStyleCharacter(
-                "Another-Unknown-Generic-Family", 400, false, "en-US", "B");
+                "Another-Unknown-Generic-Family", 400, false, "en-US",
+                0 /* default family variant */, "B");
         assertEquals(fontForA, fontForB);
     }
 
@@ -91,6 +92,8 @@ public class NativeSystemFontTest {
             "aaa", "100", "\u3042", "-"
         };
 
+        int[] familyVariants = { 0, 1, 2 };  // Family variants, DEFAULT, COMPACT and ELEGANT.
+
         String[] inputTexts = {
             "A", "B", "abc", // Alphabet input
             "\u3042", "\u3042\u3046\u3048", "\u4F60\u597D",  // CJK characters
@@ -106,22 +109,26 @@ public class NativeSystemFontTest {
             for (int weight : weights) {
                 for (boolean italic : italics) {
                     for (String languageTag : languageTags) {
-                        for (String inputText : inputTexts) {
-                            Pair<File, Integer> result =
-                                    NativeSystemFontHelper.matchFamilyStyleCharacter(
-                                            familyName, weight, italic, languageTag, inputText);
-                            // We cannot expcet much here since OEM can change font configurations.
-                            // At least, a font must be assigned for the first character.
-                            assertTrue(result.second >= 1);
+                        for (int familyVariant : familyVariants) {
+                            for (String inputText : inputTexts) {
+                                Pair<File, Integer> result =
+                                        NativeSystemFontHelper.matchFamilyStyleCharacter(
+                                                familyName, weight, italic, languageTag,
+                                                familyVariant, inputText);
+                                // We cannot expcet much here since OEM can change font
+                                // configurations.
+                                // At least, a font must be assigned for the first character.
+                                assertTrue(result.second >= 1);
 
-                            final File fontFile = result.first;
-                            assertTrue(fontFile.exists());
-                            assertTrue(fontFile.isAbsolute());
-                            assertTrue(fontFile.isFile());
-                            assertTrue(fontFile.canRead());
-                            assertFalse(fontFile.canExecute());
-                            assertFalse(fontFile.canWrite());
-                            assertTrue(fontFile.length() > 0);
+                                final File fontFile = result.first;
+                                assertTrue(fontFile.exists());
+                                assertTrue(fontFile.isAbsolute());
+                                assertTrue(fontFile.isFile());
+                                assertTrue(fontFile.canRead());
+                                assertFalse(fontFile.canExecute());
+                                assertFalse(fontFile.canWrite());
+                                assertTrue(fontFile.length() > 0);
+                            }
                         }
                     }
                 }
