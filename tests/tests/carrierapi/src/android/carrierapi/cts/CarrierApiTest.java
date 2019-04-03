@@ -440,6 +440,32 @@ public class CarrierApiTest extends AndroidTestCase {
         assertEquals(STATUS_UNKNOWN_ERROR, response.getStatus());
     }
 
+    /**
+     * Test that it's possible to close logical channels to the ICC. This follows the Manage Channel
+     * command described in TS 102 221 Section 11.1.17.
+     */
+    public void testIccCloseLogicalChannel() {
+        if (!hasCellular) return;
+
+        // The directory here doesn't matter - we just need to open a valid connection that can
+        // later be closed. In this case, the specified AID ("") opens a channel and selects the MF.
+        IccOpenLogicalChannelResponse response = mTelephonyManager.iccOpenLogicalChannel("");
+        // Check that the select command succeeded. This ensures that the logical channel is indeed
+        // open.
+        assertArrayEquals(STATUS_NORMAL, response.getSelectResponse());
+        assertTrue(mTelephonyManager.iccCloseLogicalChannel(response.getChannel()));
+
+        // Close opened channel twice.
+        assertFalse(mTelephonyManager.iccCloseLogicalChannel(response.getChannel()));
+
+        // Close channel that is not open.
+        assertFalse(mTelephonyManager.iccCloseLogicalChannel(2));
+
+        // Channel 0 is guaranteed to be always available and cannot be closed, per TS 102 221
+        // Section 11.1.17
+        assertFalse(mTelephonyManager.iccCloseLogicalChannel(0));
+    }
+
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
         // The assigned channel should be between the min and max allowed channel numbers
         int channel = response.getChannel();
