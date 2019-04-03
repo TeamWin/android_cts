@@ -17,6 +17,8 @@
 package android.app.cts;
 
 import android.app.cts.R;
+
+import static android.app.Notification.FLAG_BUBBLE;
 import static android.graphics.drawable.Icon.TYPE_ADAPTIVE_BITMAP;
 import static android.graphics.drawable.Icon.TYPE_RESOURCE;
 
@@ -788,6 +790,13 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(BUBBLE_HEIGHT, data.getDesiredHeight());
         // Res id should be cleared
         assertEquals(0, data.getDesiredHeightResId());
+    }
+
+    public void testFlagBubble() {
+        Notification n = new Notification();
+        assertFalse((n.flags & FLAG_BUBBLE) != 0);
+        n.flags |= FLAG_BUBBLE;
+        assertTrue((n.flags & FLAG_BUBBLE) != 0);
     }
 
     private static RemoteInput newDataOnlyRemoteInput() {

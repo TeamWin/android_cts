@@ -394,6 +394,17 @@
 
         <receiver android:name="android.app.stubs.CommandReceiver"
                   android:exported="true" />
+
+        <activity android:name="android.app.stubs.BubblesTestActivity"
+                  android:allowEmbedded="true"
+                  android:documentLaunchMode="always"
+                  android:resizeableActivity="true"
+                  android:turnScreenOn="true"/>
+
+        <service android:name="android.app.stubs.BubblesTestService"
+                 android:label="BubblesTestsService"
+                 android:exported="true">
+        </service>
     </application>
 
 </manifest>
