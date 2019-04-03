@@ -16,6 +16,12 @@
 
 package android.carrierapi.cts;
 
+import static org.junit.Assert.assertArrayEquals;
+
+import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
+import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
+import static android.telephony.IccOpenLogicalChannelResponse.STATUS_UNKNOWN_ERROR;
+
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderClient;
 import android.content.ContentValues;
@@ -32,6 +38,7 @@ import android.os.PersistableBundle;
 import android.provider.Telephony;
 import android.provider.VoicemailContract;
 import android.telephony.CarrierConfigManager;
+import android.telephony.IccOpenLogicalChannelResponse;
 import android.telephony.PhoneStateListener;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -62,6 +69,13 @@ public class CarrierApiTest extends AndroidTestCase {
     private HandlerThread mListenerThread;
 
     private static final String FiDevCert = "24EB92CBB156B280FA4E1429A6ECEEB6E5C1BFE4";
+    // The minimum allocatable logical channel number, per TS 102 221 Section 11.1.17.1
+    private static final int MIN_LOGICAL_CHANNEL = 1;
+    // The maximum allocatable logical channel number in the standard range, per TS 102 221 Section
+    // 11.1.17.1
+    private static final int MAX_LOGICAL_CHANNEL = 3;
+    // Status normal. This indicates that the previous APDU command was completed successfully.
+    private static final byte[] STATUS_NORMAL = {(byte) 0x90, (byte) 0x00};
 
     @Override
     protected void setUp() throws Exception {
@@ -87,10 +101,22 @@ public class CarrierApiTest extends AndroidTestCase {
         if (!hasCellular) {
             Log.e(TAG, "No cellular support, all tests will be skipped.");
         }
+
+        // We need to close all logical channels in the standard range, [1, 3], before each test.
+        // This makes sure each SIM-related test starts with a clean slate.
+        for (int i = MIN_LOGICAL_CHANNEL; i <= MAX_LOGICAL_CHANNEL; i++) {
+            mTelephonyManager.iccCloseLogicalChannel(i);
+        }
     }
 
     @Override
     public void tearDown() throws Exception {
+        // We need to close all logical channels in the standard range, [1, 3], after each test.
+        // This makes sure each SIM-related test releases any opened channels.
+        for (int i = MIN_LOGICAL_CHANNEL; i <= MAX_LOGICAL_CHANNEL; i++) {
+            mTelephonyManager.iccCloseLogicalChannel(i);
+        }
+
         mListenerThread.quit();
         try {
             mStatusProvider.delete(mStatusContentUri, null, null);
@@ -382,6 +408,44 @@ public class CarrierApiTest extends AndroidTestCase {
             failMessage();
         }
 
+    }
+
+    /**
+     * Test that it's possible to open logical channels to the ICC. This mirrors the Manage Channel
+     * command described in TS 102 221 Section 11.1.17.
+     */
+    public void testIccOpenLogicalChannel() {
+        if (!hasCellular) return;
+
+        // The AID here doesn't matter - we just need to open a valid connection. In this case, the
+        // specified AID ("") opens a channel and selects the MF.
+        IccOpenLogicalChannelResponse response = mTelephonyManager.iccOpenLogicalChannel("");
+        verifyValidIccOpenLogicalChannelResponse(response);
+        mTelephonyManager.iccCloseLogicalChannel(response.getChannel());
+
+        // {@link TelephonyManager#iccOpenLogicalChannel} sends a Manage Channel (open) APDU
+        // followed by a Select APDU with the given AID and p2 values. See Open Mobile API
+        // Specification v3.2 Section 6.2.7.h and TS 102 221 for details.
+        int p2 = 0;
+        response = mTelephonyManager.iccOpenLogicalChannel("", p2);
+        verifyValidIccOpenLogicalChannelResponse(response);
+        mTelephonyManager.iccCloseLogicalChannel(response.getChannel());
+
+        // Only values 0x00, 0x04, 0x08, and 0x0C are allowed for p2. Any p2 values that produce
+        // non '9000'/'62xx'/'63xx' status words are treated as an error and the channel is not
+        // opened.
+        p2 = 0x02;
+        response = mTelephonyManager.iccOpenLogicalChannel("", p2);
+        assertEquals(INVALID_CHANNEL, response.getChannel());
+        assertEquals(STATUS_UNKNOWN_ERROR, response.getStatus());
+    }
+
+    private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
+        // The assigned channel should be between the min and max allowed channel numbers
+        int channel = response.getChannel();
+        assertTrue(MIN_LOGICAL_CHANNEL <= channel && channel <= MAX_LOGICAL_CHANNEL);
+        assertEquals(STATUS_NO_ERROR, response.getStatus());
+        assertArrayEquals(STATUS_NORMAL, response.getSelectResponse());
     }
 
     private static class IntentReceiver extends BroadcastReceiver {
