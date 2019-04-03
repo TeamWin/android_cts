@@ -81,6 +81,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      */
     private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
 
+    /**
+     * Copied from {@link android.app.admin.DevicePolicyManager
+     * .InstallSystemUpdateCallback#UPDATE_ERROR_UNKNOWN}
+     */
+    private static final int UPDATE_ERROR_UNKNOWN = 1;
+
     private static final int TYPE_NONE = 0;
 
     /**
@@ -1022,16 +1028,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         pushUpdateFileToDevice("wrongHash.zip");
         pushUpdateFileToDevice("wrongSize.zip");
         executeDeviceOwnerTest("InstallUpdateTest");
-
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".InstallUpdateTest", "testInstallUpdate_failWrongHash");
-        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
-                .setAdminPackageName(DEVICE_OWNER_PKG)
-                .setBoolean(isDeviceAb())
-                .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
-                .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
-                .build());
     }
 
     public void testInstallUpdateLogged() throws Exception {
@@ -1046,7 +1042,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     .setBoolean(isDeviceAb())
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
-                    .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
+                    .setInt(isDeviceAb()
+                            ? UPDATE_ERROR_UPDATE_FILE_INVALID
+                            : UPDATE_ERROR_UNKNOWN)
                     .build());
     }
 
