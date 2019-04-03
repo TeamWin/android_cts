@@ -101,7 +101,7 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
         }
     }
 
-    public void testCallWithoutThirdPartyApp() throws Exception {
+    public void doNotTestCallWithoutThirdPartyApp() throws Exception {
         // No companion apps
         List<String> previousHolders = mCtsRoleManagerAdapter.getRoleHolders(ROLE_COMPANION_APP);
         assertEquals(0, previousHolders.size());
@@ -117,7 +117,7 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
         mSkipNullUnboundLatch = true;
     }
 
-    public void testCallWithCompanionApps() throws Exception {
+    public void doNotTestCallWithCompanionApps() throws Exception {
         // Set companion app default.
         mCtsRoleManagerAdapter.addCompanionAppRoleHolder(mThirdPartyPackageName);
         List<String> previousHolders = mCtsRoleManagerAdapter.getRoleHolders(ROLE_COMPANION_APP);
@@ -131,7 +131,7 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
         mICtsThirdPartyInCallServiceControl.resetLatchForServiceBound(true);
     }
 
-    public void testCallWithThirdPartyCarModeApp() throws Exception {
+    public void doNotTestCallWithThirdPartyCarModeApp() throws Exception {
         // Set car mode app default.
         mCtsRoleManagerAdapter.addAutomotiveRoleHolder(mThirdPartyPackageName);
         assertEquals(mThirdPartyPackageName,
