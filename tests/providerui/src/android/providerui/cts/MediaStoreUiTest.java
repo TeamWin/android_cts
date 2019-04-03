@@ -19,6 +19,7 @@ package android.providerui.cts;
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.ACCESS_MEDIA_LOCATION;
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.RECORD_AUDIO;
@@ -208,21 +209,22 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
      * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri.
      */
-    public void testImageCapture() throws Exception {
-        testImageCaptureWithOrWithoutLocationAccess(true);
+    public void testImageCaptureWithInadequeteLocationPermissions() throws Exception {
+        Set<String> perms = new HashSet<>();
+        perms.add(ACCESS_COARSE_LOCATION);
+        perms.add(ACCESS_BACKGROUND_LOCATION);
+        perms.add(ACCESS_MEDIA_LOCATION);
+        testImageCaptureWithoutLocation(perms);
     }
-
-    /**
-     * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
+     /**
+     * Helper function to verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri, without location
-     * information.
+     * information, necessarily, when ACCESS_FINE_LOCATION permissions aren't given.
      */
-    public void testImageCaptureWithoutLocationAccess() throws Exception {
-        testImageCaptureWithOrWithoutLocationAccess(false);
-    }
-
-    private void testImageCaptureWithOrWithoutLocationAccess(boolean giveLocationAccess)
+    private void testImageCaptureWithoutLocation(Set<String> locationPermissions)
             throws Exception {
+        assertFalse("testImageCaptureWithoutLocation should not be passed ACCESS_FINE_LOCATION",
+                locationPermissions.contains(ACCESS_FINE_LOCATION));
         final Context context = getInstrumentation().getContext();
         if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             Log.d(TAG, "Skipping due to lack of camera");
@@ -251,9 +253,9 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         final Set<String> req = new HashSet<>();
         req.addAll(Arrays.asList(pi.requestedPermissions));
 
-        grantRequisitePermissions(pkg, req, giveLocationAccess);
+        grantRequisitePermissions(pkg, req, locationPermissions);
 
-        Result result = getImageOrVideoCaptureIntentResult(intent, false, giveLocationAccess, pkg);
+        Result result = getImageOrVideoCaptureIntentResult(intent, false, pkg);
 
         assertTrue("exists", target.exists());
         assertTrue("has data", target.length() > 65536);
@@ -264,42 +266,30 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         assertAttribute(exif, ExifInterface.TAG_MAKE);
         assertAttribute(exif, ExifInterface.TAG_MODEL);
         assertAttribute(exif, ExifInterface.TAG_DATETIME);
-        if (!giveLocationAccess) {
-            float[] latLong = new float[2];
-            assertTrue("Should not contain location information ", !exif.getLatLong(latLong));
-        } else {
-            revokeRequisitePermissions(pkg, req);
-        }
+        float[] latLong = new float[2];
+        assertTrue("Should not contain location information ", !exif.getLatLong(latLong));
+        revokeRequisitePermissions(pkg, req, locationPermissions);
     }
 
-    private void grantRequisitePermissions(String pkg, Set<String> req, boolean giveLocationAccess)
-        throws Exception {
-        // Grant them all the permissions they might want
+    private void grantRequisitePermissions(String pkg, Set<String> req,
+            Set<String> locationPermissions) throws Exception {
+        // Grant them all the permissions they might want.
         maybeGrantRuntimePermission(pkg, req, CAMERA);
         maybeGrantRuntimePermission(pkg, req, RECORD_AUDIO);
         maybeGrantRuntimePermission(pkg, req, READ_EXTERNAL_STORAGE);
         maybeGrantRuntimePermission(pkg, req, WRITE_EXTERNAL_STORAGE);
         SystemClock.sleep(DateUtils.SECOND_IN_MILLIS);
-        if (giveLocationAccess) {
-            maybeGrantRuntimePermission(pkg, req, ACCESS_COARSE_LOCATION);
-            maybeGrantRuntimePermission(pkg, req, ACCESS_FINE_LOCATION);
-            maybeGrantRuntimePermission(pkg, req, ACCESS_BACKGROUND_LOCATION);
+        for (String perm : locationPermissions) {
+            maybeGrantRuntimePermission(pkg, req, perm);
         }
     }
 
-    private void revokeRequisitePermissions(String pkg, Set<String> req) throws Exception {
+    private void revokeRequisitePermissions(String pkg, Set<String> req, Set<String> perms)
+            throws Exception {
         // So that the other tests don't start with this permission granted.
-        maybeRevokeRuntimePermission(pkg, req, ACCESS_COARSE_LOCATION);
-        maybeRevokeRuntimePermission(pkg, req, ACCESS_FINE_LOCATION);
-        maybeRevokeRuntimePermission(pkg, req, ACCESS_BACKGROUND_LOCATION);
-    }
-
-    /**
-     * Verify that whoever handles {@link MediaStore#ACTION_VIDEO_CAPTURE} can
-     * correctly write the contents into a passed {@code content://} Uri.
-     */
-    public void testVideoCapture() throws Exception {
-        testVideoCaptureWithOrWithoutLocationAccess(true);
+        for (String perm : perms) {
+            maybeRevokeRuntimePermission(pkg, req, perm);
+        }
     }
 
     /**
@@ -307,12 +297,24 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
      * correctly write the contents into a passed {@code content://} Uri, without location
      * information.
      */
-    public void testVideoCaptureWithoutLocationAccess() throws Exception {
-        testVideoCaptureWithOrWithoutLocationAccess(false);
+    public void testVideoCaptureWithInadequeteLocationPermissions() throws Exception {
+        Set<String> perms = new HashSet<>();
+        perms.add(ACCESS_COARSE_LOCATION);
+        perms.add(ACCESS_BACKGROUND_LOCATION);
+        perms.add(ACCESS_MEDIA_LOCATION);
+        testVideoCaptureWithoutLocation(perms);
     }
 
-    private void testVideoCaptureWithOrWithoutLocationAccess(boolean giveLocationAccess)
+    /**
+     * Helper method to verify that whoever handles {@link MediaStore#ACTION_VIDEO_CAPTURE} can
+     * correctly write the contents into a passed {@code content://} Uri, necessarily without
+     * location information when ACCESS_FINE_LOCATION permissions aren't given.
+     */
+
+    private void testVideoCaptureWithoutLocation(Set<String> locationPermissions)
             throws Exception {
+        assertFalse("testVideoCaptureWithoutLocation should not be passed ACCESS_FINE_LOCATION",
+                locationPermissions.contains(ACCESS_FINE_LOCATION));
         final Context context = getInstrumentation().getContext();
         if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             Log.d(TAG, "Skipping due to lack of camera");
@@ -341,8 +343,8 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         final Set<String> req = new HashSet<>();
         req.addAll(Arrays.asList(pi.requestedPermissions));
 
-        grantRequisitePermissions(pkg, req, giveLocationAccess);
-        Result result = getImageOrVideoCaptureIntentResult(intent, true, giveLocationAccess, pkg);
+        grantRequisitePermissions(pkg, req, locationPermissions);
+        Result result = getImageOrVideoCaptureIntentResult(intent, true, pkg);
 
         assertTrue("exists", target.exists());
         assertTrue("has data", target.length() > 65536);
@@ -353,16 +355,13 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         assertNotNull(mediaRetriever.extractMetadata(METADATA_KEY_HAS_VIDEO));
         Log.d(TAG, "duration of video: " + mediaRetriever.extractMetadata(METADATA_KEY_DURATION));
         Log.d(TAG, "location of video: " + mediaRetriever.extractMetadata(METADATA_KEY_LOCATION));
-        if (!giveLocationAccess) {
-            assertNull(mediaRetriever.extractMetadata(METADATA_KEY_LOCATION));
-        } else {
-            revokeRequisitePermissions(pkg, req);
-        }
+        assertNull(mediaRetriever.extractMetadata(METADATA_KEY_LOCATION));
+        revokeRequisitePermissions(pkg, req, locationPermissions);
         mediaRetriever.release();
     }
 
-    private Result getImageOrVideoCaptureIntentResult(Intent intent, boolean isVideo,
-            boolean giveLocationAccess, String pkg) throws Exception {
+    private Result getImageOrVideoCaptureIntentResult(Intent intent, boolean isVideo, String pkg)
+            throws Exception {
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
