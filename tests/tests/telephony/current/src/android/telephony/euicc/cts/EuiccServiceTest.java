@@ -29,7 +29,9 @@ import android.service.euicc.EuiccService;
 import android.service.euicc.IDownloadSubscriptionCallback;
 import android.service.euicc.IEuiccService;
 import android.service.euicc.IGetEidCallback;
+import android.service.euicc.IGetOtaStatusCallback;
 import android.telephony.euicc.DownloadableSubscription;
+import android.telephony.euicc.EuiccManager;
 import android.telephony.euicc.cts.MockEuiccService.IMockEuiccServiceCallback;
 
 import androidx.test.InstrumentationRegistry;
@@ -107,6 +109,29 @@ public class EuiccServiceTest {
                     @Override
                     public void onSuccess(String eid) {
                         assertEquals(MockEuiccService.MOCK_EID, eid);
+                        mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnGetOtaStatus() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getOtaStatus(
+                MOCK_SLOT_ID,
+                new IGetOtaStatusCallback.Stub() {
+                    @Override
+                    public void onSuccess(int status) {
+                        assertEquals(EuiccManager.EUICC_OTA_SUCCEEDED, status);
                         mCountDownLatch.countDown();
                     }
                 });
