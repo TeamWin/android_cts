@@ -98,7 +98,7 @@ class TestSSLConnection {
   public SocketChannel socketChannel;
   public SSLEngine clientEngine;
   public String remoteAddress = "127.0.0.1";
-  public int port = 9000;
+  public int port = 7000;
   public ByteBuffer[] dataOutAppBuffers = new ByteBuffer[3];
   public ByteBuffer dataOutNetBuffer;
   public ByteBuffer hsInAppBuffer, hsInNetBuffer, hsOutAppBuffer, hsOutNetBuffer;
@@ -492,7 +492,7 @@ class SSLServer {
   public ByteBuffer dataInAppBuffer, dataInNetBuffer;
 
   final String hostAddress = "127.0.0.1";
-  public int port = 9000;
+  public int port = 7000;
   public boolean bActive = false;
 
   public Selector selector;
