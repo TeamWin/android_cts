@@ -355,8 +355,8 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         // wait for JavaScript to post the form
         mOnUiThread.waitForLoadCompletion();
-        // the URL should have changed when the form was posted
-        assertFalse(url.equals(mOnUiThread.getUrl()));
+        assertFalse("The URL should have changed when the form was posted",
+                url.equals(mOnUiThread.getUrl()));
         // reloading the current URL should trigger the callback
         mOnUiThread.reload();
         new PollingCheck(TEST_TIMEOUT) {
@@ -659,12 +659,12 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
                     backToSafetyWebViewClient.getOnSafeBrowsingHitRequest().getUrl().toString());
             assertTrue(backToSafetyWebViewClient.getOnSafeBrowsingHitRequest().isForMainFrame());
 
-            // Back to safety should produce a network error
-            assertEquals(WebViewClient.ERROR_UNSAFE_RESOURCE,
+            assertEquals("Back to safety should produce a network error",
+                    WebViewClient.ERROR_UNSAFE_RESOURCE,
                     backToSafetyWebViewClient.hasOnReceivedErrorCode());
 
-            // Check that we actually navigated backward
-            assertEquals(ORIGINAL_URL, mOnUiThread.getUrl());
+            assertEquals("Back to safety should navigate backward", ORIGINAL_URL,
+                    mOnUiThread.getUrl());
         }
     }
 
@@ -699,8 +699,8 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
                     proceedWebViewClient.getOnSafeBrowsingHitRequest().getUrl().toString());
             assertTrue(proceedWebViewClient.getOnSafeBrowsingHitRequest().isForMainFrame());
 
-            // Check that we actually proceeded
-            assertEquals(TEST_SAFE_BROWSING_MALWARE_URL, mOnUiThread.getUrl());
+            assertEquals("Proceed button should navigate to the page",
+                    TEST_SAFE_BROWSING_MALWARE_URL, mOnUiThread.getUrl());
         }
     }
 

@@ -299,8 +299,8 @@ public class CookieManagerTest extends
         assertTrue(s.tryAcquire(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
         assertTrue(anyDeleted.get());
 
-        // The normal cookie is not removed.
-        assertTrue(mCookieManager.getCookie(url).contains(normalCookie));
+        assertTrue("The normal cookie should not be removed",
+                mCookieManager.getCookie(url).contains(normalCookie));
 
         // When we remove session cookies again there are none to remove.
         removeSessionCookiesOnUiThread(callback);
@@ -312,8 +312,7 @@ public class CookieManagerTest extends
         assertTrue(s.tryAcquire(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
         assertTrue(anyDeleted.get());
 
-        // Now we have no cookies.
-        assertFalse(mCookieManager.hasCookies());
+        assertFalse("We should have no more cookies", mCookieManager.hasCookies());
         assertNull(mCookieManager.getCookie(url));
 
         // When we remove all cookies again there are none to remove.

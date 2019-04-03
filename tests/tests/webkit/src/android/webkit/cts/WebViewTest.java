@@ -345,8 +345,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         mOnUiThread.postUrlAndWaitForCompletion(nonNetworkUrl, new byte[1]);
 
-        // Test if the nonNetworkUrl is loaded
-        assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mWebView.getTitle());
+        assertEquals("Non-network URL should have loaded", TestHtmlConstants.HELLO_WORLD_TITLE,
+                mWebView.getTitle());
     }
 
     @UiThreadTest
@@ -362,11 +362,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.postUrlAndWaitForCompletion(networkUrl, postData);
 
         HttpRequest request = mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
-        // The last request should be POST
-        assertEquals(request.getRequestLine().getMethod(), "POST");
+        assertEquals("The last request should be POST", request.getRequestLine().getMethod(),
+                "POST");
 
-        // The last request should have a request body
-        assertTrue(request instanceof HttpEntityEnclosingRequest);
+        assertTrue("The last request should have a request body",
+                request instanceof HttpEntityEnclosingRequest);
         HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
         String entityString = EntityUtils.toString(entity);
         assertEquals(entityString, postDataString);
@@ -851,8 +851,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         assertEquals("true", childOnUiThread.evaluateJavascriptSync("'dummy' in window"));
 
-        // Verify that the injected object is functional.
-        assertEquals("42", childOnUiThread.evaluateJavascriptSync("dummy.test()"));
+        assertEquals("The injected object should be functional", "42",
+                childOnUiThread.evaluateJavascriptSync("dummy.test()"));
     }
 
     private final class TestPictureListener implements PictureListener {
@@ -908,8 +908,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.reloadAndWaitForCompletion();
         waitForPictureToHaveColor(Color.CYAN, listener);
 
-        // The content of the previously captured picture will not be updated automatically.
-        assertTrue(isPictureFilledWithColor(oldPicture, Color.WHITE));
+        assertTrue("The content of the previously captured picture should not update automatically",
+                isPictureFilledWithColor(oldPicture, Color.WHITE));
     }
 
     public void testSetPictureListener() throws Exception, Throwable {
@@ -1134,8 +1134,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataWithBaseURLAndWaitForCompletion(baseUrl,
                 HTML_HEADER + "<body><img src=\"" + imgUrl + "\"/></body></html>",
                 "text/html", "UTF-8", null);
-        // Verify that the resource request makes it to the server.
-        assertTrue(mWebServer.wasResourceRequested(imgUrl));
+        assertTrue("The resource request should make it to the server",
+                mWebServer.wasResourceRequested(imgUrl));
     }
 
     public void testLoadDataWithBaseUrl_historyUrl() throws Throwable {
@@ -1973,8 +1973,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        // nothing to save
-        assertNull(mWebView.saveState(new Bundle()));
+        assertNull("Should return null when there's nothing to save",
+                mWebView.saveState(new Bundle()));
 
         startWebServer(false);
         String url1 = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);

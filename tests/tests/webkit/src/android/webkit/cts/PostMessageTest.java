@@ -303,8 +303,8 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
                 }
             }, messageHandler);
         });
-        // Wait for all the responses to arrive and assert correct thread.
-        assertTrue(WebkitUtils.waitForFuture(messageHandlerThreadFuture));
+        assertTrue("Wait for all the responses to arrive and assert correct thread",
+                WebkitUtils.waitForFuture(messageHandlerThreadFuture));
     }
 
     /**
@@ -333,7 +333,7 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
                 }
             });
         });
-        // Wait for all the responses to arrive and assert correct thread.
-        assertTrue(WebkitUtils.waitForFuture(messageMainLooperFuture));
+        assertTrue("Response should be on the main thread",
+                WebkitUtils.waitForFuture(messageMainLooperFuture));
     }
 }

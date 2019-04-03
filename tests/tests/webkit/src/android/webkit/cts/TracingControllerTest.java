@@ -80,8 +80,8 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
         }
 
         private void validateThread() {
-            // Ensure the callbacks are called on the correct (executor) thread.
-            assertTrue(Thread.currentThread().getName().startsWith(EXECUTOR_THREAD_PREFIX));
+            assertTrue("Callbacks should be called on the correct (executor) thread",
+                    Thread.currentThread().getName().startsWith(EXECUTOR_THREAD_PREFIX));
         }
 
         int getNbChunks() { return mChunkCount; }
@@ -240,7 +240,7 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
             tracingController.start(config);
         } catch (IllegalArgumentException e) {
             // as expected;
-            assertFalse(tracingController.isTracing());
+            assertFalse("TracingController should not be tracing", tracingController.isTracing());
             return;
         }
 
@@ -261,7 +261,7 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
             tracingController.start(config);
         } catch (IllegalArgumentException e) {
             // as expected;
-            assertFalse(tracingController.isTracing());
+            assertFalse("TracingController should not be tracing", tracingController.isTracing());
             return;
         }
 
@@ -279,7 +279,7 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
             tracingController.start(null);
         } catch (IllegalArgumentException e) {
             // as expected
-            assertFalse(tracingController.isTracing());
+            assertFalse("TracingController should not be tracing", tracingController.isTracing());
             return;
         }
         fail("Tracing start should throw exception if TracingConfig is null");
