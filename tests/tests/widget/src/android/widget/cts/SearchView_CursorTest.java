@@ -215,8 +215,8 @@ public class SearchView_CursorTest {
         // Emulate click on the first suggestion - which should be Dido
         final int suggestionRowHeight = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.search_view_suggestion_row_height);
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, mSearchView, mSearchView.getWidth() / 2,
-                mSearchView.getHeight() + suggestionRowHeight / 2);
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mSearchView,
+                mSearchView.getWidth() / 2, mSearchView.getHeight() + suggestionRowHeight / 2);
 
         // At this point we expect the click on the first suggestion to have activated a sequence
         // of events that ends up in our suggestion listener that sets the full suggestion text

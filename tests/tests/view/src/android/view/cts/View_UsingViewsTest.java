@@ -388,39 +388,39 @@ public class View_UsingViewsTest {
 
         // long click the edit text
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mEditText);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mEditText);
         verify(onLongClickListener, within(1000)).onLongClick(mEditText);
 
         // click the Cancel button
         mActivityRule.runOnUiThread(() -> mEditText.setText("Germany"));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonCancel);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonCancel);
         assertEquals("", mEditText.getText().toString());
 
         // click the OK button
         mActivityRule.runOnUiThread(() -> mEditText.setText(ARGENTINA));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(ARGENTINA_SYMBOL, mSymbolTextView.getText().toString());
 
         mActivityRule.runOnUiThread(() -> mEditText.setText(AMERICA));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(AMERICA_SYMBOL, mSymbolTextView.getText().toString());
 
         mActivityRule.runOnUiThread(() -> mEditText.setText(CHINA));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(CHINA_SYMBOL, mSymbolTextView.getText().toString());
 
         mActivityRule.runOnUiThread(() -> mEditText.setText("Unknown"));
         mInstrumentation.waitForIdleSync();
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButtonOk);
         assertEquals(View.VISIBLE, mWarningTextView.getVisibility());
     }
 

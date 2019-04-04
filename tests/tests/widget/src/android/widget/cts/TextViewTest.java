@@ -669,7 +669,7 @@ public class TextViewTest {
         // Long click on the text selects all text and shows selection handlers. The view has an
         // attribute layout_width="wrap_content", so clicked location (the center of the view)
         // should be on the text.
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, textView);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, textView);
 
         // At this point the entire content of our TextView should be selected and highlighted
         // with blue. Now change the highlight to red while the selection is still on.
@@ -1712,7 +1712,7 @@ public class TextViewTest {
         // Long click on the text selects all text and shows selection handlers. The view has an
         // attribute layout_width="wrap_content", so clicked location (the center of the view)
         // should be on the text.
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mTextView);
 
         mActivityRule.runOnUiThread(() -> Selection.removeSelection((Spannable) mTextView.getText()));
         mInstrumentation.waitForIdleSync();
@@ -4207,7 +4207,7 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
 
         // Trigger insertion.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mTextView);
 
         final boolean[] mDrawn = new boolean[3];
         mActivityRule.runOnUiThread(() -> {
@@ -4233,7 +4233,7 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
 
         // Trigger selection.
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mTextView);
 
         final boolean[] mDrawn = new boolean[3];
         mActivityRule.runOnUiThread(() -> {
@@ -5710,7 +5710,7 @@ public class TextViewTest {
     @Test
     public void testCancelLongPress() {
         mTextView = findTextView(R.id.textview_text);
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mTextView);
         mTextView.cancelLongPress();
     }
 
@@ -5779,7 +5779,7 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
 
         // Tap the view to show InsertPointController.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mTextView);
         // bad workaround for waiting onStartInputView of LeanbackIme.apk done
         try {
             Thread.sleep(1000);
@@ -6942,14 +6942,14 @@ public class TextViewTest {
         assertFalse(mTextView.isInTouchMode());
 
         // First tap on the view triggers onClick() but does not focus the TextView.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mTextView);
         SystemClock.sleep(safeDoubleTapTimeout);
         assertTrue(mTextView.isInTouchMode());
         assertFalse(mTextView.isFocused());
         verify(mockOnClickListener, times(1)).onClick(mTextView);
         reset(mockOnClickListener);
         // So does the second tap.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mTextView);
         SystemClock.sleep(safeDoubleTapTimeout);
         assertTrue(mTextView.isInTouchMode());
         assertFalse(mTextView.isFocused());
@@ -6964,14 +6964,14 @@ public class TextViewTest {
 
         // First tap on the view focuses the TextView but does not trigger onClick().
         reset(mockOnClickListener);
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mTextView);
         SystemClock.sleep(safeDoubleTapTimeout);
         assertTrue(mTextView.isInTouchMode());
         assertTrue(mTextView.isFocused());
         verify(mockOnClickListener, never()).onClick(mTextView);
         reset(mockOnClickListener);
         // The second tap triggers onClick() and keeps the focus.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mTextView);
         SystemClock.sleep(safeDoubleTapTimeout);
         assertTrue(mTextView.isInTouchMode());
         assertTrue(mTextView.isFocused());
@@ -7059,24 +7059,24 @@ public class TextViewTest {
     @Test
     public void testClickableSpanOnClickSingleTapInside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
-                spanDetails.mYPosInside);
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mTextView,
+                spanDetails.mXPosInside, spanDetails.mYPosInside);
         verify(spanDetails.mClickableSpan, times(1)).onClick(mTextView);
     }
 
     @Test
     public void testClickableSpanOnClickDoubleTapInside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        CtsTouchUtils.emulateDoubleTapOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
-                spanDetails.mYPosInside);
+        CtsTouchUtils.emulateDoubleTapOnView(mInstrumentation, mActivityRule, mTextView,
+                spanDetails.mXPosInside, spanDetails.mYPosInside);
         verify(spanDetails.mClickableSpan, times(2)).onClick(mTextView);
     }
 
     @Test
     public void testClickableSpanOnClickSingleTapOutside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, mTextView, spanDetails.mXPosOutside,
-                spanDetails.mYPosOutside);
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mTextView,
+                spanDetails.mXPosOutside, spanDetails.mYPosOutside);
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
     }
 
@@ -7091,7 +7091,7 @@ public class TextViewTest {
                 viewOnScreenXY[1] + spanDetails.mYPosOutside));
         swipeCoordinates.put(1, new Point(viewOnScreenXY[0] + spanDetails.mXPosOutside + 50,
                 viewOnScreenXY[1] + spanDetails.mYPosOutside + 50));
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, swipeCoordinates);
+        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, swipeCoordinates);
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
     }
 
@@ -8073,7 +8073,7 @@ public class TextViewTest {
 
         // Perform drag selection.
         CtsTouchUtils.emulateLongPressAndDragGesture(
-                mInstrumentation, startX, startY, offsetX, 0 /* offsetY */);
+                mInstrumentation, mActivityRule, startX, startY, offsetX, 0 /* offsetY */);
 
         // No smart selection on drag selection.
         assertEquals(startIndex, mTextView.getSelectionStart());
@@ -8465,12 +8465,13 @@ public class TextViewTest {
     }
 
     private void emulateClickOnView(View view, int offsetX, int offsetY) {
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, view, offsetX, offsetY);
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, view, offsetX, offsetY);
         SystemClock.sleep(CLICK_TIMEOUT);
     }
 
     private void emulateLongPressOnView(View view, int offsetX, int offsetY) {
-        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, view, offsetX, offsetY);
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mActivityRule, view,
+                offsetX, offsetY);
         // TODO: Ideally, we shouldn't have to wait for a click timeout after a long-press but it
         // seems like we have a minor bug (call it inconvenience) in TextView that requires this.
         SystemClock.sleep(CLICK_TIMEOUT);

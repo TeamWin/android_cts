@@ -96,7 +96,7 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
 
             // Emulate tap event
             CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), editText);
+                    InstrumentationRegistry.getInstrumentation(), null, editText);
 
             // Wait until "onStartInput" gets called for the EditText.
             expectEvent(stream, event -> {
