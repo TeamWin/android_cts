@@ -44,9 +44,12 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.AvailableNetworkInfo;
+import android.telephony.CallAttributes;
+import android.telephony.CallQuality;
 import android.telephony.CellLocation;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
+import android.telephony.PreciseCallState;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -943,6 +946,38 @@ public class TelephonyManagerTest {
             fail("Expected SecurityException. App does not have carrier privileges.");
         } catch (SecurityException expected) {
         }
+    }
+
+    /**
+     * Construct a CallAttributes object and test getters.
+     */
+    @Test
+    public void testCallAttributes() {
+        CallQuality cq = new CallQuality();
+        PreciseCallState pcs = new PreciseCallState();
+        CallAttributes ca = new CallAttributes(pcs, TelephonyManager.NETWORK_TYPE_UNKNOWN, cq);
+        assertEquals(pcs, ca.getPreciseCallState());
+        assertEquals(TelephonyManager.NETWORK_TYPE_UNKNOWN, ca.getNetworkType());
+        assertEquals(cq, ca.getCallQuality());
+    }
+
+    /**
+     * Checks that a zeroed-out default CallQuality object can be created
+     */
+    @Test
+    public void testCallQuality() {
+        CallQuality cq = new CallQuality();
+        assertEquals(0, cq.getDownlinkCallQualityLevel());
+        assertEquals(0, cq.getUplinkCallQualityLevel());
+        assertEquals(0, cq.getCallDuration());
+        assertEquals(0, cq.getNumRtpPacketsTransmitted());
+        assertEquals(0, cq.getNumRtpPacketsReceived());
+        assertEquals(0, cq.getNumRtpPacketsTransmittedLost());
+        assertEquals(0, cq.getNumRtpPacketsNotReceived());
+        assertEquals(0, cq.getAverageRelativeJitter());
+        assertEquals(0, cq.getMaxRelativeJitter());
+        assertEquals(0, cq.getAverageRoundTripTime());
+        assertEquals(0, cq.getCodecType());
     }
 
     /**
