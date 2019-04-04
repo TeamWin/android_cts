@@ -733,6 +733,7 @@ public class PopupWindowTest {
                 mPopupWindow.getWindowLayoutType());
     }
 
+    @FlakyTest(bugId = 129949356)
     @Test
     public void testGetMaxAvailableHeight() {
         mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
