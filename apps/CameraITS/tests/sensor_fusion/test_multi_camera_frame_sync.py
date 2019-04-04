@@ -116,7 +116,12 @@ def _collect_data():
         # Define capture request
         s, e, _, _, _ = cam.do_3a(get_results=True, do_af=False)
         req = its.objects.manual_capture_request(s, e)
-        req["android.lens.focusDistance"] = 1 / (CHART_DISTANCE * CM_TO_M)
+        fd_min = props["android.lens.info.minimumFocusDistance"]
+        fd_chart = 1 / (CHART_DISTANCE * CM_TO_M)
+        if fd_min < fd_chart:
+            req["android.lens.focusDistance"] = fd_min
+        else:
+            req["android.lens.focusDistance"] = fd_chart
 
         # capture YUVs
         out_surfaces = [{"format": "yuv", "width": W, "height": H,
