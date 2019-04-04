@@ -114,10 +114,21 @@ public class ServiceStateTest extends AndroidTestCase {
 
     public void testGetDuplexMode() {
         ServiceState serviceState = new ServiceState();
-        serviceState.setRilDataRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_GSM);
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_GSM)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
         assertEquals(DUPLEX_MODE_UNKNOWN, serviceState.getDuplexMode());
 
-        serviceState.setRilDataRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_LTE);
+        nri = new NetworkRegistrationInfo.Builder()
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+
         assertEquals(DUPLEX_MODE_FDD, serviceState.getDuplexMode());
 
         serviceState.setChannelNumber(CHANNEL_NUMBER_BAND_33);
