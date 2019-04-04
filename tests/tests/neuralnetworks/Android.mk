@@ -21,7 +21,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := CtsNNAPITests_static
 LOCAL_SRC_FILES := \
      $(call all-cpp-files-under,generated/tests) \
-     GeneratedUtils.cpp \
+     TestGenerated.cpp \
      TestMemory.cpp \
      TestTrivialModel.cpp \
      TestUnknownDimensions.cpp \
