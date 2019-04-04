@@ -76,12 +76,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- Music -->
-        <activity android:name=".MusicActivity">
+        <!-- Browser -->
+        <activity android:name=".BrowserActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.APP_MUSIC" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
             </intent-filter>
         </activity>
     </application>
