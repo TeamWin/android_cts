@@ -666,6 +666,12 @@ public class RoutingTest extends AndroidTestCase {
             return;
         }
 
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        if (devices.length < 2) {
+            // In this case, we cannot switch output device, that may cause the test fail.
+            return;
+        }
+
         mRoutingChanged = false;
         mRoutingChangedLooper = null;
         // Create MediaPlayer in another thread to make sure there is a looper active for events.
@@ -678,6 +684,27 @@ public class RoutingTest extends AndroidTestCase {
                 AudioRoutingListener listener = new AudioRoutingListener();
                 MediaPlayer mediaPlayer = allocMediaPlayer();
                 mediaPlayer.addOnRoutingChangedListener(listener, null);
+                // With setting preferred device, the output device may switch.
+                // Post the request delayed to ensure the message queue is running
+                // so that the routing changed event can be handled correctly.
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        AudioDeviceInfo routedDevice = mediaPlayer.getRoutedDevice();
+                        if (routedDevice == null) {
+                            return;
+                        }
+                        AudioDeviceInfo[] devices = mAudioManager.getDevices(
+                                AudioManager.GET_DEVICES_OUTPUTS);
+                        for (AudioDeviceInfo device : devices) {
+                            if (routedDevice.getId() != device.getId()) {
+                                mediaPlayer.setPreferredDevice(device);
+                                break;
+                            }
+                        }
+                    }
+                }, 1000);
                 Looper.loop();
                 mediaPlayer.removeOnRoutingChangedListener(listener);
                 mediaPlayer.stop();
