@@ -3038,9 +3038,10 @@ public class TimeTest {
     public void test_bug118835133_fixEarliestRawOffsetValue() {
         // This test confirms the behavior between Integer.MIN_VALUE seconds and the next
         // transition. With zic <= 2014b there is no explicit transition at Integer.MIN_VALUE
-        // seconds. This test should pass regardless of zic version used as the Android behavior
-        // is stable for this zone as we have fixed the logic used to determine the offset before
-        // the first transition AND the first transition for the zone is after Integer.MIN_VALUE.
+        // seconds. Between 2014c and 2018e there is one, and it goes away again in 2018f. This test
+        // should pass regardless of zic version used as the Android behavior is stable for this
+        // zone as we have fixed the logic used to determine the offset before the first transition
+        // AND the first transition for the zone is after Integer.MIN_VALUE.
         Time t = new Time("Africa/Abidjan");
         // Jan 1, 1912 12:16:08 AM UTC / Jan 1, 1912 00:00:00 local time
         Instant oldEarliestTransition = Instant.ofEpochSecond(-1830383032);
