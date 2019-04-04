@@ -16,8 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.rootlessgpudebug.app"
-    android:targetSandboxVersion="2">
+    package="android.rootlessgpudebug.app">
 
     <application android:extractNativeLibs="true" >
         <activity android:name=".RootlessGpuDebugDeviceActivity" >

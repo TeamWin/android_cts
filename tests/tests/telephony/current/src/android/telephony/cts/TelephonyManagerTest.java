@@ -1404,7 +1404,7 @@ public class TelephonyManagerTest {
         }
 
         boolean rebootRequired = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, (tm) -> tm.isRebootRequiredForModemConfigChange());
+                mTelephonyManager, (tm) -> tm.doesSwitchMultiSimConfigTriggerReboot());
 
         // It's hard to test if reboot is needed.
         if (!rebootRequired) {

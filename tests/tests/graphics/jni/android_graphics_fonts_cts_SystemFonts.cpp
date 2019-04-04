@@ -18,10 +18,15 @@
 #define LOG_TAG "SystemFonts"
 
 #include <jni.h>
-#include <android/system_fonts.h>
 
 #include <array>
+#include <string>
+#include <vector>
+
+#include <android/font.h>
+#include <android/font_matcher.h>
 #include <android/log.h>
+#include <android/system_fonts.h>
 
 namespace {
 
@@ -92,6 +97,43 @@ private:
     size_t mSize;
 };
 
+struct FontMatcherDeleter {
+  void operator()(AFontMatcher* matcher) { AFontMatcher_destroy(matcher); }
+};
+
+using FontMatcherUniquePtr = std::unique_ptr<AFontMatcher, FontMatcherDeleter>;
+
+class FontMatcher {
+public:
+      FontMatcher() : mMatcher(AFontMatcher_create()) {}
+
+      FontMatcher& setStyle(uint16_t weight, bool italic) {
+          AFontMatcher_setStyle(mMatcher.get(), weight, italic);
+          return *this;
+      }
+
+      FontMatcher& setLocales(const std::string& locales) {
+          AFontMatcher_setLocales(mMatcher.get(), locales.c_str());
+          return *this;
+      }
+
+      FontMatcher& setFamilyVariant(uint32_t familyVariant) {
+          AFontMatcher_setFamilyVariant(mMatcher.get(), familyVariant);
+          return *this;
+      }
+
+      std::pair<AFont*, uint32_t> match(const std::string familyName,
+                                        const std::vector<uint16_t>& text) {
+          uint32_t runLength;
+          AFont* font = AFontMatcher_match(mMatcher.get(), familyName.c_str(), text.data(),
+                                           text.size(), &runLength);
+          return std::make_pair(font, runLength);
+      }
+
+private:
+      FontMatcherUniquePtr mMatcher;
+};
+
 
 jlong nOpenIterator(JNIEnv*, jclass) {
     return reinterpret_cast<jlong>(ASystemFontIterator_open());
@@ -107,62 +149,68 @@ jlong nGetNext(JNIEnv*, jclass, jlong ptr) {
 }
 
 void nCloseFont(JNIEnv*, jclass, jlong ptr) {
-    return ASystemFont_close(reinterpret_cast<ASystemFont*>(ptr));
+    return AFont_close(reinterpret_cast<AFont*>(ptr));
 }
 
 jstring nGetFilePath(JNIEnv* env, jclass, jlong ptr) {
-    return env->NewStringUTF(ASystemFont_getFontFilePath(reinterpret_cast<ASystemFont*>(ptr)));
+    return env->NewStringUTF(AFont_getFontFilePath(reinterpret_cast<AFont*>(ptr)));
 }
 
 jint nGetWeight(JNIEnv*, jclass, jlong ptr) {
-    return ASystemFont_getWeight(reinterpret_cast<ASystemFont*>(ptr));
+    return AFont_getWeight(reinterpret_cast<AFont*>(ptr));
 }
 
 jboolean nIsItalic(JNIEnv*, jclass, jlong ptr) {
-    return ASystemFont_isItalic(reinterpret_cast<ASystemFont*>(ptr));
+    return AFont_isItalic(reinterpret_cast<AFont*>(ptr));
 }
 
 jstring nGetLocale(JNIEnv* env, jclass, jlong ptr) {
-    return env->NewStringUTF(ASystemFont_getLocale(reinterpret_cast<ASystemFont*>(ptr)));
+    return env->NewStringUTF(AFont_getLocale(reinterpret_cast<AFont*>(ptr)));
 }
 
 jint nGetCollectionIndex(JNIEnv*, jclass, jlong ptr) {
-    return ASystemFont_getCollectionIndex(reinterpret_cast<ASystemFont*>(ptr));
+    return AFont_getCollectionIndex(reinterpret_cast<AFont*>(ptr));
 }
 
 jint nGetAxisCount(JNIEnv*, jclass, jlong ptr) {
-    return ASystemFont_getAxisCount(reinterpret_cast<ASystemFont*>(ptr));
+    return AFont_getAxisCount(reinterpret_cast<AFont*>(ptr));
 }
 
 jint nGetAxisTag(JNIEnv*, jclass, jlong ptr, jint axisIndex) {
-    return ASystemFont_getAxisTag(reinterpret_cast<ASystemFont*>(ptr), axisIndex);
+    return AFont_getAxisTag(reinterpret_cast<AFont*>(ptr), axisIndex);
 }
 
 jfloat nGetAxisValue(JNIEnv*, jclass, jlong ptr, jint axisIndex) {
-    return ASystemFont_getAxisValue(reinterpret_cast<ASystemFont*>(ptr), axisIndex);
+    return AFont_getAxisValue(reinterpret_cast<AFont*>(ptr), axisIndex);
 }
 
 jlong nMatchFamilyStyleCharacter(JNIEnv* env, jclass, jstring familyName, jint weight,
-                                 jboolean italic, jstring langTags, jstring text) {
+                                 jboolean italic, jstring langTags, jint familyVariant,
+                                 jstring text) {
     ScopedUtfChars familyNameChars(env, familyName);
     ScopedUtfChars langTagsChars(env, langTags);
     ScopedStringChars textChars(env, text);
-    return reinterpret_cast<jlong>(ASystemFont_matchFamilyStyleCharacter(
-        familyNameChars.c_str(), weight, italic, langTagsChars.c_str(), textChars.get(),
-        textChars.size(), nullptr));
+    std::vector<uint16_t> utf16(textChars.get(), textChars.get() + textChars.size());
+    return reinterpret_cast<jlong>(
+        FontMatcher()
+            .setStyle(weight, italic)
+            .setLocales(langTagsChars.c_str())
+            .setFamilyVariant(familyVariant)
+            .match(familyNameChars.c_str(), utf16).first);
 }
 
 jint nMatchFamilyStyleCharacter_runLength(JNIEnv* env, jclass, jstring familyName, jint weight,
-                                          jboolean italic, jstring langTags, jstring text) {
+                                          jboolean italic, jstring langTags, jint familyVariant,
+                                          jstring text) {
     ScopedUtfChars familyNameChars(env, familyName);
     ScopedUtfChars langTagsChars(env, langTags);
     ScopedStringChars textChars(env, text);
-    uint32_t runLength = 0;
-    ASystemFont* ptr = ASystemFont_matchFamilyStyleCharacter(
-            familyNameChars.c_str(), weight, italic, langTagsChars.c_str(), textChars.get(),
-            textChars.size(), &runLength);
-    ASystemFont_close(ptr);
-    return runLength;
+    std::vector<uint16_t> utf16(textChars.get(), textChars.get() + textChars.size());
+    return FontMatcher()
+            .setStyle(weight, italic)
+            .setLocales(langTagsChars.c_str())
+            .setFamilyVariant(familyVariant)
+            .match(familyNameChars.c_str(), utf16).second;
 }
 
 const std::array<JNINativeMethod, 14> JNI_METHODS = {{
@@ -179,10 +227,10 @@ const std::array<JNINativeMethod, 14> JNI_METHODS = {{
     { "nGetAxisTag", "(JI)I", (void*) nGetAxisTag },
     { "nGetAxisValue", "(JI)F", (void*) nGetAxisValue },
     { "nMatchFamilyStyleCharacter",
-          "(Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;)J",
+          "(Ljava/lang/String;IZLjava/lang/String;ILjava/lang/String;)J",
           (void*) nMatchFamilyStyleCharacter },
     { "nMatchFamilyStyleCharacter_runLength",
-          "(Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;)I",
+          "(Ljava/lang/String;IZLjava/lang/String;ILjava/lang/String;)I",
           (void*) nMatchFamilyStyleCharacter_runLength },
 
 }};

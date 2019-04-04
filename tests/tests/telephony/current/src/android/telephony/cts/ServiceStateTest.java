@@ -114,10 +114,21 @@ public class ServiceStateTest extends AndroidTestCase {
 
     public void testGetDuplexMode() {
         ServiceState serviceState = new ServiceState();
-        serviceState.setRilDataRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_GSM);
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_GSM)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
         assertEquals(DUPLEX_MODE_UNKNOWN, serviceState.getDuplexMode());
 
-        serviceState.setRilDataRadioTechnology(ServiceState.RIL_RADIO_TECHNOLOGY_LTE);
+        nri = new NetworkRegistrationInfo.Builder()
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+
         assertEquals(DUPLEX_MODE_FDD, serviceState.getDuplexMode());
 
         serviceState.setChannelNumber(CHANNEL_NUMBER_BAND_33);
@@ -243,5 +254,17 @@ public class ServiceStateTest extends AndroidTestCase {
         assertEquals(nri, serviceState.getNetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN));
 
+        nris = serviceState.getNetworkRegistrationInfoListForDomain(
+                NetworkRegistrationInfo.DOMAIN_PS);
+        assertEquals(2, nris.size());
+        assertEquals(nri, nris.get(1));
+
+        nris = serviceState.getNetworkRegistrationInfoList();
+        assertEquals(2, nris.size());
+
+        nris = serviceState.getNetworkRegistrationInfoListForTransportType(
+                AccessNetworkConstants.TRANSPORT_TYPE_WLAN);
+        assertEquals(1, nris.size());
+        assertEquals(nri, nris.get(0));
     }
 }

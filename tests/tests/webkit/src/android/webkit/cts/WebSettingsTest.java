@@ -15,6 +15,9 @@
  */
 package android.webkit.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -429,7 +432,9 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setDefaultFontSize(1000);
         int maxSize = mSettings.getDefaultFontSize();
         // cannot check exact size set, since the implementation caps it at an arbitrary limit
-        assertTrue(maxSize > defaultSize);
+        assertThat("max size should be greater than default size",
+                maxSize,
+                greaterThan(defaultSize));
 
         mSettings.setDefaultFontSize(-10);
         int minSize = mSettings.getDefaultFontSize();
@@ -449,8 +454,10 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         mSettings.setDefaultFixedFontSize(1000);
         int maxSize = mSettings.getDefaultFixedFontSize();
-        // cannot check exact size, since the implementation caps it at an arbitrary limit
-        assertTrue(maxSize > defaultSize);
+        // cannot check exact size set, since the implementation caps it at an arbitrary limit
+        assertThat("max size should be greater than default size",
+                maxSize,
+                greaterThan(defaultSize));
 
         mSettings.setDefaultFixedFontSize(-10);
         int minSize = mSettings.getDefaultFixedFontSize();
@@ -615,8 +622,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         String pluginPath = "pluginPath";
         mSettings.setPluginsPath(pluginPath);
-        // plugin path always empty
-        assertEquals("", mSettings.getPluginsPath());
+        assertEquals("Plugin path always empty", "", mSettings.getPluginsPath());
     }
 
     public void testAccessTextSize() {
@@ -646,8 +652,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertFalse(mSettings.getUseDoubleTree());
 
         mSettings.setUseDoubleTree(true);
-        // setUseDoubleTree is a no-op
-        assertFalse(mSettings.getUseDoubleTree());
+        assertFalse("setUseDoubleTree should be a no-op", mSettings.getUseDoubleTree());
     }
 
     public void testAccessUseWideViewPort() {
