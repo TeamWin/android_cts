@@ -37,7 +37,6 @@ import java.util.Map;
 public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
-    private static final String DELEGATION_PACKAGE_INSTALLATION = "delegation-package-installation";
 
     @Override
     protected void setUp() throws Exception {
@@ -104,35 +103,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     List<String> getAdditionalDelegationScopes() {
         final List<String> result = new ArrayList<>();
         result.add(DELEGATION_NETWORK_LOGGING);
-        // PackageInstallation delegation is missing from this since it's explicitly tested below.
         return result;
-    }
-
-    public void testDelegationPackageInstallation() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        final File apk = mBuildHelper.getTestFile(TEST_APP_APK);
-        try {
-            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
-
-            installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
-            setDelegatedScopes(PACKAGE_INSTALLER_PKG,
-                    Arrays.asList(DELEGATION_PACKAGE_INSTALLATION));
-
-            assertMetricsLogged(getDevice(), () -> {
-                    runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".SilentPackageInstallTest",
-                            mUserId);
-            }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_PACKAGE_VALUE)
-                    .setAdminPackageName(PACKAGE_INSTALLER_PKG)
-                    .build(),
-               new DevicePolicyEventWrapper.Builder(EventId.UNINSTALL_PACKAGE_VALUE)
-                    .setAdminPackageName(PACKAGE_INSTALLER_PKG)
-                    .build());
-            // Uninstall of test packages happen in tearDown.
-        } finally {
-            String command = "rm " + TEST_APP_LOCATION + apk.getName();
-            getDevice().executeShellCommand(command);
-        }
     }
 }
