@@ -272,12 +272,12 @@ EGLAPI EGLFuncPointer EGLAPIENTRY glesLayer_GetLayerProcAddress(const char* func
 
 extern "C" {
 
-    __attribute((visibility("default"))) EGLAPI void InitializeLayer(void* layer_id,
+    __attribute((visibility("default"))) EGLAPI void AndroidGLESLayer_Initialize(void* layer_id,
             PFNEGLGETNEXTLAYERPROCADDRESSPROC get_next_layer_proc_address) {
         return (void)glesLayer_InitializeLayer(layer_id, get_next_layer_proc_address);
     }
 
-    __attribute((visibility("default"))) EGLAPI void* GetLayerProcAddress(const char *funcName, EGLFuncPointer next) {
+    __attribute((visibility("default"))) EGLAPI void* AndroidGLESLayer_GetProcAddress(const char *funcName, EGLFuncPointer next) {
         return (void*)glesLayer_GetLayerProcAddress(funcName, next);
     }
 }

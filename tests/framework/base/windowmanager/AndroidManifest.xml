@@ -20,6 +20,7 @@
           android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application android:label="CtsWindowManagerDeviceTestCases">
         <uses-library android:name="android.test.runner"/>
@@ -33,6 +34,9 @@
         <activity android:name="android.server.wm.AlertWindowsAppOpsTestsActivity"/>
         <activity android:name="android.server.wm.DialogFrameTestActivity" />
         <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"/>
+        <activity android:name="android.server.wm.WindowInsetsPolicyTest$TestActivity"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.LayoutTests$TestActivity"
@@ -86,6 +90,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
+                 android:foregroundServiceType="mediaProjection"
+                 android:enabled="true">
+        </service>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -18,10 +18,10 @@ package com.android.cts.certinstaller;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.Truth.assertThat;
-import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
@@ -214,13 +214,21 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
         String serialNumber = Build.getSerial();
         assertThat(Build.getSerial()).doesNotMatch(Build.UNKNOWN);
 
+        PackageManager pm = getContext().getPackageManager();
+        if ((pm == null) || (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))) {
+            return;
+        }
+
         TelephonyManager telephonyService = (TelephonyManager) getContext().getSystemService(
                 Context.TELEPHONY_SERVICE);
         assertWithMessage("Telephony service must be available.")
                 .that(telephonyService).isNotNull();
 
-        assertWithMessage("Must be able to obtain a valid IMEI.")
-                .that(telephonyService.getImei()).isNotNull();
+        try {
+            telephonyService.getImei();
+        } catch (SecurityException e) {
+            fail("Should have permission to access IMEI: " + e);
+        }
     }
 
     private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)

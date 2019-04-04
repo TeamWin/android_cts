@@ -43,6 +43,8 @@ import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 import android.util.Size;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Assume;
@@ -59,8 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import androidx.test.InstrumentationRegistry;
-
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
@@ -266,7 +267,7 @@ public class MediaStore_Images_MediaTest {
             assertEquals(1, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(0, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals(externalPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testimage", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals("testimage.jpg", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("image/jpeg", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testimage", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
@@ -410,12 +411,12 @@ public class MediaStore_Images_MediaTest {
 
         // Publish some content
         final File dir = ProviderTestUtils.stageDir(mVolumeName);
-        final Uri a = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "a.jpg")), true);
-        final Uri b = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "b.jpg")), true);
-        final Uri c = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "c.jpg")), true);
+        final Uri a = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "a.jpg")));
+        final Uri b = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "b.jpg")));
+        final Uri c = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.scenery, new File(dir, "c.jpg")));
 
         // Confirm we can canonicalize and recover it
         final Uri canonicalized = mContentResolver.canonicalize(b);
@@ -431,8 +432,8 @@ public class MediaStore_Images_MediaTest {
         assertNull(mContentResolver.uncanonicalize(canonicalized));
 
         // Publish data again and confirm we can recover it
-        final Uri d = ProviderTestUtils.scanFile(
-                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "d.jpg")), true);
+        final Uri d = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "d.jpg")));
         assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
     }
 }

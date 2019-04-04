@@ -45,6 +45,9 @@ import java.util.concurrent.TimeUnit;
 public class BatteryConstraintTest extends ConstraintTest {
     private static final String TAG = "BatteryConstraintTest";
 
+    private String FEATURE_WATCH = "android.hardware.type.watch";
+    private String TWM_HARDWARE_FEATURE = "com.google.clockwork.hardware.traditional_watch_mode";
+
     /** Unique identifier for the job scheduled by this suite of tests. */
     public static final int BATTERY_JOB_ID = BatteryConstraintTest.class.hashCode();
 
@@ -85,6 +88,16 @@ public class BatteryConstraintTest extends ConstraintTest {
             Settings.Global.putInt(getContext().getContentResolver(),
                     Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, mPreviousLowPowerTriggerLevel);
         }
+    }
+
+    boolean hasBattery() throws Exception {
+        Intent batteryInfo = getContext().registerReceiver(
+                null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        boolean present = batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
+        if (!present) {
+            Log.i(TAG, "Device doesn't have a battery.");
+        }
+        return present;
     }
 
     void setBatteryState(boolean plugged, int level) throws Exception {
@@ -205,6 +218,11 @@ public class BatteryConstraintTest extends ConstraintTest {
      * not plugged in but has sufficient power.
      */
     public void testBatteryNotLowConstraintExecutes_withoutPower() throws Exception {
+        // "Without power" test case is valid only for devices with a battery.
+        if (!hasBattery()) {
+            return;
+        }
+
         setBatteryState(false, 100);
         waitFor(2_000);
         verifyChargingState(false);
@@ -229,6 +247,11 @@ public class BatteryConstraintTest extends ConstraintTest {
      * the device is not on power.
      */
     public void testChargingConstraintFails() throws Exception {
+        // "Without power" test case is valid only for devices with a battery.
+        if (!hasBattery()) {
+            return;
+        }
+
         setBatteryState(false, 100);
         verifyChargingState(false);
 
@@ -268,6 +291,16 @@ public class BatteryConstraintTest extends ConstraintTest {
      * the battery level is critical and not on power.
      */
     public void testBatteryNotLowConstraintFails_withoutPower() throws Exception {
+        // "Without power" test case is valid only for devices with a battery.
+        if (!hasBattery()) {
+            return;
+        }
+        if(getInstrumentation().getContext().getPackageManager().hasSystemFeature(FEATURE_WATCH) &&
+               getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+               TWM_HARDWARE_FEATURE)) {
+            return;
+        }
+
         setBatteryState(false, 5);
         // setBatteryState() waited for the charging/not-charging state to formally settle,
         // but battery level reporting lags behind that.  wait a moment to let that happen

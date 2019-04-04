@@ -33,6 +33,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Insets;
@@ -798,6 +799,85 @@ public class DrawableTest {
         assertEquals(Insets.NONE, mockDrawable.getOpticalInsets());
     }
 
+    @Test
+    public void testNoSetTintModeInfiniteLoop() {
+        // Setting a PorterDuff.Mode should delegate to the BlendMode API
+        TestTintDrawable testTintDrawable = new TestTintDrawable();
+
+        testTintDrawable.setTintMode(PorterDuff.Mode.OVERLAY);
+        assertEquals(2, testTintDrawable.getNumTimesTintModeInvoked());
+        assertEquals(1, testTintDrawable.getNumTimesBlendModeInvoked());
+    }
+
+    @Test
+    public void testPorterDuffTintWithUnsupportedBlendMode() {
+        // Setting a BlendMode should delegate to the PorterDuff.Mode API
+        TestTintDrawable testTintDrawable = new TestTintDrawable();
+        testTintDrawable.setTintMode(BlendMode.LUMINOSITY);
+        // 1 time invoking setTintMode because the default is applied if there is no equivalent for
+        // the luminosity blend mode on older API levels
+        assertEquals(1, testTintDrawable.getNumTimesTintModeInvoked());
+        assertEquals(2, testTintDrawable.getNumTimesBlendModeInvoked());
+    }
+
+    @Test
+    public void testPorterDuffTintWithSupportedBlendMode() {
+        TestTintDrawable testTintDrawable = new TestTintDrawable();
+        testTintDrawable.setTintMode(BlendMode.SRC_OVER);
+        assertEquals(1, testTintDrawable.getNumTimesTintModeInvoked());
+        assertEquals(2, testTintDrawable.getNumTimesBlendModeInvoked());
+    }
+
+    @Test
+    public void testBlendModeImplementationInvokedWithBlendMode() {
+        TestBlendModeImplementedDrawable test = new TestBlendModeImplementedDrawable();
+
+        test.setTintMode(BlendMode.SRC);
+        assertEquals(1, test.getNumTimesBlendModeInvoked());
+        assertEquals(0, test.getNumTimesTintModeInvoked());
+    }
+
+    @Test
+    public void testBlendModeImplementationInvokedWithPorterDuffMode() {
+        TestBlendModeImplementedDrawable test = new TestBlendModeImplementedDrawable();
+        test.setTintMode(PorterDuff.Mode.CLEAR);
+
+        assertEquals(1, test.getNumTimesTintModeInvoked());
+        assertEquals(1, test.getNumTimesBlendModeInvoked());
+    }
+
+    @Test
+    public void testPorterDuffImplementationInvokedWithBlendMode() {
+        TestPorterDuffImplementedDrawable test = new TestPorterDuffImplementedDrawable();
+        test.setTintMode(BlendMode.CLEAR);
+
+        assertEquals(1, test.getNumTimesBlendModeInvoked());
+        assertEquals(1, test.getNumTimesTintModeInvoked());
+    }
+
+    @Test
+    public void testPorterDuffImplementationInvokedWithPorterDuffMode() {
+        TestPorterDuffImplementedDrawable test = new TestPorterDuffImplementedDrawable();
+        test.setTintMode(PorterDuff.Mode.CLEAR);
+
+        assertEquals(1, test.getNumTimesTintModeInvoked());
+        assertEquals(0, test.getNumTimesBlendModeInvoked());
+    }
+
+    @Test
+    public void testNullPorterDuffReturnsDefaultBlendMode() {
+        TestNullBlendModeDrawable d = new TestNullBlendModeDrawable();
+        d.setTintMode((PorterDuff.Mode) null);
+        assertEquals(BlendMode.SRC_IN, d.mode);
+    }
+
+    @Test
+    public void testNullBlendModeReturnsDefaultPorterDuffMode() {
+        TestNullPorterDuffDrawable d = new TestNullPorterDuffDrawable();
+        d.setTintMode((BlendMode) null);
+        assertEquals(PorterDuff.Mode.SRC_IN, d.mode);
+    }
+
     // Since Mockito can't mock or spy on protected methods, we have a custom extension
     // of Drawable to track calls to protected methods. This class also has empty implementations
     // of the base abstract methods.
@@ -837,6 +917,204 @@ public class DrawableTest {
 
         protected boolean onStateChange(int[] state) {
             return super.onStateChange(state);
+        }
+    }
+
+    private static class TestTintDrawable extends Drawable {
+
+        private int mSetTintModeInvoked = 0;
+        private int mSetBlendModeInvoked = 0;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+
+        @Override
+        public void setTintMode(PorterDuff.Mode tintMode) {
+            mSetTintModeInvoked++;
+            super.setTintMode(tintMode);
+        }
+
+        @Override
+        public void setTintMode(BlendMode blendMode) {
+            mSetBlendModeInvoked++;
+            super.setTintMode(blendMode);
+        }
+
+        public int getNumTimesTintModeInvoked() {
+            return mSetTintModeInvoked;
+        }
+
+        public int getNumTimesBlendModeInvoked() {
+            return mSetBlendModeInvoked;
+        }
+    }
+
+    private static class TestNullPorterDuffDrawable extends Drawable {
+
+        public PorterDuff.Mode mode;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public void setTintMode(PorterDuff.Mode tintMode) {
+            mode = tintMode;
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+    }
+
+    private static class TestNullBlendModeDrawable extends Drawable {
+
+        public BlendMode mode;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public void setTintMode(BlendMode blendMode) {
+            mode = blendMode;
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+    }
+
+    private static class TestBlendModeImplementedDrawable extends Drawable {
+
+        private int mSetTintModeInvoked = 0;
+        private int mSetBlendModeInvoked = 0;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+
+        @Override
+        public void setTintMode(PorterDuff.Mode tintMode) {
+            mSetTintModeInvoked++;
+            super.setTintMode(tintMode);
+        }
+
+        @Override
+        public void setTintMode(BlendMode blendMode) {
+            // Intentionally not delegating to super class implementation
+            mSetBlendModeInvoked++;
+        }
+
+        public int getNumTimesTintModeInvoked() {
+            return mSetTintModeInvoked;
+        }
+
+        public int getNumTimesBlendModeInvoked() {
+            return mSetBlendModeInvoked;
+        }
+    }
+
+    private static class TestPorterDuffImplementedDrawable extends Drawable {
+
+        private int mSetTintModeInvoked = 0;
+        private int mSetBlendModeInvoked = 0;
+
+        @Override
+        public void draw(Canvas canvas) {
+
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
+
+        @Override
+        public void setTintMode(PorterDuff.Mode tintMode) {
+            // Intentionally not delegating to super class implementation
+            mSetTintModeInvoked++;
+        }
+
+        @Override
+        public void setTintMode(BlendMode blendMode) {
+            mSetBlendModeInvoked++;
+            super.setTintMode(blendMode);
+        }
+
+        public int getNumTimesTintModeInvoked() {
+            return mSetTintModeInvoked;
+        }
+
+        public int getNumTimesBlendModeInvoked() {
+            return mSetBlendModeInvoked;
         }
     }
 }

@@ -939,15 +939,6 @@ public class UsageStatsTest {
         } catch (SecurityException e) {
             // Exception expected
         }
-
-        // STOPSHIP b/126917290: remove this check when deprecated method is removed.
-        try {
-            mUsageStatsManager.registerAppUsageLimitObserver(observerId, packages,
-                    1, java.util.concurrent.TimeUnit.HOURS, null);
-            fail("Expected SecurityException for an app not holding OBSERVE_APP_USAGE permission.");
-        } catch (SecurityException e) {
-            // Exception expected
-        }
     }
 
     @Test
@@ -1111,8 +1102,6 @@ public class UsageStatsTest {
         final long startTime = System.currentTimeMillis();
         // Launch the series of Activities.
         launchSubActivities(activitySequence);
-
-        mUiDevice.pressHome();
         SystemClock.sleep(250);
 
         final long endTime = System.currentTimeMillis();
@@ -1147,8 +1136,8 @@ public class UsageStatsTest {
             }
         }
         assertEquals("Unexpected number of activity resumes", 3, resumes);
-        assertEquals("Unexpected number of activity pauses", 3, pauses);
-        assertEquals("Unexpected number of activity stops", 3, stops);
+        assertEquals("Unexpected number of activity pauses", 2, pauses);
+        assertEquals("Unexpected number of activity stops", 2, stops);
     }
 
 

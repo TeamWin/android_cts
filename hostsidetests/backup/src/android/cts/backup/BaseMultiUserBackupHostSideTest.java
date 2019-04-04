@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
+import com.android.compatibility.common.util.HostSideTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -42,8 +43,7 @@ import java.util.concurrent.TimeUnit;
 @AppModeFull
 public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSideTest {
     private static final String USER_SETUP_COMPLETE_SETTING = "user_setup_complete";
-    private static final long USER_STATE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(5);
-    private static final long TRANSPORT_INITIALIZATION_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
+    private static final long TRANSPORT_INITIALIZATION_TIMEOUT_SECS = TimeUnit.MINUTES.toSeconds(2);
 
     // Key-value test package.
     static final String KEY_VALUE_APK = "CtsProfileKeyValueApp.apk";
@@ -57,8 +57,8 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
     static final String FULL_BACKUP_DEVICE_TEST_NAME =
             FULL_BACKUP_TEST_PACKAGE + ".ProfileFullBackupRestoreTest";
 
-    private final BackupUtils mBackupUtils = getBackupUtils();
-    private ITestDevice mDevice;
+    protected final BackupUtils mBackupUtils = getBackupUtils();
+    protected ITestDevice mDevice;
 
     // Store initial device state as Optional as tearDown() will execute even if we have assumption
     // failures in setUp().
@@ -112,17 +112,22 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
         }
     }
 
-    /** Start the user and set necessary conditions for backup to be enabled in the user. */
-    void startUserAndInitializeForBackup(int userId)
-            throws IOException, DeviceNotAvailableException {
-        // Turn on multi-user feature for this user.
-        mBackupUtils.executeShellCommandSync(
-                String.format("bmgr --user %d activate %b", userId, true));
-
+    /** Start the user. */
+    void startUser(int userId) throws DeviceNotAvailableException {
         boolean startSuccessful = mDevice.startUser(userId, /* wait for RUNNING_UNLOCKED */ true);
         assertThat(startSuccessful).isTrue();
 
         mDevice.setSetting(userId, "secure", USER_SETUP_COMPLETE_SETTING, "1");
+    }
+
+    /** Start the user and set necessary conditions for backup to be enabled in the user. */
+    void startUserAndInitializeForBackup(int userId)
+            throws IOException, DeviceNotAvailableException {
+        // Turn on multi-user feature for this user.
+        mBackupUtils.activateBackupForUser(true, userId);
+
+        startUser(userId);
+
         mBackupUtils.enableBackupForUser(true, userId);
         assertThat(mBackupUtils.isBackupEnabledForUser(userId)).isTrue();
     }
@@ -137,21 +142,9 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
 
         // TODO (b/121198010): Update dumpsys or add shell command to query status of transport
         // initialization. Transports won't be available until they are initialized/registered.
-        boolean hasLocalTransport = false;
-        long timeout = System.currentTimeMillis() + TRANSPORT_INITIALIZATION_TIMEOUT_MS;
-        while (System.currentTimeMillis() <= timeout) {
-            if (mBackupUtils.userHasBackupTransport(localTransport, userId)) {
-                hasLocalTransport = true;
-                break;
-            }
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // Do nothing.
-            }
-        }
-        assertThat(hasLocalTransport).isTrue();
+        HostSideTestUtils.waitUntil("wait for user to have local transport",
+                TRANSPORT_INITIALIZATION_TIMEOUT_SECS,
+                () -> mBackupUtils.userHasBackupTransport(localTransport, userId));
 
         // Switch to the local transport and assert success.
         mBackupUtils.setBackupTransportForUser(localTransport, userId);

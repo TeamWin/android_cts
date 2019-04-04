@@ -527,10 +527,9 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         }
 
         // Check whether session configuration is supported
-        assertTrue("Deferred session configuration query failed",
-                CameraTestUtils.checkSessionConfiguration(mCamera, mHandler, outputSurfaces,
+        CameraTestUtils.checkSessionConfigurationSupported(mCamera, mHandler, outputSurfaces,
                 /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
-                /*expectedResult*/ true));
+                /*defaultSupport*/ true, "Deferred session configuration query failed");
 
         // Create session
 

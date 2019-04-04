@@ -405,6 +405,21 @@ class CaptureResultListener {
         thiz->mResultCondition.notify_one();
     }
 
+    static void onLogicalCameraCaptureFailed(void* obj, ACameraCaptureSession* /*session*/,
+            ACaptureRequest* /*request*/, ALogicalCameraCaptureFailure* failure) {
+        ALOGV("%s", __FUNCTION__);
+        if ((obj == nullptr) || (failure == nullptr)) {
+            return;
+        }
+        if (failure->physicalCameraId != nullptr) {
+            ALOGV("%s: physicalCameraId: %s", __FUNCTION__, failure->physicalCameraId);
+        }
+        CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mLastFailedFrameNumber = failure->captureFailure.frameNumber;
+        thiz->mResultCondition.notify_one();
+    }
+
     static void onCaptureSequenceCompleted(void* obj, ACameraCaptureSession* /*session*/,
             int sequenceId, int64_t frameNumber) {
         ALOGV("%s", __FUNCTION__);
@@ -1042,21 +1057,18 @@ class PreviewTestCase {
         return createCaptureSessionWithLog(extraOutputs, isPreviewShared, sessionParameters);
     }
 
-    camera_status_t createCaptureSessionWithLog(
+    camera_status_t createCaptureSessionOutputContainer(
             const std::vector<ACaptureSessionOutput*> extraOutputs,
+            ACaptureSessionOutputContainer** outputs,
             bool isPreviewShared = false, ACaptureRequest *sessionParameters = nullptr) {
-        if (mSession) {
-            LOG_ERROR(errorString, "Cannot create session before closing existing one");
+        if (!mMgrInited || (!mImgReaderInited && !mPreviewInited) || !outputs) {
+            LOG_ERROR(errorString, "Cannot create session output container. mgrInit %d "
+                    "readerInit %d previewInit %d outputs %p",
+                    mMgrInited, mImgReaderInited, mPreviewInited, outputs);
             return ACAMERA_ERROR_UNKNOWN;
         }
 
-        if (!mMgrInited || (!mImgReaderInited && !mPreviewInited)) {
-            LOG_ERROR(errorString, "Cannot create session. mgrInit %d readerInit %d previewInit %d",
-                    mMgrInited, mImgReaderInited, mPreviewInited);
-            return ACAMERA_ERROR_UNKNOWN;
-        }
-
-        camera_status_t ret = ACaptureSessionOutputContainer_create(&mOutputs);
+        camera_status_t ret = ACaptureSessionOutputContainer_create(outputs);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Create capture session output container failed. ret %d", ret);
             return ret;
@@ -1066,7 +1078,7 @@ class PreviewTestCase {
             ret = ACaptureSessionOutput_create(mImgReaderAnw, &mImgReaderOutput);
             if (ret != ACAMERA_OK || mImgReaderOutput == nullptr) {
                 LOG_ERROR(errorString,
-                        "Sesssion image reader output create fail! ret %d output %p",
+                        "Session image reader output create fail! ret %d output %p",
                         ret, mImgReaderOutput);
                 if (ret == ACAMERA_OK) {
                     ret = ACAMERA_ERROR_UNKNOWN; // ret OK but output is null
@@ -1074,17 +1086,17 @@ class PreviewTestCase {
                 return ret;
             }
 
-            ret = ACaptureSessionOutputContainer_add(mOutputs, mImgReaderOutput);
+            ret = ACaptureSessionOutputContainer_add(*outputs, mImgReaderOutput);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Sesssion image reader output add failed! ret %d", ret);
+                LOG_ERROR(errorString, "Session image reader output add failed! ret %d", ret);
                 return ret;
             }
         }
 
         for (auto extraOutput : extraOutputs) {
-            ret = ACaptureSessionOutputContainer_add(mOutputs, extraOutput);
+            ret = ACaptureSessionOutputContainer_add(*outputs, extraOutput);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Sesssion image reader output add failed! ret %d", ret);
+                LOG_ERROR(errorString, "Session image reader output add failed! ret %d", ret);
                 return ret;
             }
         }
@@ -1097,7 +1109,7 @@ class PreviewTestCase {
             }
             if (ret != ACAMERA_OK || mPreviewOutput == nullptr) {
                 LOG_ERROR(errorString,
-                        "Sesssion preview output create fail! ret %d output %p",
+                        "Session preview output create fail! ret %d output %p",
                         ret, mPreviewOutput);
                 if (ret == ACAMERA_OK) {
                     ret = ACAMERA_ERROR_UNKNOWN; // ret OK but output is null
@@ -1105,11 +1117,40 @@ class PreviewTestCase {
                 return ret;
             }
 
-            ret = ACaptureSessionOutputContainer_add(mOutputs, mPreviewOutput);
+            ret = ACaptureSessionOutputContainer_add(*outputs, mPreviewOutput);
             if (ret != ACAMERA_OK) {
-                LOG_ERROR(errorString, "Sesssion preview output add failed! ret %d", ret);
+                LOG_ERROR(errorString, "Session preview output add failed! ret %d", ret);
                 return ret;
             }
+        }
+        return ret;
+    }
+
+    camera_status_t createCaptureSessionWithLog(
+            const std::vector<ACaptureSessionOutput*> extraOutputs,
+            bool isPreviewShared = false, ACaptureRequest *sessionParameters = nullptr,
+            bool sessionConfigurationDefault = true) {
+        if (mSession) {
+            LOG_ERROR(errorString, "Cannot create session before closing existing one");
+            return ACAMERA_ERROR_UNKNOWN;
+        }
+
+        camera_status_t ret = createCaptureSessionOutputContainer(
+                extraOutputs, &mOutputs, isPreviewShared, sessionParameters);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Failed to create session output container! ret %d", ret);
+            return ret;
+        }
+
+        ret = ACameraDevice_isSessionConfigurationSupported(mDevice, mOutputs);
+        if (ret != ACAMERA_OK && ret != ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
+            LOG_ERROR(errorString, "isSessionConfigurationSupported must return either OK "
+                    "or UNSUPPORTED_OPERATION, but returns %d", ret);
+            return ret;
+        }
+
+        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION && !sessionConfigurationDefault) {
+            return ret;
         }
 
         ret = ACameraDevice_createCaptureSessionWithSessionParameters(
@@ -1477,7 +1518,7 @@ class PreviewTestCase {
         CaptureResultListener::onCaptureStart,
         CaptureResultListener::onCaptureProgressed,
         CaptureResultListener::onLogicalCameraCaptureCompleted,
-        CaptureResultListener::onCaptureFailed,
+        CaptureResultListener::onLogicalCameraCaptureFailed,
         CaptureResultListener::onCaptureSequenceCompleted,
         CaptureResultListener::onCaptureSequenceAborted,
         CaptureResultListener::onCaptureBufferLost
@@ -2120,6 +2161,18 @@ testCameraDeviceSessionOpenAndCloseNative(
             goto cleanup;
         }
 
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
+        }
+
         ret = testCase.openCamera(cameraId);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
@@ -2255,6 +2308,18 @@ testCameraDeviceSharedOutputUpdate(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);
@@ -2501,6 +2566,18 @@ testCameraDeviceSimplePreviewNative(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);
@@ -2861,8 +2938,11 @@ bool nativeCameraDeviceLogicalPhysicalStreaming(
             goto cleanup;
         }
 
-        ret = testCase.createCaptureSessionWithLog(readerSessionOutputs);
-        if (ret != ACAMERA_OK) {
+        ret = testCase.createCaptureSessionWithLog(readerSessionOutputs, false /*isPreviewShared*/,
+                nullptr /*sessionParameters*/, false /*sessionConfigurationDefault*/);
+        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
+            continue;
+        } else if (ret != ACAMERA_OK) {
             // Don't log error here. testcase did it
             goto cleanup;
         }
@@ -3019,6 +3099,18 @@ bool nativeImageReaderTestBase(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);
@@ -3418,6 +3510,18 @@ testStillCaptureNative(
         if (cameraId == nullptr) {
             LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
             goto cleanup;
+        }
+
+        {
+            ACameraMetadata* chars = testCase.getCameraChars(cameraId);
+            StaticInfo staticInfo(chars);
+            if (!staticInfo.isColorOutputSupported()) {
+                ALOGI("%s: camera %s does not support color output. skipping",
+                        __FUNCTION__, cameraId);
+                ACameraMetadata_free(chars);
+                continue;
+            }
+            ACameraMetadata_free(chars);
         }
 
         ret = testCase.openCamera(cameraId);

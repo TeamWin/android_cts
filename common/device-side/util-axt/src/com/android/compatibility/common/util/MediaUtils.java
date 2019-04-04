@@ -709,6 +709,17 @@ public class MediaUtils {
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
     }
 
+    public static boolean hasHardwareCodec(String mime, boolean encode) {
+        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
+            if (info.isEncoder() == encode &&
+                    info.isHardwareAccelerated() &&
+                    info.getCapabilitiesForType(mime) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /*
      *  ------------------ HELPER METHODS FOR STATISTICS AND REPORTING ------------------
      */

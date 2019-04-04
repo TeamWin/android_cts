@@ -1101,6 +1101,9 @@
     firstEventReceivedMs=%2$d diffMs=%3$d toleranceMs=%4$d </string>
     <string name="snsr_device_suspend_test_instr">One you begin the test, disconnect USB, turn off the display and allow
     the device to go into suspend mode. The screen will turn on and a sound will be played once all the tests are completed.</string>
+    <string name="snsr_device_suspend_service">Device Suspend Service</string>
+    <string name="snsr_device_suspend_service_active">Device Suspend Test Active</string>
+    <string name="snsr_device_suspend_service_notification">Device Suspend Test is using sensors.</string>
 
     <!-- Significant Motion -->
     <string name="snsr_significant_motion_test">Significant Motion Tests</string>
@@ -1437,7 +1440,9 @@
     <string name="wifi_test">Wi-Fi Test</string>
     <string name="wifi_test_info">
         The Wi-Fi tests requires an open (no security) access point in the environment along with the DUT.
-        The DUT should also not have any saved wifi networks that are visible in the environment.
+        \nPlease perform a network settings reset between each test to reset platform\'s internal state which
+        might interfere with the test flow.\nNavigate to \"Settings -> System -> Reset Options -> Reset Wi-Fi,
+        mobile &amp; Bluetooth\" to perform a network settings reset.
     </string>
     <string name="wifi_location_not_enabled">Wi-Fi / Location Mode is not enabled</string>
     <string name="wifi_location_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
@@ -1792,6 +1797,7 @@
         itself according to the current rotation of the device.</string>
 
     <string name="test_category_notifications">Notifications</string>
+    <string name="test_category_tiles">Tiles</string>
     <string name="package_priority_test">Notification Package Priority Test</string>
     <string name="package_priority_info">This test checks that the NotificationManagerService respects
         user preferences about relative package priorities.
@@ -1868,6 +1874,18 @@
         dismiss them.
     </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
+    <string name="tile_service_name">Tile Service for CTS Verifier</string>
+    <string name="tiles_test">Tile Service Test</string>
+    <string name="tiles_info">This test checks that a Tile Service added by a third party
+        application is not immediately added to the current Quick Settings tiles but can be added
+        by the user.
+    </string>
+    <string name="tiles_adding_tile">Check that Tile Service is enabled</string>
+    <string name="tiles_not_added">Open Quick Settings and check that the Tile Service for CTS
+        Verifier is not visible in any page</string>
+    <string name="tiles_in_customizer">Open Quick Settings and click the button to customize Quick
+        Settings. Check that the Tile Service for CTS Verifier is available to be added</string>
+    <string name="tiles_removing_tile">Check that Tile Service is disabled</string>
     <string name="vr_tests">VR Tests</string>
     <string name="test_category_vr">VR</string>
     <string name="vr_test_title">VR Listener Test</string>

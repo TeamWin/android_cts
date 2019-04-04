@@ -26,12 +26,16 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.CalendarContract;
 
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Runtime permission behavior tests for apps targeting API 23
@@ -486,18 +490,20 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
     @Test
     public void testNoResidualPermissionsOnUninstall_part1() throws Exception {
-        // Grant all permissions
-        grantPermissions(new String[] {
+        ArrayList<String> perms = new ArrayList<>(Arrays.asList(
                 Manifest.permission.WRITE_CALENDAR,
                 Manifest.permission.WRITE_CONTACTS,
-                Manifest.permission.READ_MEDIA_AUDIO,
-                Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_SMS,
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.BODY_SENSORS,
                 Manifest.permission.CAMERA
-        });
+        ));
+
+        perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        // Grant all permissions
+        grantPermissions(perms.toArray(new String[perms.size()]));
 
         // Don't use UI for granting location permission as this shows another dialog
         String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
@@ -634,7 +640,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     }
 
     private void assertAllPermissionsGrantState(int grantState) {
-        assertPermissionsGrantState(new String[] {
+        ArrayList<String> perms = new ArrayList<>(Arrays.asList(
                 Manifest.permission.SEND_SMS,
                 Manifest.permission.RECEIVE_SMS,
                 Manifest.permission.RECEIVE_WAP_PUSH,
@@ -642,9 +648,6 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.READ_CALENDAR,
                 Manifest.permission.WRITE_CALENDAR,
                 Manifest.permission.WRITE_CONTACTS,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_AUDIO,
                 Manifest.permission.READ_SMS,
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.READ_CALL_LOG,
@@ -662,7 +665,11 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
                 // Split permissions
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        }, grantState);
+        ));
+
+        perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        perms.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        assertPermissionsGrantState(perms.toArray(new String[perms.size()]), grantState);
     }
 
     private void assertPermissionsGrantState(String[] permissions, int grantState) {

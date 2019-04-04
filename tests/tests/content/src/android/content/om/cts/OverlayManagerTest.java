@@ -16,12 +16,17 @@
 
 package android.content.om.cts;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.content.om.IOverlayManager;
 import android.content.om.OverlayManager;
+import android.os.UserHandle;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -51,20 +56,36 @@ public class OverlayManagerTest {
     }
 
     @Test
+    public void testSetEnabled() throws Exception {
+        String packageName = "overlay source package name";
+        int userId = UserHandle.myUserId();
+        UserHandle user = UserHandle.of(userId);
+        verify(mMockService, times(0)).setEnabled(packageName, true, userId);
+        when(mMockService.setEnabled(anyString(), any(Boolean.class), anyInt()))
+                .thenReturn(Boolean.TRUE);
+        mManager.setEnabled(packageName, true, user);
+        verify(mMockService, times(1)).setEnabled(packageName, true, userId);
+    }
+
+    @Test
     public void testSetEnabledExclusiveInCategory() throws Exception {
         String packageName = "overlay source package name";
-        int userId = 10;
+        int userId = UserHandle.myUserId();
+        UserHandle user = UserHandle.of(userId);
         verify(mMockService, times(0)).setEnabledExclusiveInCategory(packageName, userId);
-        mManager.setEnabledExclusiveInCategory(packageName, userId);
+        when(mMockService.setEnabledExclusiveInCategory(anyString(), anyInt()))
+                .thenReturn(Boolean.TRUE);
+        mManager.setEnabledExclusiveInCategory(packageName, user);
         verify(mMockService, times(1)).setEnabledExclusiveInCategory(packageName, userId);
     }
 
     @Test
     public void testGetOverlayInfosForTarget() throws Exception {
         String targetPackageName = "overlay target package name";
-        int userId = 10;
+        int userId = UserHandle.myUserId();
+        UserHandle user = UserHandle.of(userId);
         verify(mMockService, times(0)).getOverlayInfosForTarget(targetPackageName, userId);
-        mManager.getOverlayInfosForTarget(targetPackageName, userId);
+        mManager.getOverlayInfosForTarget(targetPackageName, user);
         verify(mMockService, times(1)).getOverlayInfosForTarget(targetPackageName, userId);
     }
 }

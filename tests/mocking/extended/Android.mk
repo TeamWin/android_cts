@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTE: when converting this file to Android.bp, verify that
+# 'atest CtsExtendedMockingTestCases' succeeds.
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)

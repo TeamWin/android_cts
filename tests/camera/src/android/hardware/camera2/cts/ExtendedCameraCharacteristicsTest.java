@@ -80,6 +80,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final Size VGA = new Size(640, 480);
     private static final Size QVGA = new Size(320, 240);
 
+    private static final long MIN_BACK_SENSOR_RESOLUTION = 2000000;
+    private static final long MIN_FRONT_SENSOR_RESOLUTION = VGA.getHeight() * VGA.getWidth();
     private static final long LOW_LATENCY_THRESHOLD_MS = 200;
     private static final float LATENCY_TOLERANCE_FACTOR = 1.1f; // 10% tolerance
     private static final int MAX_NUM_IMAGES = 5;
@@ -206,11 +208,36 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             Rect activeRect = CameraTestUtils.getValueNotNull(
                     c, CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-            Size activeArraySize = new Size(activeRect.width(), activeRect.height());
+            Size pixelArraySize = CameraTestUtils.getValueNotNull(
+                    c, CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+
+            int activeArrayHeight = activeRect.height();
+            int activeArrayWidth = activeRect.width();
+            long sensorResolution = pixelArraySize.getHeight() * pixelArraySize.getWidth() ;
+            Integer lensFacing = c.get(CameraCharacteristics.LENS_FACING);
+            assertNotNull("Can't get lens facing info for camera id: " + mIds[counter], lensFacing);
+
+            // Check that the sensor sizes are atleast what the CDD specifies
+            switch(lensFacing) {
+                case CameraCharacteristics.LENS_FACING_FRONT:
+                    assertTrue("Front Sensor resolution should be at least " +
+                            MIN_FRONT_SENSOR_RESOLUTION + " pixels, is "+ sensorResolution,
+                            sensorResolution >= MIN_FRONT_SENSOR_RESOLUTION);
+                    break;
+                case CameraCharacteristics.LENS_FACING_BACK:
+                    assertTrue("Back Sensor resolution should be at least "
+                            + MIN_BACK_SENSOR_RESOLUTION +
+                            " pixels, is "+ sensorResolution,
+                            sensorResolution >= MIN_BACK_SENSOR_RESOLUTION);
+                    break;
+                default:
+                    break;
+            }
+
             Integer hwLevel = c.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
 
-            if (activeArraySize.getWidth() >= FULLHD.getWidth() &&
-                    activeArraySize.getHeight() >= FULLHD.getHeight()) {
+            if (activeArrayWidth >= FULLHD.getWidth() &&
+                    activeArrayHeight >= FULLHD.getHeight()) {
                 assertArrayContainsAnyOf(String.format(
                         "Required FULLHD size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes,
@@ -223,8 +250,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             }
 
-            if (activeArraySize.getWidth() >= HD.getWidth() &&
-                    activeArraySize.getHeight() >= HD.getHeight()) {
+            if (activeArrayWidth >= HD.getWidth() &&
+                    activeArrayHeight >= HD.getHeight()) {
                 assertArrayContains(String.format(
                         "Required HD size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes, HD);
@@ -235,8 +262,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             }
 
-            if (activeArraySize.getWidth() >= VGA.getWidth() &&
-                    activeArraySize.getHeight() >= VGA.getHeight()) {
+            if (activeArrayWidth >= VGA.getWidth() &&
+                    activeArrayHeight >= VGA.getHeight()) {
                 assertArrayContains(String.format(
                         "Required VGA size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes, VGA);
@@ -247,8 +274,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             }
 
-            if (activeArraySize.getWidth() >= QVGA.getWidth() &&
-                    activeArraySize.getHeight() >= QVGA.getHeight()) {
+            if (activeArrayWidth >= QVGA.getWidth() &&
+                    activeArrayHeight >= QVGA.getHeight()) {
                 assertArrayContains(String.format(
                         "Required QVGA size not found for format %x for: ID %s",
                         ImageFormat.JPEG, mIds[counter]), jpegSizes, QVGA);

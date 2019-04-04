@@ -19,10 +19,7 @@ package android.media.cts;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
@@ -40,8 +37,8 @@ import android.provider.MediaStore.MediaColumns;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.filters.SmallTest;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.PollingCheck;
@@ -621,25 +618,16 @@ public class MediaScannerTest extends AndroidTestCase {
         }
     }
 
-    static void startMediaScan() {
-        // Ugh, the best proxy we have is pretending that it was just mounted
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_VOLUME "
-                        + "--receiver-include-background -d "
-                        + Uri.fromFile(Environment.getExternalStorageDirectory()));
+    public static void startMediaScan() {
+        new Thread(() -> {
+            MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(),
+                    Environment.getExternalStorageDirectory());
+        }).start();
     }
 
-    private void startMediaScanAndWait() throws InterruptedException {
-        ScannerNotificationReceiver finishedReceiver = new ScannerNotificationReceiver(
-                Intent.ACTION_MEDIA_SCANNER_FINISHED);
-        IntentFilter finishedIntentFilter = new IntentFilter(Intent.ACTION_MEDIA_SCANNER_FINISHED);
-        finishedIntentFilter.addDataScheme("file");
-        mContext.registerReceiver(finishedReceiver, finishedIntentFilter);
-
-        startMediaScan();
-
-        finishedReceiver.waitForBroadcast();
-        mContext.unregisterReceiver(finishedReceiver);
+    public static void startMediaScanAndWait() {
+        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(),
+                Environment.getExternalStorageDirectory());
     }
 
     private void checkMediaScannerConnection() {

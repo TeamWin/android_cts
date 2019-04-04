@@ -15,8 +15,12 @@
  */
 package android.webkit.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Message;
@@ -24,6 +28,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.webkit.ConsoleMessage;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -45,7 +50,9 @@ import com.google.common.util.concurrent.SettableFuture;
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -425,7 +432,9 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setDefaultFontSize(1000);
         int maxSize = mSettings.getDefaultFontSize();
         // cannot check exact size set, since the implementation caps it at an arbitrary limit
-        assertTrue(maxSize > defaultSize);
+        assertThat("max size should be greater than default size",
+                maxSize,
+                greaterThan(defaultSize));
 
         mSettings.setDefaultFontSize(-10);
         int minSize = mSettings.getDefaultFontSize();
@@ -445,8 +454,10 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         mSettings.setDefaultFixedFontSize(1000);
         int maxSize = mSettings.getDefaultFixedFontSize();
-        // cannot check exact size, since the implementation caps it at an arbitrary limit
-        assertTrue(maxSize > defaultSize);
+        // cannot check exact size set, since the implementation caps it at an arbitrary limit
+        assertThat("max size should be greater than default size",
+                maxSize,
+                greaterThan(defaultSize));
 
         mSettings.setDefaultFixedFontSize(-10);
         int minSize = mSettings.getDefaultFixedFontSize();
@@ -611,8 +622,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         String pluginPath = "pluginPath";
         mSettings.setPluginsPath(pluginPath);
-        // plugin path always empty
-        assertEquals("", mSettings.getPluginsPath());
+        assertEquals("Plugin path always empty", "", mSettings.getPluginsPath());
     }
 
     public void testAccessTextSize() {
@@ -642,8 +652,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertFalse(mSettings.getUseDoubleTree());
 
         mSettings.setUseDoubleTree(true);
-        // setUseDoubleTree is a no-op
-        assertFalse(mSettings.getUseDoubleTree());
+        assertFalse("setUseDoubleTree should be a no-op", mSettings.getUseDoubleTree());
     }
 
     public void testAccessUseWideViewPort() {
@@ -1167,6 +1176,73 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertFalse(mSettings.getSafeBrowsingEnabled());
     }
 
+    private  int[] getBitmapPixels(Bitmap bitmap, int x, int y, int width, int height) {
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, x, y, width, height);
+        return pixels;
+    }
+
+    private Map<Integer,Integer> getBitmapHistogram(Bitmap bitmap, int x, int y, int width, int height) {
+        HashMap<Integer, Integer> histogram = new HashMap();
+        for (int pixel : getBitmapPixels(bitmap, x, y, width, height)) {
+            histogram.put(pixel, histogram.getOrDefault(pixel, 0) + 1);
+        }
+        return histogram;
+    }
+
+    public void testForceDark_default() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        assertEquals("The default force dark state should be AUTO",
+                mSettings.getForceDark(), WebSettings.FORCE_DARK_AUTO);
+    }
+
+    private void setWebViewSize(int width, int height) {
+        // Set the webview size to 64x64
+        WebkitUtils.onMainThreadSync(() -> {
+            WebView webView = mOnUiThread.getWebView();
+            ViewGroup.LayoutParams params = webView.getLayoutParams();
+            params.height = height;
+            params.width = width;
+            webView.setLayoutParams(params);
+        });
+
+    }
+
+    public void testForceDark_rendersDark() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        setWebViewSize(64, 64);
+
+        Map<Integer, Integer> histogram;
+        Integer[] colourValues;
+
+        // Loading about:blank into a force-dark-on webview should result in a dark background
+        mSettings.setForceDark(WebSettings.FORCE_DARK_ON);
+        assertEquals("Force dark should have been set to ON",
+                mSettings.getForceDark(), WebSettings.FORCE_DARK_ON);
+
+        mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+        histogram = getBitmapHistogram(mOnUiThread.captureBitmap(), 0, 0, 64, 64);
+        assertEquals("Bitmap should have a single colour", histogram.size(), 1);
+        colourValues = histogram.keySet().toArray(new Integer[0]);
+        assertTrue("Bitmap colour should be dark", Color.luminance(colourValues[0]) < 0.5f);
+
+        // Loading about:blank into a force-dark-off webview should result in a light background
+        mSettings.setForceDark(WebSettings.FORCE_DARK_OFF);
+        assertEquals("Force dark should have been set to OFF",
+                mSettings.getForceDark(), WebSettings.FORCE_DARK_OFF);
+
+        mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+        histogram = getBitmapHistogram(mOnUiThread.captureBitmap(), 0, 0, 64, 64);
+        assertEquals("Bitmap should have a single colour", histogram.size(), 1);
+        colourValues = histogram.keySet().toArray(new Integer[0]);
+        assertTrue("Bitmap colour should be light", Color.luminance(colourValues[0]) > 0.5f);
+    }
 
     /**
      * Starts the internal web server. The server will be shut down automatically

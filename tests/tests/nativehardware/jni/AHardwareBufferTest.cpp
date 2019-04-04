@@ -20,6 +20,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -30,6 +31,7 @@
 //#define LOG_NDEBUG 0
 
 #define BAD_VALUE -EINVAL
+#define INVALID_OPERATION -ENOSYS
 #define NO_ERROR 0
 
 #define LOG_TAG "AHBTest"
@@ -310,6 +312,48 @@ TEST(AHardwareBufferTest, SendAndRecvSucceeds) {
 
     AHardwareBuffer_release(buffer);
     AHardwareBuffer_release(received);
+}
+
+TEST(AHardwareBufferTest, LockAndGetInfoAndUnlockSucceed) {
+    AHardwareBuffer* buffer = nullptr;
+    AHardwareBuffer_Desc desc = {};
+
+    desc.width = 2;
+    desc.height = 4;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+
+    int32_t bytesPerPixel = std::numeric_limits<int32_t>::min();
+    int32_t bytesPerStride = std::numeric_limits<int32_t>::min();
+
+    // Test that an invalid buffer fails.
+    int err = AHardwareBuffer_lockAndGetInfo(NULL, 0, -1, NULL, NULL, &bytesPerPixel, &bytesPerStride);
+    EXPECT_EQ(BAD_VALUE, err);
+
+    err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, err);
+    void* bufferData = NULL;
+
+    // Test invalid usage flag
+    err = AHardwareBuffer_lockAndGetInfo(buffer, ~(AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK | AHARDWAREBUFFER_USAGE_CPU_READ_MASK), -1, NULL, &bufferData, &bytesPerPixel, &bytesPerStride);
+    EXPECT_EQ(BAD_VALUE, err);
+
+    err = AHardwareBuffer_lockAndGetInfo(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1, NULL, &bufferData, &bytesPerPixel, &bytesPerStride);
+
+    if (bytesPerPixel == -1 || bytesPerStride == -1) {
+        EXPECT_EQ(INVALID_OPERATION, err);
+    } else {
+        EXPECT_EQ(NO_ERROR, err);
+        EXPECT_LE(0, bytesPerPixel);
+        EXPECT_LE(0, bytesPerStride);
+        EXPECT_TRUE(bufferData != NULL);
+
+        int32_t fence = -1;
+        err = AHardwareBuffer_unlock(buffer, &fence);
+        EXPECT_EQ(NO_ERROR, err);
+    }
+    AHardwareBuffer_release(buffer);
 }
 
 TEST(AHardwareBufferTest, LockAndUnlockSucceed) {

@@ -873,10 +873,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
         requestBuilder.addTarget(mPreviewSurface);
         CaptureRequest initialRequest = requestBuilder.build();
-        assertTrue("Constrained session configuration query failed",
-                CameraTestUtils.checkSessionConfigurationWithSurfaces(mCamera, mHandler,
+        CameraTestUtils.checkSessionConfigurationWithSurfaces(mCamera, mHandler,
                 outputSurfaces, /*inputConfig*/ null, SessionConfiguration.SESSION_HIGH_SPEED,
-                /*expectedResult*/ true));
+                /*defaultSupport*/ true, "Constrained session configuration query failed");
         mSession = buildConstrainedCameraSession(mCamera, outputSurfaces, mSessionListener,
                 mHandler, initialRequest);
         slowMoRequests = ((CameraConstrainedHighSpeedCaptureSession) mSession).

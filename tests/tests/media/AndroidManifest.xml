@@ -26,14 +26,13 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER" />
     <uses-permission android:name="android.permission.SET_MEDIA_KEY_LISTENER" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <permission android:name="android.media.cts" android:protectionLevel="normal" />
 
@@ -123,6 +122,10 @@
             <intent-filter>
                 <action android:name="android.media.MediaSession2Service" />
             </intent-filter>
+        </service>
+        <service android:name="android.media.cts.LocalMediaProjectionService"
+            android:foregroundServiceType="mediaProjection"
+            android:enabled="true">
         </service>
     </application>
 

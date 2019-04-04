@@ -19,6 +19,7 @@ package android.provider.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore.Audio;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -27,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class MediaStore_AudioTest {
     private String mKeyForBeatles;

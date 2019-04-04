@@ -358,14 +358,15 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
             mPlayer.setScreenOnWhilePlaying(true);
 
             mOnBufferingUpdateCalled.reset();
+            AtomicInteger percent = new AtomicInteger(0);
             MediaPlayer2.EventCallback ecb =
                 new MediaPlayer2.EventCallback() {
                     @Override
@@ -378,6 +379,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
                             mOnPrepareCalled.signal();
                         } else if (what == MediaPlayer2.MEDIA_INFO_BUFFERING_UPDATE) {
+                            percent.set(extra);
                             mOnBufferingUpdateCalled.signal();
                         }
                     }
@@ -395,6 +397,10 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                 assertFalse(mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             } else {
                 mOnBufferingUpdateCalled.waitForSignal();
+                if (percent.get() > 0) {
+                    assertTrue(mPlayer.getBufferedPosition() > 0);
+                    assertTrue(mPlayer.getBufferedPosition(mPlayer.getCurrentDataSource()) > 0);
+                }
                 mPlayer.play();
                 Thread.sleep(SLEEP_TIME);
             }
@@ -421,8 +427,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -517,8 +523,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             assertTrue(mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR);
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -598,8 +604,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             final AtomicInteger counter = new AtomicInteger();
             String stream_url = mServer.getAssetUrl("prog_index.m3u8");
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mPlayer.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
             mPlayer.setScreenOnWhilePlaying(true);
@@ -690,7 +696,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
             assertTrue("Stream has no timed ID3 track", i >= 0);
-            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), i);
+            mPlayer.selectTrack(mPlayer.getCurrentDataSource(), trackInfos.get(i));
 
             synchronized (completion) {
                 completion.wait();
@@ -764,8 +770,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
         try {
             String path = mServer.getDelayedAssetUrl("noiseandchirps.ogg", 15000);
             final Uri uri = Uri.parse(path);
-            mp.setDataSource(new UriDataSourceDesc.Builder()
-                    .setDataSource(mContext, uri)
+            mp.setDataSource(new DataSourceDesc.Builder()
+                    .setDataSource(uri)
                     .build());
 
             MediaPlayer2.EventCallback ecb =

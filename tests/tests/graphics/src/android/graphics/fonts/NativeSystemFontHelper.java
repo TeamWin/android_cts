@@ -68,11 +68,11 @@ public class NativeSystemFontHelper {
     }
 
     public static Pair<File, Integer> matchFamilyStyleCharacter(String familyName, int weight,
-            boolean italic, String languageTags, String text) {
+            boolean italic, String languageTags, int familyVariant, String text) {
         final long fontPtr = nMatchFamilyStyleCharacter(familyName, weight, italic, languageTags,
-                text);
+                familyVariant, text);
         final int runLength = nMatchFamilyStyleCharacter_runLength(familyName, weight, italic,
-                languageTags, text);
+                languageTags, familyVariant, text);
         try {
             return new Pair<>(new File(nGetFilePath(fontPtr)), runLength);
         } finally {
@@ -93,7 +93,7 @@ public class NativeSystemFontHelper {
     private static native int nGetAxisTag(long ptr, int index);
     private static native float nGetAxisValue(long ptr, int index);
     private static native long nMatchFamilyStyleCharacter(String familyName, int weight,
-            boolean italic, String languageTags, String text);
+            boolean italic, String languageTags, int familyVariant, String text);
     private static native int nMatchFamilyStyleCharacter_runLength(String familyName, int weight,
-            boolean italic, String languageTags, String text);
+            boolean italic, String languageTags, int familyVariant, String text);
 }

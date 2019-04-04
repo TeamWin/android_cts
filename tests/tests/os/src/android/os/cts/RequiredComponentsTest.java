@@ -38,7 +38,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -54,7 +53,7 @@ public class RequiredComponentsTest {
     public void testPackageInstallerPresent() throws Exception {
         Intent installerIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         installerIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        installerIntent.setDataAndType(Uri.fromFile(new File("foo.apk")), PACKAGE_MIME_TYPE);
+        installerIntent.setDataAndType(Uri.parse("content://com.example/"), PACKAGE_MIME_TYPE);
         List<ResolveInfo> installers = InstrumentationRegistry.getContext()
                 .getPackageManager().queryIntentActivities(installerIntent, MATCH_SYSTEM_ONLY
                         | MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
@@ -103,7 +102,7 @@ public class RequiredComponentsTest {
     public void testNoPackageInstallerPresent() {
         final Intent installerIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         installerIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        installerIntent.setDataAndType(Uri.fromFile(new File("foo.apk")), PACKAGE_MIME_TYPE);
+        installerIntent.setDataAndType(Uri.parse("content://com.example/"), PACKAGE_MIME_TYPE);
         final List<ResolveInfo> installers = InstrumentationRegistry.getContext()
                 .getPackageManager().queryIntentActivities(installerIntent, MATCH_SYSTEM_ONLY
                         | MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);

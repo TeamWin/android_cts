@@ -117,7 +117,7 @@ public class AppPredictionServiceTest {
 
         // Ensure that future calls to the client fail
         assertFails(() -> client.notifyAppTargetEvent(null));
-        assertFails(() -> client.notifyLocationShown(null, null));
+        assertFails(() -> client.notifyLaunchLocationShown(null, null));
         assertFails(() -> client.registerPredictionUpdates(null, null));
         assertFails(() -> client.unregisterPredictionUpdates(null));
         assertFails(() -> client.requestPredictionUpdate());
@@ -146,6 +146,9 @@ public class AppPredictionServiceTest {
         // Ensure we don't get updates after the listeners are unregistered
         assertFalse(cb.requestAndWaitForTargets(createPredictions(),
                 () -> client.requestPredictionUpdate()));
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     @Test
@@ -164,6 +167,9 @@ public class AppPredictionServiceTest {
             mReporter.awaitOnAppTargetEvent();
         }
         assertEquals(mReporter.mEvents, events);
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     @Test
@@ -177,10 +183,13 @@ public class AppPredictionServiceTest {
             AppTargetId id = target.getId();
             targetIds.add(id);
         }
-        client.notifyLocationShown(TEST_LAUNCH_LOCATION, targetIds);
+        client.notifyLaunchLocationShown(TEST_LAUNCH_LOCATION, targetIds);
         mReporter.awaitOnLocationShown();
         assertEquals(mReporter.mLocationsShown, TEST_LAUNCH_LOCATION);
         assertEquals(mReporter.mLocationsShownTargets, targetIds);
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     @Test
@@ -202,6 +211,9 @@ public class AppPredictionServiceTest {
         assertTrue(cb.requestAndWaitForTargets(sortedTargets,
                 () -> client.sortTargets(shuffledTargets,
                         Executors.newSingleThreadExecutor(), cb)));
+
+        // Clients must be destroyed at end of test.
+        client.destroy();
     }
 
     private void assertFails(Runnable r) {
@@ -219,8 +231,10 @@ public class AppPredictionServiceTest {
         List<AppTarget> targets = new ArrayList<>();
         int n = (int) (Math.random() * 20);
         for (int i = 0; i < n; i++) {
-            targets.add(new AppTarget(new AppTargetId(String.valueOf(i)), "test.pkg",
-                    "test.class." + i, UserHandle.CURRENT));
+            targets.add(new AppTarget.Builder(new AppTargetId(String.valueOf(i)))
+                    .setTarget("test.pkg", UserHandle.CURRENT)
+                    .setClassName("test.class." + i)
+                    .build());
         }
         return targets;
     }

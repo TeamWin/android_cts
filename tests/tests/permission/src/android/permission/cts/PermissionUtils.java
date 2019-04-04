@@ -22,7 +22,6 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.permissionToOp;
-import static android.content.pm.PackageManager.FLAG_PERMISSION_HIDDEN;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_ON_UPGRADE;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
@@ -56,7 +55,7 @@ public class PermissionUtils {
 
     private static int TESTED_FLAGS = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED
             | FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED
-            | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED | FLAG_PERMISSION_HIDDEN;
+            | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation =
@@ -177,14 +176,14 @@ public class PermissionUtils {
         if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
             // The app-op for background location is encoded into the mode of the foreground
             // location
-            if (isPermissionGranted(ACCESS_COARSE_LOCATION, packageName)) {
+            if (isPermissionGranted(packageName, ACCESS_COARSE_LOCATION)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
             }
         } else if (permission.equals(ACCESS_COARSE_LOCATION)) {
             // The app-op for location depends on the state of the bg location
-            if (isPermissionGranted(ACCESS_BACKGROUND_LOCATION, packageName)) {
+            if (isPermissionGranted(packageName, ACCESS_BACKGROUND_LOCATION)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_ALLOWED);
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);

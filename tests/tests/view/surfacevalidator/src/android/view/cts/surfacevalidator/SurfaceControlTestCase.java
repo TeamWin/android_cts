@@ -117,6 +117,9 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
 
         public View createView(Context context) {
             SurfaceView surfaceView = new SurfaceView(context);
+            if (mCallback instanceof ParentSurfaceHolder) {
+                surfaceView.setZOrderOnTop(true);
+            }
 
             // prevent transparent region optimization, which is invalid for a SurfaceView moving
             // around

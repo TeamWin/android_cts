@@ -17,20 +17,19 @@ package android.packageinstaller.install.cts
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.AppOpsManager.MODE_ALLOWED
-import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
-import android.content.Intent
 import android.content.pm.ApplicationInfo.CATEGORY_MAPS
 import android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.STATUS_FAILURE_ABORTED
-import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.STATUS_SUCCESS
 import android.content.pm.PackageManager
-import androidx.test.InstrumentationRegistry
-import androidx.test.runner.AndroidJUnit4
+import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.AppModeInstant
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -39,7 +38,11 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.lang.NullPointerException
 import java.util.concurrent.TimeUnit
+import kotlin.Int
+import kotlin.Long
+import kotlin.String
 
 private const val INSTALL_BUTTON_ID = "button1"
 private const val CANCEL_BUTTON_ID = "button2"
@@ -96,6 +99,17 @@ class SessionTest : PackageInstallerTestBase() {
     /**
      * Check that we can install an app via a package-installer session
      */
+    @AppModeInstant(reason = "Only instant apps cannot create installer sessions")
+    @Test(expected = NullPointerException::class)
+    fun instantAppsCannotCreateInstallSessions() {
+        pm.packageInstaller.createSession(
+                PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL))
+    }
+
+    /**
+     * Check that we can install an app via a package-installer session
+     */
+    @AppModeFull(reason = "Instant apps cannot create installer sessions")
     @Test
     fun confirmInstallation() {
         startInstallationViaSession()
@@ -116,6 +130,7 @@ class SessionTest : PackageInstallerTestBase() {
     /**
      * Check that we can set an app category for an app we installed
      */
+    @AppModeFull(reason = "Instant apps cannot create installer sessions")
     @Test
     fun setAppCategory() {
         startInstallationViaSession()
@@ -136,6 +151,7 @@ class SessionTest : PackageInstallerTestBase() {
      * Install an app via a package-installer session, but then cancel it when the package installer
      * pops open.
      */
+    @AppModeFull(reason = "Instant apps cannot create installer sessions")
     @Test
     fun cancelInstallation() {
         startInstallationViaSession()

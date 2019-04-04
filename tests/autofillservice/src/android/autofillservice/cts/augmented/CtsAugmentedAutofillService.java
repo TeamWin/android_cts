@@ -35,7 +35,9 @@ import android.service.autofill.augmented.FillCallback;
 import android.service.autofill.augmented.FillController;
 import android.service.autofill.augmented.FillRequest;
 import android.service.autofill.augmented.FillResponse;
+import android.util.ArraySet;
 import android.util.Log;
+import android.view.autofill.AutofillManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -127,6 +129,17 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
 
         sServiceWatcher.mService = this;
         sServiceWatcher.mCreated.countDown();
+
+        Log.d(TAG, "Whitelisting " + Helper.MY_PACKAGE + " for augmented autofill");
+        final ArraySet<String> packages = new ArraySet<>(1);
+        packages.add(Helper.MY_PACKAGE);
+
+        final AutofillManager afm = getApplication().getSystemService(AutofillManager.class);
+        if (afm == null) {
+            addException("No AutofillManager on application context on onConnected()");
+            return;
+        }
+        afm.setAugmentedAutofillWhitelist(packages, /* activities= */ null);
 
         if (mConnectedLatch.getCount() == 0) {
             addException("already connected: %s", mConnectedLatch);

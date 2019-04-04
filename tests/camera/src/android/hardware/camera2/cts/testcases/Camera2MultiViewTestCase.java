@@ -545,10 +545,9 @@ public class Camera2MultiViewTestCase {
         public int startPreviewWithConfigs(List<OutputConfiguration> outputConfigs,
                 CaptureCallback listener)
                 throws Exception {
-            assertTrue("Session configuration query should not fail",
-                    checkSessionConfiguration(mCamera, mHandler, outputConfigs,
+            checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs,
                     /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
-                    /*expectedResult*/ true));
+                    /*defaultSupport*/ true, "Session configuration query should not fail");
             createSessionWithConfigs(outputConfigs);
 
             CaptureRequest.Builder captureBuilder =
@@ -580,9 +579,9 @@ public class Camera2MultiViewTestCase {
         }
 
         public boolean isSessionConfigurationSupported(List<OutputConfiguration> configs) {
-            return checkSessionConfiguration(mCamera, mHandler, configs,
+            return isSessionConfigSupported(mCamera, mHandler, configs,
                     /*inputConig*/ null, SessionConfiguration.SESSION_REGULAR,
-                    /*expectedResult*/ true);
+                    /*expectedResult*/ true).configSupported;
         }
 
         public void capture(CaptureRequest request, CaptureCallback listener)

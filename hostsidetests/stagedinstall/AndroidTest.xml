@@ -16,15 +16,16 @@
 <configuration description="Runs the staged install API  tests">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
+    <!-- Instant apps can't have INSTALL_PACKAGES permission. -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="StagedInstallTest.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="mkdir -p /data/local/tmp/ctsstagedinstall" />
         <option name="run-command" value="pm uninstall com.android.tests.stagedinstall.testapp.A" />
         <option name="run-command" value="pm uninstall com.android.tests.stagedinstall.testapp.B" />
-        <option name="teardown-command" value="rm -rf /data/local/tmp/ctsstagedinstall" />
         <option name="teardown-command" value="pm uninstall com.android.tests.stagedinstall.testapp.A" />
         <option name="teardown-command" value="pm uninstall com.android.tests.stagedinstall.testapp.B" />
     </target_preparer>

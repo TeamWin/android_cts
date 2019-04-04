@@ -25,6 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
@@ -45,12 +46,20 @@ public class AtomicInstallTest {
     private static final String TEST_APP_A = "com.android.tests.atomicinstall.testapp.A";
     private static final String TEST_APP_B = "com.android.tests.atomicinstall.testapp.B";
 
-    @Before
-    public void adoptShellPermissions() {
+    private void adoptShellPermissions() {
         InstrumentationRegistry
                 .getInstrumentation()
                 .getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES);
+                .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES,
+                    Manifest.permission.DELETE_PACKAGES);
+    }
+
+    @Before
+    public void setup() throws Exception {
+        adoptShellPermissions();
+
+        uninstall(TEST_APP_A);
+        uninstall(TEST_APP_B);
     }
 
     @After
@@ -63,11 +72,81 @@ public class AtomicInstallTest {
 
     @Test
     public void testInstallTwoApks() throws Exception {
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
         installMultiPackage("AtomicInstallTestAppAv1.apk", "AtomicInstallTestAppBv1.apk");
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
         assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
+    }
+
+    @Test
+    @FlakyTest(bugId = 129859594)
+    public void testFailInconsistentMultiPackageCommit() throws Exception {
+        // Test inconsistency in staged settings
+        for (boolean staged : new boolean[]{false, true}) {
+            final PackageInstaller.SessionParams parentSessionParams =
+                    createSessionParams(/*staged*/staged, /*multipackage*/true,
+                            /*enableRollback*/false, /*inherit*/false);
+            final int parentSessionId =
+                    createSessionId(/*apkFileName*/null, parentSessionParams);
+            // Create a child session that differs in the staged parameter
+            final PackageInstaller.SessionParams childSessionParams =
+                    createSessionParams(/*staged*/!staged, /*multipackage*/false,
+                            /*enableRollback*/false, /*inherit*/false);
+            final int childSessionId =
+                    createSessionId("AtomicInstallTestAppAv1.apk", childSessionParams);
+
+            final PackageInstaller.Session parentSession = getSessionOrFail(parentSessionId);
+            parentSession.addChildSessionId(childSessionId);
+            parentSession.commit(LocalIntentSender.getIntentSender());
+            assertStatusFailure(LocalIntentSender.getIntentSenderResult(),
+                    "inconsistent staged settings");
+            assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        }
+
+        // Test inconsistency in rollback settings
+        for (boolean enableRollback : new boolean[]{false, true}) {
+            final PackageInstaller.SessionParams parentSessionParams =
+                    createSessionParams(/*staged*/false, /*multipackage*/true,
+                            /*enableRollback*/enableRollback, /*inherit*/false);
+            final int parentSessionId =
+                    createSessionId(/*apkFileName*/null, parentSessionParams);
+            // Create a child session that differs in the staged parameter
+            final PackageInstaller.SessionParams childSessionParams =
+                    createSessionParams(/*staged*/false, /*multipackage*/false,
+                            /*enableRollback*/!enableRollback, /*inherit*/false);
+            final int childSessionId =
+                    createSessionId("AtomicInstallTestAppAv1.apk", childSessionParams);
+
+            final PackageInstaller.Session parentSession = getSessionOrFail(parentSessionId);
+            parentSession.addChildSessionId(childSessionId);
+            parentSession.commit(LocalIntentSender.getIntentSender());
+            assertStatusFailure(LocalIntentSender.getIntentSenderResult(),
+                    "inconsistent rollback settings");
+            assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    public void testChildFailurePropagated() throws Exception {
+        final PackageInstaller.SessionParams parentSessionParams =
+                createSessionParams(/*staged*/false, /*multipackage*/true,
+                        /*enableRollback*/ false, /*inherit*/false);
+        final int parentSessionId =
+                createSessionId(/*apkFileName*/null, parentSessionParams);
+        final PackageInstaller.Session parentSession = getSessionOrFail(parentSessionId);
+
+        // Create a child session that "inherits" from a non-existent package. This
+        // causes the session commit to fail with a PackageManagerException.
+        final PackageInstaller.SessionParams childSessionParams =
+                createSessionParams(/*staged*/false, /*multipackage*/false,
+                        /*enableRollback*/ false, /*inherit*/true);
+        final int childSessionId =
+                createSessionId("AtomicInstallTestAppAv1.apk", childSessionParams);
+        parentSession.addChildSessionId(childSessionId);
+        parentSession.commit(LocalIntentSender.getIntentSender());
+
+        final Intent intent = LocalIntentSender.getIntentSenderResult();
+        assertStatusFailure(intent, "Missing existing base package");
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
     }
 
     private static long getInstalledVersion(String packageName) {
@@ -81,43 +160,72 @@ public class AtomicInstallTest {
         }
     }
 
-    private void installMultiPackage(String... resources) throws Exception {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-        PackageInstaller.SessionParams multiPackageSessionParams =
-                new PackageInstaller.SessionParams(
-                        PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        multiPackageSessionParams.setMultiPackage();
-
-        int multiPackageSessionId = packageInstaller.createSession(multiPackageSessionParams);
-        PackageInstaller.Session multiPackageSession = packageInstaller.openSession(
-                multiPackageSessionId);
+    private static void installMultiPackage(String... resources) throws Exception {
+        final PackageInstaller.SessionParams parentSessionParams =
+                createSessionParams(/*staged*/false, /*multipackage*/true,
+                        /*enableRollback*/false, /*inherit*/ false);
+        final int parentSessionId = createSessionId(/*apkFileName*/null, parentSessionParams);
+        final PackageInstaller.Session parentSession = getSessionOrFail(parentSessionId);
 
         for (String apkFileName : resources) {
-            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
-                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-
-            int sessionId = packageInstaller.createSession(params);
-            PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-            try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
-                 InputStream is =
-                         AtomicInstallTest.class.getClassLoader().getResourceAsStream(
-                                 apkFileName)) {
-                byte[] buffer = new byte[4096];
-                int n;
-                while ((n = is.read(buffer)) >= 0) {
-                    packageInSession.write(buffer, 0, n);
-                }
-            }
-            multiPackageSession.addChildSessionId(sessionId);
+            final PackageInstaller.SessionParams childSessionParams =
+                    createSessionParams(/*staged*/false, /*multipackage*/false,
+                            /*enableRollback*/false, /*inherit*/ false);
+            final int sessionId = createSessionId(apkFileName, childSessionParams);
+            parentSession.addChildSessionId(sessionId);
         }
         // Commit the session (this will start the installation workflow).
-        multiPackageSession.commit(LocalIntentSender.getIntentSender());
+        parentSession.commit(LocalIntentSender.getIntentSender());
         assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
     }
 
+    private static PackageInstaller.SessionParams createSessionParams(
+            boolean staged, boolean multiPackage, boolean enableRollback, boolean inherit) {
+        final int sessionMode = inherit
+                ? PackageInstaller.SessionParams.MODE_INHERIT_EXISTING
+                : PackageInstaller.SessionParams.MODE_FULL_INSTALL;
+        final PackageInstaller.SessionParams params =
+                new PackageInstaller.SessionParams(sessionMode);
+        if (staged) {
+            params.setStaged();
+        }
+        if (multiPackage) {
+            params.setMultiPackage();
+        }
+        params.setEnableRollback(enableRollback);
+        return params;
+    }
+
+    private static int createSessionId(String apkFileName, PackageInstaller.SessionParams params)
+            throws Exception {
+        final PackageInstaller packageInstaller = InstrumentationRegistry.getContext()
+                .getPackageManager().getPackageInstaller();
+        final int sessionId = packageInstaller.createSession(params);
+        if (apkFileName == null) {
+            return sessionId;
+        }
+        final PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+        try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
+            final InputStream is =
+                AtomicInstallTest.class.getClassLoader().getResourceAsStream(
+                    apkFileName)) {
+            final byte[] buffer = new byte[4096];
+            int n;
+            while ((n = is.read(buffer)) >= 0) {
+                packageInSession.write(buffer, 0, n);
+            }
+        }
+        return sessionId;
+    }
+
+    private static PackageInstaller.Session getSessionOrFail(int sessionId) throws Exception {
+        final PackageInstaller packageInstaller = InstrumentationRegistry.getContext()
+                .getPackageManager().getPackageInstaller();
+        return packageInstaller.openSession(sessionId);
+    }
+
     private static void assertStatusSuccess(Intent result) {
-        int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+        final int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
                 PackageInstaller.STATUS_FAILURE);
         if (status == -1) {
             throw new AssertionError("PENDING USER ACTION");
@@ -125,5 +233,32 @@ public class AtomicInstallTest {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
         }
+    }
+
+    private static void assertStatusFailure(Intent result, String errorMessage) {
+        final int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+            PackageInstaller.STATUS_FAILURE);
+        if (status == -1) {
+            throw new AssertionError("PENDING USER ACTION");
+        } else if (status == 0) {
+            throw new AssertionError("Installation unexpectedly succeeded!");
+        }
+        final String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+        if (message == null || !message.contains(errorMessage)) {
+            throw new AssertionError("Unexpected failure:" +
+                    (message == null ? "UNKNOWN" : message));
+        }
+    }
+
+    private static void uninstall(String packageName) throws Exception {
+        // No need to uninstall if the package isn't installed.
+        if (getInstalledVersion(packageName) == -1) {
+            return;
+        }
+
+        // Don't care about status; this is just cleanup
+        final PackageInstaller packageInstaller = InstrumentationRegistry.getContext()
+                .getPackageManager().getPackageInstaller();
+        packageInstaller.uninstall(packageName, null);
     }
 }

@@ -97,6 +97,7 @@ import androidx.test.filters.FlakyTest;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -140,10 +141,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final int MAX_ASPECT_RATIO_DENOMINATOR = 100;
     private static final int ABOVE_MAX_ASPECT_RATIO_NUMERATOR = MAX_ASPECT_RATIO_NUMERATOR + 1;
 
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        assumeTrue(supportsPip());
+    }
+
     @Test
     public void testMinimumDeviceSize() throws Exception {
-        assumeTrue(supportsPip());
-
         mAmWmState.assertDeviceDefaultDisplaySize(
                 "Devices supporting picture-in-picture must be larger than the default minimum"
                         + " task size");
@@ -182,8 +188,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testNonTappablePipActivity() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch the tap-to-finish activity at a specific place
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -202,8 +206,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackDefaultBounds() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
@@ -242,8 +244,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackMovementBounds() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
@@ -283,8 +283,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest // TODO: Reintroduce to presubmit once b/71508234 is resolved.
     public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
-        assumeTrue(supportsPip());
-
         final WindowManagerState wmState = mAmWmState.getWmState();
 
         // Launch an activity into the pinned stack
@@ -315,8 +313,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackInBoundsAfterRotation() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch an activity into the pinned stack
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -339,8 +335,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testEnterPipToOtherOrientation() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a portrait only app on the fullscreen stack
         launchActivity(TEST_ACTIVITY,
                 EXTRA_FIXED_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT));
@@ -367,8 +361,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     private void testEnterPipAspectRatio(int num, int denom) throws Exception {
-        assumeTrue(supportsPip());
-
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
                 EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(num),
@@ -394,8 +386,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     private void testResizePipAspectRatio(int num, int denom) throws Exception {
-        assumeTrue(supportsPip());
-
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
                 EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(num),
@@ -421,8 +411,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     private void testEnterPipExtremeAspectRatio(int num, int denom) throws Exception {
-        assumeTrue(supportsPip());
-
         // Assert that we could not create a pinned stack with an extreme aspect ratio
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -444,8 +432,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     private void testSetPipExtremeAspectRatio(int num, int denom) throws Exception {
-        assumeTrue(supportsPip());
-
         // Try to resize the a normal pinned stack to an extreme aspect ratio and ensure that
         // fails (the aspect ratio remains the same)
         launchActivity(PIP_ACTIVITY,
@@ -466,8 +452,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testDisallowPipLaunchFromStoppedActivity() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch the bottom pip activity which will launch a new activity on top and attempt to
         // enter pip when it is stopped
         launchActivity(PIP_ON_STOP_ACTIVITY);
@@ -481,8 +465,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testAutoEnterPictureInPicture() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -498,8 +480,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testAutoEnterPictureInPictureLaunchActivity() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -520,8 +500,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testAutoEnterPictureInPictureFinish() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -536,8 +514,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testAutoEnterPictureInPictureAspectRatio() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch the PIP activity on pause, and set the aspect ratio
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP_ON_PAUSE, "true",
@@ -558,8 +534,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testAutoEnterPictureInPictureOverPip() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch another PIP activity
         launchActivity(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY);
         waitForEnterPip(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
@@ -582,8 +556,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a test activity so that we have multiple fullscreen tasks
         launchActivity(TEST_ACTIVITY);
 
@@ -604,8 +576,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPipUnPipOverHome() throws Exception {
-        assumeTrue(supportsPip());
-
         // Go home
         launchHomeActivity();
         // Launch an auto pip activity
@@ -623,8 +593,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPipUnPipOverApp() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -643,8 +611,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testRemovePipWithNoFullscreenStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a pip activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
@@ -659,8 +625,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testRemovePipWithVisibleFullscreenStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a fullscreen activity, and a pip activity over that
         launchActivity(TEST_ACTIVITY);
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -677,8 +641,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest(bugId = 70746098)
     @Test
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
         // launch a pip activity over home
         launchActivity(TEST_ACTIVITY);
@@ -696,8 +658,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testMovePipToBackWithNoFullscreenStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Start with a clean slate, remove all the stacks but home
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
@@ -716,8 +676,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest(bugId = 70906499)
     @Test
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a fullscreen activity, and a pip activity over that
         launchActivity(TEST_ACTIVITY);
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -734,8 +692,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest(bugId = 70906499)
     @Test
     public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
         // launch a pip activity over home
         launchActivity(TEST_ACTIVITY);
@@ -753,8 +709,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackAlwaysOnTop() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch activity into pinned stack and assert it's on top.
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
@@ -774,8 +728,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testAppOpsDenyPipOnPause() throws Exception {
-        assumeTrue(supportsPip());
-
         try (final AppOpsSession appOpsSession = new AppOpsSession(PIP_ACTIVITY)) {
             // Disable enter-pip and try to enter pip
             appOpsSession.setOpToMode(APP_OPS_OP_ENTER_PICTURE_IN_PICTURE, APP_OPS_MODE_IGNORED);
@@ -792,8 +744,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testEnterPipFromTaskWithMultipleActivities() throws Exception {
-        assumeTrue(supportsPip());
-
         // Try to enter picture-in-picture from an activity that has more than one activity in the
         // task and ensure that it works
         launchActivity(LAUNCH_ENTER_PIP_ACTIVITY);
@@ -803,8 +753,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testEnterPipWithResumeWhilePausingActivityNoStop() throws Exception {
-        assumeTrue(supportsPip());
-
         /*
          * Launch the resumeWhilePausing activity and ensure that the PiP activity did not get
          * stopped and actually went into the pinned stack.
@@ -833,8 +781,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testDisallowEnterPipActivityLocked() throws Exception {
-        assumeTrue(supportsPip());
-
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
         ActivityTask task = mAmWmState.getAmState().getStandardStackByWindowingMode(
                 WINDOWING_MODE_FULLSCREEN).getTopTask();
@@ -858,8 +804,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest(bugId = 70328524)
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a PiP activity and ensure configuration change only happened once, and that the
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
@@ -907,8 +851,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testEnterPipInterruptedCallbacks() throws Exception {
-        assumeTrue(supportsPip());
-
         try (final TransitionAnimationScaleSession transitionAnimationScaleSession =
                 new TransitionAnimationScaleSession()) {
             // Slow down the transition animations for this test
@@ -943,8 +885,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete so that system has reported pip mode change event to
@@ -978,8 +918,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPreventSetAspectRatioWhileExpanding() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch the PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
@@ -993,8 +931,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetRequestedOrientationWhilePinned() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch the PiP activity fixed as portrait, and enter picture-in-picture
         launchActivity(PIP_ACTIVITY,
                 EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT),
@@ -1014,7 +950,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testWindowButtonEntersPip() throws Exception {
-        assumeTrue(supportsPip());
         assumeTrue(!mAmWmState.getAmState().isHomeRecentsComponent());
 
         // Launch the PiP activity trigger the window button, ensure that we have entered PiP
@@ -1026,8 +961,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testFinishPipActivityWithTaskOverlay() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
@@ -1049,8 +982,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testNoResumeAfterTaskOverlayFinishes() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
@@ -1079,7 +1010,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackWithDockedStack() throws Exception {
-        assumeTrue(supportsPip());
         assumeTrue(supportsSplitScreenMultiWindow());
 
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -1115,8 +1045,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testLaunchTaskByComponentMatchMultipleTasks() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a fullscreen activity which will launch a PiP activity in a new task with the same
         // affinity
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
@@ -1140,8 +1068,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testLaunchTaskByAffinityMatchMultipleTasks() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch a fullscreen activity which will launch a PiP activity in a new task with the same
         // affinity, and also launch another activity in the same task, while finishing itself. As
         // a result, the task will not have a component matching the same activity as what it was
@@ -1173,8 +1099,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testLaunchTaskByAffinityMatchSingleTask() throws Exception {
-        assumeTrue(supportsPip());
-
         // Launch an activity into the pinned stack with a fixed affinity
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
                 EXTRA_ENTER_PIP, "true",
@@ -1198,8 +1122,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest
     @Test
     public void testDisplayMetricsPinUnpin() throws Exception {
-        assumeTrue(supportsPip());
-
         separateTestJournal();
         launchActivity(TEST_ACTIVITY);
         final int defaultWindowingMode = mAmWmState.getAmState()
@@ -1234,8 +1156,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testEnterPictureInPictureSavePosition() throws Exception {
-        assumeTrue(supportsPip());
-
         // Ensure we have static shelf offset by running this test over a non-home activity
         launchActivity(NO_RELAUNCH_ACTIVITY);
         mAmWmState.waitForActivityState(mAmWmState.getAmState().getHomeActivityName(),
@@ -1284,8 +1204,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest(bugId = 71792368)
     public void testEnterPictureInPictureDiscardSavedPositionOnFinish() throws Exception {
-        assumeTrue(supportsPip());
-
         // Ensure we have static shelf offset by running this test over a non-home activity
         launchActivity(NO_RELAUNCH_ACTIVITY);
         mAmWmState.waitForActivityState(mAmWmState.getAmState().getHomeActivityName(),

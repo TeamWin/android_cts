@@ -184,6 +184,10 @@ public final class UiBot {
     @Deprecated
     // TODO: remove once we're sure no more OEM is getting failure due to screen size
     public void setScreenResolution() {
+        if (true) {
+            Log.w(TAG, "setScreenResolution(): ignored");
+            return;
+        }
         assumeMinimumResolution(500);
 
         runShellCommand("wm size 1080x1920");
@@ -200,6 +204,10 @@ public final class UiBot {
     @Deprecated
     // TODO: remove once we're sure no more OEM is getting failure due to screen size
     public void resetScreenResolution() {
+        if (true) {
+            Log.w(TAG, "resetScreenResolution(): ignored");
+            return;
+        }
         runShellCommand("wm density reset");
         runShellCommand("wm size reset");
     }

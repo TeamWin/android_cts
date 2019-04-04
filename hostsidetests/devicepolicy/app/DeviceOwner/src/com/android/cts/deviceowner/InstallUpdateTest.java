@@ -22,6 +22,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -38,6 +39,7 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     private static final int TEST_BATTERY_THRESHOLD = 10;
     private static final IntentFilter BATTERY_CHANGED_FILTER =
             new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+    private static final String AB_DEVICE_KEY = "ro.build.ab_update";
 
     public static final String TEST_SYSTEM_UPDATES_DIR =
             "/data/local/tmp/cts/deviceowner/";
@@ -54,32 +56,44 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     public void testInstallUpdate_failWrongVersion() throws InterruptedException {
         assertUpdateError(
                 "wrongVersion.zip",
-                InstallSystemUpdateCallback.UPDATE_ERROR_INCORRECT_OS_VERSION);
+                isDeviceAB()
+                        ? InstallSystemUpdateCallback.UPDATE_ERROR_INCORRECT_OS_VERSION
+                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
     }
 
     public void testInstallUpdate_failNoZipOtaFile() throws InterruptedException {
         assertUpdateError("notZip.zi",
-                InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                isDeviceAB()
+                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
     }
 
     public void testInstallUpdate_failWrongPayloadFile() throws InterruptedException {
         assertUpdateError("wrongPayload.zip",
-                InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                isDeviceAB()
+                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
     }
 
     public void testInstallUpdate_failEmptyOtaFile() throws InterruptedException {
         assertUpdateError("empty.zip",
-                InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                isDeviceAB()
+                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
     }
 
     public void testInstallUpdate_failWrongHash() throws InterruptedException {
         assertUpdateError("wrongHash.zip",
-                InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                isDeviceAB()
+                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
     }
 
     public void testInstallUpdate_failWrongSize() throws InterruptedException {
         assertUpdateError("wrongSize.zip",
-                InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                isDeviceAB()
+                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
     }
 
     public void testInstallUpdate_notCharging_belowThreshold_failsBatteryCheck() throws Exception {
@@ -101,7 +115,9 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
             // Positive CTS tests aren't possible, so we verify that we get the file-related error
             // rather than the battery one.
             assertUpdateError("wrongSize.zip",
-                    InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                    isDeviceAB()
+                            ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                            : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
         } finally {
             resetBatteryState();
             resetDevicePolicyConstants();
@@ -127,7 +143,9 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
             // Positive CTS tests aren't possible, so we verify that we get the file-related error
             // rather than the battery one.
             assertUpdateError("wrongSize.zip",
-                    InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID);
+                    isDeviceAB()
+                            ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
+                            : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
         } finally {
             resetBatteryState();
             resetDevicePolicyConstants();
@@ -204,5 +222,9 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
 
     private void resetDevicePolicyConstants() {
         SystemUtil.runShellCommand("settings delete global device_policy_constants");
+    }
+
+    private boolean isDeviceAB() {
+        return "true".equalsIgnoreCase(SystemProperties.get(AB_DEVICE_KEY, ""));
     }
 }

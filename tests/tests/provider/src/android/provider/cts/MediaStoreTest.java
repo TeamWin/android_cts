@@ -33,9 +33,12 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -51,8 +54,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import androidx.test.InstrumentationRegistry;
-
+@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStoreTest {
     static final String TAG = "MediaStoreTest";
@@ -140,6 +142,7 @@ public class MediaStoreTest {
         final StorageManager sm = mContext.getSystemService(StorageManager.class);
         try {
             sm.getStorageVolume(Uri.parse("content://com.example/path/to/item/"));
+            fail("getStorageVolume unrelated should throw exception");
         } catch (IllegalArgumentException expected) {
         }
     }
@@ -180,7 +183,7 @@ public class MediaStoreTest {
         final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
                 "cts" + System.nanoTime() + ".jpg");
         ProviderTestUtils.stageFile(R.raw.volantis, file);
-        inside = ProviderTestUtils.scanFile(file, true);
+        inside = ProviderTestUtils.scanFileFromShell(file);
         outside = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
 
         {

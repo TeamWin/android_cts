@@ -68,7 +68,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String MEDIA_CLASS = MEDIA_PKG + ".MediaStorageTest";
     private static final String MEDIA28_APK = "CtsMediaStorageApp28.apk";
     private static final String MEDIA28_PKG = "com.android.cts.mediastorageapp28";
-    private static final String MEDIA28_CLASS = MEDIA28_PKG + ".MediaStorageTest";
+    private static final String MEDIA28_CLASS = MEDIA_PKG + ".MediaStorageTest";
 
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
@@ -78,9 +78,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
     private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
-    private static final String PERM_READ_MEDIA_AUDIO = "android.permission.READ_MEDIA_AUDIO";
-    private static final String PERM_READ_MEDIA_VIDEO = "android.permission.READ_MEDIA_VIDEO";
-    private static final String PERM_READ_MEDIA_IMAGES = "android.permission.READ_MEDIA_IMAGES";
     private static final String ROLE_GALLERY = "android.app.role.GALLERY";
 
     private int[] mUsers;
@@ -540,9 +537,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         installPackage(MEDIA_APK);
         for (int user : mUsers) {
             updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_READ_MEDIA_AUDIO,
-                    PERM_READ_MEDIA_VIDEO,
-                    PERM_READ_MEDIA_IMAGES,
+                    PERM_READ_EXTERNAL_STORAGE,
+                    PERM_WRITE_EXTERNAL_STORAGE,
             }, false);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
@@ -563,7 +559,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             }, false);
             updateRole(MEDIA28_PKG, user, ROLE_GALLERY, false);
 
-            runDeviceTests(MEDIA28_PKG, MEDIA_CLASS, "testMediaNone", user);
+            runDeviceTests(MEDIA28_PKG, MEDIA28_CLASS, "testMediaNone", user);
         }
     }
 
@@ -575,10 +571,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         installPackage(MEDIA_APK);
         for (int user : mUsers) {
             updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_READ_MEDIA_AUDIO,
-                    PERM_READ_MEDIA_VIDEO,
-                    PERM_READ_MEDIA_IMAGES,
+                    PERM_READ_EXTERNAL_STORAGE,
             }, true);
+            updatePermissions(MEDIA_PKG, user, new String[] {
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, false);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaRead", user);
@@ -594,11 +591,13 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         for (int user : mUsers) {
             updatePermissions(MEDIA28_PKG, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
-                    PERM_WRITE_EXTERNAL_STORAGE,
             }, true);
+            updatePermissions(MEDIA28_PKG, user, new String[] {
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, false);
             updateRole(MEDIA28_PKG, user, ROLE_GALLERY, false);
 
-            runDeviceTests(MEDIA28_PKG, MEDIA_CLASS, "testMediaRead", user);
+            runDeviceTests(MEDIA28_PKG, MEDIA28_CLASS, "testMediaRead", user);
         }
     }
 
@@ -610,9 +609,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         installPackage(MEDIA_APK);
         for (int user : mUsers) {
             updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_READ_MEDIA_AUDIO,
-                    PERM_READ_MEDIA_VIDEO,
-                    PERM_READ_MEDIA_IMAGES,
+                    PERM_READ_EXTERNAL_STORAGE,
+                    PERM_WRITE_EXTERNAL_STORAGE,
             }, true);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, true);
 
@@ -633,7 +631,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             }, true);
             updateRole(MEDIA28_PKG, user, ROLE_GALLERY, true);
 
-            runDeviceTests(MEDIA28_PKG, MEDIA_CLASS, "testMediaWrite", user);
+            runDeviceTests(MEDIA28_PKG, MEDIA28_CLASS, "testMediaWrite", user);
         }
     }
 
@@ -647,10 +645,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         // TODO: extend test to exercise secondary users
         for (int user : Arrays.copyOf(mUsers, 1)) {
             updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_READ_MEDIA_AUDIO,
-                    PERM_READ_MEDIA_VIDEO,
-                    PERM_READ_MEDIA_IMAGES,
+                    PERM_READ_EXTERNAL_STORAGE,
             }, true);
+            updatePermissions(MEDIA_PKG, user, new String[] {
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, false);
             updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
             runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaEscalation", user);

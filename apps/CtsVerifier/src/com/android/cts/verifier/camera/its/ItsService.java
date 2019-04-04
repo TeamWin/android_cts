@@ -36,6 +36,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -92,6 +93,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -677,6 +679,8 @@ public class ItsService extends Service implements SensorEventListener {
                     doReprocessCapture(cmdObj);
                 } else if ("getItsVersion".equals(cmdObj.getString("cmdName"))) {
                     mSocketRunnableObj.sendResponse("ItsVersion", ITS_SERVICE_VERSION);
+                } else if ("isStreamCombinationSupported".equals(cmdObj.getString("cmdName"))) {
+                    doCheckStreamCombination(cmdObj);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -964,6 +968,55 @@ public class ItsService extends Service implements SensorEventListener {
             throw new ItsException("JSON error: ", e);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
+        }
+    }
+
+    private static class HandlerExecutor implements Executor {
+        private final Handler mHandler;
+
+        public HandlerExecutor(Handler handler) {
+            mHandler = handler;
+        }
+
+        @Override
+        public void execute(Runnable runCmd) {
+            mHandler.post(runCmd);
+        }
+    }
+
+    private void doCheckStreamCombination(JSONObject params) throws ItsException {
+        try {
+            JSONObject obj = new JSONObject();
+            JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
+            prepareImageReadersWithOutputSpecs(jsonOutputSpecs, /*inputSize*/null,
+                    /*inputFormat*/0, /*maxInputBuffers*/0, /*backgroundRequest*/false);
+            int numSurfaces = mOutputImageReaders.length;
+            List<OutputConfiguration> outputConfigs =
+                    new ArrayList<OutputConfiguration>(numSurfaces);
+            for (int i = 0; i < numSurfaces; i++) {
+                OutputConfiguration config = new OutputConfiguration(
+                        mOutputImageReaders[i].getSurface());
+                if (mPhysicalStreamMap.get(i) != null) {
+                    config.setPhysicalCameraId(mPhysicalStreamMap.get(i));
+                }
+                outputConfigs.add(config);
+            }
+
+            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+            SessionConfiguration sessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outputConfigs,
+                new HandlerExecutor(mCameraHandler), sessionListener);
+            boolean supported = mCamera.isSessionConfigurationSupported(sessionConfig);
+
+            String supportString = supported ? "supportedCombination" : "unsupportedCombination";
+            mSocketRunnableObj.sendResponse("streamCombinationSupport", supportString);
+
+        } catch (UnsupportedOperationException e) {
+            mSocketRunnableObj.sendResponse("streamCombinationSupport", "unsupportedOperation");
+        } catch (IllegalArgumentException e) {
+            throw new ItsException("Error checking stream combination", e);
+        } catch (CameraAccessException e) {
+            throw new ItsException("Error checking stream combination", e);
         }
     }
 

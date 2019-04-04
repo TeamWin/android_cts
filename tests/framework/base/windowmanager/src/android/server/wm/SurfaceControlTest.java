@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Surface;
 import android.view.SurfaceControl;
@@ -38,6 +39,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 @LargeTest
+@Presubmit
 public class SurfaceControlTest {
     private static final int DEFAULT_LAYOUT_WIDTH = 100;
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
@@ -152,7 +154,7 @@ public class SurfaceControlTest {
                 new PixelChecker(PixelColor.BLACK) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
+                        return pixelCount == 0;
                     }
                 });
     }
