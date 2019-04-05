@@ -18,6 +18,7 @@
     <option name="not-shardable" value="true" />
     <option name="config-descriptor:metadata" key="component" value="print" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="cmd print set-bind-instant-service-allowed true" />
