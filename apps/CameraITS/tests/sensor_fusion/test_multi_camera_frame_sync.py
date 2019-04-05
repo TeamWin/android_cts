@@ -42,7 +42,6 @@ def _check_available_capabilities(props):
             its.caps.read_3a(props),
             its.caps.per_frame_control(props),
             its.caps.logical_multi_camera(props),
-            its.caps.raw16(props),
             its.caps.sensor_fusion(props)])
 
 

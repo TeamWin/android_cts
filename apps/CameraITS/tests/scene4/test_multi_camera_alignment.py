@@ -265,27 +265,30 @@ def main():
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props) and
                              its.caps.per_frame_control(props) and
-                             its.caps.logical_multi_camera(props) and
-                             its.caps.raw16(props))
+                             its.caps.logical_multi_camera(props))
         debug = its.caps.debug_mode()
         avail_fls = props['android.lens.info.availableFocalLengths']
         pose_reference = props['android.lens.poseReference']
 
-        max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         w, h = its.objects.get_available_output_sizes(
-                'yuv', props, match_ar_size=max_raw_size)[0]
+                'yuv', props)[0]
 
-        # get physical camera properties
+        # Find physical camera IDs that support raw, and skip if less than 2
         ids = its.caps.logical_multi_camera_physical_ids(props)
         props_physical = {}
+        physical_ids = []
         for i in ids:
-            props_physical[i] = cam.get_camera_properties_by_id(i)
+            prop = cam.get_camera_properties_by_id(i)
+            if its.caps.raw16(prop) and len(physical_ids) < 2:
+                physical_ids.append(i)
+                props_physical[i] = cam.get_camera_properties_by_id(i)
+        its.caps.skip_unless(len(physical_ids) == 2)
 
-        # capture RAWs of 1st 2 cameras
+        # capture RAWs of the 2 physical cameras
         cap_raw = {}
         out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
-                        {'format': 'raw', 'physicalCamera': ids[0]},
-                        {'format': 'raw', 'physicalCamera': ids[1]}]
+                        {'format': 'raw', 'physicalCamera': physical_ids[0]},
+                        {'format': 'raw', 'physicalCamera': physical_ids[1]}]
 
         out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
         its.caps.skip_unless(out_surfaces_supported)
@@ -296,7 +299,7 @@ def main():
         e *= 2  # brighten RAW images
         req = its.objects.manual_capture_request(s, e, fd, True, props)
 
-        _, cap_raw[ids[0]], cap_raw[ids[1]] = cam.do_capture(req, out_surfaces)
+        _, cap_raw[physical_ids[0]], cap_raw[physical_ids[1]] = cam.do_capture(req, out_surfaces)
 
     size_raw = {}
     k = {}
@@ -306,11 +309,11 @@ def main():
     circle = {}
     fl = {}
     sensor_diag = {}
-    for i in ids:
+    for i in physical_ids:
         print 'Camera %s' % i
         # process image
         img_raw = its.image.convert_capture_to_rgb_image(
-                cap_raw[i], props=props)
+                cap_raw[i], props=props_physical[i])
         size_raw[i] = (cap_raw[i]['width'], cap_raw[i]['height'])
 
         # save images if debug
