@@ -14,9 +14,10 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-       package="com.android.cts.mediastorageapp28">
+       package="com.android.cts.mediastorageappfull">
 
-    <application>
+    <application
+        android:allowExternalStorageSandbox="false">
         <uses-library android:name="android.test.runner" />
 
         <activity android:name="com.android.cts.mediastorageapp.StubActivity">
@@ -32,13 +33,9 @@
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="com.android.cts.mediastorageapp28" />
+        android:targetPackage="com.android.cts.mediastorageappfull" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <uses-sdk
-        android:minSdkVersion="28"
-        android:targetSdkVersion="28" />
 
 </manifest>
