@@ -27,8 +27,10 @@ import android.media.MediaCodec.CodecException;
 import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaCodec.CryptoInfo.Pattern;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.AudioCapabilities;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
+import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaCrypto;
 import android.media.MediaDrm;
@@ -2441,5 +2443,66 @@ public class MediaCodecTest extends AndroidTestCase {
         });
         codec.setAudioPresentation(
                 (new AudioPresentation.Builder(42 /* presentationId */)).build());
+    }
+
+    public void testPrependHeadersToSyncFrames() throws IOException {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            boolean isEncoder = info.isEncoder();
+            for (String mime: info.getSupportedTypes()) {
+                CodecCapabilities caps = info.getCapabilitiesForType(mime);
+                boolean isVideo = (caps.getVideoCapabilities() != null);
+
+                MediaCodec codec = null;
+                MediaFormat format = null;
+                try {
+                    codec = MediaCodec.createByCodecName(info.getName());
+                    if (isVideo) {
+                        VideoCapabilities vcaps = caps.getVideoCapabilities();
+                        int minWidth = vcaps.getSupportedWidths().getLower();
+                        int minHeight = vcaps.getSupportedHeightsFor(minWidth).getLower();
+                        int minBitrate = vcaps.getBitrateRange().getLower();
+                        int minFrameRate = Math.max(vcaps.getSupportedFrameRatesFor(
+                                minWidth, minHeight) .getLower().intValue(), 1);
+                        format = MediaFormat.createVideoFormat(mime, minWidth, minHeight);
+                        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, caps.colorFormats[0]);
+                        format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);
+                        format.setInteger(MediaFormat.KEY_FRAME_RATE, minFrameRate);
+                        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+                    } else {
+                        AudioCapabilities acaps = caps.getAudioCapabilities();
+                        int minSampleRate = acaps.getSupportedSampleRateRanges()[0].getLower();
+                        int minChannelCount = 1;
+                        int minBitrate = acaps.getBitrateRange().getLower();
+                        format = MediaFormat.createAudioFormat(mime, minSampleRate, minChannelCount);
+                        format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);
+                    }
+                    format.setInteger(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1);
+
+                    codec.configure(format, null /* surface */, null /* crypto */,
+                            isEncoder ? codec.CONFIGURE_FLAG_ENCODE : 0);
+
+                    if (isVideo && isEncoder) {
+                        Log.i(TAG, info.getName() + " supports KEY_PREPEND_HEADER_TO_SYNC_FRAMES");
+                    } else {
+                        Log.i(TAG, info.getName() + " is not a video encoder, so" +
+                                " KEY_PREPEND_HEADER_TO_SYNC_FRAMES is no-op, as expected");
+                    }
+                    // TODO: actually test encoders prepend the headers to sync frames.
+                } catch (IllegalArgumentException iae) {
+                    if (isVideo && isEncoder) {
+                        Log.i(TAG, info.getName() + " does not support" +
+                                " KEY_PREPEND_HEADER_TO_SYNC_FRAMES");
+                    } else {
+                        fail(info.getName() + " is not a video encoder," +
+                                " so it should not fail to configure.\n" + iae.toString());
+                    }
+                } finally {
+                    if (codec != null) {
+                        codec.release();
+                    }
+                }
+            }
+        }
     }
 }
