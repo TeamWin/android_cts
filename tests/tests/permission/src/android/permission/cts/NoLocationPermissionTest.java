@@ -25,6 +25,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
+import android.telephony.CellInfo;
+import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
@@ -76,18 +78,26 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
 
         TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
                 Context.TELEPHONY_SERVICE);
-        PhoneStateListener phoneStateListener = new PhoneStateListener();
+        PhoneStateListener phoneStateListener = new PhoneStateListener() {
+            @Override
+            public void onCellLocationChanged(CellLocation location) {
+                if (location != null) {
+                    fail("Test process should not have received CellLocation");
+                }
+            }
+
+        };
         try {
             telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);
-            fail("TelephonyManager.listen(LISTEN_CELL_LOCATION) did not" +
-                    " throw SecurityException as expected");
         } catch (SecurityException e) {
             // expected
         }
 
         try {
-            telephonyManager.getCellLocation();
-            fail("TelephonyManager.getCellLocation did not throw SecurityException as expected");
+            CellLocation cellLocation = telephonyManager.getCellLocation();
+            if (cellLocation != null) {
+                fail("Test process should not have gotten a nonnull value from getCellLocation.");
+            }
         } catch (SecurityException e) {
             // expected
         }
@@ -107,19 +117,25 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
 
         TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
                 Context.TELEPHONY_SERVICE);
-        PhoneStateListener phoneStateListener = new PhoneStateListener();
-
         try {
-            telephonyManager.getAllCellInfo();
-            fail("TelephonyManager.getAllCellInfo did not throw SecurityException as expected");
+            List<CellInfo> cellInfos = telephonyManager.getAllCellInfo();
+            if (cellInfos != null && cellInfos.size() > 0) {
+                fail("Test process should not have received CellInfo");
+            }
         } catch (SecurityException e) {
             // expected
         }
 
         try {
-            telephonyManager.requestCellInfoUpdate(null, null);
-            fail("TelephonyManager.requestCellInfoUpdate did not throw"
-                    + " SecurityException as expected");
+            telephonyManager.requestCellInfoUpdate(mContext.getMainExecutor(),
+                    new TelephonyManager.CellInfoCallback() {
+                        @Override
+                        public void onCellInfo(List<CellInfo> cellInfos) {
+                            if (cellInfos != null && cellInfos.size() > 0) {
+                                fail("Test process should not have received CellInfo");
+                            }
+                        }
+                    });
         } catch (SecurityException e) {
             // expected
         }
