@@ -14,6 +14,7 @@ LOCAL_LDFLAGS := -Wl,--rpath,\$${ORIGIN}/lib/bionic-loader-test-libs -Wl,--enabl
 LOCAL_SHARED_LIBRARIES += \
     ld-android \
     libdl \
+    libdl_android \
     libdl_preempt_test_1 \
     libdl_preempt_test_2 \
     libdl_test_df_1_global \
