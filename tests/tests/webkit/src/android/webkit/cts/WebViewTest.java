@@ -1771,7 +1771,14 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals(mOnUiThread.getHeight(),
                 mOnUiThread.getContentHeight() * mOnUiThread.getScale(), 2f);
 
-        final int pageHeight = 600;
+        // Make pageHeight bigger than the larger dimension of the device, so the page is taller
+        // than viewport. Because when layout_height set to match_parent, getContentHeight() will
+        // give maximum value between the actual web content height and the viewport height. When
+        // viewport height is bigger, |extraSpace| below is not the extra space on the web page.
+        // Note that we are passing physical pixels rather than CSS pixels here, since screen
+        // density scale is generally greater than 1, it only makes the page content taller.
+        DisplayMetrics metrics = mOnUiThread.getDisplayMetrics();
+        final int pageHeight = Math.max(metrics.widthPixels, metrics.heightPixels);
         // set the margin to 0
         final String p = "<p style=\"height:" + pageHeight
                 + "px;margin:0px auto;\">Get the height of HTML content.</p>";
