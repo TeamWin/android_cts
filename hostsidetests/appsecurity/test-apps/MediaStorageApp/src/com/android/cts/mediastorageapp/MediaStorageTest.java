@@ -33,6 +33,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
@@ -41,6 +42,9 @@ import android.provider.MediaStore.MediaColumns;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingParams;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingSession;
 
@@ -48,14 +52,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaStorageTest {
@@ -68,6 +70,47 @@ public class MediaStorageTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
         mUserId = mContext.getUserId();
+    }
+
+    @Test
+    public void testSandboxed() throws Exception {
+        doSandboxed(true);
+    }
+
+    @Test
+    public void testNotSandboxed() throws Exception {
+        doSandboxed(false);
+    }
+
+    private void doSandboxed(boolean sandboxed) throws Exception {
+        assertEquals(sandboxed, Environment.isExternalStorageSandboxed());
+
+        final File jpg = stageFile(Environment.buildPath(Environment.getExternalStorageDirectory(),
+                Environment.DIRECTORY_DOWNLOADS, System.nanoTime() + ".jpg"));
+        final File pdf = stageFile(Environment.buildPath(Environment.getExternalStorageDirectory(),
+                Environment.DIRECTORY_DOWNLOADS, System.nanoTime() + ".pdf"));
+
+        final Uri jpgUri = MediaStore.scanFileFromShell(mContext, jpg);
+        final Uri pdfUri = MediaStore.scanFileFromShell(mContext, pdf);
+
+        final HashSet<Long> seen = new HashSet<>();
+        try (Cursor c = mContentResolver.query(
+                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                new String[] { MediaColumns._ID }, null, null)) {
+            while (c.moveToNext()) {
+                seen.add(c.getLong(0));
+            }
+        }
+
+        if (sandboxed) {
+            // If we're sandboxed, we should only see the image
+            assertTrue(seen.contains(ContentUris.parseId(jpgUri)));
+            assertFalse(seen.contains(ContentUris.parseId(pdfUri)));
+        } else {
+            // If we're not sandboxed, we should see both
+            assertTrue(seen.contains(ContentUris.parseId(jpgUri)));
+            assertTrue(seen.contains(ContentUris.parseId(pdfUri)));
+        }
     }
 
     @Test
@@ -267,5 +310,13 @@ public class MediaStorageTest {
                 "content update --uri %s --user %d --bind owner_package_name:n:",
                 uri, userId);
         runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
+    }
+
+    static File stageFile(File file) throws IOException {
+        runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "mkdir -p " + file.getParentFile().getAbsolutePath());
+        runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "touch " + file.getAbsolutePath());
+        return file;
     }
 }

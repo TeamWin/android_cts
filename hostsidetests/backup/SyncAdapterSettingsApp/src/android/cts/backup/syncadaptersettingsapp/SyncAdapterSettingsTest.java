@@ -34,6 +34,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BackupUtils;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import org.junit.runner.RunWith;
 
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Device side routines to be invoked by the host side SyncAdapterSettingsHostSideTest. These
@@ -56,6 +58,7 @@ public class SyncAdapterSettingsTest {
 
     private static final String ACCOUNT_NAME = "SyncAdapterSettings";
     private static final String ACCOUNT_TYPE = "android.cts.backup.syncadaptersettingsapp";
+    private static final int AUTHENTICATOR_POLL_TIMEOUT_SECS = 30;
 
     private Context mContext;
     private Account mAccount;
@@ -227,14 +230,28 @@ public class SyncAdapterSettingsTest {
     /**
      * Add an account, if it doesn't exist yet.
      */
-    private void addAccount(Context context) {
+    private void addAccount(Context context) throws Exception {
         final String password = "password";
 
         final AccountManager am = context.getSystemService(AccountManager.class);
 
         if (!Arrays.asList(am.getAccountsByType(mAccount.type)).contains(mAccount)) {
+            waitUntilAuthenticatorRegistered();
             am.addAccountExplicitly(mAccount, password, new Bundle());
         }
+    }
+
+    private boolean isAuthenticatorRegistered() {
+        final AccountManager am = mContext.getSystemService(AccountManager.class);
+        return Arrays.stream(am.getAuthenticatorTypes())
+                .map(a -> a.type)
+                .collect(Collectors.toList())
+                .contains(ACCOUNT_TYPE);
+    }
+
+    private void waitUntilAuthenticatorRegistered() throws Exception {
+        TestUtils.waitUntil("Timeout waiting for authenticator to be registered",
+                AUTHENTICATOR_POLL_TIMEOUT_SECS, this::isAuthenticatorRegistered);
     }
 
     /**

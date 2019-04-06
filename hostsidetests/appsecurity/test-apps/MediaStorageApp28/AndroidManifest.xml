@@ -19,7 +19,7 @@
     <application>
         <uses-library android:name="android.test.runner" />
 
-        <activity android:name=".StubActivity">
+        <activity android:name="com.android.cts.mediastorageapp.StubActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -28,7 +28,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".GetResultActivity" />
+        <activity android:name="com.android.cts.mediastorageapp.GetResultActivity" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

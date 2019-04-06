@@ -91,6 +91,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -156,6 +157,8 @@ public class ItsService extends Service implements SensorEventListener {
     private SparseArray<String> mPhysicalStreamMap = new SparseArray<String>();
     private ImageReader mInputImageReader = null;
     private CameraCharacteristics mCameraCharacteristics = null;
+    private HashMap<String, CameraCharacteristics> mPhysicalCameraChars =
+            new HashMap<String, CameraCharacteristics>();
 
     private Vibrator mVibrator = null;
 
@@ -353,17 +356,16 @@ public class ItsService extends Service implements SensorEventListener {
         }
     }
 
-    public void openCameraDevice(int cameraId) throws ItsException {
-        Logt.i(TAG, String.format("Opening camera %d", cameraId));
+    public void openCameraDevice(String cameraId) throws ItsException {
+        Logt.i(TAG, String.format("Opening camera %s", cameraId));
 
-        String[] devices;
         try {
-            devices = mCameraManager.getCameraIdList();
-            if (devices == null || devices.length == 0) {
-                throw new ItsException("No camera devices");
-            }
             if (mMemoryQuota == -1) {
                 // Initialize memory quota on this device
+                List<String> devices = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+                if (devices.size() == 0) {
+                    throw new ItsException("No camera devices");
+                }
                 for (String camId : devices) {
                     CameraCharacteristics chars =  mCameraManager.getCameraCharacteristics(camId);
                     Size maxYuvSize = ItsUtils.getMaxOutputSize(
@@ -380,10 +382,17 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         try {
-            mCamera = mBlockingCameraManager.openCamera(devices[cameraId],
-                    mCameraListener, mCameraHandler);
-            mCameraCharacteristics = mCameraManager.getCameraCharacteristics(
-                    devices[cameraId]);
+            mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener, mCameraHandler);
+            mCameraCharacteristics = mCameraManager.getCameraCharacteristics(cameraId);
+
+            boolean isLogicalCamera = hasCapability(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
+            if (isLogicalCamera) {
+                Set<String> physicalCameraIds = mCameraCharacteristics.getPhysicalCameraIds();
+                for (String id : physicalCameraIds) {
+                    mPhysicalCameraChars.put(id, mCameraManager.getCameraCharacteristics(id));
+                }
+            }
             mSocketQueueQuota = new Semaphore(mMemoryQuota, true);
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to open camera", e);
@@ -653,7 +662,7 @@ public class ItsService extends Service implements SensorEventListener {
                 JSONObject cmdObj = new JSONObject(cmd);
                 Logt.i(TAG, "Start processing command" + cmdObj.getString("cmdName"));
                 if ("open".equals(cmdObj.getString("cmdName"))) {
-                    int cameraId = cmdObj.getInt("cameraId");
+                    String cameraId = cmdObj.getString("cameraId");
                     openCameraDevice(cameraId);
                 } else if ("close".equals(cmdObj.getString("cmdName"))) {
                     closeCameraDevice();
@@ -914,6 +923,9 @@ public class ItsService extends Service implements SensorEventListener {
     private void doGetPropsById(JSONObject params) throws ItsException {
         String[] devices;
         try {
+            // Intentionally not using ItsUtils.getItsCompatibleCameraIds here so it's possible to
+            // write some simple script to query camera characteristics even for devices exempted
+            // from ITS today.
             devices = mCameraManager.getCameraIdList();
             if (devices == null || devices.length == 0) {
                 throw new ItsException("No camera devices");
@@ -924,50 +936,34 @@ public class ItsService extends Service implements SensorEventListener {
 
         try {
             String cameraId = params.getString("cameraId");
-            if (Arrays.asList(devices).contains(cameraId)) {
-                CameraCharacteristics characteristics =
-                        mCameraManager.getCameraCharacteristics(cameraId);
-                mSocketRunnableObj.sendResponse(characteristics);
-            } else {
-                Log.e(TAG, "Invalid camera ID: " + cameraId);
-                throw new ItsException("Invalid cameraId:" + cameraId);
-            }
+            CameraCharacteristics characteristics =
+                    mCameraManager.getCameraCharacteristics(cameraId);
+            mSocketRunnableObj.sendResponse(characteristics);
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
+        } catch (IllegalArgumentException e) {
+            throw new ItsException("Illegal argument error:", e);
         } catch (CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
     }
 
     private void doGetCameraIds() throws ItsException {
-        String[] devices;
-        try {
-            devices = mCameraManager.getCameraIdList();
-            if (devices == null || devices.length == 0) {
-                throw new ItsException("No camera devices");
-            }
-        } catch (CameraAccessException e) {
-            throw new ItsException("Failed to get device ID list", e);
+        List<String> devices = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+        if (devices.size() == 0) {
+            throw new ItsException("No camera devices");
         }
 
         try {
             JSONObject obj = new JSONObject();
             JSONArray array = new JSONArray();
             for (String id : devices) {
-                CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
-                // Only supply camera Id for non-legacy cameras since legacy camera does not
-                // support ITS
-                if (characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL) !=
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-                    array.put(id);
-                }
+                array.put(id);
             }
             obj.put("cameraIdArray", array);
             mSocketRunnableObj.sendResponse("cameraIds", obj);
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
-        } catch (android.hardware.camera2.CameraAccessException e) {
-            throw new ItsException("Access error: ", e);
         }
     }
 
@@ -1322,37 +1318,44 @@ public class ItsService extends Service implements SensorEventListener {
                     }
                     // Get the specified surface.
                     JSONObject surfaceObj = jsonOutputSpecs.getJSONObject(i);
+                    String physicalCameraId = surfaceObj.optString("physicalCamera");
+                    CameraCharacteristics cameraCharacteristics =  mCameraCharacteristics;
+                    mPhysicalStreamMap.put(i, physicalCameraId);
+                    if (!physicalCameraId.isEmpty()) {
+                        cameraCharacteristics = mPhysicalCameraChars.get(physicalCameraId);
+                    }
+
                     String sformat = surfaceObj.optString("format");
                     Size sizes[];
                     if ("yuv".equals(sformat) || "".equals(sformat)) {
                         // Default to YUV if no format is specified.
                         outputFormats[i] = ImageFormat.YUV_420_888;
-                        sizes = ItsUtils.getYuvOutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getYuvOutputSizes(cameraCharacteristics);
                     } else if ("jpg".equals(sformat) || "jpeg".equals(sformat)) {
                         outputFormats[i] = ImageFormat.JPEG;
-                        sizes = ItsUtils.getJpegOutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getJpegOutputSizes(cameraCharacteristics);
                     } else if ("raw".equals(sformat)) {
                         outputFormats[i] = ImageFormat.RAW_SENSOR;
-                        sizes = ItsUtils.getRaw16OutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getRaw16OutputSizes(cameraCharacteristics);
                     } else if ("raw10".equals(sformat)) {
                         outputFormats[i] = ImageFormat.RAW10;
-                        sizes = ItsUtils.getRaw10OutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getRaw10OutputSizes(cameraCharacteristics);
                     } else if ("raw12".equals(sformat)) {
                         outputFormats[i] = ImageFormat.RAW12;
-                        sizes = ItsUtils.getRaw12OutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getRaw12OutputSizes(cameraCharacteristics);
                     } else if ("dng".equals(sformat)) {
                         outputFormats[i] = ImageFormat.RAW_SENSOR;
-                        sizes = ItsUtils.getRaw16OutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getRaw16OutputSizes(cameraCharacteristics);
                         mCaptureRawIsDng = true;
                     } else if ("rawStats".equals(sformat)) {
                         outputFormats[i] = ImageFormat.RAW_SENSOR;
-                        sizes = ItsUtils.getRaw16OutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getRaw16OutputSizes(cameraCharacteristics);
                         mCaptureRawIsStats = true;
                         mCaptureStatsGridWidth = surfaceObj.optInt("gridWidth");
                         mCaptureStatsGridHeight = surfaceObj.optInt("gridHeight");
                     } else if ("y8".equals(sformat)) {
                         outputFormats[i] = ImageFormat.Y8;
-                        sizes = ItsUtils.getY8OutputSizes(mCameraCharacteristics);
+                        sizes = ItsUtils.getY8OutputSizes(cameraCharacteristics);
                     } else {
                         throw new ItsException("Unsupported format: " + sformat);
                     }
@@ -1371,14 +1374,9 @@ public class ItsService extends Service implements SensorEventListener {
                     if (height <= 0) {
                         height = ItsUtils.getMaxSize(sizes).getHeight();
                     }
-                    String physicalCameraId = surfaceObj.optString("physicalCamera");
-                    if (physicalCameraId != null) {
-                        mPhysicalStreamMap.put(i, physicalCameraId);
-                    }
-
                     // The stats computation only applies to the active array region.
-                    int aaw = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics).width();
-                    int aah = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics).height();
+                    int aaw = ItsUtils.getActiveArrayCropRegion(cameraCharacteristics).width();
+                    int aah = ItsUtils.getActiveArrayCropRegion(cameraCharacteristics).height();
                     if (mCaptureStatsGridWidth <= 0 || mCaptureStatsGridWidth > aaw) {
                         mCaptureStatsGridWidth = aaw;
                     }
@@ -1877,6 +1875,20 @@ public class ItsService extends Service implements SensorEventListener {
         return (float)r.getNumerator() / (float)r.getDenominator();
     }
 
+    private boolean hasCapability(int capability) throws ItsException {
+        int[] capabilities = mCameraCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        if (capabilities == null) {
+            throw new ItsException("Failed to get capabilities");
+        }
+        for (int c : capabilities) {
+            if (c == capability) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private String buildLogString(CaptureResult result) throws ItsException {
         StringBuilder logMsg = new StringBuilder();
         logMsg.append(String.format(
@@ -1884,20 +1896,10 @@ public class ItsService extends Service implements SensorEventListener {
                 result.get(CaptureResult.CONTROL_AE_STATE),
                 result.get(CaptureResult.CONTROL_AF_STATE),
                 result.get(CaptureResult.CONTROL_AWB_STATE)));
-        int[] capabilities = mCameraCharacteristics.get(
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-        if (capabilities == null) {
-            throw new ItsException("Failed to get capabilities");
-        }
-        boolean readSensorSettings = false;
-        for (int capability : capabilities) {
-            if (capability ==
-                    CameraCharacteristics.
-                            REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS) {
-                readSensorSettings = true;
-                break;
-            }
-        }
+
+        boolean readSensorSettings = hasCapability(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS);
+
         if (readSensorSettings) {
             logMsg.append(String.format(
                     "sens=%d, exp=%.1fms, dur=%.1fms, ",

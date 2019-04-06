@@ -45,9 +45,12 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.AvailableNetworkInfo;
+import android.telephony.CallAttributes;
+import android.telephony.CallQuality;
 import android.telephony.CellLocation;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
+import android.telephony.PreciseCallState;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -1176,12 +1179,33 @@ public class TelephonyManagerTest {
      * Tests that a SecurityException is thrown when trying to access UiccCardsInfo.
      */
     @Test
-    public void testGetUiccCardsInfo() {
+    public void testGetUiccCardsInfoException() {
         try {
             // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
             List<UiccCardInfo> infos = mTelephonyManager.getUiccCardsInfo();
             fail("Expected SecurityException. App does not have carrier privileges");
         } catch (SecurityException e) {
+        }
+    }
+
+    /**
+     * Tests that UiccCardsInfo methods don't crash.
+     */
+    @Test
+    public void testGetUiccCardsInfo() {
+        // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
+        List<UiccCardInfo> infos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getUiccCardsInfo());
+        // test that these methods don't crash
+        if (infos.size() > 0) {
+            UiccCardInfo info = infos.get(0);
+            info.getIccId();
+            info.getEid();
+            info.isRemovable();
+            info.isEuicc();
+            info.getCardId();
+            info.getSlotIndex();
         }
     }
 
@@ -1223,6 +1247,38 @@ public class TelephonyManagerTest {
             fail("Expected SecurityException. App does not have carrier privileges.");
         } catch (SecurityException expected) {
         }
+    }
+
+    /**
+     * Construct a CallAttributes object and test getters.
+     */
+    @Test
+    public void testCallAttributes() {
+        CallQuality cq = new CallQuality();
+        PreciseCallState pcs = new PreciseCallState();
+        CallAttributes ca = new CallAttributes(pcs, TelephonyManager.NETWORK_TYPE_UNKNOWN, cq);
+        assertEquals(pcs, ca.getPreciseCallState());
+        assertEquals(TelephonyManager.NETWORK_TYPE_UNKNOWN, ca.getNetworkType());
+        assertEquals(cq, ca.getCallQuality());
+    }
+
+    /**
+     * Checks that a zeroed-out default CallQuality object can be created
+     */
+    @Test
+    public void testCallQuality() {
+        CallQuality cq = new CallQuality();
+        assertEquals(0, cq.getDownlinkCallQualityLevel());
+        assertEquals(0, cq.getUplinkCallQualityLevel());
+        assertEquals(0, cq.getCallDuration());
+        assertEquals(0, cq.getNumRtpPacketsTransmitted());
+        assertEquals(0, cq.getNumRtpPacketsReceived());
+        assertEquals(0, cq.getNumRtpPacketsTransmittedLost());
+        assertEquals(0, cq.getNumRtpPacketsNotReceived());
+        assertEquals(0, cq.getAverageRelativeJitter());
+        assertEquals(0, cq.getMaxRelativeJitter());
+        assertEquals(0, cq.getAverageRoundTripTime());
+        assertEquals(0, cq.getCodecType());
     }
 
     /**
