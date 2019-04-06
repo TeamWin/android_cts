@@ -21,6 +21,8 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.telephony.CellInfo;
+import android.telephony.NeighboringCellInfo;
 import android.telephony.TelephonyManager;
 
 import androidx.test.InstrumentationRegistry;
@@ -29,6 +31,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class RequestLocation {
@@ -53,8 +57,10 @@ public class RequestLocation {
     public void testGetNeighboringCellInfo() {
         if (!mHasTelephony) return;
         try {
-            mTelephonyManager.getNeighboringCellInfo();
-            fail("No Exception thrown for getNeighboringCellInfo without permission!");
+            List<NeighboringCellInfo> cellInfos = mTelephonyManager.getNeighboringCellInfo();
+            if (cellInfos != null && !cellInfos.isEmpty()) {
+                fail("Meaningful information returned from getNeighboringCellInfo!");
+            }
         } catch (SecurityException expected) {
         }
     }
