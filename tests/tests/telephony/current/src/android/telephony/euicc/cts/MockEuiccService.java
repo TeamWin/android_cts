@@ -76,8 +76,9 @@ public class MockEuiccService extends EuiccService {
     public GetDefaultDownloadableSubscriptionListResult onGetDefaultDownloadableSubscriptionList(
             int slotId, boolean forceDeactivateSim) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return null;
+
+        return new GetDefaultDownloadableSubscriptionListResult(
+                EuiccService.RESULT_RESOLVABLE_ERRORS, null /*subscriptions*/);
     }
 
     @Override
