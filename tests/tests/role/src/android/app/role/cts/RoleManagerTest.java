@@ -81,7 +81,7 @@ public class RoleManagerTest {
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 1000;
 
-    private static final String ROLE_NAME = RoleManager.ROLE_MUSIC;
+    private static final String ROLE_NAME = RoleManager.ROLE_BROWSER;
 
     private static final String APP_APK_PATH = "/data/local/tmp/cts/role/CtsRoleTestApp.apk";
     private static final String APP_PACKAGE_NAME = "android.app.role.cts.app";

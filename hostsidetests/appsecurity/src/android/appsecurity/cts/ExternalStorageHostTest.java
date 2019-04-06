@@ -47,6 +47,18 @@ import java.util.List;
 public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String TAG = "ExternalStorageHostTest";
 
+    private static class Config {
+        public final String apk;
+        public final String pkg;
+        public final String clazz;
+
+        public Config(String apk, String pkg, String clazz) {
+            this.apk = apk;
+            this.pkg = pkg;
+            this.clazz = clazz;
+        }
+    }
+
     private static final String COMMON_CLASS =
             "com.android.cts.externalstorageapp.CommonExternalStorageTest";
 
@@ -63,12 +75,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String MULTIUSER_PKG = "com.android.cts.multiuserstorageapp";
     private static final String MULTIUSER_CLASS = MULTIUSER_PKG + ".MultiUserStorageTest";
 
-    private static final String MEDIA_APK = "CtsMediaStorageApp.apk";
-    private static final String MEDIA_PKG = "com.android.cts.mediastorageapp";
-    private static final String MEDIA_CLASS = MEDIA_PKG + ".MediaStorageTest";
-    private static final String MEDIA28_APK = "CtsMediaStorageApp28.apk";
-    private static final String MEDIA28_PKG = "com.android.cts.mediastorageapp28";
-    private static final String MEDIA28_CLASS = MEDIA_PKG + ".MediaStorageTest";
+    private static final String MEDIA_CLAZZ = "com.android.cts.mediastorageapp.MediaStorageTest";
+
+    private static final Config MEDIA = new Config("CtsMediaStorageApp.apk",
+            "com.android.cts.mediastorageapp", MEDIA_CLAZZ);
+    private static final Config MEDIA_28 = new Config("CtsMediaStorageApp28.apk",
+            "com.android.cts.mediastorageapp28", MEDIA_CLAZZ);
+    private static final Config MEDIA_FULL = new Config("CtsMediaStorageAppFull.apk",
+            "com.android.cts.mediastorageappfull", MEDIA_CLAZZ);
 
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
@@ -78,7 +92,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
     private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
-    private static final String ROLE_GALLERY = "android.app.role.GALLERY";
 
     private int[] mUsers;
 
@@ -530,129 +543,152 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testMediaNone() throws Exception {
+    public void testMediaSandboxed() throws Exception {
+        doMediaSandboxed(MEDIA, true);
+    }
+    @Test
+    public void testMediaSandboxed28() throws Exception {
+        doMediaSandboxed(MEDIA_28, false);
+    }
+    @Test
+    public void testMediaSandboxedFull() throws Exception {
+        doMediaSandboxed(MEDIA_FULL, false);
+    }
+
+    private void doMediaSandboxed(Config config, boolean sandboxed) throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
 
-        installPackage(MEDIA_APK);
+        installPackage(config.apk);
         for (int user : mUsers) {
-            updatePermissions(MEDIA_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
                     PERM_WRITE_EXTERNAL_STORAGE,
-            }, false);
-            updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
+            }, true);
 
-            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaNone", user);
+            if (sandboxed) {
+                runDeviceTests(config.pkg, config.clazz, "testSandboxed", user);
+            } else {
+                runDeviceTests(config.pkg, config.clazz, "testNotSandboxed", user);
+            }
         }
     }
 
     @Test
+    public void testMediaNone() throws Exception {
+        doMediaNone(MEDIA);
+    }
+    @Test
     public void testMediaNone28() throws Exception {
+        doMediaNone(MEDIA_28);
+    }
+    @Test
+    public void testMediaNoneFull() throws Exception {
+        doMediaNone(MEDIA_FULL);
+    }
+
+    private void doMediaNone(Config config) throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
 
-        installPackage(MEDIA28_APK);
+        installPackage(config.apk);
         for (int user : mUsers) {
-            updatePermissions(MEDIA28_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, false);
-            updateRole(MEDIA28_PKG, user, ROLE_GALLERY, false);
 
-            runDeviceTests(MEDIA28_PKG, MEDIA28_CLASS, "testMediaNone", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaNone", user);
         }
     }
 
     @Test
     public void testMediaRead() throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
-        installPackage(MEDIA_APK);
-        for (int user : mUsers) {
-            updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_READ_EXTERNAL_STORAGE,
-            }, true);
-            updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_WRITE_EXTERNAL_STORAGE,
-            }, false);
-            updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
-
-            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaRead", user);
-        }
+        doMediaRead(MEDIA);
     }
-
     @Test
     public void testMediaRead28() throws Exception {
+        doMediaRead(MEDIA_28);
+    }
+    @Test
+    public void testMediaReadFull() throws Exception {
+        doMediaRead(MEDIA_FULL);
+    }
+
+    private void doMediaRead(Config config) throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
 
-        installPackage(MEDIA28_APK);
+        installPackage(config.apk);
         for (int user : mUsers) {
-            updatePermissions(MEDIA28_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
             }, true);
-            updatePermissions(MEDIA28_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, false);
-            updateRole(MEDIA28_PKG, user, ROLE_GALLERY, false);
 
-            runDeviceTests(MEDIA28_PKG, MEDIA28_CLASS, "testMediaRead", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaRead", user);
         }
     }
 
     @Test
     public void testMediaWrite() throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
-        installPackage(MEDIA_APK);
-        for (int user : mUsers) {
-            updatePermissions(MEDIA_PKG, user, new String[] {
-                    PERM_READ_EXTERNAL_STORAGE,
-                    PERM_WRITE_EXTERNAL_STORAGE,
-            }, true);
-            updateRole(MEDIA_PKG, user, ROLE_GALLERY, true);
-
-            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaWrite", user);
-        }
+        doMediaWrite(MEDIA);
     }
-
     @Test
     public void testMediaWrite28() throws Exception {
+        doMediaWrite(MEDIA_28);
+    }
+    @Test
+    public void testMediaWriteFull() throws Exception {
+        doMediaWrite(MEDIA_FULL);
+    }
+
+    private void doMediaWrite(Config config) throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
 
-        installPackage(MEDIA28_APK);
+        installPackage(config.apk);
         for (int user : mUsers) {
-            updatePermissions(MEDIA28_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, true);
-            updateRole(MEDIA28_PKG, user, ROLE_GALLERY, true);
 
-            runDeviceTests(MEDIA28_PKG, MEDIA28_CLASS, "testMediaWrite", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaWrite", user);
         }
     }
 
     @Test
     public void testMediaEscalation() throws Exception {
+        doMediaEscalation(MEDIA);
+    }
+    @Test
+    public void testMediaEscalation28() throws Exception {
+        doMediaEscalation(MEDIA_28);
+    }
+    @Test
+    public void testMediaEscalationFull() throws Exception {
+        doMediaEscalation(MEDIA_FULL);
+    }
+
+    private void doMediaEscalation(Config config) throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(hasIsolatedStorage());
 
-        installPackage(MEDIA_APK);
+        installPackage(config.apk);
 
         // TODO: extend test to exercise secondary users
         for (int user : Arrays.copyOf(mUsers, 1)) {
-            updatePermissions(MEDIA_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
             }, true);
-            updatePermissions(MEDIA_PKG, user, new String[] {
+            updatePermissions(config.pkg, user, new String[] {
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, false);
-            updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
 
-            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaEscalation", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation", user);
         }
     }
 
@@ -677,13 +713,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         final String verb = allow ? "allow" : "default";
         getDevice().executeShellCommand(
                 "cmd appops set --user " + userId + " " + packageName + " " + appOp + " " + verb);
-    }
-
-    private void updateRole(String packageName, int userId, String role, boolean add)
-            throws Exception {
-        final String verb = add ? "add-role-holder" : "remove-role-holder";
-        getDevice().executeShellCommand(
-                "cmd role " + verb + " --user " + userId + " " + role + " " + packageName);
     }
 
     private boolean hasIsolatedStorage() throws DeviceNotAvailableException {

@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
+import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 
@@ -27,10 +28,11 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
-import android.platform.test.annotations.Presubmit;
-
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -66,14 +68,22 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
             APP_B_PACKAGE_NAME, "android.server.am.ForegroundActivity");
     private static final String LAUNCH_BACKGROUND_ACTIVITY_EXTRA =
             "LAUNCH_BACKGROUND_ACTIVITY_EXTRA";
+    private static final String LAUNCH_BACKGROUND_ACTIVITY_STARTS_ENABLED =
+            "background_activity_starts_enabled";
+    private static final int DEFAULT_LAUNCH_BG_ACTIVITY_STARTS_SETTING = -1;
 
     private final ActivityManagerState mAmState = new ActivityManagerState();
+    private int mOriginalBgActivityStartsSetting;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mAtm = mContext.getSystemService(ActivityTaskManager.class);
+        mOriginalBgActivityStartsSetting = Settings.Global.getInt(mContext.getContentResolver(),
+                LAUNCH_BACKGROUND_ACTIVITY_STARTS_ENABLED,
+                DEFAULT_LAUNCH_BG_ACTIVITY_STARTS_SETTING);
+        runShellCommand("settings put global " + LAUNCH_BACKGROUND_ACTIVITY_STARTS_ENABLED + " 0");
 
         pressWakeupButton();
         pressUnlockButton();
@@ -81,6 +91,18 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         runShellCommand("cmd deviceidle tempwhitelist -d 100000 " + APP_A_PACKAGE_NAME);
         runShellCommand("cmd deviceidle tempwhitelist -d 100000 " + APP_B_PACKAGE_NAME);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (mOriginalBgActivityStartsSetting == DEFAULT_LAUNCH_BG_ACTIVITY_STARTS_SETTING) {
+            runShellCommand("settings delete global " + LAUNCH_BACKGROUND_ACTIVITY_STARTS_ENABLED);
+        } else {
+            runShellCommand("settings put global " + LAUNCH_BACKGROUND_ACTIVITY_STARTS_ENABLED + " "
+                    + mOriginalBgActivityStartsSetting);
+        }
+        pressHomeButton();
+        mAmWmState.waitForHomeActivityVisible();
     }
 
     @Test
