@@ -26,8 +26,10 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.service.euicc.DownloadSubscriptionResult;
 import android.service.euicc.EuiccService;
+import android.service.euicc.GetDefaultDownloadableSubscriptionListResult;
 import android.service.euicc.IDownloadSubscriptionCallback;
 import android.service.euicc.IEuiccService;
+import android.service.euicc.IGetDefaultDownloadableSubscriptionListCallback;
 import android.service.euicc.IGetEidCallback;
 import android.service.euicc.IGetOtaStatusCallback;
 import android.telephony.euicc.DownloadableSubscription;
@@ -46,7 +48,6 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 @RunWith(AndroidJUnit4.class)
 public class EuiccServiceTest {
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000 /* 2 sec */;
@@ -143,6 +144,23 @@ public class EuiccServiceTest {
         }
 
         assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnGetDefaultDownloadableSubscriptionList() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getDefaultDownloadableSubscriptionList(
+                MOCK_SLOT_ID,
+                true /*forceDeactivateSim*/,
+                new IGetDefaultDownloadableSubscriptionListCallback.Stub() {
+                    @Override
+                    public void onComplete(GetDefaultDownloadableSubscriptionListResult result) {
+                        assertNotNull(result);
+                        assertEquals(EuiccService.RESULT_RESOLVABLE_ERRORS, result.getResult());
+                        mCountDownLatch.countDown();
+                    }
+                });
     }
 
     @Test
