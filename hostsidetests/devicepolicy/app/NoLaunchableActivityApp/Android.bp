@@ -32,3 +32,45 @@ android_test_helper_app {
     ],
     sdk_version: "current",
 }
+
+// Build for no component app
+android_test_helper_app {
+    name: "CtsNoComponentApp",
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    srcs: ["src/**/*.java"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+        "cts_instant",
+    ],
+    manifest: "no_component_AndroidManifest.xml",
+    sdk_version: "current",
+}
+
+// Build for no permission app
+android_test_helper_app {
+    name: "CtsNoPermissionApp",
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    srcs: ["src/**/*.java"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+        "cts_instant",
+    ],
+    manifest: "no_permission_AndroidManifest.xml",
+    sdk_version: "current",
+}
