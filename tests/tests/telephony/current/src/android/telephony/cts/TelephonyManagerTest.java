@@ -990,7 +990,36 @@ public class TelephonyManagerTest {
         }
         Map<Integer, List<EmergencyNumber>> emergencyNumberList
           = mTelephonyManager.getEmergencyNumberList();
-        // TODO enhance it later
+
+        assertFalse(emergencyNumberList == null);
+
+        int defaultSubId = mSubscriptionManager.getDefaultSubscriptionId();
+      
+        // 112 and 911 should always be available
+        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
+        assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+            emergencyNumberList.get(defaultSubId), "911"));
+        assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+            emergencyNumberList.get(defaultSubId), "112"));
+
+        // 000, 08, 110, 118, 119, and 999 should be always available when sim is absent
+        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
+        if (mTelephonyManager.getPhoneCount() > 0
+                && mSubscriptionManager.getSimStateForSlotIndex(0)
+                    == TelephonyManager.SIM_STATE_ABSENT) {
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                emergencyNumberList.get(defaultSubId), "000"));
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                emergencyNumberList.get(defaultSubId), "08"));
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                emergencyNumberList.get(defaultSubId), "110"));
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                emergencyNumberList.get(defaultSubId), "118"));
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                emergencyNumberList.get(defaultSubId), "119"));
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                emergencyNumberList.get(defaultSubId), "999"));
+        }
     }
 
     /**
@@ -1001,8 +1030,23 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        boolean isEmergencyNumber = mTelephonyManager.isEmergencyNumber("911");
-        // TODO enhance it later
+        // 112 and 911 should always be available
+        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
+        assertTrue(mTelephonyManager.isEmergencyNumber("911"));
+        assertTrue(mTelephonyManager.isEmergencyNumber("112"));
+
+        // 000, 08, 110, 118, 119, and 999 should be always available when sim is absent
+        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
+        if (mTelephonyManager.getPhoneCount() > 0
+                && mSubscriptionManager.getSimStateForSlotIndex(0)
+                    == TelephonyManager.SIM_STATE_ABSENT) {
+            assertTrue(mTelephonyManager.isEmergencyNumber("000"));
+            assertTrue(mTelephonyManager.isEmergencyNumber("08"));
+            assertTrue(mTelephonyManager.isEmergencyNumber("110"));
+            assertTrue(mTelephonyManager.isEmergencyNumber("118"));
+            assertTrue(mTelephonyManager.isEmergencyNumber("119"));
+            assertTrue(mTelephonyManager.isEmergencyNumber("999"));
+        }
     }
 
     /**
@@ -1013,11 +1057,16 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        // use shell permission to run system api
-        boolean isEmergencyNumber =
-                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                        (tm) -> tm.isPotentialEmergencyNumber("911"));
-        // TODO enhance it later
+
+        String countryIso = mTelephonyManager.getNetworkCountryIso();
+        String potentialEmergencyAddress = "91112345";
+        if (countryIso.equals("br") || countryIso.equals("cl") || countryIso.equals("ni")) {
+            assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
+        } else {
+            assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
+        }
     }
 
     /**
@@ -1106,6 +1155,16 @@ public class TelephonyManagerTest {
 
     private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
         assertThat(value).isEqualTo(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS);
+    }
+
+    private static boolean checkIfEmergencyNumberListHasSpecificAddress(
+            List<EmergencyNumber> emergencyNumberList, String address) {
+        for (EmergencyNumber emergencyNumber : emergencyNumberList) {
+            if (address.equals(emergencyNumber.getNumber())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
