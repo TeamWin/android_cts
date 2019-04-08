@@ -897,7 +897,6 @@ status_t EvilBufferQueueProducer::connect(const sp<IProducerListener>& listener,
                                           QueueBufferOutput* output) {
   ATRACE_CALL();
   Mutex::Autolock lock(mCore->mMutex);
-  mConsumerName = mCore->mConsumerName;
   BQ_LOGV("connect: api=%d producerControlledByApp=%s", api,
           producerControlledByApp ? "true" : "false");
 
