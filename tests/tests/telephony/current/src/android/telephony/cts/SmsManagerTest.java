@@ -434,18 +434,12 @@ public class SmsManagerTest extends InstrumentationTestCase {
                 contentValues.put(Telephony.TextBasedSmsColumns.SUBJECT, "subj");
                 contentValues.put(Telephony.TextBasedSmsColumns.BODY, "created_at_" +
                         new Date().toString().replace(" ", "_"));
-                int originalSmsAccessRestrictionEnabled = getSmsAccessRestrictionEnabled();
-                setSmsAccessRestrictionEnabled(0);
-                try {
-                    return contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
-                } finally {
-                    setSmsAccessRestrictionEnabled(originalSmsAccessRestrictionEnabled);
-                }
+                return contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
             });
             assertNotNull("Failed to insert dummy sms", dummySmsUri);
             assertNotEquals("Failed to insert dummy sms", dummySmsUri.getLastPathSegment(), "0");
-            testContentProviderAccessRestriction(false);
-            testContentProviderAccessRestriction(true);
+            testSmsAccessAboutDefaultApp(LEGACY_SMS_APP);
+            testSmsAccessAboutDefaultApp(MODERN_SMS_APP);
         } finally {
             if (dummySmsUri != null && !"/0".equals(dummySmsUri.getLastPathSegment())) {
                 final Uri finalDummySmsUri = dummySmsUri;
@@ -461,37 +455,14 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
-    private void testContentProviderAccessRestriction(boolean accessRestrictionEnabled)
-            throws Exception {
-        int originalSmsAccessRestrictionEnabled = getSmsAccessRestrictionEnabled();
-        setSmsAccessRestrictionEnabled(accessRestrictionEnabled ? 1 : 0);
-        try {
-            testSmsAccessAboutDefaultApp(LEGACY_SMS_APP, accessRestrictionEnabled);
-            testSmsAccessAboutDefaultApp(MODERN_SMS_APP, accessRestrictionEnabled);
-        } finally {
-            setSmsAccessRestrictionEnabled(originalSmsAccessRestrictionEnabled);
-        }
-    }
-
-    private int getSmsAccessRestrictionEnabled() {
-        return Settings.Global.getInt(getInstrumentation().getContext().getContentResolver(),
-                Settings.Global.SMS_ACCESS_RESTRICTION_ENABLED, 0);
-    }
-
-    private void setSmsAccessRestrictionEnabled(int enabled) throws Exception {
-        executeWithShellPermissionIdentity(() ->
-                Settings.Global.putInt(getInstrumentation().getContext().getContentResolver(),
-                        Settings.Global.SMS_ACCESS_RESTRICTION_ENABLED, enabled));
-    }
-
-    private void testSmsAccessAboutDefaultApp(String pkg, boolean accessRestrictionEnabled)
+    private void testSmsAccessAboutDefaultApp(String pkg)
             throws Exception {
         String originalSmsApp = getSmsApp();
         assertNotEquals(pkg, originalSmsApp);
-        assertCanAccessSms(pkg, !accessRestrictionEnabled);
+        assertCanAccessSms(pkg);
         try {
             setSmsApp(pkg);
-            assertCanAccessSms(pkg, true);
+            assertCanAccessSms(pkg);
         } finally {
             resetReadWriteSmsAppOps(pkg);
             setSmsApp(originalSmsApp);
@@ -567,7 +538,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         void run() throws Exception;
     }
 
-    private void assertCanAccessSms(String pkg, boolean expectAccess) throws Exception {
+    private void assertCanAccessSms(String pkg) throws Exception {
         CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
         mContext.startActivity(new Intent()
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -578,8 +549,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
 
         assertThat(bundle.getString("class"), startsWith(pkg));
         assertThat(bundle.getString("exceptionMessage"), anyOf(equalTo(null), emptyString()));
-        assertThat(bundle.getInt("queryCount"),
-                expectAccess ? greaterThan(0) : lessThanOrEqualTo(0));
+        assertThat(bundle.getInt("queryCount"), greaterThan(0));
     }
 
     private void init() {
