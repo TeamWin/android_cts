@@ -22,7 +22,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.Window;
 
-import android.server.cts.wm.R;
+import android.server.wm.cts.R;
 
 public class WindowCtsActivity extends Activity {
 

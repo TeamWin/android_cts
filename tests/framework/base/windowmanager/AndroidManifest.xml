@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.cts.wm"
+          package="android.server.wm.cts"
           android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
@@ -98,7 +98,7 @@
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.server.cts.wm"
+                     android:targetPackage="android.server.wm.cts"
                      android:label="CTS tests of WindowManager">
     </instrumentation>
 
