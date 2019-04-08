@@ -18,7 +18,7 @@ package android.server.am;
 
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -38,7 +38,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.test.annotation.UiThreadTest;
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;

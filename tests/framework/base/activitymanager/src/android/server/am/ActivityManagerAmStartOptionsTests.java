@@ -20,10 +20,10 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.ENTRY_POINT_ALIAS_ACTIVITY;
-import static android.server.am.Components.LAUNCHING_ACTIVITY;
-import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
+import static android.server.am.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.SINGLE_TASK_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -15,7 +15,7 @@
   ~ limitations under the License
   -->
 
-<android.server.am.LifecycleLogView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.server.am.app.LifecycleLogView xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-</android.server.am.LifecycleLogView>
+</android.server.am.app.LifecycleLogView>

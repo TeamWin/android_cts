@@ -17,15 +17,15 @@
 package android.server.am;
 
 import static android.os.SystemClock.sleep;
-import static android.server.am.Components.ENTRY_POINT_ALIAS_ACTIVITY;
-import static android.server.am.Components.NO_DISPLAY_ACTIVITY;
-import static android.server.am.Components.REPORT_FULLY_DRAWN_ACTIVITY;
-import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
+import static android.server.am.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
+import static android.server.am.app.Components.NO_DISPLAY_ACTIVITY;
+import static android.server.am.app.Components.REPORT_FULLY_DRAWN_ACTIVITY;
+import static android.server.am.app.Components.SINGLE_TASK_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TRANSLUCENT_TEST_ACTIVITY;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.util.TimeUtils.formatDuration;
@@ -60,8 +60,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
-
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
