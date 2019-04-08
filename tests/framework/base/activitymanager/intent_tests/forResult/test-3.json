@@ -4,7 +4,7 @@
             {
                 "flags": "FLAG_ACTIVITY_NEW_TASK",
                 "class": "android.server.am.intent.Activities$SingleTopActivity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             }
         ],
@@ -12,7 +12,7 @@
             {
                 "flags": "",
                 "class": "android.server.am.intent.Activities$SingleTopActivity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             }
         ]
@@ -24,13 +24,13 @@
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$SingleTopActivity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$SingleTopActivity",
                                 "state": "RESUMED"
                             }
                         ]
                     }
                 ],
-                "resumedActivity": "android.server.cts.am\/android.server.am.intent.Activities$SingleTopActivity"
+                "resumedActivity": "android.server.am.cts\/android.server.am.intent.Activities$SingleTopActivity"
             }
         ]
     },
@@ -41,13 +41,13 @@
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$SingleTopActivity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$SingleTopActivity",
                                 "state": "RESUMED"
                             }
                         ]
                     }
                 ],
-                "resumedActivity": "android.server.cts.am\/android.server.am.intent.Activities$SingleTopActivity"
+                "resumedActivity": "android.server.am.cts\/android.server.am.intent.Activities$SingleTopActivity"
             }
         ]
     }
