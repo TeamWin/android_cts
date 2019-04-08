@@ -22,7 +22,6 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_SELECTION;
 import static android.app.admin.DevicePolicyManager.DELEGATION_ENABLE_SYSTEM_APP;
 import static android.app.admin.DevicePolicyManager.DELEGATION_NETWORK_LOGGING;
-import static android.app.admin.DevicePolicyManager.DELEGATION_PACKAGE_INSTALLATION;
 import static android.app.admin.DevicePolicyManager.EXTRA_DELEGATION_SCOPES;
 import static com.google.common.truth.Truth.assertThat;
 
@@ -189,8 +188,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
 
     public void testDeviceOwnerOnlyDelegationsOnlyPossibleToBeSetByDeviceOwner() throws Exception {
         final String doDelegations[] = {
-                DELEGATION_NETWORK_LOGGING,
-                DELEGATION_PACKAGE_INSTALLATION};
+                DELEGATION_NETWORK_LOGGING};
         final boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(
                 mContext.getPackageName());
         for (String scope : doDelegations) {
