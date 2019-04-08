@@ -17,6 +17,7 @@ package android.webkit.cts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -427,7 +428,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
         int defaultSize = mSettings.getDefaultFontSize();
-        assertTrue(defaultSize > 0);
+        assertThat(defaultSize, greaterThan(0));
 
         mSettings.setDefaultFontSize(1000);
         int maxSize = mSettings.getDefaultFontSize();
@@ -438,8 +439,8 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         mSettings.setDefaultFontSize(-10);
         int minSize = mSettings.getDefaultFontSize();
-        assertTrue(minSize > 0);
-        assertTrue(minSize < maxSize);
+        assertThat(minSize, greaterThan(0));
+        assertThat(minSize, lessThan(maxSize));
 
         mSettings.setDefaultFontSize(10);
         assertEquals(10, mSettings.getDefaultFontSize());
@@ -450,7 +451,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
         int defaultSize = mSettings.getDefaultFixedFontSize();
-        assertTrue(defaultSize > 0);
+        assertThat(defaultSize, greaterThan(0));
 
         mSettings.setDefaultFixedFontSize(1000);
         int maxSize = mSettings.getDefaultFixedFontSize();
@@ -461,8 +462,8 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         mSettings.setDefaultFixedFontSize(-10);
         int minSize = mSettings.getDefaultFixedFontSize();
-        assertTrue(minSize > 0);
-        assertTrue(minSize < maxSize);
+        assertThat(minSize, greaterThan(0));
+        assertThat(minSize, lessThan(maxSize));
 
         mSettings.setDefaultFixedFontSize(10);
         assertEquals(10, mSettings.getDefaultFixedFontSize());
@@ -1230,7 +1231,8 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         histogram = getBitmapHistogram(mOnUiThread.captureBitmap(), 0, 0, 64, 64);
         assertEquals("Bitmap should have a single colour", histogram.size(), 1);
         colourValues = histogram.keySet().toArray(new Integer[0]);
-        assertTrue("Bitmap colour should be dark", Color.luminance(colourValues[0]) < 0.5f);
+        assertThat("Bitmap colour should be dark",
+                Color.luminance(colourValues[0]), lessThan(0.5f));
 
         // Loading about:blank into a force-dark-off webview should result in a light background
         mSettings.setForceDark(WebSettings.FORCE_DARK_OFF);
@@ -1241,7 +1243,8 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         histogram = getBitmapHistogram(mOnUiThread.captureBitmap(), 0, 0, 64, 64);
         assertEquals("Bitmap should have a single colour", histogram.size(), 1);
         colourValues = histogram.keySet().toArray(new Integer[0]);
-        assertTrue("Bitmap colour should be light", Color.luminance(colourValues[0]) > 0.5f);
+        assertThat("Bitmap colour should be light",
+                Color.luminance(colourValues[0]), greaterThan(0.5f));
     }
 
     /**
