@@ -733,7 +733,6 @@ public class PopupWindowTest {
                 mPopupWindow.getWindowLayoutType());
     }
 
-    @FlakyTest(bugId = 129949356)
     @Test
     public void testGetMaxAvailableHeight() {
         mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
@@ -778,12 +777,12 @@ public class PopupWindowTest {
         assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration <= available);
 
         maxAvailableHeightWithOffsetIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, maxAvailableHeight / 2 - 1, true);
+                mPopupWindow.getMaxAvailableHeight(anchorView, maxAvailableHeight / 2, true);
         assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration > 0);
         assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration <= available);
 
         maxAvailableHeightWithOffsetIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, -1, true);
+                mPopupWindow.getMaxAvailableHeight(anchorView, 0, true);
         assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration > 0);
         assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration <= available);
 
