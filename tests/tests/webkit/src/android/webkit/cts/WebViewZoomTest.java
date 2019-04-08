@@ -16,6 +16,12 @@
 
 package android.webkit.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+
 import android.net.http.SslError;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
@@ -322,13 +328,13 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
 
             // Check that we zoomed in the expected direction wrt. the current scale.
             if (scaleAmount > 1.0f) {
-                assertTrue(
+                assertThat(
                         "Expected new scale > current scale when zooming in",
-                        state.mNewScale > currentScale);
+                        state.mNewScale, greaterThan(currentScale));
             } else {
-                assertTrue(
+                assertThat(
                         "Expected new scale < current scale when zooming out",
-                        state.mNewScale < currentScale);
+                        state.mNewScale, lessThan(currentScale));
             }
 
             // If we hit the zoom limit, then the new scale should be between the old scale
@@ -336,14 +342,14 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
             if (Math.abs(nextScale - state.mNewScale) > PAGE_SCALE_EPSILON) {
                 if (scaleAmount > 1.0f) {
                     assertFalse(state.mCanZoomIn);
-                    assertTrue(
+                    assertThat(
                             "Expected new scale <= requested scale when zooming in past limit",
-                            state.mNewScale <= nextScale);
+                            state.mNewScale, lessThanOrEqualTo(nextScale));
                 } else {
                     assertFalse(state.mCanZoomOut);
-                    assertTrue(
+                    assertThat(
                             "Expected new scale >= requested scale when zooming out past limit",
-                            state.mNewScale >= nextScale);
+                            state.mNewScale, greaterThanOrEqualTo(nextScale));
                 }
             }
 
@@ -353,14 +359,14 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
         public float expectZoomOut(float currentScale) {
             ScaleChangedState state = waitForNextScaleChange();
             assertEquals(currentScale, state.mOldScale);
-            assertTrue(state.mNewScale < currentScale);
+            assertThat(state.mNewScale, lessThan(currentScale));
             return state.mNewScale;
         }
 
         public float expectZoomIn(float currentScale) {
             ScaleChangedState state = waitForNextScaleChange();
             assertEquals(currentScale, state.mOldScale);
-            assertTrue(state.mNewScale > currentScale);
+            assertThat(state.mNewScale, greaterThan(currentScale));
             return state.mNewScale;
         }
 

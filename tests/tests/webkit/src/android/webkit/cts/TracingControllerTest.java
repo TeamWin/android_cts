@@ -16,6 +16,9 @@
 
 package android.webkit.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.TracingConfig;
 import android.webkit.TracingController;
@@ -173,8 +176,8 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
             runTracingTestWithCallbacks(tracingReceiver, singleThreadExecutor);
         });
         PollingCheck.check("Tracing did not complete", POLLING_TIMEOUT, tracingReceiver.getCompleteCallable());
-        assertTrue(tracingReceiver.getNbChunks() > 0);
-        assertTrue(tracingReceiver.getOutputStream().size() > 0);
+        assertThat(tracingReceiver.getNbChunks(), greaterThan(0));
+        assertThat(tracingReceiver.getOutputStream().size(), greaterThan(0));
         // currently the output is json (as of April 2018), but this could change in the future
         // so we don't explicitly test the contents of output stream.
     }
@@ -190,8 +193,8 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
         final TracingReceiver tracingReceiver = new TracingReceiver();
         runTracingTestWithCallbacks(tracingReceiver, singleThreadExecutor);
         PollingCheck.check("Tracing did not complete", POLLING_TIMEOUT, tracingReceiver.getCompleteCallable());
-        assertTrue(tracingReceiver.getNbChunks() > 0);
-        assertTrue(tracingReceiver.getOutputStream().size() > 0);
+        assertThat(tracingReceiver.getNbChunks(), greaterThan(0));
+        assertThat(tracingReceiver.getOutputStream().size(), greaterThan(0));
     }
 
     // Test that tracing stop has no effect if tracing has not been started.
