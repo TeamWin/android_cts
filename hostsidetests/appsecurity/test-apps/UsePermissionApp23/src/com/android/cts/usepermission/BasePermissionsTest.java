@@ -64,8 +64,8 @@ import java.util.concurrent.TimeoutException;
 public abstract class BasePermissionsTest {
     private static final String PLATFORM_PACKAGE_NAME = "android";
 
-    private static final long IDLE_TIMEOUT_MILLIS = 500;
-    private static final long GLOBAL_TIMEOUT_MILLIS = 5000;
+    private static final long IDLE_TIMEOUT_MILLIS = 1000;
+    private static final long GLOBAL_TIMEOUT_MILLIS = 10000;
 
     private static final long RETRY_TIMEOUT = 3 * GLOBAL_TIMEOUT_MILLIS;
     private static final String LOG_TAG = "BasePermissionsTest";
@@ -557,12 +557,18 @@ public abstract class BasePermissionsTest {
             throws Exception {
         AccessibilityNodeInfo result = current;
         while (result != null) {
-            if (result.getCollectionItemInfo() != null) {
+            // Nodes that are in the hierarchy but not yet on screen may not have collection item
+            // info populated. Use a parent with collection info as an indicator in those cases.
+            if (result.getCollectionItemInfo() != null || hasCollectionAsParent(result)) {
                 return result;
             }
             result = result.getParent();
         }
         return null;
+    }
+
+    private static boolean hasCollectionAsParent(AccessibilityNodeInfo node) {
+        return node.getParent() != null && node.getParent().getCollectionInfo() != null;
     }
 
     private static AccessibilityNodeInfo findSwitch(AccessibilityNodeInfo root) throws Exception {
