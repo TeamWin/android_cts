@@ -86,6 +86,10 @@ import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
+import com.android.cts.mockime.ImeCommand;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.MockImeSession;
+
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
