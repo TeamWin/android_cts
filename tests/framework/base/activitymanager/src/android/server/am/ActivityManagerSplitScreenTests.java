@@ -519,6 +519,8 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
             lockScreenSession.sleepDevice()
                     .wakeUpDevice()
                     .unlockDevice();
+            pressHomeButton();
+            mAmWmState.waitForHomeActivityVisible();
             mAmWmState.computeState(TEST_ACTIVITY);
             assertDockMinimized();
         }
