@@ -53,7 +53,6 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.provider.DeviceConfig.Privacy;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -62,6 +61,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
@@ -87,12 +87,20 @@ import java.util.concurrent.CountDownLatch;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a location "
         + "access check notification for instant apps.")
+@FlakyTest
 public class LocationAccessCheckTest {
     private static final String LOG_TAG = LocationAccessCheckTest.class.getSimpleName();
 
     private static final String TEST_APP_PKG = "android.permission.cts.appthataccesseslocation";
     private static final String TEST_APP_LABEL = "CtsLocationAccess";
     private static final String TEST_APP_SERVICE = TEST_APP_PKG + ".AccessLocationOnCommand";
+    private static final String TEST_APP_LOCATION_BG_ACCESS_APK =
+            "/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk";
+    private static final String TEST_APP_LOCATION_FG_ACCESS_APK =
+            "/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk";
+
+    /** Whether to show location access check notifications. */
+    private static final String PROPERTY_LOCATION_ACCESS_CHECK_ENABLED = "location_access_check_enabled";
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
     private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
@@ -339,6 +347,21 @@ public class LocationAccessCheckTest {
         });
     }
 
+    @BeforeClass
+    public static void installBackgroundAccessApp() {
+        runShellCommand("pm install -r -g " + TEST_APP_LOCATION_BG_ACCESS_APK);
+    }
+
+    @AfterClass
+    public static void uninstallBackgroundAccessApp() {
+        runShellCommand("pm uninstall " + TEST_APP_PKG);
+    }
+
+
+    private static void installForegroundAccessApp() {
+        runShellCommand("pm install -r -g " + TEST_APP_LOCATION_FG_ACCESS_APK);
+    }
+
     /**
      * Reset the permission controllers state before each test
      */
@@ -352,8 +375,9 @@ public class LocationAccessCheckTest {
      */
     @Before
     public void enableLocationAccessCheck() {
-        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(Privacy.NAMESPACE,
-                Privacy.PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "true", false));
+        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
+                DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "true", false));
     }
 
     /**
@@ -470,7 +494,8 @@ public class LocationAccessCheckTest {
     @After
     public void resetPrivacyConfig() {
         runWithShellPermissionIdentity(
-                () -> DeviceConfig.resetToDefaults(RESET_MODE_PACKAGE_DEFAULTS, Privacy.NAMESPACE));
+                () -> DeviceConfig.resetToDefaults(RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_PRIVACY));
     }
 
     @Test
@@ -495,7 +520,7 @@ public class LocationAccessCheckTest {
         clearPackageData(TEST_APP_PKG);
 
         // Wait until package is cleared and permission controller has cleared the state
-        Thread.sleep(2000);
+        Thread.sleep(10000);
 
         // Clearing removed the permissions, hence grant them again
         grantPermissionToTestApp(ACCESS_FINE_LOCATION);
@@ -505,33 +530,36 @@ public class LocationAccessCheckTest {
         assertNotNull(getNotification(false));
     }
 
-    @Test
-    public void notificationIsShownAgainAfterUninstallAndReinstall() throws Throwable {
-        accessLocation();
-        getNotification(true);
-
-        runShellCommand("pm uninstall " + TEST_APP_PKG);
-
-        // Wait until package permission controller has cleared the state
-        Thread.sleep(2000);
-
-        runShellCommand("pm install -g "
-                + "/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk");
-
-        eventually(() -> {
-            accessLocation();
-            assertNotNull(getNotification(false));
-        }, UNEXPECTED_TIMEOUT_MILLIS);
-    }
+    // @Test
+    // public void notificationIsShownAgainAfterUninstallAndReinstall() throws Throwable {
+    //     accessLocation();
+    //     getNotification(true);
+    //
+    //     uninstallBackgroundAccessApp();
+    //
+    //     // Wait until package permission controller has cleared the state
+    //     Thread.sleep(2000);
+    //
+    //     installBackgroundAccessApp();
+    //
+    //     eventually(() -> {
+    //         accessLocation();
+    //         assertNotNull(getNotification(false));
+    //     }, UNEXPECTED_TIMEOUT_MILLIS);
+    // }
 
     @Test
     public void removeNotificationOnUninstall() throws Throwable {
         accessLocation();
         getNotification(false);
 
-        runShellCommand("pm uninstall " + TEST_APP_PKG);
+        uninstallBackgroundAccessApp();
 
-        eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
+        try {
+            eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
+        } finally {
+            installBackgroundAccessApp();
+        }
     }
 
     @Test
@@ -540,18 +568,21 @@ public class LocationAccessCheckTest {
         getNotification(true);
 
         // Update to app to a version that does not request permission anymore
-        runShellCommand("pm install -r "
-                + "/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk");
-
-        resetPermissionController();
+        installForegroundAccessApp();
 
         try {
-            // We don't expect a notification, but try to trigger one anyway
-            eventually(() -> assertNotNull(getNotification(false)), EXPECTED_TIMEOUT_MILLIS);
-        } catch (AssertionError expected) {
-            return;
-        }
+            resetPermissionController();
 
-        fail("Location access notification was shown");
+            try {
+                // We don't expect a notification, but try to trigger one anyway
+                eventually(() -> assertNotNull(getNotification(false)), EXPECTED_TIMEOUT_MILLIS);
+            } catch (AssertionError expected) {
+                return;
+            }
+
+            fail("Location access notification was shown");
+        } finally {
+            installBackgroundAccessApp();
+        }
     }
 }

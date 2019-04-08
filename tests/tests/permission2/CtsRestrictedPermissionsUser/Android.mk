@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,25 +19,15 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 
+LOCAL_SDK_VERSION := current
+
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-# Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
-LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+# TODO: Uncomment when uncommenting the test
+#LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-	androidx.test.core \
-	compatibility-device-util-axt \
-	ctstestrunner-axt \
-	guava
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_PACKAGE_NAME := CtsPermission2TestCases
-
-LOCAL_SDK_VERSION := test_current
+LOCAL_PACKAGE_NAME := CtsRestrictedPermissionsUser
 
 include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))

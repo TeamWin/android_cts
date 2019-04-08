@@ -26,6 +26,7 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.permission.PermissionControllerManager.REASON_INSTALLER_POLICY_VIOLATION;
 import static android.permission.PermissionControllerManager.REASON_MALWARE;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.AppOpsManager;
@@ -39,7 +40,9 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -56,6 +59,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant apps cannot talk to permission controller")
 public class PermissionControllerTest {
+    private static final String APK =
+            "/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk";
     private static final String APP = "android.permission.cts.appthataccesseslocation";
 
     private static final UiAutomation sUiAutomation =
@@ -68,6 +73,16 @@ public class PermissionControllerTest {
         sUiAutomation.grantRuntimePermission(APP, ACCESS_FINE_LOCATION);
         sUiAutomation.grantRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
         setAppOp(APP, ACCESS_FINE_LOCATION, MODE_ALLOWED);
+    }
+
+    @BeforeClass
+    public static void installApp() {
+        runShellCommand("pm install -r -g " + APK);
+    }
+
+    @AfterClass
+    public static void uninstallApp() {
+        runShellCommand("pm uninstall " + APP);
     }
 
     @Before
