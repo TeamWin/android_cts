@@ -18,5 +18,5 @@
     package="com.android.cts.overlay.app">
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.rro" />
+                     android:targetPackage="com.android.cts.overlay.app" />
 </manifest>
