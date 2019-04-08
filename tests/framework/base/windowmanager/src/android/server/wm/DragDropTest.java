@@ -28,7 +28,7 @@ import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import android.server.cts.wm.R;
+import android.server.wm.cts.R;
 import android.view.DragEvent;
 import android.view.InputDevice;
 import android.view.MotionEvent;
