@@ -402,7 +402,6 @@ public class MediaScannerTest extends AndroidTestCase {
 
         // remove the entry from the database
         assertEquals(1, res.delete(uri, null, null));
-        assertTrue(new File(path).delete());
 
         // write same file again and scan to insert into database
         mMediaScannerConnectionClient.reset();
@@ -431,7 +430,6 @@ public class MediaScannerTest extends AndroidTestCase {
         assertEquals(uri2, uncanonicalizedUri3);
 
         assertEquals(1, res.delete(uri2, null, null));
-        assertTrue(new File(path2).delete());
     }
 
     static class MediaScanEntry {
