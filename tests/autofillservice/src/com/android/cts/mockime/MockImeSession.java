@@ -175,9 +175,19 @@ public class MockImeSession implements AutoCloseable {
     }
 
     private void initialize(@Nullable ImeSettings.Builder imeSettings) throws Exception {
-        // NOTE: on P we call 'ime reset', but it's not available on O, so we're just ignoring it -
-        // we don't really need the IME and it will be effectively disabled after this APK is
-        // uninstalled.
+        // Make sure that MockIME is not selected.
+        if (mContext.getSystemService(InputMethodManager.class)
+                .getInputMethodList()
+                .stream()
+                .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
+            executeShellCommand(mUiAutomation, "ime reset");
+        }
+        if (mContext.getSystemService(InputMethodManager.class)
+                .getEnabledInputMethodList()
+                .stream()
+                .anyMatch(info -> getMockImeComponentName().equals(info.getComponent()))) {
+            throw new IllegalStateException();
+        }
 
         writeMockImeSettings(mContext, mImeEventActionName, imeSettings);
 
@@ -228,9 +238,13 @@ public class MockImeSession implements AutoCloseable {
      * selected next is up to the system.
      */
     public void close() throws Exception {
-        // NOTE: on P we call 'ime reset', but it's not available on O, so we're just ignoring it -
-        // we don't really need the IME and it will be effectively disabled after this APK is
-        // uninstalled.
+        executeShellCommand(mUiAutomation, "ime reset");
+
+        PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
+                mContext.getSystemService(InputMethodManager.class)
+                        .getEnabledInputMethodList()
+                        .stream()
+                        .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
 
         mContext.unregisterReceiver(mEventReceiver);
         mHandlerThread.quitSafely();
