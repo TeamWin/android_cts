@@ -41,7 +41,7 @@ public class GnssClockTest extends GnssTestCase {
         clock.setTimeNanos(8);
         clock.setTimeUncertaintyNanos(9.0);
         clock.setElapsedRealtimeNanos(10987732253L);
-        clock.setElapsedRealtimeUncertaintyNanos(3943523L);
+        clock.setElapsedRealtimeUncertaintyNanos(3943523.0);
     }
 
     private static void verifyTestValues(GnssClock clock) {
@@ -55,7 +55,7 @@ public class GnssClockTest extends GnssTestCase {
         assertEquals(8, clock.getTimeNanos());
         assertEquals(9.0, clock.getTimeUncertaintyNanos());
         assertEquals(10987732253L, clock.getElapsedRealtimeNanos());
-        assertEquals(3943523L, clock.getElapsedRealtimeUncertaintyNanos());
+        assertEquals(3943523.0, clock.getElapsedRealtimeUncertaintyNanos());
     }
 
     public void testWriteToParcel() {
