@@ -62,6 +62,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
@@ -130,6 +132,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * Tests that wallpaper shows on secondary displays.
      */
     @Test
+    @FlakyTest
     public void testWallpaperShowOnSecondaryDisplays() throws Exception {
         try (final ChangeWallpaperSession wallpaperSession = new ChangeWallpaperSession();
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -201,6 +204,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * Test that navigation bar should show on display with system decoration.
      */
     @Test
+    @FlakyTest
     public void testNavBarShowingOnDisplayWithDecor() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession
@@ -214,6 +218,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * Test that navigation bar should not show on display without system decoration.
      */
     @Test
+    @FlakyTest
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             virtualDisplaySession.setPublicDisplay(true)
@@ -230,6 +235,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * supports system decoration.
      */
     @Test
+    @FlakyTest
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             virtualDisplaySession.setPublicDisplay(false)
@@ -292,6 +298,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * support.
      */
     @Test
+    @FlakyTest
     public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(SINGLE_HOME_ACTIVITY);
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -313,6 +320,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * system decoration support.
      */
     @Test
+    @FlakyTest
     public void testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession =
                      new HomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
@@ -335,6 +343,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
      * support.
      */
     @Test
+    @FlakyTest
     public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY);
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -464,6 +473,7 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
     }
 
     @Test
+    @FlakyTest
     public void testImeWindowCanSwitchWhenTopFocusedDisplayChange() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
