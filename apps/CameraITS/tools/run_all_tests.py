@@ -64,6 +64,8 @@ NOT_YET_MANDATED = {
         'scene2': [
                 'test_auto_per_frame_control'
         ],
+        'scene2b': [],
+        'scene2c': [],
         'scene3': [],
         'scene4': [],
         'scene5': [],
