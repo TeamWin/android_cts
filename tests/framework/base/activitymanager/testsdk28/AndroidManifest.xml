@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.server.cts.am.testsdk28">
+    package="android.server.am.cts.testsdk28">
 
     <uses-sdk android:targetSdkVersion="28" />
 
@@ -32,6 +32,6 @@
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.server.cts.am.testsdk28" />
+        android:targetPackage="android.server.am.cts.testsdk28" />
 
 </manifest>

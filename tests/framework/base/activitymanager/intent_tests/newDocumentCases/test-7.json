@@ -4,19 +4,19 @@
             {
                 "flags": "FLAG_ACTIVITY_NEW_TASK",
                 "class": "android.server.am.intent.Activities$TaskAffinity1Activity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             },
             {
                 "flags": "",
                 "class": "android.server.am.intent.Activities$RegularActivity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             },
             {
                 "flags": "FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK",
                 "class": "android.server.am.intent.Activities$TaskAffinity1Activity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             }
         ],
@@ -24,7 +24,7 @@
             {
                 "flags": "FLAG_ACTIVITY_NEW_DOCUMENT",
                 "class": "android.server.am.intent.Activities$TaskAffinity1Activity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             }
         ]
@@ -36,24 +36,24 @@
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$TaskAffinity1Activity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$TaskAffinity1Activity",
                                 "state": "RESUMED"
                             }
                         ]
                     }
                 ],
-                "resumedActivity": "android.server.cts.am\/android.server.am.intent.Activities$TaskAffinity1Activity"
+                "resumedActivity": "android.server.am.cts\/android.server.am.intent.Activities$TaskAffinity1Activity"
             },
             {
                 "tasks": [
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$RegularActivity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$RegularActivity",
                                 "state": "STOPPED"
                             },
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$TaskAffinity1Activity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$TaskAffinity1Activity",
                                 "state": "STOPPED"
                             }
                         ]
@@ -69,24 +69,24 @@
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$TaskAffinity1Activity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$TaskAffinity1Activity",
                                 "state": "RESUMED"
                             }
                         ]
                     }
                 ],
-                "resumedActivity": "android.server.cts.am\/android.server.am.intent.Activities$TaskAffinity1Activity"
+                "resumedActivity": "android.server.am.cts\/android.server.am.intent.Activities$TaskAffinity1Activity"
             },
             {
                 "tasks": [
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$RegularActivity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$RegularActivity",
                                 "state": "STOPPED"
                             },
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$TaskAffinity1Activity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$TaskAffinity1Activity",
                                 "state": "STOPPED"
                             }
                         ]
