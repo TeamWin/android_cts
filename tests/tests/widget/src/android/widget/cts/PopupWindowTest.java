@@ -1446,11 +1446,12 @@ public class PopupWindowTest {
         int measuredHeight = popupRoot.getMeasuredHeight();
         View anchor = mActivity.findViewById(R.id.anchor_middle);
 
-        // The popup should occupy all available vertical space.
+        // The popup should occupy all available vertical space, except the system bars.
         int[] anchorLocationInWindowXY = new int[2];
         anchor.getLocationInWindow(anchorLocationInWindowXY);
         assertEquals(measuredHeight,
-                parentHeight - (anchorLocationInWindowXY[1] + anchor.getHeight()));
+                parentHeight - (anchorLocationInWindowXY[1] + anchor.getHeight())
+                        - parentWindowView.getRootWindowInsets().getSystemWindowInsetBottom());
 
         // The popup should be vertically aligned to the anchor's bottom edge.
         int[] anchorLocationOnScreenXY = new int[2];
