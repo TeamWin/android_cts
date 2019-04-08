@@ -19,7 +19,7 @@ package android.server.wm;
 import android.app.Activity;
 import android.os.Bundle;
 
-import android.server.cts.wm.R;
+import android.server.wm.cts.R;
 
 public class DragDropActivity extends Activity {
 
