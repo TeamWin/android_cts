@@ -96,13 +96,36 @@ LOCAL_MULTILIB := both
 LOCAL_JNI_SHARED_LIBRARIES := \
 libVkLayer_nullLayerA \
 libVkLayer_nullLayerB \
-libVkLayer_nullLayerC \
+libVkLayer_nullLayerC
+
+LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_PACKAGE_NAME := CtsGpuToolsRootlessGpuDebugApp-GLES_LAYERS
+LOCAL_SDK_VERSION := current
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+LOCAL_MULTILIB := both
+
+LOCAL_JNI_SHARED_LIBRARIES := \
 libGLES_glesLayerA \
 libGLES_glesLayerB \
 libGLES_glesLayerC
 
 LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
 
+LOCAL_AAPT_FLAGS := \
+--rename-manifest-package android.rootlessgpudebug.GLES_LAYERS.app
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

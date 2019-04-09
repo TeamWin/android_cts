@@ -94,6 +94,9 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoadGLES)
     // - Ensure we cannot enumerate layers from debuggable app's data directory if Setting not specified (testDebugNoEnumerateGLES)
     // - Ensure we cannot enumerate layers without specifying the debuggable app (testDebugNoEnumerateGLES)
+    //
+    // Positive combined tests
+    // - Ensure we can load Vulkan and GLES layers at the same time, from multiple external apps (testMultipleExternalApps)
 
 
 
@@ -111,6 +114,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     private static final String DEBUG_APP = "android.rootlessgpudebug.DEBUG.app";
     private static final String RELEASE_APP = "android.rootlessgpudebug.RELEASE.app";
     private static final String LAYERS_APP = "android.rootlessgpudebug.LAYERS.app";
+    private static final String GLES_LAYERS_APP = "android.rootlessgpudebug.GLES_LAYERS.app";
     private static final String GLES_LAYER_A = "glesLayerA";
     private static final String GLES_LAYER_B = "glesLayerB";
     private static final String GLES_LAYER_C = "glesLayerC";
@@ -191,10 +195,10 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     /**
      * Extract the requested layer from APK and copy to tmp
      */
-    private void setupLayer(String layer) throws Exception {
+    private void setupLayer(String layer, String layerApp) throws Exception {
 
         // We use the LAYERS apk to facilitate getting layers onto the device for mixing and matching
-        String libPath = mDevice.executeAdbCommand("shell", "pm", "path", LAYERS_APP);
+        String libPath = mDevice.executeAdbCommand("shell", "pm", "path", layerApp);
         libPath = libPath.replaceAll("package:", "");
         libPath = libPath.replaceAll("base.apk", "");
         libPath = removeWhitespace(libPath);
@@ -315,8 +319,8 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
 
         // Copy the layers from our LAYERS APK to tmp
-        setupLayer(LAYER_A_LIB);
-        setupLayer(LAYER_B_LIB);
+        setupLayer(LAYER_A_LIB, LAYERS_APP);
+        setupLayer(LAYER_B_LIB, LAYERS_APP);
 
 
         // Copy them over to our DEBUG app
@@ -357,7 +361,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(LAYER_A_LIB);
+        setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Attempt to copy them over to our RELEASE app (this should fail)
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
@@ -387,7 +391,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers", LAYER_A_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(LAYER_A_LIB);
+        setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Copy it over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
@@ -417,7 +421,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers", LAYER_A_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(LAYER_A_LIB);
+        setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Copy it over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
@@ -447,7 +451,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers", "foo");
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(LAYER_A_LIB);
+        setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Copy it over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
@@ -504,8 +508,8 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers", LAYER_A_NAME);
 
         // Copy the layers from our LAYERS APK
-        setupLayer(LAYER_A_LIB);
-        setupLayer(LAYER_B_LIB);
+        setupLayer(LAYER_A_LIB, LAYERS_APP);
+        setupLayer(LAYER_B_LIB, LAYERS_APP);
 
         // Copy them over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
@@ -570,8 +574,8 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers_gles", GLES_LAYER_A_LIB + ":" + GLES_LAYER_B_LIB);
 
         // Copy the layers from our LAYERS APK to tmp
-        setupLayer(GLES_LAYER_A_LIB);
-        setupLayer(GLES_LAYER_B_LIB);
+        setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
+        setupLayer(GLES_LAYER_B_LIB, GLES_LAYERS_APP);
 
         // Copy them over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
@@ -609,7 +613,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         deleteSetting("gpu_debug_layer_app");
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(GLES_LAYER_A_LIB);
+        setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Attempt to copy them over to our RELEASE app (this should fail)
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", RELEASE_APP,
@@ -638,7 +642,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers_gles", GLES_LAYER_A_LIB);
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(GLES_LAYER_A_LIB);
+        setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Copy it over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
@@ -667,7 +671,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers_gles", GLES_LAYER_A_LIB);
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(GLES_LAYER_A_LIB);
+        setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Copy it over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
@@ -696,7 +700,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers_gles", "foo");
 
         // Copy a layer from our LAYERS APK to tmp
-        setupLayer(GLES_LAYER_A_LIB);
+        setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Copy it over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
@@ -752,8 +756,8 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers_gles", GLES_LAYER_A_LIB);
 
         // Copy the layers from our LAYERS APK
-        setupLayer(GLES_LAYER_A_LIB);
-        setupLayer(GLES_LAYER_B_LIB);
+        setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
+        setupLayer(GLES_LAYER_B_LIB, GLES_LAYERS_APP);
 
         // Copy them over to our DEBUG app
         mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
@@ -790,7 +794,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         applySetting("gpu_debug_layers_gles", GLES_LAYER_C_LIB);
 
         // Specify the external app that hosts layers
-        applySetting("gpu_debug_layer_app", LAYERS_APP);
+        applySetting("gpu_debug_layer_app", GLES_LAYERS_APP);
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
@@ -802,4 +806,32 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         Assert.assertTrue(GLES_LAYER_C + " was not loaded", resultC.found);
     }
 
+    /**
+     *
+     */
+    @Test
+    public void testMultipleExternalApps() throws Exception {
+
+        // Set up layers to be loaded
+        applySetting("enable_gpu_debug_layers", "1");
+        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_layers", LAYER_C_NAME);
+        applySetting("gpu_debug_layers_gles", GLES_LAYER_C_LIB);
+
+        // Specify multple external apps that host layers
+        applySetting("gpu_debug_layer_app", LAYERS_APP + ":" + GLES_LAYERS_APP);
+
+        // Kick off our DEBUG app
+        String appStartTime = getTime();
+        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+
+        // Check that external layers were loaded from both apps
+        String vulkanString = "nullCreateInstance called in " + LAYER_C;
+        LogScanResult vulkanResult = scanLog(TAG + "," + LAYER_C, vulkanString, appStartTime);
+        Assert.assertTrue(LAYER_C + " was not loaded", vulkanResult.found);
+
+        String glesString = "glesLayer_eglChooseConfig called in " + GLES_LAYER_C;
+        LogScanResult glesResult = scanLog(TAG + "," + GLES_LAYER_C, glesString, appStartTime);
+        Assert.assertTrue(GLES_LAYER_C + " was not loaded", glesResult.found);
+    }
 }
