@@ -40,7 +40,7 @@
         <option name="run-command" value="settings put system screen_off_timeout 120000" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
-        <option name="package" value="android.server.cts.am"/>
+        <option name="package" value="android.server.am.cts"/>
         <option name="runtime-hint" value="1h"/>
     </test>
 </configuration>

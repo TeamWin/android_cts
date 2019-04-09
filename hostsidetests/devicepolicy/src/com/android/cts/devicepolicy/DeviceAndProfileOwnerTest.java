@@ -338,7 +338,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      *    combinations, add them to the subclass's {@link #getAdditionalDelegationScopes} and
      *    {@link #getDelegationScopes} intead.
      *    <p>Alternatively, create a separate hostside method to drive the test, similar to
-     *    {@link MixedDeviceOwnerTest#testDelegationPackageInstallation()} and
      *    {@link #testDelegationCertSelection}. This is preferred if the delegated functionalities
      *    already exist in another app.
      * 2. Test access control of DO-only delegation

@@ -26,7 +26,7 @@
         <option name="test-file-name" value="CtsActivityManagerDeviceSdk25TestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
-        <option name="package" value="android.server.cts.am.testsdk25" />
+        <option name="package" value="android.server.am.cts.testsdk25" />
         <option name="runtime-hint" value="1m" />
     </test>
 </configuration>
