@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.LteVopsSupportInfo;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
@@ -243,5 +244,36 @@ public class ServiceStateTest extends AndroidTestCase {
         assertEquals(nri, serviceState.getNetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN));
 
+    }
+
+    public void testLteVopsSupportInfo() {
+        LteVopsSupportInfo lteVopsSupportInfo =
+                new LteVopsSupportInfo(LteVopsSupportInfo.LTE_STATUS_NOT_AVAILABLE,
+                        LteVopsSupportInfo.LTE_STATUS_NOT_AVAILABLE);
+
+        NetworkRegistrationInfo wwanDataRegState = new NetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                0, 0, 0, true, null, null, 0, false, false, false, lteVopsSupportInfo, false);
+
+        ServiceState ss = new ServiceState();
+
+        ss.addNetworkRegistrationInfo(wwanDataRegState);
+
+        assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN), wwanDataRegState);
+
+        lteVopsSupportInfo =
+                new LteVopsSupportInfo(LteVopsSupportInfo.LTE_STATUS_SUPPORTED,
+                        LteVopsSupportInfo.LTE_STATUS_NOT_SUPPORTED);
+
+        wwanDataRegState = new NetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                0, 0, 0, true, null, null, 0, false, false, false, lteVopsSupportInfo, false);
+        ss.addNetworkRegistrationInfo(wwanDataRegState);
+        assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN), wwanDataRegState);
+        assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN).getDataSpecificInfo().getLteVopsSupportInfo(),
+            lteVopsSupportInfo);
     }
 }
