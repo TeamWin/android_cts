@@ -57,9 +57,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -377,6 +379,23 @@ public class SubscriptionManagerTest {
         // Remove from subscription group with current sub Id. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
         try {
+            mSm.addSubscriptionsIntoGroup(subGroup, null);
+            fail();
+        } catch (NullPointerException expected) {
+        }
+
+        // Add into subscription group with current sub Id. This should fail
+        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
+        try {
+            ParcelUuid groupUuid = new ParcelUuid(UUID.randomUUID());
+            mSm.addSubscriptionsIntoGroup(subGroup, groupUuid);
+            fail();
+        } catch (SecurityException expected) {
+        }
+
+        // Remove from subscription group with current sub Id. This should fail
+        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
+        try {
             mSm.removeSubscriptionsFromGroup(subGroup, null);
             fail();
         } catch (NullPointerException expected) {
@@ -399,9 +418,31 @@ public class SubscriptionManagerTest {
         assertEquals(1, infoList.size());
         assertEquals(uuid, infoList.get(0).getGroupUuid());
 
+        List<SubscriptionInfo> availableInfoList = mSm.getAvailableSubscriptionInfoList();
+        if (availableInfoList.size() > 1) {
+            List<Integer> availableSubGroup = availableInfoList.stream()
+                    .map(info -> info.getSubscriptionId())
+                    .filter(subId -> subId != mSubId)
+                    .collect(Collectors.toList());
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.addSubscriptionsIntoGroup(availableSubGroup, uuid));
+
+            infoList = mSm.getSubscriptionsInGroup(uuid);
+            assertNotNull(infoList);
+            assertEquals(availableInfoList.size(), infoList.size());
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.removeSubscriptionsFromGroup(availableSubGroup, uuid));
+        }
+
         // Remove from subscription group with current sub Id.
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                 (sm) -> sm.removeSubscriptionsFromGroup(subGroup, uuid));
+
+        infoList = mSm.getSubscriptionsInGroup(uuid);
+        assertNotNull(infoList);
+        assertTrue(infoList.isEmpty());
     }
 
     @Test
