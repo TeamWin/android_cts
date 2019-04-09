@@ -21,6 +21,7 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
+import static android.telephony.TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -58,7 +59,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -490,6 +494,130 @@ public class SubscriptionManagerTest {
         }
     }
 
+    @Test
+    public void testGetEnabledSubscriptionId() {
+        if (!isSupported()) return;
+        int slotId = SubscriptionManager.getSlotIndex(mSubId);
+        if (!SubscriptionManager.isValidSlotIndex(slotId)) {
+            fail("Invalid slot id " + slotId + " for subscription id " + mSubId);
+        }
+        int enabledSubId = executeWithShellPermissionAndDefault(-1, mSm,
+                (sm) -> sm.getEnabledSubscriptionId(slotId));
+        assertEquals(mSubId, enabledSubId);
+    }
+
+    @Test
+    public void testSetAndCheckSubscriptionEnabled() {
+        if (!isSupported()) return;
+        boolean enabled = executeWithShellPermissionAndDefault(false, mSm,
+                (sm) -> sm.isSubscriptionEnabled(mSubId));
+        if (isDSDS()) {
+            // Change it to a different value
+            changeAndVerifySubscriptionEnabledValue(mSubId, !enabled);
+            // Reset it back to original
+            changeAndVerifySubscriptionEnabledValue(mSubId, enabled);
+        } else {
+            boolean changeSuccessfully = executeWithShellPermissionAndDefault(false, mSm,
+                    (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
+            assertFalse(changeSuccessfully);
+        }
+    }
+
+    @Test
+    public void testSetPreferredDataSubscriptionId() {
+        if (!isSupported()) return;
+        int preferredSubId = executeWithShellPermissionAndDefault(-1, mSm,
+                (sm) -> sm.getPreferredDataSubscriptionId());
+
+        final LinkedBlockingQueue<Integer> resultQueue = new LinkedBlockingQueue<>(1);
+        Executor executor = new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        };
+
+        Consumer<Integer> consumer = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer res) {
+                if (res == null) {
+                    resultQueue.offer(-1);
+                } else {
+                    resultQueue.offer(res);
+                }
+            }
+        };
+
+        int [] subList = mSm.getActiveSubscriptionIdList();
+        boolean changes = false;
+
+        for (int subId : subList) {
+            if (subId != preferredSubId) {
+                int newPreferredSubId = subId;
+                // Change to a new value.
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                        (sm) -> sm.setPreferredDataSubscriptionId(newPreferredSubId, false,
+                                executor, consumer));
+                int res = -1;
+                try {
+                    res = resultQueue.poll(2, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    fail("Cannot get the modem result in time");
+                }
+                assertEquals(SET_OPPORTUNISTIC_SUB_SUCCESS, res);
+                int newGetValue = executeWithShellPermissionAndDefault(-1, mSm,
+                        (sm) -> sm.getPreferredDataSubscriptionId());
+                assertEquals(newPreferredSubId, newGetValue);
+                changes = true;
+                break;
+            }
+        }
+
+        // Reset back, or set the duplicate.
+        if (SubscriptionManager.isValidSubscriptionId(preferredSubId)) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setPreferredDataSubscriptionId(preferredSubId, false,
+                            executor, consumer));
+            int res = -1;
+            try {
+                res = resultQueue.poll(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                fail("Cannot get the modem result in time");
+            }
+            // Duplicate setting ends up with nothing.
+            if (!changes) {
+                assertEquals(-1, res);
+            } else {
+                assertEquals(SET_OPPORTUNISTIC_SUB_SUCCESS, res);
+                int resetGetValue = executeWithShellPermissionAndDefault(-1, mSm,
+                        (sm) -> sm.getPreferredDataSubscriptionId());
+                assertEquals(resetGetValue, preferredSubId);
+            }
+        }
+    }
+
+    private void changeAndVerifySubscriptionEnabledValue(int subId, boolean targetValue) {
+        boolean changeSuccessfully = executeWithShellPermissionAndDefault(false, mSm,
+                (sm) -> sm.setSubscriptionEnabled(subId, targetValue));
+        if (!changeSuccessfully) {
+            fail("Cannot change subscription " + subId
+                    + " from " + !targetValue + " to " + targetValue);
+        }
+        boolean res = executeWithShellPermissionAndDefault(targetValue, mSm,
+                (sm) -> sm.isSubscriptionEnabled(subId));
+        assertEquals(targetValue, res);
+    }
+
+    private <T, U> T executeWithShellPermissionAndDefault(T defaultValue, U targetObject,
+            ShellIdentityUtils.ShellPermissionMethodHelper<T, U> helper) {
+        try {
+            return ShellIdentityUtils.invokeMethodWithShellPermissions(targetObject, helper);
+        } catch (Exception e) {
+            // do nothing, return default
+        }
+        return defaultValue;
+    }
+
     private void assertOverrideSuccess(SubscriptionPlan... plans) {
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(plans));
         mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
@@ -549,6 +677,12 @@ public class SubscriptionManagerTest {
     private static boolean isSupported() {
         return InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
+    private static boolean isDSDS() {
+        TelephonyManager tm = InstrumentationRegistry.getContext()
+                .getSystemService(TelephonyManager.class);
+        return tm != null && tm.getPhoneCount() > 1;
     }
 
     private static void setSubPlanOwner(int subId, String packageName) throws Exception {
