@@ -30,6 +30,8 @@ import android.provider.BlockedNumberContract.BlockedNumbers;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 // make cts
 // cts-tradefed
 // run cts -m CtsProviderTestCases --test android.provider.cts.BlockedNumberContractTest
+@CddTest(requirement="7.4.1.1/C-1-1,C-1-2")
 public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnabled {
     private static final String TAG = "BlockedNumberContractTest";
     private ContentResolver mContentResolver;
@@ -74,6 +77,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         super.tearDown();
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testProviderInteractionsAsRegularApp_fails() {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -131,6 +135,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         assertNull(mContentResolver.getType(BlockedNumberContract.AUTHORITY_URI));
     }
 
+    @CddTest(requirement="7.4.1.1/CC-1-2")
     public void testInsertAndBlockCheck_succeeds() throws Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -162,6 +167,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         assertFalse(BlockedNumberContract.isBlocked(mContext, "random string"));
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testUnblock_succeeds() throws Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -181,6 +187,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         assertFalse(BlockedNumberContract.isBlocked(mContext, "1234@abcd.com"));
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testInsert_failsWithInvalidInputs() throws Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -226,6 +233,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         }
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testUpdate_isUnsupported() throws  Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -250,6 +258,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         assertFalse(BlockedNumberContract.isBlocked(mContext, ""));
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testDelete() throws Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -321,6 +330,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         }
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testProviderNotifiesChangesUsingContentObserver() throws Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");
@@ -351,6 +361,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         }
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-2")
     public void testAccessingNonExistentMethod_fails() throws Exception {
         if (!mIsSystemUser) {
             Log.i(TAG, "skipping BlockedNumberContractTest");

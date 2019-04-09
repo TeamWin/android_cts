@@ -29,6 +29,8 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests call blocking in a multi-user environment.
  */
+@CddTest(requirement="7.4.1.1/C-1-1")
 public class CallBlockingTest extends BaseNumberBlockingClientTest {
     private static final String QUERY_CALL_THROUGH_OUR_CONNECTION_SERVICE = CallLog.Calls.NUMBER
             + " = ? AND " + CallLog.Calls.PHONE_ACCOUNT_COMPONENT_NAME + " = ?";
@@ -65,6 +68,7 @@ public class CallBlockingTest extends BaseNumberBlockingClientTest {
         assertNull(mTelecomManager.getPhoneAccount(getPhoneAccountHandle()));
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-3,C-1-4")
     public void testIncomingCallFromBlockedNumberIsRejected() throws Exception {
         // Make sure no lingering values from previous runs.
         cleanupCall(false /* verifyNoCallLogsWritten */);
