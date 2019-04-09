@@ -299,9 +299,12 @@ public class AppStandbyTests {
 
     private void setBatteryCharging(final boolean charging) throws Exception {
         final BatteryManager bm = mContext.getSystemService(BatteryManager.class);
-        final String cmd = "dumpsys battery " + (charging ? "reset" : "unplug");
-        executeAndLog(cmd);
-        if (!charging) {
+        if (charging) {
+            executeAndLog("dumpsys battery reset");
+        } else {
+            executeAndLog("dumpsys battery unplug");
+            executeAndLog("dumpsys battery set status " +
+                    BatteryManager.BATTERY_STATUS_DISCHARGING);
             assertTrue("Battery could not be unplugged", waitUntil(() -> !bm.isCharging(), 5_000));
         }
     }
