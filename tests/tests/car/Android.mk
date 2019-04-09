@@ -27,6 +27,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	androidx.test.rules \
 	compatibility-device-util-axt \
+	truth-prebuilt\
 	ctstestrunner-axt
 
 LOCAL_JAVA_LIBRARIES := android.car android.test.base.stubs
