@@ -1027,8 +1027,20 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mPlayer.play();
 
         onStartCalled.waitForSignal();
+        int state = mPlayer.getState();
+        assertTrue("MediaPlayer2 should be in playing state for dsd, " + state,
+                state == MediaPlayer2.PLAYER_STATE_PLAYING);
+
         onStart2Called.waitForSignal();
+        state = mPlayer.getState();
+        assertTrue("MediaPlayer2 should be in playing state for dsd2, " + state,
+                state == MediaPlayer2.PLAYER_STATE_PLAYING);
+
         onStart3Called.waitForSignal();
+        state = mPlayer.getState();
+        assertTrue("MediaPlayer2 should be in playing state for dsd3, " + state,
+                state == MediaPlayer2.PLAYER_STATE_PLAYING);
+
         mOnCompletionCalled.waitForSignal();
         onCompletion2Called.waitForSignal();
         onCompletion3Called.waitForSignal();
