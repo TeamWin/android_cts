@@ -19,6 +19,8 @@ package com.android.cts.verifier.nfc;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 import android.app.Dialog;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
@@ -33,6 +35,7 @@ import java.nio.charset.Charset;
 /**
  * Test activity that sends a particular NDEF Push message to another NFC device.
  */
+@CddTest(requirement="7.4.4/C-1-4,C-1-5,C-1-10")
 public class NdefPushSenderActivity extends PassFailButtons.Activity implements
         NfcAdapter.CreateNdefMessageCallback {
 

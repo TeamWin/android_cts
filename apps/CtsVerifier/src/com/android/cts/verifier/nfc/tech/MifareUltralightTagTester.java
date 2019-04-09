@@ -19,6 +19,8 @@ package com.android.cts.verifier.nfc.tech;
 import android.nfc.Tag;
 import android.nfc.tech.MifareUltralight;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
@@ -27,6 +29,7 @@ import java.util.Random;
  * {@link TagTester} for MIFARE Ultralight tags. It writes random bytes to the
  * tag's first user page and verifies that it matches when scanned later.
  */
+@CddTest(requirement="7.4.4/C-4-1")
 public class MifareUltralightTagTester implements TagTester {
 
     private static final int USER_PAGE_OFFSET = 5;

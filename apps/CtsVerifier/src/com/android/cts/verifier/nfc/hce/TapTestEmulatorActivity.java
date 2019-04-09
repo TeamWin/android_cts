@@ -7,9 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.nfc.NfcDialogs;
 
+@CddTest(requirement="7.4.4/C-2-2")
 @TargetApi(19)
 public class TapTestEmulatorActivity extends BaseEmulatorActivity {
     TextView mTextView;
