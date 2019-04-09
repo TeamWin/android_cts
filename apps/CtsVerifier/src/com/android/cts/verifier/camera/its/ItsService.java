@@ -346,17 +346,16 @@ public class ItsService extends Service implements SensorEventListener {
         }
     }
 
-    public void openCameraDevice(int cameraId) throws ItsException {
-        Logt.i(TAG, String.format("Opening camera %d", cameraId));
+    public void openCameraDevice(String cameraId) throws ItsException {
+        Logt.i(TAG, String.format("Opening camera %s", cameraId));
 
-        String[] devices;
         try {
-            devices = mCameraManager.getCameraIdList();
-            if (devices == null || devices.length == 0) {
-                throw new ItsException("No camera devices");
-            }
             if (mMemoryQuota == -1) {
                 // Initialize memory quota on this device
+                List<String> devices = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+                if (devices.size() == 0) {
+                    throw new ItsException("No camera devices");
+                }
                 for (String camId : devices) {
                     CameraCharacteristics chars =  mCameraManager.getCameraCharacteristics(camId);
                     Size maxYuvSize = ItsUtils.getMaxOutputSize(
@@ -373,10 +372,8 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         try {
-            mCamera = mBlockingCameraManager.openCamera(devices[cameraId],
-                    mCameraListener, mCameraHandler);
-            mCameraCharacteristics = mCameraManager.getCameraCharacteristics(
-                    devices[cameraId]);
+            mCamera = mBlockingCameraManager.openCamera(cameraId, mCameraListener, mCameraHandler);
+            mCameraCharacteristics = mCameraManager.getCameraCharacteristics(cameraId);
             mSocketQueueQuota = new Semaphore(mMemoryQuota, true);
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to open camera", e);
@@ -646,7 +643,7 @@ public class ItsService extends Service implements SensorEventListener {
                 JSONObject cmdObj = new JSONObject(cmd);
                 Logt.i(TAG, "Start processing command" + cmdObj.getString("cmdName"));
                 if ("open".equals(cmdObj.getString("cmdName"))) {
-                    int cameraId = cmdObj.getInt("cameraId");
+                    String cameraId = cmdObj.getString("cameraId");
                     openCameraDevice(cameraId);
                 } else if ("close".equals(cmdObj.getString("cmdName"))) {
                     closeCameraDevice();
@@ -901,6 +898,9 @@ public class ItsService extends Service implements SensorEventListener {
     private void doGetPropsById(JSONObject params) throws ItsException {
         String[] devices;
         try {
+            // Intentionally not using ItsUtils.getItsCompatibleCameraIds here so it's possible to
+            // write some simple script to query camera characteristics even for devices exempted
+            // from ITS today.
             devices = mCameraManager.getCameraIdList();
             if (devices == null || devices.length == 0) {
                 throw new ItsException("No camera devices");
@@ -927,34 +927,21 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void doGetCameraIds() throws ItsException {
-        String[] devices;
-        try {
-            devices = mCameraManager.getCameraIdList();
-            if (devices == null || devices.length == 0) {
-                throw new ItsException("No camera devices");
-            }
-        } catch (CameraAccessException e) {
-            throw new ItsException("Failed to get device ID list", e);
+        List<String> devices = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+        if (devices.size() == 0) {
+            throw new ItsException("No camera devices");
         }
 
         try {
             JSONObject obj = new JSONObject();
             JSONArray array = new JSONArray();
             for (String id : devices) {
-                CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
-                // Only supply camera Id for non-legacy cameras since legacy camera does not
-                // support ITS
-                if (characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL) !=
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-                    array.put(id);
-                }
+                array.put(id);
             }
             obj.put("cameraIdArray", array);
             mSocketRunnableObj.sendResponse("cameraIds", obj);
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
-        } catch (android.hardware.camera2.CameraAccessException e) {
-            throw new ItsException("Access error: ", e);
         }
     }
 
