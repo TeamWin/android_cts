@@ -46,6 +46,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.FileDescriptor;
 import java.io.SyncFailedException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -685,6 +686,25 @@ public class StorageManagerTest extends AndroidTestCase {
             for (int i = 0; i < bytes.length; i++) {
                 assertEquals(bytes[i], callback.bytes[i]);
             }
+        }
+    }
+
+    public void testIsAllocationSupported() throws Exception {
+        FileDescriptor good = Os.open(
+            File.createTempFile("StorageManagerTest", "").getAbsolutePath(),
+            OsConstants.O_RDONLY, 0);
+        FileDescriptor bad = Os.open("/proc/self/cmdline", OsConstants.O_RDONLY, 0);
+        try {
+            assertTrue(mStorageManager.isAllocationSupported(good));
+            assertFalse(mStorageManager.isAllocationSupported(bad));
+        } finally {
+            try {
+                Os.close(good);
+            } catch (ErrnoException ignored) {}
+
+            try {
+                Os.close(bad);
+            } catch (ErrnoException ignored) {}
         }
     }
 
