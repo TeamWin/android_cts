@@ -1,4 +1,5 @@
-# Copyright (C) 2016 The Android Open Source Project
+#
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,4 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-include $(call all-subdir-makefiles)
+LOCAL_PATH:= $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_SDK_VERSION := current
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
+
+# TODO: Uncomment when uncommenting the test
+#LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_PACKAGE_NAME := CtsRestrictedPermissionsUser
+
+include $(BUILD_CTS_PACKAGE)

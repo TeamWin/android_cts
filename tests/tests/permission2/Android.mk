@@ -27,6 +27,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+	androidx.test.core \
 	compatibility-device-util-axt \
 	ctstestrunner-axt \
 	guava
@@ -38,3 +39,5 @@ LOCAL_PACKAGE_NAME := CtsPermission2TestCases
 LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
