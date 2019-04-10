@@ -425,15 +425,15 @@ public class LocationTest extends AndroidTestCase {
     public void testAccessElapsedRealtimeUncertaintyNanos() {
         Location location = new Location("");
         assertFalse(location.hasElapsedRealtimeUncertaintyNanos());
-        assertEquals(0, location.getElapsedRealtimeUncertaintyNanos());
+        assertEquals(0.0, location.getElapsedRealtimeUncertaintyNanos());
 
-        location.setElapsedRealtimeUncertaintyNanos(12000);
-        assertEquals(12000, location.getElapsedRealtimeUncertaintyNanos());
+        location.setElapsedRealtimeUncertaintyNanos(12000.0);
+        assertEquals(12000.0, location.getElapsedRealtimeUncertaintyNanos());
         assertTrue(location.hasElapsedRealtimeUncertaintyNanos());
 
         location.reset();
         assertFalse(location.hasElapsedRealtimeUncertaintyNanos());
-        assertEquals(0, location.getElapsedRealtimeUncertaintyNanos());
+        assertEquals(0.0, location.getElapsedRealtimeUncertaintyNanos());
     }
 
     public void testSet() {
