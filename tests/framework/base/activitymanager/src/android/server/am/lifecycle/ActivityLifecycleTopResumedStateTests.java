@@ -658,7 +658,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                     new Intent());
             waitAndAssertActivityStates(state(activity, ON_STOP));
             LifecycleVerifier.assertLaunchAndStopSequence(CallbackTrackingActivity.class,
-                    getLifecycleLog(), false /* onTop */);
+                    getLifecycleLog(), true /* onTop */);
 
             getLifecycleLog().clear();
         }
@@ -707,8 +707,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
             // TODO(b/123432490): Fix extra pause/resume
             LifecycleVerifier.assertSequence(ShowWhenLockedCallbackTrackingActivity.class,
-                    getLifecycleLog(), Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START,
-                            ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED),
+                    getLifecycleLog(),
+                    Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                            ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_RESUME,
+                            ON_TOP_POSITION_GAINED),
                     "launchAboveKeyguard");
 
             getLifecycleLog().clear();
