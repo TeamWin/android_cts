@@ -195,7 +195,7 @@ ALOGI("%s%s%s", "Returning glesLayer_" #func " for ", funcName, " in eglGPA"); \
 return (EGLFuncPointer)glesLayer_##func; \
 }
 
-    if (strcmp("1", xstr(LAYERNAME)) == 0) {
+    if (strcmp("A", xstr(LAYERNAME)) == 0) {
 
         const char* targetFunc = "glCompileShader";
         if (strcmp(targetFunc, funcName) == 0) {
@@ -205,7 +205,7 @@ return (EGLFuncPointer)glesLayer_##func; \
 
         GETPROCADDR(glDrawArraysInstanced);
 
-    } else if (strcmp("2", xstr(LAYERNAME)) == 0) {
+    } else if (strcmp("B", xstr(LAYERNAME)) == 0) {
 
         const char* targetFunc = "glCompileShader";
         if (strcmp(targetFunc, funcName) == 0) {
