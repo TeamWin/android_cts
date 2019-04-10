@@ -49,10 +49,10 @@ include $(BUILD_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libGLES_glesLayer1
+LOCAL_MODULE := libGLES_glesLayerA
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/glesLayer.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=1
+LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=A
 LOCAL_SHARED_LIBRARIES := libandroid libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
@@ -60,10 +60,10 @@ include $(BUILD_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libGLES_glesLayer2
+LOCAL_MODULE := libGLES_glesLayerB
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/glesLayer.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=2
+LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=B
 LOCAL_SHARED_LIBRARIES := libandroid libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
@@ -71,10 +71,10 @@ include $(BUILD_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libGLES_glesLayer3
+LOCAL_MODULE := libGLES_glesLayerC
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/glesLayer.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=3
+LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=C
 LOCAL_SHARED_LIBRARIES := libandroid libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
@@ -97,9 +97,9 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 libVkLayer_nullLayerA \
 libVkLayer_nullLayerB \
 libVkLayer_nullLayerC \
-libGLES_glesLayer1 \
-libGLES_glesLayer2 \
-libGLES_glesLayer3
+libGLES_glesLayerA \
+libGLES_glesLayerB \
+libGLES_glesLayerC
 
 LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
 

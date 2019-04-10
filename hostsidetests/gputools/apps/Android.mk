@@ -64,7 +64,7 @@ LOCAL_MULTILIB := both
 LOCAL_JNI_SHARED_LIBRARIES := \
 libctsgputools_jni \
 libVkLayer_nullLayerC \
-libGLES_glesLayer3
+libGLES_glesLayerC
 
 LOCAL_AAPT_FLAGS := \
 --rename-manifest-package android.rootlessgpudebug.RELEASE.app
