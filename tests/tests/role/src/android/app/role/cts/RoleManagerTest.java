@@ -554,7 +554,7 @@ public class RoleManagerTest {
         removeRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
 
         assertThat(AppOpsUtils.getOpMode(APP_PACKAGE_NAME, AppOpsManager.OPSTR_SEND_SMS))
-                .isEqualTo(AppOpsManager.opToDefaultMode(AppOpsManager.OPSTR_SEND_SMS));
+                .isEqualTo(AppOpsManager.MODE_ALLOWED);
     }
 
     @Test
