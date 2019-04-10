@@ -1317,6 +1317,28 @@ public class ContentResolverTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull
+    public void testContentResolverCaching() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.CACHE_CONTENT,
+                android.Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+
+        Bundle cached = new Bundle();
+        cached.putString("key", "value");
+        mContentResolver.putCache(TABLE1_URI, cached);
+
+        Bundle response = mContentResolver.getCache(TABLE1_URI);
+        assertEquals("value", response.getString("key"));
+
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_KEY_NAME, "key10");
+        values.put(COLUMN_VALUE_NAME, 10);
+        mContentResolver.update(TABLE1_URI, values, null, null);
+
+        response = mContentResolver.getCache(TABLE1_URI);
+        assertNull(response);
+    }
+
     private class MockContentObserver extends ContentObserver {
         private boolean mHadOnChanged = false;
 

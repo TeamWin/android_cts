@@ -19,6 +19,9 @@
           package="android.app.notification.legacy29.cts">
 
     <uses-sdk android:minSdkVersion="29"  />
+
+    <uses-permission android:name="android.permission.REQUEST_NOTIFICATION_ASSISTANT_SERVICE"/>
+
     <application>
         <uses-library android:name="android.test.runner" />
 
@@ -28,6 +31,15 @@
                  android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <service android:name="android.app.notification.legacy29.cts.TestNotificationAssistant"
+                 android:exported="true"
+                 android:label="TestNotificationAssistant"
+                 android:permission="android.permission.BIND_NOTIFICATION_ASSISTANT_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationAssistantService" />
             </intent-filter>
         </service>
 
