@@ -17,6 +17,7 @@
 package android.provider.cts;
 
 import static android.provider.cts.ProviderTestUtils.hash;
+import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -41,12 +42,13 @@ import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,12 +58,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Presubmit
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class MediaStore_DownloadsTest {
     private static final String TAG = MediaStore_DownloadsTest.class.getSimpleName();
     private static final long NOTIFY_TIMEOUT_MILLIS = 4000;
@@ -70,30 +71,36 @@ public class MediaStore_DownloadsTest {
     private ContentResolver mContentResolver;
     private File mDownloadsDir;
     private File mPicturesDir;
-    private ArrayList<Uri> mAddedUris;
-    private final Uri mExternalDownloads = Downloads.EXTERNAL_CONTENT_URI;
     private CountDownLatch mCountDownLatch;
     private int mInitialDownloadsCount;
 
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mContentResolver = mContext.getContentResolver();
-        mDownloadsDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS);
-        mPicturesDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES);
-        mDownloadsDir.mkdir();
-        mPicturesDir.mkdir();
-        mAddedUris = new ArrayList<>();
-        mInitialDownloadsCount = getInitialDownloadsCount();
+    private Uri mExternalImages;
+    private Uri mExternalDownloads;
+
+    @Parameter(0)
+    public String mVolumeName;
+
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ProviderTestUtils.getSharedVolumeNames();
     }
 
-    @After
-    public void tearDown() {
-        for (Uri uri : mAddedUris) {
-            mContentResolver.delete(uri, null, null);
-        }
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
+
+        Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
+        mExternalDownloads = MediaStore.Downloads.getContentUri(mVolumeName);
+
+        mDownloadsDir = new File(MediaStore.getVolumePath(resolveVolumeName(mVolumeName)),
+                Environment.DIRECTORY_DOWNLOADS);
+        mPicturesDir = new File(MediaStore.getVolumePath(resolveVolumeName(mVolumeName)),
+                Environment.DIRECTORY_PICTURES);
+        mDownloadsDir.mkdirs();
+        mPicturesDir.mkdirs();
+        mInitialDownloadsCount = getInitialDownloadsCount();
     }
 
     @Test
@@ -121,10 +128,7 @@ public class MediaStore_DownloadsTest {
     @Test
     public void testGetContentUri() throws Exception {
         Cursor c;
-        assertNotNull(c = mContentResolver.query(Downloads.INTERNAL_CONTENT_URI,
-                null, null, null, null));
-        c.close();
-        assertNotNull(c = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
+        assertNotNull(c = mContentResolver.query(mExternalDownloads,
                 null, null, null, null));
         c.close();
     }
@@ -133,12 +137,12 @@ public class MediaStore_DownloadsTest {
     public void testMediaInDownloadsDir() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final Uri insertUri = insertImage(displayName, "test image",
-                new File(mDownloadsDir, "scenery.jpg"), "image/jpeg", R.raw.scenery);
+                new File(mDownloadsDir, displayName + ".jpg"), "image/jpeg", R.raw.scenery);
         final String displayName2 = "cts" + System.nanoTime();
         final Uri insertUri2 = insertImage(displayName2, "test image2",
-                new File(mPicturesDir, "volantis.jpg"), "image/jpeg", R.raw.volantis);
+                new File(mPicturesDir, displayName2 + ".jpg"), "image/jpeg", R.raw.volantis);
 
-        try (Cursor cursor = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
+        try (Cursor cursor = mContentResolver.query(mExternalDownloads,
                 null, "title LIKE ?1", new String[] { displayName }, null)) {
             assertEquals(1, cursor.getCount());
             cursor.moveToNext();
@@ -147,8 +151,7 @@ public class MediaStore_DownloadsTest {
         }
 
         assertEquals(1, mContentResolver.delete(insertUri, null, null));
-        mAddedUris.remove(insertUri);
-        try (Cursor cursor = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
+        try (Cursor cursor = mContentResolver.query(mExternalDownloads,
                 null, null, null, null)) {
             assertEquals(mInitialDownloadsCount, cursor.getCount());
         }
@@ -163,13 +166,12 @@ public class MediaStore_DownloadsTest {
         final Uri refererUri = Uri.parse("https://www.android.com");
 
         final PendingParams params = new PendingParams(
-                Downloads.EXTERNAL_CONTENT_URI, displayName, mimeType);
+                mExternalDownloads, displayName, mimeType);
         params.setDownloadUri(downloadUri);
         params.setRefererUri(refererUri);
 
         final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
-        mAddedUris.add(pendingUri);
         final Uri publishUri;
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (PrintWriter pw = new PrintWriter(session.openOutputStream())) {
@@ -210,13 +212,12 @@ public class MediaStore_DownloadsTest {
     public void testUpdateDownload() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(
-                Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gpp");
+                mExternalDownloads, displayName, "video/3gpp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
 
         final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
-        mAddedUris.add(pendingUri);
         final Uri publishUri;
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
@@ -247,13 +248,12 @@ public class MediaStore_DownloadsTest {
     public void testDeleteDownload() throws Exception {
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(
-                Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
+                mExternalDownloads, displayName, "video/3gp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
 
         final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
-        mAddedUris.add(pendingUri);
         final Uri publishUri;
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
@@ -264,7 +264,7 @@ public class MediaStore_DownloadsTest {
         }
 
         assertEquals(1, mContentResolver.delete(publishUri, null, null));
-        try (Cursor cursor = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
+        try (Cursor cursor = mContentResolver.query(mExternalDownloads,
                 null, null, null, null)) {
             assertEquals(mInitialDownloadsCount, cursor.getCount());
         }
@@ -279,22 +279,21 @@ public class MediaStore_DownloadsTest {
                 mCountDownLatch.countDown();
             }
         };
-        mContentResolver.registerContentObserver(Downloads.EXTERNAL_CONTENT_URI, true, observer);
+        mContentResolver.registerContentObserver(mExternalDownloads, true, observer);
         mContentResolver.registerContentObserver(MediaStore.AUTHORITY_URI, false, observer);
         final Uri volumeUri = MediaStore.AUTHORITY_URI.buildUpon()
-                .appendPath(MediaStore.getVolumeName(Downloads.EXTERNAL_CONTENT_URI))
+                .appendPath(mVolumeName)
                 .build();
         mContentResolver.registerContentObserver(volumeUri, false, observer);
 
         mCountDownLatch = new CountDownLatch(1);
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(
-                Downloads.EXTERNAL_CONTENT_URI, displayName, "video/3gp");
+                mExternalDownloads, displayName, "video/3gp");
         final Uri downloadUri = Uri.parse("https://www.android.com/download?file=testvideo.3gp");
         params.setDownloadUri(downloadUri);
         final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         assertNotNull(pendingUri);
-        mAddedUris.add(pendingUri);
         final Uri publishUri;
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo);
@@ -318,7 +317,7 @@ public class MediaStore_DownloadsTest {
     }
 
     private int getInitialDownloadsCount() {
-        try (Cursor cursor = mContentResolver.query(Downloads.EXTERNAL_CONTENT_URI,
+        try (Cursor cursor = mContentResolver.query(mExternalDownloads,
                 null, null, null, null)) {
             return cursor.getCount();
         }
@@ -341,17 +340,14 @@ public class MediaStore_DownloadsTest {
         values.put(Images.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000);
         values.put(Images.Media.MIME_TYPE, mimeType);
 
-        final Uri insertUri = mContentResolver.insert(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        final Uri insertUri = mContentResolver.insert(mExternalImages, values);
         assertNotNull(insertUri);
-        mAddedUris.add(insertUri);
         return insertUri;
     }
 
     private void verifyScannedDownload(File file) throws Exception {
         final Uri mediaStoreUri = ProviderTestUtils.scanFile(file);
         Log.e(TAG, "Scanned file " + file.getAbsolutePath() + ": " + mediaStoreUri);
-        mAddedUris.add(mediaStoreUri);
         assertArrayEquals("File hashes should match for " + file + " and " + mediaStoreUri,
                 hash(new FileInputStream(file)),
                 hash(mContentResolver.openInputStream(mediaStoreUri)));
