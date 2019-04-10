@@ -429,6 +429,12 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
+    public void testNotificationPolicyDetailIntent() {
+        Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_DETAIL_SETTINGS)
+                .setData(Uri.parse("package:android.content.cts"));
+        assertCanBeHandled(intent);
+    }
+
     public void testRequestEnableContentCaptureIntent() {
         Intent intent = new Intent(Settings.ACTION_REQUEST_ENABLE_CONTENT_CAPTURE);
         assertCanBeHandled(intent);
