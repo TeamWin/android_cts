@@ -176,18 +176,6 @@ public class MediaStore_Video_MediaTest {
         assertNotExists(videofile);
     }
 
-    @Test
-    public void testStoreVideoMediaInternal() {
-        // can not insert any data, so other operations can not be tested
-        try {
-            mContentResolver.insert(Media.INTERNAL_CONTENT_URI, new ContentValues());
-            fail("Should throw UnsupportedOperationException when inserting into internal "
-                    + "database");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
-    }
-
     private Uri insertVideo(Context context) throws IOException {
         final File dir = ProviderTestUtils.stageDir(mVolumeName);
         final File file = new File(dir, "testVideo.3gp");
