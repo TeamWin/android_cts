@@ -389,7 +389,7 @@
             <meta-data android:name="android.service.zen.automatic.ruleType"
                        android:value="@string/automatic_zen_rule_name" />
             <meta-data android:name="android.service.zen.automatic.ruleInstanceLimit"
-                       android:value="1" />
+                       android:value="2" />
         </activity>
 
         <receiver android:name="android.app.stubs.CommandReceiver"

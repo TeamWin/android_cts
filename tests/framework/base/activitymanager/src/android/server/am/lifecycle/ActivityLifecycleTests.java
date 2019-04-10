@@ -385,17 +385,10 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
             LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                     Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
                             ON_PAUSE), "becomingVisiblePaused");
-            // TODO(b/77974794): New intent handling sequence should always be the same.
-            // It is possible to get an extra pause and resume now.
             final List<LifecycleLog.ActivityCallback> expectedSequence =
                     Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
-            final List<LifecycleLog.ActivityCallback> extraCycleSequence =
-                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
-                            ON_PAUSE, ON_RESUME);
-            LifecycleVerifier.assertSequenceMatchesOneOf(TranslucentActivity.class,
-                    getLifecycleLog(),
-                    Arrays.asList(expectedSequence, extraCycleSequence),
-                    "becomingVisibleResumed");
+            LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
+                    expectedSequence, "becomingVisibleResumed");
         }
     }
 
@@ -624,27 +617,22 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         mTargetContext.startActivity(intent);
 
         // Wait for activity to relaunch and resume
-        final List<List<LifecycleLog.ActivityCallback>> expectedRelaunchSequences;
+        final List<LifecycleLog.ActivityCallback> expectedRelaunchSequence;
         if (secondActivityIsTranslucent) {
-            expectedRelaunchSequences = Arrays.asList(Arrays.asList(ON_NEW_INTENT, ON_RESUME,
+            expectedRelaunchSequence = Arrays.asList(ON_NEW_INTENT, ON_RESUME,
                     ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST,
                     ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                    ON_POST_CREATE, ON_RESUME,ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED));
+                    ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED);
         } else {
-            expectedRelaunchSequences = Arrays.asList(
-                    Arrays.asList(ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME,
-                            ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
-                            ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
-                            ON_RESUME, ON_TOP_POSITION_GAINED),
-                    Arrays.asList(ON_NEW_INTENT, ON_RESTART, ON_START, ON_RESUME,
-                            ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
-                            ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
-                            ON_RESUME, ON_TOP_POSITION_GAINED));
+            expectedRelaunchSequence = Arrays.asList(ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME,
+                    ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY,
+                    PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                    ON_TOP_POSITION_GAINED);
         }
 
-        waitForActivityTransitions(SingleTopActivity.class, expectedRelaunchSequences.get(0));
-        LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
-                expectedRelaunchSequences, "recreate");
+        waitForActivityTransitions(SingleTopActivity.class, expectedRelaunchSequence);
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                expectedRelaunchSequence, "recreate");
     }
 
     @Test
@@ -698,21 +686,18 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         mTargetContext.startActivity(intent);
 
         // Wait for the activity to resume again
-        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
 
         // Verify that the first activity was restarted, new intent was delivered and resumed again
         final List<LifecycleLog.ActivityCallback> expectedSequence;
-        final List<LifecycleLog.ActivityCallback> otherSequence;
         if (isTranslucent(singleTopActivity)) {
-            expectedSequence = Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_PAUSE, ON_RESUME);
-            otherSequence = Arrays.asList(ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME);
+            expectedSequence = Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_TOP_POSITION_GAINED);
         } else {
-            expectedSequence = Arrays.asList(ON_NEW_INTENT, ON_RESTART, ON_START, ON_RESUME);
-            otherSequence = Arrays.asList(ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME);
+            expectedSequence = Arrays.asList(ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME,
+                    ON_TOP_POSITION_GAINED);
         }
-        // TODO(b/65236456): This should always be ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME
-        LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
-                Arrays.asList(expectedSequence, otherSequence), "newIntent");
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                expectedSequence, "newIntent");
     }
 
     @Test
@@ -738,16 +723,11 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         mTargetContext.startActivity(intent);
 
         // Wait for the activity to resume again
-        // TODO(b/77974794): New intent handling sequence should always be the same.
-        // It is possible to get an extra pause and resume now.
-        final List<LifecycleLog.ActivityCallback> extraPauseSequence =
-                Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_PAUSE, ON_RESUME);
-        waitForActivityTransitions(SingleTopActivity.class, extraPauseSequence);
-
         // Verify that the new intent was delivered and resumed again
         final List<LifecycleLog.ActivityCallback> expectedSequence =
-                Arrays.asList(ON_NEW_INTENT, ON_RESUME);
-        LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
-                Arrays.asList(expectedSequence, extraPauseSequence), "newIntent");
+                Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_TOP_POSITION_GAINED);
+        waitForActivityTransitions(SingleTopActivity.class, expectedSequence);
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                expectedSequence, "newIntent");
     }
 }

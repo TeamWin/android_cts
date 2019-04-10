@@ -37,6 +37,7 @@ import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
@@ -187,7 +188,7 @@ public abstract class ActivityManagerTestBase {
         testPackages.add(TEST_PACKAGE);
         testPackages.add(SECOND_TEST_PACKAGE);
         testPackages.add(THIRD_TEST_PACKAGE);
-        testPackages.add("android.server.cts.am");
+        testPackages.add("android.server.am.cts");
         TEST_PACKAGES = Collections.unmodifiableList(testPackages);
     }
 
@@ -201,6 +202,7 @@ public abstract class ActivityManagerTestBase {
 
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
+    private static Boolean sSupportsInsecureLockScreen = null;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
@@ -769,10 +771,9 @@ public abstract class ActivityManagerTestBase {
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
-    /** Whether or not the device pin/pattern/password lock. */
+    /** Whether or not the device supports pin/pattern/password lock. */
     protected boolean supportsSecureLock() {
-        return !hasDeviceFeature(FEATURE_LEANBACK)
-                && !hasDeviceFeature(FEATURE_EMBEDDED);
+        return hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     /** Whether or not the device supports "swipe" lock. */
@@ -780,7 +781,8 @@ public abstract class ActivityManagerTestBase {
         return !hasDeviceFeature(FEATURE_LEANBACK)
                 && !hasDeviceFeature(FEATURE_WATCH)
                 && !hasDeviceFeature(FEATURE_EMBEDDED)
-                && !hasDeviceFeature(FEATURE_AUTOMOTIVE);
+                && !hasDeviceFeature(FEATURE_AUTOMOTIVE)
+                && getSupportsInsecureLockScreen();
     }
 
     protected boolean isWatch() {
@@ -865,6 +867,19 @@ public abstract class ActivityManagerTestBase {
             sSupportsSystemDecorsOnSecondaryDisplays = getSupportsSystemDecorsOnSecondaryDisplays();
         }
         return sSupportsSystemDecorsOnSecondaryDisplays;
+    }
+
+    protected boolean getSupportsInsecureLockScreen() {
+        if (sSupportsInsecureLockScreen == null) {
+            try {
+                sSupportsInsecureLockScreen = mContext.getResources().getBoolean(
+                        Resources.getSystem().getIdentifier(
+                                "config_supportsInsecureLockScreen", "bool", "android"));
+            } catch (Resources.NotFoundException e) {
+                sSupportsInsecureLockScreen = true;
+            }
+        }
+        return sSupportsInsecureLockScreen;
     }
 
     /**

@@ -4,7 +4,7 @@
             {
                 "flags": "FLAG_ACTIVITY_NEW_TASK",
                 "class": "android.server.am.intent.Activities$SingleInstanceActivity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             }
         ],
@@ -12,7 +12,7 @@
             {
                 "flags": "FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK",
                 "class": "android.server.am.intent.Activities$SingleInstanceActivity",
-                "package": "android.server.cts.am",
+                "package": "android.server.am.cts",
                 "startForResult": false
             }
         ]
@@ -24,13 +24,13 @@
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$SingleInstanceActivity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$SingleInstanceActivity",
                                 "state": "RESUMED"
                             }
                         ]
                     }
                 ],
-                "resumedActivity": "android.server.cts.am\/android.server.am.intent.Activities$SingleInstanceActivity"
+                "resumedActivity": "android.server.am.cts\/android.server.am.intent.Activities$SingleInstanceActivity"
             }
         ]
     },
@@ -41,13 +41,13 @@
                     {
                         "activities": [
                             {
-                                "name": "android.server.cts.am\/android.server.am.intent.Activities$SingleInstanceActivity",
+                                "name": "android.server.am.cts\/android.server.am.intent.Activities$SingleInstanceActivity",
                                 "state": "RESUMED"
                             }
                         ]
                     }
                 ],
-                "resumedActivity": "android.server.cts.am\/android.server.am.intent.Activities$SingleInstanceActivity"
+                "resumedActivity": "android.server.am.cts\/android.server.am.intent.Activities$SingleInstanceActivity"
             }
         ]
     }

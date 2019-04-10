@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.server.cts.am.testsdk25">
+    package="android.server.am.cts.testsdk25">
 
     <uses-sdk android:targetSdkVersion="25" />
 
@@ -31,6 +31,6 @@
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.server.cts.am.testsdk25" />
+        android:targetPackage="android.server.am.cts.testsdk25" />
 
 </manifest>

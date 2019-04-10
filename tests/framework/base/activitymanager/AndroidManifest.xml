@@ -17,7 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
-    package="android.server.cts.am">
+    package="android.server.am.cts">
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
@@ -262,6 +262,6 @@
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:label="CTS tests of ActivityManager"
-        android:targetPackage="android.server.cts.am" />
+        android:targetPackage="android.server.am.cts" />
 
 </manifest>

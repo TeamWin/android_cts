@@ -286,6 +286,72 @@ public class WindowFocusTests extends WindowManagerTestBase {
         primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
     }
 
+    /**
+     * Ensure that a non focused display becomes focused when tapping on a focusable window on
+     * that display.
+     */
+    @Test
+    public void testTapFocusableWindow() throws InterruptedException {
+        assumeTrue(supportsMultiDisplay());
+        // Ensure per display focus is disabled before proceeding with this test
+        if (getInstrumentation().getTargetContext().getResources().getBoolean(
+                android.R.bool.config_perDisplayFocusEnabled)) {
+            return;
+        }
+
+        PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
+
+        try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int secondaryDisplayId = displaySession.createDisplay(
+                    getInstrumentation().getTargetContext()).getDisplayId();
+            SecondaryActivity secondaryActivity = startActivity(SecondaryActivity.class,
+                    secondaryDisplayId);
+
+            tapOnCenterOfDisplay(DEFAULT_DISPLAY);
+            // Ensure primary activity got focus
+            primaryActivity.waitAndAssertWindowFocusState(true);
+            secondaryActivity.waitAndAssertWindowFocusState(false);
+        }
+    }
+
+    /**
+     * Ensure that a non focused display does not become focused when tapping on a non-focusable
+     * window on that display.
+     */
+    @Test
+    public void testTapNonFocusableWindow() throws InterruptedException {
+        assumeTrue(supportsMultiDisplay());
+        // Ensure per display focus is disabled before proceeding with this test
+        if (getInstrumentation().getTargetContext().getResources().getBoolean(
+                android.R.bool.config_perDisplayFocusEnabled)) {
+            return;
+        }
+
+        PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
+
+        try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int secondaryDisplayId = displaySession.createDisplay(
+                    getInstrumentation().getTargetContext()).getDisplayId();
+            SecondaryActivity secondaryActivity = startActivity(SecondaryActivity.class,
+                    secondaryDisplayId);
+
+            // Tap on a window that can't be focused and ensure that the other window in that
+            // display, primaryActivity's window, doesn't get focus.
+            getInstrumentation().runOnMainSync(() -> {
+                View view = new View(primaryActivity);
+                LayoutParams p = new LayoutParams();
+                p.flags = LayoutParams.FLAG_NOT_FOCUSABLE;
+                primaryActivity.getWindowManager().addView(view, p);
+            });
+            getInstrumentation().waitForIdleSync();
+
+            tapOnCenterOfDisplay(DEFAULT_DISPLAY);
+            // Ensure secondary activity still has focus
+            secondaryActivity.waitAndAssertWindowFocusState(true);
+            primaryActivity.waitAndAssertWindowFocusState(false);
+        }
+    }
+
     private static class InputTargetActivity extends FocusableActivity {
         private static final long TIMEOUT_DISPLAY_CHANGED = 1000; // milliseconds
         private static final long TIMEOUT_POINTER_CAPTURE_CHANGED = 1000;

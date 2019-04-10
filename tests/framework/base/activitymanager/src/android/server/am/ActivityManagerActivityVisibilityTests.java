@@ -56,6 +56,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 
@@ -398,9 +399,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
-        if (!supportsSecureLock()) {
-            return;
-        }
+        assumeTrue(supportsSecureLock());
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential()

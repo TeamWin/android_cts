@@ -31,7 +31,9 @@
 #include <android/surface_control.h>
 #include <android/sync.h>
 
+#include <errno.h>
 #include <jni.h>
+#include <time.h>
 
 namespace {
 
@@ -56,6 +58,16 @@ static void fail(JNIEnv* env, const char* format, ...) {
         fail(env, format, ##args);         \
         return;                            \
     }
+
+#define NANOS_PER_SECOND 1000000000LL
+int64_t systemTime() {
+    struct timespec time;
+    int result = clock_gettime(CLOCK_MONOTONIC, &time);
+    if (result < 0) {
+        return -errno;
+    }
+    return (time.tv_sec * NANOS_PER_SECOND) + time.tv_nsec;
+}
 
 static AHardwareBuffer* allocateBuffer(int32_t width, int32_t height) {
     AHardwareBuffer* buffer = nullptr;
@@ -337,12 +349,16 @@ static void onComplete(void* context, ASurfaceTransactionStats* stats) {
     int* contextIntPtr = reinterpret_cast<int*>(context);
     contextIntPtr[0]++;
     contextIntPtr[1] = presentFence;
+    int64_t* systemTimeLongPtr = reinterpret_cast<int64_t*>(contextIntPtr + 2);
+    *systemTimeLongPtr = systemTime();
 }
 
 jlong SurfaceTransaction_setOnComplete(JNIEnv* /*env*/, jclass, jlong surfaceTransaction) {
-    int* context = new int[2];
+    int* context = new int[4];
     context[0] = 0;
     context[1] = -1;
+    context[2] = -1;
+    context[3] = -1;
 
     ASurfaceTransaction_setOnComplete(
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
@@ -358,6 +374,9 @@ void SurfaceTransaction_checkOnComplete(JNIEnv* env, jclass, jlong context,
     int data = contextPtr[0];
     int presentFence = contextPtr[1];
 
+    int64_t* callbackTimePtr = reinterpret_cast<int64_t*>(contextPtr + 2);
+    int64_t callbackTime = *callbackTimePtr;
+
     delete[] contextPtr;
 
     if (desiredPresentTime < 0) {
@@ -367,30 +386,40 @@ void SurfaceTransaction_checkOnComplete(JNIEnv* env, jclass, jlong context,
         return;
     }
 
-    struct sync_file_info* syncFileInfo = sync_file_info(presentFence);
-    ASSERT(syncFileInfo, "invalid fence")
+    if (presentFence >= 0) {
+        struct sync_file_info* syncFileInfo = sync_file_info(presentFence);
+        ASSERT(syncFileInfo, "invalid fence");
 
-    if (syncFileInfo->status != 1) {
-        sync_file_info_free(syncFileInfo);
-        ASSERT(syncFileInfo->status == 1, "fence did not signal")
-    }
-
-    uint64_t presentTime = 0;
-    struct sync_fence_info* syncFenceInfo = sync_get_fence_info(syncFileInfo);
-    for (size_t i = 0; i < syncFileInfo->num_fences; i++) {
-        if (syncFenceInfo[i].timestamp_ns > presentTime) {
-            presentTime = syncFenceInfo[i].timestamp_ns;
+        if (syncFileInfo->status != 1) {
+            sync_file_info_free(syncFileInfo);
+            ASSERT(syncFileInfo->status == 1, "fence did not signal")
         }
+
+        uint64_t presentTime = 0;
+        struct sync_fence_info* syncFenceInfo = sync_get_fence_info(syncFileInfo);
+        for (size_t i = 0; i < syncFileInfo->num_fences; i++) {
+            if (syncFenceInfo[i].timestamp_ns > presentTime) {
+                presentTime = syncFenceInfo[i].timestamp_ns;
+            }
+        }
+
+        sync_file_info_free(syncFileInfo);
+        close(presentFence);
+
+        // In the worst case the worst present time should be no more than three frames off from the
+        // desired present time. Since the test case is using a virtual display and there are no
+        // requirements for virtual display refresh rate timing, lets assume a refresh rate of 16fps.
+        ASSERT(presentTime < desiredPresentTime + 0.188 * 1e9, "transaction was presented too late");
+        ASSERT(presentTime >= desiredPresentTime, "transaction was presented too early");
+    } else {
+        ASSERT(presentFence == -1, "invalid fences should be -1");
+        // The device doesn't support present fences. We will use the callback time to roughly
+        // verify the result. Since the callback could take up to half a frame, do the normal bound
+        // check plus an additional half frame.
+        ASSERT(callbackTime < desiredPresentTime + (0.188 + 0.031) * 1e9,
+                                                  "transaction was presented too late");
+        ASSERT(callbackTime >= desiredPresentTime, "transaction was presented too early");
     }
-
-    sync_file_info_free(syncFileInfo);
-    close(presentFence);
-
-    // In the worst case the worst present time should be no more than three frames off from the
-    // desired present time. Since the test case is using a virtual display and there are no
-    // requirements for virtual display refresh rate timing, lets assume a refresh rate of 16fps.
-    ASSERT(presentTime < desiredPresentTime + 0.188 * 1e9, "transaction was presented too late");
-    ASSERT(presentTime >= desiredPresentTime, "transaction was presented too early");
 
     ASSERT(data >= 1, "did not receive a callback")
     ASSERT(data <= 1, "received too many callbacks")
