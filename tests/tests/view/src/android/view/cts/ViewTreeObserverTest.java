@@ -166,7 +166,7 @@ public class ViewTreeObserverTest {
     @Test
     public void testAddOnTouchModeChangeListener() throws Throwable {
         // let the button be touch mode.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButton);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButton);
 
         mViewTreeObserver = mButton.getViewTreeObserver();
 
@@ -276,7 +276,7 @@ public class ViewTreeObserverTest {
     @Test
     public void testRemoveOnTouchModeChangeListener() throws Throwable {
         // let the button be touch mode.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButton);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButton);
 
         mViewTreeObserver = mButton.getViewTreeObserver();
 

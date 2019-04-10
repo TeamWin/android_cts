@@ -89,7 +89,7 @@ public class SearchViewTest extends EndToEndImeTestBase {
 
             // Emulate tap event on SearchView
             CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), searchView);
+                    InstrumentationRegistry.getInstrumentation(), null, searchView);
 
             // Expect input to bind since EditText is focused.
             expectBindInput(stream, Process.myPid(), TIMEOUT);

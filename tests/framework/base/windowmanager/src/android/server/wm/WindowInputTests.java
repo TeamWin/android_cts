@@ -104,7 +104,7 @@ public class WindowInputTests {
                 wm.updateViewLayout(mView, p);
             });
             mInstrumentation.waitForIdleSync();
-            CtsTouchUtils.emulateTapOnView(mInstrumentation, mView, 0 /* offsetX */,
+            CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mView, 0 /* offsetX */,
                     0 /* offsetY */);
         }
 
