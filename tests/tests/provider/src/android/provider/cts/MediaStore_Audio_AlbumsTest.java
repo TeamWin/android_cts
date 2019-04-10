@@ -19,6 +19,7 @@ package android.provider.cts;
 import static android.provider.cts.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -108,9 +109,11 @@ public class MediaStore_Audio_AlbumsTest {
             c.moveToFirst();
             long id = c.getLong(c.getColumnIndex(Albums._ID));
             assertTrue(id > 0);
+            assertFalse(c.isNull(c.getColumnIndex(Albums.ALBUM_ID)));
             assertEquals(Audio1.ALBUM, c.getString(c.getColumnIndex(Albums.ALBUM)));
             assertNull(c.getString(c.getColumnIndex(Albums.ALBUM_ART)));
             assertNotNull(c.getString(c.getColumnIndex(Albums.ALBUM_KEY)));
+            assertFalse(c.isNull(c.getColumnIndex(Albums.ARTIST_ID)));
             assertEquals(Audio1.ARTIST, c.getString(c.getColumnIndex(Albums.ARTIST)));
             assertEquals(Audio1.YEAR, c.getInt(c.getColumnIndex(Albums.FIRST_YEAR)));
             assertEquals(Audio1.YEAR, c.getInt(c.getColumnIndex(Albums.LAST_YEAR)));
