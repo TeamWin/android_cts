@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static android.app.Notification.CATEGORY_CALL;
+import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
@@ -25,11 +27,20 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
+import static android.app.stubs.BubblesTestActivity.BUBBLE_NOTIF_ID;
+import static android.app.stubs.BubblesTestService.EXTRA_TEST_CASE;
+import static android.app.stubs.BubblesTestService.TEST_NO_BUBBLE_METADATA;
+import static android.app.stubs.BubblesTestService.TEST_NO_CATEGORY;
+import static android.app.stubs.BubblesTestService.TEST_NO_PERSON;
+import static android.app.stubs.BubblesTestService.TEST_SUCCESS;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
@@ -38,12 +49,16 @@ import android.app.PendingIntent;
 import android.app.Person;
 import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
+import android.app.stubs.BubblesTestActivity;
+import android.app.stubs.BubblesTestService;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -56,6 +71,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -64,9 +80,11 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
+import android.server.am.ActivityManagerTestBase;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -87,6 +105,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
@@ -312,7 +332,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.cancel(id);
 
         if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-            fail("canceled notification was still alive, id=" + 1);
+            fail("canceled notification was still alive, id=" + id);
         }
     }
 
@@ -344,17 +364,57 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    private void sendAndVerifyBubble(final int id, Notification.Builder builder,
+            Notification.BubbleMetadata data, boolean shouldBeBubble) {
+        final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setAction(Intent.ACTION_MAIN);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+
+        if (data == null) {
+            data = new Notification.BubbleMetadata.Builder()
+                    .setIcon(Icon.createWithResource(mContext, R.drawable.black))
+                    .setIntent(pendingIntent)
+                    .build();
+        }
+        if (builder == null) {
+            builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                            .setSmallIcon(R.drawable.black)
+                            .setWhen(System.currentTimeMillis())
+                            .setContentTitle("notify#" + id)
+                            .setContentText("This is #" + id + "notification  ")
+                            .setContentIntent(pendingIntent);
+        }
+        builder.setBubbleMetadata(data);
+
+        Notification notif = builder.build();
+        mNotificationManager.notify(id, notif);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true, shouldBeBubble)) {
+            fail("couldn't find posted notification bubble with id=" + id);
+        }
+    }
+
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
+        return checkNotificationExistence(id, shouldExist, false /* shouldBeBubble */);
+    }
+
+    private boolean checkNotificationExistence(int id, boolean shouldExist,
+            boolean shouldBeBubble) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
         // we will check for it for up to 300ms before giving up
         boolean found = false;
+        boolean isBubble = false;
         for (int tries = 3; tries--> 0;) {
             // Need reset flag.
             found = false;
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
-                Log.d(TAG, "Found " + sbn.getKey());
+                isBubble = (sbn.getNotification().flags & FLAG_BUBBLE) != 0;
+                Log.d(TAG, "Found " + sbn.getKey() + " Bubble? " + isBubble);
                 if (sbn.getId() == id) {
                     found = true;
                     break;
@@ -367,7 +427,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 // pass
             }
         }
-        return found == shouldExist;
+        return (found == shouldExist) && (isBubble == shouldBeBubble);
     }
 
     private void assertNotificationCount(int expectedCount) {
@@ -501,6 +561,39 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
+    }
+
+    private Activity launchSendBubbleActivity() {
+        Class clazz = BubblesTestActivity.class;
+
+        Instrumentation.ActivityResult result =
+                new Instrumentation.ActivityResult(0, new Intent());
+        Instrumentation.ActivityMonitor monitor =
+                new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+        InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+        Intent i = new Intent(mContext, BubblesTestActivity.class);
+        i.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        InstrumentationRegistry.getInstrumentation().startActivitySync(i);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+        return monitor.waitForActivity();
+    }
+
+    private class HomeHelper extends ActivityManagerTestBase implements AutoCloseable {
+
+        HomeHelper() throws Exception {
+            setUp();
+        }
+
+        public void goHome() {
+            launchHomeActivity();
+        }
+
+        @Override
+        public void close() throws Exception {
+            tearDown();
+        }
     }
 
     public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
@@ -2294,5 +2387,150 @@ public class NotificationManagerTest extends AndroidTestCase {
         String badNumberString = NotificationManager.Policy.suppressedEffectsToString(1234567);
         assertNotNull("suppressedEffects with a non-relevant int returns a string",
                 badNumberString);
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForMessage() {
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+        sendAndVerifyBubble(1, nb, null /* use default metadata */, true /* shouldBeBubble */);
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForPhonecall() {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
+        mContext.startService(serviceIntent);
+
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, true /* shouldBeBubble */)) {
+            fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoPerson() {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_PERSON);
+        mContext.startService(serviceIntent);
+
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, false /* shouldBeBubble */)) {
+            fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
+                    + " or it was a bubble when it shouldn't be");
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoForeground() {
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setCategory(CATEGORY_CALL)
+                .addPerson(person)
+                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+        sendAndVerifyBubble(1, nb, null /* use default metadata */, false /* shouldBeBubble */);
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoCategory() {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_CATEGORY);
+        mContext.startService(serviceIntent);
+
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, false /* shouldBeBubble */)) {
+            fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
+                    + " or it was a bubble when it shouldn't be");
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoMetadata() {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_BUBBLE_METADATA);
+        mContext.startService(serviceIntent);
+
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, false /* shouldBeBubble */)) {
+            fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
+                    + " or it was a bubble when it shouldn't be");
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_noFlagForAppNotForeground() {
+        sendAndVerifyBubble(1, null /* use default notif */, null /* use default metadata */,
+                false /* shouldBeBubble */);
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(2);
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        };
+        IntentFilter filter = new IntentFilter(BubblesTestActivity.BUBBLE_ACTIVITY_OPENED);
+        mContext.registerReceiver(receiver, filter);
+
+        // Start & get the activity
+        BubblesTestActivity a = (BubblesTestActivity) launchSendBubbleActivity();
+
+        // Make sure device is unlocked
+        KeyguardManager keyguardManager =
+                (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+        keyguardManager.requestDismissKeyguard(a, new KeyguardManager.KeyguardDismissCallback() {
+            @Override
+            public void onDismissSucceeded() {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await(100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Should be foreground now
+        a.sendBubble(1);
+
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, true /* shouldBeBubble */)) {
+            fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
+        }
+
+        // Make ourselves not foreground
+        HomeHelper homeHelper = new HomeHelper();
+        homeHelper.goHome();
+
+        // The notif should be allowed to update as a bubble
+        a.sendBubble(2);
+
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, true /* shouldBeBubble */)) {
+            fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
+        }
+
+        // Cancel the notif
+        cancelAndPoll(BUBBLE_NOTIF_ID);
+
+        // Send it again when not foreground, this should not be a bubble & just be a notif
+        a.sendBubble(3);
+        if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                true /* shouldExist */, false /* shouldBeBubble */)) {
+            fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
+                    + " or it was a bubble when it shouldn't be");
+        }
+
+        mContext.unregisterReceiver(receiver);
+        homeHelper.close();
     }
 }
