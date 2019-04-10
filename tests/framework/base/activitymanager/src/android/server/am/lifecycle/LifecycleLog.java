@@ -72,7 +72,7 @@ public class LifecycleLog extends ContentProvider {
      * Log for encountered activity callbacks. Note that methods accessing or modifying this
      * list should be synchronized as it can be accessed from different threads.
      */
-    private static List<Pair<String, ActivityCallback>> sLog = new ArrayList<>();
+    private final static List<Pair<String, ActivityCallback>> sLog = new ArrayList<>();
 
     /**
      * Lifecycle tracker interface that waits for correct states or sequences.
@@ -80,8 +80,10 @@ public class LifecycleLog extends ContentProvider {
     private static LifecycleTrackerCallback sLifecycleTracker;
 
     /** Clear the entire transition log. */
-    synchronized void clear() {
-        sLog.clear();
+    void clear() {
+        synchronized(sLog) {
+            sLog.clear();
+        }
     }
 
     public void setLifecycleTracker(LifecycleTrackerCallback lifecycleTracker) {
@@ -89,9 +91,11 @@ public class LifecycleLog extends ContentProvider {
     }
 
     /** Add activity callback to the log. */
-    synchronized private void onActivityCallback(String activityCanonicalName,
+    private void onActivityCallback(String activityCanonicalName,
             ActivityCallback callback) {
-        sLog.add(new Pair<>(activityCanonicalName, callback));
+        synchronized (sLog) {
+            sLog.add(new Pair<>(activityCanonicalName, callback));
+        }
         log("Activity " + activityCanonicalName + " receiver callback " + callback);
         // Trigger check for valid state in the tracker
         if (sLifecycleTracker != null) {
@@ -100,19 +104,23 @@ public class LifecycleLog extends ContentProvider {
     }
 
     /** Get logs for all recorded transitions. */
-    synchronized List<Pair<String, ActivityCallback>> getLog() {
+    List<Pair<String, ActivityCallback>> getLog() {
         // Wrap in a new list to prevent concurrent modification
-        return new ArrayList<>(sLog);
+        synchronized(sLog) {
+            return new ArrayList<>(sLog);
+        }
     }
 
     /** Get transition logs for the specified activity. */
-    synchronized List<ActivityCallback> getActivityLog(Class<? extends Activity> activityClass) {
+    List<ActivityCallback> getActivityLog(Class<? extends Activity> activityClass) {
         final String activityName = activityClass.getCanonicalName();
         log("Looking up log for activity: " + activityName);
         final List<ActivityCallback> activityLog = new ArrayList<>();
-        for (Pair<String, ActivityCallback> transition : sLog) {
-            if (transition.first.equals(activityName)) {
-                activityLog.add(transition.second);
+        synchronized(sLog) {
+            for (Pair<String, ActivityCallback> transition : sLog) {
+                if (transition.first.equals(activityName)) {
+                    activityLog.add(transition.second);
+                }
             }
         }
         return activityLog;
