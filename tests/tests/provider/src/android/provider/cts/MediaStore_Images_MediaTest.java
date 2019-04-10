@@ -284,17 +284,6 @@ public class MediaStore_Images_MediaTest {
         }
     }
 
-    @Test
-    public void testStoreImagesMediaInternal() {
-        // can not insert any data, so other operations can not be tested
-        try {
-            mContentResolver.insert(Media.INTERNAL_CONTENT_URI, new ContentValues());
-            fail("Should throw UnsupportedOperationException when inserting into internal "
-                    + "database");
-        } catch (UnsupportedOperationException e) {
-        }
-    }
-
     private void assertInsertionSuccess(String stringUrl) throws IOException {
         final Uri uri = Uri.parse(stringUrl);
 

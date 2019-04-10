@@ -352,18 +352,6 @@ public class MediaStore_Images_ThumbnailsTest {
     }
 
     @Test
-    public void testStoreImagesMediaInternal() {
-        // can not insert any data, so other operations can not be tested
-        try {
-            mContentResolver.insert(Thumbnails.INTERNAL_CONTENT_URI, new ContentValues());
-            fail("Should throw UnsupportedOperationException when inserting into internal "
-                    + "database");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
-    }
-
-    @Test
     public void testThumbnailOrderedQuery() throws Exception {
         if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
 
