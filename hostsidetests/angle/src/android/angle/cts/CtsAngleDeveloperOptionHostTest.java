@@ -429,4 +429,34 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
                 "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_VALUES + " = '" + devOptionValue + "'",
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE), devOptionValue);
     }
+
+    /**
+     * Test that the "ANGLE In Use" dialog box can be enabled when ANGLE is used.
+     *
+     * We can't actually make sure the dialog box shows up, just that enabling it and attempting to
+     * show it doesn't cause a crash or prevent ANGLE from being enabled.
+     */
+    @Test
+    public void testAngleInUseDialogBoxWithAngle() throws Exception {
+        Assume.assumeTrue(isAngleLoadable(getDevice()));
+
+        setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
+
+        testUseAngleDriver();
+    }
+
+    /**
+     * Test that the "ANGLE In Use" dialog box can be enabled when Native is used.
+     *
+     * We can't actually make sure the dialog box shows up, just that enabling it and attempting to
+     * show it doesn't cause a crash.
+     */
+    @Test
+    public void testAngleInUseDialogBoxWithNative() throws Exception {
+        Assume.assumeTrue(isAngleLoadable(getDevice()));
+
+        setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
+
+        testUseNativeDriver();
+    }
 }
