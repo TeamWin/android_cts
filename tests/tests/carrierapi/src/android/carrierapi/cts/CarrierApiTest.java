@@ -57,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 
+// TODO(b/130187425): Split CarrierApiTest apart to have separate test classes for functionality
 public class CarrierApiTest extends AndroidTestCase {
     private static final String TAG = "CarrierApiTest";
     private TelephonyManager mTelephonyManager;
@@ -106,6 +107,10 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String MF_FILE_ID = "3F00";
     // File ID for the MF Access Rule Reference. TS 102 221
     private static final String MF_ARR_FILE_ID = "2F06";
+    private static final String ALPHA_TAG_A = "tagA";
+    private static final String ALPHA_TAG_B = "tagB";
+    private static final String NUMBER_A = "1234567890";
+    private static final String NUMBER_B = "0987654321";
 
     @Override
     protected void setUp() throws Exception {
@@ -709,6 +714,34 @@ public class CarrierApiTest extends AndroidTestCase {
         response = mTelephonyManager
             .iccTransmitApduBasicChannel(cla, COMMAND_MANAGE_CHANNEL, p1, p2, p3, data);
         assertEquals(STATUS_NORMAL_STRING, response);
+    }
+
+    /**
+     * This test verifies that {@link TelephonyManager#setLine1NumberForDisplay(String, String)}
+     * correctly sets the Line 1 alpha tag and number when called.
+     */
+    public void testLine1NumberForDisplay() {
+        // Cache original alpha tag and number values.
+        String originalAlphaTag = mTelephonyManager.getLine1AlphaTag();
+        String originalNumber = mTelephonyManager.getLine1Number();
+
+        try {
+            assertTrue(mTelephonyManager.setLine1NumberForDisplay(ALPHA_TAG_A, NUMBER_A));
+            assertEquals(ALPHA_TAG_A, mTelephonyManager.getLine1AlphaTag());
+            assertEquals(NUMBER_A, mTelephonyManager.getLine1Number());
+
+            assertTrue(mTelephonyManager.setLine1NumberForDisplay(ALPHA_TAG_B, NUMBER_B));
+            assertEquals(ALPHA_TAG_B, mTelephonyManager.getLine1AlphaTag());
+            assertEquals(NUMBER_B, mTelephonyManager.getLine1Number());
+
+            // null is used to clear the Line 1 alpha tag and number values.
+            assertTrue(mTelephonyManager.setLine1NumberForDisplay(null, null));
+            assertEquals("", mTelephonyManager.getLine1AlphaTag());
+            assertEquals("", mTelephonyManager.getLine1Number());
+        } finally {
+            // Reset original alpha tag and number values.
+            mTelephonyManager.setLine1NumberForDisplay(originalAlphaTag, originalNumber);
+        }
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
