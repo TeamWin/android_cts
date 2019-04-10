@@ -80,7 +80,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     }
 
     @Override
-    public void onCapabilitiesChanged() {
-        currentCapabilities = mNotificationManager.getAllowedAssistantCapabilities();
+    public void onAllowedAdjustmentsChanged() {
+        currentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
 }
