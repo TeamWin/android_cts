@@ -337,7 +337,7 @@ public class SpinnerTest {
         });
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDropdownMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDropdownMode);
         // Verify that we're showing the popup
         assertTrue(mSpinnerDropdownMode.isPopupShowing());
 
@@ -371,7 +371,7 @@ public class SpinnerTest {
         });
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDialogMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDialogMode);
         // Verify that we're showing the popup
         assertTrue(mSpinnerDialogMode.isPopupShowing());
 
@@ -393,7 +393,7 @@ public class SpinnerTest {
                 mSpinnerDropdownMode.setPopupBackgroundResource(R.drawable.blue_fill));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDropdownMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDropdownMode);
         // Verify that we're showing the popup
         assertTrue(mSpinnerDropdownMode.isPopupShowing());
         // And test its fill
@@ -414,7 +414,7 @@ public class SpinnerTest {
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDropdownMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDropdownMode);
         // Verify that we're showing the popup
         assertTrue(mSpinnerDropdownMode.isPopupShowing());
         // And test its fill
@@ -436,7 +436,7 @@ public class SpinnerTest {
                 mSpinnerDialogMode.setPopupBackgroundResource(R.drawable.blue_fill));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDialogMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDialogMode);
         // Verify that we're showing the popup
         assertTrue(mSpinnerDialogMode.isPopupShowing());
         // And test that getPopupBackground returns null
@@ -454,7 +454,7 @@ public class SpinnerTest {
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDialogMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDialogMode);
         // Verify that we're showing the popup
         assertTrue(mSpinnerDialogMode.isPopupShowing());
         // And test that getPopupBackground returns null

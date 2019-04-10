@@ -233,7 +233,7 @@ public class CalendarViewTest {
         }
 
         // Use instrumentation to emulate a tap on 09/07/2008
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, calendarView,
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, calendarView,
                 dayBounds.left + dayBounds.width() / 2,
                 dayBounds.top + dayBounds.height() / 2);
 
