@@ -80,6 +80,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private static final int RECORD_TIME_LAPSE_MS = 6000;
     private static final int RECORD_TIME_LONG_MS = 20000;
     private static final int RECORDED_DUR_TOLERANCE_MS = 1000;
+    private static final int TEST_TIMING_TOLERANCE_MS = 70;
     // Tolerate 4 frames off at maximum
     private static final float RECORDED_DUR_TOLERANCE_FRAMES = 4f;
     private static final int VIDEO_WIDTH = 176;
@@ -1655,12 +1656,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         configureDefaultMediaRecorder();
         mMediaRecorder.prepare();
         mMediaRecorder.start();
-        Thread.sleep(1000);
+        callback.await(TEST_TIMING_TOLERANCE_MS);
         assertTrue(callback.mCalled);
         assertTrue(callback.mConfigs.size() <= 1);
         if (callback.mConfigs.size() == 1) {
             checkRecordingConfig(callback.mConfigs.get(0));
         }
+        Thread.sleep(RECORD_TIME_MS);
         mMediaRecorder.stop();
         mMediaRecorder.unregisterAudioRecordingCallback(callback);
     }
