@@ -1064,6 +1064,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         DataSourceDesc dsd2 = new DataSourceDesc.Builder()
                 .setDataSource(ParcelFileDescriptor.dup(afd2.getFileDescriptor()),
                         afd2.getStartOffset(), afd2.getLength())
+                .setMediaId("afd2")
                 .build();
         afd2.close();
 
@@ -1072,6 +1073,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         DataSourceDesc dsd3 = new DataSourceDesc.Builder()
                 .setDataSource(ParcelFileDescriptor.dup(afd3.getFileDescriptor()),
                         afd3.getStartOffset(), afd3.getLength())
+                .setMediaId("afd3")
                 .build();
         afd3.close();
 
@@ -1146,7 +1148,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         mPlayer.skipToNext();
         onCompletion2Called.waitForSignal(3000);
-        assertTrue("current data source is not dsd2",
+        assertTrue("current data source is not dsd3",
                 mPlayer.getCurrentDataSource() == dsd3);
         onStart3Called.waitForSignal();
 
