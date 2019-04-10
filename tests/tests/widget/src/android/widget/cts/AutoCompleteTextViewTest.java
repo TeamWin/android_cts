@@ -76,6 +76,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import com.google.common.collect.ImmutableList;
 
@@ -214,12 +215,12 @@ public class AutoCompleteTextViewTest {
         mAutoCompleteTextView.setThreshold(3);
         assertEquals(3, mAutoCompleteTextView.getThreshold());
 
-        mActivityRule.runOnUiThread(() -> mAutoCompleteTextView.setText("TryToTest"));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView,
+                () -> mAutoCompleteTextView.setText("TryToTest"));
         assertTrue(mAutoCompleteTextView.enoughToFilter());
 
-        mActivityRule.runOnUiThread(() -> mAutoCompleteTextView.setText("No"));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView,
+                () -> mAutoCompleteTextView.setText("No"));
         assertFalse(mAutoCompleteTextView.enoughToFilter());
     }
 
@@ -407,24 +408,22 @@ public class AutoCompleteTextViewTest {
     public void testDropDownBackground() throws Throwable {
         mActivityRule.runOnUiThread(() -> mAutoCompleteTextView.setAdapter(mAdapter));
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setDropDownBackgroundResource(R.drawable.blue_fill);
             mAutoCompleteTextView.showDropDown();
         });
-        mInstrumentation.waitForIdleSync();
 
         Drawable dropDownBackground = mAutoCompleteTextView.getDropDownBackground();
         TestUtils.assertAllPixelsOfColor("Drop down should be blue", dropDownBackground,
                 dropDownBackground.getBounds().width(), dropDownBackground.getBounds().height(),
                 false, Color.BLUE, 1, true);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.dismissDropDown();
             mAutoCompleteTextView.setDropDownBackgroundDrawable(
                     mActivity.getDrawable(R.drawable.yellow_fill));
             mAutoCompleteTextView.showDropDown();
         });
-        mInstrumentation.waitForIdleSync();
 
         dropDownBackground = mAutoCompleteTextView.getDropDownBackground();
         TestUtils.assertAllPixelsOfColor("Drop down should be yellow", dropDownBackground,
@@ -438,21 +437,18 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(
                 mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setText("testT");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAdapter.add("testThree");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
     }
@@ -464,21 +460,18 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(
                 mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setText("testT");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAdapter.remove("testThree");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
     }
@@ -490,37 +483,33 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(
                 mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(3);
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setText("tes");
         });
-        mInstrumentation.waitForIdleSync();
 
         // Above Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setText("test");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
         assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
 
         // At Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setText("tes");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
         assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
 
         // Below Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setText("te");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
     }
 
@@ -531,36 +520,32 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
                 suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setText("test");
         });
-        mInstrumentation.waitForIdleSync();
 
         // Above Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(3);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
         assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
 
         // At Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(4);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
         assertThat(getAutoCompleteSuggestions()).containsExactly("testOne", "testTwo", "testThree");
 
         // Below Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(5);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
     }
 
@@ -571,19 +556,17 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
                 suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setDropDownAlwaysVisible(true);
             mAutoCompleteTextView.setText("test");
         });
-        mInstrumentation.waitForIdleSync();
 
         // Below Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(5);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
     }
 
@@ -594,19 +577,17 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
                 suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setDropDownAlwaysVisible(false);
             mAutoCompleteTextView.setText("test");
         });
-        mInstrumentation.waitForIdleSync();
 
         // Below Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(5);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
     }
 
@@ -617,19 +598,17 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
                 suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setDropDownAlwaysVisible(false);
             mAutoCompleteTextView.setText("test");
         });
-        mInstrumentation.waitForIdleSync();
 
         // Below Threshold.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setThreshold(5);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
         assertThat(mAutoCompleteTextView.isPopupShowing()).isFalse();
     }
 
@@ -639,21 +618,18 @@ public class AutoCompleteTextViewTest {
         mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
                 suggestions);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.setText("testT");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAdapter.add("testThree");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        mInstrumentation.waitForIdleSync();
 
         assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
     }
@@ -808,27 +784,25 @@ public class AutoCompleteTextViewTest {
         if (isTvMode()) {
             return;
         }
-        mActivityRule.runOnUiThread(() -> {
-                mAutoCompleteTextView.setAdapter(mAdapter);
-                mAutoCompleteTextView.setValidator(mValidator);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.setValidator(mValidator);
 
-                mAutoCompleteTextView.setText("test");
-                mAutoCompleteTextView.setFocusable(true);
-                mAutoCompleteTextView.requestFocus();
-                mAutoCompleteTextView.showDropDown();
+            mAutoCompleteTextView.setText("test");
+            mAutoCompleteTextView.setFocusable(true);
+            mAutoCompleteTextView.requestFocus();
+            mAutoCompleteTextView.showDropDown();
         });
-        mInstrumentation.waitForIdleSync();
         assertTrue(mAutoCompleteTextView.isPopupShowing());
 
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
         // KeyBack will close the popup.
         assertFalse(mAutoCompleteTextView.isPopupShowing());
 
-        mActivityRule.runOnUiThread(() -> {
-                mAutoCompleteTextView.dismissDropDown();
-                mAutoCompleteTextView.setText(STRING_TEST);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
+            mAutoCompleteTextView.dismissDropDown();
+            mAutoCompleteTextView.setText(STRING_TEST);
         });
-        mInstrumentation.waitForIdleSync();
 
         assertEquals(STRING_TEST, mAutoCompleteTextView.getText().toString());
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
@@ -838,13 +812,12 @@ public class AutoCompleteTextViewTest {
         final MockAdapter<String> adapter = new MockAdapter<String>(mActivity,
                 android.R.layout.simple_dropdown_item_1line, WORDS);
 
-        // Set Threshold to 4 charactersonKeyDown
-        mActivityRule.runOnUiThread(() -> {
-                mAutoCompleteTextView.setAdapter(adapter);
-                mAutoCompleteTextView.requestFocus();
-                mAutoCompleteTextView.setText("");
+        // Set Threshold to 4 characters onKeyDown
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
+            mAutoCompleteTextView.setAdapter(adapter);
+            mAutoCompleteTextView.requestFocus();
+            mAutoCompleteTextView.setText("");
         });
-        mInstrumentation.waitForIdleSync();
         // Create and get the filter.
         final MockFilter filter = (MockFilter) adapter.getFilter();
 
@@ -871,25 +844,24 @@ public class AutoCompleteTextViewTest {
                 mock(AdapterView.OnItemClickListener.class);
         assertFalse(mAutoCompleteTextView.isPerformingCompletion());
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.requestFocus();
             mAutoCompleteTextView.showDropDown();
         });
-        mInstrumentation.waitForIdleSync();
         assertFalse(mAutoCompleteTextView.isPerformingCompletion());
 
         // Key is ENTER or DPAD_ENTER, will invoke completion
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, null);
         verify(mockItemClickListener, times(1)).onItemClick(any(AdapterView.class), any(View.class),
                 eq(0), eq(0L));
         assertEquals(WORDS[0], mAutoCompleteTextView.getText().toString());
 
-        mActivityRule.runOnUiThread(mAutoCompleteTextView::showDropDown);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView,
+                mAutoCompleteTextView::showDropDown);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);
         verify(mockItemClickListener, times(2)).onItemClick(any(AdapterView.class), any(View.class),
@@ -928,13 +900,12 @@ public class AutoCompleteTextViewTest {
         final TextWatcher spyTextWatcher = spy(myTextWatcher);
         mAutoCompleteTextView.addTextChangedListener(spyTextWatcher);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
             mAutoCompleteTextView.setAdapter(mAdapter);
             mAutoCompleteTextView.requestFocus();
             mAutoCompleteTextView.showDropDown();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertTrue(mAutoCompleteTextView.isPopupShowing());
         assertFalse(mAutoCompleteTextView.isPerformingCompletion());
@@ -958,16 +929,15 @@ public class AutoCompleteTextViewTest {
         final AdapterView.OnItemClickListener mockItemClickListener =
                 mock(AdapterView.OnItemClickListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
             mAutoCompleteTextView.setAdapter(mAdapter);
         });
-        mInstrumentation.waitForIdleSync();
 
         assertFalse(mAutoCompleteTextView.isPopupShowing());
 
-        mActivityRule.runOnUiThread(() -> mAutoCompleteTextView.setText("testO", true));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView,
+                () -> mAutoCompleteTextView.setText("testO", true));
 
         assertTrue(mAutoCompleteTextView.isPopupShowing());
         verifyZeroInteractions(mockItemClickListener);
@@ -978,16 +948,15 @@ public class AutoCompleteTextViewTest {
         final AdapterView.OnItemClickListener mockItemClickListener =
                 mock(AdapterView.OnItemClickListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
             mAutoCompleteTextView.setAdapter(mAdapter);
         });
-        mInstrumentation.waitForIdleSync();
 
         assertFalse(mAutoCompleteTextView.isPopupShowing());
 
-        mActivityRule.runOnUiThread(() -> mAutoCompleteTextView.setText("testO", false));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView,
+                () -> mAutoCompleteTextView.setText("testO", false));
 
         assertFalse(mAutoCompleteTextView.isPopupShowing());
         verifyZeroInteractions(mockItemClickListener);
@@ -1022,25 +991,23 @@ public class AutoCompleteTextViewTest {
         final AdapterView.OnItemClickListener mockItemClickListener =
                 mock(AdapterView.OnItemClickListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
-                mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
-                mAutoCompleteTextView.setAdapter(mAdapter);
-                mAutoCompleteTextView.requestFocus();
-                mAutoCompleteTextView.showDropDown();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
+            mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
+            mAutoCompleteTextView.setAdapter(mAdapter);
+            mAutoCompleteTextView.requestFocus();
+            mAutoCompleteTextView.showDropDown();
         });
-        mInstrumentation.waitForIdleSync();
 
-        mActivityRule.runOnUiThread(() -> {
-                mAutoCompleteTextView.setListSelection(1);
-                assertEquals(1, mAutoCompleteTextView.getListSelection());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
+            mAutoCompleteTextView.setListSelection(1);
+            assertEquals(1, mAutoCompleteTextView.getListSelection());
 
-                mAutoCompleteTextView.setListSelection(2);
-                assertEquals(2, mAutoCompleteTextView.getListSelection());
+            mAutoCompleteTextView.setListSelection(2);
+            assertEquals(2, mAutoCompleteTextView.getListSelection());
 
-                mAutoCompleteTextView.clearListSelection();
-                assertEquals(2, mAutoCompleteTextView.getListSelection());
+            mAutoCompleteTextView.clearListSelection();
+            assertEquals(2, mAutoCompleteTextView.getListSelection());
         });
-        mInstrumentation.waitForIdleSync();
     }
 
     @UiThreadTest
