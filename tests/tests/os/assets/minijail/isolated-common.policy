@@ -7,8 +7,10 @@ capget: 1
 capset: return EPERM
 chdir: return EPERM
 
-# clock_gettime: clk_id=={CLOCK_BOOTTIME,CLOCK_MONOTONIC,CLOCK_MONOTONIC_COARSE,CLOCK_THREAD_CPUTIME_ID,CLOCK_PROCESS_CPUTIME_ID,CLOCK_REALTIME,CLOCK_REALTIME_COARSE}
-clock_gettime: arg0 == 0 || arg0 == 1 || arg0 == 2 || arg0 == 3 || arg0 == 5 || arg0 == 6 || arg0 == 7
+# clock_gettime: clk_id=={CLOCK_BOOTTIME,CLOCK_MONOTONIC,CLOCK_MONOTONIC_COARSE,CLOCK_THREAD_CPUTIME_ID,CLOCK_PROCESS_CPUTIME_ID,CLOCK_REALTIME,CLOCK_REALTIME_COARSE} || (clk_id < 0)
+# clock_gettime accepts negative clk_id to access clock_posix_dynamic and clock_posix_cpu.
+# This policy assumes clk_id is at least 32-bit wide, where the MSB means it is negative.
+clock_gettime: arg0 == 0 || arg0 == 1 || arg0 == 2 || arg0 == 3 || arg0 == 5 || arg0 == 6 || arg0 == 7 || arg0 & 0x80000000
 
 clone: 1
 close: 1
