@@ -27,9 +27,11 @@ import android.os.IBinder;
 import android.service.euicc.DownloadSubscriptionResult;
 import android.service.euicc.EuiccService;
 import android.service.euicc.GetDefaultDownloadableSubscriptionListResult;
+import android.service.euicc.GetDownloadableSubscriptionMetadataResult;
 import android.service.euicc.IDownloadSubscriptionCallback;
 import android.service.euicc.IEuiccService;
 import android.service.euicc.IGetDefaultDownloadableSubscriptionListCallback;
+import android.service.euicc.IGetDownloadableSubscriptionMetadataCallback;
 import android.service.euicc.IGetEidCallback;
 import android.service.euicc.IGetOtaStatusCallback;
 import android.telephony.euicc.DownloadableSubscription;
@@ -48,8 +50,11 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
 @RunWith(AndroidJUnit4.class)
 public class EuiccServiceTest {
+    private static final String ACTIVATION_CODE = "12345-ABCDE";
+
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000 /* 2 sec */;
 
     private static final int MOCK_SLOT_ID = 1;
@@ -147,6 +152,35 @@ public class EuiccServiceTest {
     }
 
     @Test
+    public void testOnGetDownloadableSubscriptionMetadata() throws Exception {
+        DownloadableSubscription subscription =
+                DownloadableSubscription.forActivationCode(ACTIVATION_CODE);
+
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getDownloadableSubscriptionMetadata(
+                MOCK_SLOT_ID,
+                subscription,
+                true /*forceDeactivateSim*/,
+                new IGetDownloadableSubscriptionMetadataCallback.Stub() {
+                    @Override
+                    public void onComplete(GetDownloadableSubscriptionMetadataResult result) {
+                        assertNotNull(result);
+                        assertEquals(EuiccService.RESULT_OK, result.getResult());
+                        mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
     public void testOnGetDefaultDownloadableSubscriptionList() throws Exception {
         mCountDownLatch = new CountDownLatch(1);
 
@@ -161,13 +195,20 @@ public class EuiccServiceTest {
                         mCountDownLatch.countDown();
                     }
                 });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
     }
 
     @Test
     public void testOnDownloadSubscription() throws Exception {
-        String activationCode = "1$SMDP.GSMA.COM$04386-A1B2C-A74Y8-3F815";
         DownloadableSubscription subscription =
-                DownloadableSubscription.forActivationCode(activationCode);
+                DownloadableSubscription.forActivationCode(ACTIVATION_CODE);
 
         mCountDownLatch = new CountDownLatch(1);
 
