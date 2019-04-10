@@ -46,6 +46,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -219,11 +220,8 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     }
 
     protected void tapOnDisplayCenter(int displayId) {
-        final ReportedDisplayMetrics displayMetrics = getDisplayMetrics(displayId);
-        final int x = displayMetrics.getSize().getWidth() / 2;
-        final int y = displayMetrics.getSize().getHeight() / 2;
-
-        tapOnDisplay(x, y, displayId);
+        final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
+        tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId);
     }
 
     public class VirtualDisplaySession implements AutoCloseable {
