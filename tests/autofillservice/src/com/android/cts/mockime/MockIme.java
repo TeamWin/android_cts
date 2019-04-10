@@ -147,9 +147,7 @@ public final class MockIme extends InputMethodService {
                     }
                     case "requestShowSelf": {
                         final int flags = command.getExtras().getInt("flags");
-                        // This method was added on P
-                        Log.w(TAG, "Ignoring requestShowFelf(" + flags +")");
-                        // requestShowSelf(flags);
+                        requestShowSelf(flags);
                         break;
                     }
                 }
