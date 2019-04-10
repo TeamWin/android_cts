@@ -28,7 +28,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.MediaStoreUtils.PendingParams;
@@ -52,9 +51,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,13 +69,19 @@ public class ProviderTestUtils {
             "(?i)^/storage/[^/]+/(?:[0-9]+/)?");
 
     static Iterable<String> getSharedVolumeNames() {
-        if (StorageManager.hasIsolatedStorage()) {
-            final Set<String> volumeNames = MediaStore
-                    .getAllVolumeNames(InstrumentationRegistry.getTargetContext());
-            volumeNames.remove(MediaStore.VOLUME_INTERNAL);
-            return volumeNames;
+        // We test both new and legacy volume names
+        final HashSet<String> testVolumes = new HashSet<>();
+        testVolumes.addAll(
+                MediaStore.getExternalVolumeNames(InstrumentationRegistry.getTargetContext()));
+        testVolumes.add(MediaStore.VOLUME_EXTERNAL);
+        return testVolumes;
+    }
+
+    static String resolveVolumeName(String volumeName) {
+        if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
+            return MediaStore.VOLUME_EXTERNAL_PRIMARY;
         } else {
-            return Arrays.asList(MediaStore.VOLUME_EXTERNAL);
+            return volumeName;
         }
     }
 
@@ -172,6 +176,9 @@ public class ProviderTestUtils {
     }
 
     static File stageDir(String volumeName) throws IOException {
+        if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
+            volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
+        }
         return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
                 "android.provider.cts");
     }

@@ -73,17 +73,6 @@ public class MediaStore_Audio_PlaylistsTest {
                 Playlists.getContentUri(mVolumeName), null, null,
                 null, null));
         c.close();
-
-        // can not accept any other volume names
-        try {
-            assertNotNull(c = mContentResolver.query(
-                    Playlists.getContentUri(MediaStoreAudioTestHelper.INTERNAL_VOLUME_NAME), null,
-                    null, null, null));
-            c.close();
-            fail("Should throw SQLException as the internal datatbase has no playlist");
-        } catch (SQLException e) {
-            // expected
-        }
     }
 
     @Test
