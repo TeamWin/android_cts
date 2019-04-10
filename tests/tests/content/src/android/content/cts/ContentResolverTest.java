@@ -19,7 +19,7 @@ package android.content.cts;
 import android.accounts.Account;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
-import android.content.ContentResolver.TypeInfo;
+import android.content.ContentResolver.MimeTypeInfo;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -1275,7 +1275,7 @@ public class ContentResolverTest extends AndroidTestCase {
                 "application/rdf+xml",
                 "x-custom/x-custom",
         }) {
-            final TypeInfo ti = mContentResolver.getTypeInfo(mimeType);
+            final MimeTypeInfo ti = mContentResolver.getTypeInfo(mimeType);
             assertNotNull(ti);
             assertNotNull(ti.getLabel());
             assertNotNull(ti.getContentDescription());
