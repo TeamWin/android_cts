@@ -744,6 +744,29 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * This test verifies that {@link TelephonyManager#setVoiceMailNumber(String, String)} correctly
+     * sets the VoiceMail alpha tag and number when called.
+     */
+    public void testVoiceMailNumber() {
+        // Cache original alpha tag and number values.
+        String originalAlphaTag = mTelephonyManager.getVoiceMailAlphaTag();
+        String originalNumber = mTelephonyManager.getVoiceMailNumber();
+
+        try {
+            assertTrue(mTelephonyManager.setVoiceMailNumber(ALPHA_TAG_A, NUMBER_A));
+            assertEquals(ALPHA_TAG_A, mTelephonyManager.getVoiceMailAlphaTag());
+            assertEquals(NUMBER_A, mTelephonyManager.getVoiceMailNumber());
+
+            assertTrue(mTelephonyManager.setVoiceMailNumber(ALPHA_TAG_B, NUMBER_B));
+            assertEquals(ALPHA_TAG_B, mTelephonyManager.getVoiceMailAlphaTag());
+            assertEquals(NUMBER_B, mTelephonyManager.getVoiceMailNumber());
+        } finally {
+            // Reset original alpha tag and number values.
+            mTelephonyManager.setVoiceMailNumber(originalAlphaTag, originalNumber);
+        }
+    }
+
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
         // The assigned channel should be between the min and max allowed channel numbers
         int channel = response.getChannel();
