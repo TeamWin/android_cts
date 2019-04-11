@@ -96,7 +96,7 @@ public class NotificationAssistantServiceTest {
         Thread.sleep(SLEEP_TIME);
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_USER_SENTIMENT);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_USER_SENTIMENT);
         mUi.dropShellPermissionIdentity();
 
         mNotificationListenerService = TestNotificationListener.getInstance();
@@ -129,7 +129,7 @@ public class NotificationAssistantServiceTest {
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_USER_SENTIMENT);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_USER_SENTIMENT);
         mUi.dropShellPermissionIdentity();
 
         sendNotification(1, ICON_ID);
@@ -160,7 +160,7 @@ public class NotificationAssistantServiceTest {
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_IMPORTANCE);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_IMPORTANCE);
         mUi.dropShellPermissionIdentity();
 
         sendNotification(1, ICON_ID);
@@ -190,7 +190,7 @@ public class NotificationAssistantServiceTest {
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_CONTEXTUAL_ACTIONS);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_CONTEXTUAL_ACTIONS);
         mUi.dropShellPermissionIdentity();
 
         PendingIntent sendIntent = PendingIntent.getActivity(mContext, 0,
@@ -238,7 +238,7 @@ public class NotificationAssistantServiceTest {
         CharSequence smartReply = "Smart Reply!";
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_TEXT_REPLIES);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_TEXT_REPLIES);
         mUi.dropShellPermissionIdentity();
 
         sendNotification(1, ICON_ID);
@@ -280,7 +280,7 @@ public class NotificationAssistantServiceTest {
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.disallowAssistantCapability(Adjustment.KEY_IMPORTANCE);
+        mNotificationManager.disallowAssistantAdjustment(Adjustment.KEY_IMPORTANCE);
         mUi.dropShellPermissionIdentity();
 
         sendNotification(1, ICON_ID);
@@ -312,7 +312,7 @@ public class NotificationAssistantServiceTest {
         toggleAssistantAccess(false);
 
         try {
-            mNotificationManager.getAllowedAssistantCapabilities();
+            mNotificationManager.getAllowedAssistantAdjustments();
             fail(" Non assistants cannot call this method");
         } catch (SecurityException e) {
             //pass
@@ -324,23 +324,23 @@ public class NotificationAssistantServiceTest {
         toggleAssistantAccess(true);
         Thread.sleep(SLEEP_TIME); // wait for assistant to be allowed
         mNotificationAssistantService = TestNotificationAssistant.getInstance();
-        mNotificationAssistantService.onCapabilitiesChanged();
+        mNotificationAssistantService.onAllowedAdjustmentsChanged();
         assertNotNull(mNotificationAssistantService.currentCapabilities);
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_SNOOZE_CRITERIA);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_SNOOZE_CRITERIA);
 
         Thread.sleep(SLEEP_TIME);
         assertTrue(mNotificationAssistantService.currentCapabilities.contains(
                 Adjustment.KEY_SNOOZE_CRITERIA));
 
-        mNotificationManager.disallowAssistantCapability(Adjustment.KEY_SNOOZE_CRITERIA);
+        mNotificationManager.disallowAssistantAdjustment(Adjustment.KEY_SNOOZE_CRITERIA);
         Thread.sleep(SLEEP_TIME);
         assertFalse(mNotificationAssistantService.currentCapabilities.contains(
                 Adjustment.KEY_SNOOZE_CRITERIA));
 
         // just in case KEY_SNOOZE_CRITERIA was included in the original set, test adding again
-        mNotificationManager.allowAssistantCapability(Adjustment.KEY_SNOOZE_CRITERIA);
+        mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_SNOOZE_CRITERIA);
         Thread.sleep(SLEEP_TIME);
         assertTrue(mNotificationAssistantService.currentCapabilities.contains(
                 Adjustment.KEY_SNOOZE_CRITERIA));
