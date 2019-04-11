@@ -17,53 +17,31 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
-import static android.server.am.ActivityManagerTestBase.executeShellCommand;
-import static android.server.am.StateLogger.log;
 import static android.server.am.UiDeviceUtils.dragPointer;
-import static android.server.am.UiDeviceUtils.pressMenuButton;
-import static android.server.am.UiDeviceUtils.wakeUpDevice;
-
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
+import static android.server.wm.dndsourceapp.Components.DRAG_SOURCE;
+import static android.server.wm.dndtargetapp.Components.DROP_TARGET;
+import static android.server.wm.dndtargetappsdk23.Components.DROP_TARGET_SDK23;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.ActivityTaskManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
-import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
+import android.server.am.ActivityManagerState.ActivityTask;
+import android.server.am.ActivityManagerTestBase;
 import android.util.Log;
 import android.view.Display;
-
-import androidx.test.filters.FlakyTest;
-import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
-import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
-import androidx.test.runner.lifecycle.Stage;
-
-import com.android.compatibility.common.util.SystemUtil;
-
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Map;
-import java.util.function.BooleanSupplier;
-import java.util.regex.Pattern;
 
 /**
  * Build/Install/Run:
@@ -71,26 +49,10 @@ import java.util.regex.Pattern;
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
-public class CrossAppDragAndDropTests {
+public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String TAG = "CrossAppDragAndDrop";
 
-    private static final String AM_START_N = "am start -n ";
-    private static final String TASK_ID_PREFIX = "taskId";
-
-    // Regex pattern to match adb shell am stack list output of the form:
-    // taskId=<TASK_ID>: <componentName> bounds=[LEFT,TOP][RIGHT,BOTTOM]
-    private static final String TASK_REGEX_PATTERN_STRING =
-            "taskId=[0-9]+: %s bounds=\\[[0-9]+,[0-9]+\\]\\[[0-9]+,[0-9]+\\]";
-
     private static final int SWIPE_STEPS = 100;
-
-    private static final String SOURCE_PACKAGE_NAME = "android.server.wm.dndsourceapp";
-    private static final String TARGET_PACKAGE_NAME = "android.server.wm.dndtargetapp";
-    private static final String TARGET_23_PACKAGE_NAME = "android.server.wm.dndtargetappsdk23";
-
-
-    private static final String SOURCE_ACTIVITY_NAME = "DragSource";
-    private static final String TARGET_ACTIVITY_NAME = "DropTarget";
 
     private static final String FILE_GLOBAL = "file_global";
     private static final String FILE_LOCAL = "file_local";
@@ -128,104 +90,38 @@ public class CrossAppDragAndDropTests {
     private static final String RESULT_EXCEPTION = "Exception";
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
 
-    protected Context mContext;
-    protected ActivityManager mAm;
-    protected ActivityTaskManager mAtm;
+    private static final String EXTRA_MODE = "mode";
+    private static final String EXTRA_LOGTAG = "logtag";
+
     protected DisplayManager mDm;
 
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
 
-    private String mSourcePackageName;
-    private String mTargetPackageName;
-
     private String mSessionId;
     private String mSourceLogTag;
     private String mTargetLogTag;
 
-    private LifecycleMonitor mLifecycleMonitor = new LifecycleMonitor();
-
-    private static class LifecycleMonitor implements ActivityLifecycleCallback {
-        Stage mCurrentStage;
-        Activity mCurrentActivity;
-
-        @Override
-        synchronized public void onActivityLifecycleChanged(Activity activity, Stage stage) {
-            mCurrentStage = stage;
-            mCurrentActivity = activity;
-        }
-
-        public void waitForStage(String packageName, String activityName, Stage stage) {
-            final ComponentName component = new ComponentName(packageName, activityName);
-            waitForConditionWithTimeout(() -> {
-                if (mCurrentActivity == null || mCurrentStage == null) {
-                    return false;
-                }
-                return mCurrentActivity.getComponentName().equals(component)
-                        && mCurrentStage.equals(stage);
-            }, 3000);
-        }
-
-        /** Blocking call to wait for a condition to become true with max timeout. */
-        synchronized private boolean waitForConditionWithTimeout(BooleanSupplier waitCondition,
-                long timeoutMs) {
-            final long timeout = System.currentTimeMillis() + timeoutMs;
-            while (!waitCondition.getAsBoolean()) {
-                final long waitMs = timeout - System.currentTimeMillis();
-                if (waitMs <= 0) {
-                    // Timeout expired.
-                    return false;
-                }
-                try {
-                    wait(500);
-                } catch (InterruptedException e) {
-                    // Weird, let's retry.
-                }
-            }
-            return true;
-        }
-    }
-
     @Before
+    @Override
     public void setUp() throws Exception {
-        assumeTrue(supportsDragAndDrop());
+        super.setUp();
+        assumeTrue(supportsSplitScreenMultiWindow() || supportsFreeform());
 
         // Use uptime in seconds as unique test invocation id.
         mSessionId = Long.toString(SystemClock.uptimeMillis() / 1000);
         mSourceLogTag = SOURCE_LOG_TAG + mSessionId;
         mTargetLogTag = TARGET_LOG_TAG + mSessionId;
 
-        mContext = getInstrumentation().getContext();
-        mAm = mContext.getSystemService(ActivityManager.class);
-        mAtm = mContext.getSystemService(ActivityTaskManager.class);
         mDm = mContext.getSystemService(DisplayManager.class);
-
-        mSourcePackageName = SOURCE_PACKAGE_NAME;
-        mTargetPackageName = TARGET_PACKAGE_NAME;
         cleanupState();
-
-        ActivityLifecycleMonitorRegistry.getInstance().addLifecycleCallback(mLifecycleMonitor);
     }
 
     @After
+    @Override
     public void tearDown() throws Exception {
-        if (!supportsDragAndDrop()) {
-          return;
-        }
-
-        ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(mLifecycleMonitor);
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            mAm.forceStopPackage(mSourcePackageName);
-            mAm.forceStopPackage(mTargetPackageName);
-        });
-    }
-
-    private String getStartCommand(String componentName, String modeExtra, String logtag) {
-        return AM_START_N + componentName + " -e mode " + modeExtra + " -e logtag " + logtag;
-    }
-
-    private String getComponentName(String packageName, String activityName) {
-        return packageName + "/" + packageName + "." + activityName;
+        super.tearDown();
+        cleanupState();
     }
 
     /**
@@ -233,35 +129,9 @@ public class CrossAppDragAndDropTests {
      * is in a good state.
      */
     private void cleanupState() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            mAm.forceStopPackage(SOURCE_PACKAGE_NAME);
-            mAm.forceStopPackage(TARGET_PACKAGE_NAME);
-            mAm.forceStopPackage(TARGET_23_PACKAGE_NAME);
-            unlockDevice();
-
-            // Remove special stacks.
-            mAtm.removeStacksInWindowingModes(new int[]{
-                    WINDOWING_MODE_PINNED,
-                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY,
-                    WINDOWING_MODE_FREEFORM
-            });
-        });
-    }
-
-    private void launchDockedActivity(String packageName, String activityName, String mode,
-            String logtag) throws Exception {
-        final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
-                + WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        waitForResume(packageName, activityName);
-    }
-
-    private void launchFullscreenActivity(String packageName, String activityName, String mode,
-            String logtag) throws Exception {
-        final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
-                + WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        waitForResume(packageName, activityName);
+        stopTestPackage(DRAG_SOURCE.getPackageName());
+        stopTestPackage(DROP_TARGET.getPackageName());
+        stopTestPackage(DROP_TARGET_SDK23.getPackageName());
     }
 
     /**
@@ -269,82 +139,16 @@ public class CrossAppDragAndDropTests {
      * @param leftSide {@code true} to launch the app taking up the left half of the display,
      *         {@code false} to launch the app taking up the right half of the display.
      */
-    private void launchFreeformActivity(String packageName, String activityName, String mode,
+    private void launchFreeformActivity(ComponentName componentName, String mode,
             String logtag, Point displaySize, boolean leftSide) throws Exception {
-        final String componentName = getComponentName(packageName, activityName);
-        executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
-                + WINDOWING_MODE_FREEFORM);
-        waitForResume(packageName, activityName);
+        launchActivity(componentName, WINDOWING_MODE_FREEFORM, "mode", mode, "logtag", logtag);
         Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
         Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.resizeTask(getActivityTaskId(componentName),
-                        new Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)));
-    }
-
-    private void waitForResume(String packageName, String activityName) throws Exception {
-        mLifecycleMonitor.waitForStage(packageName, activityName, Stage.RESUMED);
+        resizeActivityTask(componentName, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
     }
 
     private void injectInput(Point from, Point to, int steps) throws Exception {
         dragPointer(from, to, steps);
-    }
-
-    private String findTaskInfo(String name) {
-        try {
-            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-
-            final String output = mAtm.listAllStacks();
-            final StringBuilder builder = new StringBuilder();
-            builder.append("Finding task info for task: ");
-            builder.append(name);
-            builder.append("\nParsing adb shell am output: ");
-            builder.append(output);
-            log(builder.toString());
-            final Pattern pattern = Pattern.compile(String.format(TASK_REGEX_PATTERN_STRING, name));
-            for (String line : output.split("\\n")) {
-                final String truncatedLine;
-                // Only look for the activity name before the "topActivity" string.
-                final int pos = line.indexOf("topActivity");
-                if (pos > 0) {
-                    truncatedLine = line.substring(0, pos);
-                } else {
-                    truncatedLine = line;
-                }
-                if (pattern.matcher(truncatedLine).find()) {
-                    return truncatedLine;
-                }
-            }
-            return "";
-        } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
-    }
-
-    private boolean getWindowBounds(String name, Point from, Point to) throws Exception {
-        final String taskInfo = findTaskInfo(name);
-        final String[] sections = taskInfo.split("\\[");
-        if (sections.length > 2) {
-            try {
-                parsePoint(sections[1], from);
-                parsePoint(sections[2], to);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    private int getActivityTaskId(String name) {
-        final String taskInfo = findTaskInfo(name);
-        for (String word : taskInfo.split("\\s+")) {
-            if (word.startsWith(TASK_ID_PREFIX)) {
-                final String withColon = word.split("=")[1];
-                return Integer.parseInt(withColon.substring(0, withColon.length() - 1));
-            }
-        }
-        return -1;
     }
 
     private Point getDisplaySize() throws Exception {
@@ -353,70 +157,60 @@ public class CrossAppDragAndDropTests {
         return displaySize;
     }
 
-    private Point getWindowCenter(String name) throws Exception {
-        Point p1 = new Point();
-        Point p2 = new Point();
-        if (getWindowBounds(name, p1, p2)) {
-            return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+    private Point getWindowCenter(ComponentName name) throws Exception {
+        final ActivityTask sideTask = mAmWmState.getAmState().getTaskByActivity(name);
+        Rect bounds = sideTask.getBounds();
+        if (bounds != null) {
+            return new Point(bounds.centerX(), bounds.centerY());
         }
         return null;
     }
 
-    private void parsePoint(String string, Point point) {
-        final String[] parts = string.split("[,|\\]]");
-        point.x = Integer.parseInt(parts[0]);
-        point.y = Integer.parseInt(parts[1]);
-    }
-
-    private void unlockDevice() {
-        // Wake up the device, if necessary.
-        try {
-            wakeUpDevice();
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-        // Unlock the screen.
-        pressMenuButton();
-    }
-
     private void assertDropResult(String sourceMode, String targetMode, String expectedDropResult)
             throws Exception {
-        assertDragAndDropResults(sourceMode, targetMode, RESULT_OK, expectedDropResult, RESULT_OK);
+        assertDragAndDropResults(DRAG_SOURCE, sourceMode, DROP_TARGET, targetMode,
+                RESULT_OK, expectedDropResult, RESULT_OK);
     }
 
-    private void assertNoGlobalDragEvents(String sourceMode, String expectedStartDragResult)
+    private void assertNoGlobalDragEvents(ComponentName sourceComponentName, String sourceMode,
+            ComponentName targetComponentName, String expectedStartDragResult)
             throws Exception {
         assertDragAndDropResults(
-                sourceMode, REQUEST_NONE, expectedStartDragResult, RESULT_MISSING, RESULT_MISSING);
+                sourceComponentName, sourceMode, targetComponentName, REQUEST_NONE,
+                expectedStartDragResult, RESULT_MISSING, RESULT_MISSING);
     }
 
-    private void assertDragAndDropResults(String sourceMode, String targetMode,
+    private void assertDragAndDropResults(ComponentName sourceComponentName, String sourceMode,
+            ComponentName targetComponentName, String targetMode,
             String expectedStartDragResult, String expectedDropResult,
             String expectedListenerResults) throws Exception {
         Log.e(TAG, "session: " + mSessionId + ", source: " + sourceMode
                 + ", target: " + targetMode);
 
-        if (supportsSplitScreenMultiWindow()) {
-            launchDockedActivity(
-                    mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode, mSourceLogTag);
-            launchFullscreenActivity(
-                    mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode, mTargetLogTag);
-        } else if (supportsFreeformMultiWindow()) {
+        if (supportsFreeform()) {
             // Fallback to try to launch two freeform windows side by side.
             Point displaySize = getDisplaySize();
-            launchFreeformActivity(
-                    mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode, mSourceLogTag,
-                    displaySize, true /* leftSide */);
-            launchFreeformActivity(
-                    mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode, mTargetLogTag,
-                    displaySize, false /* leftSide */);
+            launchFreeformActivity(sourceComponentName, sourceMode, mSourceLogTag,
+                displaySize, true /* leftSide */);
+            launchFreeformActivity(targetComponentName, targetMode, mTargetLogTag,
+                displaySize, false /* leftSide */);
         } else {
-            return;
+            launchActivitiesInSplitScreen(getLaunchActivityBuilder()
+                    .setTargetActivity(sourceComponentName)
+                    .setIntentExtra(bundle -> {
+                        bundle.putString(EXTRA_MODE, sourceMode);
+                        bundle.putString(EXTRA_LOGTAG, mSourceLogTag);
+                    }),
+                    getLaunchActivityBuilder().setTargetActivity(targetComponentName)
+                    .setIntentExtra(bundle -> {
+                        bundle.putString(EXTRA_MODE, targetMode);
+                        bundle.putString(EXTRA_LOGTAG, mTargetLogTag);
+                    }));
         }
 
-        Point p1 = getWindowCenter(getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME));
+        Point p1 = getWindowCenter(sourceComponentName);
         assertNotNull(p1);
-        Point p2 = getWindowCenter(getComponentName(mTargetPackageName, TARGET_ACTIVITY_NAME));
+        Point p2 = getWindowCenter(targetComponentName);
         assertNotNull(p2);
 
         TestLogService.registerClient(mSourceLogTag, RESULT_KEY_START_DRAG);
@@ -467,21 +261,6 @@ public class CrossAppDragAndDropTests {
         }
     }
 
-    private static boolean supportsDragAndDrop() {
-        return ActivityTaskManager.supportsMultiWindow(getInstrumentation().getContext());
-    }
-
-    private static boolean supportsSplitScreenMultiWindow() {
-        return ActivityTaskManager.supportsSplitScreenMultiWindow(
-                getInstrumentation().getContext());
-    }
-
-    private static boolean supportsFreeformMultiWindow() {
-        return getInstrumentation().getContext()
-                .getPackageManager()
-                .hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT);
-    }
-
     @Test
     public void testCancelSoon() throws Exception {
         assertDropResult(CANCEL_SOON, REQUEST_NONE, RESULT_MISSING);
@@ -489,23 +268,22 @@ public class CrossAppDragAndDropTests {
 
     @Test
     public void testDisallowGlobal() throws Exception {
-        assertNoGlobalDragEvents(DISALLOW_GLOBAL, RESULT_OK);
+        assertNoGlobalDragEvents(DRAG_SOURCE, DISALLOW_GLOBAL, DROP_TARGET, RESULT_OK);
     }
 
     @Test
     public void testDisallowGlobalBelowSdk24() throws Exception {
-        mTargetPackageName = TARGET_23_PACKAGE_NAME;
-        assertNoGlobalDragEvents(GRANT_NONE, RESULT_OK);
+        assertNoGlobalDragEvents(DRAG_SOURCE, GRANT_NONE, DROP_TARGET_SDK23, RESULT_OK);
     }
 
     @Test
     public void testFileUriLocal() throws Exception {
-        assertNoGlobalDragEvents(FILE_LOCAL, RESULT_OK);
+        assertNoGlobalDragEvents(DRAG_SOURCE, FILE_LOCAL, DROP_TARGET, RESULT_OK);
     }
 
     @Test
     public void testFileUriGlobal() throws Exception {
-        assertNoGlobalDragEvents(FILE_GLOBAL, RESULT_EXCEPTION);
+        assertNoGlobalDragEvents(DRAG_SOURCE, FILE_GLOBAL, DROP_TARGET, RESULT_EXCEPTION);
     }
 
     @Test

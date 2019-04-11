@@ -23,7 +23,10 @@ LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
     $(call all-java-files-under, alertwindowservice/src) \
     $(call all-named-files-under,Components.java, alertwindowapp) \
-    $(call all-named-files-under,Components.java, alertwindowappsdk25)
+    $(call all-named-files-under,Components.java, alertwindowappsdk25) \
+    $(call all-named-files-under,Components.java, dndsourceapp) \
+    $(call all-named-files-under,Components.java, dndtargetapp) \
+    $(call all-named-files-under,Components.java, dndtargetappsdk23)
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
