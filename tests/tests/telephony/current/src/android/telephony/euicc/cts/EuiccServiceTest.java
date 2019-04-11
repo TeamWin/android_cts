@@ -28,13 +28,23 @@ import android.service.euicc.DownloadSubscriptionResult;
 import android.service.euicc.EuiccService;
 import android.service.euicc.GetDefaultDownloadableSubscriptionListResult;
 import android.service.euicc.GetDownloadableSubscriptionMetadataResult;
+import android.service.euicc.GetEuiccProfileInfoListResult;
+import android.service.euicc.IDeleteSubscriptionCallback;
 import android.service.euicc.IDownloadSubscriptionCallback;
+import android.service.euicc.IEraseSubscriptionsCallback;
 import android.service.euicc.IEuiccService;
 import android.service.euicc.IGetDefaultDownloadableSubscriptionListCallback;
 import android.service.euicc.IGetDownloadableSubscriptionMetadataCallback;
 import android.service.euicc.IGetEidCallback;
+import android.service.euicc.IGetEuiccInfoCallback;
+import android.service.euicc.IGetEuiccProfileInfoListCallback;
 import android.service.euicc.IGetOtaStatusCallback;
+import android.service.euicc.IOtaStatusChangedCallback;
+import android.service.euicc.IRetainSubscriptionsForFactoryResetCallback;
+import android.service.euicc.ISwitchToSubscriptionCallback;
+import android.service.euicc.IUpdateSubscriptionNicknameCallback;
 import android.telephony.euicc.DownloadableSubscription;
+import android.telephony.euicc.EuiccInfo;
 import android.telephony.euicc.EuiccManager;
 import android.telephony.euicc.cts.MockEuiccService.IMockEuiccServiceCallback;
 
@@ -58,6 +68,8 @@ public class EuiccServiceTest {
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000 /* 2 sec */;
 
     private static final int MOCK_SLOT_ID = 1;
+    private static final String MOCK_ICCID = "12345";
+    private static final String MOCK_NICK_NAME = "nick name";
 
     private IEuiccService mEuiccServiceBinder;
     private IMockEuiccServiceCallback mCallback;
@@ -167,6 +179,28 @@ public class EuiccServiceTest {
                     public void onComplete(GetDownloadableSubscriptionMetadataResult result) {
                         assertNotNull(result);
                         assertEquals(EuiccService.RESULT_OK, result.getResult());
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnStartOtaIfNecessary() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.startOtaIfNecessary(
+                MOCK_SLOT_ID,
+                new IOtaStatusChangedCallback.Stub() {
+                    @Override
+                    public void onOtaStatusChanged(int status) {
+                        assertEquals(EuiccManager.EUICC_OTA_SUCCEEDED, status);
                         mCountDownLatch.countDown();
                     }
                 });
@@ -224,6 +258,169 @@ public class EuiccServiceTest {
                         assertNotNull(result);
                         assertEquals(EuiccService.RESULT_OK, result.getResult());
                         mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnGetEuiccProfileInfoList() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getEuiccProfileInfoList(
+                MOCK_SLOT_ID,
+                new IGetEuiccProfileInfoListCallback.Stub() {
+                    @Override
+                    public void onComplete(GetEuiccProfileInfoListResult result) {
+                        assertNotNull(result);
+                        assertEquals(EuiccService.RESULT_RESOLVABLE_ERRORS, result.getResult());
+                        mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnGetEuiccInfo() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getEuiccInfo(
+                MOCK_SLOT_ID,
+                new IGetEuiccInfoCallback.Stub() {
+                    @Override
+                    public void onSuccess(EuiccInfo euiccInfo) {
+                        assertNotNull(euiccInfo);
+                        assertEquals(MockEuiccService.MOCK_OS_VERSION, euiccInfo.getOsVersion());
+                        mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnDeleteSubscription() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.deleteSubscription(
+                MOCK_SLOT_ID,
+                MOCK_ICCID,
+                new IDeleteSubscriptionCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        assertEquals(EuiccService.RESULT_OK, result);
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnSwitchToSubscription() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.switchToSubscription(
+                MOCK_SLOT_ID,
+                MOCK_ICCID,
+                true /*forceDeactivateSim*/,
+                new ISwitchToSubscriptionCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        assertEquals(EuiccService.RESULT_OK, result);
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnUpdateSubscriptionNickname() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.updateSubscriptionNickname(
+                MOCK_SLOT_ID,
+                MOCK_ICCID,
+                MOCK_NICK_NAME,
+                new IUpdateSubscriptionNicknameCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        assertEquals(EuiccService.RESULT_OK, result);
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnEraseSubscriptions() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.eraseSubscriptions(
+                MOCK_SLOT_ID,
+                new IEraseSubscriptionsCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        assertEquals(EuiccService.RESULT_OK, result);
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnRetainSubscriptionsForFactoryReset() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.retainSubscriptionsForFactoryReset(
+                MOCK_SLOT_ID,
+                new IRetainSubscriptionsForFactoryResetCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        assertEquals(EuiccService.RESULT_OK, result);
                     }
                 });
 

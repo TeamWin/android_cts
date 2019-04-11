@@ -32,6 +32,7 @@ import android.telephony.euicc.EuiccManager.OtaStatus;
 /** Dummy implementation of {@link EuiccService} for testing. */
 public class MockEuiccService extends EuiccService {
     static String MOCK_EID = "89000000000000000000000000000000";
+    static String MOCK_OS_VERSION = "1.0";
 
     interface IMockEuiccServiceCallback {
         void setMethodCalled();
@@ -62,6 +63,7 @@ public class MockEuiccService extends EuiccService {
     @Override
     public void onStartOtaIfNecessary(int slotId, OtaStatusChangedCallback statusChangedCallback) {
         sMockEuiccServiceCallback.setMethodCalled();
+        statusChangedCallback.onOtaStatusChanged(EuiccManager.EUICC_OTA_SUCCEEDED);
     }
 
     @Override
@@ -112,50 +114,44 @@ public class MockEuiccService extends EuiccService {
     @Override
     public @NonNull GetEuiccProfileInfoListResult onGetEuiccProfileInfoList(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return null;
+        return new GetEuiccProfileInfoListResult(
+                EuiccService.RESULT_RESOLVABLE_ERRORS, null /*profiles*/, false /*isRemovable*/);
     }
 
     @Override
     public @NonNull EuiccInfo onGetEuiccInfo(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return null;
+        return new EuiccInfo(MOCK_OS_VERSION);
     }
 
     @Override
     public @Result int onDeleteSubscription(int slotId, String iccid) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return 0;
+        return EuiccService.RESULT_OK;
     }
 
     @Override
     public @Result int onSwitchToSubscription(
             int slotId, @Nullable String iccid, boolean forceDeactivateSim) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return 0;
+        return EuiccService.RESULT_OK;
     }
 
     @Override
     public int onUpdateSubscriptionNickname(int slotId, String iccid, String nickname) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return 0;
+        return EuiccService.RESULT_OK;
     }
 
     @Override
     public int onEraseSubscriptions(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return 0;
+        return EuiccService.RESULT_OK;
     }
 
     @Override
     public int onRetainSubscriptionsForFactoryReset(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
-        // TODO: Return meaningful value.
-        return 0;
+        return EuiccService.RESULT_OK;
     }
 }
