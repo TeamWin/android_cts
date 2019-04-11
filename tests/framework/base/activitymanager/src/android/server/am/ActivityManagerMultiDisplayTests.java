@@ -1896,7 +1896,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
-     * Tests that turning the secondary display off stops activities running on that display.
+     * Tests that turning the secondary display off stops activities running and makes invisible
+     * on that display.
      */
     @Test
     public void testExternalDisplayToggleState() throws Exception {
@@ -1912,9 +1913,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             externalDisplaySession.turnDisplayOff();
 
-            // Check that turning off the external display stops the activity
+            // Check that turning off the external display stops the activity, and makes it
+            // invisible.
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Activity launched on external display must be stopped after turning off");
+            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
             externalDisplaySession.turnDisplayOn();
 
