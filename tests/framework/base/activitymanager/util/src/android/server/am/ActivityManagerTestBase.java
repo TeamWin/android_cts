@@ -43,6 +43,7 @@ import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.server.am.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
+import static android.server.am.ActivityLauncher.KEY_INTENT_EXTRAS;
 import static android.server.am.ActivityLauncher.KEY_INTENT_FLAGS;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
@@ -1909,6 +1910,7 @@ public abstract class ActivityManagerTestBase {
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
             b.putInt(KEY_INTENT_FLAGS, mIntentFlags);
+            b.putBundle(KEY_INTENT_EXTRAS, getExtras());
             final Context context = getInstrumentation().getContext();
             launchActivityFromExtras(context, b, mLaunchInjector);
         }
