@@ -256,9 +256,10 @@ public class AtomicInstallTest {
             return;
         }
 
-        // Don't care about status; this is just cleanup
         final PackageInstaller packageInstaller = InstrumentationRegistry.getContext()
                 .getPackageManager().getPackageInstaller();
-        packageInstaller.uninstall(packageName, null);
+        packageInstaller.uninstall(packageName, LocalIntentSender.getIntentSender());
+        // Don't care about status; this is just cleanup
+        LocalIntentSender.getIntentSenderResult();
     }
 }
