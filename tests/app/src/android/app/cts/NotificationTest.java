@@ -637,7 +637,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(icon, data.getIcon());
         assertEquals(bubbleIntent, data.getIntent());
         assertEquals(deleteIntent, data.getDeleteIntent());
-        assertFalse(data.getSuppressInitialNotification());
+        assertFalse(data.getSuppressNotification());
         assertFalse(data.getAutoExpandBubble());
     }
 
@@ -649,7 +649,7 @@ public class NotificationTest extends AndroidTestCase {
                 new Notification.BubbleMetadata.Builder()
                         .setDesiredHeight(BUBBLE_HEIGHT)
                         .setAutoExpandBubble(true)
-                        .setSuppressInitialNotification(true)
+                        .setSuppressNotification(true)
                         .setIcon(icon)
                         .setIntent(bubbleIntent)
                         .setDeleteIntent(deleteIntent)
@@ -661,7 +661,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(bubbleIntent, metadata.getIntent());
         assertEquals(deleteIntent, metadata.getDeleteIntent());
         assertTrue(metadata.getAutoExpandBubble());
-        assertTrue(metadata.getSuppressInitialNotification());
+        assertTrue(metadata.getSuppressNotification());
     }
 
     public void testBubbleMetadata_parcelResId() {
@@ -678,7 +678,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(icon, metadata.getIcon());
         assertEquals(bubbleIntent, metadata.getIntent());
         assertFalse(metadata.getAutoExpandBubble());
-        assertFalse(metadata.getSuppressInitialNotification());
+        assertFalse(metadata.getSuppressNotification());
     }
 
     public void testBubbleMetadataBuilder_throwForNoIntent() {
