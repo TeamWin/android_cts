@@ -69,12 +69,12 @@ public class ServiceDisabledForSureTest
         mActivity.assertServiceStatusOnCreate(false);
 
         final AutofillManager afm = mActivity.getAutofillManager();
-        assertThat(afm.isEnabled()).isFalse();
+        Helper.assertAutofillEnabled(afm, false);
 
         enableAutofillService(mContext, SERVICE_NAME);
-        assertThat(afm.isEnabled()).isTrue();
+        Helper.assertAutofillEnabled(afm, true);
 
         disableAutofillService(mContext);
-        assertThat(afm.isEnabled()).isFalse();
+        Helper.assertAutofillEnabled(afm, false);
     }
 }

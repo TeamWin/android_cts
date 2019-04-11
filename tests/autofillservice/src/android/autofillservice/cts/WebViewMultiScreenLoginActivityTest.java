@@ -41,7 +41,6 @@ import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.autofill.AutofillId;
-import android.view.autofill.AutofillManager;
 
 import org.junit.Test;
 
@@ -89,8 +88,7 @@ public class WebViewMultiScreenLoginActivityTest
         // Load WebView
         final MyWebView myWebView = mActivity.loadWebView(mUiBot);
         // Sanity check to make sure autofill is enabled in the application context
-        assertThat(myWebView.getContext().getSystemService(AutofillManager.class).isEnabled())
-                .isTrue();
+        Helper.assertAutofillEnabled(myWebView.getContext(), true);
 
         /*
          * First screen: username
@@ -196,8 +194,7 @@ public class WebViewMultiScreenLoginActivityTest
         // Load WebView
         final MyWebView myWebView = mActivity.loadWebView(mUiBot);
         // Sanity check to make sure autofill is enabled in the application context
-        assertThat(myWebView.getContext().getSystemService(AutofillManager.class).isEnabled())
-                .isTrue();
+        Helper.assertAutofillEnabled(myWebView.getContext(), true);
 
         /*
          * First screen: username
