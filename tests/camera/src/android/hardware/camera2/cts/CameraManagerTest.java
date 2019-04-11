@@ -30,11 +30,13 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.camera2.cts.CameraTestUtils.MockStateCallback;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 
 import org.mockito.ArgumentCaptor;
@@ -671,4 +673,24 @@ public class CameraManagerTest extends AndroidTestCase {
 
     } // testCameraManagerListenerCallbacks
 
+    // Verify no LEGACY-level devices appear on devices first launched in the Q release or newer
+    public void testNoLegacyOnQ() throws Exception {
+        if(PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.Q){
+            // LEGACY still allowed for devices upgrading to Q
+            return;
+        }
+        String[] ids = mCameraManager.getCameraIdList();
+        for (int i = 0; i < ids.length; i++) {
+            CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
+            assertNotNull(
+                    String.format("Can't get camera characteristics from: ID %s", ids[i]), props);
+            Integer hardwareLevel = props.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+            assertNotNull(
+                    String.format("Can't get hardware level from: ID %s", ids[i]), hardwareLevel);
+            assertTrue(String.format(
+                            "Camera device %s cannot be LEGACY level for devices launching on Q",
+                            ids[i]),
+                    hardwareLevel != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
+        }
+    }
 }
