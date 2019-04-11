@@ -18,21 +18,31 @@ package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.content.Intent;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
  * Stub accessibility service that reports itself as providing multiple feedback types.
  */
 public class SpeakingAndVibratingAccessibilityService extends AccessibilityService {
+    private static final String LOG_TAG =
+            SpeakingAndVibratingAccessibilityService.class.getSimpleName();
     public static Object sWaitObjectForConnecting = new Object();
 
     public static SpeakingAndVibratingAccessibilityService sConnectedInstance;
 
     @Override
-    public void onDestroy() {
-        sConnectedInstance = null;
+    public boolean onUnbind(Intent intent) {
+        Log.v(LOG_TAG, "onUnbind [" + this + "]");
+        return false;
     }
 
+    @Override
+    public void onDestroy() {
+        sConnectedInstance = null;
+        Log.v(LOG_TAG, "onDestroy ["  + this + "]");
+    }
 
     @Override
     protected void onServiceConnected() {
@@ -40,6 +50,7 @@ public class SpeakingAndVibratingAccessibilityService extends AccessibilityServi
             sConnectedInstance = this;
             sWaitObjectForConnecting.notifyAll();
         }
+        Log.v(LOG_TAG, "onServiceConnected ["  + this + "]");
     }
 
     @Override
