@@ -10,4 +10,4 @@ aaronholden@google.com
 yuji@google.com
 nickrose@google.com
 
-per-file *Android.bp=*
+per-file Android.bp=*
