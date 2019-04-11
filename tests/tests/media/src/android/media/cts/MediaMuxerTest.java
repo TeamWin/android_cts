@@ -1078,14 +1078,11 @@ public class MediaMuxerTest extends AndroidTestCase {
             }
             if (samplesDropSet == null || !samplesDropSet.contains(videoSampleCount)) {
                 if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
-                    // TODO: Uncomment once MediaExtractor.advance() bug - b/121204004 is fixed.
-                    // or if that was not bug, then find another approach.
-                    // if (VERBOSE) {
-                    //     Log.d(TAG, "Fail:either of tracks reached end of stream");
-                    //     Log.d(TAG, "videoSampleCount:" + videoSampleCount);
-                    //     Log.d(TAG, "srcUs:" + srcSampleTimeUs + "testUs:" + testSampleTimeUs);
-                    // }
-                    // fail("either of tracks reached end of stream");
+                  if (VERBOSE) {
+                    Log.d(TAG, "videoSampleCount:" + videoSampleCount);
+                    Log.d(TAG, "srcUs:" + srcSampleTimeUs + "testUs:" + testSampleTimeUs);
+                  }
+                  fail("either source or test track reached end of stream");
                 }
                 // Stts values within 0.1ms(100us) difference are fudged to save too many
                 // stts entries in MPEG4Writer.
@@ -1135,14 +1132,11 @@ public class MediaMuxerTest extends AndroidTestCase {
             }
 
             if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
-                // TODO: Uncomment once MediaExtractor.advance() bug - b/121204004 is fixed.
-                // or if that was not bug, then find another approach.
-                // if (VERBOSE) {
-                //     Log.d(TAG, "Fail:either of tracks reached end of stream");
-                //     Log.d(TAG, "audioSampleCount:" + audioSampleCount);
-                //     Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
-                // }
-                // fail("either of tracks reached end of stream");
+              if (VERBOSE) {
+                Log.d(TAG, "audioSampleCount:" + audioSampleCount);
+                Log.d(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
+              }
+              fail("either source or test track reached end of stream");
             }
             // First audio sample would have zero timestamp and its start offset is implemented
             // by assigning the first audio sample's duration as the offset. Second sample onwards
