@@ -76,15 +76,6 @@ public class MediaStore_Audio_GenresTest {
                 Genres.getContentUri(mVolumeName), null, null,
                     null, null));
         c.close();
-        try {
-            assertNotNull(c = mContentResolver.query(
-                    Genres.getContentUri(MediaStoreAudioTestHelper.INTERNAL_VOLUME_NAME), null,
-                        null, null, null));
-            c.close();
-            fail("Should throw SQLException as the internal datatbase has no genre");
-        } catch (SQLException e) {
-            // expected
-        }
     }
 
     @Test
@@ -106,15 +97,6 @@ public class MediaStore_Audio_GenresTest {
         } finally {
             assertEquals(1, mContentResolver.delete(uri, null, null));
         }
-    }
-
-    @Test
-    public void testStoreAudioGenresInternal() {
-        // the internal database does not have genres
-        ContentValues values = new ContentValues();
-        values.put(Genres.NAME, "POP");
-        Uri uri = mContentResolver.insert(Genres.INTERNAL_CONTENT_URI, values);
-        assertNull(uri);
     }
 
     @Test

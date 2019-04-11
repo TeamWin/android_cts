@@ -50,6 +50,8 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 
+import junit.framework.Assert;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,6 +60,9 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 @FlakyTest
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -65,7 +70,6 @@ public class NumberPickerTest {
     private static final String[] NUMBER_NAMES3 = {"One", "Two", "Three"};
     private static final String[] NUMBER_NAMES_ALT3 = {"Three", "Four", "Five"};
     private static final String[] NUMBER_NAMES5 = {"One", "Two", "Three", "Four", "Five"};
-    private static final long TIMEOUT_ACCESSIBILITY_EVENT = 5 * 1000;
 
     private Instrumentation mInstrumentation;
     private NumberPickerCtsActivity mActivity;
@@ -336,9 +340,17 @@ public class NumberPickerTest {
                 mock(NumberPicker.OnValueChangeListener.class);
         mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
 
+        final CountDownLatch latch = new CountDownLatch(1);
         final NumberPicker.OnScrollListener mockScrollListener =
                 mock(NumberPicker.OnScrollListener.class);
-        mNumberPicker.setOnScrollListener(mockScrollListener);
+        final NumberPicker.OnScrollListener waitForIdleListener =
+                (NumberPicker numberPicker, int scrollState) -> {
+                    mockScrollListener.onScrollStateChange(numberPicker, scrollState);
+                    if (scrollState == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE) {
+                        mNumberPicker.post(latch::countDown);
+                    }
+                };
+        mNumberPicker.setOnScrollListener(waitForIdleListener);
 
         mActivityRule.runOnUiThread(() -> mNumberPicker.setValue(7));
         assertEquals(7, mNumberPicker.getValue());
@@ -347,11 +359,17 @@ public class NumberPickerTest {
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
-        CtsTouchUtils.emulateDragGesture(mInstrumentation,
-                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
-                numberPickerLocationOnScreen[1] + 1,
-                0,
-                mNumberPicker.getHeight() - 2);
+        try {
+            CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+                    numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
+                    numberPickerLocationOnScreen[1] + 1,
+                    0,
+                    mNumberPicker.getHeight() - 2);
+            Assert.assertTrue("Expected to get to IDLE state within 5 seconds",
+                    latch.await(5, TimeUnit.SECONDS));
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
 
         // At this point we expect that the drag-down gesture has selected the value
         // that was "above" the previously selected one, and that our value change listener
@@ -385,9 +403,17 @@ public class NumberPickerTest {
                 mock(NumberPicker.OnValueChangeListener.class);
         mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
 
+        final CountDownLatch latch = new CountDownLatch(1);
         final NumberPicker.OnScrollListener mockScrollListener =
                 mock(NumberPicker.OnScrollListener.class);
-        mNumberPicker.setOnScrollListener(mockScrollListener);
+        final NumberPicker.OnScrollListener waitForIdleListener =
+                (NumberPicker numberPicker, int scrollState) -> {
+                    mockScrollListener.onScrollStateChange(numberPicker, scrollState);
+                    if (scrollState == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE) {
+                        mNumberPicker.post(latch::countDown);
+                    }
+                };
+        mNumberPicker.setOnScrollListener(waitForIdleListener);
 
         mActivityRule.runOnUiThread(() -> mNumberPicker.setValue(11));
         assertEquals(11, mNumberPicker.getValue());
@@ -396,12 +422,19 @@ public class NumberPickerTest {
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
+
         ((View) mNumberPicker.getParent()).setAccessibilityDelegate(mMockA11yDelegate);
-        CtsTouchUtils.emulateDragGesture(mInstrumentation,
-                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
-                numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
-                0,
-                -(mNumberPicker.getHeight() - 2));
+        try {
+            CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+                    numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
+                    numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
+                    0,
+                    -(mNumberPicker.getHeight() - 2));
+            Assert.assertTrue("Expected to get to IDLE state within 5 seconds",
+                    latch.await(5, TimeUnit.SECONDS));
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
         verify(mMockA11yDelegate, atLeastOnce()).onRequestSendAccessibilityEvent(
                 any(), eq(mNumberPicker),
                 argThat(event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED));

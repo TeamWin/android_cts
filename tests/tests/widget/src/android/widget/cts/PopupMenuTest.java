@@ -219,7 +219,7 @@ public class PopupMenuTest {
         // wouldn't emulate the user-facing interaction for this test. Also, we don't want to use
         // View.dispatchTouchEvent directly as that would require emulation of two separate
         // sequences as well.
-        CtsTouchUtils.emulateTapOnView(mInstrumentation, mBuilder.mAnchor, 10, -20);
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mBuilder.mAnchor, 10, -20);
 
         // At this point our popup should have notified its dismiss listener
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);

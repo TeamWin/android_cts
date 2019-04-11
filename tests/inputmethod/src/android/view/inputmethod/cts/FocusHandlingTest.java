@@ -111,7 +111,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Emulate tap event
             CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), editText);
+                    InstrumentationRegistry.getInstrumentation(), null, editText);
 
             // Wait until "onStartInput" gets called for the EditText.
             final ImeEvent onStart =
@@ -408,7 +408,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Emulate tap event
             CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), editText);
+                    InstrumentationRegistry.getInstrumentation(), null, editText);
 
             // "showSoftInput" must not happen when setShowSoftInputOnFocus(false) is called.
             notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),

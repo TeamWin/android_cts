@@ -528,6 +528,7 @@ public class BitmapTest {
 
         bitmap = Bitmap.createBitmap(picture, 100, 100, Config.HARDWARE);
         assertFalse(bitmap.isMutable());
+        assertNotNull(bitmap.getColorSpace());
 
         bitmap = Bitmap.createBitmap(picture, 100, 100, Config.ARGB_8888);
         assertFalse(bitmap.isMutable());
