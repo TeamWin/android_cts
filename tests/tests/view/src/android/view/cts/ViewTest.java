@@ -410,7 +410,7 @@ public class ViewTest {
         view.setTouchDelegate(delegate);
         assertSame(delegate, view.getTouchDelegate());
         verify(delegate, never()).onTouchEvent(any());
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, view);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, view);
         assertTrue(view.hasCalledOnTouchEvent());
         verify(delegate, times(1)).onTouchEvent(any());
         CtsMouseUtil.emulateHoverOnView(mInstrumentation, view, view.getWidth() / 2,
@@ -3442,7 +3442,7 @@ public class ViewTest {
         assertFalse(view.isClickable());
         assertFalse(view.isLongClickable());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, view);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, view);
         assertTrue(view.hasCalledOnTouchEvent());
 
         mActivityRule.runOnUiThread(() -> {
@@ -3784,7 +3784,7 @@ public class ViewTest {
         assertFalse(mockView.isInTouchMode());
         assertFalse(fitWindowsView.isInTouchMode());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mockView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mockView);
         assertFalse(fitWindowsView.isFocused());
         assertFalse(mockView.isFocused());
         mActivityRule.runOnUiThread(mockView::requestFocus);
@@ -3822,7 +3822,7 @@ public class ViewTest {
         mInstrumentation.sendPointerSync(event);
         assertFalse(fitWindowsView.isInTouchMode());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mockView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mockView);
         assertTrue(fitWindowsView.isInTouchMode());
 
         event.setSource(InputDevice.SOURCE_MOUSE);

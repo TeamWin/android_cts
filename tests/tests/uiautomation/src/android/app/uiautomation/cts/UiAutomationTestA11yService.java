@@ -26,12 +26,16 @@ import android.view.accessibility.AccessibilityEvent;
  */
 public class UiAutomationTestA11yService extends AccessibilityService {
     private static String LOG_TAG = "UiAutomationTest";
-    public static Object sWaitObjectForConnecting = new Object();
+    public static Object sWaitObjectForConnectOrUnbind = new Object();
 
     public static UiAutomationTestA11yService sConnectedInstance;
 
     @Override
     public boolean onUnbind(Intent intent) {
+        synchronized (sWaitObjectForConnectOrUnbind) {
+            sConnectedInstance = null;
+            sWaitObjectForConnectOrUnbind.notifyAll();
+        }
         Log.v(LOG_TAG, "onUnbind [" + this + "]");
         return false;
     }
@@ -52,9 +56,9 @@ public class UiAutomationTestA11yService extends AccessibilityService {
 
     @Override
     protected void onServiceConnected() {
-        synchronized (sWaitObjectForConnecting) {
+        synchronized (sWaitObjectForConnectOrUnbind) {
             sConnectedInstance = this;
-            sWaitObjectForConnecting.notifyAll();
+            sWaitObjectForConnectOrUnbind.notifyAll();
         }
         Log.v(LOG_TAG, "onServiceConnected ["  + this + "]");
     }

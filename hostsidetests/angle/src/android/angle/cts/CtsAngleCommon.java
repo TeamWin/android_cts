@@ -29,6 +29,7 @@ class CtsAngleCommon {
     static final String SETTINGS_GLOBAL_DRIVER_PKGS = "angle_gl_driver_selection_pkgs";
     static final String SETTINGS_GLOBAL_DRIVER_VALUES = "angle_gl_driver_selection_values";
     static final String SETTINGS_GLOBAL_WHITELIST = "angle_whitelist";
+    static final String SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX = "show_angle_in_use_dialog_box";
 
     // System Properties
     static final String PROPERTY_GFX_ANGLE_SUPPORTED = "ro.gfx.angle.supported";
@@ -92,6 +93,7 @@ class CtsAngleCommon {
 
     static void clearSettings(ITestDevice device) throws Exception {
         setGlobalSetting(device, SETTINGS_GLOBAL_ALL_USE_ANGLE, "0");
+        setGlobalSetting(device, SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "0");
         setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
         setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
         setGlobalSetting(device, SETTINGS_GLOBAL_WHITELIST, "\"\"");
@@ -103,18 +105,9 @@ class CtsAngleCommon {
         String propDisablePreloading = device.getProperty(PROPERTY_DISABLE_OPENGL_PRELOADING);
         String propGfxDriver = device.getProperty(PROPERTY_GFX_DRIVER);
 
-        // Make sure ANGLE exists on the device
-        if((angleSupported == null) || (angleSupported.equals("false"))) {
-            return false;
-        }
-
-        // This logic is attempting to mimic ZygoteInit.java::ZygoteInit#preloadOpenGL()
-        if (((propDisablePreloading != null) && propDisablePreloading.equals("false")) &&
-                ((propGfxDriver == null) || propGfxDriver.isEmpty())) {
-            return false;
-        }
-
-        return true;
+        return (angleSupported != null) && (angleSupported.equals("true")) &&
+                (((propDisablePreloading != null) && propDisablePreloading.equals("true")) ||
+                        ((propGfxDriver != null) && !propGfxDriver.isEmpty()));
     }
 
     static void startActivity(ITestDevice device, String action) throws Exception {

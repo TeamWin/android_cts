@@ -118,19 +118,6 @@ public class ServiceControlUtils {
      * @param instrumentation A valid instrumentation
      */
     public static void turnAccessibilityOff(Instrumentation instrumentation) {
-        if (SpeakingAccessibilityService.sConnectedInstance != null) {
-            SpeakingAccessibilityService.sConnectedInstance.disableSelf();
-            SpeakingAccessibilityService.sConnectedInstance = null;
-        }
-        if (VibratingAccessibilityService.sConnectedInstance != null) {
-            VibratingAccessibilityService.sConnectedInstance.disableSelf();
-            VibratingAccessibilityService.sConnectedInstance = null;
-        }
-        if (SpeakingAndVibratingAccessibilityService.sConnectedInstance != null) {
-            SpeakingAndVibratingAccessibilityService.sConnectedInstance.disableSelf();
-            SpeakingAndVibratingAccessibilityService.sConnectedInstance = null;
-        }
-
         final Object waitLockForA11yOff = new Object();
         AccessibilityManager manager = (AccessibilityManager) instrumentation
                 .getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
@@ -143,6 +130,19 @@ public class ServiceControlUtils {
             }
         };
         manager.addAccessibilityStateChangeListener(listener);
+
+        if (SpeakingAccessibilityService.sConnectedInstance != null) {
+            SpeakingAccessibilityService.sConnectedInstance.disableSelf();
+            SpeakingAccessibilityService.sConnectedInstance = null;
+        }
+        if (VibratingAccessibilityService.sConnectedInstance != null) {
+            VibratingAccessibilityService.sConnectedInstance.disableSelf();
+            VibratingAccessibilityService.sConnectedInstance = null;
+        }
+        if (SpeakingAndVibratingAccessibilityService.sConnectedInstance != null) {
+            SpeakingAndVibratingAccessibilityService.sConnectedInstance.disableSelf();
+            SpeakingAndVibratingAccessibilityService.sConnectedInstance = null;
+        }
         waitOn(waitLockForA11yOff, () -> !accessibilityEnabled.get(), TIMEOUT_FOR_SERVICE_ENABLE,
                 "Accessibility turns off");
     }

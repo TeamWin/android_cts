@@ -143,7 +143,7 @@ public class ZoomButtonTest {
             // Emulate long click
             long longPressWait = ViewConfiguration.getLongPressTimeout()
                     + zoomSpeed + 100;
-            CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mZoomButton,
+            CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mZoomButton,
                     longPressWait);
 
             final Long callbackFirstInvocationTime = zoomClickListener.getTimeOfFirstClick();

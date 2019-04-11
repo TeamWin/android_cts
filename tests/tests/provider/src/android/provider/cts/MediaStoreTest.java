@@ -18,7 +18,6 @@ package android.provider.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -104,26 +103,25 @@ public class MediaStoreTest {
 
     @Test
     public void testGetVersion() {
-        // Could be a version string or null...just check it doesn't blow up.
-        MediaStore.getVersion(getContext());
-
-        // Each volume should have a unique version to help detect data wipes
-        final String internal = MediaStore.getVersion(getContext(), MediaStore.VOLUME_INTERNAL);
-        final String external = MediaStore.getVersion(getContext(), MediaStore.VOLUME_EXTERNAL);
-        assertNotEquals(external, internal);
+        // We should have valid versions to help detect data wipes
+        assertNotNull(MediaStore.getVersion(getContext(), MediaStore.VOLUME_INTERNAL));
+        assertNotNull(MediaStore.getVersion(getContext(), MediaStore.VOLUME_EXTERNAL));
+        assertNotNull(MediaStore.getVersion(getContext(), MediaStore.VOLUME_EXTERNAL_PRIMARY));
     }
 
     @Test
-    public void testGetAllVolumeNames() {
-        Set<String> volumeNames = MediaStore.getAllVolumeNames(getContext());
+    public void testGetExternalVolumeNames() {
+        Set<String> volumeNames = MediaStore.getExternalVolumeNames(getContext());
 
-        // At very least should contain these two volumes
-        assertTrue(volumeNames.contains(MediaStore.VOLUME_INTERNAL));
-        assertTrue(volumeNames.contains(MediaStore.VOLUME_EXTERNAL));
+        assertFalse(volumeNames.contains(MediaStore.VOLUME_INTERNAL));
+        assertFalse(volumeNames.contains(MediaStore.VOLUME_EXTERNAL));
+        assertTrue(volumeNames.contains(MediaStore.VOLUME_EXTERNAL_PRIMARY));
     }
 
     @Test
     public void testGetStorageVolume() throws Exception {
+        Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
+
         final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
 
         final StorageManager sm = mContext.getSystemService(StorageManager.class);
@@ -132,7 +130,7 @@ public class MediaStoreTest {
         // We should always have a volume for media we just created
         assertNotNull(sv);
 
-        if (MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) {
+        if (MediaStore.VOLUME_EXTERNAL_PRIMARY.equals(mVolumeName)) {
             assertEquals(sm.getPrimaryStorageVolume(), sv);
         }
     }
@@ -151,7 +149,7 @@ public class MediaStoreTest {
     public void testContributedMedia() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(StorageManager.hasIsolatedStorage());
-        Assume.assumeTrue(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
+        Assume.assumeTrue(MediaStore.VOLUME_EXTERNAL_PRIMARY.equals(mVolumeName));
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 android.Manifest.permission.CLEAR_APP_USER_DATA,

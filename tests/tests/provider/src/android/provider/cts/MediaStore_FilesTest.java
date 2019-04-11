@@ -42,6 +42,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +52,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
+import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
 
 @Presubmit
 @RunWith(Parameterized.class)
@@ -209,7 +212,8 @@ public class MediaStore_FilesTest {
 
     @Test
     public void testAccess() throws Exception {
-        final String path = MediaStore.getVolumePath(mVolumeName).getAbsolutePath();
+        final String path = MediaStore.getVolumePath(resolveVolumeName(mVolumeName))
+                .getAbsolutePath();
         final Uri updateUri = ContentUris.withAppendedId(mExternalFiles,
                 ContentUris.parseId(ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages)));
 

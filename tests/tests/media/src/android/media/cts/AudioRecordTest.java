@@ -87,6 +87,7 @@ public class AudioRecordTest {
         }
     };
     private static final int RECORD_DURATION_MS = 500;
+    private static final int TEST_TIMING_TOLERANCE_MS = 70;
 
     @Before
     public void setUp() throws Exception {
@@ -969,16 +970,14 @@ public class AudioRecordTest {
         mAudioRecord.startRecording();
         assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
 
-        try {
-            Thread.sleep(RECORD_DURATION_MS);
-        } catch (InterruptedException e) {
-        }
+        callback.await(TEST_TIMING_TOLERANCE_MS);
         assertTrue(callback.mCalled);
         assertTrue(callback.mConfigs.size() <= 1);
         if (callback.mConfigs.size() == 1) {
             checkRecordingConfig(callback.mConfigs.get(0));
         }
 
+        Thread.sleep(RECORD_DURATION_MS);
         mAudioRecord.unregisterAudioRecordingCallback(callback);
     }
 

@@ -658,7 +658,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                     new Intent());
             waitAndAssertActivityStates(state(activity, ON_STOP));
             LifecycleVerifier.assertLaunchAndStopSequence(CallbackTrackingActivity.class,
-                    getLifecycleLog(), false /* onTop */);
+                    getLifecycleLog(), true /* onTop */);
 
             getLifecycleLog().clear();
         }
@@ -707,8 +707,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
             // TODO(b/123432490): Fix extra pause/resume
             LifecycleVerifier.assertSequence(ShowWhenLockedCallbackTrackingActivity.class,
-                    getLifecycleLog(), Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START,
-                            ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED),
+                    getLifecycleLog(),
+                    Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                            ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_RESUME,
+                            ON_TOP_POSITION_GAINED),
                     "launchAboveKeyguard");
 
             getLifecycleLog().clear();
@@ -985,9 +987,13 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Wait and assert lifecycle
         waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED),
-                "startPIP");
+        // PipMenuActivity will start and briefly get the top position, so we ignore the rest
+        // of the possibilities.
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
+                transition(CallbackTrackingActivity.class, ON_PAUSE),
+                transition(CallbackTrackingActivity.class, ON_RESUME),
+                transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED)), "startPIP");
 
         // Exit PiP
         getLifecycleLog().clear();
@@ -1019,7 +1025,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
 
         // Launch always focusable activity into PiP
-        getLifecycleLog().clear();
+
+        // Notice that do not clear the lifecycle log here, because it may clear the event
+        // ON_TOP_POSITION_LOST of CallbackTrackingActivity if PipMenuActivity is started earlier.
         final Activity alwaysFocusableActivity = mAlwaysFocusableActivityTestRule.launchActivity(
                 new Intent());
         waitAndAssertActivityStates(state(pipActivity, ON_STOP),
