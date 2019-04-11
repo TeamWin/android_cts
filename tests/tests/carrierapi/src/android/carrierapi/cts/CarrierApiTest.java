@@ -16,14 +16,14 @@
 
 package android.carrierapi.cts;
 
-import static org.junit.Assert.assertArrayEquals;
-
-import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
-import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
-import static android.telephony.IccOpenLogicalChannelResponse.STATUS_UNKNOWN_ERROR;
 import static android.carrierapi.cts.FcpTemplate.FILE_IDENTIFIER;
 import static android.carrierapi.cts.IccUtils.bytesToHexString;
 import static android.carrierapi.cts.IccUtils.hexStringToBytes;
+import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
+import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
+import static android.telephony.IccOpenLogicalChannelResponse.STATUS_UNKNOWN_ERROR;
+
+import static org.junit.Assert.assertArrayEquals;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderClient;
@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import javax.annotation.Nonnull;
 
 // TODO(b/130187425): Split CarrierApiTest apart to have separate test classes for functionality
@@ -116,11 +117,17 @@ public class CarrierApiTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        mPackageManager = getContext().getPackageManager();
         mTelephonyManager = (TelephonyManager)
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
+        hasCellular = hasCellular();
+        if (!hasCellular) {
+            Log.e(TAG, "No cellular support, all tests will be skipped.");
+            return;
+        }
+
         mCarrierConfigManager = (CarrierConfigManager)
                 getContext().getSystemService(Context.CARRIER_CONFIG_SERVICE);
-        mPackageManager = getContext().getPackageManager();
         mSubscriptionManager = (SubscriptionManager)
                 getContext().getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
         selfPackageName = getContext().getPackageName();
@@ -133,10 +140,6 @@ public class CarrierApiTest extends AndroidTestCase {
                 .acquireContentProviderClient(mStatusContentUri);
         mListenerThread = new HandlerThread("CarrierApiTest");
         mListenerThread.start();
-        hasCellular = hasCellular();
-        if (!hasCellular) {
-            Log.e(TAG, "No cellular support, all tests will be skipped.");
-        }
 
         // We need to close all logical channels in the standard range, [1, 3], before each test.
         // This makes sure each SIM-related test starts with a clean slate.
@@ -147,12 +150,14 @@ public class CarrierApiTest extends AndroidTestCase {
 
     @Override
     public void tearDown() throws Exception {
+        if (!hasCellular) return;
+
         // We need to close all logical channels in the standard range, [1, 3], after each test.
-        // This makes sure each SIM-related test releases any opened channels.
+        // This makes sure each SIM-related test releases any opened channels. Channels should only
+        // be closed for devices that have cellular capabilities.
         for (int i = MIN_LOGICAL_CHANNEL; i <= MAX_LOGICAL_CHANNEL; i++) {
             mTelephonyManager.iccCloseLogicalChannel(i);
         }
-
         mListenerThread.quit();
         try {
             mStatusProvider.delete(mStatusContentUri, null, null);
@@ -628,6 +633,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * process, as it process involves several file-reads. The ICCID is one of the first files read.
      */
     public void testApduFileRead() {
+        if (!hasCellular) return;
+
         // Open a logical channel and select the MF.
         IccOpenLogicalChannelResponse logicalChannel = mTelephonyManager.iccOpenLogicalChannel("");
         int channel = logicalChannel.getChannel();
@@ -708,6 +715,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * correctly sets the Line 1 alpha tag and number when called.
      */
     public void testLine1NumberForDisplay() {
+        if (!hasCellular) return;
+
         // Cache original alpha tag and number values.
         String originalAlphaTag = mTelephonyManager.getLine1AlphaTag();
         String originalNumber = mTelephonyManager.getLine1Number();
@@ -736,6 +745,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * sets the VoiceMail alpha tag and number when called.
      */
     public void testVoiceMailNumber() {
+        if (!hasCellular) return;
+
         // Cache original alpha tag and number values.
         String originalAlphaTag = mTelephonyManager.getVoiceMailAlphaTag();
         String originalNumber = mTelephonyManager.getVoiceMailNumber();
