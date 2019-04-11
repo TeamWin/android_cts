@@ -2489,13 +2489,13 @@ public class MediaCodecTest extends AndroidTestCase {
                                 " KEY_PREPEND_HEADER_TO_SYNC_FRAMES is no-op, as expected");
                     }
                     // TODO: actually test encoders prepend the headers to sync frames.
-                } catch (IllegalArgumentException iae) {
+                } catch (IllegalArgumentException | CodecException e) {
                     if (isVideo && isEncoder) {
                         Log.i(TAG, info.getName() + " does not support" +
                                 " KEY_PREPEND_HEADER_TO_SYNC_FRAMES");
                     } else {
                         fail(info.getName() + " is not a video encoder," +
-                                " so it should not fail to configure.\n" + iae.toString());
+                                " so it should not fail to configure.\n" + e.toString());
                     }
                 } finally {
                     if (codec != null) {
