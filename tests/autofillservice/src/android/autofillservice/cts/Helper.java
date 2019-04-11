@@ -53,6 +53,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
@@ -1379,6 +1380,26 @@ public final class Helper {
         assertThat(string).hasLength(LARGE_STRING_SIZE);
         assertThat(string.charAt(0)).isEqualTo(LARGE_STRING_CHAR);
         assertThat(string.charAt(LARGE_STRING_SIZE - 1)).isEqualTo(LARGE_STRING_CHAR);
+    }
+
+    /**
+     * Asserts that autofill is enabled in the context, retrying if necessariy.
+     */
+    public static void assertAutofillEnabled(@NonNull Context context, boolean expected)
+            throws Exception {
+        assertAutofillEnabled(context.getSystemService(AutofillManager.class), expected);
+    }
+
+    /**
+     * Asserts that autofill is enabled in the manager, retrying if necessariy.
+     */
+    public static void assertAutofillEnabled(@NonNull AutofillManager afm, boolean expected)
+            throws Exception {
+        Timeouts.IDLE_UNBIND_TIMEOUT.run("assertEnabled(" + expected + ")", () -> {
+            final boolean actual = afm.isEnabled();
+            Log.v(TAG, "assertEnabled(): expected=" + expected + ", actual=" + actual);
+            return actual == expected ? "not_used" : null;
+        });
     }
 
     /**
