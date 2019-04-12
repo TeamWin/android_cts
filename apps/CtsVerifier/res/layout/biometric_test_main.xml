@@ -23,16 +23,16 @@
     <Button android:id="@+id/biometric_enroll_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/biometric_start_test_not_secured"
         android:layout_centerHorizontal="true"
         android:text="@string/biometric_enroll"
-        android:visibility="invisible"
+        android:visibility="gone"
         />
 
     <Button android:id="@+id/biometric_start_test_not_secured"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/biometric_enroll_button"
         android:text="@string/biometric_start_test1"
         />
 
@@ -57,13 +57,20 @@
     <Button android:id="@+id/biometric_start_test_authenticate_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/biometric_start_test_fallback_button"
+        android:layout_below="@+id/biometric_start_test_credential_button"
         android:layout_centerHorizontal="true"
         android:text="@string/biometric_start_test4"
         android:visibility="invisible"
         />
 
-
+    <Button android:id="@+id/biometric_start_test_strings_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/biometric_start_test_authenticate_button"
+        android:layout_centerHorizontal="true"
+        android:text="@string/biometric_start_test5"
+        android:visibility="invisible"
+        />
 
     <include android:layout_width="match_parent"
         android:layout_height="wrap_content"
