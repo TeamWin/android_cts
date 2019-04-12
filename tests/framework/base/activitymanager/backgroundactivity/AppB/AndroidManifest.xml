@@ -16,10 +16,14 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.am.cts.backgroundactivity.appb">
+          package="android.server.am.backgroundactivity.appb">
 
     <application>
-        <receiver android:name="android.server.am.StartPendingIntentReceiver" android:exported="true"/>
-        <activity android:name="android.server.am.ForegroundActivity" android:exported="true" />
+        <receiver
+            android:name=".StartPendingIntentReceiver"
+            android:exported="true"/>
+        <activity
+            android:name=".ForegroundActivity"
+            android:exported="true" />
     </application>
 </manifest>
