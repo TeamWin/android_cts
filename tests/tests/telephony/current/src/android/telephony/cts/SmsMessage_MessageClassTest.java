@@ -16,12 +16,13 @@
 
 package android.telephony.cts;
 
-import junit.framework.TestCase;
 import android.telephony.SmsMessage;
 
+import org.junit.Test;
 
-public class SmsMessage_MessageClassTest extends TestCase {
+public class SmsMessage_MessageClassTest {
 
+    @Test
     public void testMessageClass() {
     }
 }

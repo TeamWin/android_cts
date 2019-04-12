@@ -20,7 +20,15 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
 import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -29,31 +37,32 @@ import android.platform.test.annotations.SecurityTest;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 
 import java.io.IOException;
 
-public class CarrierConfigManagerTest extends AndroidTestCase {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class CarrierConfigManagerTest {
     private CarrierConfigManager mConfigManager;
     private TelephonyManager mTelephonyManager;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mTelephonyManager = (TelephonyManager)
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mConfigManager = (CarrierConfigManager)
                 getContext().getSystemService(Context.CARRIER_CONFIG_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         try {
             setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
         } catch (IOException e) {
             fail();
         }
-        super.tearDown();
     }
 
     /**
@@ -105,12 +114,14 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetConfig() {
         PersistableBundle config = mConfigManager.getConfig();
         checkConfig(config);
     }
 
     @SecurityTest
+    @Test
     public void testRevokePermission() {
         PersistableBundle config;
 
@@ -133,6 +144,7 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
         checkConfig(config);
     }
 
+    @Test
     public void testGetConfigForSubId() {
         PersistableBundle config =
                 mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubscriptionId());
@@ -144,6 +156,7 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
      * notifyConfigChangedForSubId() API and expects a SecurityException since the test apk is not signed
      * by certificate on the SIM.
      */
+    @Test
     public void testNotifyConfigChangedForSubId() {
         try {
             if (isSimCardPresent()) {
