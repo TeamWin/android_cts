@@ -37,4 +37,16 @@ public class Poc17_08 extends SecurityTestCase {
         TimeUnit.SECONDS.sleep(50);
     }
 
- }
+    /**
+     * b/37563942
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0737() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0737", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(
+            "Fatal signal 11 \\(SIGSEGV\\)" +
+            ".*>>> /system/bin/mediaserver <<<", logcatOut);
+    }
+}
