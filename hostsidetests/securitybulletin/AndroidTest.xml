@@ -224,6 +224,7 @@
         <option name="cleanup" value="true" />
 
         <option name="push" value="CVE-2018-626732->/data/local/tmp/CVE-2018-6267" />
+        <option name="push" value="CVE-2018-627132->/data/local/tmp/CVE-2018-6271" />
 
         <option name="append-bitness" value="false" />
     </target_preparer>
