@@ -19,10 +19,10 @@ package android.server.am;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
-import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
+import static android.server.am.app.Components.DISMISS_KEYGUARD_ACTIVITY;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 
 import static org.junit.Assume.assumeTrue;
 

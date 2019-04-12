@@ -18,8 +18,8 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
-import static android.server.am.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.ANIMATION_TEST_ACTIVITY;
+import static android.server.am.app.Components.LAUNCHING_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertFalse;

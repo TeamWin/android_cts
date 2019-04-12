@@ -3,7 +3,7 @@ package android.server.am.lifecycle;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
+import static android.server.am.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;

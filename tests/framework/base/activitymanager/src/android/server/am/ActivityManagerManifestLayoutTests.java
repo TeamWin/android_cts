@@ -20,11 +20,11 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ComponentNameUtils.getWindowName;
-import static android.server.am.Components.BOTTOM_LEFT_LAYOUT_ACTIVITY;
-import static android.server.am.Components.BOTTOM_RIGHT_LAYOUT_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.TOP_LEFT_LAYOUT_ACTIVITY;
-import static android.server.am.Components.TOP_RIGHT_LAYOUT_ACTIVITY;
+import static android.server.am.app.Components.BOTTOM_LEFT_LAYOUT_ACTIVITY;
+import static android.server.am.app.Components.BOTTOM_RIGHT_LAYOUT_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TOP_LEFT_LAYOUT_ACTIVITY;
+import static android.server.am.app.Components.TOP_RIGHT_LAYOUT_ACTIVITY;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;

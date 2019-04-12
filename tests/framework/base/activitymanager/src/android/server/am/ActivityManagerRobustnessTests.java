@@ -16,12 +16,10 @@
 
 package android.server.am;
 
-import static android.server.am.Components.RECURSIVE_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.RECURSIVE_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 
 import android.platform.test.annotations.Presubmit;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 

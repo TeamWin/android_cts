@@ -17,23 +17,24 @@
 package android.server.am;
 
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.WALLPAPAER_ACTIVITY;
 import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.am.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY;
 import static android.server.am.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER;
 import static android.server.am.WindowManagerState.TRANSIT_KEYGUARD_OCCLUDE;
 import static android.server.am.WindowManagerState.TRANSIT_KEYGUARD_UNOCCLUDE;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.WALLPAPAER_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+
 import org.junit.Before;
 import org.junit.Test;
 

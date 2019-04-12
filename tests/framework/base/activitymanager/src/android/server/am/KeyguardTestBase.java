@@ -16,10 +16,10 @@
 
 package android.server.am;
 
-import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_CANCELLED;
-import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_ERROR;
-import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_SUCCEEDED;
 import static android.server.am.StateLogger.logAlways;
+import static android.server.am.app.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_CANCELLED;
+import static android.server.am.app.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_ERROR;
+import static android.server.am.app.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_SUCCEEDED;
 
 import static org.junit.Assert.fail;
 
@@ -27,7 +27,6 @@ import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.os.SystemClock;
 import android.server.am.TestJournalProvider.TestJournalContainer;
-
 
 class KeyguardTestBase extends ActivityManagerTestBase {
 

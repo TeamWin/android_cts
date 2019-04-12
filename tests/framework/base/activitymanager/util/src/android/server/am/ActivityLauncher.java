@@ -20,7 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
