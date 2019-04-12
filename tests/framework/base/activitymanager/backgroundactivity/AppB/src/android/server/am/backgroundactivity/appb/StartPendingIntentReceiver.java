@@ -14,7 +14,9 @@
  * limitations under the License
  */
 
-package android.server.am;
+package android.server.am.backgroundactivity.appb;
+
+import static android.server.am.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -25,7 +27,6 @@ import android.content.Intent;
  * Receive pending intent from AppA and launch it
  */
 public class StartPendingIntentReceiver extends BroadcastReceiver {
-    private static final String PENDING_INTENT_EXTRA = "PENDING_INTENT_EXTRA";
 
     @Override
     public void onReceive(Context context, Intent intent) {

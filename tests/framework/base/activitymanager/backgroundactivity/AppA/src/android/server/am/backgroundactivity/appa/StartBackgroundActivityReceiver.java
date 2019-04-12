@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.am;
+package android.server.am.backgroundactivity.appa;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

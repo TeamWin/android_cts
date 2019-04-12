@@ -14,7 +14,9 @@
  * limitations under the License
  */
 
-package android.server.am;
+package android.server.am.backgroundactivity.appa;
+
+import static android.server.am.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -24,9 +26,6 @@ import android.os.Bundle;
  * Foreground activity that makes AppA as foreground.
  */
 public class ForegroundActivity extends Activity {
-
-    private static final String LAUNCH_BACKGROUND_ACTIVITY_EXTRA =
-            "LAUNCH_BACKGROUND_ACTIVITY_EXTRA";
 
     @Override
     public void onCreate(Bundle bundle) {

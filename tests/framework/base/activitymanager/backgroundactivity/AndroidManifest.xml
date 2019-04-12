@@ -16,9 +16,9 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.am.cts.backgroundactivity">
+          package="android.server.am.backgroundactivity.cts">
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.server.am.cts.backgroundactivity" />
+        android:targetPackage="android.server.am.backgroundactivity.cts" />
 </manifest>
