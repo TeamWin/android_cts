@@ -1145,7 +1145,7 @@ public abstract class ActivityManagerTestBase {
         private final SettingsObserver mRotationObserver;
         private int mPreviousDegree;
 
-        public RotationSession() throws Exception {
+        public RotationSession() {
             // Save accelerometer_rotation preference.
             super(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
                     Settings.System::getInt, Settings.System::putInt);
@@ -1164,7 +1164,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         @Override
-        public void set(@NonNull Integer value) throws Exception {
+        public void set(@NonNull Integer value) {
             // When the rotation is locked and the SystemUI receives the rotation becoming 0deg, it
             // will call freezeRotation to WMS, which will cause USER_ROTATION be set to zero again.
             // In order to prevent our test target from being overwritten by SystemUI during
