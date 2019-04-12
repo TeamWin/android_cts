@@ -209,7 +209,7 @@ public class MagnifierTest {
     //***** Tests for default parameters *****//
 
     private int dpToPixelSize(float dp) {
-        return (int) Math.ceil(dp * mDisplayMetrics.density);
+        return (int) (dp * mDisplayMetrics.density + 0.5f);
     }
 
     private float dpToPixel(float dp) {
