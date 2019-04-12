@@ -16,7 +16,7 @@
 
 package android.server.am.settings;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ContentResolver;
 import android.net.Uri;
@@ -108,15 +108,19 @@ public class SettingsSession<T> implements AutoCloseable {
         }
     }
 
-    public void set(final @NonNull T value) throws Exception {
+    public void set(final @NonNull T value) {
         put(mUri, mSetter, value);
         if (DEBUG) {
             Log.i(TAG, "  set: uri=" + mUri + " value=" + value);
         }
     }
 
-    public T get() throws SettingNotFoundException {
-        return get(mUri, mGetter);
+    public T get() {
+        try {
+            return get(mUri, mGetter);
+        } catch (SettingNotFoundException e) {
+            return null;
+        }
     }
 
     @Override
@@ -137,8 +141,7 @@ public class SettingsSession<T> implements AutoCloseable {
         }
     }
 
-    private static <T> void put(final Uri uri, final SettingsSetter<T> setter, T value)
-            throws SettingNotFoundException {
+    private static <T> void put(final Uri uri, final SettingsSetter<T> setter, T value) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             setter.set(getContentResolver(), uri.getLastPathSegment(), value);
         });
