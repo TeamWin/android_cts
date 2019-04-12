@@ -159,6 +159,10 @@
     <string name="biometric_start_test2">Start Test 2</string>
     <string name="biometric_start_test3">Start Test 3</string>
     <string name="biometric_start_test4">Start Test 4</string>
+    <string name="biometric_start_test5">Start Test 5</string>
+    <string name="biometric_test_strings_title">Instructions</string>
+    <string name="biometric_test_strings_instructions">For the next test, please write down the numbers shown in the title, subtitle, description, and negative button fields. After authenticating, please enter the strings in the appropriate box.</string>
+    <string name="biometric_test_strings_verify_title">Please enter the numbers you recorded</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
