@@ -28,18 +28,14 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
-import androidx.core.content.FileProvider
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
-private const val CONTENT_AUTHORITY = "android.packageinstaller.install.cts.fileprovider"
 private const val INSTALL_CONFIRM_TEXT_ID = "install_confirm_question"
 private const val ALERT_DIALOG_TITLE_ID = "android:id/alertTitle"
 
@@ -50,23 +46,10 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
     private val packageName = context.packageName
-    private val apkFile = File(context.filesDir, TEST_APK_NAME)
     private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-
-    @Before
-    fun copyTestApk() {
-        File(TEST_APK_EXTERNAL_LOCATION, TEST_APK_NAME).copyTo(target = apkFile, overwrite = true)
-    }
 
     private fun setAppOpsMode(mode: Int) {
         AppOpsUtils.setOpMode(packageName, APP_OP_STR, mode)
-    }
-
-    private fun startInstallationViaIntent() {
-        val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
-        intent.data = FileProvider.getUriForFile(context, CONTENT_AUTHORITY, apkFile)
-        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(intent)
     }
 
     private fun assertUiObject(errorMessage: String, selector: BySelector) {
@@ -152,15 +135,15 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
     @Test
     fun blockedSourceTest() {
         setAppOpsMode(MODE_ERRORED)
-        assertFalse("Package $packageName allowed to install packages after setting app op to "
-                + "errored", pm.canRequestPackageInstalls())
+        assertFalse("Package $packageName allowed to install packages after setting app op to " +
+                "errored", pm.canRequestPackageInstalls())
     }
 
     @Test
     fun allowedSourceTest() {
         setAppOpsMode(MODE_ALLOWED)
-        assertTrue("Package $packageName blocked from installing packages after setting app op to "
-                + "allowed", pm.canRequestPackageInstalls())
+        assertTrue("Package $packageName blocked from installing packages after setting app op " +
+                "to allowed", pm.canRequestPackageInstalls())
     }
 
     @Test
