@@ -31,6 +31,7 @@ import androidx.test.rule.ActivityTestRule;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.hamcrest.Matcher;
+import org.junit.Before;
 
 class AspectRatioTestsBase {
     // The delta allowed when comparing two floats for equality. We consider them equal if they are
@@ -63,6 +64,12 @@ class AspectRatioTestsBase {
 //        activity.setRequestedOrientation(SCREEN_ORIENTATION_PORTRAIT);
 //        waitForIdle();
 //        callback.assertAspectRatio(getAspectRatio(activity));
+    }
+
+    @Before
+    public void wakeUpAndUnlock() {
+        UiDeviceUtils.pressWakeupButton();
+        UiDeviceUtils.pressUnlockButton();
     }
 
     static float getDefaultDisplayAspectRatio() {

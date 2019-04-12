@@ -18,17 +18,17 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.ComponentNameUtils.getWindowName;
-import static android.server.am.Components.NO_RELAUNCH_ACTIVITY;
-import static android.server.am.Components.SLOW_CREATE_ACTIVITY;
 import static android.server.am.StateLogger.log;
+import static android.server.am.app.Components.NO_RELAUNCH_ACTIVITY;
+import static android.server.am.app.Components.SLOW_CREATE_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.os.SystemClock;
-
 import android.platform.test.annotations.Presubmit;
+
 import org.junit.Before;
 import org.junit.Test;
 

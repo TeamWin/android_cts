@@ -18,7 +18,7 @@ package android.server.am.lifecycle;
 
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
+import static android.server.am.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;

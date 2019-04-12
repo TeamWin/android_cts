@@ -18,16 +18,16 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
-import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
-import static android.server.am.Components.PIP_ACTIVITY;
-import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
-import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
-import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.app.Components.DISMISS_KEYGUARD_ACTIVITY;
+import static android.server.am.app.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
+import static android.server.am.app.Components.PIP_ACTIVITY;
+import static android.server.am.app.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.am.app.Components.PipActivity.EXTRA_ENTER_PIP;
+import static android.server.am.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
+import static android.server.am.app.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
@@ -47,8 +47,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-
-import androidx.test.filters.FlakyTest;
 
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;

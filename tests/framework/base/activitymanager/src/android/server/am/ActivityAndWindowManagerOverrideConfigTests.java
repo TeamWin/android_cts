@@ -17,7 +17,7 @@
 package android.server.am;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.server.am.Components.LOG_CONFIGURATION_ACTIVITY;
+import static android.server.am.app.Components.LOG_CONFIGURATION_ACTIVITY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 
