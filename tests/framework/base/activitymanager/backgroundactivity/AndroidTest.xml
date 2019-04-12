@@ -23,12 +23,13 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.LocationCheck" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <!-- TODO(b/129909356): Rename to CtsBackgroundActivityTestCases.apk -->
         <option name="test-file-name" value="CtsActivityManagerBackgroundActivityTestCases.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppA.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppB.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
-        <option name="package" value="android.server.am.cts.backgroundactivity" />
+        <option name="package" value="android.server.am.backgroundactivity.cts" />
         <option name="runtime-hint" value="1m" />
     </test>
 </configuration>

@@ -14,11 +14,14 @@
  * limitations under the License
  */
 
-package android.server.am;
+package android.server.am.backgroundactivity.appa;
+
+import static android.server.am.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
+import static android.server.am.backgroundactivity.appb.Components.APP_B_START_PENDING_INTENT_RECEIVER;
+import static android.server.am.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
@@ -27,23 +30,12 @@ import android.content.Intent;
  */
 public class SendPendingIntentReceiver extends BroadcastReceiver {
 
-    private static final String APP_A_PACKAGE_NAME =
-            "android.server.am.cts.backgroundactivity.appa";
-    private static final String APP_B_PACKAGE_NAME =
-            "android.server.am.cts.backgroundactivity.appb";
-    private static final ComponentName APP_A_BACKGROUND_ACTIVITY_COMPONENT = new ComponentName(
-            APP_A_PACKAGE_NAME, "android.server.am.BackgroundActivity");
-    private static final ComponentName APP_B_START_PENDING_INTENT_RECEIVER_COMPONENT =
-            new ComponentName(APP_B_PACKAGE_NAME, "android.server.am.StartPendingIntentReceiver");
-
-    private static final String PENDING_INTENT_EXTRA = "PENDING_INTENT_EXTRA";
-
     @Override
     public void onReceive(Context context, Intent notUsed) {
 
         // Create a pendingIntent to launch appA's BackgroundActivity
         Intent newIntent = new Intent();
-        newIntent.setComponent(APP_A_BACKGROUND_ACTIVITY_COMPONENT);
+        newIntent.setComponent(APP_A_BACKGROUND_ACTIVITY);
         newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
@@ -51,7 +43,7 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
 
         // Send the pendingIntent to appB
         Intent intent = new Intent();
-        intent.setComponent(APP_B_START_PENDING_INTENT_RECEIVER_COMPONENT);
+        intent.setComponent(APP_B_START_PENDING_INTENT_RECEIVER);
         intent.putExtra(PENDING_INTENT_EXTRA, pendingIntent);
         context.sendBroadcast(intent);
     }
