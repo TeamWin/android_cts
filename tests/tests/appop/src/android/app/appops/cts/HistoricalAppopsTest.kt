@@ -28,6 +28,7 @@ import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.ArrayList
@@ -60,26 +61,31 @@ class HistoricalAppopsTest {
     }
 
     @Test
+    @Ignore
     fun testGetHistoricalPackageOpsForegroundAccessInMemoryBucket() {
         testGetHistoricalPackageOpsForegroundAtDepth(0)
     }
 
     @Test
+    @Ignore
     fun testGetHistoricalPackageOpsForegroundAccessFirstOnDiskBucket() {
         testGetHistoricalPackageOpsForegroundAtDepth(1)
     }
 
     @Test
+    @Ignore
     fun testHistoricalAggregationOneLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(0)
     }
 
     @Test
+    @Ignore
     fun testHistoricalAggregationTwoLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(1)
     }
 
     @Test
+    @Ignore
     fun testHistoricalAggregationOverflow() {
         // Configure historical registry behavior.
         appOpsManager!!.setHistoryParameters(
@@ -117,6 +123,7 @@ class HistoricalAppopsTest {
     }
 
     @Test
+    @Ignore
     fun testHistoryTimeTravel() {
         // Configure historical registry behavior.
         appOpsManager!!.setHistoryParameters(
