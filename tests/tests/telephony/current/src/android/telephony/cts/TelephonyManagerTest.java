@@ -64,7 +64,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
@@ -72,7 +71,6 @@ import com.android.compatibility.common.util.TestThread;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,7 +87,6 @@ import java.util.regex.Pattern;
  *  make cts -j64
  *  cts-tradefed run cts -m CtsTelephonyTestCases --test android.telephony.cts.TelephonyManagerTest
  */
-@RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
     private SubscriptionManager mSubscriptionManager;
