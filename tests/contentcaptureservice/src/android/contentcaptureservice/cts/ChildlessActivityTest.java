@@ -74,7 +74,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class ChildlessActivityTest
-        extends AbstractContentCaptureIntegrationTest<ChildlessActivity> {
+        extends AbstractContentCaptureIntegrationAutoActivityLaunchTest<ChildlessActivity> {
 
     private static final String TAG = ChildlessActivityTest.class.getSimpleName();
 
