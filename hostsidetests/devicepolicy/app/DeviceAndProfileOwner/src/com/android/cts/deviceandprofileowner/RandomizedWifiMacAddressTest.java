@@ -15,13 +15,13 @@
  */
 package com.android.cts.deviceandprofileowner;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.net.MacAddress;
 import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+
+import com.android.compatibility.common.util.WifiConfigCreator;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,14 +34,30 @@ public class RandomizedWifiMacAddressTest extends BaseDeviceAdminTest {
     /** Mac address returned when the caller doesn't have access. */
     private static final String DEFAULT_MAC_ADDRESS = "02:00:00:00:00:00";
     /** SSID returned when the caller doesn't have access or if WiFi is not connected. */
+    private static final String NETWORK_SSID = "TestSSID";
     private static final String DEFAULT_SSID = "<unknown ssid>";
 
+    private int mNetId;
+    private WifiConfigCreator mWifiConfigCreator;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mWifiConfigCreator = new WifiConfigCreator(mContext);
+        mNetId = mWifiConfigCreator.addNetwork(NETWORK_SSID, false,
+                WifiConfigCreator.SECURITY_TYPE_NONE, null);
+        assertWithMessage("Fail to create test network")
+                .that(mNetId)
+                .isNotEqualTo(-1);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        mWifiConfigCreator.removeNetwork(mNetId);
+        super.tearDown();
+    }
     public void testGetRandomizedMacAddress() {
         final WifiManager wifiManager = mContext.getSystemService(WifiManager.class);
-        final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
-        assertWithMessage("Cannot get WiFi connection info").that(connectionInfo).isNotNull();
-        assertWithMessage("Default SSID returned for current connection, check WiFi and location")
-                .that(connectionInfo.getSSID()).isNotEqualTo(DEFAULT_SSID);
 
         final List<WifiConfiguration> wifiConfigs = wifiManager.getConfiguredNetworks();
         for (final WifiConfiguration config : wifiConfigs) {
@@ -49,7 +65,7 @@ public class RandomizedWifiMacAddressTest extends BaseDeviceAdminTest {
                 continue;
             }
 
-            if (config.SSID.equals(connectionInfo.getSSID())) {
+            if (config.SSID.equals("\"" + NETWORK_SSID + "\"")) {
                 final MacAddress macAddress = config.getRandomizedMacAddress();
 
                 assertWithMessage("Device owner should be able to get the randomized MAC address")
@@ -63,6 +79,6 @@ public class RandomizedWifiMacAddressTest extends BaseDeviceAdminTest {
                 .map(c -> c.SSID).filter(Objects::nonNull).collect(Collectors.joining(","));
 
         fail(String.format("Failed to find WifiConfiguration for the current connection, " +
-                "current SSID: %s; configured SSIDs: %s", connectionInfo.getSSID(), ssids));
+                "current SSID: %s; configured SSIDs: %s", NETWORK_SSID, ssids));
     }
 }
