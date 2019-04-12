@@ -129,6 +129,8 @@
                 android:resource="@xml/alias" />
             <meta-data android:name="android.app.intent.filter"
                 android:resource="@xml/intentfilter" />
+            <meta-data android:name="android.app.intent"
+                       android:resource="@xml/intent" />
             <intent-filter>
                 <action android:name="android.content.cts.action.TEST_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
