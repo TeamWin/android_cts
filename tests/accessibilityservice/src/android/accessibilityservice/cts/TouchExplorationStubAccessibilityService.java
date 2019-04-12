@@ -22,6 +22,7 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_HOVER_ENTE
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_HOVER_EXIT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.app.Instrumentation;
 import android.view.accessibility.AccessibilityEvent;
 

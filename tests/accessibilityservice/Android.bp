@@ -21,6 +21,7 @@ android_test {
         "mockito-target-minus-junit4",
         "compatibility-device-util-axt",
         "platform-test-annotations",
+        "CtsAccessibilityCommon",
     ],
     libs: [
         "android.test.runner.stubs",
