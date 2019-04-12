@@ -14,12 +14,14 @@
  * limitations under the License
  */
 
-package android.server.am;
+package android.server.am.backgroundactivity.appa;
 
 import android.app.Activity;
 
 /**
- * Foreground activity that makes AppB as foreground.
+ * A background activity that will be launched, for testing if app is able to start background
+ * activity.
  */
-public class ForegroundActivity extends Activity {
+public class BackgroundActivity extends Activity {
+
 }
