@@ -113,13 +113,8 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     @Test
     public void testKeyValueBackupJobRunsSuccessfully() throws Exception {
         int profileUserId = mProfileUserId.get();
-        // Install a new key value backup app and simulate data changed.
+        // Install a new key value backup app.
         installPackageAsUser(KEY_VALUE_APK, profileUserId);
-        checkDeviceTestAsUser(
-                KEY_VALUE_TEST_PACKAGE,
-                KEY_VALUE_DEVICE_TEST_NAME,
-                "callDataChanged",
-                profileUserId);
 
         // Force run k/v job.
         String startLog = mLogcatInspector.mark(TAG);
