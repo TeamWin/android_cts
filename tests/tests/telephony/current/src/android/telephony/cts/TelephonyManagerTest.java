@@ -1302,11 +1302,14 @@ public class TelephonyManagerTest {
 
         String countryIso = mTelephonyManager.getNetworkCountryIso();
         String potentialEmergencyAddress = "91112345";
+        // According to com.android.i18n.phonenumbers.ShortNumberInfo, in
+        // these countries, if extra digits are added to an emergency number,
+        // it no longer connects to the emergency service.
         if (countryIso.equals("br") || countryIso.equals("cl") || countryIso.equals("ni")) {
-            assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+            assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
         } else {
-            assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+            assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
         }
     }
