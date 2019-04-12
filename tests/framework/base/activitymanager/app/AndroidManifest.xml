@@ -17,7 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
-          package="android.server.am">
+          package="android.server.am.app">
 
     <!-- virtual display test permissions -->
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
@@ -329,8 +329,8 @@
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
-                <action android:name="android.server.am.LAUNCH_BROADCAST_ACTION"/>
-                <action android:name="android.server.am.ACTION_TEST_ACTIVITY_START"/>
+                <action android:name="android.server.am.app.LAUNCH_BROADCAST_ACTION"/>
+                <action android:name="android.server.am.app.ACTION_TEST_ACTIVITY_START"/>
             </intent-filter>
         </receiver>
 
@@ -463,7 +463,7 @@
                   android:launchMode="singleInstance" />
 
         <service
-            android:name="android.server.am.LiveWallpaper"
+            android:name=".LiveWallpaper"
             android:permission="android.permission.BIND_WALLPAPER">
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService">

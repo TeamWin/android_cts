@@ -18,17 +18,16 @@ package android.server.am;
 
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 import static android.server.am.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
-import static android.server.am.displaysize.Components.SmallestWidthActivity
-        .EXTRA_LAUNCH_ANOTHER_ACTIVITY;
+import static android.server.am.displaysize.Components.SmallestWidthActivity.EXTRA_LAUNCH_ANOTHER_ACTIVITY;
 
 import static org.junit.Assert.assertTrue;
 
 import android.os.Build;
-
 import android.platform.test.annotations.Presubmit;
+
 import org.junit.After;
 import org.junit.Test;
 
@@ -42,7 +41,7 @@ import org.junit.Test;
 @Presubmit
 public class DisplaySizeTest extends ActivityManagerTestBase {
 
-    /** @see com.android.server.am.UnsupportedDisplaySizeDialog */
+    /** @see com.android.server.wm.UnsupportedDisplaySizeDialog */
     private static final String UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME =
             "UnsupportedDisplaySizeDialog";
 

@@ -16,7 +16,7 @@
 
 package android.server.am;
 
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 
 import static org.junit.Assert.assertFalse;
@@ -24,7 +24,6 @@ import static org.junit.Assert.assertFalse;
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
