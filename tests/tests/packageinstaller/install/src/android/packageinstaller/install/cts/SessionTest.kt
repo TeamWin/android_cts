@@ -22,27 +22,17 @@ import android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.STATUS_FAILURE_ABORTED
 import android.content.pm.PackageInstaller.STATUS_SUCCESS
-import android.content.pm.PackageManager
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.AppModeInstant
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.UiDevice
-import android.support.test.uiautomator.Until
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.lang.NullPointerException
-import java.util.concurrent.TimeUnit
-import kotlin.Int
-import kotlin.Long
-import kotlin.String
 
 private const val INSTALL_BUTTON_ID = "button1"
 private const val CANCEL_BUTTON_ID = "button2"
@@ -51,49 +41,10 @@ private const val CANCEL_BUTTON_ID = "button2"
 class SessionTest : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
-    private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     @Before
     fun allowToInstallPackages() {
         AppOpsUtils.setOpMode(context.packageName, APP_OP_STR, MODE_ALLOWED)
-    }
-
-    /**
-     * Wait for result of install dialog and return it
-     */
-    private fun getInstallDialogResult(timeout: Long = TIMEOUT): Int? {
-        return installDialogResults.poll(timeout, TimeUnit.MILLISECONDS)
-    }
-
-    private fun assertInstalled() {
-        // Throws exception if package is not installed.
-        pm.getPackageInfo(TEST_APK_PACKAGE_NAME, 0)
-    }
-
-    private fun assertNotInstalled() {
-        try {
-            pm.getPackageInfo(TEST_APK_PACKAGE_NAME, 0)
-            fail("Package should not be installed")
-        } catch (expected: PackageManager.NameNotFoundException) {
-        }
-    }
-
-    /**
-     * Click a button in the UI of the installer app
-     *
-     * @param resId The resource ID of the button to click
-     */
-    private fun clickInstallerUIButton(resId: String) {
-        uiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, resId)), TIMEOUT)
-                .click()
-    }
-
-    /**
-     * Assert that there are no more callbacks from the install session or install dialog
-     */
-    private fun assertNoMoreInstallResults() {
-        assertNull(getInstallSessionResult(0))
-        assertEquals(0, installDialogResults.size)
     }
 
     /**
