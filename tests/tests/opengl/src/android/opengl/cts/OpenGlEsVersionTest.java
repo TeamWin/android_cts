@@ -35,6 +35,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -80,6 +81,8 @@ public class OpenGlEsVersionTest {
     @CddTest(requirement="7.1.4.1/C-0-1")
     @Test
     public void testOpenGlEsVersion() throws InterruptedException {
+        Assume.assumeFalse(isRunningANGLE());
+
         int detectedMajorVersion = getDetectedMajorVersion();
         int reportedVersion = getVersionFromActivityManager(mActivity);
 
@@ -99,6 +102,8 @@ public class OpenGlEsVersionTest {
     @CddTest(requirement="7.1.4.1/C-2-2")
     @Test
     public void testRequiredExtensions() throws InterruptedException {
+        Assume.assumeFalse(isRunningANGLE());
+
         int reportedVersion = getVersionFromActivityManager(mActivity);
 
         if (getMajorVersion(reportedVersion) < 3)
@@ -138,6 +143,8 @@ public class OpenGlEsVersionTest {
     @CddTest(requirement="7.1.4.1/C-2-1,C-5-1,C-4-1")
     @Test
     public void testExtensionPack() throws InterruptedException {
+        Assume.assumeFalse(isRunningANGLE());
+
         // Requirements:
         // 1. If the device claims support for the system feature, the extension must be available.
         // 2. If the extension is available, the device must claim support for it.
@@ -167,6 +174,8 @@ public class OpenGlEsVersionTest {
     @CddTest(requirement="7.9.2/C-1-4")
     @Test
     public void testOpenGlEsVersionForVrHighPerformance() throws InterruptedException {
+        Assume.assumeFalse(isRunningANGLE());
+
         if (!supportsVrHighPerformance())
             return;
         restartActivityWithClientVersion(3);
@@ -183,6 +192,8 @@ public class OpenGlEsVersionTest {
     @CddTest(requirement="7.9.2/C-1-6,C-1-8")
     @Test
     public void testRequiredExtensionsForVrHighPerformance() throws InterruptedException {
+        Assume.assumeFalse(isRunningANGLE());
+
         if (!supportsVrHighPerformance())
             return;
         restartActivityWithClientVersion(3);
@@ -289,6 +300,8 @@ public class OpenGlEsVersionTest {
             "EGL_EXT_surface_CTA861_3_metadata",
         };
 
+        Assume.assumeFalse(isRunningANGLE());
+
         // This requirement only applies if device is handheld and claims to be HDR capable.
         boolean isHdrCapable = mActivity.getResources().getConfiguration().isScreenHdr();
         if (!isHdrCapable || !isHandheld())
@@ -332,6 +345,8 @@ public class OpenGlEsVersionTest {
     @CddTest(requirement="7.1.4.5/C-1-5")
     @Test
     public void testRequiredEglExtensionsForWideColorDisplay() {
+        Assume.assumeFalse(isRunningANGLE());
+
         // See CDD section 7.1.4.5
         // This test covers the EGL portion of the CDD requirement. The VK portion of the
         // requirement is covered elsewhere.
@@ -516,5 +531,15 @@ public class OpenGlEsVersionTest {
     private boolean supportsVrHighPerformance() {
         PackageManager pm = mActivity.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
+    }
+
+    private boolean isRunningANGLE() {
+        try {
+            // We expect to find something like: OpenGL ES 1.0 (ANGLE 2.1.0.310294adacdd)
+            return mActivity.getVersionString().contains("ANGLE");
+        } catch (Exception e) {
+            Log.e(TAG, "Caught exception: " + e);
+        }
+        return false;
     }
 }
