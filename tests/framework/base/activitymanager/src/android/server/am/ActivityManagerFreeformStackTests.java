@@ -18,10 +18,10 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.server.am.Components.FREEFORM_ACTIVITY;
-import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
-import static android.server.am.Components.NO_RELAUNCH_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.FREEFORM_ACTIVITY;
+import static android.server.am.app.Components.NON_RESIZEABLE_ACTIVITY;
+import static android.server.am.app.Components.NO_RELAUNCH_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 

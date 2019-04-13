@@ -16,7 +16,7 @@
 
 package android.server.am.lifecycle;
 
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
+import static android.server.am.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;

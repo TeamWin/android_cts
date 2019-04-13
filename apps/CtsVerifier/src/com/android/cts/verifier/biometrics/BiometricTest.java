@@ -17,6 +17,9 @@
 package com.android.cts.verifier.biometrics;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.KeyguardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,14 +30,18 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import java.util.Random;
 import java.util.concurrent.Executor;
 
 /**
@@ -61,6 +68,8 @@ public class BiometricTest extends PassFailButtons.Activity {
     private static final int TEST_DEVICE_CREDENTIAL = 3;
     // Test that authentication can succeed when biometrics are enrolled.
     private static final int TEST_AUTHENTICATE = 4;
+    // Test that the strings set from the public APIs can be seen by the user.
+    private static final int TEST_STRINGS_SEEN = 5;
 
     private BiometricManager mBiometricManager;
     private KeyguardManager mKeyguardManager;
@@ -73,6 +82,12 @@ public class BiometricTest extends PassFailButtons.Activity {
     private Button mButtonTestNoneEnrolled;
     private Button mButtonTestCredential;
     private Button mButtonTestAuthenticate;
+    private Button mButtonTestStringsSeen;
+
+    private String mRandomTitle;
+    private String mRandomSubtitle;
+    private String mRandomDescription;
+    private String mRandomNegativeButtonText;
 
     private Executor mExecutor = (runnable) -> {
         mHandler.post(runnable);
@@ -94,9 +109,11 @@ public class BiometricTest extends PassFailButtons.Activity {
                 mButtonEnroll.setVisibility(View.VISIBLE);
                 mButtonTestAuthenticate.setVisibility(View.VISIBLE);
             } else if (mCurrentTest == TEST_AUTHENTICATE) {
-                showToastAndLog("You have passed the test!");
+                showToastAndLog("Please start the next test");
                 mButtonTestAuthenticate.setEnabled(false);
-                getPassButton().setEnabled(true);
+                mButtonTestStringsSeen.setVisibility(View.VISIBLE);
+            } else if (mCurrentTest == TEST_STRINGS_SEEN) {
+                showCheckStringsDialog();
             }
         }
 
@@ -145,6 +162,7 @@ public class BiometricTest extends PassFailButtons.Activity {
         mButtonTestNotSecured = findViewById(R.id.biometric_start_test_not_secured);
         mButtonTestAuthenticate = findViewById(R.id.biometric_start_test_authenticate_button);
         mButtonTestCredential = findViewById(R.id.biometric_start_test_credential_button);
+        mButtonTestStringsSeen = findViewById(R.id.biometric_start_test_strings_button);
 
         PackageManager pm = getApplicationContext().getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
@@ -170,6 +188,9 @@ public class BiometricTest extends PassFailButtons.Activity {
             });
             mButtonTestCredential.setOnClickListener((view) -> {
                 startTest(TEST_DEVICE_CREDENTIAL);
+            });
+            mButtonTestStringsSeen.setOnClickListener((view) -> {
+                startTest(TEST_STRINGS_SEEN);
             });
         } else {
             // NO biometrics available
@@ -217,18 +238,28 @@ public class BiometricTest extends PassFailButtons.Activity {
                 showToastAndLog("Error: " + result +
                         " Please ensure at least one biometric is enrolled and try again");
             }
+        } else if (testType == TEST_STRINGS_SEEN) {
+            showInstructionDialogForStringsTest();
         } else {
             showToastAndLog("Unknown test type: " + testType);
         }
     }
 
     private void showBiometricPrompt(boolean allowCredential) {
+        showBiometricPrompt(allowCredential, "Please authenticate", null, null, "Cancel");
+    }
+
+    private void showBiometricPrompt(boolean allowCredential, String title, String subtitle,
+            String description, String negativeButtonText) {
         BiometricPrompt.Builder builder = new BiometricPrompt.Builder(getApplicationContext())
-            .setTitle("Please authenticate");
+                .setTitle(title)
+                .setSubtitle(subtitle)
+                .setDescription(description);
         if (allowCredential) {
             builder.setDeviceCredentialAllowed(true);
         } else {
-            builder.setNegativeButton("Cancel", mExecutor, mBiometricPromptButtonListener);
+            builder.setNegativeButton(negativeButtonText, mExecutor,
+                    mBiometricPromptButtonListener);
         }
         BiometricPrompt bp = builder.build();
         mCancellationSignal = new CancellationSignal();
@@ -238,5 +269,92 @@ public class BiometricTest extends PassFailButtons.Activity {
     private void showToastAndLog(String string) {
         Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT).show();
         Log.v(TAG, string);
+    }
+
+    private void showInstructionDialogForStringsTest() {
+        final Random random = new Random();
+
+        mRandomTitle = String.valueOf(random.nextInt(1000));
+        mRandomSubtitle = String.valueOf(random.nextInt(1000));
+        mRandomDescription = String.valueOf(random.nextInt(1000));
+        mRandomNegativeButtonText = String.valueOf(random.nextInt(1000));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.biometric_test_strings_title)
+                .setMessage(R.string.biometric_test_strings_instructions)
+                .setCancelable(true)
+                .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showBiometricPrompt(false,
+                                "Title: " + mRandomTitle,
+                                "Subtitle: " + mRandomSubtitle,
+                                "Description: " + mRandomDescription,
+                                "Negative Button: " + mRandomNegativeButtonText);
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showCheckStringsDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        final EditText titleBox = new EditText(this);
+        titleBox.setHint("Title");
+        titleBox.setInputType(InputType.TYPE_CLASS_NUMBER);
+        layout.addView(titleBox);
+
+        final EditText subtitleBox = new EditText(this);
+        subtitleBox.setHint("Subtitle");
+        subtitleBox.setInputType(InputType.TYPE_CLASS_NUMBER);
+        layout.addView(subtitleBox);
+
+        final EditText descriptionBox = new EditText(this);
+        descriptionBox.setHint("Description");
+        descriptionBox.setInputType(InputType.TYPE_CLASS_NUMBER);
+        layout.addView(descriptionBox);
+
+        final EditText negativeBox = new EditText(this);
+        negativeBox.setHint("Negative Button");
+        negativeBox.setInputType(InputType.TYPE_CLASS_NUMBER);
+        layout.addView(negativeBox);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.biometric_test_strings_verify_title)
+                .setCancelable(true)
+                .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String titleEntered = titleBox.getText().toString();
+                        final String subtitleEntered = subtitleBox.getText().toString();
+                        final String descriptionEntered = descriptionBox.getText().toString();
+                        final String negativeEntered = negativeBox.getText().toString();
+
+                        if (!titleEntered.contentEquals(mRandomTitle)) {
+                            showToastAndLog("Title incorrect, "
+                                    + titleEntered + " " + mRandomTitle);
+                        } else if (!subtitleEntered.contentEquals(mRandomSubtitle)) {
+                            showToastAndLog("Subtitle incorrect, "
+                                    + subtitleEntered + " " + mRandomSubtitle);
+                        } else if (!descriptionEntered.contentEquals(mRandomDescription)) {
+                            showToastAndLog("Description incorrect, "
+                                    + descriptionEntered + " " + mRandomDescription);
+                        } else if (!negativeEntered.contentEquals(mRandomNegativeButtonText)) {
+                            showToastAndLog("Negative text incorrect, "
+                                    + negativeEntered + " " + mRandomNegativeButtonText);
+                        } else {
+                            mButtonTestStringsSeen.setEnabled(false);
+                            getPassButton().setEnabled(true);
+                            showToastAndLog("You have passed the test!");
+                        }
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+
+        dialog.setView(layout);
+        dialog.show();
     }
 }

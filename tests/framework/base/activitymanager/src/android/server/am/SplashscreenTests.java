@@ -16,7 +16,7 @@
 
 package android.server.am;
 
-import static android.server.am.Components.SPLASHSCREEN_ACTIVITY;
+import static android.server.am.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,8 +26,8 @@ import static org.junit.Assert.fail;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
-
 import android.platform.test.annotations.Presubmit;
+
 import org.junit.Test;
 
 /**

@@ -25,8 +25,8 @@ import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.ALIAS_TEST_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.ALIAS_TEST_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 
 import static org.junit.Assert.assertEquals;

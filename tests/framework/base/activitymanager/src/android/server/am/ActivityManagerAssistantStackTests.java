@@ -25,24 +25,23 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECOND
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
-import static android.server.am.Components.ASSISTANT_ACTIVITY;
-import static android.server.am.Components.ASSISTANT_VOICE_INTERACTION_SERVICE;
-import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
-import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_ENTER_PIP;
-import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_FINISH_SELF;
-import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_LAUNCH_NEW_TASK;
-import static android.server.am.Components.DOCKED_ACTIVITY;
-import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION;
-import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK;
-import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack
-        .EXTRA_ASSISTANT_IS_TRANSLUCENT;
-import static android.server.am.Components.PIP_ACTIVITY;
-import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.TRANSLUCENT_ASSISTANT_ACTIVITY;
-import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.server.am.app.Components.ANIMATION_TEST_ACTIVITY;
+import static android.server.am.app.Components.ASSISTANT_ACTIVITY;
+import static android.server.am.app.Components.ASSISTANT_VOICE_INTERACTION_SERVICE;
+import static android.server.am.app.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
+import static android.server.am.app.Components.AssistantActivity.EXTRA_ASSISTANT_ENTER_PIP;
+import static android.server.am.app.Components.AssistantActivity.EXTRA_ASSISTANT_FINISH_SELF;
+import static android.server.am.app.Components.AssistantActivity.EXTRA_ASSISTANT_LAUNCH_NEW_TASK;
+import static android.server.am.app.Components.DOCKED_ACTIVITY;
+import static android.server.am.app.Components.LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION;
+import static android.server.am.app.Components.LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK;
+import static android.server.am.app.Components.LaunchAssistantActivityIntoAssistantStack.EXTRA_ASSISTANT_IS_TRANSLUCENT;
+import static android.server.am.app.Components.PIP_ACTIVITY;
+import static android.server.am.app.Components.PipActivity.EXTRA_ENTER_PIP;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TRANSLUCENT_ASSISTANT_ACTIVITY;
+import static android.server.am.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -55,6 +54,7 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
+
 import androidx.test.filters.FlakyTest;
 
 import org.junit.Ignore;

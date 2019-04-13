@@ -50,6 +50,7 @@ import androidx.test.runner.AndroidJUnit4
 import androidx.test.InstrumentationRegistry
 
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -140,6 +141,7 @@ class AppOpsTest {
     }
 
     @Test
+    @Ignore
     fun testNoteOpAndCheckOp() {
         setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
         assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_READ_SMS,
@@ -189,6 +191,7 @@ class AppOpsTest {
     }
 
     @Test
+    @Ignore
     fun testStartOpAndFinishOp() {
         setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
         assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_READ_SMS,
@@ -343,6 +346,7 @@ class AppOpsTest {
     }
 
     @Test
+    @Ignore
     fun testGetOpsForPackageOpsAreLogged() {
         // This test checks if operations get logged by the system. It needs to start with a clean
         // slate, i.e. these ops can't have been logged previously for this test package. The reason

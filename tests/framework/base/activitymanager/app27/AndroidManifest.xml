@@ -19,13 +19,13 @@
     package="android.server.am.app27">
 
     <application android:label="App27">
-        <activity android:name="android.server.am.LaunchingActivity"
+        <activity android:name="android.server.am.app.LaunchingActivity"
                   android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   android:exported="true"
         />
 
-        <activity android:name="android.server.am.TestActivity"
+        <activity android:name="android.server.am.app.TestActivity"
                   android:exported="true"
         />
 

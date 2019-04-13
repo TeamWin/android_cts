@@ -159,6 +159,10 @@
     <string name="biometric_start_test2">Start Test 2</string>
     <string name="biometric_start_test3">Start Test 3</string>
     <string name="biometric_start_test4">Start Test 4</string>
+    <string name="biometric_start_test5">Start Test 5</string>
+    <string name="biometric_test_strings_title">Instructions</string>
+    <string name="biometric_test_strings_instructions">For the next test, please write down the numbers shown in the title, subtitle, description, and negative button fields. After authenticating, please enter the strings in the appropriate box.</string>
+    <string name="biometric_test_strings_verify_title">Please enter the numbers you recorded</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
@@ -4940,4 +4944,32 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nAlphanumeric, length at least 4</string>
     <string name="set_complexity_low_desc">Any pattern, PIN or password</string>
     <string name="set_complexity_none_desc">No restrictions</string>
+
+    <!-- Notification Bubble Tests-->
+    <string name="bubbles_notification_title">Bubble Notification Tests</string>
+    <string name="bubbles_notification_description">This test checks the behaviour of bubble
+        notifications, ensuring that notifications appear or disappear appropriately based on how
+        BubbleMetadata is configured on the notification and user actions.</string>
+    <string name="bubbles_notification_test_title_1">Step 1: send a bubble with notification</string>
+    <string name="bubbles_notification_test_verify_1">Click the button below and verify that there is a
+        bubble on the screen and a notification in the notification shade.
+    </string>
+    <string name="bubbles_notification_test_button_1">Send bubble notification</string>
+    <string name="bubbles_notification_test_title_2">Step 2: hide notification</string>
+    <string name="bubbles_notification_test_verify_2">Click the button below and verify that the bubble
+        is still on the screen, but the notification is now hidden from the notification shade.
+    </string>
+    <string name="bubbles_notification_test_button_2">Update bubble to hide notification</string>
+    <string name="bubbles_notification_test_title_3">Step 3: show notification</string>
+    <string name="bubbles_notification_test_verify_3">Click the button below and verify that the bubble
+        is still on the screen, and the notification is now visible in the notification shade.
+    </string>
+    <string name="bubbles_notification_test_button_3">Update bubble to show notification</string>
+    <string name="bubbles_notification_test_title_4">Step 4: open bubble</string>
+    <string name="bubbles_notification_test_verify_4">Tap on the bubble to open it, then tap on the
+        bubble again to collapse it and return to this screen. Verify that after opening the bubble,
+        there is no longer a notification for it visible in the notification shade.</string>
+    <string name="bubbles_test_summary_title">Test Complete</string>
+    <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
+    <string name="bubble_activity_title">Bubble Activity</string>
 </resources>

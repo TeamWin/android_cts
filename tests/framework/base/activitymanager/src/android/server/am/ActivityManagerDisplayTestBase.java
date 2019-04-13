@@ -19,23 +19,22 @@ package android.server.am;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
-import static android.server.am.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
-import static android.server.am.Components.VirtualDisplayActivity.COMMAND_DESTROY_DISPLAY;
-import static android.server.am.Components.VirtualDisplayActivity.COMMAND_RESIZE_DISPLAY;
-import static android.server.am.Components.VirtualDisplayActivity
-        .KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_COMMAND;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_COUNT;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_PRESENTATION_DISPLAY;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
-import static android.server.am.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
-import static android.server.am.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
+import static android.server.am.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
+import static android.server.am.app.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
+import static android.server.am.app.Components.VirtualDisplayActivity.COMMAND_DESTROY_DISPLAY;
+import static android.server.am.app.Components.VirtualDisplayActivity.COMMAND_RESIZE_DISPLAY;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_COMMAND;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_COUNT;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_PRESENTATION_DISPLAY;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
+import static android.server.am.app.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
+import static android.server.am.app.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,10 +53,10 @@ import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.ActivitySessionClient;
 import android.server.am.settings.SettingsSession;
+import android.util.Size;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import android.util.Size;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -344,8 +343,9 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
          * Create new virtual display.
          * <pre>
          * <code>mDensityDpi</code> provide custom density for the display.
-         * <code>mLaunchInSplitScreen</code> start {@link VirtualDisplayActivity} to side from
-         *     {@link LaunchingActivity} on primary display.
+         * <code>mLaunchInSplitScreen</code> start
+         *     {@link android.server.am.app.VirtualDisplayActivity} to side from
+         *     {@link android.server.am.app.LaunchingActivity} on primary display.
          * <code>mCanShowWithInsecureKeyguard</code>  allow showing content when device is
          *     showing an insecure keyguard.
          * <code>mMustBeCreated</code> should assert if the display was or wasn't created.

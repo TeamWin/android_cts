@@ -17,10 +17,10 @@
 package android.server.am;
 
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
-import static android.server.am.Components.LAUNCHING_ACTIVITY;
-import static android.server.am.Components.RESIZEABLE_ACTIVITY;
-import static android.server.am.Components.VR_TEST_ACTIVITY;
+import static android.server.am.app.Components.ALT_LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.RESIZEABLE_ACTIVITY;
+import static android.server.am.app.Components.VR_TEST_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
@@ -33,6 +33,7 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.settings.SettingsSession;
+
 import com.android.cts.verifier.vr.MockVrListenerService;
 
 import org.junit.Before;

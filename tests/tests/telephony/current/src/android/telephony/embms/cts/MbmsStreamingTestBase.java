@@ -1,4 +1,27 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License
+ */
+
 package android.telephony.embms.cts;
+
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.annotation.Nullable;
 import android.content.ComponentName;
@@ -14,7 +37,6 @@ import android.telephony.cts.embmstestapp.CtsStreamingService;
 import android.telephony.cts.embmstestapp.ICtsStreamingMiddlewareControl;
 import android.telephony.mbms.MbmsStreamingSessionCallback;
 import android.telephony.mbms.StreamingServiceInfo;
-import android.test.InstrumentationTestCase;
 
 import com.android.internal.os.SomeArgs;
 
@@ -25,8 +47,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Before;
 
-public class MbmsStreamingTestBase extends InstrumentationTestCase {
+public class MbmsStreamingTestBase {
     protected static final int ASYNC_TIMEOUT = 10000;
 
     protected static class TestCallback extends MbmsStreamingSessionCallback {
@@ -93,9 +117,9 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
     MbmsStreamingSession mStreamingSession;
     TestCallback mCallback = new TestCallback();
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        mContext = getInstrumentation().getContext();
+        mContext = getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
         mCallbackExecutor = (new Handler(mHandlerThread.getLooper()))::post;
@@ -104,7 +128,7 @@ public class MbmsStreamingTestBase extends InstrumentationTestCase {
         setupStreamingSession();
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         mHandlerThread.quit();
         mStreamingSession.close();

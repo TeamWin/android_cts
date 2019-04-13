@@ -64,7 +64,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
@@ -72,7 +71,6 @@ import com.android.compatibility.common.util.TestThread;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,7 +87,6 @@ import java.util.regex.Pattern;
  *  make cts -j64
  *  cts-tradefed run cts -m CtsTelephonyTestCases --test android.telephony.cts.TelephonyManagerTest
  */
-@RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
     private SubscriptionManager mSubscriptionManager;
@@ -1361,11 +1358,14 @@ public class TelephonyManagerTest {
 
         String countryIso = mTelephonyManager.getNetworkCountryIso();
         String potentialEmergencyAddress = "91112345";
+        // According to com.android.i18n.phonenumbers.ShortNumberInfo, in
+        // these countries, if extra digits are added to an emergency number,
+        // it no longer connects to the emergency service.
         if (countryIso.equals("br") || countryIso.equals("cl") || countryIso.equals("ni")) {
-            assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+            assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
         } else {
-            assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+            assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
         }
     }

@@ -20,7 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
@@ -119,6 +119,11 @@ public class ActivityLauncher {
      */
     public static final String KEY_MULTIPLE_INSTANCES = "multiple_instances";
 
+    /**
+     * Key for bundle extra to the intent which are used for launching an activity.
+     */
+    public static final String KEY_INTENT_EXTRAS = "intent_extras";
+
 
     /** Perform an activity launch configured by provided extras. */
     public static void launchActivityFromExtras(final Context context, Bundle extras) {
@@ -155,6 +160,11 @@ public class ActivityLauncher {
 
         if (extras.getBoolean(KEY_REORDER_TO_FRONT)) {
             newIntent.addFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
+        }
+
+        final Bundle intentExtras = extras.getBundle(KEY_INTENT_EXTRAS) ;
+        if (intentExtras != null) {
+            newIntent.putExtras(intentExtras);
         }
 
         ActivityOptions options = null;
