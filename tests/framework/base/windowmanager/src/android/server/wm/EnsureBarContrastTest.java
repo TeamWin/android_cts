@@ -37,6 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -94,6 +95,7 @@ public class EnsureBarContrastTest {
     }
 
     @Test
+    @FlakyTest(bugId = 130470676)
     public void test_dontEnsureContrast_darkBars() {
         final boolean lightBars = false;
         runTestDontEnsureContrast(lightBars);
