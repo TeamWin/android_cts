@@ -57,6 +57,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
@@ -319,6 +321,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * window on that display.
      */
     @Test
+    @FlakyTest(bugId = 130467737)
     public void testTapNonFocusableWindow() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
         // Ensure per display focus is disabled before proceeding with this test
