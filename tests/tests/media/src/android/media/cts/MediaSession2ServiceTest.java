@@ -30,11 +30,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaController2;
 import android.media.MediaSession2;
+import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2Service;
 import android.media.Session2CommandGroup;
 import android.media.Session2Token;
+import android.os.Bundle;
 import android.os.HandlerThread;
-import android.os.IBinder;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
@@ -60,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 public class MediaSession2ServiceTest {
     private static final long TIMEOUT_MS = 3000L;
+    private static final long WAIT_TIME_FOR_NO_RESPONSE_MS = 500L;
 
     private static HandlerExecutor sHandlerExecutor;
     private final List<MediaController2> mControllers = new ArrayList<>();
@@ -109,45 +111,107 @@ public class MediaSession2ServiceTest {
     }
 
     /**
-     * Tests whether {@link MediaSession2Service#onGetPrimarySession()} is called whenever a
-     * controller is created with the service's token.
+     * Tests whether {@link MediaSession2Service#onGetSession(ControllerInfo)}
+     * is called when controller tries to connect, with the proper arguments.
      */
     @Test
-    public void testOnGetPrimarySession() throws InterruptedException {
-        MediaController2 controller1 = createConnectedController(mToken);
-        MediaController2 controller2 = createConnectedController(mToken);
-        assertNotEquals(mToken, controller1.getConnectedSessionToken());
-        assertEquals(Session2Token.TYPE_SESSION,
-                controller1.getConnectedSessionToken().getType());
-        assertEquals(controller1.getConnectedSessionToken(),
-                controller2.getConnectedSessionToken());
+    public void testOnGetSessionIsCalled() throws InterruptedException {
+        final List<ControllerInfo> controllerInfoList = new ArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        StubMediaSession2Service.setTestInjector(new StubMediaSession2Service.TestInjector() {
+            @Override
+            MediaSession2 onGetSession(ControllerInfo controllerInfo) {
+                controllerInfoList.add(controllerInfo);
+                latch.countDown();
+                return null;
+            }
+        });
+        Bundle testHints = new Bundle();
+        testHints.putString("test_key", "test_value");
+        MediaController2 controller = new MediaController2.Builder(mContext, mToken)
+                .setConnectionHints(testHints)
+                .setControllerCallback(sHandlerExecutor,
+                        new MediaController2.ControllerCallback() {})
+                .build();
+        mControllers.add(controller);
 
-        // Add dummy call for preventing this from being missed by CTS coverage.
-        if (StubMediaSession2Service.getInstance() != null) {
-            ((MediaSession2Service) StubMediaSession2Service.getInstance()).onGetPrimarySession();
+        // onGetSession() should be called.
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(controllerInfoList.get(0).getPackageName(), mContext.getPackageName());
+        assertTrue(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints));
+    }
+
+    /**
+     * Tests whether the controller is connected to the session which is returned from
+     * {@link MediaSession2Service#onGetSession(ControllerInfo)}.
+     * Also checks whether the connection hints are properly passed to
+     * {@link MediaSession2.SessionCallback#onConnect(MediaSession2, ControllerInfo)}.
+     */
+    @Test
+    public void testOnGetSession_returnsSession() throws InterruptedException {
+        final List<ControllerInfo> controllerInfoList = new ArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        try (MediaSession2 testSession = new MediaSession2.Builder(mContext)
+                .setId("testOnGetSession_returnsSession")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback() {
+                    @Override
+                    public Session2CommandGroup onConnect(MediaSession2 session,
+                            ControllerInfo controller) {
+                        if (controller.getUid() == Process.myUid()) {
+                            controllerInfoList.add(controller);
+                            latch.countDown();
+                            return new Session2CommandGroup.Builder().build();
+                        }
+                        return null;
+                    }
+                }).build()) {
+
+            StubMediaSession2Service.setTestInjector(new StubMediaSession2Service.TestInjector() {
+                @Override
+                MediaSession2 onGetSession(ControllerInfo controllerInfo) {
+                    // Add dummy call for preventing this from being missed by CTS coverage.
+                    super.onGetSession(controllerInfo);
+                    return testSession;
+                }
+            });
+
+            Bundle testHints = new Bundle();
+            testHints.putString("test_key", "test_value");
+            MediaController2 controller = new MediaController2.Builder(mContext, mToken)
+                    .setConnectionHints(testHints)
+                    .setControllerCallback(sHandlerExecutor,
+                            new MediaController2.ControllerCallback() {})
+                    .build();
+            mControllers.add(controller);
+
+            // MediaSession2.SessionCallback#onConnect() should be called.
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertEquals(controllerInfoList.get(0).getPackageName(), mContext.getPackageName());
+            assertTrue(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints));
+
+            // The controller should be connected to the right session.
+            assertNotEquals(mToken, controller.getConnectedSessionToken());
+            assertEquals(testSession.getSessionToken(), controller.getConnectedSessionToken());
         }
     }
 
     /**
-     * Tests whether {@link MediaSession2Service#onGetPrimarySession()} is called whenever a
-     * controller is created with the service's token.
+     * Tests whether {@link MediaSession2Service#onGetSession(ControllerInfo)}
+     * can return different sessions for different controllers.
      */
     @Test
-    public void testOnGetPrimarySession_multipleSessions() throws InterruptedException {
+    public void testOnGetSession_returnsDifferentSessions() throws InterruptedException {
         final List<Session2Token> tokens = new ArrayList<>();
-        StubMediaSession2Service.setTestInjector(
-                new StubMediaSession2Service.TestInjector() {
-                    @Override
-                    MediaSession2 onGetPrimarySession() {
-                        MediaSession2 session = new MediaSession2.Builder(mContext)
-                                .setId("testOnGetPrimarySession_multipleSession"
-                                        + System.currentTimeMillis())
-                                .setSessionCallback(sHandlerExecutor, new SessionCallback())
-                                .build();
-                        tokens.add(session.getSessionToken());
-                        return session;
-                    }
-                });
+        StubMediaSession2Service.setTestInjector(new StubMediaSession2Service.TestInjector() {
+            @Override
+            MediaSession2 onGetSession(ControllerInfo controllerInfo) {
+                MediaSession2 session = createMediaSession2(
+                        "testOnGetSession_returnsDifferentSessions" + System.currentTimeMillis());
+                tokens.add(session.getSessionToken());
+                return session;
+            }
+        });
 
         MediaController2 controller1 = createConnectedController(mToken);
         MediaController2 controller2 = createConnectedController(mToken);
@@ -162,35 +226,69 @@ public class MediaSession2ServiceTest {
         assertEquals(tokens.get(1), controller2.getConnectedSessionToken());
     }
 
+    /**
+     * Tests whether {@link MediaSession2Service#onGetSession(ControllerInfo)}
+     * can reject incoming connection by returning null.
+     */
+    @Test
+    public void testOnGetSession_rejectsConnection() throws InterruptedException {
+        StubMediaSession2Service.setTestInjector(new StubMediaSession2Service.TestInjector() {
+            @Override
+            MediaSession2 onGetSession(ControllerInfo controllerInfo) {
+                return null;
+            }
+        });
+        final CountDownLatch latch = new CountDownLatch(1);
+        MediaController2 controller = new MediaController2.Builder(mContext, mToken)
+                .setControllerCallback(sHandlerExecutor, new MediaController2.ControllerCallback() {
+                    @Override
+                    public void onDisconnected(MediaController2 controller) {
+                        latch.countDown();
+                    }
+                })
+                .build();
+
+        // MediaController2.ControllerCallback#onDisconnected() should be called.
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertNull(controller.getConnectedSessionToken());
+    }
+
     @Test
     public void testAllControllersDisconnected_oneSession() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
-        StubMediaSession2Service.setTestInjector(
-                new StubMediaSession2Service.TestInjector() {
-                    @Override
-                    void onServiceDestroyed() {
-                        latch.countDown();
-                    }
-                });
+        final MediaSession2 testSession =
+                createMediaSession2("testAllControllersDisconnected_oneSession");
+
+        StubMediaSession2Service.setTestInjector(new StubMediaSession2Service.TestInjector() {
+            @Override
+            MediaSession2 onGetSession(ControllerInfo controllerInfo) {
+                return testSession;
+            }
+
+            @Override
+            void onServiceDestroyed() {
+                latch.countDown();
+            }
+        });
         MediaController2 controller1 = createConnectedController(mToken);
         MediaController2 controller2 = createConnectedController(mToken);
-        controller1.close();
-        controller2.close();
 
+        controller1.close();
+        assertFalse(latch.await(WAIT_TIME_FOR_NO_RESPONSE_MS, TimeUnit.MILLISECONDS));
+
+        // Service should be closed only when all controllers are closed.
+        controller2.close();
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
     @Test
-    public void testAllControllersDisconnected_multipleSession() throws InterruptedException {
+    public void testAllControllersDisconnected_multipleSessions() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         StubMediaSession2Service.setTestInjector(new StubMediaSession2Service.TestInjector() {
             @Override
-            MediaSession2 onGetPrimarySession() {
-                return new MediaSession2.Builder(mContext)
-                        .setId("testAllControllersDisconnected_multipleSession"
-                                + System.currentTimeMillis())
-                        .setSessionCallback(sHandlerExecutor, new SessionCallback())
-                        .build();
+            MediaSession2 onGetSession(ControllerInfo controllerInfo) {
+                return createMediaSession2("testAllControllersDisconnected_multipleSession"
+                        + System.currentTimeMillis());
             }
 
             @Override
@@ -201,9 +299,12 @@ public class MediaSession2ServiceTest {
 
         MediaController2 controller1 = createConnectedController(mToken);
         MediaController2 controller2 = createConnectedController(mToken);
-        controller1.close();
-        controller2.close();
 
+        controller1.close();
+        assertFalse(latch.await(WAIT_TIME_FOR_NO_RESPONSE_MS, TimeUnit.MILLISECONDS));
+
+        // Service should be closed only when all controllers are closed.
+        controller2.close();
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
@@ -249,7 +350,7 @@ public class MediaSession2ServiceTest {
     public void testOnUpdateNotification() throws InterruptedException {
         MediaController2 controller = createConnectedController(mToken);
         MediaSession2Service service = StubMediaSession2Service.getInstance();
-        MediaSession2 primarySession = service.getSessions().get(0);
+        MediaSession2 testSession = service.getSessions().get(0);
         CountDownLatch latch = new CountDownLatch(2);
 
         StubMediaSession2Service.setTestInjector(
@@ -257,7 +358,7 @@ public class MediaSession2ServiceTest {
                     @Override
                     MediaSession2Service.MediaNotification onUpdateNotification(
                             MediaSession2 session) {
-                        assertEquals(primarySession, session);
+                        assertEquals(testSession, session);
                         switch ((int) latch.getCount()) {
                             case 2:
 
@@ -269,8 +370,8 @@ public class MediaSession2ServiceTest {
                     }
                 });
 
-        primarySession.setPlaybackActive(true);
-        primarySession.setPlaybackActive(false);
+        testSession.setPlaybackActive(true);
+        testSession.setPlaybackActive(false);
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
         // Add dummy call for preventing this from being missed by CTS coverage.
@@ -308,24 +409,32 @@ public class MediaSession2ServiceTest {
     private MediaController2 createConnectedController(Session2Token token)
             throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        MediaController2 controller = new MediaController2(mContext, token, sHandlerExecutor,
-                new MediaController2.ControllerCallback() {
+        MediaController2 controller = new MediaController2.Builder(mContext, token)
+                .setControllerCallback(sHandlerExecutor, new MediaController2.ControllerCallback() {
                     @Override
                     public void onConnected(MediaController2 controller,
                             Session2CommandGroup allowedCommands) {
                         latch.countDown();
                         super.onConnected(controller, allowedCommands);
                     }
-                });
+                }).build();
+
         mControllers.add(controller);
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         return controller;
     }
 
+    private MediaSession2 createMediaSession2(String id) {
+        return new MediaSession2.Builder(mContext)
+                .setId(id)
+                .setSessionCallback(sHandlerExecutor, new SessionCallback())
+                .build();
+    }
+
     private static class SessionCallback extends MediaSession2.SessionCallback {
         @Override
         public Session2CommandGroup onConnect(MediaSession2 session,
-                MediaSession2.ControllerInfo controller) {
+                ControllerInfo controller) {
             if (controller.getUid() == Process.myUid()) {
                 return new Session2CommandGroup.Builder().build();
             }
