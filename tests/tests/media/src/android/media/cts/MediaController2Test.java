@@ -139,9 +139,15 @@ public class MediaController2Test {
     }
 
     @Test
-    public void testConstructor_noCallbackVersion() throws Exception {
-        try (MediaController2 controller = new MediaController2(mContext,
-                mSession.getSessionToken())) {
+    public void testBuilder() {
+        // TODO: Try passing null arguments in setter methods in builder, and check they throws
+        // the exception.
+    }
+
+    @Test
+    public void testCreatingControllerWithoutCallback() throws Exception {
+        try (MediaController2 controller =
+                     new MediaController2.Builder(mContext, mSession.getSessionToken()).build()) {
             assertTrue(mSessionCallback.mOnConnectedLatch.await(
                     WAIT_TIME_MS, TimeUnit.MILLISECONDS));
             assertEquals(mContext.getPackageName(),
@@ -152,8 +158,10 @@ public class MediaController2Test {
     @Test
     public void testGetConnectedToken() {
         Controller2Callback controllerCallback = new Controller2Callback();
-        try (MediaController2 controller = new MediaController2(
-                mContext, mSession.getSessionToken(), sHandlerExecutor, controllerCallback)) {
+        try (MediaController2 controller =
+                     new MediaController2.Builder(mContext, mSession.getSessionToken())
+                             .setControllerCallback(sHandlerExecutor, controllerCallback)
+                             .build()) {
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
             assertEquals(controller, controllerCallback.mController);
             assertEquals(mSession.getSessionToken(), controller.getConnectedSessionToken());
@@ -171,8 +179,10 @@ public class MediaController2Test {
     @Test
     public void testCallback_onConnected_onDisconnected() {
         Controller2Callback controllerCallback = new Controller2Callback();
-        try (MediaController2 controller = new MediaController2(
-                mContext, mSession.getSessionToken(), sHandlerExecutor, controllerCallback)) {
+        try (MediaController2 controller =
+                     new MediaController2.Builder(mContext, mSession.getSessionToken())
+                             .setControllerCallback(sHandlerExecutor, controllerCallback)
+                             .build()) {
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
             assertEquals(controller, controllerCallback.mController);
             assertTrue(controllerCallback.mAllowedCommands.hasCommand(ALLOWED_COMMAND_CODE));
@@ -184,8 +194,10 @@ public class MediaController2Test {
     @Test
     public void testCallback_onSessionCommand() {
         Controller2Callback controllerCallback = new Controller2Callback();
-        try (MediaController2 controller = new MediaController2(
-                mContext, mSession.getSessionToken(), sHandlerExecutor, controllerCallback)) {
+        try (MediaController2 controller =
+                     new MediaController2.Builder(mContext, mSession.getSessionToken())
+                             .setControllerCallback(sHandlerExecutor, controllerCallback)
+                             .build()) {
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
 
             String commandStr = "test_command";
@@ -215,8 +227,10 @@ public class MediaController2Test {
     @Test
     public void testCallback_onCommandResult() {
         Controller2Callback controllerCallback = new Controller2Callback();
-        try (MediaController2 controller = new MediaController2(
-                mContext, mSession.getSessionToken(), sHandlerExecutor, controllerCallback)) {
+        try (MediaController2 controller =
+                     new MediaController2.Builder(mContext, mSession.getSessionToken())
+                             .setControllerCallback(sHandlerExecutor, controllerCallback)
+                             .build()) {
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
 
             String commandStr = "test_command";
@@ -246,8 +260,10 @@ public class MediaController2Test {
     @Test
     public void testCancelSessionCommand() {
         Controller2Callback controllerCallback = new Controller2Callback();
-        try (MediaController2 controller = new MediaController2(
-                mContext, mSession.getSessionToken(), sHandlerExecutor, controllerCallback)) {
+        try (MediaController2 controller =
+                     new MediaController2.Builder(mContext, mSession.getSessionToken())
+                             .setControllerCallback(sHandlerExecutor, controllerCallback)
+                             .build()) {
             assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
 
             String commandStr = "test_command_";

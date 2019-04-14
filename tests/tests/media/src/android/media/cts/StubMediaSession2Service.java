@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import android.media.MediaSession2;
+import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2Service;
 import android.media.Session2CommandGroup;
 import android.os.Process;
@@ -94,13 +95,10 @@ public class StubMediaSession2Service extends MediaSession2Service {
     }
 
     @Override
-    public MediaSession2 onGetPrimarySession() {
+    public MediaSession2 onGetSession(ControllerInfo controllerInfo) {
         synchronized (StubMediaSession2Service.class) {
             if (sTestInjector != null) {
-                MediaSession2 session = sTestInjector.onGetPrimarySession();
-                if (session != null) {
-                    return session;
-                }
+                return sTestInjector.onGetSession(controllerInfo);
             }
         }
         if (getSessions().size() > 0) {
@@ -111,7 +109,7 @@ public class StubMediaSession2Service extends MediaSession2Service {
                 .setSessionCallback(sHandlerExecutor, new MediaSession2.SessionCallback() {
                     @Override
                     public Session2CommandGroup onConnect(MediaSession2 session,
-                            MediaSession2.ControllerInfo controller) {
+                            ControllerInfo controller) {
                         if (controller.getUid() == Process.myUid()) {
                             return new Session2CommandGroup.Builder().build();
                         }
@@ -121,7 +119,7 @@ public class StubMediaSession2Service extends MediaSession2Service {
     }
 
     public static abstract class TestInjector {
-        MediaSession2 onGetPrimarySession() {
+        MediaSession2 onGetSession(ControllerInfo controllerInfo) {
             return null;
         }
 
