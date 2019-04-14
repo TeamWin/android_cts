@@ -425,4 +425,46 @@ public class MediaStore_Images_MediaTest {
                 ProviderTestUtils.stageFile(R.raw.lg_g4_iso_800_jpg, new File(dir, "d.jpg")));
         assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
     }
+
+    @Test
+    public void testMetadata() throws Exception {
+        final Uri uri = ProviderTestUtils.stageMedia(R.raw.lg_g4_iso_800_jpg, mExternalImages,
+                "image/jpeg");
+
+        try (Cursor c = mContentResolver.query(uri, null, null, null)) {
+            assertTrue(c.moveToFirst());
+
+            // Confirm that we parsed Exif metadata
+            assertEquals(0, c.getLong(c.getColumnIndex(ImageColumns.ORIENTATION)));
+            assertEquals(600, c.getLong(c.getColumnIndex(ImageColumns.WIDTH)));
+            assertEquals(337, c.getLong(c.getColumnIndex(ImageColumns.HEIGHT)));
+
+            // Confirm that we parsed XMP metadata
+            assertEquals("xmp.did:041dfd42-0b46-4302-918a-836fba5016ed",
+                    c.getString(c.getColumnIndex(ImageColumns.DOCUMENT_ID)));
+            assertEquals("xmp.iid:041dfd42-0b46-4302-918a-836fba5016ed",
+                    c.getString(c.getColumnIndex(ImageColumns.INSTANCE_ID)));
+            assertEquals("3F9DD7A46B26513A7C35272F0D623A06",
+                    c.getString(c.getColumnIndex(ImageColumns.ORIGINAL_DOCUMENT_ID)));
+
+            // Confirm that timestamp was parsed
+            assertEquals(1447346778000L, c.getLong(c.getColumnIndex(ImageColumns.DATE_TAKEN)));
+
+            // We just added and modified the file, so should be recent
+            final long added = c.getLong(c.getColumnIndex(ImageColumns.DATE_ADDED));
+            final long modified = c.getLong(c.getColumnIndex(ImageColumns.DATE_MODIFIED));
+            final long now = System.currentTimeMillis() / 1000;
+            assertTrue("Invalid added time " + added, Math.abs(added - now) < 5);
+            assertTrue("Invalid modified time " + modified, Math.abs(modified - now) < 5);
+
+            // Confirm that we trusted value from XMP metadata
+            assertEquals("image/dng", c.getString(c.getColumnIndex(ImageColumns.MIME_TYPE)));
+
+            assertEquals(107684, c.getLong(c.getColumnIndex(ImageColumns.SIZE)));
+
+            final String displayName = c.getString(c.getColumnIndex(ImageColumns.DISPLAY_NAME));
+            assertTrue("Invalid display name " + displayName, displayName.startsWith("cts"));
+            assertTrue("Invalid display name " + displayName, displayName.endsWith(".jpg"));
+        }
+    }
 }
