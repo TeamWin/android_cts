@@ -63,7 +63,8 @@ import java.nio.ShortBuffer;
  */
 public class AudioPlaybackCaptureTest {
     private static final String TAG = "AudioPlaybackCaptureTest";
-    private static final int BUFFER_SIZE = 32768; // ~200ms at 44.1k 16b MONO
+    private static final int SAMPLE_RATE = 44100;
+    private static final int BUFFER_SIZE = SAMPLE_RATE * 2; // 1s at 44.1k/s 16bit mono
 
     private AudioManager mAudioManager;
     private boolean mPlaybackBeforeCapture;
@@ -166,22 +167,26 @@ public class AudioPlaybackCaptureTest {
         assertEquals(AudioRecord.RECORDSTATE_RECORDING, audioRecord.getRecordingState());
         ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
         int retry = 100;
-        while (buffer.hasRemaining()) {
+        boolean silence = true;
+        while (silence && buffer.hasRemaining()) {
             assertNotSame(buffer.remaining() + "/" + bufferSize + "remaining", 0, retry--);
             int written = audioRecord.read(buffer, buffer.remaining());
             assertThat(written).isGreaterThan(0);
-            buffer.position(buffer.position() + written);
+            for (int i = 0; i < written; i++) {
+                silence &= buffer.get() == 0;
+            }
         }
         buffer.rewind();
         return buffer;
     }
 
     private static boolean onlySilence(ShortBuffer buffer) {
-        boolean onlySilence = true;
         while (buffer.hasRemaining()) {
-            onlySilence &= buffer.get() == 0;
+            if (buffer.get() != 0) {
+                return false;
+            }
         }
-        return onlySilence;
+        return true;
     }
 
     public void testPlaybackCapture(@CapturePolicy int capturePolicy,
@@ -197,7 +202,7 @@ public class AudioPlaybackCaptureTest {
         AudioRecord audioRecord = createPlaybackCaptureRecord(
                 new AudioFormat.Builder()
                      .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                     .setSampleRate(44100)
+                     .setSampleRate(SAMPLE_RATE)
                      .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                      .build());
 
@@ -266,7 +271,6 @@ public class AudioPlaybackCaptureTest {
         testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_MEDIA, EXPECT_SILENCE);
     }
 
-    @Presubmit
     @Test
     public void testPlaybackCaptureRerouting() throws Exception {
         mPlaybackBeforeCapture = true;
@@ -274,13 +278,11 @@ public class AudioPlaybackCaptureTest {
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_MEDIA, EXPECT_DATA);
     }
 
-    @Presubmit
     @Test(expected = IllegalArgumentException.class)
     public void testMatchNothing() throws Exception {
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
     }
 
-    @Presubmit
     @Test(expected = IllegalStateException.class)
     public void testCombineUsages() throws Exception {
         mAPCTestConfig.matchingUsages = new int[]{ AudioAttributes.USAGE_UNKNOWN };
@@ -288,7 +290,6 @@ public class AudioPlaybackCaptureTest {
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
     }
 
-    @Presubmit
     @Test(expected = IllegalStateException.class)
     public void testCombineUid() throws Exception {
         mAPCTestConfig.matchingUids = new int[]{ mUid };
