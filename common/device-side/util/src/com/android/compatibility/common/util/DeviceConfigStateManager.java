@@ -67,7 +67,8 @@ public final class DeviceConfigStateManager implements StateManager<String> {
     private void setWithPermissionsGranted(@Nullable String value) {
         final OneTimeDeviceConfigListener listener = new OneTimeDeviceConfigListener(mNamespace,
                 mKey);
-        DeviceConfig.addOnPropertyChangedListener(mNamespace, mContext.getMainExecutor(), listener);
+        DeviceConfig.addOnPropertiesChangedListener(mNamespace, mContext.getMainExecutor(),
+                listener);
 
         DeviceConfig.setProperty(mNamespace, mKey, value, /* makeDefault= */ false);
         listener.assertCalled();
