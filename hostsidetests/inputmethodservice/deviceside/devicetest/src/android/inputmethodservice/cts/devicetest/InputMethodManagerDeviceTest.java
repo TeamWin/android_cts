@@ -20,8 +20,9 @@ import static android.inputmethodservice.cts.common.BusyWaitUtils.pollingCheck;
 
 import static org.junit.Assert.assertFalse;
 
-import android.content.Context;
 import android.inputmethodservice.cts.common.Ime1Constants;
+import android.inputmethodservice.cts.common.Ime2Constants;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -30,6 +31,8 @@ import android.view.inputmethod.InputMethodSubtype;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,15 +46,32 @@ public class InputMethodManagerDeviceTest {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
+    private InputMethodManager mImm;
+
+    /**
+     * Set up {@link #mImm} from the target {@link Context}.
+     */
+    @Before
+    public void setUpInputMethodManager() {
+        mImm = InstrumentationRegistry.getTargetContext()
+                .getSystemService(InputMethodManager.class);
+    }
+
+    /**
+     * Tear down {@link #mImm} with {@code null}.
+     */
+    @After
+    public void tearDownInputMethodManager() {
+        mImm = null;
+    }
+
     /**
      * Make sure {@link InputMethodManager#getInputMethodList()} contains
      * {@link Ime1Constants#IME_ID}.
      */
     @Test
     public void testIme1InInputMethodList() throws Throwable {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
-        pollingCheck(() -> imm.getInputMethodList().stream().anyMatch(
+        pollingCheck(() -> mImm.getInputMethodList().stream().anyMatch(
                 imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID)),
                 TIMEOUT, "Ime1 must exist.");
     }
@@ -61,12 +81,76 @@ public class InputMethodManagerDeviceTest {
      * {@link Ime1Constants#IME_ID}.
      */
     @Test
-    public void testIme1NotInInputMethodList() throws Throwable {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
-        Thread.sleep(EXPECTED_TIMEOUT);
-        assertFalse(imm.getInputMethodList().stream().anyMatch(
+    public void testIme1NotInInputMethodList() {
+        SystemClock.sleep(EXPECTED_TIMEOUT);
+        assertFalse(mImm.getInputMethodList().stream().anyMatch(
                 imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID)));
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getEnabledInputMethodList()} contains
+     * {@link Ime1Constants#IME_ID}.
+     */
+    @Test
+    public void testIme1InEnabledInputMethodList() throws Throwable {
+        pollingCheck(() -> mImm.getEnabledInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID)),
+                TIMEOUT, "Ime1 must be enabled.");
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getEnabledInputMethodList()} does not contain
+     * {@link Ime1Constants#IME_ID}.
+     */
+    @Test
+    public void testIme1NotInEnabledInputMethodList() {
+        SystemClock.sleep(EXPECTED_TIMEOUT);
+        assertFalse(mImm.getEnabledInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID)));
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getInputMethodList()} contains
+     * {@link Ime2Constants#IME_ID}.
+     */
+    @Test
+    public void testIme2InInputMethodList() throws Throwable {
+        pollingCheck(() -> mImm.getInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), Ime2Constants.IME_ID)),
+                TIMEOUT, "Ime1 must exist.");
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getInputMethodList()} does not contain
+     * {@link Ime2Constants#IME_ID}.
+     */
+    @Test
+    public void testIme2NotInInputMethodList() {
+        SystemClock.sleep(EXPECTED_TIMEOUT);
+        assertFalse(mImm.getInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), Ime2Constants.IME_ID)));
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getEnabledInputMethodList()} contains
+     * {@link Ime2Constants#IME_ID}.
+     */
+    @Test
+    public void testIme2InEnabledInputMethodList() throws Throwable {
+        pollingCheck(() -> mImm.getEnabledInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), Ime2Constants.IME_ID)),
+                TIMEOUT, "Ime1 must be enabled.");
+    }
+
+    /**
+     * Make sure {@link InputMethodManager#getEnabledInputMethodList()} does not contain
+     * {@link Ime2Constants#IME_ID}.
+     */
+    @Test
+    public void testIme2NotInEnabledInputMethodList() {
+        SystemClock.sleep(EXPECTED_TIMEOUT);
+        assertFalse(mImm.getEnabledInputMethodList().stream().anyMatch(
+                imi -> TextUtils.equals(imi.getId(), Ime2Constants.IME_ID)));
     }
 
     /**
@@ -76,11 +160,9 @@ public class InputMethodManagerDeviceTest {
      */
     @Test
     public void testIme1ImplicitlyEnabledSubtypeExists() throws Throwable {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
-        pollingCheck(() -> imm.getInputMethodList().stream()
+        pollingCheck(() -> mImm.getInputMethodList().stream()
                         .filter(imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID))
-                        .flatMap(imi -> imm.getEnabledInputMethodSubtypeList(imi, true).stream())
+                        .flatMap(imi -> mImm.getEnabledInputMethodSubtypeList(imi, true).stream())
                         .anyMatch(InputMethodSubtype::overridesImplicitlyEnabledSubtype),
                 TIMEOUT, "Implicitly enabled Subtype must exist for IME1.");
     }
@@ -91,13 +173,11 @@ public class InputMethodManagerDeviceTest {
      * {@link Ime1Constants#IME_ID} does not return the implicitly enabled subtype.
      */
     @Test
-    public void testIme1ImplicitlyEnabledSubtypeNotExist() throws Throwable {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
-        Thread.sleep(EXPECTED_TIMEOUT);
-        assertFalse(imm.getInputMethodList().stream()
+    public void testIme1ImplicitlyEnabledSubtypeNotExist() {
+        SystemClock.sleep(EXPECTED_TIMEOUT);
+        assertFalse(mImm.getInputMethodList().stream()
                 .filter(imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID))
-                .flatMap(imi -> imm.getEnabledInputMethodSubtypeList(imi, true).stream())
+                .flatMap(imi -> mImm.getEnabledInputMethodSubtypeList(imi, true).stream())
                 .anyMatch(InputMethodSubtype::overridesImplicitlyEnabledSubtype));
     }
 }

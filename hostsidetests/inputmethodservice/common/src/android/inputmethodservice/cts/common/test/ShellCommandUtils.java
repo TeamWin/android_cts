@@ -36,16 +36,35 @@ public final class ShellCommandUtils {
         return "settings get " + SETTING_DEFAULT_IME;
     }
 
+    /** Command to get ID of current IME. */
+    public static String getCurrentIme(int userId) {
+        return String.format("settings --user %d get %s", userId, SETTING_DEFAULT_IME);
+    }
+
     /** Command to set current IME to {@code imeId} synchronously */
     public static String setCurrentImeSync(String imeId) {
         return "ime set " + imeId;
     }
 
+    /** Command to set current IME to {@code imeId} synchronously for the specified {@code user}*/
+    public static String setCurrentImeSync(String imeId, int userId) {
+        return String.format("ime set --user %d %s", userId, imeId);
+    }
+
     public static String getEnabledImes() {
         return "ime list -s";
     }
+
+    public static String getEnabledImes(int userId) {
+        return String.format("ime list -s --user %d", userId);
+    }
+
     public static String getAvailableImes() {
         return "ime list -s -a";
+    }
+
+    public static String getAvailableImes(int userId) {
+        return String.format("ime list -s -a --user %d", userId);
     }
 
     public static String listPackage(String packageName) {
@@ -57,14 +76,35 @@ public final class ShellCommandUtils {
         return "ime enable " + imeId;
     }
 
+    /** Command to enable IME of {@code imeId} for the specified {@code userId}. */
+    public static String enableIme(String imeId, int userId) {
+        return String.format("ime enable --user %d %s", userId, imeId);
+    }
+
     /** Command to disable IME of {@code imeId}. */
     public static String disableIme(String imeId) {
         return "ime disable " + imeId;
     }
 
+    /** Command to disable IME of {@code imeId} for the specified {@code userId}. */
+    public static String disableIme(String imeId, int userId) {
+        return String.format("ime disable --user %d %s", userId, imeId);
+    }
+
     /** Command to reset currently selected/enabled IMEs to the default ones. */
     public static String resetImes() {
         return "ime reset";
+    }
+
+    /** Command to reset currently selected/enabled IMEs to the default ones for the specified
+     * {@code userId} */
+    public static String resetImes(int userId) {
+        return String.format("ime reset --user %d", userId);
+    }
+
+    /** Command to reset currently selected/enabled IMEs to the default ones for all the users. */
+    public static String resetImesForAllUsers() {
+        return "ime reset --user all";
     }
 
     /** Command to delete all records of IME event provider. */
