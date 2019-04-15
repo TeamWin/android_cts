@@ -22,12 +22,12 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewStructure;
+import android.view.contentcapture.ContentCaptureSession;
 
 import androidx.annotation.NonNull;
 
 /**
- * A view that can be used to emulate custom behavior (like virtual children) on
- * {@link #onProvideContentCaptureStructure(ViewStructure, int)}.
+ * A view that can be used to emulate custom behavior (like virtual children)
  */
 public class CustomView extends View {
 
@@ -37,29 +37,30 @@ public class CustomView extends View {
 
     public CustomView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_YES);
     }
 
-    @Override
-    public void onProvideContentCaptureStructure(ViewStructure structure, int flags) {
+    public void onProvideContentCaptureStructure(ViewStructure structure) {
         if (mDelegate != null) {
             Log.d(TAG, "onProvideContentCaptureStructure(): delegating");
             structure.setClassName(getAccessibilityClassName().toString());
             mDelegate.visit(structure);
             Log.d(TAG, "onProvideContentCaptureStructure(): delegated");
-        } else {
-            superOnProvideContentCaptureStructure(structure, flags);
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        if (changed) {
+            final ContentCaptureSession session = getContentCaptureSession();
+            final ViewStructure structure = session.newViewStructure(this);
+            onProvideContentCaptureStructure(structure);
+            session.notifyViewAppeared(structure);
         }
     }
 
     @Override
     public CharSequence getAccessibilityClassName() {
         return CustomView.class.getName();
-    }
-
-    void superOnProvideContentCaptureStructure(@NonNull ViewStructure structure, int flags) {
-        Log.d(TAG, "calling super.onProvideContentCaptureStructure()");
-        super.onProvideContentCaptureStructure(structure, flags);
     }
 
     void setContentCaptureDelegate(@NonNull Visitor<ViewStructure> delegate) {

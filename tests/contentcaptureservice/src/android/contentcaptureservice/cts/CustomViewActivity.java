@@ -15,13 +15,9 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.Assertions.assertDecorViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertSessionPaused;
 import static android.contentcaptureservice.cts.Assertions.assertSessionResumed;
-import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
-import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
-import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 
@@ -51,13 +47,13 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
      * <p>Used on {@link #assertInitialViewsAppeared(Session, int)} and
      * {@link #assertInitialViewsDisappeared(List, int)}.
      */
-    public static final int MIN_EVENTS = 7;
+    public static final int MIN_EVENTS = 2;
 
     CustomView mCustomView;
 
     /**
      * Sets a delegate that provides the behavior of
-     * {@link CustomView#onProvideContentCaptureStructure(ViewStructure, int)}.
+     * {@link CustomView#onProvideContentCaptureStructure(ViewStructure)}.
      */
     static void setCustomViewDelegate(@NonNull DoubleVisitor<CustomView, ViewStructure> delegate) {
         sCustomViewDelegate = delegate;
@@ -116,12 +112,7 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
 
         // Assert just the relevant events
         assertSessionResumed(events, 0);
-        assertViewTreeStarted(events, 1);
-        assertDecorViewAppeared(events, 2, getDecorView());
-        assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
-        assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
-        assertViewWithUnknownParentAppeared(events, 5, session.id, mCustomView);
-        assertViewTreeFinished(events, 6);
+        assertViewWithUnknownParentAppeared(events, 1, session.id, mCustomView);
 
         return events;
     }
