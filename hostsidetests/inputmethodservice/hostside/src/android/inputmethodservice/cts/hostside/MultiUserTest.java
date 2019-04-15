@@ -16,9 +16,13 @@
 
 package android.inputmethodservice.cts.hostside;
 
+import static android.inputmethodservice.cts.common.BusyWaitUtils.pollingCheck;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.inputmethodservice.cts.common.Ime1Constants;
+import android.inputmethodservice.cts.common.Ime2Constants;
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
@@ -37,6 +41,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -47,6 +52,7 @@ import java.util.concurrent.TimeoutException;
 public class MultiUserTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
     private static final long USER_SWITCH_POLLING_INTERVAL = TimeUnit.MILLISECONDS.toMillis(100);
+    private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
 
     /**
      * A sleep time after calling {@link com.android.tradefed.device.ITestDevice#switchUser(int)}
@@ -106,6 +112,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
                 getDevice().removeUser(userId);
             }
         }
+
+        shell(ShellCommandUtils.resetImesForAllUsers());
+
         shell(ShellCommandUtils.wakeUp());
         shell(ShellCommandUtils.dismissKeyguard());
         shell(ShellCommandUtils.closeSystemDialog());
@@ -193,40 +202,55 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
         final int primaryUserId = getDevice().getPrimaryUserId();
         final int profileUserId = createProfile(primaryUserId);
-        final int secondaryUserId = getDevice().createUser(
-                "InputMethodMultiUserTest_secondaryUser" + System.currentTimeMillis());
 
         getDevice().startUser(profileUserId);
-        getDevice().startUser(secondaryUserId);
 
         installPossibleInstantPackage(DeviceTestConstants.APK, primaryUserId, instant);
         installPossibleInstantPackage(DeviceTestConstants.APK, profileUserId, instant);
-        installPossibleInstantPackage(DeviceTestConstants.APK, secondaryUserId, instant);
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(profileUserId);
-        assertIme1NotExistInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
+        // Install IME1 then enable/set it as the current IME for the primary user.
         installPackageAsUser(Ime1Constants.APK, true, primaryUserId, "-r");
+        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, primaryUserId);
+        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, primaryUserId));
+        shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, primaryUserId));
+
+        // Install IME2 then enable/set it as the current IME for the profile user.
+        installPackageAsUser(Ime2Constants.APK, true, profileUserId, "-r");
+        waitUntilImeIsInShellCommandResult(Ime2Constants.IME_ID, profileUserId);
+        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID, profileUserId));
+        shell(ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID, profileUserId));
+
+        // Primary User: IME1:enabled, IME2:N/A
+        assertIme1ExistsInApiResult(primaryUserId);
+        assertIme1EnabledInApiResult(primaryUserId);
+        assertIme2NotExistInApiResult(primaryUserId);
+        assertIme2NotEnabledInApiResult(primaryUserId);
+        assertIme1Selected(primaryUserId);
+
+        // Profile User: IME1:N/A, IME2:enabled
+        assertIme1NotExistInApiResult(profileUserId);
+        assertIme1NotEnabledInApiResult(profileUserId);
+        assertIme2ExistsInApiResult(profileUserId);
+        assertIme2EnabledInApiResult(profileUserId);
+        assertIme2Selected(profileUserId);
+
+        // Make sure that IME switches depending on the target user.
+        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, primaryUserId);
+        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, profileUserId);
+        runTestAsUser(DeviceTestConstants.TEST_CONNECTING_TO_THE_SAME_USER_IME, primaryUserId);
+
+        assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
+        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
 
         assertIme1ExistsInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(profileUserId);
-        assertIme1NotExistInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
-
-        switchUser(secondaryUserId);
-
-        assertIme1ExistsInApiResult(primaryUserId);
-        assertIme1NotExistInApiResult(profileUserId);
-        assertIme1NotExistInApiResult(secondaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeExists(primaryUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
-        assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
     }
 
     private String shell(String command) {
@@ -303,12 +327,51 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         throw new IllegalStateException();
     }
 
+    private void waitUntilImeIsInShellCommandResult(String imeId, int userId) throws Exception {
+        final String command = ShellCommandUtils.getAvailableImes(userId);
+        pollingCheck(() -> Arrays.stream(shell(command).split("\n")).anyMatch(imeId::equals),
+                IME_COMMAND_TIMEOUT, imeId + " is not found for user #" + userId
+                        + " within timeout.");
+    }
+
     private void assertIme1ExistsInApiResult(int userId) throws Exception  {
         runTestAsUser(DeviceTestConstants.TEST_IME1_IN_INPUT_METHOD_LIST, userId);
     }
 
     private void assertIme1NotExistInApiResult(int userId) throws Exception  {
         runTestAsUser(DeviceTestConstants.TEST_IME1_NOT_IN_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme1EnabledInApiResult(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME1_IN_ENABLED_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme1NotEnabledInApiResult(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME1_NOT_IN_ENABLED_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme1Selected(int userId)  {
+        assertEquals(Ime1Constants.IME_ID, shell(ShellCommandUtils.getCurrentIme(userId)));
+    }
+
+    private void assertIme2ExistsInApiResult(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME2_IN_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme2NotExistInApiResult(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME2_NOT_IN_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme2EnabledInApiResult(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME2_IN_ENABLED_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme2NotEnabledInApiResult(int userId) throws Exception  {
+        runTestAsUser(DeviceTestConstants.TEST_IME2_NOT_IN_ENABLED_INPUT_METHOD_LIST, userId);
+    }
+
+    private void assertIme2Selected(int userId)  {
+        assertEquals(Ime2Constants.IME_ID, shell(ShellCommandUtils.getCurrentIme(userId)));
     }
 
     private void assertIme1ImplicitlyEnabledSubtypeExists(int userId) throws Exception  {
