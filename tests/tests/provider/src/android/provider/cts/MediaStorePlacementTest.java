@@ -33,6 +33,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -191,6 +192,38 @@ public class MediaStorePlacementTest {
                 Optional.of("Random"), null));
         assertFalse(updatePlacement(uri,
                 Optional.of(Environment.DIRECTORY_ALARMS), null));
+    }
+
+    @Test
+    public void testDirectory_InsideSandbox() throws Exception {
+        Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
+
+        final File dir = MediaStore.getVolumePath(mVolumeName);
+        final File file = ProviderTestUtils.stageFile(R.drawable.scenery, Environment.buildPath(dir,
+                "Android", "media", "android.provider.cts", System.nanoTime() + ".jpg"));
+        final Uri uri = ProviderTestUtils.scanFile(file);
+
+        assertFalse(updatePlacement(uri,
+                Optional.of("Android/media/android.provider.cts/foo"), null));
+        assertFalse(updatePlacement(uri,
+                Optional.of("Android/media/com.example/foo"), null));
+        assertFalse(updatePlacement(uri,
+                Optional.of("DCIM"), null));
+    }
+
+    @Test
+    public void testDirectory_OutsideSandbox() throws Exception {
+        Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
+
+        final Uri uri = ProviderTestUtils.stageMedia(R.drawable.scenery,
+                mExternalImages, "image/jpeg");
+
+        assertFalse(updatePlacement(uri,
+                Optional.of("Android/media/android.provider.cts/foo"), null));
+        assertFalse(updatePlacement(uri,
+                Optional.of("Android/media/com.example/foo"), null));
+        assertTrue(updatePlacement(uri,
+                Optional.of("DCIM"), null));
     }
 
     private boolean updatePlacement(Uri uri, Optional<String> path, Optional<String> displayName)
