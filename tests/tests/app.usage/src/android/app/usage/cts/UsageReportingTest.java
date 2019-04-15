@@ -24,7 +24,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
-import android.server.am.ActivityManagerTestBase;
+import android.server.wm.ActivityManagerTestBase;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;

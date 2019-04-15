@@ -17,7 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.server.am.UiDeviceUtils.dragPointer;
+import static android.server.wm.UiDeviceUtils.dragPointer;
 import static android.server.wm.dndsourceapp.Components.DRAG_SOURCE;
 import static android.server.wm.dndtargetapp.Components.DROP_TARGET;
 import static android.server.wm.dndtargetappsdk23.Components.DROP_TARGET_SDK23;
@@ -34,8 +34,7 @@ import android.hardware.display.DisplayManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.server.am.ActivityManagerState.ActivityTask;
-import android.server.am.ActivityManagerTestBase;
+import android.server.wm.ActivityManagerState.ActivityTask;
 import android.util.Log;
 import android.view.Display;
 import java.util.Map;
