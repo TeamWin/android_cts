@@ -75,9 +75,11 @@ public class GenericDeviceInfo extends DeviceInfo {
         store.addResult(BUILD_FINGERPRINT, Build.FINGERPRINT);
         store.addResult(BUILD_ABI, Build.CPU_ABI);
         store.addResult(BUILD_ABI2, Build.CPU_ABI2);
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.Q)) {
             store.addResult(BUILD_SERIAL,
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial));
+        } else if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O)) {
+            store.addResult(BUILD_SERIAL, Build.getSerial());
         } else {
             store.addResult(BUILD_SERIAL, Build.SERIAL); // deprecated in O
         }
