@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,34 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-nnapi_cts_dir := $(call my-dir)
+my_dir := $(call my-dir)
 
-# Build the static library which is friendly to multi-threaded compilation.
-# The sources are located at frameworks/ml/nn/runtime/test
-LOCAL_PATH:= frameworks/ml/nn/runtime/test/
+LOCAL_PATH:= external/tensorflow/
 include $(CLEAR_VARS)
-LOCAL_MODULE := CtsNNAPITests_static
+LOCAL_MODULE := CtsTfliteNnapiDelegateTests_static
 LOCAL_SRC_FILES := \
-     $(call all-cpp-files-under,generated/tests) \
-     GeneratedUtils.cpp \
-     TestMemory.cpp \
-     TestTrivialModel.cpp \
-     TestUnknownDimensions.cpp \
-     TestValidateOperations.cpp \
-     TestValidation.cpp \
-     TestWrapper.cpp \
-     TestNeuralNetworksWrapper.cpp
+    tensorflow/lite/delegates/nnapi/nnapi_delegate_test.cc \
+    tensorflow/lite/kernels/test_util.cc \
+    tensorflow/core/platform/default/logging.cc
+LOCAL_CPP_EXTENSION := .cc
 
-LOCAL_C_INCLUDES := frameworks/ml/nn/runtime/include/
-LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/test/
-LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/
-LOCAL_C_INCLUDES += frameworks/ml/nn/common/include
-LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
+LOCAL_C_INCLUDES += external/flatbuffers/include
+LOCAL_C_INCLUDES += external/tensorflow
 
-LOCAL_CFLAGS := -Werror -Wall -DNNTEST_ONLY_PUBLIC_API
+LOCAL_CFLAGS :=  \
+    -DPLATFORM_POSIX_ANDROID \
+    -Wall \
+    -Werror \
+    -Wextra \
+    -Wno-extern-c-compat \
+    -Wno-sign-compare \
+    -Wno-unused-parameter \
+    -Wno-unused-private-field \
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
-LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgmock_ndk
+LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgmock_ndk libtflite_static
 LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static
 include $(BUILD_STATIC_LIBRARY)
@@ -47,19 +45,19 @@ include $(BUILD_STATIC_LIBRARY)
 
 # Build the actual CTS module with the static lib above.
 # This is necessary for the build system to pickup the AndroidTest.xml.
-LOCAL_PATH:= $(nnapi_cts_dir)
+LOCAL_PATH:= $(my_dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := CtsNNAPITestCases
+LOCAL_MODULE := CtsTfliteNnapiDelegateTestCases
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
-LOCAL_WHOLE_STATIC_LIBRARIES := CtsNNAPITests_static
+LOCAL_WHOLE_STATIC_LIBRARIES := CtsTfliteNnapiDelegateTests_static
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
-LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgtest_main_ndk_c++
+LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libtflite_static
 LOCAL_CTS_TEST_PACKAGE := android.neuralnetworks
 
 # Tag this module as a cts test artifact
@@ -69,6 +67,3 @@ LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_CTS_EXECUTABLE)
-
-include $(nnapi_cts_dir)/benchmark/Android.mk
-include $(nnapi_cts_dir)/tflite_delegate/Android.mk
