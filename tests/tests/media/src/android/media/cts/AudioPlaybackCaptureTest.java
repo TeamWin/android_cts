@@ -23,6 +23,7 @@ import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_ALL;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -103,7 +104,24 @@ public class AudioPlaybackCaptureTest {
                     apccBuilder.excludeUid(uid);
                 }
             }
-            return apccBuilder.build();
+            AudioPlaybackCaptureConfiguration config = apccBuilder.build();
+            assertCorreclyBuilt(config);
+            return config;
+        }
+
+        private void assertCorreclyBuilt(AudioPlaybackCaptureConfiguration config) {
+            assertEqualNullIsEmpty("matchingUsages", matchingUsages, config.getMatchingUsages());
+            assertEqualNullIsEmpty("excludeUsages", excludeUsages, config.getExcludeUsages());
+            assertEqualNullIsEmpty("matchingUids", matchingUids, config.getMatchingUids());
+            assertEqualNullIsEmpty("excludeUids", excludeUids, config.getExcludeUids());
+        }
+
+        private void assertEqualNullIsEmpty(String msg, int[] expected, int[] found) {
+            if (expected == null) {
+                assertEquals(msg, 0, found.length);
+            } else {
+                assertArrayEquals(msg, expected, found);
+            }
         }
     };
     private APCTestConfig mAPCTestConfig;
