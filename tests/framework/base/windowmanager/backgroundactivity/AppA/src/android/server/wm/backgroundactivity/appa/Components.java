@@ -34,5 +34,7 @@ public class Components extends ComponentsBase {
     public static class ForegroundActivity {
         public static final String LAUNCH_BACKGROUND_ACTIVITY_EXTRA =
                 "LAUNCH_BACKGROUND_ACTIVITY_EXTRA";
+        public static final String RELAUNCH_FOREGROUND_ACTIVITY_EXTRA =
+                "RELAUNCH_FOREGROUND_ACTIVITY_EXTRA";
     }
 }
