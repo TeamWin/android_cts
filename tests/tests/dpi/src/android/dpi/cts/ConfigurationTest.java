@@ -68,8 +68,12 @@ public class ConfigurationTest extends AndroidTestCase {
 
         Set<Integer> allowedDensities = new HashSet<Integer>();
         allowedDensities.add(DisplayMetrics.DENSITY_LOW);
+        allowedDensities.add(DisplayMetrics.DENSITY_140);
         allowedDensities.add(DisplayMetrics.DENSITY_MEDIUM);
+        allowedDensities.add(DisplayMetrics.DENSITY_180);
+        allowedDensities.add(DisplayMetrics.DENSITY_200);
         allowedDensities.add(DisplayMetrics.DENSITY_TV);
+        allowedDensities.add(DisplayMetrics.DENSITY_220);
         allowedDensities.add(DisplayMetrics.DENSITY_HIGH);
         allowedDensities.add(DisplayMetrics.DENSITY_260);
         allowedDensities.add(DisplayMetrics.DENSITY_280);
