@@ -336,7 +336,7 @@ public class BitmapDrawableTest {
         final BitmapDrawable d = new BitmapDrawable(source);
 
         d.setTint(Color.BLACK);
-        d.setTintMode(BlendMode.SRC_OVER);
+        d.setTintBlendMode(BlendMode.SRC_OVER);
         assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
     }
