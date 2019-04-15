@@ -30,6 +30,7 @@ import android.media.cts.R;
 import android.os.PersistableBundle;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.webkit.cts.CtsTestServer;
 
 import androidx.test.filters.SmallTest;
 
@@ -117,6 +118,18 @@ public class MediaExtractorTest extends AndroidTestCase {
     // Smoke test MediaExtractor reading from a DataSource.
     public void testExtractFromAMediaDataSource() throws Exception {
         TestMediaDataSource dataSource = setDataSource(R.raw.testvideo);
+        checkExtractorSamplesAndMetrics();
+    }
+
+    // Smoke test MediaExtractor reading from an AssetFileDescriptor.
+    public void testExtractFromAssetFileDescriptor() throws Exception {
+        AssetFileDescriptor afd = mResources.openRawResourceFd(R.raw.testvideo);
+        mExtractor.setDataSource(afd);
+        checkExtractorSamplesAndMetrics();
+        afd.close();
+    }
+
+    private void checkExtractorSamplesAndMetrics() {
         // 1MB is enough for any sample.
         final ByteBuffer buf = ByteBuffer.allocate(1024*1024);
         final int trackCount = mExtractor.getTrackCount();
@@ -141,7 +154,6 @@ public class MediaExtractorTest extends AndroidTestCase {
                 fail("getMetrics() trackCount expect " + trackCount + " got " + tracks);
             }
         }
-
     }
 
     static boolean audioPresentationSetMatchesReference(
@@ -258,6 +270,22 @@ public class MediaExtractorTest extends AndroidTestCase {
             assertTrue("Presentation set " + i + " was not found in the stream",
                     presentationsMatched[i]);
         }
+    }
+
+    public void testExtractorGetCachedDuration() throws Exception {
+        CtsTestServer foo = new CtsTestServer(getContext());
+        String url = foo.getAssetUrl("ringer.mp3");
+        mExtractor.setDataSource(url);
+        long cachedDurationUs = mExtractor.getCachedDuration();
+        assertTrue("cached duration should be non-negative", cachedDurationUs >= 0);
+    }
+
+    public void testExtractorHasCacheReachedEndOfStream() throws Exception {
+        // Using file source to get deterministic result.
+        AssetFileDescriptor afd = mResources.openRawResourceFd(R.raw.testvideo);
+        mExtractor.setDataSource(afd);
+        assertTrue(mExtractor.hasCacheReachedEndOfStream());
+        afd.close();
     }
 
     /*
