@@ -19,20 +19,12 @@
     package="android.permission2.cts.restrictedpermissionuser"
     android:versionCode="1">
 
-    <!-- SMS -->
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
-    <uses-permission android:name="android.permission.RECEIVE_MMS" />
-    <uses-permission android:name="android.permission.READ_CELL_BROADCASTS" />
+    <!-- Storage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <!-- CallLog -->
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
-    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 
-    <application android:label="CtsRestrictedPermissionUser">
-    </application>
+    <application android:label="CtsStoragePermissionsUserDefaultSdk28" />
 
 </manifest>

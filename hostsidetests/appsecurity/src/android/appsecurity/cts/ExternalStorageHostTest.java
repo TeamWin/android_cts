@@ -371,11 +371,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             getDevice().uninstallPackage(PKG_A);
             installPackage(APK_A);
 
-            updateAppOp(PKG_A, owner, "android:legacy_storage", true);
+            updateAppOp(PKG_A, true, owner, "android:legacy_storage", true);
             runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedLegacy", owner);
             runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedWrite", owner);
 
-            updateAppOp(PKG_A, owner, "android:legacy_storage", false);
+            updateAppOp(PKG_A, true, owner, "android:legacy_storage", false);
             runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedNonLegacy", owner);
         } finally {
             getDevice().uninstallPackage(PKG_A);
@@ -703,16 +703,23 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         final String verb = grant ? "grant" : "revoke";
         for (String permission : permissions) {
             getDevice().executeShellCommand(
-                    "cmd package " + verb + " --user " + userId + " " + packageName + " "
+                    "cmd package " + verb + " --user " + userId + " --uid " + packageName + " "
                             + permission);
         }
     }
 
     private void updateAppOp(String packageName, int userId, String appOp, boolean allow)
             throws Exception {
+        updateAppOp(packageName, false, userId, appOp, allow);
+    }
+
+    private void updateAppOp(String packageName, boolean targetsUid, int userId,
+            String appOp, boolean allow)
+            throws Exception {
         final String verb = allow ? "allow" : "default";
         getDevice().executeShellCommand(
-                "cmd appops set --user " + userId + " " + packageName + " " + appOp + " " + verb);
+                "cmd appops set --user " + userId + (targetsUid ? " --uid " : " ") + packageName
+                        + " " + appOp + " " + verb);
     }
 
     private boolean hasIsolatedStorage() throws DeviceNotAvailableException {
