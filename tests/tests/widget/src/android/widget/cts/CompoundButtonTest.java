@@ -35,6 +35,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -362,6 +363,33 @@ public class CompoundButtonTest  {
                 Color.WHITE, tintedButton.getButtonTintList().getDefaultColor());
         assertEquals("Button tint mode inflated correctly",
                 PorterDuff.Mode.SRC_OVER, tintedButton.getButtonTintMode());
+
+        Drawable mockDrawable = spy(new ColorDrawable(Color.GREEN));
+
+        mCompoundButton.setButtonDrawable(mockDrawable);
+        // No button tint applied by default
+        verify(mockDrawable, never()).setTintList(any(ColorStateList.class));
+
+        mCompoundButton.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
+        // Button tint applied when setButtonTintList() called after setButton()
+        verify(mockDrawable, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
+
+        reset(mockDrawable);
+        mCompoundButton.setButtonDrawable(null);
+        mCompoundButton.setButtonDrawable(mockDrawable);
+        // Button tint applied when setButtonTintList() called before setButton()
+        verify(mockDrawable, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
+    }
+
+    @UiThreadTest
+    @Test
+    public void testButtonTintBlendMode() {
+        CompoundButton tintedButton = (CompoundButton) mActivity.findViewById(R.id.button_tint);
+
+        assertEquals("Button tint inflated correctly",
+                Color.WHITE, tintedButton.getButtonTintList().getDefaultColor());
+        assertEquals("Button tint mode inflated correctly",
+                BlendMode.SRC_OVER, tintedButton.getButtonTintBlendMode());
 
         Drawable mockDrawable = spy(new ColorDrawable(Color.GREEN));
 
