@@ -31,6 +31,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
+import android.view.WindowManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -71,6 +72,8 @@ public class AudioPlaybackCaptureActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // UI automator need the screen ON in dismissPermissionDialog()
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mProjectionManager = getSystemService(MediaProjectionManager.class);
         mCountDownLatch = new CountDownLatch(1);
         bindMediaProjectionService();
@@ -121,8 +124,8 @@ public class AudioPlaybackCaptureActivity extends Activity {
         return mMediaProjection;
     }
 
+    /** The permission dialog will be auto-opened by the activity - find it and accept */
     public void dismissPermissionDialog() {
-        // The permission dialog will be auto-opened by the activity - find it and accept
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         UiObject2 acceptButton = uiDevice.wait(Until.findObject(By.res(ACCEPT_RESOURCE_ID)),
                 PERMISSION_DIALOG_WAIT_MS);
