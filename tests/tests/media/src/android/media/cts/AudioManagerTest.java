@@ -46,6 +46,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -1529,4 +1530,16 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testAllowedCapturePolicy() throws Exception {
+        final int policy = mAudioManager.getAllowedCapturePolicy();
+        assertEquals("Wrong default capture policy", AudioAttributes.ALLOW_CAPTURE_BY_ALL, policy);
+
+        for (int setPolicy : new int[] { AudioAttributes.ALLOW_CAPTURE_BY_NONE,
+                                      AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM,
+                                      AudioAttributes.ALLOW_CAPTURE_BY_ALL}) {
+            mAudioManager.setAllowedCapturePolicy(setPolicy);
+            final int getPolicy = mAudioManager.getAllowedCapturePolicy();
+            assertEquals("Allowed capture policy doesn't match", setPolicy, getPolicy);
+        }
+    }
 }
