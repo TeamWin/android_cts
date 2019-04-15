@@ -50,7 +50,6 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -287,14 +286,12 @@ public class AdapterViewTest {
     public void testAccessOnItemSelectedListener() throws Throwable {
         mAdapterView = mActivity.getListView();
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mAdapterView,
-                () -> mAdapterView.setLayoutParams(new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT)), true);
-
-        mActivityRule.runOnUiThread(() -> setArrayAdapter(mAdapterView));
-        // Wait for the UI to "settle down" since selection is fired asynchronously
-        // on the next layout pass, and we don't want to trigger the listener too early
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+                () -> {
+                    mAdapterView.setLayoutParams(new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    setArrayAdapter(mAdapterView);
+                }, true);
 
         AdapterView.OnItemSelectedListener mockSelectedListener =
                 mock(AdapterView.OnItemSelectedListener.class);

@@ -56,6 +56,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -228,26 +229,26 @@ public class ExpandableListViewTest {
         mExpandableListView.setOnGroupExpandListener(mockOnGroupExpandListener);
 
         verifyZeroInteractions(mockOnGroupExpandListener);
-        mActivityRule.runOnUiThread(() -> assertTrue(mExpandableListView.expandGroup(0, true)));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView,
+                () -> assertTrue(mExpandableListView.expandGroup(0, true)));
         verify(mockOnGroupExpandListener, times(1)).onGroupExpand(0);
         assertTrue(mExpandableListView.isGroupExpanded(0));
 
         reset(mockOnGroupExpandListener);
-        mActivityRule.runOnUiThread(() -> assertFalse(mExpandableListView.expandGroup(0, true)));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView,
+                () -> assertFalse(mExpandableListView.expandGroup(0, true)));
         verify(mockOnGroupExpandListener, times(1)).onGroupExpand(0);
         assertTrue(mExpandableListView.isGroupExpanded(0));
 
         reset(mockOnGroupExpandListener);
-        mActivityRule.runOnUiThread(() -> assertTrue(mExpandableListView.expandGroup(1, true)));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView,
+                () -> assertTrue(mExpandableListView.expandGroup(1, true)));
         verify(mockOnGroupExpandListener, times(1)).onGroupExpand(1);
         assertTrue(mExpandableListView.isGroupExpanded(1));
 
         reset(mockOnGroupExpandListener);
-        mActivityRule.runOnUiThread(() -> assertFalse(mExpandableListView.expandGroup(1, true)));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView,
+                () -> assertFalse(mExpandableListView.expandGroup(1, true)));
         verify(mockOnGroupExpandListener, times(1)).onGroupExpand(1);
         assertTrue(mExpandableListView.isGroupExpanded(1));
 

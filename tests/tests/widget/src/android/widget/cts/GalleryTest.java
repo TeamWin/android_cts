@@ -115,11 +115,10 @@ public class GalleryTest  {
     }
 
     private void setSpacingAndCheck(final int spacing) throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mGallery, () -> {
             mGallery.setSpacing(spacing);
             mGallery.requestLayout();
-        });
-        mInstrumentation.waitForIdleSync();
+        }, true);
 
         View v0 = mGallery.getChildAt(0);
         View v1 = mGallery.getChildAt(1);
@@ -191,12 +190,8 @@ public class GalleryTest  {
     }
 
     private void setGalleryGravity(final int gravity) throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mGallery.setGravity(gravity);
-            mGallery.invalidate();
-            mGallery.requestLayout();
-        });
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mGallery,
+                () -> mGallery.setGravity(gravity), true);
     }
 
     @Test
