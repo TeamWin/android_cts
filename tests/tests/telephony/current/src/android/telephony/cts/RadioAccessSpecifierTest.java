@@ -19,9 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Parcel;
 import android.telephony.RadioAccessSpecifier;
-import android.test.AndroidTestCase;
 
-public class RadioAccessSpecifierTest extends AndroidTestCase {
+import org.junit.Test;
+
+public class RadioAccessSpecifierTest {
+
+    @Test
     public void testConstructorAndGetters() {
         // Constructor and getters.
         int ran = 1;

@@ -16,6 +16,9 @@
 
 package android.telephony.embms.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.telephony.MbmsStreamingSession;
 import android.telephony.cts.embmstestapp.CtsStreamingService;
 import android.telephony.mbms.MbmsErrors;
@@ -25,7 +28,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.Test;
+
 public class MbmsStreamingSessionTest extends MbmsStreamingTestBase {
+    @Test
     public void testDuplicateSession() throws Exception {
         try {
             MbmsStreamingSession failure = MbmsStreamingSession.create(
@@ -36,6 +42,7 @@ public class MbmsStreamingSessionTest extends MbmsStreamingTestBase {
         }
     }
 
+    @Test
     public void testRequestUpdateStreamingServices() throws Exception {
         List<String> testClasses = Arrays.asList("class1", "class2");
         mStreamingSession.requestUpdateStreamingServices(testClasses);
@@ -59,6 +66,7 @@ public class MbmsStreamingSessionTest extends MbmsStreamingTestBase {
         }
     }
 
+    @Test
     public void testClose() throws Exception {
         mStreamingSession.close();
 
@@ -75,6 +83,7 @@ public class MbmsStreamingSessionTest extends MbmsStreamingTestBase {
         assertEquals(1, closeCalls.size());
     }
 
+    @Test
     public void testErrorDelivery() throws Exception {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);

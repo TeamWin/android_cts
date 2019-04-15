@@ -15,21 +15,27 @@
  */
 package android.telephony.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+
 import android.telephony.AccessNetworkConstants;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 
 import java.util.Arrays;
 
-public class NetworkRegistrationInfoTest extends AndroidTestCase {
+import org.junit.Test;
 
+public class NetworkRegistrationInfoTest {
+
+    @Test
     public void testDescribeContents() {
         NetworkRegistrationInfo networkRegistrationInfo = new NetworkRegistrationInfo.Builder()
                 .build();
         assertEquals(0, networkRegistrationInfo.describeContents());
     }
 
+    @Test
     public void testEquals() {
         NetworkRegistrationInfo nri1 = new NetworkRegistrationInfo.Builder()
                 .setDomain(NetworkRegistrationInfo.DOMAIN_CS)
@@ -62,6 +68,7 @@ public class NetworkRegistrationInfoTest extends AndroidTestCase {
         assertNotSame(nri2, nri3);
     }
 
+    @Test
     public void testGetAccessNetworkTechnology() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_EHRPD)
@@ -69,6 +76,7 @@ public class NetworkRegistrationInfoTest extends AndroidTestCase {
         assertEquals(TelephonyManager.NETWORK_TYPE_EHRPD, nri.getAccessNetworkTechnology());
     }
 
+    @Test
     public void testGetAvailableServices() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setAvailableServices(Arrays.asList(NetworkRegistrationInfo.SERVICE_TYPE_DATA,
@@ -78,6 +86,7 @@ public class NetworkRegistrationInfoTest extends AndroidTestCase {
                 NetworkRegistrationInfo.SERVICE_TYPE_VIDEO), nri.getAvailableServices());
     }
 
+    @Test
     public void testGetDomain() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setDomain(NetworkRegistrationInfo.DOMAIN_CS)
@@ -85,6 +94,7 @@ public class NetworkRegistrationInfoTest extends AndroidTestCase {
         assertEquals(NetworkRegistrationInfo.DOMAIN_CS, nri.getDomain());
     }
 
+    @Test
     public void testRegistrationState() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
@@ -92,6 +102,7 @@ public class NetworkRegistrationInfoTest extends AndroidTestCase {
         assertEquals(NetworkRegistrationInfo.REGISTRATION_STATE_HOME, nri.getRegistrationState());
     }
 
+    @Test
     public void testGetTransportType() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
