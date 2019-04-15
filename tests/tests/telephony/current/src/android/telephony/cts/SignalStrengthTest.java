@@ -16,13 +16,6 @@
 package android.telephony.cts;
 
 import static android.telephony.NetworkRegistrationInfo.NR_STATE_CONNECTED;
-
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.CellSignalStrengthCdma;
@@ -35,20 +28,20 @@ import android.telephony.CellSignalStrength;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
+import android.test.AndroidTestCase;
 import android.util.Log;
+
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test SignalStrength to ensure that valid data is being reported and that invalid data is
  * not reported.
  */
-public class SignalStrengthTest {
+public class SignalStrengthTest extends AndroidTestCase {
     private static final String TAG = "SignalStrengthTest";
 
     private TelephonyManager mTm;
@@ -62,13 +55,13 @@ public class SignalStrengthTest {
                 || ss.getState() == ServiceState.STATE_EMERGENCY_ONLY);
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
     }
 
-    @Test
     public void testSignalStrength() throws Throwable {
         if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");

@@ -16,25 +16,21 @@
 
 package android.telephony.sdk28.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.os.Parcel;
 import android.telephony.CellInfo;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
+import android.test.AndroidTestCase;
 import android.util.Log;
 
+
 import java.util.List;
+import java.util.Objects;
 
-import org.junit.Before;
-import org.junit.Test;
-
-public class CellInfoTest {
+public class CellInfoTest extends AndroidTestCase {
     private static final String TAG = "CellInfoTest";
 
     private static final int MAX_WAIT_SECONDS = 15;
@@ -50,13 +46,13 @@ public class CellInfoTest {
                 || ss.getState() == ServiceState.STATE_EMERGENCY_ONLY);
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
     }
 
-    @Test
     public void testCellInfoSdk28() {
         if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");

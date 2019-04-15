@@ -16,24 +16,14 @@
 
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
+import android.test.AndroidTestCase;
 
-import org.junit.Before;
-import org.junit.Test;
-
-public class SmsMessageTest {
+public class SmsMessageTest extends AndroidTestCase{
 
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
@@ -80,14 +70,14 @@ public class SmsMessageTest {
         "🇦🇫🇦🇽🇦🇱🇩🇿🇦🇸🇦🇩🇦🇴🇦🇮🇦🇶🇦🇬🇦🇷🇦🇲🇦🇼🇦🇨"
         + "🇦🇺🇦🇹🇦🇿🇧🇸🇧🇭🇧🇩🇧🇧🇧🇾🇧🇪🇧🇿🇧🇯🇧🇲🇧🇹🇧🇴🇧🇦";
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mTelephonyManager =
             (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPackageManager = getContext().getPackageManager();
     }
 
-    @Test
     public void testCreateFromPdu() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CDMA)) {
@@ -168,7 +158,6 @@ public class SmsMessageTest {
         return total - messageLength == remaining;
     }
 
-    @Test
     public void testCPHSVoiceMail() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CDMA)) {
@@ -212,7 +201,6 @@ public class SmsMessageTest {
         assertTrue(sms.isMwiDontStore());
     }
 
-    @Test
     public void testGetUserData() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CDMA)) {
@@ -232,7 +220,6 @@ public class SmsMessageTest {
         assertNotNull(userData);
     }
 
-    @Test
     public void testGetSubmitPdu() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -277,7 +264,6 @@ public class SmsMessageTest {
         assertNotNull(smsPdu);
     }
 
-    @Test
     public void testEmailGateway() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CDMA)) {
@@ -310,7 +296,6 @@ public class SmsMessageTest {
         assertEquals(MB, sms.getEmailBody());
     }
 
-    @Test
     public void testCalculateLength() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -335,7 +320,6 @@ public class SmsMessageTest {
         assertEquals(SmsMessage.ENCODING_16BIT, result[3]);
     }
 
-    @Test
     public void testCalculateLengthFlags() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
