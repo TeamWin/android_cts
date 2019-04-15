@@ -70,7 +70,7 @@ public final class DeviceTestConstants {
             new TestInfo(PACKAGE, SHELL_TEST, "testShellCommandHelp");
 
     /**
-     * Device test class: ShellCommandDeviceTest.
+     * Device test class: InputMethodManagerDeviceTest.
      */
     private static final String MANAGER_TEST =
             "android.inputmethodservice.cts.devicetest.InputMethodManagerDeviceTest";
@@ -79,8 +79,31 @@ public final class DeviceTestConstants {
             new TestInfo(PACKAGE, MANAGER_TEST, "testIme1InInputMethodList");
     public static final TestInfo TEST_IME1_NOT_IN_INPUT_METHOD_LIST =
             new TestInfo(PACKAGE, MANAGER_TEST, "testIme1NotInInputMethodList");
+    public static final TestInfo TEST_IME1_IN_ENABLED_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme1InEnabledInputMethodList");
+    public static final TestInfo TEST_IME1_NOT_IN_ENABLED_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme1NotInEnabledInputMethodList");
+
+    public static final TestInfo TEST_IME2_IN_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme2InInputMethodList");
+    public static final TestInfo TEST_IME2_NOT_IN_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme2NotInInputMethodList");
+    public static final TestInfo TEST_IME2_IN_ENABLED_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme2InEnabledInputMethodList");
+    public static final TestInfo TEST_IME2_NOT_IN_ENABLED_INPUT_METHOD_LIST =
+            new TestInfo(PACKAGE, MANAGER_TEST, "testIme2NotInEnabledInputMethodList");
+
     public static final TestInfo TEST_IME1_IMPLICITLY_ENABLED_SUBTYPE_EXISTS =
             new TestInfo(PACKAGE, MANAGER_TEST, "testIme1ImplicitlyEnabledSubtypeExists");
     public static final TestInfo TEST_IME1_IMPLICITLY_ENABLED_SUBTYPE_NOT_EXIST =
             new TestInfo(PACKAGE, MANAGER_TEST, "testIme1ImplicitlyEnabledSubtypeNotExist");
+
+    /**
+     * Device test class: MultiUserDeviceTest.
+     */
+    private static final String MULTI_USER_TEST =
+            "android.inputmethodservice.cts.devicetest.MultiUserDeviceTest";
+
+    public static final TestInfo TEST_CONNECTING_TO_THE_SAME_USER_IME =
+            new TestInfo(PACKAGE, MULTI_USER_TEST, "testConnectingToTheSameUserIme");
 }

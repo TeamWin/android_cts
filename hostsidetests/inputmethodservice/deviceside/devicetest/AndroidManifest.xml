@@ -27,9 +27,19 @@
     <application
         android:label="CtsInputMethodServiceDeviceTests"
         android:icon="@mipmap/ic_launcher"
-        android:allowBackup="false"
-    >
+        android:allowBackup="false">
+
         <uses-library android:name="android.test.runner" />
+
+        <activity
+            android:name=".TestActivity"
+            android:label="TestActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
     </application>
 
     <instrumentation
