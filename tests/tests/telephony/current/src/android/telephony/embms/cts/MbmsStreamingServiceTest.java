@@ -16,8 +16,6 @@
 
 package android.telephony.embms.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import android.annotation.Nullable;
 import android.telephony.cts.embmstestapp.CtsStreamingService;
 import android.telephony.mbms.MbmsErrors;
@@ -30,8 +28,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
 
 public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
     private class TestStreamingServiceCallback extends StreamingServiceCallback {
@@ -128,7 +124,6 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
     private TestStreamingServiceCallback mStreamingServiceCallback =
             new TestStreamingServiceCallback();
 
-    @Test
     public void testStartStreaming() throws Exception {
         StreamingService streamingService = mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
@@ -147,7 +142,6 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
                 startStreamingCalls.get(0).get(2));
     }
 
-    @Test
     public void testGetPlaybackUri() throws Exception {
         StreamingService streamingService = mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
@@ -161,7 +155,6 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
                 getPlaybackUriCalls.get(0).get(2));
     }
 
-    @Test
     public void testStopStreaming() throws Exception {
         StreamingService streamingService = mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
@@ -174,7 +167,6 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
                 stopStreamingCalls.get(0).get(2));
     }
 
-    @Test
     public void testStreamingCallbacks() throws Exception {
         mStreamingSession.startStreaming(
                 CtsStreamingService .STREAMING_SERVICE_INFO,
@@ -198,7 +190,6 @@ public class MbmsStreamingServiceTest extends MbmsStreamingTestBase {
                 mStreamingServiceCallback.waitOnStreamMethodUpdated().arg1);
     }
 
-    @Test
     public void testStartStreamingFailure() throws Exception {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);

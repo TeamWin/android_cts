@@ -15,23 +15,17 @@
  */
 package android.telephony.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import android.os.Parcel;
 import android.telephony.AvailableNetworkInfo;
-
-import org.junit.Test;
-
+import android.test.AndroidTestCase;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AvailableNetworkInfoTest {
+public class AvailableNetworkInfoTest extends AndroidTestCase {
     private static final String OPERATOR_MCCMNC_1 = "123456";
     private static final String OPERATOR_MCCMNC_2 = "246135";
     private static final int SUB_ID = 123;
 
-    @Test
     public void testAvailableNetworkInfo() {
         List<String> mccMncs = new ArrayList<String>();
         mccMncs.add(OPERATOR_MCCMNC_1);
