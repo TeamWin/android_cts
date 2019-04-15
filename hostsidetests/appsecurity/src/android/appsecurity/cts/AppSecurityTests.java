@@ -38,13 +38,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class AppSecurityTests extends BaseAppSecurityTest {
 
-    // testSharedUidDifferentCerts constants
-    private static final String SHARED_UI_APK = "CtsSharedUidInstall.apk";
-    private static final String SHARED_UI_PKG = "com.android.cts.shareuidinstall";
-    private static final String SHARED_UI_DIFF_CERT_APK = "CtsSharedUidInstallDiffCert.apk";
-    private static final String SHARED_UI_DIFF_CERT_PKG =
-        "com.android.cts.shareuidinstalldiffcert";
-
     // testAppUpgradeDifferentCerts constants
     private static final String SIMPLE_APP_APK = "CtsSimpleAppInstall.apk";
     private static final String SIMPLE_APP_PKG = "com.android.cts.simpleappinstall";
@@ -92,27 +85,6 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     public void setUp() throws Exception {
         Utils.prepareSingleUser(getDevice());
         assertNotNull(getBuild());
-    }
-
-    /**
-     * Test that an app that declares the same shared uid as an existing app, cannot be installed
-     * if it is signed with a different certificate.
-     */
-    @Test
-    @AppModeFull(reason = "Instant applications can't define shared UID")
-    public void testSharedUidDifferentCerts() throws Exception {
-        Log.i(LOG_TAG, "installing apks with shared uid, but different certs");
-        try {
-            getDevice().uninstallPackage(SHARED_UI_PKG);
-            getDevice().uninstallPackage(SHARED_UI_DIFF_CERT_PKG);
-
-            new InstallMultiple().addApk(SHARED_UI_APK).run();
-            new InstallMultiple().addApk(SHARED_UI_DIFF_CERT_APK)
-                    .runExpectingFailure("INSTALL_FAILED_SHARED_USER_INCOMPATIBLE");
-        } finally {
-            getDevice().uninstallPackage(SHARED_UI_PKG);
-            getDevice().uninstallPackage(SHARED_UI_DIFF_CERT_PKG);
-        }
     }
 
     /**
