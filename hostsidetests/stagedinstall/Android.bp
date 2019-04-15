@@ -51,6 +51,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "androidx.test.runner",
+        "androidx.test.core",
         "truth-prebuilt",
     ],
     sdk_version: "system_current",
