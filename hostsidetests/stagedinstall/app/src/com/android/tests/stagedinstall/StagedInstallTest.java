@@ -184,14 +184,54 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
+    public void testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage()
+            throws Exception {
         int sessionId = stageSingleApk(
                 "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
         StageSessionResult failedSessionResult = stageSingleApk("StagedInstallTestAppAv1.apk");
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
-        InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller()
-                .abandonSession(sessionId);
+        getPackageInstaller().abandonSession(sessionId);
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage()
+            throws Exception {
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageMultipleApks(
+                "StagedInstallTestAppAv1.apk",
+                "StagedInstallTestAppBv1.apk");
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "There is already in-progress committed staged session");
+        getPackageInstaller().abandonSession(sessionId);
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage()
+            throws Exception {
+        int sessionId = stageMultipleApks(
+                "StagedInstallTestAppAv1.apk",
+                "StagedInstallTestAppBv1.apk").assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageSingleApk(
+                "StagedInstallTestAppAv1.apk");
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "There is already in-progress committed staged session");
+        getPackageInstaller().abandonSession(sessionId);
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage()
+            throws Exception {
+        int sessionId = stageMultipleApks(
+                "StagedInstallTestAppAv1.apk",
+                "StagedInstallTestAppBv1.apk").assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageMultipleApks(
+                "StagedInstallTestAppAv1.apk",
+                "StagedInstallTestAppBv1.apk");
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "There is already in-progress committed staged session");
+        getPackageInstaller().abandonSession(sessionId);
     }
 
     @Test
@@ -229,7 +269,7 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testGetActiveStagedSesssion() throws Exception {
+    public void testGetActiveStagedSession() throws Exception {
         PackageInstaller packageInstaller = getPackageInstaller();
         int sessionId = stageSingleApk(
                 "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
@@ -242,6 +282,16 @@ public class StagedInstallTest {
         PackageInstaller packageInstaller = getPackageInstaller();
         PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
         assertThat(session).isNull();
+    }
+
+    @Test
+    public void testGetGetActiveStagedSession_MultiApkSession() throws Exception {
+        int sessionId = stageMultipleApks(
+                "StagedInstallTestAppAv1.apk",
+                "StagedInstallTestAppBv1.apk")
+                .assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo session = getPackageInstaller().getActiveStagedSession();
+        assertThat(session.getSessionId()).isEqualTo(sessionId);
     }
 
     @Test
