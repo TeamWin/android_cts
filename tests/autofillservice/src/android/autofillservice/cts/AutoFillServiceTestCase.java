@@ -135,6 +135,7 @@ public final class AutoFillServiceTestCase {
 
         @Override
         protected TestRule getMainTestRule() {
+            // TODO: create a NoOpTestRule on common code
             return new TestRule() {
 
                 @Override
