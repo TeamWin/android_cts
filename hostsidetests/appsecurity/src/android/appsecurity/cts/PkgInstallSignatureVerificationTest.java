@@ -370,6 +370,13 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v2-only-two-signers.apk");
     }
 
+    public void testInstallNegativeModulus() throws Exception {
+        // APK signed with a certificate that has a negative RSA modulus.
+        assertInstallSucceeds("v1-only-negative-modulus.apk");
+        assertInstallSucceeds("v2-only-negative-modulus.apk");
+        assertInstallSucceeds("v3-only-negative-modulus.apk");
+    }
+
     public void testInstallV2TwoSignersRejectsWhenOneBroken() throws Exception {
         // Bitflip in the ECDSA signature of second signer. Based on two-signers.apk.
         // This asserts that breakage in any signer leads to rejection of the APK.

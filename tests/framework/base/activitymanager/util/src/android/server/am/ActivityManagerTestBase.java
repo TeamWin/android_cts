@@ -43,6 +43,7 @@ import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.server.am.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
+import static android.server.am.ActivityLauncher.KEY_INTENT_EXTRAS;
 import static android.server.am.ActivityLauncher.KEY_INTENT_FLAGS;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
@@ -59,21 +60,6 @@ import static android.server.am.ActivityLauncher.launchActivityFromExtras;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
-import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
-import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_CUTOUT_EXISTS;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
-import static android.server.am.Components.LAUNCHING_ACTIVITY;
-import static android.server.am.Components.PipActivity.ACTION_EXPAND_PIP;
-import static android.server.am.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
-import static android.server.am.Components.PipActivity.EXTRA_PIP_ORIENTATION;
-import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
-import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
-import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
@@ -85,6 +71,24 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
+import static android.server.am.app.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.app.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.app.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
+import static android.server.am.app.Components.BroadcastReceiverActivity.EXTRA_CUTOUT_EXISTS;
+import static android.server.am.app.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
+import static android.server.am.app.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
+import static android.server.am.app.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
+import static android.server.am.app.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
+import static android.server.am.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.PipActivity.ACTION_EXPAND_PIP;
+import static android.server.am.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
+import static android.server.am.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
+import static android.server.am.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
+import static android.server.am.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
+import static android.server.am.app.Components.SECONDARY_HOME_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.second.Components.SECOND_ACTIVITY;
+import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
@@ -95,6 +99,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import static java.lang.Integer.toHexString;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
@@ -146,8 +152,6 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import static java.lang.Integer.toHexString;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -178,9 +182,9 @@ public abstract class ActivityManagerTestBase {
             ACTIVITY_TYPE_UNDEFINED
     };
 
-    private static final String TEST_PACKAGE = "android.server.am";
-    private static final String SECOND_TEST_PACKAGE = "android.server.am.second";
-    private static final String THIRD_TEST_PACKAGE = "android.server.am.third";
+    private static final String TEST_PACKAGE = TEST_ACTIVITY.getPackageName();
+    private static final String SECOND_TEST_PACKAGE = SECOND_ACTIVITY.getPackageName();
+    private static final String THIRD_TEST_PACKAGE = THIRD_ACTIVITY.getPackageName();
     private static final List<String> TEST_PACKAGES;
 
     static {
@@ -1144,7 +1148,7 @@ public abstract class ActivityManagerTestBase {
         private final SettingsObserver mRotationObserver;
         private int mPreviousDegree;
 
-        public RotationSession() throws Exception {
+        public RotationSession() {
             // Save accelerometer_rotation preference.
             super(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
                     Settings.System::getInt, Settings.System::putInt);
@@ -1163,7 +1167,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         @Override
-        public void set(@NonNull Integer value) throws Exception {
+        public void set(@NonNull Integer value) {
             // When the rotation is locked and the SystemUI receives the rotation becoming 0deg, it
             // will call freezeRotation to WMS, which will cause USER_ROTATION be set to zero again.
             // In order to prevent our test target from being overwritten by SystemUI during
@@ -1909,6 +1913,7 @@ public abstract class ActivityManagerTestBase {
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
             b.putInt(KEY_INTENT_FLAGS, mIntentFlags);
+            b.putBundle(KEY_INTENT_EXTRAS, getExtras());
             final Context context = getInstrumentation().getContext();
             launchActivityFromExtras(context, b, mLaunchInjector);
         }

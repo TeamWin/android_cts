@@ -16,13 +16,6 @@
 
 package android.server.am;
 
-import static android.server.am.Components.BOTTOM_ACTIVITY;
-import static android.server.am.Components.BottomActivity.EXTRA_BOTTOM_WALLPAPER;
-import static android.server.am.Components.BottomActivity.EXTRA_STOP_DELAY;
-import static android.server.am.Components.TOP_ACTIVITY;
-import static android.server.am.Components.TRANSLUCENT_TOP_ACTIVITY;
-import static android.server.am.Components.TopActivity.EXTRA_FINISH_DELAY;
-import static android.server.am.Components.TopActivity.EXTRA_TOP_WALLPAPER;
 import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
@@ -32,6 +25,13 @@ import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_INTRA_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_INTRA_OPEN;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
+import static android.server.am.app.Components.BOTTOM_ACTIVITY;
+import static android.server.am.app.Components.BottomActivity.EXTRA_BOTTOM_WALLPAPER;
+import static android.server.am.app.Components.BottomActivity.EXTRA_STOP_DELAY;
+import static android.server.am.app.Components.TOP_ACTIVITY;
+import static android.server.am.app.Components.TRANSLUCENT_TOP_ACTIVITY;
+import static android.server.am.app.Components.TopActivity.EXTRA_FINISH_DELAY;
+import static android.server.am.app.Components.TopActivity.EXTRA_TOP_WALLPAPER;
 
 import static org.junit.Assert.assertEquals;
 

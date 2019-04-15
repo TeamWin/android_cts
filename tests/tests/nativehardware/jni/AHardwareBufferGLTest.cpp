@@ -1331,11 +1331,9 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
               "by this test.");
         return false;
     }
-    if (FormatIsYuv(desc.format) &&
-        (desc.stride & kExplicitYuvSampling) &&
-        !HasGLExtension("GL_EXT_YUV_target")) {
-        ALOGI("Test skipped: Explicit YUV sampling not supported but required "
-              " by this test. ");
+    if (FormatIsYuv(desc.format) && !HasGLExtension("GL_EXT_YUV_target")) {
+        ALOGI("Test skipped: The GL_EXT_YUV_target extension is required for "
+              "operations in the YUV color space.");
         return false;
     }
     // For control cases using GL formats, the test should be run in a single

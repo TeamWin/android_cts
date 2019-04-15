@@ -31,9 +31,12 @@ import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
+import android.support.test.uiautomator.By
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import android.support.test.uiautomator.UiDevice
+import android.support.test.uiautomator.Until
+import androidx.core.content.FileProvider
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.After
 import org.junit.Assert
@@ -49,11 +52,12 @@ const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
 const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/cts/packageinstaller"
 const val INSTALL_ACTION_CB = "PackageInstallerTestBase.install_cb"
 
+const val CONTENT_AUTHORITY = "android.packageinstaller.install.cts.fileprovider"
+
 const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
 const val SYSTEM_PACKAGE_NAME = "android"
 
 const val TIMEOUT = 60000L
-const val TIMEOUT_EXPECTED = 2000L
 const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
 open class PackageInstallerTestBase {
@@ -63,6 +67,7 @@ open class PackageInstallerTestBase {
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
     private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+    private val apkFile = File(context.filesDir, TEST_APK_NAME)
 
     /** If a status was received the value of the status, otherwise null */
     private var installSessionResult = LinkedBlockingQueue<Int>()
@@ -79,6 +84,11 @@ open class PackageInstallerTestBase {
 
             installSessionResult.offer(status)
         }
+    }
+
+    @Before
+    fun copyTestApk() {
+        File(TEST_APK_EXTERNAL_LOCATION, TEST_APK_NAME).copyTo(target = apkFile, overwrite = true)
     }
 
     @Before
@@ -126,7 +136,7 @@ open class PackageInstallerTestBase {
         val session = pi.openSession(sessionId)!!
 
         // Write data to session
-        File(TEST_APK_EXTERNAL_LOCATION, TEST_APK_NAME).inputStream().use { fileOnDisk ->
+        apkFile.inputStream().use { fileOnDisk ->
             session.openWrite(TEST_APK_NAME, 0, -1).use { sessionFile ->
                 fileOnDisk.copyTo(sessionFile)
             }
@@ -141,6 +151,56 @@ open class PackageInstallerTestBase {
         Assert.assertEquals(STATUS_PENDING_USER_ACTION, getInstallSessionResult())
 
         return session
+    }
+
+    /**
+     * Start an installation via a session
+     */
+    protected fun startInstallationViaIntent() {
+        val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+        intent.data = FileProvider.getUriForFile(context, CONTENT_AUTHORITY, apkFile)
+        intent.putExtra(Intent.EXTRA_RETURN_RESULT, true)
+        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+
+        installDialogStarter.activity.startActivityForResult(intent, 0)
+    }
+
+    /**
+     * Wait for result of install dialog and return it
+     */
+    fun getInstallDialogResult(timeout: Long = TIMEOUT): Int? {
+        return installDialogResults.poll(timeout, TimeUnit.MILLISECONDS)
+    }
+
+    fun assertInstalled() {
+        // Throws exception if package is not installed.
+        pm.getPackageInfo(TEST_APK_PACKAGE_NAME, 0)
+    }
+
+    fun assertNotInstalled() {
+        try {
+            pm.getPackageInfo(TEST_APK_PACKAGE_NAME, 0)
+            Assert.fail("Package should not be installed")
+        } catch (expected: PackageManager.NameNotFoundException) {
+        }
+    }
+
+    /**
+     * Click a button in the UI of the installer app
+     *
+     * @param resId The resource ID of the button to click
+     */
+    fun clickInstallerUIButton(resId: String) {
+        uiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, resId)), TIMEOUT)
+                .click()
+    }
+
+    /**
+     * Assert that there are no more callbacks from the install session or install dialog
+     */
+    fun assertNoMoreInstallResults() {
+        Assert.assertNull(getInstallSessionResult(0))
+        Assert.assertEquals(0, installDialogResults.size)
     }
 
     @After

@@ -21,15 +21,18 @@ import static android.telephony.TelephonyManager.NETWORK_TYPE_EDGE;
 import static android.telephony.TelephonyManager.NETWORK_TYPE_GPRS;
 import static android.telephony.TelephonyManager.NETWORK_TYPE_UMTS;
 
+import static org.junit.Assert.assertEquals;
 
 import android.os.Parcel;
 import android.telephony.NeighboringCellInfo;
-import android.test.AndroidTestCase;
 
-public class NeighboringCellInfoTest extends AndroidTestCase{
+import org.junit.Test;
+
+public class NeighboringCellInfoTest {
     private static final int RSSI = 20;
     private static final int CID = 0xffff;
 
+    @Test
     public void testNeighboringCellInfo() {
         int rssi = 31;
         String location = "ffffffff";

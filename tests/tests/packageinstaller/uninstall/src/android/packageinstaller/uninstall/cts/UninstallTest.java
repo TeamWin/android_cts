@@ -30,6 +30,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -40,9 +41,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class UninstallTest {
+    private static final String LOG_TAG = UninstallTest.class.getSimpleName();
+
     private static final String TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts";
 
     private static final long TIMEOUT_MS = 30000;
@@ -64,6 +71,18 @@ public class UninstallTest {
         AppOpsUtils.reset(mContext.getPackageName());
     }
 
+    private void dumpWindowHierarchy() throws InterruptedException, IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        mUiDevice.dumpWindowHierarchy(outputStream);
+        String windowHierarchy = outputStream.toString(StandardCharsets.UTF_8.name());
+
+        Log.w(LOG_TAG, "Window hierarchy:");
+        for (String line : windowHierarchy.split("\n")) {
+            Thread.sleep(10);
+            Log.w(LOG_TAG, line);
+        }
+    }
+
     @Test
     public void testUninstall() throws Exception {
         assertTrue(isInstalled());
@@ -73,12 +92,17 @@ public class UninstallTest {
         intent.addFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
 
-        // Confirm uninstall
+        if (mUiDevice.wait(Until.findObject(By.text("Do you want to uninstall this app?")),
+                TIMEOUT_MS) == null) {
+            dumpWindowHierarchy();
+        }
         assertNotNull("Uninstall prompt not shown",
                 mUiDevice.wait(Until.findObject(By.text("Do you want to uninstall this app?")),
                         TIMEOUT_MS));
         // The app's name should be shown to the user.
         assertNotNull(mUiDevice.findObject(By.text("Empty Test App")));
+
+        // Confirm uninstall
         mUiDevice.findObject(By.text("OK")).click();
 
         for (int i = 0; i < 30; i++) {

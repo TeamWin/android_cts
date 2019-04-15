@@ -16,20 +16,23 @@
 
 package android.server.am.app27;
 
+import static android.server.am.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+
 import android.content.ComponentName;
 import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
 
     public static final ComponentName SDK_27_LAUNCHING_ACTIVITY =
-            component(Components.class, "android.server.am.LaunchingActivity");
+            component(Components.class, LAUNCHING_ACTIVITY.getClassName());
 
     public static final ComponentName SDK_27_TEST_ACTIVITY =
-            component(Components.class, "android.server.am.TestActivity");
+            component(Components.class, TEST_ACTIVITY.getClassName());
 
     public static final ComponentName SDK_27_SEPARATE_PROCESS_ACTIVITY =
-            component(Components.class, "android.server.am.app27.SeparateProcessActivity");
+            component(Components.class, "SeparateProcessActivity");
 
     public static final ComponentName SDK_27_HOME_ACTIVITY =
-            component(Components.class, "android.server.am.app27.HomeActivity");
+            component(Components.class, "HomeActivity");
 }

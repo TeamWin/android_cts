@@ -28,32 +28,32 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
-import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
-import static android.server.am.Components.BOTTOM_ACTIVITY;
-import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
-import static android.server.am.Components.DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY;
-import static android.server.am.Components.LAUNCHING_ACTIVITY;
-import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
-import static android.server.am.Components.LAUNCH_TEST_ON_DESTROY_ACTIVITY;
-import static android.server.am.Components.LaunchBroadcastReceiver.ACTION_TEST_ACTIVITY_START;
-import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_COMPONENT_NAME;
-import static android.server.am.Components.LaunchBroadcastReceiver.EXTRA_TARGET_DISPLAY;
-import static android.server.am.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
-import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
-import static android.server.am.Components.RESIZEABLE_ACTIVITY;
-import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
-import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY;
-import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2;
-import static android.server.am.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.TOAST_ACTIVITY;
-import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
+import static android.server.am.app.Components.ALT_LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.BOTTOM_ACTIVITY;
+import static android.server.am.app.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.app.Components.DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY;
+import static android.server.am.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.app.Components.LAUNCH_BROADCAST_RECEIVER;
+import static android.server.am.app.Components.LAUNCH_TEST_ON_DESTROY_ACTIVITY;
+import static android.server.am.app.Components.LaunchBroadcastReceiver.ACTION_TEST_ACTIVITY_START;
+import static android.server.am.app.Components.LaunchBroadcastReceiver.EXTRA_COMPONENT_NAME;
+import static android.server.am.app.Components.LaunchBroadcastReceiver.EXTRA_TARGET_DISPLAY;
+import static android.server.am.app.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
+import static android.server.am.app.Components.NON_RESIZEABLE_ACTIVITY;
+import static android.server.am.app.Components.RESIZEABLE_ACTIVITY;
+import static android.server.am.app.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
+import static android.server.am.app.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY;
+import static android.server.am.app.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2;
+import static android.server.am.app.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TOAST_ACTIVITY;
+import static android.server.am.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
 import static android.server.am.app27.Components.SDK_27_TEST_ACTIVITY;
@@ -1896,7 +1896,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
-     * Tests that turning the secondary display off stops activities running on that display.
+     * Tests that turning the secondary display off stops activities running and makes invisible
+     * on that display.
      */
     @Test
     public void testExternalDisplayToggleState() throws Exception {
@@ -1912,9 +1913,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             externalDisplaySession.turnDisplayOff();
 
-            // Check that turning off the external display stops the activity
+            // Check that turning off the external display stops the activity, and makes it
+            // invisible.
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Activity launched on external display must be stopped after turning off");
+            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
             externalDisplaySession.turnDisplayOn();
 

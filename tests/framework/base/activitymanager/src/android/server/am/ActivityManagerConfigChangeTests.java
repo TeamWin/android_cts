@@ -17,16 +17,16 @@
 package android.server.am;
 
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
-import static android.server.am.Components.FONT_SCALE_ACTIVITY;
-import static android.server.am.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
-import static android.server.am.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
-import static android.server.am.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
-import static android.server.am.Components.NO_RELAUNCH_ACTIVITY;
-import static android.server.am.Components.RESIZEABLE_ACTIVITY;
-import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
+import static android.server.am.app.Components.FONT_SCALE_ACTIVITY;
+import static android.server.am.app.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
+import static android.server.am.app.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
+import static android.server.am.app.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
+import static android.server.am.app.Components.NO_RELAUNCH_ACTIVITY;
+import static android.server.am.app.Components.RESIZEABLE_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;

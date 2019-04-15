@@ -27,6 +27,7 @@
 #include <android/hardware_buffer.h>
 #include <android/log.h>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 //#define LOG_NDEBUG 0
 
@@ -38,6 +39,9 @@
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 namespace {
+
+using testing::AnyOf;
+using testing::Eq;
 
 #define FORMAT_CASE(x) case AHARDWAREBUFFER_FORMAT_ ## x: os << #x ; break
 
@@ -418,11 +422,11 @@ TEST(AHardwareBufferTest, PlanarLockAndUnlockYuvSucceed) {
     EXPECT_TRUE(planes.planes[0].rowStride >= 16);
 
     EXPECT_TRUE(planes.planes[1].data != NULL);
-    EXPECT_EQ(2U, planes.planes[1].pixelStride);
+    EXPECT_THAT(planes.planes[1].pixelStride, AnyOf(Eq(1U), Eq(2U)));
     EXPECT_TRUE(planes.planes[1].rowStride >= 8);
 
     EXPECT_TRUE(planes.planes[2].data != NULL);
-    EXPECT_EQ(2U, planes.planes[2].pixelStride);
+    EXPECT_THAT(planes.planes[2].pixelStride, AnyOf(Eq(1U), Eq(2U)));
     EXPECT_TRUE(planes.planes[2].rowStride >= 8);
 
     // Unlock

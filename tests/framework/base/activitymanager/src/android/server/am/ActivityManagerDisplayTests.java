@@ -17,7 +17,7 @@
 package android.server.am;
 
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.app.Components.TEST_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
@@ -26,8 +26,6 @@ import static org.junit.Assume.assumeFalse;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.util.Size;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 

@@ -17,14 +17,13 @@
 package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
-import static android.server.am.Components.HOME_ACTIVITY;
-import static android.server.am.Components.SECONDARY_HOME_ACTIVITY;
-import static android.server.am.Components.SINGLE_HOME_ACTIVITY;
-import static android.server.am.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
-import static android.server.am.Components.TEST_LIVE_WALLPAPER_SERVICE;
-import static android.server.am.Components.TestLiveWallpaperKeys.COMPONENT;
-import static android.server.am.Components.TestLiveWallpaperKeys.ENGINE_DISPLAY_ID;
-import static android.server.am.StateLogger.logAlways;
+import static android.server.am.app.Components.HOME_ACTIVITY;
+import static android.server.am.app.Components.SECONDARY_HOME_ACTIVITY;
+import static android.server.am.app.Components.SINGLE_HOME_ACTIVITY;
+import static android.server.am.app.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
+import static android.server.am.app.Components.TEST_LIVE_WALLPAPER_SERVICE;
+import static android.server.am.app.Components.TestLiveWallpaperKeys.COMPONENT;
+import static android.server.am.app.Components.TestLiveWallpaperKeys.ENGINE_DISPLAY_ID;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
