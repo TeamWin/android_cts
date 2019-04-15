@@ -48,6 +48,8 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -232,8 +234,8 @@ public class TableLayoutTest {
     public void testColumnStretchableEffect() throws Throwable {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         // Preparation: remove Collapsed mark for column 0.
-        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnCollapsed(0, false));
-        instrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTableDefault,
+                () -> mTableDefault.setColumnCollapsed(0, false));
         assertFalse(mTableDefault.isColumnStretchable(0));
         assertFalse(mTableDefault.isColumnStretchable(1));
         assertTrue(mTableDefault.isColumnStretchable(2));
@@ -254,8 +256,8 @@ public class TableLayoutTest {
                 - orignalWidth1 - orignalWidth2;
 
         // Test: set column 1 is able to be stretched.
-        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnStretchable(1, true));
-        instrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTableDefault,
+                () -> mTableDefault.setColumnStretchable(1, true));
         assertEquals(oldWidth0, column0.getWidth());
         assertTrue(oldWidth1 < column1.getWidth());
         assertTrue(oldWidth2 > column2.getWidth());
@@ -268,8 +270,8 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: set column 0 is able to be stretched.
-        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnStretchable(0, true));
-        instrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTableDefault,
+                () -> mTableDefault.setColumnStretchable(0, true));
         assertTrue(oldWidth0 < column0.getWidth());
         assertTrue(oldWidth1 > column1.getWidth());
         assertTrue(oldWidth2 > column2.getWidth());
@@ -282,8 +284,8 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: set column 2 is unable to be stretched.
-        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnStretchable(2, false));
-        instrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTableDefault,
+                () -> mTableDefault.setColumnStretchable(2, false));
         // assertTrue(oldWidth0 < column0.getWidth());
         // assertTrue(oldWidth1 < column1.getWidth());
         assertEquals(oldWidth0, column0.getWidth());
@@ -299,11 +301,11 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: mark all columns are able to be stretched.
-        mActivityRule.runOnUiThread(() -> {
-            mTableDefault.setStretchAllColumns(true);
-            mTableDefault.requestLayout();
-        });
-        instrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mTableDefault,
+                () -> {
+                    mTableDefault.setStretchAllColumns(true);
+                    mTableDefault.requestLayout();
+                }, true);
         // assertTrue(oldWidth0 > column0.getWidth());
         // assertTrue(oldWidth1 > column1.getWidth());
         assertEquals(oldWidth0, column0.getWidth());
@@ -318,11 +320,11 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: Remove the mark for all columns are able to be stretched.
-        mActivityRule.runOnUiThread(() -> {
-            mTableDefault.setStretchAllColumns(false);
-            mTableDefault.requestLayout();
-        });
-        instrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mTableDefault,
+                () -> {
+                    mTableDefault.setStretchAllColumns(false);
+                    mTableDefault.requestLayout();
+                }, true);
         // assertTrue(oldWidth0 > column0.getWidth());
         // assertTrue(oldWidth1 > column1.getWidth());
         assertEquals(oldWidth0, column0.getWidth());
