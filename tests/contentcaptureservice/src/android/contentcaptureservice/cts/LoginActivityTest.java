@@ -72,7 +72,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
-public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<LoginActivity> {
+public class LoginActivityTest
+        extends AbstractContentCaptureIntegrationAutoActivityLaunchTest<LoginActivity> {
 
     private static final String TAG = LoginActivityTest.class.getSimpleName();
 

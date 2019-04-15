@@ -15,7 +15,6 @@
  */
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
@@ -25,20 +24,14 @@ import static android.provider.Settings.Secure.CONTENT_CAPTURE_ENABLED;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
-import android.app.Application;
 import android.content.ContentCaptureOptions;
-import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
-import android.contentcaptureservice.cts.common.Visitor;
 import android.provider.DeviceConfig;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
@@ -48,7 +41,6 @@ import com.android.compatibility.common.util.SafeCleanerRule;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SettingsUtils;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -61,8 +53,7 @@ import org.junit.runner.RunWith;
  * Base class for all (or most :-) integration tests in this CTS suite.
  */
 @RunWith(AndroidJUnit4.class)
-public abstract class AbstractContentCaptureIntegrationTest
-        <A extends AbstractContentCaptureActivity> {
+public abstract class AbstractContentCaptureIntegrationTest {
 
     private static final String TAG = AbstractContentCaptureIntegrationTest.class.getSimpleName();
 
@@ -70,11 +61,7 @@ public abstract class AbstractContentCaptureIntegrationTest
             new DeviceConfigStateManager(sContext, DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
             ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED);
 
-    private final String mTag = getClass().getSimpleName();
-
-    protected ActivitiesWatcher mActivitiesWatcher;
-
-    private final Class<A> mActivityClass;
+    protected final String mTag = getClass().getSimpleName();
 
     private final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule(SYSTEM_SERVICE_NAME);
@@ -135,10 +122,6 @@ public abstract class AbstractContentCaptureIntegrationTest
             // Finally, let subclasses set their own rule
             .around(getMainTestRule());
 
-    protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
-        mActivityClass = activityClass;
-    }
-
     /**
      * Hack to make sure ContentCapture is available for the CTS test package.
      *
@@ -191,23 +174,6 @@ public abstract class AbstractContentCaptureIntegrationTest
         CtsContentCaptureService.resetStaticState();
     }
 
-    @Before
-    public void registerLifecycleCallback() {
-        Log.v(mTag, "@Before: Registering lifecycle callback");
-        final Application app = (Application) sContext.getApplicationContext();
-        mActivitiesWatcher = new ActivitiesWatcher(GENERIC_TIMEOUT_MS);
-        app.registerActivityLifecycleCallbacks(mActivitiesWatcher);
-    }
-
-    @After
-    public void unregisterLifecycleCallback() {
-        Log.d(mTag, "@After: Unregistering lifecycle callback: " + mActivitiesWatcher);
-        if (mActivitiesWatcher != null) {
-            final Application app = (Application) sContext.getApplicationContext();
-            app.unregisterActivityLifecycleCallbacks(mActivitiesWatcher);
-        }
-    }
-
     @Nullable
     public static void setFeatureEnabledBySettings(@Nullable boolean enabled) {
         SettingsUtils.syncSet(sContext, CONTENT_CAPTURE_ENABLED, enabled ? "1" : "0");
@@ -237,46 +203,8 @@ public abstract class AbstractContentCaptureIntegrationTest
     }
 
     /**
-     * Gets the {@link ActivityTestRule} use to launch this activity.
-     *
-     * <p><b>NOTE: </b>implementation must return a static singleton, otherwise it might be
-     * {@code null} when used it in this class' {@code @Rule}
-     */
-    protected abstract ActivityTestRule<A> getActivityTestRule();
-
-    /**
      * Gets the test-specific {@link Rule}.
-     *
-     * <p>By default it returns {@link #getActivityTestRule()}, but subclasses with more than one
-     * rule can override it to return a {@link RuleChain}.
      */
     @NonNull
-    protected TestRule getMainTestRule() {
-        return getActivityTestRule();
-    }
-
-    protected A launchActivity() {
-        Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
-
-        return getActivityTestRule().launchActivity(getLaunchIntent());
-    }
-
-    protected A launchActivity(@Nullable Visitor<Intent> visitor) {
-        Log.d(mTag, "Launching " + mActivityClass.getSimpleName());
-
-        final Intent intent = getLaunchIntent();
-        if (visitor != null) {
-            visitor.visit(intent);
-        }
-        return getActivityTestRule().launchActivity(intent);
-    }
-
-    private Intent getLaunchIntent() {
-        return new Intent(sContext, mActivityClass);
-    }
-
-    @NonNull
-    protected ActivityWatcher startWatcher() {
-        return mActivitiesWatcher.watch(mActivityClass);
-    }
+    protected abstract TestRule getMainTestRule();
 }

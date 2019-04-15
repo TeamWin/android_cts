@@ -36,7 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
-public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<BlankActivity> {
+public class BlankActivityTest
+        extends AbstractContentCaptureIntegrationAutoActivityLaunchTest<BlankActivity> {
 
     private static final String TAG = BlankActivityTest.class.getSimpleName();
 
