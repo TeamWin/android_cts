@@ -22,6 +22,7 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.AudioManager;
+import android.media.CamcorderProfile;
 import android.media.MediaDataSource;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -58,6 +59,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -1024,7 +1026,14 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         // getSupportedVideoSizes returns null when separate video/preview size
         // is not supported.
         if (videoSizes == null) {
-            videoSizes = parameters.getSupportedPreviewSizes();
+            // If we have CamcorderProfile use it instead of Preview size.
+            if (CamcorderProfile.hasProfile(0, CamcorderProfile.QUALITY_LOW)) {
+                CamcorderProfile profile = CamcorderProfile.get(0, CamcorderProfile.QUALITY_LOW);
+                videoSizes = new ArrayList();
+                videoSizes.add(mCamera.new Size(profile.videoFrameWidth, profile.videoFrameHeight));
+            } else {
+                videoSizes = parameters.getSupportedPreviewSizes();
+            }
         }
         for (Camera.Size size : videoSizes)
         {
