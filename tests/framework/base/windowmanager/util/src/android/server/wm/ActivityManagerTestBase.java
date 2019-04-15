@@ -361,13 +361,16 @@ public abstract class ActivityManagerTestBase {
         private static final int WAIT_SLICE = 50;
 
         void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
+            launchTestActivityOnDisplaySync(new Intent(mContext, activityClass), displayId);
+        }
+
+        void launchTestActivityOnDisplaySync(Intent intent, int displayId) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 final Bundle bundle = ActivityOptions.makeBasic()
                         .setLaunchDisplayId(displayId).toBundle();
                 final ActivityMonitor monitor = getInstrumentation()
                         .addMonitor((String) null, null, false);
-                mContext.startActivity(new Intent(mContext, activityClass)
-                        .addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
+                mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
                 // Wait for activity launch with timeout.
                 mTestActivity = (T) monitor.waitForActivityWithTimeout(ACTIVITY_LAUNCH_TIMEOUT);
                 assertNotNull(mTestActivity);
