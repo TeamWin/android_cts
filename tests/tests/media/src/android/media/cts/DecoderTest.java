@@ -1802,7 +1802,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 testFd.getLength());
         testFd.close();
         extractor.selectTrack(0);
-        int numsamples = 0;
+        int numsamples = extractor.getSampleTime() < 0 ? 0 : 1;
         while (extractor.advance()) {
             numsamples++;
         }
@@ -2459,6 +2459,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         if ((checkFlags & CHECKFLAG_SETCHECKSUM) != 0) {
             outputChecksums.clear();
         }
+        boolean advanceDone = true;
         while (!sawOutputEOS && deadDecoderCounter < 100) {
             // handle input
             if (!sawInputEOS) {
@@ -2469,17 +2470,18 @@ public class DecoderTest extends MediaPlayerTestBase {
 
                     int sampleSize =
                             extractor.readSampleData(dstBuf, 0 /* offset */);
+                    assertEquals("end of stream should match extractor.advance()", sampleSize >= 0,
+                            advanceDone);
                     long presentationTimeUs = extractor.getSampleTime();
-                    boolean advanceDone = extractor.advance();
+                    advanceDone = extractor.advance();
                     // int flags = extractor.getSampleFlags();
                     // Log.i("@@@@", "read sample " + samplenum + ":" +
                     // extractor.getSampleFlags()
                     // + " @ " + extractor.getSampleTime() + " size " +
                     // sampleSize);
-                    assertEquals("extractor.advance() should match end of stream", sampleSize >= 0,
-                            advanceDone);
 
                     if (sampleSize < 0) {
+                        assertFalse("advance succeeded after failed read", advanceDone);
                         Log.d(TAG, "saw input EOS.");
                         sawInputEOS = true;
                         assertEquals("extractor.readSampleData() must return -1 at end of stream",
