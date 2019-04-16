@@ -16,9 +16,16 @@
 
 package android.telephony.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
-import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -33,8 +40,6 @@ import android.provider.BlockedNumberContract;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
-import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -45,15 +50,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for {@link android.telephony.SmsManager}.
  *
  * Structured so tests can be reused to test {@link android.telephony.gsm.SmsManager}
  */
-public class SmsManagerTest extends InstrumentationTestCase {
+public class SmsManagerTest {
 
     private static final String TAG = "SmsManagerTest";
     private static final String LONG_TEXT =
@@ -95,12 +103,11 @@ public class SmsManagerTest extends InstrumentationTestCase {
     private static final int TIME_OUT = 1000 * 60 * 5;
     private static final int NO_CALLS_TIMEOUT_MILLIS = 1000; // 1 second
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = getContext();
         mTelephonyManager =
-            (TelephonyManager) getInstrumentation().getContext().getSystemService(
+            (TelephonyManager) getContext().getSystemService(
                     Context.TELEPHONY_SERVICE);
         mPackageManager = mContext.getPackageManager();
         mDestAddr = mTelephonyManager.getLine1Number();
@@ -115,8 +122,8 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mBlockedNumberUri != null) {
             mContext.getContentResolver().delete(mBlockedNumberUri, null, null);
             mBlockedNumberUri = null;
@@ -126,6 +133,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDivideMessage() {
         ArrayList<String> dividedMessages = divideMessage(LONG_TEXT);
         assertNotNull(dividedMessages);
@@ -140,6 +148,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDivideUnicodeMessage() {
         ArrayList<String> dividedMessages = divideMessage(LONG_TEXT_WITH_32BIT_CHARS);
         assertNotNull(dividedMessages);
@@ -162,6 +171,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         return longText.equals(actualMessage);
     }
 
+    @Test
     public void testSendAndReceiveMessages() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -228,6 +238,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSmsBlocking() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -284,6 +295,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
     }
 
 
+    @Test
     public void testSmsNotPersisted_failsWithoutCarrierPermissions() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -373,6 +385,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         return false;
     }
 
+    @Test
     public void testGetDefault() {
         assertNotNull(getSmsManager());
     }
