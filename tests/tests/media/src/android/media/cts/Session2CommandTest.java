@@ -40,7 +40,7 @@ public class Session2CommandTest {
     private final int TEST_COMMAND_CODE = 10000;
     private final int TEST_RESULT_CODE = 0;
     private final String TEST_CUSTOM_ACTION = "testAction";
-    private final Bundle TEST_EXTRA = new Bundle();
+    private final Bundle TEST_CUSTOM_EXTRAS = new Bundle();
     private final Bundle TEST_RESULT_DATA = new Bundle();
 
     @Test
@@ -68,26 +68,29 @@ public class Session2CommandTest {
         Session2Command commandWithCode = new Session2Command(TEST_COMMAND_CODE);
         assertEquals(TEST_COMMAND_CODE, commandWithCode.getCommandCode());
 
-        Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION, TEST_EXTRA);
+        Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION,
+                TEST_CUSTOM_EXTRAS);
         assertEquals(Session2Command.COMMAND_CODE_CUSTOM, commandWithAction.getCommandCode());
     }
 
     @Test
-    public void testGetCustomCommand() {
+    public void testGetCustomAction() {
         Session2Command commandWithCode = new Session2Command(TEST_COMMAND_CODE);
-        assertNull(commandWithCode.getCustomCommand());
+        assertNull(commandWithCode.getCustomAction());
 
-        Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION, TEST_EXTRA);
-        assertEquals(TEST_CUSTOM_ACTION, commandWithAction.getCustomCommand());
+        Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION,
+                TEST_CUSTOM_EXTRAS);
+        assertEquals(TEST_CUSTOM_ACTION, commandWithAction.getCustomAction());
     }
 
     @Test
-    public void testGetExtras() {
+    public void testGetCustomExtras() {
         Session2Command commandWithCode = new Session2Command(TEST_COMMAND_CODE);
-        assertNull(commandWithCode.getExtras());
+        assertNull(commandWithCode.getCustomExtras());
 
-        Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION, TEST_EXTRA);
-        assertEquals(TEST_EXTRA, commandWithAction.getExtras());
+        Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION,
+                TEST_CUSTOM_EXTRAS);
+        assertEquals(TEST_CUSTOM_EXTRAS, commandWithAction.getCustomExtras());
     }
 
     @Test
@@ -104,8 +107,8 @@ public class Session2CommandTest {
         command.writeToParcel(dest, 0);
         dest.setDataPosition(0);
         assertEquals(command.getCommandCode(), dest.readInt());
-        assertEquals(command.getCustomCommand(), dest.readString());
-        assertEquals(command.getExtras(), dest.readBundle());
+        assertEquals(command.getCustomAction(), dest.readString());
+        assertEquals(command.getCustomExtras(), dest.readBundle());
     }
 
     @Test
@@ -114,8 +117,10 @@ public class Session2CommandTest {
         Session2Command commandWithCode2 = new Session2Command(TEST_COMMAND_CODE);
         assertTrue(commandWithCode1.equals(commandWithCode2));
 
-        Session2Command commandWithAction1 = new Session2Command(TEST_CUSTOM_ACTION, TEST_EXTRA);
-        Session2Command commandWithAction2 = new Session2Command(TEST_CUSTOM_ACTION, TEST_EXTRA);
+        Session2Command commandWithAction1 = new Session2Command(TEST_CUSTOM_ACTION,
+                TEST_CUSTOM_EXTRAS);
+        Session2Command commandWithAction2 = new Session2Command(TEST_CUSTOM_ACTION,
+                TEST_CUSTOM_EXTRAS);
         assertTrue(commandWithAction1.equals(commandWithAction2));
     }
 
