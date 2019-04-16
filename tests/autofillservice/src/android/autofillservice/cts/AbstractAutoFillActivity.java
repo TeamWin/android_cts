@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractAutoFillActivity extends Activity {
 
     private final CountDownLatch mDestroyedLatch = new CountDownLatch(1);
+    protected final String mTag = getClass().getSimpleName();
     private MyAutofillCallback mCallback;
 
     /**

@@ -17,17 +17,19 @@
 package android.autofillservice.cts.augmented;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
-import android.autofillservice.cts.LoginNotImportantForAutofillActivity;
+import android.autofillservice.cts.LoginNotImportantForAutofillWrappedApplicationContextActivity;
 import android.platform.test.annotations.AppModeFull;
 
 @AppModeFull(reason = "AugmentedLoginActivityTest is enough")
-public class AugmentedLoginNotImportantForAutofillActivityTest
-        extends AbstractLoginNotImportantForAutofillTestCase<LoginNotImportantForAutofillActivity> {
-
+public class AugmentedNotImportantForAutofillWrappedApplicationContextTest extends
+        AbstractLoginNotImportantForAutofillTestCase<
+        LoginNotImportantForAutofillWrappedApplicationContextActivity> {
     @Override
-    protected AutofillActivityTestRule<LoginNotImportantForAutofillActivity> getActivityRule() {
-        return new AutofillActivityTestRule<LoginNotImportantForAutofillActivity>(
-                LoginNotImportantForAutofillActivity.class) {
+    protected AutofillActivityTestRule<
+            LoginNotImportantForAutofillWrappedApplicationContextActivity> getActivityRule() {
+        return new AutofillActivityTestRule<
+                LoginNotImportantForAutofillWrappedApplicationContextActivity>(
+                LoginNotImportantForAutofillWrappedApplicationContextActivity.class) {
             @Override
             protected void afterActivityLaunched() {
                 mActivity = getActivity();
