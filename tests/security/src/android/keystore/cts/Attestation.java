@@ -129,7 +129,7 @@ public class Attestation {
 
         s.append("\nChallenge");
         String stringChallenge = new String(attestationChallenge);
-        if (CharMatcher.ASCII.matchesAllOf(stringChallenge)) {
+        if (CharMatcher.ascii().matchesAllOf(stringChallenge)) {
             s.append(": [" + stringChallenge + "]");
         } else {
             s.append(" (base64): [" + BaseEncoding.base64().encode(attestationChallenge) + "]");
