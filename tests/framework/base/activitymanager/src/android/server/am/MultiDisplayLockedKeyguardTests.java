@@ -36,10 +36,10 @@ import org.junit.Test;
  * Display tests that require a locked keyguard.
  *
  * <p>Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayLockedKeyguardTests
+ *     atest CtsActivityManagerDeviceTestCases:MultiDisplayLockedKeyguardTests
  */
 @Presubmit
-public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDisplayTestBase {
+public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
 
     @Before
     @Override

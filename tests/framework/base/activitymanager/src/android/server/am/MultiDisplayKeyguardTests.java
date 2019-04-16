@@ -36,10 +36,10 @@ import java.util.List;
  * Display tests that require a keyguard.
  *
  * <p>Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayKeyguardTests
+ *     atest CtsActivityManagerDeviceTestCases:MultiDisplayKeyguardTests
  */
 @Presubmit
-public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayTestBase {
+public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
     @Before
     @Override
