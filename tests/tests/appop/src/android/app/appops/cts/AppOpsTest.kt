@@ -28,8 +28,8 @@ import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
 import android.app.AppOpsManager.OPSTR_READ_CALENDAR
-import android.app.AppOpsManager.OPSTR_READ_SMS
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
+import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
 
 import android.app.appops.cts.AppOpsUtils.Companion.allowedOperationLogged
 import android.app.appops.cts.AppOpsUtils.Companion.rejectedOperationLogged
@@ -141,84 +141,82 @@ class AppOpsTest {
     }
 
     @Test
-    @Ignore
     fun testNoteOpAndCheckOp() {
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
-        assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_READ_SMS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+        assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ALLOWED, mAppOps.noteOpNoThrow(OPSTR_READ_SMS,
+        assertEquals(MODE_ALLOWED, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOp(OPSTR_READ_SMS,
+        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOpNoThrow(OPSTR_READ_SMS,
-                Process.myUid(), mOpPackageName))
-
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_IGNORED)
-        assertEquals(MODE_IGNORED, mAppOps.noteOp(OPSTR_READ_SMS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.noteOpNoThrow(OPSTR_READ_SMS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOp(OPSTR_READ_SMS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_READ_SMS,
+        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
 
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_DEFAULT)
-        assertEquals(MODE_DEFAULT, mAppOps.noteOp(OPSTR_READ_SMS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_IGNORED)
+        assertEquals(MODE_IGNORED, mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.noteOpNoThrow(OPSTR_READ_SMS,
+        assertEquals(MODE_IGNORED, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOp(OPSTR_READ_SMS,
+        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOpNoThrow(OPSTR_READ_SMS,
+        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
 
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED)
-        assertEquals(MODE_ERRORED, mAppOps.noteOpNoThrow(OPSTR_READ_SMS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_DEFAULT)
+        assertEquals(MODE_DEFAULT, mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ERRORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_READ_SMS,
+        assertEquals(MODE_DEFAULT, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+        assertEquals(MODE_ERRORED, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_ERRORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
         try {
-            mAppOps.noteOp(OPSTR_READ_SMS, Process.myUid(), mOpPackageName)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
             fail("SecurityException expected")
         } catch (expected: SecurityException) {
         }
         try {
-            mAppOps.unsafeCheckOp(OPSTR_READ_SMS, Process.myUid(), mOpPackageName)
+            mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
             fail("SecurityException expected")
         } catch (expected: SecurityException) {
         }
     }
 
     @Test
-    @Ignore
     fun testStartOpAndFinishOp() {
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
-        assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_READ_SMS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+        assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        mAppOps.finishOp(OPSTR_READ_SMS, Process.myUid(), mOpPackageName)
-        assertEquals(MODE_ALLOWED, mAppOps.startOpNoThrow(OPSTR_READ_SMS,
+        mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
+        assertEquals(MODE_ALLOWED, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        mAppOps.finishOp(OPSTR_READ_SMS,
+        mAppOps.finishOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName)
 
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_IGNORED)
-        assertEquals(MODE_IGNORED, mAppOps.startOp(OPSTR_READ_SMS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_IGNORED)
+        assertEquals(MODE_IGNORED, mAppOps.startOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.startOpNoThrow(OPSTR_READ_SMS,
-                Process.myUid(), mOpPackageName))
-
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_DEFAULT)
-        assertEquals(MODE_DEFAULT, mAppOps.startOp(OPSTR_READ_SMS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.startOpNoThrow(OPSTR_READ_SMS,
+        assertEquals(MODE_IGNORED, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
 
-        setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED)
-        assertEquals(MODE_ERRORED, mAppOps.startOpNoThrow(OPSTR_READ_SMS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_DEFAULT)
+        assertEquals(MODE_DEFAULT, mAppOps.startOp(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_DEFAULT, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+        assertEquals(MODE_ERRORED, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
         try {
-            mAppOps.startOp(OPSTR_READ_SMS, Process.myUid(), mOpPackageName)
+            mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
             fail("SecurityException expected")
         } catch (expected: SecurityException) {
         }
@@ -258,25 +256,25 @@ class AppOpsTest {
     fun testWatchingMode() {
         val watcher = mock(OnOpChangedListener::class.java)
         try {
-            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
 
-            mAppOps.startWatchingMode(OPSTR_READ_SMS, mOpPackageName, watcher)
+            mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, watcher)
 
             // Make a change to the app op's mode.
             reset(watcher)
-            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
             verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
-                    .onOpChanged(OPSTR_READ_SMS, mOpPackageName)
+                    .onOpChanged(OPSTR_WRITE_CALENDAR, mOpPackageName)
 
             // Make another change to the app op's mode.
             reset(watcher)
-            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
             verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
-                    .onOpChanged(OPSTR_READ_SMS, mOpPackageName)
+                    .onOpChanged(OPSTR_WRITE_CALENDAR, mOpPackageName)
 
             // Set mode to the same value as before - expect no call to the listener.
             reset(watcher)
-            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
             verifyZeroInteractions(watcher)
 
             mAppOps.stopWatchingMode(watcher)
@@ -284,7 +282,7 @@ class AppOpsTest {
             // Make a change to the app op's mode. Since we already stopped watching the mode, the
             // listener shouldn't be called.
             reset(watcher)
-            setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
             verifyZeroInteractions(watcher)
         } finally {
             // Clean up registered watcher.
@@ -346,7 +344,6 @@ class AppOpsTest {
     }
 
     @Test
-    @Ignore
     fun testGetOpsForPackageOpsAreLogged() {
         // This test checks if operations get logged by the system. It needs to start with a clean
         // slate, i.e. these ops can't have been logged previously for this test package. The reason
