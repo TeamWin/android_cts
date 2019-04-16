@@ -641,6 +641,19 @@ public class BitmapRegionDecoderTest {
         });
     }
 
+    @Test
+    public void testHeif() throws IOException {
+        InputStream is = obtainInputStream(R.raw.heifwriter_input);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), null);
+        assertNotNull(region);
+
+        // Prior to a fix, this crashed in native code.
+        Bitmap full = decoder.decodeRegion(new Rect(0, 0, decoder.getWidth(), decoder.getHeight()),
+                null);
+        assertNotNull(full);
+    }
+
     private void compareRegionByRegion(BitmapRegionDecoder decoder,
             Options opts, int mseMargin, Bitmap wholeImage) {
         int width = decoder.getWidth();
