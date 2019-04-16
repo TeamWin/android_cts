@@ -269,6 +269,7 @@ public class ServiceStateTest extends AndroidTestCase {
         assertEquals(nri, nris.get(0));
     }
 
+    @Test
     public void testLteVopsSupportInfo() {
         LteVopsSupportInfo lteVopsSupportInfo =
                 new LteVopsSupportInfo(LteVopsSupportInfo.LTE_STATUS_NOT_AVAILABLE,
