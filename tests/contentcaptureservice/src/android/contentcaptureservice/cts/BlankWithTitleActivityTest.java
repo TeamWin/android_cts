@@ -29,7 +29,7 @@ import androidx.test.rule.ActivityTestRule;
 import org.junit.Test;
 
 public class BlankWithTitleActivityTest
-        extends AbstractContentCaptureIntegrationTest<BlankWithTitleActivity> {
+        extends AbstractContentCaptureIntegrationAutoActivityLaunchTest<BlankWithTitleActivity> {
 
     private static final String TAG = BlankWithTitleActivityTest.class.getSimpleName();
 

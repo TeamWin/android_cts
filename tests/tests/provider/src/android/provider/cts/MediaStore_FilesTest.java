@@ -18,6 +18,7 @@ package android.provider.cts;
 
 import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.containsId;
+import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -42,7 +43,6 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,8 +52,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
-import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
-import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
 
 @Presubmit
 @RunWith(Parameterized.class)
@@ -281,14 +279,42 @@ public class MediaStore_FilesTest {
         }
     }
 
-    private void assertStringColumn(Uri fileUri, String columnName, String expectedValue) {
-        Cursor cursor = mResolver.query(fileUri, null, null, null, null);
-        try {
-            assertTrue(cursor.moveToNext());
-            int index = cursor.getColumnIndexOrThrow(columnName);
-            assertEquals(expectedValue, cursor.getString(index));
-        } finally {
-            cursor.close();
+    @Test
+    public void testDateAddedFrozen() throws Exception {
+        final long startTime = (System.currentTimeMillis() / 1000);
+        final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "test" + System.nanoTime() + ".mp3");
+        ProviderTestUtils.stageFile(R.raw.testmp3, file);
+
+        final ContentValues values = new ContentValues();
+        values.put(MediaColumns.DATA, file.getAbsolutePath());
+        values.put(MediaColumns.DATE_ADDED, 32);
+        final Uri uri = mResolver.insert(mExternalFiles, values);
+
+        assertTrue(queryLong(uri, MediaColumns.DATE_ADDED) >= startTime);
+
+        values.clear();
+        values.put(MediaColumns.DATE_ADDED, 64);
+        mResolver.update(uri, values, null, null);
+
+        assertTrue(queryLong(uri, MediaColumns.DATE_ADDED) >= startTime);
+    }
+
+    private long queryLong(Uri uri, String columnName) {
+        try (Cursor c = mResolver.query(uri, new String[] { columnName }, null, null, null)) {
+            assertTrue(c.moveToFirst());
+            return c.getLong(0);
         }
+    }
+
+    private String queryString(Uri uri, String columnName) {
+        try (Cursor c = mResolver.query(uri, new String[] { columnName }, null, null, null)) {
+            assertTrue(c.moveToFirst());
+            return c.getString(0);
+        }
+    }
+
+    private void assertStringColumn(Uri fileUri, String columnName, String expectedValue) {
+        assertEquals(expectedValue, queryString(fileUri, columnName));
     }
 }

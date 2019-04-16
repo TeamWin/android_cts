@@ -33,11 +33,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Process;
-import android.os.UserHandle;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
 import android.view.KeyEvent;
-import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;

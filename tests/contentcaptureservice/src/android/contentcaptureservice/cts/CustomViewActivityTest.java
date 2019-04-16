@@ -64,7 +64,7 @@ import java.util.concurrent.CountDownLatch;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class CustomViewActivityTest extends
-        AbstractContentCaptureIntegrationTest<CustomViewActivity> {
+        AbstractContentCaptureIntegrationAutoActivityLaunchTest<CustomViewActivity> {
 
     private static final String TAG = CustomViewActivityTest.class.getSimpleName();
 
