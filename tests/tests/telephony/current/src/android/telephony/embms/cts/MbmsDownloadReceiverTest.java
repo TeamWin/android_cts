@@ -16,11 +16,6 @@
 
 package android.telephony.embms.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -44,9 +39,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
     private static final String CTS_BROADCAST_PERMISSION =
@@ -104,7 +96,7 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
     private String tempFileRootDirPath;
     private DownloadRequest testDownloadRequest;
 
-    @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         testDownloadRequest = downloadRequestTemplate
@@ -127,14 +119,13 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
         }
     }
 
-    @After
+    @Override
     public void tearDown() throws Exception {
         recursiveDelete(tempFileRootDir);
         tempFileRootDir = null;
         super.tearDown();
     }
 
-    @Test
     public void testMalformedIntents() throws Exception {
         Intent downloadCompleteIntent = new Intent(VendorUtils.ACTION_DOWNLOAD_RESULT_INTERNAL);
         sendBroadcastAndValidate(downloadCompleteIntent,
@@ -149,7 +140,6 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
                 MbmsDownloadReceiver.RESULT_MALFORMED_INTENT);
     }
 
-    @Test
     public void testBadTempFileDirectory() throws Exception {
         Intent cleanupIntent = new Intent(VendorUtils.ACTION_CLEANUP);
         populateIntentWithCommonFields(cleanupIntent);
@@ -160,7 +150,6 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
                 MbmsDownloadReceiver.RESULT_BAD_TEMP_FILE_ROOT);
     }
 
-    @Test
     public void testDownloadFailureIntent() throws Exception {
         Intent intentForReceiverTest = new Intent(VendorUtils.ACTION_DOWNLOAD_RESULT_INTERNAL);
         populateIntentWithCommonFields(intentForReceiverTest);
@@ -181,7 +170,6 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
                 receivedIntent.getParcelableExtra(MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST));
     }
 
-    @Test
     public void testBadDownloadToken() {
         // Set up a perfectly valid download completion intent, and expect it to fail because the
         // download token hasn't been written.
@@ -200,7 +188,6 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
                 MbmsDownloadReceiver.RESULT_MALFORMED_INTENT);
     }
 
-    @Test
     public void testRequestNoFileDescriptors() throws Exception {
         Intent fdRequestIntent = new Intent(VendorUtils.ACTION_FILE_DESCRIPTOR_REQUEST);
         populateIntentWithCommonFields(fdRequestIntent);
@@ -209,7 +196,6 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
         assertTrue(b == null || b.isEmpty());
     }
 
-    @Test
     public void testRequestNewFileDescriptors() throws Exception {
         Intent fdRequestIntent = new Intent(VendorUtils.ACTION_FILE_DESCRIPTOR_REQUEST);
         populateIntentWithCommonFields(fdRequestIntent);
@@ -225,7 +211,6 @@ public class MbmsDownloadReceiverTest extends MbmsDownloadTestBase {
         }
     }
 
-    @Test
     public void testRequestRefreshedFileDescriptors() throws Exception {
         // Set up a few temp files that we can request again
         Intent fdRequestIntent = new Intent(VendorUtils.ACTION_FILE_DESCRIPTOR_REQUEST);

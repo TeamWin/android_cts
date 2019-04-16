@@ -16,13 +16,6 @@
 
 package android.telephony.embms.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.annotation.Nullable;
 import android.content.ComponentName;
 import android.content.Context;
@@ -36,6 +29,7 @@ import android.telephony.MbmsGroupCallSession;
 import android.telephony.cts.embmstestapp.CtsGroupCallService;
 import android.telephony.cts.embmstestapp.ICtsGroupCallMiddlewareControl;
 import android.telephony.mbms.MbmsGroupCallSessionCallback;
+import android.test.InstrumentationTestCase;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -44,10 +38,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
 
-public class MbmsGroupCallTestBase {
+public class MbmsGroupCallTestBase extends InstrumentationTestCase {
     protected static final int ASYNC_TIMEOUT = 10000;
 
     protected static class TestCallback implements MbmsGroupCallSessionCallback {
@@ -138,9 +130,9 @@ public class MbmsGroupCallTestBase {
     MbmsGroupCallSession mGroupCallSession;
     TestCallback mCallback = new TestCallback();
 
-    @Before
+    @Override
     public void setUp() throws Exception {
-        mContext = getContext();
+        mContext = getInstrumentation().getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
         mCallbackExecutor = (new Handler(mHandlerThread.getLooper()))::post;
@@ -149,7 +141,7 @@ public class MbmsGroupCallTestBase {
         setupGroupCallSession();
     }
 
-    @After
+    @Override
     public void tearDown() throws Exception {
         mHandlerThread.quit();
         mGroupCallSession.close();

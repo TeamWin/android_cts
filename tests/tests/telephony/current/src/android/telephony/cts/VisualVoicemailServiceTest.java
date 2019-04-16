@@ -16,12 +16,6 @@
 
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -47,6 +41,7 @@ import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.telephony.VisualVoicemailSms;
 import android.telephony.VisualVoicemailSmsFilterSettings;
+import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -64,11 +59,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-public class VisualVoicemailServiceTest {
+public class VisualVoicemailServiceTest extends InstrumentationTestCase {
 
     private static final String TAG = "VvmServiceTest";
 
@@ -91,8 +82,9 @@ public class VisualVoicemailServiceTest {
 
     private SmsBroadcastReceiver mSmsReceiver;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mContext = getInstrumentation().getContext();
         if (hasTelephony(mContext)) {
             mPreviousDefaultDialer = getDefaultDialer(getInstrumentation());
@@ -116,8 +108,8 @@ public class VisualVoicemailServiceTest {
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
         if (hasTelephony(mContext)) {
             if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
                 setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
@@ -127,9 +119,9 @@ public class VisualVoicemailServiceTest {
                 mContext.unregisterReceiver(mSmsReceiver);
             }
         }
+        super.tearDown();
     }
 
-    @Test
     public void testPermissionlessService_ignored() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -178,7 +170,6 @@ public class VisualVoicemailServiceTest {
 
     }
 
-    @Test
     public void testFilter() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -198,7 +189,6 @@ public class VisualVoicemailServiceTest {
         assertEquals("1", result.getFields().getString("pw"));
     }
 
-    @Test
     public void testFilter_data() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -227,7 +217,6 @@ public class VisualVoicemailServiceTest {
     }
 
 
-    @Test
     public void testFilter_TrailingSemiColon() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -247,7 +236,6 @@ public class VisualVoicemailServiceTest {
         assertEquals("1", result.getFields().getString("pw"));
     }
 
-    @Test
     public void testFilter_EmptyPrefix() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -267,7 +255,6 @@ public class VisualVoicemailServiceTest {
         assertEquals("1", result.getFields().getString("pw"));
     }
 
-    @Test
     public void testFilter_EmptyField() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -278,7 +265,6 @@ public class VisualVoicemailServiceTest {
         assertTrue(result.getFields().isEmpty());
     }
 
-    @Test
     public void testFilterFail_NotVvm() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -288,7 +274,6 @@ public class VisualVoicemailServiceTest {
                 "helloworld");
     }
 
-    @Test
     public void testFilterFail_PrefixMismatch() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -298,7 +283,6 @@ public class VisualVoicemailServiceTest {
                 "//FOOVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
     }
 
-    @Test
     public void testFilterFail_MissingFirstColon() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -308,7 +292,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVMSTATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
     }
 
-    @Test
     public void testFilterFail_MissingSecondColon() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -318,7 +301,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUSst=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
     }
 
-    @Test
     public void testFilterFail_MessageEndAfterClientPrefix() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -328,7 +310,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:");
     }
 
-    @Test
     public void testFilterFail_MessageEndAfterPrefix() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -338,7 +319,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUS");
     }
 
-    @Test
     public void testFilterFail_InvalidKeyValuePair() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -348,7 +328,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUS:key");
     }
 
-    @Test
     public void testFilterFail_InvalidMissingKey() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -358,7 +337,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUS:=value");
     }
 
-    @Test
     public void testFilter_MissingValue() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -370,7 +348,6 @@ public class VisualVoicemailServiceTest {
         assertEquals("", result.getFields().getString("key"));
     }
 
-    @Test
     public void testFilter_originatingNumber_match_filtered() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -384,7 +361,6 @@ public class VisualVoicemailServiceTest {
         getSmsFromText(settings, "//CTSVVM:SYNC:key=value", true);
     }
 
-    @Test
     public void testFilter_originatingNumber_mismatch_notFiltered() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -398,7 +374,6 @@ public class VisualVoicemailServiceTest {
         getSmsFromText(settings, "//CTSVVM:SYNC:key=value", false);
     }
 
-    @Test
     public void testFilter_port_match() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -417,7 +392,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", true);
     }
 
-    @Test
     public void testFilter_port_mismatch() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -436,7 +410,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", false);
     }
 
-    @Test
     public void testFilter_port_anydata() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -458,7 +431,6 @@ public class VisualVoicemailServiceTest {
     /**
      * Text SMS should not be filtered with DESTINATION_PORT_DATA_SMS
      */
-    @Test
     public void testFilter_port_anydata_notData() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -477,7 +449,6 @@ public class VisualVoicemailServiceTest {
                 "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", false);
     }
 
-    @Test
     public void testGetVisualVoicemailPackageName_isSelf() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");

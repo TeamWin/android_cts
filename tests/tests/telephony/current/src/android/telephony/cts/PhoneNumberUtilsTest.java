@@ -15,12 +15,6 @@
  */
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -32,6 +26,7 @@ import android.provider.Contacts;
 import android.provider.Contacts.People;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
+import android.test.AndroidTestCase;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -40,14 +35,11 @@ import android.text.style.TtsSpan;
 
 import java.util.Locale;
 
-import org.junit.Test;
-
-public class PhoneNumberUtilsTest {
+public class PhoneNumberUtilsTest extends AndroidTestCase {
     // mPhoneNumber ~ "+17005550020", length == 7.
     private byte[] mPhoneNumber = { (byte) 0x91, (byte) 0x71, (byte) 0x00, (byte) 0x55,
             (byte) 0x05, (byte) 0x20, (byte) 0xF0 };
 
-    @Test
     public void testExtractMethods() {
 
         // Test extractNetworkPortion
@@ -77,7 +69,6 @@ public class PhoneNumberUtilsTest {
                                 PhoneNumberUtils.WAIT)));
     }
 
-    @Test
     public void testCallMethods() {
         // Test calledPartyBCDToString
         assertEquals("+17005550020", PhoneNumberUtils.calledPartyBCDToString(mPhoneNumber, 0, 7));
@@ -122,7 +113,6 @@ public class PhoneNumberUtilsTest {
         }
     }
 
-    @Test
     public void testGetMethods() throws RemoteException {
         // Test getStrippedReversed
         assertNull(PhoneNumberUtils.getStrippedReversed(null));
@@ -177,7 +167,6 @@ public class PhoneNumberUtilsTest {
         }
     }
 
-    @Test
     public void testFormatMethods() {
         // Test formatNanpNumber
         SpannableStringBuilder builderNumber = new SpannableStringBuilder();
@@ -257,7 +246,6 @@ public class PhoneNumberUtilsTest {
         assertEquals(PhoneNumberUtils.TOA_Unknown, PhoneNumberUtils.toaFromString("88888888"));
     }
 
-    @Test
     public void testJudgeMethods() {
         // Test is12Key, isDialable, isISODigit, isReallyDialable, isStartsPostDial
         for (char c = '0'; c <= '9'; c++) {
@@ -317,7 +305,6 @@ public class PhoneNumberUtilsTest {
         assertFalse(PhoneNumberUtils.isWellFormedSmsAddress("android"));
     }
 
-    @Test
     public void testGetPhoneTtsSpan() {
         // Setup: phone number without a country code. Lets keep coverage minimal to avoid
         // exercising the underlying PhoneNumberUtil or constraining localization changes.
@@ -328,7 +315,6 @@ public class PhoneNumberUtilsTest {
         assertEquals("6512223333", ttsSpan.getArgs().get(TtsSpan.ARG_NUMBER_PARTS));
     }
 
-    @Test
     public void testAddPhoneTtsSpan() {
         // Setup: phone number without a country code. Lets keep coverage minimal to avoid
         // exercising the underlying PhoneNumberUtil or constraining localization changes.
@@ -341,7 +327,6 @@ public class PhoneNumberUtilsTest {
         assertEquals("6502223333", ttsSpans[0].getArgs().get(TtsSpan.ARG_NUMBER_PARTS));
     }
 
-    @Test
     public void testGetPhoneTtsSpannable() {
         // Setup: phone number without a country code. Lets keep coverage minimal to avoid
         // exercising the underlying PhoneNumberUtil or constraining localization changes.
@@ -354,7 +339,6 @@ public class PhoneNumberUtilsTest {
         assertEquals("6512223333", ttsSpans[0].getArgs().get(TtsSpan.ARG_NUMBER_PARTS));
     }
 
-    @Test
     public void testFormatNumberToE164() {
         assertNull(PhoneNumberUtils.formatNumber("invalid#", "US"));
         assertNull(PhoneNumberUtils.formatNumberToE164("1234567", "US"));

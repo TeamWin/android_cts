@@ -15,11 +15,6 @@
  */
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import android.content.Context;
 import android.os.Looper;
 import android.telephony.CellInfo;
@@ -29,17 +24,14 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.net.ConnectivityManager;
+import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.TestThread;
 
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-public class PhoneStateListenerTest {
+public class PhoneStateListenerTest extends  AndroidTestCase{
 
     public static final long WAIT_TIME = 1000;
 
@@ -62,22 +54,23 @@ public class PhoneStateListenerTest {
     private static final String TAG = "android.telephony.cts.PhoneStateListenerTest";
     private static ConnectivityManager mCm;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mTelephonyManager =
                 (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
         if (mListener != null) {
             // unregister the listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         }
     }
 
-    @Test
     public void testPhoneStateListener() {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -93,7 +86,6 @@ public class PhoneStateListenerTest {
      * registration. There is no simple way to emulate state changes for testing the listeners.
      */
 
-    @Test
     public void testOnServiceStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -131,7 +123,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnServiceStateChangedCalled);
     }
 
-    @Test
     public void testOnSignalStrengthChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -169,7 +160,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnSignalStrengthChangedCalled);
     }
 
-    @Test
     public void testOnSignalStrengthsChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -218,7 +208,6 @@ public class PhoneStateListenerTest {
         mSignalStrength.getLevel();
     }
 
-    @Test
     public void testOnMessageWaitingIndicatorChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -257,7 +246,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnMessageWaitingIndicatorChangedCalled);
     }
 
-    @Test
     public void testOnCallForwardingIndicatorChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -297,7 +285,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnCallForwardingIndicatorChangedCalled);
     }
 
-    @Test
     public void testOnCellLocationChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -335,7 +322,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnCellLocationChangedCalled);
     }
 
-    @Test
     public void testOnCallStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -373,7 +359,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnCallStateChangedCalled);
     }
 
-    @Test
     public void testOnDataConnectionStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -422,7 +407,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnDataConnectionStateChangedWithNetworkTypeCalled);
     }
 
-    @Test
     public void testOnDataActivity() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -460,7 +444,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnDataActivityCalled);
     }
 
-    @Test
     public void testOnCellInfoChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -498,7 +481,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnCellInfoChangedCalled);
     }
 
-    @Test
     public void testOnUserMobileDataStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -537,7 +519,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnUserMobileDataStateChanged);
     }
 
-    @Test
     public void testOnActiveDataSubscriptionIdChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");

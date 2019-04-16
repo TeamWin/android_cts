@@ -16,22 +16,18 @@
 
 package android.telephony4.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.fail;
-
 import android.content.Context;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
-import org.junit.Before;
-import org.junit.Test;
+import android.test.AndroidTestCase;
 
-public class SimRestrictedApisTest {
+public class SimRestrictedApisTest extends AndroidTestCase {
     private static final byte[] TEST_PDU = { 0, 0 };
     private TelephonyManager mTelephonyManager;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
     }
@@ -45,7 +41,6 @@ public class SimRestrictedApisTest {
      * Tests the SmsManager.injectSmsPdu() API. This makes a call to injectSmsPdu() API and expects
      * a SecurityException since the test apk is not signed by a certificate on the SIM.
      */
-    @Test
     public void testInjectSmsPdu() {
         try {
             if (isSimCardPresent()) {
@@ -61,7 +56,6 @@ public class SimRestrictedApisTest {
      * setLine1NumberForDisplay() API and expects a SecurityException since the test apk is not
      * signed by a certificate on the SIM.
      */
-    @Test
     public void testSetLine1NumberForDisplay() {
         try {
             if (isSimCardPresent()) {
@@ -77,7 +71,6 @@ public class SimRestrictedApisTest {
      * iccOpenLogicalChannel() API and expects a SecurityException since the test apk is not signed
      * by certificate on the SIM.
      */
-    @Test
     public void testIccOpenLogicalChannel() {
         try {
             if (isSimCardPresent()) {
@@ -94,7 +87,6 @@ public class SimRestrictedApisTest {
      * iccOpenLogicalChannelBySlot() API and expects a SecurityException since the test apk is not
      * signed by certificate on the SIM.
      */
-    @Test
     public void testIccOpenLogicalChannelBySlot() {
         try {
             if (isSimCardPresent()) {
@@ -111,7 +103,6 @@ public class SimRestrictedApisTest {
      * iccCloseLogicalChannel() API and expects a SecurityException since the test apk is not signed
      * by certificate on the SIM.
      */
-    @Test
     public void testIccCloseLogicalChannel() {
         try {
             if (isSimCardPresent()) {
@@ -127,7 +118,6 @@ public class SimRestrictedApisTest {
      * iccCloseLogicalChannelBySlot() API and expects a SecurityException since the test apk is not
      * signed by certificate on the SIM.
      */
-    @Test
     public void testIccCloseLogicalChannelBySlot() {
         try {
             if (isSimCardPresent()) {
@@ -143,7 +133,6 @@ public class SimRestrictedApisTest {
      * iccTransmitApduBasicChannel() API and expects a SecurityException since the test apk is not
      * signed by a certificate on the SIM.
      */
-    @Test
     public void testIccTransmitApduBasicChannel() {
         try {
             if (isSimCardPresent()) {
@@ -159,7 +148,6 @@ public class SimRestrictedApisTest {
      * iccTransmitApduBasicChannelBySlot() API and expects a SecurityException since the test apk is
      * not signed by a certificate on the SIM.
      */
-    @Test
     public void testIccTransmitApduBasicChannelBySlot() {
         try {
             if (isSimCardPresent()) {
@@ -175,7 +163,6 @@ public class SimRestrictedApisTest {
      * iccTransmitApduLogicalChannel() API and expects a SecurityException since the test apk is not
      * signed by a certificate on the SIM.
      */
-    @Test
     public void testIccTransmitApduLogicalChannel() {
         try {
             if (isSimCardPresent()) {
@@ -191,7 +178,6 @@ public class SimRestrictedApisTest {
      * iccTransmitApduLogicalChannelBySlot() API and expects a SecurityException since the test apk
      * is not signed by a certificate on the SIM.
      */
-    @Test
     public void testIccTransmitApduLogicalChannelBySlot() {
         try {
             if (isSimCardPresent()) {
@@ -207,7 +193,6 @@ public class SimRestrictedApisTest {
      * sendEnvelopeWithStatus() API and expects a SecurityException since the test apk is not signed
      * by certificate on the SIM.
      */
-    @Test
     public void testSendEnvelopeWithStatus() {
         try {
             if (isSimCardPresent()) {
@@ -222,7 +207,6 @@ public class SimRestrictedApisTest {
      * Tests the TelephonyManager.nvReadItem() API. This makes a call to nvReadItem() API and
      * expects a SecurityException since the test apk is not signed by a certificate on the SIM.
      */
-    @Test
     public void testNvReadItem() {
         try {
             if (isSimCardPresent()) {
@@ -237,7 +221,6 @@ public class SimRestrictedApisTest {
      * Tests the TelephonyManager.nvResetConfig() API. This makes a call to nvResetConfig() API and
      * expects a SecurityException since the test apk is not signed by a certificate on the SIM.
      */
-    @Test
     public void testNvResetConfig() {
         try {
             if (isSimCardPresent()) {
@@ -253,7 +236,6 @@ public class SimRestrictedApisTest {
      * getPreferredNetworkType() API and expects a SecurityException since the test apk is not
      * signed by certificate on the SIM.
      */
-    @Test
     public void testGetPreferredNetworkType() {
         try {
             if (isSimCardPresent()) {
@@ -269,7 +251,6 @@ public class SimRestrictedApisTest {
      * setPreferredNetworkTypeToGlobal() API and expects a SecurityException since the test apk is not
      * signed by certificate on the SIM.
      */
-    @Test
     public void testSetPreferredNetworkTypeToGlobal() {
         try {
             if (isSimCardPresent()) {
@@ -283,7 +264,6 @@ public class SimRestrictedApisTest {
     /**
      * Tests that the test apk doesn't have carrier previliges.
      */
-    @Test
     public void testHasCarrierPrivileges() {
         if (mTelephonyManager.hasCarrierPrivileges()) {
             fail("App unexpectedly has carrier privileges");
@@ -295,7 +275,6 @@ public class SimRestrictedApisTest {
      * setOperatorBrandOverride() API and expects a SecurityException since the test apk is not
      * signed by certificate on the SIM.
      */
-    @Test
     public void testSetOperatorBrandOverride() {
         try {
             if (isSimCardPresent()) {
@@ -311,7 +290,6 @@ public class SimRestrictedApisTest {
      * getIccAuthentication() API and expects a SecurityException since the test apk is not
      * signed by certificate on the SIM.
      */
-    @Test
     public void testGetIccAuthentication() {
         try {
             if (isSimCardPresent()) {
@@ -328,7 +306,6 @@ public class SimRestrictedApisTest {
      * API and expects a SecurityException since the test apk is not signed by certficate on the
      * SIM.
      */
-    @Test
     public void testGetUiccCardsInfo() {
         try {
             if (isSimCardPresent()) {
