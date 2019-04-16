@@ -32,7 +32,7 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 import android.util.Pair;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -82,7 +82,8 @@ public class StagedInstallTest {
     private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
-    private File mTestStateFile = new File(InstrumentationRegistry.getTargetContext().getFilesDir(),
+    private File mTestStateFile = new File(
+            InstrumentationRegistry.getInstrumentation().getContext().getFilesDir(),
             "ctsstagedinstall_state");
 
     private static final Duration WAIT_FOR_SESSION_REMOVED_TTL = Duration.ofSeconds(10);
@@ -116,8 +117,7 @@ public class StagedInstallTest {
     // com.android.test.stagedinstall.host.StagedInstallTest to reduce tests flakiness.
     @Test
     public void cleanUp() throws Exception {
-        PackageInstaller packageInstaller =
-                InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+        PackageInstaller packageInstaller = getPackageInstaller();
         List<PackageInstaller.SessionInfo> stagedSessions = packageInstaller.getStagedSessions();
         for (PackageInstaller.SessionInfo sessionInfo : stagedSessions) {
             try {
@@ -390,11 +390,11 @@ public class StagedInstallTest {
     }
 
     private static PackageInstaller getPackageInstaller() {
-      return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+      return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager().getPackageInstaller();
     }
 
     private static long getInstalledVersion(String packageName) {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager pm = context.getPackageManager();
         try {
             PackageInfo info = pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
@@ -407,9 +407,7 @@ public class StagedInstallTest {
     // It becomes harder to maintain this variety of install-related helper methods.
     // TODO(ioffe): refactor install-related helper methods into a separate utility.
     private static int createStagedSession() throws Exception {
-        return createStagedSession(
-                InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller(),
-                false, false, false);
+        return createStagedSession(getPackageInstaller(), false, false, false);
     }
 
     private static int createStagedSession(
@@ -441,8 +439,7 @@ public class StagedInstallTest {
     }
 
     private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        PackageInstaller packageInstaller = getPackageInstaller();
 
         Pair<Integer, PackageInstaller.Session> sessionPair =
                 prepareSingleApkStagedSession(packageInstaller, apkFileName, false);
@@ -464,8 +461,7 @@ public class StagedInstallTest {
     }
 
     private static StageSessionResult stageMultipleApks(String... apkFileNames) throws Exception {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        PackageInstaller packageInstaller = getPackageInstaller();
         int multiPackageSessionId = createStagedSession(packageInstaller, true, false, false);
         PackageInstaller.Session multiPackageSession = packageInstaller.openSession(
                 multiPackageSessionId);
@@ -496,8 +492,7 @@ public class StagedInstallTest {
 
     private static void assertSessionState(
             int sessionId, Consumer<PackageInstaller.SessionInfo> assertion) {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        PackageInstaller packageInstaller = getPackageInstaller();
 
         List<PackageInstaller.SessionInfo> sessions = packageInstaller.getStagedSessions();
         boolean found = false;
@@ -584,17 +579,14 @@ public class StagedInstallTest {
     }
 
     private static void abandonSession(int sessionId) {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-        packageInstaller.abandonSession(sessionId);
+        getPackageInstaller().abandonSession(sessionId);
     }
 
     /**
      * Returns the session by session Id, or null if no session is found.
      */
     private static PackageInstaller.SessionInfo getStagedSessionInfo(int sessionId) {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        PackageInstaller packageInstaller = getPackageInstaller();
         for (PackageInstaller.SessionInfo session : packageInstaller.getStagedSessions()) {
             if (session.getSessionId() == sessionId) {
                 return session;
@@ -604,9 +596,7 @@ public class StagedInstallTest {
     }
 
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
-        Context context = InstrumentationRegistry.getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-        return packageInstaller.getSessionInfo(sessionId);
+        return getPackageInstaller().getSessionInfo(sessionId);
     }
 
     private static void uninstall(String packageName) throws Exception {
@@ -615,7 +605,7 @@ public class StagedInstallTest {
             return;
         }
 
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager packageManager = context.getPackageManager();
         PackageInstaller packageInstaller = packageManager.getPackageInstaller();
         packageInstaller.uninstall(packageName, LocalIntentSender.getIntentSender());
