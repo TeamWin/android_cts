@@ -78,7 +78,7 @@ import java.util.function.Predicate;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:SystemDecorationMultiDisplayTests
+ *     atest CtsActivityManagerDeviceTestCases:MultiDisplaySystemDecorationTests
  *
  * This tests that verify the following should not be run for OEM device verification:
  * Wallpaper added if display supports system decorations (and not added otherwise)
@@ -87,9 +87,7 @@ import java.util.function.Predicate;
  * IME is shown if display supports system decorations (and not shown otherwise)
  */
 @Presubmit
-public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTestBase {
-
-    private Context mTargetContext;
+public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     @Before
     @Override
@@ -98,8 +96,6 @@ public class MultiDisplaySystemDecorationTests extends ActivityManagerDisplayTes
 
         assumeTrue(supportsMultiDisplay());
         assumeTrue(supportsSystemDecorsOnSecondaryDisplays());
-
-        mTargetContext = getInstrumentation().getTargetContext();
     }
 
     // Wallpaper related tests
