@@ -15,11 +15,20 @@
  */
 package com.android.cts.shareduidinstallapp;
 
-import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.test.AndroidTestCase;
 
 /**
- * Empty activity, not needed for this test
+ * Verifies that only this app is installed as a
  */
-public class SharedUidActivity extends Activity {
+public class SharedUidPackageTest extends AndroidTestCase {
+
+    public void testSelfIsOnlyMemberOfSharedUserIdPackages() throws Exception {
+        final PackageManager pm = getContext().getPackageManager();
+        final int uidForSharedUser = pm.getPackageUid(getContext().getPackageName(), 0);
+        final String[] packagesForUid = pm.getPackagesForUid(uidForSharedUser);
+        assertEquals(1, packagesForUid.length);
+        assertEquals(getContext().getPackageName(), packagesForUid[0]);
+    }
 
 }
