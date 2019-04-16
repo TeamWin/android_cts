@@ -297,8 +297,8 @@ public class MediaSession2Test {
                 @Override
                 public Session2Command.Result onSessionCommand(MediaController2 controller,
                         Session2Command command, Bundle args) {
-                    if (commandStr.equals(command.getCustomCommand())
-                            && command.getExtras() == null) {
+                    if (commandStr.equals(command.getCustomAction())
+                            && command.getCustomExtras() == null) {
                         latch1.countDown();
                     }
                     return commandResult;
@@ -315,8 +315,8 @@ public class MediaSession2Test {
                 @Override
                 public Session2Command.Result onSessionCommand(MediaController2 controller,
                         Session2Command command, Bundle args) {
-                    if (commandStr.equals(command.getCustomCommand())
-                            && command.getExtras() == null) {
+                    if (commandStr.equals(command.getCustomAction())
+                            && command.getCustomExtras() == null) {
                         latch2.countDown();
                     }
                     return commandResult;
@@ -451,9 +451,9 @@ public class MediaSession2Test {
             assertTrue(sessionCallback.awaitOnSessionCommand(WAIT_TIME_MS));
             assertEquals(session, sessionCallback.mSession);
             assertEquals(controllerInfo, sessionCallback.mController);
-            assertEquals(commandStr, sessionCallback.mCommand.getCustomCommand());
+            assertEquals(commandStr, sessionCallback.mCommand.getCustomAction());
             assertEquals(commandExtraValue,
-                    sessionCallback.mCommand.getExtras().getString(commandExtraKey));
+                    sessionCallback.mCommand.getCustomExtras().getString(commandExtraKey));
             assertEquals(commandArgValue, sessionCallback.mCommandArgs.getString(commandArgKey));
 
             controller.close();
