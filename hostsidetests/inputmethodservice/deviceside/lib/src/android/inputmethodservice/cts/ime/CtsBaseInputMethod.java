@@ -30,6 +30,8 @@ import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.ime.ImeCommandReceiver.ImeCommandCallbacks;
+import android.os.Bundle;
+import android.os.Process;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -42,6 +44,18 @@ import java.util.function.Consumer;
 public abstract class CtsBaseInputMethod extends InputMethodService implements ImeCommandCallbacks {
 
     protected static final boolean DEBUG = false;
+
+    public static final String EDITOR_INFO_KEY_REPLY_USER_HANDLE_SESSION_ID =
+            "android.inputmethodservice.cts.ime.ReplyUserHandleSessionId";
+
+    public static final String ACTION_KEY_REPLY_USER_HANDLE =
+            "android.inputmethodservice.cts.ime.ReplyUserHandle";
+
+    public static final String BUNDLE_KEY_REPLY_USER_HANDLE =
+            "android.inputmethodservice.cts.ime.ReplyUserHandle";
+
+    public static final String BUNDLE_KEY_REPLY_USER_HANDLE_SESSION_ID =
+            "android.inputmethodservice.cts.ime.ReplyUserHandleSessionId";
 
     private final ImeCommandReceiver<CtsBaseInputMethod> mImeCommandReceiver =
             new ImeCommandReceiver<>();
@@ -79,6 +93,18 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
         sendEvent(ON_START_INPUT, editorInfo, restarting);
 
         super.onStartInput(editorInfo, restarting);
+
+        if (editorInfo.extras != null) {
+            final String sessionKey =
+                    editorInfo.extras.getString(EDITOR_INFO_KEY_REPLY_USER_HANDLE_SESSION_ID, null);
+            if (sessionKey != null) {
+                final Bundle bundle = new Bundle();
+                bundle.putString(BUNDLE_KEY_REPLY_USER_HANDLE_SESSION_ID, sessionKey);
+                bundle.putParcelable(BUNDLE_KEY_REPLY_USER_HANDLE, Process.myUserHandle());
+                getCurrentInputConnection().performPrivateCommand(
+                        ACTION_KEY_REPLY_USER_HANDLE, bundle);
+            }
+        }
     }
 
     @Override

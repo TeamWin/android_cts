@@ -43,10 +43,10 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:ActivityManagerVrDisplayTests
+ *     atest CtsActivityManagerDeviceTestCases:VrDisplayTests
  */
 @Presubmit
-public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBase {
+public class VrDisplayTests extends MultiDisplayTestBase {
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 700;
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;

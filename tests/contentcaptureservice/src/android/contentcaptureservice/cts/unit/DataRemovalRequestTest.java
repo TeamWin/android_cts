@@ -15,7 +15,7 @@
  */
 package android.contentcaptureservice.cts.unit;
 
-import static android.view.contentcapture.UserDataRemovalRequest.FLAG_IS_PREFIX;
+import static android.view.contentcapture.DataRemovalRequest.FLAG_IS_PREFIX;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -25,8 +25,8 @@ import static org.testng.Assert.assertThrows;
 import android.content.LocusId;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.view.contentcapture.UserDataRemovalRequest;
-import android.view.contentcapture.UserDataRemovalRequest.LocusIdRequest;
+import android.view.contentcapture.DataRemovalRequest;
+import android.view.contentcapture.DataRemovalRequest.LocusIdRequest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,13 +36,13 @@ import java.util.List;
 
 @AppModeFull(reason = "unit test")
 @RunWith(MockitoJUnitRunner.class)
-public class UserDataRemovalRequestTest {
+public class DataRemovalRequestTest {
 
     private static final int NO_FLAGS = 0;
 
     private final LocusId mLocusId = new LocusId("content://com.example/");
 
-    private UserDataRemovalRequest.Builder mBuilder = new UserDataRemovalRequest.Builder();
+    private DataRemovalRequest.Builder mBuilder = new DataRemovalRequest.Builder();
 
     @Test
     public void testBuilder_addLocusId_invalid() {
@@ -76,20 +76,20 @@ public class UserDataRemovalRequestTest {
 
     @Test
     public void testBuild_validForEverything_directly() {
-        final UserDataRemovalRequest request = new UserDataRemovalRequest.Builder().forEverything()
+        final DataRemovalRequest request = new DataRemovalRequest.Builder().forEverything()
                 .build();
         assertForEverything(request);
     }
 
     @Test
     public void testBuild_validForEverything_parcel() {
-        final UserDataRemovalRequest request = new UserDataRemovalRequest.Builder().forEverything()
+        final DataRemovalRequest request = new DataRemovalRequest.Builder().forEverything()
                 .build();
-        final UserDataRemovalRequest clone = cloneThroughParcel(request);
+        final DataRemovalRequest clone = cloneThroughParcel(request);
         assertForEverything(clone);
     }
 
-    private void assertForEverything(final UserDataRemovalRequest request) {
+    private void assertForEverything(final DataRemovalRequest request) {
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isTrue();
         assertThat(request.getLocusIdRequests()).isNull();
@@ -97,26 +97,26 @@ public class UserDataRemovalRequestTest {
 
     @Test
     public void testBuild_validForIds_directly() {
-        final UserDataRemovalRequest request = buildForIds();
+        final DataRemovalRequest request = buildForIds();
         assertForIds(request);
     }
 
     @Test
     public void testBuild_validForIds_parcel() {
-        final UserDataRemovalRequest request = buildForIds();
-        final UserDataRemovalRequest clone = cloneThroughParcel(request);
+        final DataRemovalRequest request = buildForIds();
+        final DataRemovalRequest clone = cloneThroughParcel(request);
         assertForIds(clone);
     }
 
-    private UserDataRemovalRequest buildForIds() {
-        final UserDataRemovalRequest.Builder builder = new UserDataRemovalRequest.Builder();
+    private DataRemovalRequest buildForIds() {
+        final DataRemovalRequest.Builder builder = new DataRemovalRequest.Builder();
         assertThat(builder.addLocusId(new LocusId("prefix1True"), FLAG_IS_PREFIX)).isNotNull();
         assertThat(builder.addLocusId(new LocusId("prefix2False"), NO_FLAGS)).isNotNull();
 
         return builder.build();
     }
 
-    private void assertForIds(UserDataRemovalRequest request) {
+    private void assertForIds(DataRemovalRequest request) {
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isFalse();
         final List<LocusIdRequest> requests = request.getLocusIdRequests();
@@ -149,7 +149,7 @@ public class UserDataRemovalRequestTest {
                 .that(request.getFlags()).isEqualTo(expectedFlags);
     }
 
-    private UserDataRemovalRequest cloneThroughParcel(UserDataRemovalRequest request) {
+    private DataRemovalRequest cloneThroughParcel(DataRemovalRequest request) {
         final Parcel parcel = Parcel.obtain();
 
         try {
@@ -159,7 +159,7 @@ public class UserDataRemovalRequestTest {
 
             // Read from parcel
             parcel.setDataPosition(0);
-            final UserDataRemovalRequest clone = UserDataRemovalRequest.CREATOR
+            final DataRemovalRequest clone = DataRemovalRequest.CREATOR
                     .createFromParcel(parcel);
             assertThat(clone).isNotNull();
             return clone;

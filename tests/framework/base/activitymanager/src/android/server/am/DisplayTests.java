@@ -33,10 +33,10 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:ActivityManagerDisplayTests
+ *     atest CtsActivityManagerDeviceTestCases:DisplayTests
  */
 @Presubmit
-public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase {
+public class DisplayTests extends MultiDisplayTestBase {
 
     /**
      * Tests that the global configuration is equal to the default display's override configuration.
