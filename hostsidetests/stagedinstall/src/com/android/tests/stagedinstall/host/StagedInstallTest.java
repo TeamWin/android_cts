@@ -87,8 +87,23 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
-        runPhase("testFailInstallAnotherSessionAlreadyInProgress");
+    public void testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage");
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage");
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage");
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage");
     }
 
     @Test
@@ -106,13 +121,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testGetActiveStagedSesssion() throws Exception {
-        runPhase("testGetActiveStagedSesssion");
+    public void testGetActiveStagedSession() throws Exception {
+        runPhase("testGetActiveStagedSession");
     }
 
     @Test
     public void testGetActiveStagedSessionNoSessionActive() throws Exception {
         runPhase("testGetActiveStagedSessionNoSessionActive");
+    }
+
+    @Test
+    public void getGetActiveStagedSession_MultiApkSession() throws Exception {
+        runPhase("testGetGetActiveStagedSession_MultiApkSession");
     }
 
     @Test
