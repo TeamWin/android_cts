@@ -17,7 +17,8 @@ package com.android.compatibility.common.util;
 
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
-import android.provider.DeviceConfig.OnPropertyChangedListener;
+import android.provider.DeviceConfig.OnPropertiesChangedListener;
+import android.provider.DeviceConfig.Properties;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Helper used to block tests until a device config value has been updated.
  */
-public final class OneTimeDeviceConfigListener implements OnPropertyChangedListener {
+public final class OneTimeDeviceConfigListener implements OnPropertiesChangedListener {
 
     public static final long DEFAULT_TIMEOUT_MS = 5_000;
 
@@ -55,13 +56,14 @@ public final class OneTimeDeviceConfigListener implements OnPropertyChangedListe
     }
 
     @Override
-    public void onPropertyChanged(String namespace, String key, String value) {
-        if (!mNamespace.equals(namespace) || !mKey.equals(key)) {
-            Log.d(TAG, "ignoring " + namespace + "." + key);
+    public void onPropertiesChanged(@NonNull Properties properties) {
+        if (!properties.getNamespace().equals(mNamespace)
+                || !properties.getKeyset().contains(mKey)) {
+            Log.d(TAG, "ignoring callback for namespace: " + properties.getNamespace());
             return;
         }
         mLatch.countDown();
-        DeviceConfig.removeOnPropertyChangedListener(this);
+        DeviceConfig.removeOnPropertiesChangedListener(this);
     }
 
     /**
