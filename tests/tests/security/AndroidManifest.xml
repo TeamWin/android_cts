@@ -57,6 +57,8 @@
                      android:label="CTS tests of android.security.cts">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
+        <meta-data android:name="listener"
+            android:value="com.android.cts.runner.CrashParserRunListener" />
     </instrumentation>
 
 </manifest>
