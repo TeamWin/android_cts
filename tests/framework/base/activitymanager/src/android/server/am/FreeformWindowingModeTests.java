@@ -35,10 +35,10 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:ActivityManagerFreeformStackTests
+ *     atest CtsActivityManagerDeviceTestCases:FreeformWindowingModeTests
  */
 @Presubmit
-public class ActivityManagerFreeformStackTests extends ActivityManagerDisplayTestBase {
+public class FreeformWindowingModeTests extends MultiDisplayTestBase {
 
     private static final int TEST_TASK_OFFSET = 20;
     private static final int TEST_TASK_OFFSET_2 = 100;

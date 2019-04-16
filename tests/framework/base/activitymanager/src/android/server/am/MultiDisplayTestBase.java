@@ -17,7 +17,7 @@
 package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
+import static android.server.am.MultiDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
@@ -35,7 +35,12 @@ import static android.server.am.app.Components.VirtualDisplayActivity.KEY_PUBLIC
 import static android.server.am.app.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
 import static android.server.am.app.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
 import static android.server.am.app.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
+
+import static android.server.am.UiDeviceUtils.pressSleepButton;
+import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -44,6 +49,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -58,6 +64,8 @@ import android.util.Size;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.junit.Before;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,13 +76,21 @@ import java.util.regex.Pattern;
 /**
  * Base class for ActivityManager display tests.
  *
- * @see ActivityManagerDisplayTests
- * @see ActivityManagerDisplayLockedKeyguardTests
+ * @see DisplayTests
+ * @see MultiDisplayKeyguardTests
  */
-public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
+public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     static final int CUSTOM_DENSITY_DPI = 222;
     private static final int INVALID_DENSITY_DPI = -1;
+    protected Context mTargetContext;
+
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mTargetContext = getInstrumentation().getTargetContext();
+    }
 
     ActivityDisplay getDisplayState(int displayId) {
         return getDisplayState(getDisplaysStates(), displayId);
@@ -543,5 +559,77 @@ public class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     /** Checks if the device supports multi-display. */
     protected boolean supportsMultiDisplay() {
         return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
+    }
+
+    // TODO(b/121444086): Update ExternalDisplaySession/VirtualDisplaySession usages
+    public class ExternalDisplaySession implements AutoCloseable {
+
+        @Nullable
+        private VirtualDisplayHelper mExternalDisplayHelper;
+
+        /**
+         * Creates a private virtual display with insecure keyguard flags set.
+         */
+        ActivityDisplay createVirtualDisplay(boolean showContentWhenLocked)
+                throws Exception {
+            final List<ActivityDisplay> originalDS = getDisplaysStates();
+            final int originalDisplayCount = originalDS.size();
+
+            mExternalDisplayHelper = new VirtualDisplayHelper();
+            mExternalDisplayHelper.createAndWaitForDisplay(showContentWhenLocked);
+
+            // Wait for the virtual display to be created and get configurations.
+            final List<ActivityDisplay> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
+            assertEquals("New virtual display must be created", originalDisplayCount + 1,
+                    ds.size());
+
+            // Find the newly added display.
+            final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
+            return newDisplays.get(0);
+        }
+
+        void turnDisplayOff() {
+            if (mExternalDisplayHelper == null) {
+                throw new RuntimeException("No external display created");
+            }
+            mExternalDisplayHelper.turnDisplayOff();
+        }
+
+        void turnDisplayOn() {
+            if (mExternalDisplayHelper == null) {
+                throw new RuntimeException("No external display created");
+            }
+            mExternalDisplayHelper.turnDisplayOn();
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (mExternalDisplayHelper != null) {
+                mExternalDisplayHelper.releaseDisplay();
+                mExternalDisplayHelper = null;
+            }
+        }
+    }
+
+    public static class PrimaryDisplayStateSession implements AutoCloseable {
+
+        void turnScreenOff() {
+            setPrimaryDisplayState(false);
+        }
+
+        @Override
+        public void close() throws Exception {
+            setPrimaryDisplayState(true);
+        }
+
+        /** Turns the primary display on/off by pressing the power key */
+        private void setPrimaryDisplayState(boolean wantOn) {
+            if (wantOn) {
+                pressWakeupButton();
+            } else {
+                pressSleepButton();
+            }
+            VirtualDisplayHelper.waitForDefaultDisplayState(wantOn);
+        }
     }
 }
