@@ -179,6 +179,7 @@ public class ConversationActionsTest {
                                         ConversationActions.Request.HINT_FOR_IN_APP))
                         .setMaxSuggestions(10)
                         .setTypeConfig(typeConfig)
+                        .setExtras(EXTRAS)
                         .build();
 
         ConversationActions.Request recovered =
@@ -314,6 +315,7 @@ public class ConversationActionsTest {
         assertThat(request.getHints()).isEmpty();
         assertThat(request.getMaxSuggestions()).isEqualTo(-1);
         assertThat(request.getTypeConfig()).isNotNull();
+        assertThat(request.getExtras().size()).isEqualTo(0);
     }
 
     private void assertFullRequest(ConversationActions.Request request) {
@@ -323,6 +325,7 @@ public class ConversationActionsTest {
         assertThat(request.getHints()).containsExactly(ConversationActions.Request.HINT_FOR_IN_APP);
         assertThat(request.getMaxSuggestions()).isEqualTo(10);
         assertThat(request.getTypeConfig().shouldIncludeTypesFromTextClassifier()).isFalse();
+        assertThat(request.getExtras().keySet()).containsExactly(TEXT);
     }
 
     private void assertMinimalConversationAction(
