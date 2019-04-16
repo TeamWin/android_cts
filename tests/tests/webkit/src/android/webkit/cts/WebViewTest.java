@@ -1586,8 +1586,21 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                     && mOnUiThread.getHeight() != 0;
             }
         }.run();
-        assertEquals(mOnUiThread.getHeight(),
-                mOnUiThread.getContentHeight() * mOnUiThread.getScale(), 2f);
+
+        final int tolerance = 2;
+        // getHeight() returns physical pixels and it is from web contents' size, getContentHeight()
+        // returns CSS pixels and it is from compositor. In order to compare these two values, we
+        // need to scale getContentHeight() by the device scale factor. This also amplifies any
+        // rounding errors. Internally, getHeight() could also have rounding error first and then
+        // times device scale factor, so we are comparing two rounded numbers below.
+        // We allow 2 * getScale() as the delta, because getHeight() and getContentHeight() may
+        // use different rounding algorithms and the results are from different computation
+        // sequences. The extreme case is that in CSS pixel we have 2 as differences (0.9999 rounded
+        // down and 1.0001 rounded up), therefore we ended with 2 * getScale().
+        assertEquals(
+                mOnUiThread.getHeight(),
+                mOnUiThread.getContentHeight() * mOnUiThread.getScale(),
+                tolerance * mOnUiThread.getScale());
 
         // Make pageHeight bigger than the larger dimension of the device, so the page is taller
         // than viewport. Because when layout_height set to match_parent, getContentHeight() will
@@ -1615,7 +1628,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         new PollingCheck() {
             @Override
             protected boolean check() {
-                return pageHeight + pageHeight + extraSpace == mOnUiThread.getContentHeight();
+                // |pageHeight| is accurate, |extraSpace| = getContentheight() - |pageHeight|, so it
+                // might have rounding error +-1, also getContentHeight() might have rounding error
+                // +-1, so we allow error 2. Note that |pageHeight|, |extraSpace| and
+                // getContentHeight() are all CSS pixels.
+                final int expectedContentHeight = pageHeight + pageHeight + extraSpace;
+                return Math.abs(expectedContentHeight - mOnUiThread.getContentHeight())
+                        <= tolerance;
             }
         }.run();
     }
