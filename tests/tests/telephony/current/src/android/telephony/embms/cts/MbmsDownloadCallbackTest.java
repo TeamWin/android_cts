@@ -16,9 +16,6 @@
 
 package android.telephony.embms.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
 import android.telephony.mbms.DownloadProgressListener;
@@ -29,8 +26,6 @@ import android.telephony.mbms.FileInfo;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
 
 public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
     private static final long SHORT_TIMEOUT = 500;
@@ -83,7 +78,6 @@ public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
         }
     }
 
-    @Test
     public void testFullCallback() throws Exception {
         int sampleInt = 10;
         TestDSCallback statusCallback = new TestDSCallback();
@@ -108,7 +102,6 @@ public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
         assertEquals(sampleInt, stateArgs.arg3);
     }
 
-    @Test
     public void testDeregistration() throws Exception {
         TestDSCallback statusCallback = new TestDSCallback();
         TestDPCallback progressCallback = new TestDPCallback();

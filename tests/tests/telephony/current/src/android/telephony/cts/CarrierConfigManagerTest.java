@@ -16,29 +16,21 @@
 
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.test.AndroidTestCase;
 
-import org.junit.Before;
-import org.junit.Test;
-
-public class CarrierConfigManagerTest {
+public class CarrierConfigManagerTest extends AndroidTestCase {
     private CarrierConfigManager mConfigManager;
     private TelephonyManager mTelephonyManager;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mTelephonyManager = (TelephonyManager)
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mConfigManager = (CarrierConfigManager)
@@ -94,13 +86,11 @@ public class CarrierConfigManagerTest {
         }
     }
 
-    @Test
     public void testGetConfig() {
         PersistableBundle config = mConfigManager.getConfig();
         checkConfig(config);
     }
 
-    @Test
     public void testGetConfigForSubId() {
         PersistableBundle config =
                 mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubscriptionId());
@@ -112,7 +102,6 @@ public class CarrierConfigManagerTest {
      * notifyConfigChangedForSubId() API and expects a SecurityException since the test apk is not signed
      * by certificate on the SIM.
      */
-    @Test
     public void testNotifyConfigChangedForSubId() {
         try {
             if (isSimCardPresent()) {

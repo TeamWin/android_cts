@@ -16,9 +16,6 @@
 
 package android.telephony.embms.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import android.telephony.MbmsGroupCallSession;
 import android.telephony.cts.embmstestapp.CtsGroupCallService;
 import android.telephony.mbms.GroupCallCallback;
@@ -28,10 +25,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
 
 public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
-    @Test
     public void testDuplicateSession() throws Exception {
         try {
             MbmsGroupCallSession failure = MbmsGroupCallSession.create(
@@ -42,7 +37,6 @@ public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
         }
     }
 
-    @Test
     public void testClose() throws Exception {
         mGroupCallSession.close();
 
@@ -60,7 +54,6 @@ public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
         assertEquals(1, closeCalls.size());
     }
 
-    @Test
     public void testErrorDelivery() throws Exception {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);
@@ -70,7 +63,6 @@ public class MbmsGroupCallSessionTest extends MbmsGroupCallTestBase {
                 mCallback.waitOnError().arg1);
     }
 
-    @Test
     public void testCallbacks() throws Exception {
         List<Integer> expectCurrentSais = Arrays.asList(10, 14, 17);
         List<List<Integer>> expectAvailableSais = new ArrayList<List<Integer>>() {{

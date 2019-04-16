@@ -16,11 +16,6 @@
 
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -33,6 +28,7 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
+import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -54,13 +50,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Random;
 
-import org.junit.Before;
-import org.junit.Test;
-
 /**
  * Test sending MMS using {@link android.telephony.SmsManager}.
  */
-public class MmsTest {
+public class MmsTest extends AndroidTestCase {
     private static final String TAG = "MmsTest";
 
     private static final String ACTION_MMS_SENT = "CTS_MMS_SENT_ACTION";
@@ -166,15 +159,16 @@ public class MmsTest {
         }
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
         mRandom = new Random();
         mTelephonyManager =
-                (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        mPackageManager = getContext().getPackageManager();
+                (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        mPackageManager = mContext.getPackageManager();
     }
 
-    @Test
     public void testSendMmsMessage() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
              || !doesSupportMMS()) {

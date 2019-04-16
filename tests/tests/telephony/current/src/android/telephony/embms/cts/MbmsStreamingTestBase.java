@@ -16,13 +16,6 @@
 
 package android.telephony.embms.cts;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.annotation.Nullable;
 import android.content.ComponentName;
 import android.content.Context;
@@ -37,6 +30,7 @@ import android.telephony.cts.embmstestapp.CtsStreamingService;
 import android.telephony.cts.embmstestapp.ICtsStreamingMiddlewareControl;
 import android.telephony.mbms.MbmsStreamingSessionCallback;
 import android.telephony.mbms.StreamingServiceInfo;
+import android.test.InstrumentationTestCase;
 
 import com.android.internal.os.SomeArgs;
 
@@ -47,10 +41,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
 
-public class MbmsStreamingTestBase {
+public class MbmsStreamingTestBase extends InstrumentationTestCase {
     protected static final int ASYNC_TIMEOUT = 10000;
 
     protected static class TestCallback extends MbmsStreamingSessionCallback {
@@ -117,9 +109,9 @@ public class MbmsStreamingTestBase {
     MbmsStreamingSession mStreamingSession;
     TestCallback mCallback = new TestCallback();
 
-    @Before
+    @Override
     public void setUp() throws Exception {
-        mContext = getContext();
+        mContext = getInstrumentation().getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
         mCallbackExecutor = (new Handler(mHandlerThread.getLooper()))::post;
@@ -128,7 +120,7 @@ public class MbmsStreamingTestBase {
         setupStreamingSession();
     }
 
-    @After
+    @Override
     public void tearDown() throws Exception {
         mHandlerThread.quit();
         mStreamingSession.close();

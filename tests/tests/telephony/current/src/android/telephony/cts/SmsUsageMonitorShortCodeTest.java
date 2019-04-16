@@ -16,25 +16,18 @@
 
 package android.telephony.cts;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
-import static org.junit.Assert.assertEquals;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.telephony.PhoneNumberUtils;
-
-import androidx.test.annotation.UiThreadTest;
-
+import android.test.InstrumentationTestCase;
+import android.test.UiThreadTest;
 import com.android.internal.telephony.SmsUsageMonitor;
 
-import org.junit.Before;
-import org.junit.Test;
+import android.telephony.PhoneNumberUtils;
 
 /**
  * Test cases for SMS short code pattern matching in SmsUsageMonitor.
  */
-public class SmsUsageMonitorShortCodeTest {
+public class SmsUsageMonitorShortCodeTest extends InstrumentationTestCase {
 
     private PackageManager mPackageManager;
     private Context mContext;
@@ -488,8 +481,9 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest(null, "112", expectedReturnCode("112")),
     };
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mContext = getInstrumentation().getTargetContext();
         mPackageManager = mContext.getPackageManager();
     }
@@ -500,7 +494,6 @@ public class SmsUsageMonitorShortCodeTest {
     }
 
     @UiThreadTest
-    @Test
     public void testSmsUsageMonitor() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             // do not test if device does not support telephony (voice or sms)
