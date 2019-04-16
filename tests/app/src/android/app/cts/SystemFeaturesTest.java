@@ -45,8 +45,10 @@ import android.net.sip.SipManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
+import android.platform.test.annotations.Presubmit;
 import android.telephony.TelephonyManager;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PropertyUtil;
@@ -66,6 +68,7 @@ import org.junit.runners.JUnit4;
 /**
  * Test for checking that the {@link PackageManager} is reporting the correct features.
  */
+@Presubmit
 @RunWith(JUnit4.class)
 public class SystemFeaturesTest {
 
@@ -344,6 +347,7 @@ public class SystemFeaturesTest {
      * Check that the sensor features reported by the PackageManager correspond to the sensors
      * returned by {@link SensorManager#getSensorList(int)}.
      */
+    @FlakyTest
     @Test
     public void testSensorFeatures() throws Exception {
         Set<String> featuresLeft = getFeatureConstantsNames("FEATURE_SENSOR_");

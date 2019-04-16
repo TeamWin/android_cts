@@ -43,12 +43,14 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -75,6 +77,7 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
 
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerTest {
     private static final String TAG = "DownloadManagerTest";
@@ -106,6 +109,7 @@ public class DownloadManagerTest {
         mWebServer.shutdown();
     }
 
+    @FlakyTest
     @Test
     public void testDownloadManager() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
@@ -134,6 +138,7 @@ public class DownloadManagerTest {
         }
     }
 
+    @FlakyTest
     @Test
     public void testDownloadManagerSupportsHttp() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
@@ -157,6 +162,7 @@ public class DownloadManagerTest {
         }
     }
 
+    @FlakyTest
     @Test
     public void testDownloadManagerSupportsHttpWithExternalWebServer() throws Exception {
         if (!hasInternetConnection()) {
@@ -264,6 +270,7 @@ public class DownloadManagerTest {
      * Checks three different methods of setting location: directly via setDestinationUri, and
      * indirectly through setDestinationInExternalFilesDir and setDestinationinExternalPublicDir.
      */
+    @FlakyTest
     @Test
     public void testDownloadManagerDestination() throws Exception {
         File uriLocation = new File(mContext.getExternalFilesDir(null), "uriFile.bin");
@@ -378,6 +385,7 @@ public class DownloadManagerTest {
         return process;
     }
 
+    @FlakyTest
     @Test
     public void testProviderAcceptsCleartext() throws Exception {
         // Check that all the applications that share an android:process with the DownloadProvider
@@ -487,6 +495,7 @@ public class DownloadManagerTest {
         }
     }
 
+    @FlakyTest
     @Test
     public void testAddCompletedDownload_sdcardPath() throws Exception {
         final String fileContents = "RED;GREEN;BLUE";
@@ -511,6 +520,7 @@ public class DownloadManagerTest {
      * Download a file using DownloadManager and verify that the file has been added
      * to MediaStore as well.
      */
+    @FlakyTest
     @Test
     public void testDownloadManager_mediaStoreEntry() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
@@ -548,6 +558,7 @@ public class DownloadManagerTest {
      * Add a file using DownloadManager.addCompleted and verify that the file has been added
      * to MediaStore as well.
      */
+    @FlakyTest
     @Test
     public void testAddCompletedDownload_mediaStoreEntry() throws Exception {
         final File[] files = new File[] {
@@ -577,6 +588,7 @@ public class DownloadManagerTest {
      * Add a file to DownloadProvider using DownloadManager.addCompletedDownload and verify
      * updates to this entry in DownlaodProvider are reflected in MediaProvider as well.
      */
+    @FlakyTest
     @Test
     public void testDownloadManagerUpdates() throws Exception {
         final File dataDir = mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
@@ -626,6 +638,7 @@ public class DownloadManagerTest {
         }
     }
 
+    @FlakyTest
     @Test
     public void testDownloadManager_mediaStoreUpdates() throws Exception {
         final File dataDir = mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
