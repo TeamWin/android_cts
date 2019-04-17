@@ -159,6 +159,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testShimApexShouldPreInstalledIfUpdatingApexIsSupported() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        final ITestDevice.ApexInfo shimApex = getShimApex();
+        assertThat(shimApex.versionCode).isEqualTo(1);
+    }
+
+    @Test
     public void testInstallStagedApex() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testInstallStagedApex_Commit");
@@ -188,6 +195,10 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      * unnecessary reboots.
      */
     private void uninstallShimApexIfNecessary() throws Exception {
+        if (!isUpdatingApexSupported()) {
+            // Device doesn't support updating apex. Nothing to uninstall.
+            return;
+        }
         final ITestDevice.ApexInfo shimApex = getShimApex();
         if (shimApex.versionCode == 1) {
             // System version is active, skipping uninstalling active apex and rebooting the device.
