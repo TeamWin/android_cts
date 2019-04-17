@@ -17,9 +17,9 @@
 package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.am.UiDeviceUtils.pressHomeButton;
-import static android.server.am.UiDeviceUtils.pressUnlockButton;
-import static android.server.am.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.UiDeviceUtils.pressUnlockButton;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -30,7 +30,6 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
-import android.server.am.ComponentNameUtils;
 
 import org.junit.Before;
 
