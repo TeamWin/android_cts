@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertSessionPaused;
 import static android.contentcaptureservice.cts.Assertions.assertSessionResumed;
+import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Assertions.assertViewWithUnknownParentAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewDisappeared;
@@ -57,6 +58,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class CustomViewActivityTest extends
@@ -171,6 +173,7 @@ public class CustomViewActivityTest extends
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
 
+        final AtomicReference<AutofillId> child2IdRef = new AtomicReference<>();
         final CountDownLatch asyncLatch = setAsyncDelegate((customView, structure) -> {
             Log.d(TAG, "delegate running on " + Thread.currentThread());
             final AutofillId customViewId = customView.getAutofillId();
@@ -186,9 +189,14 @@ public class CustomViewActivityTest extends
             final ViewStructure child2 = session.newVirtualViewStructure(customViewId, 2);
             child2.setText("child2");
             final AutofillId child2Id = child2.getAutofillId();
+            child2IdRef.set(child2Id);
             assertThat(session.newAutofillId(customViewId, 2)).isEqualTo(child2Id);
             Log.d(TAG, "nofifying child2 appeared: " + child2Id);
             session.notifyViewAppeared(child2);
+
+            Log.d(TAG, "nofifying child2 text changed");
+            session.notifyViewTextChanged(child2Id, "The Times They Are a-Changin'");
+
             Log.d(TAG, "nofifying child2 disappeared: " + child2Id);
             session.notifyViewDisappeared(child2Id);
             Log.d(TAG, "nofifying child1 disappeared: " + child1Id);
@@ -218,7 +226,8 @@ public class CustomViewActivityTest extends
 
         assertVirtualViewAppeared(events, i, mainSession, customViewId, 1, "child1");
         assertVirtualViewAppeared(events, i + 1, mainSession, customViewId, 2, "child2");
-        assertVirtualViewsDisappeared(events, i + 2, customViewId, mainSession, 2, 1);
+        assertViewTextChanged(events, i + 2, child2IdRef.get(), "The Times They Are a-Changin'");
+        assertVirtualViewsDisappeared(events, i + 3, customViewId, mainSession, 2, 1);
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
         // TODO(b/122315042): assert views disappeared
