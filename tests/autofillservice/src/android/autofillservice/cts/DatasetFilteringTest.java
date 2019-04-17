@@ -178,6 +178,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter() is enough to test ephemeral apps support
     public void testFilter_usingKeyboard() throws Exception {
         final String aa = "Two A's";
         final String ab = "A and B";
