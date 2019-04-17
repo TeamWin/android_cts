@@ -449,6 +449,7 @@ def collect_data(fps, w, h, test_length):
         fmt = {"format": "yuv", "width": w, "height": h}
         s, e, _, _, _ = cam.do_3a(get_results=True, do_af=False)
         req = its.objects.manual_capture_request(s, e)
+        its.objects.turn_slow_filters_off(props, req)
         fd_min = props["android.lens.info.minimumFocusDistance"]
         fd_chart = 1 / (CHART_DISTANCE * CM_TO_M)
         if fd_min < fd_chart:
