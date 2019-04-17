@@ -73,6 +73,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.platform.test.annotations.Presubmit;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -88,6 +89,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -109,6 +111,7 @@ import java.util.concurrent.TimeUnit;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
+@Presubmit
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
@@ -1797,6 +1800,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
     }
 
+    @FlakyTest
     public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
