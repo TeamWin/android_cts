@@ -564,7 +564,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     .show();
         }
 
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_BEAM)) {
             mDisableNfcBeamTest = new DialogTestListItem(this, R.string.provisioning_byod_nfc_beam,
                     "BYOD_DisableNfcBeamTest",
                     R.string.provisioning_byod_nfc_beam_allowed_instruction,
