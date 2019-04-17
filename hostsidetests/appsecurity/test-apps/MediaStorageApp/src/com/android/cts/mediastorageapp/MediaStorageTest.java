@@ -28,6 +28,7 @@ import android.app.Instrumentation;
 import android.app.RecoverableSecurityException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -37,7 +38,6 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.provider.MediaStore.Audio.AudioColumns;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
@@ -58,6 +58,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaStorageTest {
@@ -115,20 +116,36 @@ public class MediaStorageTest {
 
     @Test
     public void testMediaNone() throws Exception {
-        doMediaNoneImage();
-        doMediaNoneAudio();
+        doMediaNone(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createAudio);
+        doMediaNone(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createVideo);
+        doMediaNone(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createImage);
+
+        // But since we don't hold the Music permission, we can't read the
+        // indexed metadata
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
+                null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+                null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
+                null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
     }
 
-    private void doMediaNoneImage() throws Exception {
-        final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+    private void doMediaNone(Uri collection, Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        final Uri blue = create.call();
 
         clearMediaOwner(blue, mUserId);
 
         // Since we have no permissions, we should only be able to see media
         // that we've contributed
         final HashSet<Long> seen = new HashSet<>();
-        try (Cursor c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        try (Cursor c = mContentResolver.query(collection,
                 new String[] { MediaColumns._ID }, null, null)) {
             while (c.moveToNext()) {
                 seen.add(c.getLong(0));
@@ -150,44 +167,22 @@ public class MediaStorageTest {
         }
     }
 
-    private void doMediaNoneAudio() throws Exception {
-        final Uri red = createAudio(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-        final Uri blue = createAudio(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-
-        clearMediaOwner(blue, mUserId);
-
-        try (Cursor c = mContentResolver.query(red, null, null, null)) {
-            assertTrue(c.moveToFirst());
-            assertEquals("MyArtist", c.getString(c.getColumnIndex(AudioColumns.ARTIST)));
-            assertEquals("MyAlbum", c.getString(c.getColumnIndex(AudioColumns.ALBUM)));
-        }
-
-        // But since we don't hold the Music permission, we can't read the
-        // indexed metadata
-        try (Cursor c = mContentResolver.query(MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
-                null, null, null)) {
-            assertEquals(0, c.getCount());
-        }
-        try (Cursor c = mContentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-                null, null, null)) {
-            assertEquals(0, c.getCount());
-        }
-        try (Cursor c = mContentResolver.query(MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
-                null, null, null)) {
-            assertEquals(0, c.getCount());
-        }
-    }
-
     @Test
     public void testMediaRead() throws Exception {
-        final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        doMediaRead(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createAudio);
+        doMediaRead(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createVideo);
+        doMediaRead(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createImage);
+    }
+
+    private void doMediaRead(Uri collection, Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        final Uri blue = create.call();
 
         clearMediaOwner(blue, mUserId);
 
         // Holding read permission we can see items we don't own
         final HashSet<Long> seen = new HashSet<>();
-        try (Cursor c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        try (Cursor c = mContentResolver.query(collection,
                 new String[] { MediaColumns._ID }, null, null)) {
             while (c.moveToNext()) {
                 seen.add(c.getLong(0));
@@ -209,14 +204,20 @@ public class MediaStorageTest {
 
     @Test
     public void testMediaWrite() throws Exception {
-        final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        final Uri blue = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        doMediaWrite(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createAudio);
+        doMediaWrite(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createVideo);
+        doMediaWrite(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createImage);
+    }
+
+    private void doMediaWrite(Uri collection, Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        final Uri blue = create.call();
 
         clearMediaOwner(blue, mUserId);
 
         // Holding read permission we can see items we don't own
         final HashSet<Long> seen = new HashSet<>();
-        try (Cursor c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        try (Cursor c = mContentResolver.query(collection,
                 new String[] { MediaColumns._ID }, null, null)) {
             while (c.moveToNext()) {
                 seen.add(c.getLong(0));
@@ -235,11 +236,16 @@ public class MediaStorageTest {
     }
 
     @Test
-    public void testMediaEscalation() throws Exception {
-        final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+    public void testMediaEscalation_Open() throws Exception {
+        doMediaEscalation_Open(MediaStorageTest::createAudio);
+        doMediaEscalation_Open(MediaStorageTest::createVideo);
+        doMediaEscalation_Open(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_Open(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
         clearMediaOwner(red, mUserId);
 
-        // Confirm that we get can take action to get write access
         RecoverableSecurityException exception = null;
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
             fail("Expected write access to be blocked");
@@ -247,6 +253,64 @@ public class MediaStorageTest {
             exception = expected;
         }
 
+        doEscalation(exception);
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+        }
+    }
+
+    @Test
+    public void testMediaEscalation_Update() throws Exception {
+        doMediaEscalation_Update(MediaStorageTest::createAudio);
+        doMediaEscalation_Update(MediaStorageTest::createVideo);
+        doMediaEscalation_Update(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_Update(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
+        final ContentValues values = new ContentValues();
+        values.put(MediaColumns.DISPLAY_NAME, "cts" + System.nanoTime());
+
+        RecoverableSecurityException exception = null;
+        try {
+            mContentResolver.update(red, values, null, null);
+            fail("Expected update access to be blocked");
+        } catch (RecoverableSecurityException expected) {
+            exception = expected;
+        }
+
+        doEscalation(exception);
+
+        assertEquals(1, mContentResolver.update(red, values, null, null));
+    }
+
+    @Test
+    public void testMediaEscalation_Delete() throws Exception {
+        doMediaEscalation_Delete(MediaStorageTest::createAudio);
+        doMediaEscalation_Delete(MediaStorageTest::createVideo);
+        doMediaEscalation_Delete(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_Delete(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
+        RecoverableSecurityException exception = null;
+        try {
+            mContentResolver.delete(red, null, null);
+            fail("Expected update access to be blocked");
+        } catch (RecoverableSecurityException expected) {
+            exception = expected;
+        }
+
+        doEscalation(exception);
+
+        assertEquals(1, mContentResolver.delete(red, null, null));
+    }
+
+    private void doEscalation(RecoverableSecurityException exception) throws Exception {
         // Try launching the action to grant ourselves access
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         final Intent intent = new Intent(inst.getContext(), GetResultActivity.class);
@@ -270,36 +334,48 @@ public class MediaStorageTest {
         // Verify that we now have access
         final GetResultActivity.Result res = activity.getResult();
         assertEquals(Activity.RESULT_OK, res.resultCode);
-
-        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
-        }
     }
 
-    private static Uri createImage(Uri collectionUri) throws IOException {
+    private static Uri createAudio() throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(
-                collectionUri, displayName, "image/png");
-        final Uri pendingUri = MediaStoreUtils.createPending(context, params);
-        try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
-            try (OutputStream out = session.openOutputStream()) {
-                final Bitmap bitmap = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
-            }
-            return session.publish();
-        }
-    }
-
-    private static Uri createAudio(Uri collectionUri) throws IOException {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        final String displayName = "cts" + System.nanoTime();
-        final PendingParams params = new PendingParams(
-                collectionUri, displayName, "audio/mpeg");
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, displayName, "audio/mpeg");
         final Uri pendingUri = MediaStoreUtils.createPending(context, params);
         try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
             try (InputStream in = context.getResources().getAssets().open("testmp3.mp3");
                     OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
+            }
+            return session.publish();
+        }
+    }
+
+    private static Uri createVideo() throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String displayName = "cts" + System.nanoTime();
+        final PendingParams params = new PendingParams(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, displayName, "video/mpeg");
+        final Uri pendingUri = MediaStoreUtils.createPending(context, params);
+        try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
+            try (InputStream in = context.getResources().getAssets().open("testmp3.mp3");
+                    OutputStream out = session.openOutputStream()) {
+                FileUtils.copy(in, out);
+            }
+            return session.publish();
+        }
+    }
+
+    private static Uri createImage() throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String displayName = "cts" + System.nanoTime();
+        final PendingParams params = new PendingParams(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, displayName, "image/png");
+        final Uri pendingUri = MediaStoreUtils.createPending(context, params);
+        try (PendingSession session = MediaStoreUtils.openPending(context, pendingUri)) {
+            try (OutputStream out = session.openOutputStream()) {
+                final Bitmap bitmap = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
             }
             return session.publish();
         }

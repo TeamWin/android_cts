@@ -55,6 +55,8 @@ public class GetResultActivity extends Activity {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        finish();
     }
 
     public void clearResult() {

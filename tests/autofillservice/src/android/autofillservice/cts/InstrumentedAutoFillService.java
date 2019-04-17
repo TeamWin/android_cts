@@ -269,7 +269,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                 request.getDatasetIds()));
     }
 
-    private static boolean isConnected() {
+    public static boolean isConnected() {
         return sConnected.get();
     }
 

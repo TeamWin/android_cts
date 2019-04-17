@@ -215,9 +215,9 @@ public class MediaController2Test {
 
             assertTrue(controllerCallback.awaitOnSessionCommand(WAIT_TIME_MS));
             assertEquals(controller, controllerCallback.mController);
-            assertEquals(commandStr, controllerCallback.mCommand.getCustomCommand());
+            assertEquals(commandStr, controllerCallback.mCommand.getCustomAction());
             assertEquals(commandExtraValue,
-                    controllerCallback.mCommand.getExtras().getString(commandExtraKey));
+                    controllerCallback.mCommand.getCustomExtras().getString(commandExtraKey));
             assertEquals(commandArgValue, controllerCallback.mCommandArgs.getString(commandArgKey));
         } finally {
             assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));

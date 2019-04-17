@@ -39,6 +39,7 @@ import static android.autofillservice.cts.Helper.isAutofillWindowFullScreen;
 import static android.autofillservice.cts.Helper.setUserComplete;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_CLASS;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_PACKAGE;
+import static android.autofillservice.cts.InstrumentedAutoFillService.isConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
@@ -98,7 +99,6 @@ import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.RetryableException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -2336,7 +2336,6 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
-    @Ignore("blocked on b/4222506") // STOPSHIP: must fix and remove @Ignore before Q is launched
     @Test
     public void testCommitMultipleTimes() throws Throwable {
         // Set service.
@@ -2354,12 +2353,14 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 // Set expectations.
                 sReplier.addResponse(response);
 
-                // Trigger auto-fill.
-                mActivity.onUsername(View::requestFocus);
+                Timeouts.IDLE_UNBIND_TIMEOUT.run("wait for session created", () -> {
+                    // Trigger auto-fill.
+                    mActivity.onUsername(View::clearFocus);
+                    mActivity.onUsername(View::requestFocus);
 
-                // Wait for onFill() before proceeding, otherwise the fields might be changed before
-                // the session started
-                waitUntilConnected();
+                    return isConnected() ? "not_used" : null;
+                });
+
                 sReplier.getNextFillRequest();
 
                 // Sanity check.

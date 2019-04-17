@@ -322,9 +322,6 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
 
             srcAdvance = mExtractor.advance();
-            // TODO: no need to reset strTok.nval to -1 once MediaExtractor.advance() bug -
-            //       b/121204004 is fixed
-            strTok.nval = -1;
             strTok.nextToken();
         } while (srcAdvance);
     }
@@ -515,5 +512,62 @@ public class MediaExtractorTest extends AndroidTestCase {
                     new MediaCodecTest.ByteBufferInputStream(
                             new MediaCodecTest.PcmAudioBufferStream(audioStream))));
         }
+    }
+
+    private void doTestAdvance(int res) throws Exception {
+        AssetFileDescriptor testFd = mResources.openRawResourceFd(res);
+
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(testFd.getFileDescriptor(), testFd.getStartOffset(),
+                testFd.getLength());
+        testFd.close();
+        extractor.selectTrack(0);
+        boolean lastAdvanceResult = true;
+        boolean lastReadResult = true;
+        ByteBuffer buf = ByteBuffer.allocate(2*1024*1024);
+        while(lastAdvanceResult || lastReadResult) {
+            int n = extractor.readSampleData(buf, 0);
+            if (lastAdvanceResult) {
+                // previous advance() was successful, so readSampleData() should succeed
+                assertTrue("readSampleData() failed after successful advance()", n >= 0);
+                assertTrue("getSampleTime() failed after succesful advance()",
+                        extractor.getSampleTime() >= 0);
+                assertTrue("getSampleSize() failed after succesful advance()",
+                        extractor.getSampleSize() >= 0);
+                assertTrue("getSampleTrackIndex() failed after succesful advance()",
+                        extractor.getSampleTrackIndex() >= 0);
+            } else {
+                // previous advance() failed, so readSampleData() should fail too
+                assertTrue("readSampleData() succeeded after failed advance()", n < 0);
+                assertTrue("getSampleTime() succeeded after failed advance()",
+                        extractor.getSampleTime() < 0);
+                assertTrue("getSampleSize() succeeded after failed advance()",
+                        extractor.getSampleSize() < 0);
+                assertTrue("getSampleTrackIndex() succeeded after failed advance()",
+                        extractor.getSampleTrackIndex() < 0);
+            }
+            lastReadResult = (n >= 0);
+            lastAdvanceResult = extractor.advance();
+        }
+        extractor.release();
+    }
+
+    public void testAdvance() throws Exception {
+        // audio-only
+        doTestAdvance(R.raw.sinesweepm4a);
+        doTestAdvance(R.raw.sinesweepmp3lame);
+        doTestAdvance(R.raw.sinesweepmp3smpb);
+        doTestAdvance(R.raw.sinesweepwav);
+        doTestAdvance(R.raw.sinesweepflac);
+        doTestAdvance(R.raw.sinesweepogg);
+        doTestAdvance(R.raw.sinesweepoggmkv);
+
+        // video-only
+        doTestAdvance(R.raw.swirl_144x136_mpeg4);
+        doTestAdvance(R.raw.video_640x360_mp4_hevc_450kbps_no_b);
+
+        // audio+video
+        doTestAdvance(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
+        doTestAdvance(R.raw.video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz);
     }
 }
