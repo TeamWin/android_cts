@@ -26,6 +26,17 @@
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk"/>
         <option name="test-file-name" value="CtsDeviceAlertWindowTestApp.apk"/>
         <option name="test-file-name" value="CtsAlertWindowService.apk"/>
+        <option name="test-file-name" value="CtsDeviceServicesTestApp.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestApp27.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestSecondApp.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestThirdApp.apk" />
+        <option name="test-file-name" value="CtsDeviceDebuggableApp.apk" />
+        <option name="test-file-name" value="CtsDeviceDeprecatedSdkApp.apk" />
+        <option name="test-file-name" value="CtsDeviceDisplaySizeApp.apk" />
+        <option name="test-file-name" value="CtsDevicePrereleaseSdkApp.apk" />
+        <option name="test-file-name" value="CtsDeviceTranslucentTestApp.apk" />
+        <option name="test-file-name" value="CtsDeviceTranslucentTestApp26.apk" />
+        <option name="test-file-name" value="CtsMockInputMethod.apk" />
     </target_preparer>
     <!-- Some older apk cannot be installed as instant, so we force them full mode -->
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
@@ -36,7 +47,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.wm.cts"/>
-        <option name="runtime-hint" value="8m"/>
+        <option name="runtime-hint" value="1h"/>
     </test>
 
 </configuration>
