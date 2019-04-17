@@ -16,7 +16,7 @@
 
 package android.server.wm;
 
-import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.DialogFrameTestActivity.DIALOG_WINDOW_NAME;
 import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_POSITION_MATCH_PARENT;
 import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS;
@@ -40,9 +40,7 @@ import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.server.am.WaitForValidActivityState;
-import android.server.am.WindowManagerState;
-import android.server.am.WindowManagerState.WindowState;
+import android.server.wm.WindowManagerState.WindowState;
 
 import androidx.test.rule.ActivityTestRule;
 

@@ -16,9 +16,9 @@
 
 package android.server.wm;
 
-import static android.server.am.UiDeviceUtils.pressHomeButton;
-import static android.server.am.UiDeviceUtils.pressUnlockButton;
-import static android.server.am.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.UiDeviceUtils.pressUnlockButton;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 
 import static org.junit.Assert.assertEquals;
 

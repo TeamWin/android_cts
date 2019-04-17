@@ -17,7 +17,7 @@
 package android.server.wm.dndtargetappsdk23;
 
 import android.content.ComponentName;
-import android.server.am.component.ComponentsBase;
+import android.server.wm.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
 

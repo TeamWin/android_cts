@@ -34,9 +34,6 @@ import static org.junit.Assert.assertTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.server.am.ActivityManagerTestBase;
-import android.server.am.WaitForValidActivityState;
-import android.server.am.WindowManagerState;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 
