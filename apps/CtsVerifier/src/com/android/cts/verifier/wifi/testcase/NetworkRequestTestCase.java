@@ -50,6 +50,7 @@ public class NetworkRequestTestCase extends BaseTestCase {
     private static final boolean DBG = true;
 
     private static final String UNAVAILABLE_SSID = "blahblahblah";
+    private static final String UNAVAILABLE_BSSID = "02:00:00:00:00:00";
     private static final int NETWORK_REQUEST_TIMEOUT_MS = 30_000;
     private static final int CALLBACK_TIMEOUT_MS = 40_000;
 
@@ -96,7 +97,7 @@ public class NetworkRequestTestCase extends BaseTestCase {
                 break;
             case NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID:
                 String ssid = UNAVAILABLE_SSID;
-                MacAddress bssid = MacAddress.createRandomUnicastAddress();
+                MacAddress bssid = MacAddress.fromString(UNAVAILABLE_BSSID);
                 if (mTestUtils.findNetworkInScanResultsResults(ssid, bssid.toString())) {
                     Log.e(TAG, "The specifiers chosen match a network in scan results."
                             + "Test will fail");
