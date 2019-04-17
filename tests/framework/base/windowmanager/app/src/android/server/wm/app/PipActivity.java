@@ -25,6 +25,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
+import static android.server.wm.app.Components.PipActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR;
@@ -39,6 +40,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATI
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
+import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -117,6 +119,11 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         // Set the window flag to show over the keyguard
         if (getIntent().hasExtra(EXTRA_SHOW_OVER_KEYGUARD)) {
             setShowWhenLocked(true);
+        }
+
+        // Set the window flag to dismiss the keyguard
+        if (getIntent().hasExtra(EXTRA_DISMISS_KEYGUARD)) {
+            getWindow().addFlags(FLAG_DISMISS_KEYGUARD);
         }
 
         boolean enteringPip = false;

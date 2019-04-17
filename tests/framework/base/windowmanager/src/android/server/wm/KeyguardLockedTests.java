@@ -23,6 +23,7 @@ import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
 import static android.server.wm.app.Components.PIP_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.wm.app.Components.PipActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
@@ -30,11 +31,8 @@ import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVIT
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
-
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -47,15 +45,12 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
-
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -289,6 +284,27 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             // Lock the screen and ensure the PiP activity is not visible on the lockscreen even
             // though it's marked as showing over the lockscreen itself
             lockScreenSession.gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+        }
+    }
+
+    @Test
+    public void testDismissKeyguardPipActivity() throws Exception {
+        assumeTrue(supportsPip());
+
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            // Show an activity in PIP
+            launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true", EXTRA_DISMISS_KEYGUARD, "true");
+            waitForEnterPip(PIP_ACTIVITY);
+            mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
+                ACTIVITY_TYPE_STANDARD);
+            mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+
+            // Lock the screen and ensure the PiP activity is not visible on the lockscreen even
+            // though it's marked as dismiss keyguard.
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             mAmWmState.assertVisibility(PIP_ACTIVITY, false);
         }
