@@ -25,6 +25,9 @@
       "name": "CtsApacheHttpLegacyUsesLibraryApiSignatureTestCases"
     },
     {
+      "name": "CtsIntentSignatureTestCases"
+    },
+    {
       "name": "CtsHiddenApiBlacklistApi27TestCases"
     },
     {
