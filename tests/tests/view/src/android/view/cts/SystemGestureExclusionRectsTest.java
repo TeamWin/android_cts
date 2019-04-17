@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.graphics.Rect;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -176,6 +177,28 @@ public class SystemGestureExclusionRectsTest {
             });
             assertTrue("unset rects timeout", unsetter[0].await(3, SECONDS));
         }
+    }
+
+    /**
+     * Test round-trip of setting the window's exclusion rects
+     */
+    @Test
+    public void rootExclusionRects() throws Throwable {
+        final Activity activity = mActivityRule.getActivity();
+        final GestureExclusionLatcher[] setter = new GestureExclusionLatcher[1];
+        mActivityRule.runOnUiThread(() -> {
+            final Window w = activity.getWindow();
+
+            final List<Rect> initialRects = w.getSystemGestureExclusionRects();
+            assertTrue("initial rects empty", initialRects.isEmpty());
+
+            setter[0] = GestureExclusionLatcher.watching(w.getDecorView().getViewTreeObserver());
+            w.setSystemGestureExclusionRects(Lists.newArrayList(new Rect(0, 0, 5, 5)));
+            assertEquals("returned rects as expected",
+                    Lists.newArrayList(new Rect(0, 0, 5, 5)),
+                    w.getSystemGestureExclusionRects());
+        });
+        assertTrue("set rects timeout", setter[0].await(3, SECONDS));
     }
 
     private static class GestureExclusionLatcher implements Consumer<List<Rect>> {
