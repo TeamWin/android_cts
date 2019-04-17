@@ -3521,7 +3521,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="dummy_accessibility_service_label">Dummy accessibility service</string>
     <string name="policy_transparency_test_instructions">
         1. <xliff:g id="set_step" example="Set policy by turning the switch on">%1$s</xliff:g>\n
-        2. Open Settings app by clicking the "Open settings" button below. (If this device has a separate app for work settings, ignore the button and open that app manually from the launcher, if necessary)\n
+        2. Open Settings app by clicking the "Open settings" button below. Note that this will open the personal Settings app. If this device has the work settings in a different app or screen, then navigate there, ignoring the button if necessary.\n
         3. Verify that performing the following action will trigger a support dialog:\n
            <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.\n
         4. Verify that the support dialog displays the short support message set earlier.\n
