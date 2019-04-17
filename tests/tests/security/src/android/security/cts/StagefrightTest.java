@@ -45,7 +45,13 @@ import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
+import com.android.compatibility.common.util.CrashUtils;
+import com.android.compatibility.common.util.Crash;
+
+import java.io.ObjectInputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -65,6 +71,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     static final String TAG = "StagefrightTest";
 
     private final long TIMEOUT_NS = 10000000000L;  // 10 seconds.
+    private final static long CHECK_INTERVAL = 50;
 
     public StagefrightTest() {
     }
@@ -485,10 +492,35 @@ public class StagefrightTest extends InstrumentationTestCase {
         return new Surface(surfaceTex);
     }
 
+    public ArrayList<Crash> getCrashReport(String testname, long timeout)
+        throws InterruptedException {
+        Log.i(TAG, CrashUtils.UPLOAD_REQUEST);
+        File reportFile = new File(CrashUtils.DEVICE_PATH, testname);
+        File lockFile = new File(CrashUtils.DEVICE_PATH, CrashUtils.LOCK_FILENAME);
+        while ((!reportFile.exists() || !lockFile.exists()) && timeout > 0) {
+            Thread.sleep(CHECK_INTERVAL);
+            timeout -= CHECK_INTERVAL;
+        }
+        if (!reportFile.exists() || !reportFile.isFile() || !lockFile.exists()) {
+            return null;
+        }
+        try (ObjectInputStream reader = new ObjectInputStream(new FileInputStream(reportFile))) {
+            return (ArrayList<Crash>) reader.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            Log.e(TAG, "Failed to deserialize crash list with error " + e.getMessage());
+            return null;
+        }
+    }
+
     class MediaPlayerCrashListener
-    implements MediaPlayer.OnErrorListener,
+        implements MediaPlayer.OnErrorListener,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
+
+        private final String[] validProcessNames = {
+            "mediaserver", "mediadrmserver", "media.extractor", "media.codec", "media.metrics"
+        };
+
         @Override
         public boolean onError(MediaPlayer mp, int newWhat, int extra) {
             Log.i(TAG, "error: " + newWhat + "/" + extra);
@@ -528,6 +560,21 @@ public class StagefrightTest extends InstrumentationTestCase {
                 // due to additional in-flight buffers being processed, so wait a little
                 // and see if more errors show up.
                 SystemClock.sleep(1000);
+            }
+            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+                ArrayList<Crash> crashes = getCrashReport(getName(), 5000);
+                if (crashes == null) {
+                    Log.e(TAG, "Crash results not found for test " + getName());
+                    return what;
+                } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
+                    return what;
+                } else {
+                    Log.i(TAG, "Crash ignored due to no security crash found for test " +
+                        getName());
+                    // 0 is the code for no error.
+                    return 0;
+                }
+
             }
             return what;
         }
