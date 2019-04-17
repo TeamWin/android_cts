@@ -28,6 +28,7 @@ public class UnitTests extends TestSuite {
     public UnitTests() {
         super();
         addTestSuite(CaseResultTest.class);
+        addTestSuite(CrashUtilsTest.class);
         addTestSuite(DynamicConfigTest.class);
         addTestSuite(LightInvocationResultTest.class);
         addTestSuite(MetricsXmlSerializerTest.class);
