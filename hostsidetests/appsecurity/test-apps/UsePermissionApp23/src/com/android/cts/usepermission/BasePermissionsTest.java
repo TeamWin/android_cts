@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.icu.text.CaseMap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -433,14 +434,17 @@ public abstract class BasePermissionsTest {
 
                 if (wasGranted && legacyApp) {
                     scrollToBottomIfWatch();
-                    String packageName = getInstrumentation().getContext().getPackageManager()
+                    Context context = getInstrumentation().getContext();
+                    String packageName = context.getPackageManager()
                             .getPermissionControllerPackageName();
                     String resIdName = "com.android.permissioncontroller"
                             + ":string/grant_dialog_button_deny_anyway";
-                    Resources resources = getInstrumentation().getContext()
+                    Resources resources = context
                             .createPackageContext(packageName, 0).getResources();
                     final int confirmResId = resources.getIdentifier(resIdName, null, null);
-                    String confirmTitle = resources.getString(confirmResId);
+                    String confirmTitle = CaseMap.toUpper().apply(
+                            resources.getConfiguration().getLocales().get(0),
+                            resources.getString(confirmResId));
                     getUiDevice().wait(Until.findObject(By.textStartsWith(confirmTitle)),
                             GLOBAL_TIMEOUT_MILLIS).click();
 
