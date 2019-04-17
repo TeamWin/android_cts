@@ -205,7 +205,10 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitAndAssertActivityStates(state(callbackTrackingActivity, ON_TOP_POSITION_GAINED));
 
         // Enter split screen, the activity will be relaunched.
-        moveTaskToPrimarySplitScreenAndVerify(callbackTrackingActivity);
+        // Start side activity so callbackTrackingActivity won't be paused due to minimized dock.
+        moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId(),
+            true/* showSideActivity */);
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
         getLifecycleLog().clear();
 
         // Launch second activity
