@@ -30,6 +30,10 @@
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsRestrictedPermissionsUser.apk->/data/local/tmp/cts/permissions2/CtsRestrictedPermissionsUser.apk" />
+        <option name="push" value="CtsStoragePermissionsUserDefaultSdk28.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserDefaultSdk28.apk" />
+        <option name="push" value="CtsStoragePermissionsUserDefaultSdk29.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserDefaultSdk29.apk" />
+        <option name="push" value="CtsStoragePermissionsUserOptInSdk28.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptInSdk28.apk" />
+        <option name="push" value="CtsStoragePermissionsUserOptOutSdk29.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk29.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

@@ -30,6 +30,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 
 import java.util.Collections;
@@ -48,8 +49,21 @@ import androidx.test.platform.app.InstrumentationRegistry;
  * Tests for restricted permission behaviors.
  */
 public class RestrictedPermissionsTest {
-    private static final String APK =
+    private static final String APK_USES_SMS_CALL_LOG =
             "/data/local/tmp/cts/permissions2/CtsRestrictedPermissionsUser.apk";
+
+    private static final String APK_USES_STORAGE_DEFAULT_28 =
+            "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserDefaultSdk28.apk";
+
+    private static final String APK_USES_STORAGE_DEFAULT_29 =
+            "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserDefaultSdk29.apk";
+
+    private static final String APK_USES_STORAGE_OPT_IN_28 =
+            "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptInSdk28.apk";
+
+    private static final String APK_USES_STORAGE_OPT_OUT_29 =
+            "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk29.apk";
+
     private static final String PKG = "android.permission2.cts.restrictedpermissionuser";
 
     private static @NonNull BroadcastReceiver sCommandReceiver;
@@ -72,7 +86,7 @@ public class RestrictedPermissionsTest {
         sCommandReceiver = new CommandBroadcastReceiver();
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("installRestrictedPermissionUserApp");
-        intentFilter.addAction("uninstallRestrictedPermissionUserApp");
+        intentFilter.addAction("uninstallApp");
         getContext().registerReceiver(sCommandReceiver, intentFilter);
     }
 
@@ -82,6 +96,7 @@ public class RestrictedPermissionsTest {
     }
 
     @Test
+    @AppModeFull
     public void testWhenFeatureDisabledAppOpsProperlySet() throws Exception {
         assumeTrue(!PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
         try {
@@ -90,13 +105,14 @@ public class RestrictedPermissionsTest {
                     null /*grantedPermissions*/);
 
             // Appops should be allowed if feature off.
-            assertAllRestrictedPermissionAppOpsAllowed();
+            assertAllHardRestrictedPermissionAppOpsAllowed();
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
     }
 
     @Test
+    @AppModeFull
     public void testNoRestrictedPermissionsWhitelistedAtInstall() throws Exception {
         assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
         try {
@@ -110,16 +126,17 @@ public class RestrictedPermissionsTest {
             // No restricted permission should be granted.
             assertNoRestrictedPermissionGranted();
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
     }
 
     @Test
+    @AppModeFull
     public void testSomeRestrictedPermissionsWhitelistedAtInstall() throws Exception {
         assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
         try {
             // Whitelist only these permissions.
-            final Set<String> whitelistedPermissions = new ArraySet<>(1);
+            final Set<String> whitelistedPermissions = new ArraySet<>(2);
             whitelistedPermissions.add(Manifest.permission.SEND_SMS);
             whitelistedPermissions.add(Manifest.permission.READ_CALL_LOG);
 
@@ -132,11 +149,12 @@ public class RestrictedPermissionsTest {
             // No restricted permission should be granted.
             assertNoRestrictedPermissionGranted();
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
     }
 
     @Test
+    @AppModeFull
     public void testAllRestrictedPermissionWhitelistedAtInstall() throws Exception {
         assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
         try {
@@ -149,11 +167,12 @@ public class RestrictedPermissionsTest {
             // No restricted permission should be granted.
             assertNoRestrictedPermissionGranted();
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
     }
 
     @Test
+    @AppModeFull
     public void testSomeRestrictedPermissionsGrantedAtInstall() throws Exception {
         assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
         try {
@@ -171,11 +190,12 @@ public class RestrictedPermissionsTest {
             // Some restricted permission should be granted.
             assertRestrictedPermissionGranted(grantedPermissions);
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
     }
 
     @Test
+    @AppModeFull
     public void testAllRestrictedPermissionsGrantedAtInstall() throws Exception {
         assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
         try {
@@ -189,11 +209,12 @@ public class RestrictedPermissionsTest {
             // Some restricted permission should be granted.
             assertAllRestrictedPermissionGranted();
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
     }
 
     @Test
+    @AppModeFull
     public void testWhitelistAccessControl() throws Exception {
         try {
             // Install with no whitelisted permissions not attempting to grant.
@@ -209,8 +230,198 @@ public class RestrictedPermissionsTest {
             assertWeCannotReadOrWriteWhileShellCanReadAndWrite(
                     PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER);
         } finally {
-            uninstallRestrictedPermissionUserApp();
+            uninstallApp();
         }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk28DefaultWhitelistedHasFullAccess() throws Exception {
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_28, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasFullStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk28DefaultNotWhitelistedHasIsolatedAccess() throws Exception {
+        assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
+        try {
+            // Install with no whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_28, null /*whitelistedPermissions*/);
+
+            // Check expected storage mode
+            assertHasIsolatedStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk28OptInWhitelistedHasIsolatedAccess() throws Exception {
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_OPT_IN_28, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasIsolatedStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk28OptInNotWhitelistedHasIsolatedAccess() throws Exception {
+        assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_OPT_IN_28, null /*whitelistedPermissions*/);
+
+            // Check expected storage mode
+            assertHasIsolatedStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk29DefaultWhitelistedHasIsolatedAccess() throws Exception {
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_29, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasIsolatedStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk29DefaultNotWhitelistedHasIsolatedAccess() throws Exception {
+        assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
+        try {
+            // Install with no whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_29, null /*whitelistedPermissions*/);
+
+            // Check expected storage mode
+            assertHasIsolatedStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk29OptOutWhitelistedHasFullAccess() throws Exception {
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_OPT_OUT_29, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasFullStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk29OptOutNotWhitelistedHasIsolatedAccess() throws Exception {
+        assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
+        try {
+            // Install with no whitelisted permissions.
+            installApp(APK_USES_STORAGE_OPT_OUT_29, null /*whitelistedPermissions*/ );
+
+            // Check expected storage mode
+            assertHasIsolatedStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageDoesNotChangeOnUpdate() throws Exception {
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_28, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasFullStorageAccess();
+
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_OPT_IN_28, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasFullStorageAccess();
+
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_29, Collections.emptySet());
+
+            // Check expected storage mode
+            assertHasFullStorageAccess();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testCannotControlStorageWhitelistPostInstall1() throws Exception {
+        assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
+        try {
+            // Install with whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_28, Collections.emptySet());
+
+            // Check expected state of restricted permissions.
+            assertCannotUnWhitelistStorage();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testCannotControlStorageWhitelistPostInstall2() throws Exception {
+        assumeTrue(PackageManager.RESTRICTED_PERMISSIONS_ENABLED);
+        try {
+            // Install with no whitelisted permissions.
+            installApp(APK_USES_STORAGE_DEFAULT_28, null /*whitelistedPermissions*/);
+
+            // Check expected state of restricted permissions.
+            assertCannotWhitelistStorage();
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    private void assertHasFullStorageAccess() throws Exception {
+        runWithShellPermissionIdentity(() -> {
+            AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+            final int uid = getContext().getPackageManager().getPackageUid(PKG, 0);
+            assertThat(appOpsManager.unsafeCheckOpRawNoThrow(AppOpsManager.OPSTR_LEGACY_STORAGE,
+                    uid, PKG)).isEqualTo(AppOpsManager.MODE_ALLOWED);
+        });
+    }
+
+    private void assertHasIsolatedStorageAccess() throws Exception {
+        runWithShellPermissionIdentity(() -> {
+            AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+            final int uid = getContext().getPackageManager().getPackageUid(PKG, 0);
+            assertThat(appOpsManager.unsafeCheckOpRawNoThrow(AppOpsManager.OPSTR_LEGACY_STORAGE,
+                    uid, PKG)).isNotEqualTo(AppOpsManager.MODE_ALLOWED);
+        });
     }
 
     private void assertWeCannotReadOrWriteWhileShellCanReadAndWrite(int whitelist)
@@ -238,6 +449,93 @@ public class RestrictedPermissionsTest {
                     permission.SEND_SMS, whitelist);
             assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
                     whitelist)).doesNotContain(permission.SEND_SMS);
+        });
+    }
+
+    private void assertCannotWhitelistStorage()
+            throws Exception {
+        final PackageManager packageManager = getContext().getPackageManager();
+
+        runWithShellPermissionIdentity(() -> {
+            // Assert added only to none whitelist.
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .doesNotContain(permission.READ_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .doesNotContain(permission.WRITE_EXTERNAL_STORAGE);
+
+            // Assert we cannot add.
+            assertThat(packageManager.addWhitelistedRestrictedPermission(PKG,
+                    permission.READ_EXTERNAL_STORAGE,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER)).isFalse();
+            assertThat(packageManager.addWhitelistedRestrictedPermission(PKG,
+                    permission.WRITE_EXTERNAL_STORAGE,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER)).isFalse();
+
+            // Assert added only to none whitelist.
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .doesNotContain(permission.READ_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .doesNotContain(permission.WRITE_EXTERNAL_STORAGE);
+
+        });
+    }
+
+    private void assertCannotUnWhitelistStorage()
+            throws Exception {
+        final PackageManager packageManager = getContext().getPackageManager();
+
+        runWithShellPermissionIdentity(() -> {
+            // Assert added only to install whitelist.
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .contains(permission.READ_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .contains(permission.WRITE_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM))
+                    .doesNotContain(permission.READ_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM))
+                    .doesNotContain(permission.WRITE_EXTERNAL_STORAGE);
+
+            // Assert we cannot remove.
+            assertThat(packageManager.removeWhitelistedRestrictedPermission(PKG,
+                    permission.READ_EXTERNAL_STORAGE,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER)).isFalse();
+            assertThat(packageManager.removeWhitelistedRestrictedPermission(PKG,
+                    permission.WRITE_EXTERNAL_STORAGE,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER)).isFalse();
+
+            // Assert added only to install whitelist.
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .contains(permission.READ_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER))
+                    .contains(permission.WRITE_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM))
+                    .doesNotContain(permission.READ_EXTERNAL_STORAGE);
+            assertThat(packageManager.getWhitelistedRestrictedPermissions(PKG,
+                    PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE
+                            | PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM))
+                    .doesNotContain(permission.WRITE_EXTERNAL_STORAGE);
         });
     }
 
@@ -290,12 +588,11 @@ public class RestrictedPermissionsTest {
                         | PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER
                         | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE);
 
-
             assertThat(whitelistedPermissions).isNotNull();
             if (expectedWhitelistedPermissions == null) {
                 assertThat(whitelistedPermissions.isEmpty()).isTrue();
             } else {
-                assertThat(whitelistedPermissions.size()).isSameAs(
+                assertThat(whitelistedPermissions.size()).isEqualTo(
                         expectedWhitelistedPermissions.size());
                 assertThat(whitelistedPermissions.containsAll(
                         expectedWhitelistedPermissions)).isTrue();
@@ -312,28 +609,32 @@ public class RestrictedPermissionsTest {
                     assertThat(appOpsManager.unsafeCheckOpNoThrow(
                             AppOpsManager.permissionToOp(permission),
                             packageInfo.applicationInfo.uid, PKG))
-                            .isSameAs(AppOpsManager.MODE_ALLOWED);
+                            .isEqualTo(AppOpsManager.MODE_ALLOWED);
                 } else {
                     assertThat(appOpsManager.unsafeCheckOpNoThrow(
                             AppOpsManager.permissionToOp(permission),
                             packageInfo.applicationInfo.uid, PKG))
-                            .isSameAs(AppOpsManager.MODE_DEFAULT);
+                            .isEqualTo(AppOpsManager.MODE_DEFAULT);
                 }
             }
         });
     }
 
-    private void assertAllRestrictedPermissionAppOpsAllowed() throws Exception {
+    private void assertAllHardRestrictedPermissionAppOpsAllowed() throws Exception {
         runWithShellPermissionIdentity(() -> {
             // Also assert that apps ops are properly set
             final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
             final PackageInfo packageInfo = getContext().getPackageManager().getPackageInfo(PKG,
                     PackageManager.GET_PERMISSIONS);
             for (String permission : packageInfo.requestedPermissions) {
-                assertThat(appOpsManager.unsafeCheckOpNoThrow(
-                        AppOpsManager.permissionToOp(permission),
-                        packageInfo.applicationInfo.uid, PKG))
-                        .isSameAs(AppOpsManager.MODE_ALLOWED);
+                final PermissionInfo permissionInfo = getContext().getPackageManager()
+                        .getPermissionInfo(permission, 0);
+                if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0) {
+                    assertThat(appOpsManager.unsafeCheckOpNoThrow(
+                            AppOpsManager.permissionToOp(permission),
+                            packageInfo.applicationInfo.uid, PKG))
+                            .isEqualTo(AppOpsManager.MODE_ALLOWED);
+                }
             }
         });
     }
@@ -350,7 +651,7 @@ public class RestrictedPermissionsTest {
                         permission, 0);
                 if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0) {
                     assertThat((packageInfo.requestedPermissionsFlags[i]
-                            & PackageInfo.REQUESTED_PERMISSION_GRANTED)).isNotSameAs(0);
+                            & PackageInfo.REQUESTED_PERMISSION_GRANTED)).isNotEqualTo(0);
                 }
             }
         }
@@ -375,10 +676,10 @@ public class RestrictedPermissionsTest {
                     if (expectedGrantedPermissions != null
                             && expectedGrantedPermissions.contains(permission)) {
                         assertThat((packageInfo.requestedPermissionsFlags[i]
-                                & PackageInfo.REQUESTED_PERMISSION_GRANTED)).isNotSameAs(0);
+                                & PackageInfo.REQUESTED_PERMISSION_GRANTED)).isNotEqualTo(0);
                     } else {
                         assertThat((packageInfo.requestedPermissionsFlags[i]
-                                & PackageInfo.REQUESTED_PERMISSION_GRANTED)).isSameAs(0);
+                                & PackageInfo.REQUESTED_PERMISSION_GRANTED)).isEqualTo(0);
                     }
                 }
             }
@@ -387,7 +688,17 @@ public class RestrictedPermissionsTest {
 
     private void installRestrictedPermissionUserApp(@Nullable Set<String> whitelistedPermissions,
             @Nullable Set<String> grantedPermissions) throws Exception {
-        // Install the app and whitelist/grant all permisison if requested.
+        installApp(APK_USES_SMS_CALL_LOG, whitelistedPermissions, grantedPermissions);
+    }
+
+    private void installApp(@NonNull String app, @Nullable Set<String> whitelistedPermissions)
+            throws Exception {
+        installApp(app, whitelistedPermissions, null /*grantedPermissions*/);
+    }
+
+    private void installApp(@NonNull String app, @Nullable Set<String> whitelistedPermissions,
+            @Nullable Set<String> grantedPermissions) throws Exception {
+        // Install the app and whitelist/grant all permission if requested.
         final StringBuilder command = new StringBuilder("pm install ");
         if (whitelistedPermissions != null && whitelistedPermissions.isEmpty()) {
             command.append("-w ");
@@ -395,7 +706,7 @@ public class RestrictedPermissionsTest {
         if (grantedPermissions != null && grantedPermissions.isEmpty()) {
             command.append("-g ");
         }
-        command.append(APK);
+        command.append(app);
         runShellCommand(command.toString());
 
         // Whitelist subset of permissions if requested
@@ -410,10 +721,10 @@ public class RestrictedPermissionsTest {
         }
 
         // Grant subset of permissions if requested
-        if (whitelistedPermissions != null && !whitelistedPermissions.isEmpty()) {
+        if (grantedPermissions != null && !grantedPermissions.isEmpty()) {
             runWithShellPermissionIdentity(() -> {
                 final PackageManager packageManager = getContext().getPackageManager();
-                for (String permission : whitelistedPermissions) {
+                for (String permission : grantedPermissions) {
                     packageManager.grantRuntimePermission(PKG, permission,
                             getContext().getUser());
                 }
@@ -421,7 +732,7 @@ public class RestrictedPermissionsTest {
         }
     }
 
-    private void uninstallRestrictedPermissionUserApp() {
+    private void uninstallApp() {
         runShellCommand("pm uninstall " + PKG);
     }
 
