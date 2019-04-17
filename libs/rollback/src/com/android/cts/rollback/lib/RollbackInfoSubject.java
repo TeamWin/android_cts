@@ -20,9 +20,8 @@ import android.content.pm.VersionedPackage;
 import android.content.rollback.PackageRollbackInfo;
 import android.content.rollback.RollbackInfo;
 
-import com.google.common.truth.FailureStrategy;
+import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
-import com.google.common.truth.SubjectFactory;
 import com.google.common.truth.Truth;
 
 import java.util.ArrayList;
@@ -42,20 +41,20 @@ public final class RollbackInfoSubject extends Subject<RollbackInfoSubject, Roll
     /**
      * Gets the subject factory for RollbackInfo.
      */
-    public static SubjectFactory<RollbackInfoSubject, RollbackInfo> rollbacks() {
+    public static Subject.Factory<RollbackInfoSubject, RollbackInfo> rollbacks() {
         return SUBJECT_FACTORY;
     }
 
-    private static final SubjectFactory<RollbackInfoSubject, RollbackInfo> SUBJECT_FACTORY =
-            new SubjectFactory<RollbackInfoSubject, RollbackInfo>() {
+    private static final Subject.Factory<RollbackInfoSubject, RollbackInfo> SUBJECT_FACTORY =
+            new Subject.Factory<RollbackInfoSubject, RollbackInfo>() {
                 @Override
-                public RollbackInfoSubject getSubject(FailureStrategy fs, RollbackInfo that) {
+                public RollbackInfoSubject createSubject(FailureMetadata fs, RollbackInfo that) {
                     return new RollbackInfoSubject(fs, that);
                 }
             };
 
-    private RollbackInfoSubject(FailureStrategy failureStrategy, RollbackInfo subject) {
-        super(failureStrategy, subject);
+    private RollbackInfoSubject(FailureMetadata failureMetadata, RollbackInfo subject) {
+        super(failureMetadata, subject);
     }
 
     /**
