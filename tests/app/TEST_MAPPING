@@ -1,23 +1,12 @@
 {
-    "presubmit": [
+  "presubmit": [
+    {
+      "name": "CtsAppTestCases",
+      "options": [
         {
-            "name": "CtsAppTestCases",
-            "options": [
-                { "exclude-filter": "android.app.cts.AlarmManagerTest#testSetRepeating" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testAddCompletedDownload_mediaStoreEntry" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testProviderAcceptsCleartext" },
-                { "exclude-filter": "android.app.cts.NotificationManagerTest#testSetAutomaticZenRuleState_multipleRules" },
-                { "exclude-filter": "android.app.cts.SystemFeaturesTest#testSensorFeatures" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testAddCompletedDownload_sdcardPath" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManagerSupportsHttp" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManagerUpdates" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManagerDestination" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManager_mediaStoreEntry" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManager_mediaStoreUpdates" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManager" },
-                { "exclude-filter": "android.app.cts.DownloadManagerTest#testDownloadManagerSupportsHttpWithExternalWebServer" },
-                { "exclude-filter": "android.app.cts.ServiceTest#testRunningServices" }
-            ]
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
         }
-    ]
+      ]
+    }
+  ]
 }
