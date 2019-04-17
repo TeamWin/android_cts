@@ -231,8 +231,8 @@ public class AppPredictionServiceTest {
         List<AppTarget> targets = new ArrayList<>();
         int n = (int) (Math.random() * 20);
         for (int i = 0; i < n; i++) {
-            targets.add(new AppTarget.Builder(new AppTargetId(String.valueOf(i)))
-                    .setTarget("test.pkg", UserHandle.CURRENT)
+            targets.add(new AppTarget.Builder(new AppTargetId(String.valueOf(i)), "test.pkg",
+                    UserHandle.CURRENT)
                     .setClassName("test.class." + i)
                     .build());
         }

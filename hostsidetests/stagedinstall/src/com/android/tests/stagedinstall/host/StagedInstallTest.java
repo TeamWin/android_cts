@@ -21,9 +21,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -39,6 +41,8 @@ import org.junit.runner.RunWith;
 public class StagedInstallTest extends BaseHostJUnit4Test {
 
     private static final String TAG = "StagedInstallTest";
+
+    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
     @Rule
     public final FailedTestLogHook mFailedTestLogHook = new FailedTestLogHook(this);
@@ -58,11 +62,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         runPhase("cleanUp");
+        uninstallShimApexIfNecessary();
     }
 
     @After
     public void tearDown() throws Exception {
         runPhase("cleanUp");
+        uninstallShimApexIfNecessary();
     }
 
     /**
@@ -81,8 +87,23 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress() throws Exception {
-        runPhase("testFailInstallAnotherSessionAlreadyInProgress");
+    public void testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage");
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage");
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage");
+    }
+
+    @Test
+    public void testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage() throws Exception {
+        runPhase("testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage");
     }
 
     @Test
@@ -100,13 +121,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testGetActiveStagedSesssion() throws Exception {
-        runPhase("testGetActiveStagedSesssion");
+    public void testGetActiveStagedSession() throws Exception {
+        runPhase("testGetActiveStagedSession");
     }
 
     @Test
     public void testGetActiveStagedSessionNoSessionActive() throws Exception {
         runPhase("testGetActiveStagedSessionNoSessionActive");
+    }
+
+    @Test
+    public void getGetActiveStagedSession_MultiApkSession() throws Exception {
+        runPhase("testGetGetActiveStagedSession_MultiApkSession");
     }
 
     @Test
@@ -130,6 +156,57 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
         getDevice().reboot();
         runPhase("testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot");
+    }
+
+    @Test
+    public void testInstallStagedApex() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testInstallStagedApex_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedApex_VerifyPostReboot");
+    }
+
+    @Test
+    public void testInstallStagedApexAndApk() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testInstallStagedApexAndApk_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedApexAndApk_VerifyPostReboot");
+    }
+
+    private boolean isUpdatingApexSupported() throws Exception {
+        final String updatable = getDevice().getProperty("ro.apex.updatable");
+        return updatable != null && updatable.equals("true");
+    }
+
+    /**
+     * Uninstalls a shim apex only if it's latest version is installed on /data partition (i.e.
+     * it has a version higher than {@code 1}).
+     *
+     * <p>This is purely to optimize tests run time. Since uninstalling an apex requires a reboot,
+     * and only a small subset of tests successfully install an apex, this code avoids ~10
+     * unnecessary reboots.
+     */
+    private void uninstallShimApexIfNecessary() throws Exception {
+        final ITestDevice.ApexInfo shimApex = getShimApex();
+        if (shimApex.versionCode == 1) {
+            // System version is active, skipping uninstalling active apex and rebooting the device.
+            return;
+        }
+        // Non system version is active, need to uninstall it and reboot the device.
+        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
+        Log.i(TAG, "Uninstalling shim apex " + shimApex);
+        if (errorMessage != null) {
+            throw new AssertionError("Failed to uninstall " + shimApex);
+        }
+        getDevice().reboot();
+        assertThat(getShimApex().versionCode).isEqualTo(1L);
+    }
+
+    private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
+        return getDevice().getActiveApexes().stream().filter(
+                apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
+                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
     }
 
     private static final class FailedTestLogHook extends TestWatcher {

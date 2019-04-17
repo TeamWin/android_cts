@@ -224,6 +224,18 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_128kbps_44100hz_dash);
     }
 
+    public void testTrackSelectionMkv() throws Exception {
+        Log.d(TAG, "testTrackSelectionMkv!!!!!! ");
+        testTrackSelection(R.raw.mkv_avc_adpcm_ima);
+        Log.d(TAG, "mkv_avc_adpcm_ima finished!!!!!! ");
+        testTrackSelection(R.raw.mkv_avc_adpcm_ms);
+        Log.d(TAG, "mkv_avc_adpcm_ms finished!!!!!! ");
+        testTrackSelection(R.raw.mkv_avc_wma);
+        Log.d(TAG, "mkv_avc_wma finished!!!!!! ");
+        testTrackSelection(R.raw.mkv_avc_mp2);
+        Log.d(TAG, "mkv_avc_mp2 finished!!!!!! ");
+    }
+
     public void testBFrames() throws Exception {
         int testsRun =
             testBFrames(R.raw.video_h264_main_b_frames) +

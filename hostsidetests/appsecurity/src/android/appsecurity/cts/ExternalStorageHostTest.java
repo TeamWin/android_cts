@@ -688,7 +688,9 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, false);
 
-            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Open", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Update", user);
+            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Delete", user);
         }
     }
 

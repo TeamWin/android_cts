@@ -125,22 +125,26 @@ public class SecurityTestCase extends DeviceTestCase {
         }
     }
 
+    // TODO convert existing assertMatches*() to RegexUtils.assertMatches*()
+    // b/123237827
+    @Deprecated
     public void assertMatches(String pattern, String input) throws Exception {
-        assertTrue("Pattern not found", Pattern.matches(pattern, input));
+        RegexUtils.assertContains(pattern, input);
     }
 
+    @Deprecated
     public void assertMatchesMultiLine(String pattern, String input) throws Exception {
-        assertTrue("Pattern not found: " + pattern,
-          Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
+        RegexUtils.assertContainsMultiline(pattern, input);
     }
 
+    @Deprecated
     public void assertNotMatches(String pattern, String input) throws Exception {
-        assertFalse("Pattern found", Pattern.matches(pattern, input));
+        RegexUtils.assertNotContains(pattern, input);
     }
 
+    @Deprecated
     public void assertNotMatchesMultiLine(String pattern, String input) throws Exception {
-        assertFalse("Pattern found: " + pattern,
-          Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
+        RegexUtils.assertNotContainsMultiline(pattern, input);
     }
 
     /**

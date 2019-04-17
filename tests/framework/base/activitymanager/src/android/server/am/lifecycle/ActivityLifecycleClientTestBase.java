@@ -44,7 +44,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
-import android.server.am.ActivityManagerDisplayTestBase;
+import android.server.am.MultiDisplayTestBase;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
@@ -56,7 +56,7 @@ import org.junit.Before;
 import java.util.List;
 
 /** Base class for device-side tests that verify correct activity lifecycle transitions. */
-public class ActivityLifecycleClientTestBase extends ActivityManagerDisplayTestBase {
+public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     static final String EXTRA_RECREATE = "recreate";
     static final String EXTRA_FINISH_IN_ON_RESUME = "finish_in_on_resume";

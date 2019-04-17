@@ -183,8 +183,12 @@ public class MediaStore_Audio_AlbumsTest {
                 albumId = c.getLong(c.getColumnIndex(Albums.ALBUM_ID));
             }
 
+            final Uri albumUri = ContentUris
+                    .withAppendedId(MediaStore.Audio.Albums.getContentUri(mVolumeName), albumId);
+
             // Verify that normal thumbnails work
             assertNotNull(mContentResolver.loadThumbnail(mediaUri, new Size(32, 32), null));
+            assertNotNull(mContentResolver.loadThumbnail(albumUri, new Size(32, 32), null));
 
             // Verify that hidden APIs still work to obtain album art
             final Uri byMedia = MediaStore.AUTHORITY_URI.buildUpon().appendPath(mVolumeName)
@@ -201,6 +205,11 @@ public class MediaStore_Audio_AlbumsTest {
 
             try {
                 mContentResolver.loadThumbnail(mediaUri, new Size(32, 32), null);
+                fail();
+            } catch (IOException expected) {
+            }
+            try {
+                mContentResolver.loadThumbnail(albumUri, new Size(32, 32), null);
                 fail();
             } catch (IOException expected) {
             }

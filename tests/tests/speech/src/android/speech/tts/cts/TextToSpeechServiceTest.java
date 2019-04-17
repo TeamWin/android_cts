@@ -54,7 +54,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     public void testSynthesizeToFile() throws Exception {
-        File sampleFile = new File(Environment.getExternalStorageDirectory(), SAMPLE_FILE_NAME);
+        File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
         try {
             assertFalse(sampleFile.exists());
 
@@ -86,7 +86,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     public void testMaxSpeechInputLength() {
-      File sampleFile = new File(Environment.getExternalStorageDirectory(), SAMPLE_FILE_NAME);
+      File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
       try {
           assertFalse(sampleFile.exists());
           TextToSpeech tts = getTts();
@@ -166,7 +166,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     public void testMediaPlayerFails() throws Exception {
-        File sampleFile = new File(Environment.getExternalStorageDirectory(), "notsound.wav");
+        File sampleFile = new File(getContext().getExternalFilesDir(null), "notsound.wav");
         try {
             assertFalse(TextToSpeechWrapper.isSoundFile(sampleFile.getPath()));
             FileOutputStream out = new FileOutputStream(sampleFile);
