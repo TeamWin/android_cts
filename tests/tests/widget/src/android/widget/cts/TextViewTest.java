@@ -51,6 +51,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -5012,6 +5013,34 @@ public class TextViewTest {
         mTextView.setCompoundDrawables(dr1, dr2, dr3, dr4);
         assertSame(colors, mTextView.getCompoundDrawableTintList());
         assertEquals(PorterDuff.Mode.XOR, mTextView.getCompoundDrawableTintMode());
+    }
+
+    @Test
+    public void testAccessCompoundDrawableTintBlendMode() {
+        mTextView = new TextView(InstrumentationRegistry.getTargetContext());
+
+        ColorStateList colors = ColorStateList.valueOf(Color.RED);
+        mTextView.setCompoundDrawableTintList(colors);
+        mTextView.setCompoundDrawableTintBlendMode(BlendMode.XOR);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(BlendMode.XOR, mTextView.getCompoundDrawableTintBlendMode());
+
+        // Ensure the tint is preserved across drawable changes.
+        mTextView.setCompoundDrawablesRelative(null, null, null, null);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(BlendMode.XOR, mTextView.getCompoundDrawableTintBlendMode());
+
+        mTextView.setCompoundDrawables(null, null, null, null);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(BlendMode.XOR, mTextView.getCompoundDrawableTintBlendMode());
+
+        ColorDrawable dr1 = new ColorDrawable(Color.RED);
+        ColorDrawable dr2 = new ColorDrawable(Color.GREEN);
+        ColorDrawable dr3 = new ColorDrawable(Color.BLUE);
+        ColorDrawable dr4 = new ColorDrawable(Color.YELLOW);
+        mTextView.setCompoundDrawables(dr1, dr2, dr3, dr4);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(BlendMode.XOR, mTextView.getCompoundDrawableTintBlendMode());
     }
 
     @Test
