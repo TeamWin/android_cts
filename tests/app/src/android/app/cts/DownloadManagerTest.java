@@ -437,6 +437,8 @@ public class DownloadManagerTest {
         }
     }
 
+    //TODO(b/130797842): Remove FlakyTest annotation after that bug is fixed.
+    @FlakyTest
     @Test
     public void testAddCompletedDownload() throws Exception {
         final String fileContents = "RED;GREEN;BLUE";
