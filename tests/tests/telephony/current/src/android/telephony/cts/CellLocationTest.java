@@ -15,6 +15,11 @@
  */
 package android.telephony.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.os.Looper;
@@ -23,14 +28,15 @@ import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.test.AndroidTestCase;
-import android.content.pm.PackageManager;
 import android.util.Log;
 
-import com.android.compatibility.common.util.ReadElf;
 import com.android.compatibility.common.util.TestThread;
 
-public class CellLocationTest extends AndroidTestCase{
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class CellLocationTest {
     private boolean mOnCellLocationChangedCalled;
     private final Object mLock = new Object();
     private TelephonyManager mTelephonyManager;
@@ -38,23 +44,22 @@ public class CellLocationTest extends AndroidTestCase{
     private static ConnectivityManager mCm;
     private static final String TAG = "android.telephony.cts.CellLocationTest";
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mTelephonyManager =
                 (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mListener != null) {
             // unregister listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         }
-        super.tearDown();
     }
 
+    @Test
     public void testCellLocation() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");

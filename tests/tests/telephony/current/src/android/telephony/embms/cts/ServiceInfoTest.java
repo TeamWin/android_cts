@@ -16,8 +16,10 @@
 
 package android.telephony.embms.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.telephony.mbms.StreamingServiceInfo;
-import android.test.InstrumentationTestCase;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,7 +28,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class ServiceInfoTest extends InstrumentationTestCase {
+import org.junit.Test;
+
+public class ServiceInfoTest {
     private static final String ID = "StreamingServiceId";
     private static final Map<Locale, String> LOCALE_DICT = new HashMap<Locale, String>() {{
         put(Locale.US, "Entertainment Source 1");
@@ -42,6 +46,7 @@ public class ServiceInfoTest extends InstrumentationTestCase {
     private static final StreamingServiceInfo STREAMING_SERVICE_INFO =
         new StreamingServiceInfo(LOCALE_DICT, NAME, LOCALES, ID, BEGIN_DATE, END_DATE);
 
+    @Test
     public void testDataAccess() {
         assertEquals(LOCALES.size(), STREAMING_SERVICE_INFO.getLocales().size());
         for (int i = 0; i < LOCALES.size(); i++) {

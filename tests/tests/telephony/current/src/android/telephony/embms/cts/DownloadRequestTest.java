@@ -16,24 +16,34 @@
 
 package android.telephony.embms.cts;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.net.Uri;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
 import android.telephony.mbms.DownloadRequest;
-import android.test.InstrumentationTestCase;
 
 import java.io.File;
 
-public class DownloadRequestTest extends InstrumentationTestCase {
+import org.junit.Test;
+
+public class DownloadRequestTest {
+
+    @Test
     public void testGetMaxAppIntentSize() {
         // Test that the max intent size is positive
         assertTrue(DownloadRequest.getMaxAppIntentSize() > 0);
     }
 
+    @Test
     public void testGetMaxDestinationUriSize() {
         // Test that the max intent size is positive
         assertTrue(DownloadRequest.getMaxDestinationUriSize() > 0);
     }
 
+    @Test
     public void testBuilderConstruction() {
         File destinationDirectory = new File(getInstrumentation().getContext().getFilesDir(),
                 "downloads");
@@ -46,6 +56,7 @@ public class DownloadRequestTest extends InstrumentationTestCase {
         assertEquals(request, DownloadRequest.Builder.fromDownloadRequest(request).build());
     }
 
+    @Test
     public void testServiceIdEquivalency() {
         File destinationDirectory = new File(getInstrumentation().getContext().getFilesDir(),
                 "downloads");
