@@ -59,6 +59,7 @@ public class ActivityManagerState {
 
     public static final int DUMP_MODE_ACTIVITIES = 0;
 
+    public static final String STATE_INITIALIZING = "INITIALIZING";
     public static final String STATE_RESUMED = "RESUMED";
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
@@ -681,7 +682,7 @@ public class ActivityManagerState {
             }
             return false;
         }
-        
+
         public ArrayList<ActivityStack> getStacks() {
             return mStacks;
         }
