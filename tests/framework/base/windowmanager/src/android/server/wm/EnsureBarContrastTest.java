@@ -239,8 +239,8 @@ public class EnsureBarContrastTest {
                 // Install the decor
                 getWindow().getDecorView();
 
-                getWindow().setEnsuringStatusBarContrastWhenTransparent(ensureContrast);
-                getWindow().setEnsuringNavigationBarContrastWhenTransparent(ensureContrast);
+                getWindow().setStatusBarContrastEnforced(ensureContrast);
+                getWindow().setNavigationBarContrastEnforced(ensureContrast);
 
                 getWindow().setStatusBarColor(Color.TRANSPARENT);
                 getWindow().setNavigationBarColor(Color.TRANSPARENT);
