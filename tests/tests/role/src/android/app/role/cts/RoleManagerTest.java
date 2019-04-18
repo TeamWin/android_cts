@@ -279,6 +279,14 @@ public class RoleManagerTest {
         respondToRoleRequest(false);
     }
 
+    @Test
+    public void requestAssistantRoleThenDeniedAutomatically() throws InterruptedException {
+        requestRole(RoleManager.ROLE_ASSISTANT);
+        Pair<Integer, Intent> result = waitForResult();
+
+        assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
+    }
+
     private void requestRole(@NonNull String roleName) {
         Intent intent = new Intent()
                 .setComponent(new ComponentName(APP_PACKAGE_NAME, APP_REQUEST_ROLE_ACTIVITY_NAME))
