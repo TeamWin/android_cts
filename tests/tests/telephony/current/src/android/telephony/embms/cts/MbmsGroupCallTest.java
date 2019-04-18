@@ -16,6 +16,9 @@
 
 package android.telephony.embms.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.annotation.Nullable;
 import android.telephony.cts.embmstestapp.CtsGroupCallService;
 import android.telephony.mbms.GroupCallCallback;
@@ -28,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.junit.Test;
 
 public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
     private class TestGroupCallCallback implements GroupCallCallback {
@@ -96,6 +100,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
     private TestGroupCallCallback mGroupCallCallback =
             new TestGroupCallCallback();
 
+    @Test
     public void testStartGroupCall() throws Exception {
         GroupCall groupCall = mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST,
                 mCallbackExecutor, mGroupCallCallback
@@ -116,6 +121,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
         assertEquals(FREQUENCY_LIST, startGroupCallCall.get(4));
     }
 
+    @Test
     public void testUpdateGroupCall() throws Exception {
         GroupCall groupCall = mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST,
                 mCallbackExecutor, mGroupCallCallback
@@ -133,6 +139,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
         assertEquals(newFreqs, updateGroupCallCall.get(4));
     }
 
+    @Test
     public void testStopGroupCall() throws Exception {
         GroupCall groupCall = mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST,
                 mCallbackExecutor, mGroupCallCallback
@@ -144,6 +151,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
         assertEquals(TMGI, stopGroupCallCalls.get(0).get(2));
     }
 
+    @Test
     public void testGroupCallCallbacks() throws Exception {
         mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST, mCallbackExecutor,
                 mGroupCallCallback
@@ -160,6 +168,7 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
                 mGroupCallCallback.waitOnBroadcastSignalStrengthUpdated().arg1);
     }
 
+    @Test
     public void testStartGroupCallFailure() throws Exception {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);
