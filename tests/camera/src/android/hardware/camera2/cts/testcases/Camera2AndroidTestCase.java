@@ -68,6 +68,8 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
     protected BlockingSessionCallback mCameraSessionListener;
     protected BlockingStateCallback mCameraListener;
     protected String[] mCameraIds;
+    // include both standalone camera IDs and "hidden" physical camera IDs
+    protected String[] mAllCameraIds;
     protected HashMap<String, StaticMetadata> mAllStaticInfo;
     protected ImageReader mReader;
     protected Surface mReaderSurface;
@@ -134,6 +136,11 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
                     mAllStaticInfo.put(physicalId, staticMetadata);
                 }
             }
+        }
+        mAllCameraIds = new String[mCameraIds.length + hiddenPhysicalIds.size()];
+        System.arraycopy(mCameraIds, 0, mAllCameraIds, 0, mCameraIds.length);
+        for (int i = 0; i < hiddenPhysicalIds.size(); i++) {
+            mAllCameraIds[mCameraIds.length + i] = hiddenPhysicalIds.get(i);
         }
     }
 
