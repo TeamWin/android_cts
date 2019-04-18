@@ -329,19 +329,19 @@ public class DrawableContainerTest {
         Drawable dr = spy(new ColorDrawable(Color.GREEN));
         addAndSelectDrawable(dr);
 
-        verify(dr, times(1)).setTintMode(BlendMode.SRC_OVER);
+        verify(dr, times(1)).setTintBlendMode(BlendMode.SRC_OVER);
     }
 
     @Test
     public void testSetBlendMode() {
         mMockDrawableContainer.setConstantState(mDrawableContainerState);
         mDrawableContainer.setTint(Color.BLACK);
-        mDrawableContainer.setTintMode(BlendMode.SRC_OVER);
+        mDrawableContainer.setTintBlendMode(BlendMode.SRC_OVER);
 
         Drawable dr = spy(new ColorDrawable(Color.GREEN));
         addAndSelectDrawable(dr);
 
-        verify(dr, times(1)).setTintMode(BlendMode.SRC_OVER);
+        verify(dr, times(1)).setTintBlendMode(BlendMode.SRC_OVER);
     }
 
     @Test
@@ -943,7 +943,7 @@ public class DrawableContainerTest {
         }
 
         @Override
-        public void setTintMode(BlendMode blendMode) {
+        public void setTintBlendMode(BlendMode blendMode) {
             mHasOnApplyBlendModeChanged = true;
             mBlendMode = blendMode;
         }
