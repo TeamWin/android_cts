@@ -79,6 +79,8 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final int NUM_FRAMES_CHECKED = 30;
 
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
+    private static final double FOV_THRESHOLD = 0.03;
+    private static final double ASPECT_RATIO_THRESHOLD = 0.03;
 
     @Override
     public void setUp() throws Exception {
@@ -840,9 +842,57 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Validate that physical cameras' crop region are compensated based on focal length.
+     *
+     * This is to make sure physical processed streams have the same field of view as long as
+     * the physical cameras supports it.
+     */
+    private void validatePhysicalCamerasFov(TotalCaptureResult totalCaptureResult,
+            List<String> physicalCameraIds) {
+        Rect cropRegion = totalCaptureResult.get(CaptureResult.SCALER_CROP_REGION);
+        Float focalLength = totalCaptureResult.get(CaptureResult.LENS_FOCAL_LENGTH);
+        float cropAspectRatio = (float)cropRegion.width() / cropRegion.height();
+
+        // Assume subject distance >> focal length, and subject distance >> camera baseline.
+        float fov = cropRegion.width() / (2 * focalLength);
+        Map<String, CaptureResult> physicalResultsDual =
+                    totalCaptureResult.getPhysicalCameraResults();
+        for (String physicalId : physicalCameraIds) {
+            CaptureResult physicalResult = physicalResultsDual.get(physicalId);
+            Rect physicalCropRegion = physicalResult.get(CaptureResult.SCALER_CROP_REGION);
+            final Float physicalFocalLength = physicalResult.get(CaptureResult.LENS_FOCAL_LENGTH);
+
+            StaticMetadata staticInfo = mAllStaticInfo.get(physicalId);
+            final Rect activeArraySize = staticInfo.getActiveArraySizeChecked();
+            final Float maxDigitalZoom = staticInfo.getAvailableMaxDigitalZoomChecked();
+            int maxWidth = activeArraySize.width();
+            int minWidth = (int)(activeArraySize.width() / maxDigitalZoom);
+            int expectedCropWidth = Math.max(Math.min(Math.round(fov * 2 * physicalFocalLength),
+                    maxWidth), minWidth);
+
+            // Makes sure FOV matches to the maximum extent.
+            assertTrue("Physical stream FOV (Field of view) should match logical stream to most "
+                    + "extent. Crop region actual width " + physicalCropRegion.width() +
+                    " vs expected width " + expectedCropWidth,
+                    Math.abs((float)physicalCropRegion.width() - expectedCropWidth) /
+                    expectedCropWidth < FOV_THRESHOLD);
+
+            // Makes sure aspect ratio matches.
+            float physicalCropAspectRatio =
+                    (float)physicalCropRegion.width() / physicalCropRegion.height();
+            assertTrue("Physical stream for camera " + physicalId + " aspect ratio " +
+                    physicalCropAspectRatio + " should match logical streams aspect ratio " +
+                    cropAspectRatio, Math.abs(physicalCropAspectRatio - cropAspectRatio) <
+                    ASPECT_RATIO_THRESHOLD);
+        }
+
+
+    }
+
+    /**
      * Test physical camera YUV streaming within a particular logical camera.
      *
-     * Use 2 YUV streams with PREVIEW or smaller size, which is guaranteed for LIMITED device level.
+     * Use 2 YUV streams with PREVIEW or smaller size.
      */
     private void testBasicPhysicalStreamingForCamera(String logicalCameraId,
             List<String> physicalCameraIds, Size previewSize) throws Exception {
@@ -980,6 +1030,13 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                  index++;
             }
         }
+
+        // Check both logical and physical streams' crop region, and make sure their FOVs
+        // are similar.
+        TotalCaptureResult totalCaptureResult =
+                simpleResultListenerDual.getTotalCaptureResult(
+                CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
+        validatePhysicalCamerasFov(totalCaptureResult, physicalCameraIds);
 
         // Check timestamp monolithity for individual camera and across cameras
         for (int i = 0; i < NUM_FRAMES_CHECKED-1; i++) {

@@ -1690,6 +1690,14 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(R.raw.mkv_mp3_frame_incomplete, -1, -1);
     }
 
+    public void testLocalVideo_mkv_audio_pcm_be() throws Exception {
+        playVideoTest(R.raw.mkv_audio_pcms16be, -1, -1);
+    }
+
+    public void testLocalVideo_mkv_audio_pcm_le() throws Exception {
+        playVideoTest(R.raw.mkv_audio_pcms16le, -1, -1);
+    }
+
     private void readSubtitleTracks() throws Exception {
         mSubtitleTrackIndex.clear();
         MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();

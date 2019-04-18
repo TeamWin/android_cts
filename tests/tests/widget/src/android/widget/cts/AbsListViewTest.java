@@ -199,13 +199,13 @@ public class AbsListViewTest {
     }
 
     private void setAdapter(final ListAdapter adapter) throws Throwable {
-        mActivityRule.runOnUiThread(() -> mListView.setAdapter(adapter));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setAdapter(adapter));
     }
 
     private void setListSelection(int index) throws Throwable {
-        mActivityRule.runOnUiThread(() -> mListView.setSelection(index));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setSelection(index));
     }
 
     @LargeTest
@@ -332,13 +332,13 @@ public class AbsListViewTest {
     public void testAccessStackFromBottom() throws Throwable {
         setAdapter();
 
-        mActivityRule.runOnUiThread(() -> mListView.setStackFromBottom(false));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setStackFromBottom(false));
         assertFalse(mListView.isStackFromBottom());
         assertEquals(0, mListView.getSelectedItemPosition());
 
-        mActivityRule.runOnUiThread(() -> mListView.setStackFromBottom(true));
-
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setStackFromBottom(true));
         assertTrue(mListView.isStackFromBottom());
         // ensure last item in list is selected
         assertEquals(COUNTRY_LIST.length-1, mListView.getSelectedItemPosition());
@@ -378,9 +378,8 @@ public class AbsListViewTest {
         assertEquals(0, mListView.getListPaddingBottom());
 
         final Rect r = new Rect(0, 0, 40, 60);
-        mActivityRule.runOnUiThread(
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setPadding(r.left, r.top, r.right, r.bottom));
-        mInstrumentation.waitForIdleSync();
 
         assertEquals(r.left, mListView.getListPaddingLeft());
         assertEquals(r.top, mListView.getListPaddingTop());
@@ -395,16 +394,14 @@ public class AbsListViewTest {
         final Drawable d = mContext.getDrawable(R.drawable.pass);
         mListView.setSelector(d);
 
-        mActivityRule.runOnUiThread(mListView::requestLayout);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, mListView::requestLayout);
         assertSame(d, mListView.getSelector());
         assertTrue(mListView.verifyDrawable(d));
 
         mListView.setSelector(R.drawable.failed);
         mListView.setDrawSelectorOnTop(true);
 
-        mActivityRule.runOnUiThread(mListView::requestLayout);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, mListView::requestLayout);
 
         Drawable drawable = mListView.getSelector();
         assertNotNull(drawable);
@@ -422,42 +419,39 @@ public class AbsListViewTest {
         // leave touch-mode
         mInstrumentation.setInTouchMode(false);
         setAdapter();
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, null);
         // Entering touch mode hides selector
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
             // make sure we've left touchmode (including message sending. instrumentation just sets
             // a variable without any broadcast).
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
-            mActivityRule.runOnUiThread(() -> {
+            WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
                 mListView.requestFocus();
                 mListView.setSelectionFromTop(1, 0);
             });
-            mInstrumentation.waitForIdleSync();
             assertEquals(1, mListView.getSelectedItemPosition());
             final int[] pt = new int[2];
             mListView.getLocationOnScreen(pt);
             CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
                     pt[0] + 2, pt[1] + 2, 0, 10);
-            mInstrumentation.waitForIdleSync();
             assertEquals(AdapterView.INVALID_POSITION, mListView.getSelectedItemPosition());
             // leave touch-mode
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
         }
 
         // Scroll off-screen hides selector, but shows up again when on-screen
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
             mListView.requestFocus();
             mListView.setSelectionFromTop(1, 0);
         });
-        mInstrumentation.waitForIdleSync();
         assertEquals(1, mListView.getSelectedItemPosition());
         int selViewHeight = mListView.getSelectedView().getHeight();
         final int[] pt = new int[2];
         mListView.getLocationOnScreen(pt);
         pt[0] += mListView.getWidth() / 2;
         pt[1] += selViewHeight / 2;
-        mActivityRule.runOnUiThread(() -> mListView.scrollListBy(selViewHeight * 2));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.scrollListBy(selViewHeight * 2));
         assertEquals(1, mListView.getSelectedItemPosition());
         assertFalse(mListView.shouldDrawSelector());
         mActivityRule.runOnUiThread(() -> mListView.scrollListBy(-(selViewHeight * 4) / 3));
@@ -475,8 +469,7 @@ public class AbsListViewTest {
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        mActivityRule.runOnUiThread(mListView::requestLayout);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, mListView::requestLayout);
     }
 
     @Test
@@ -657,20 +650,18 @@ public class AbsListViewTest {
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        mActivityRule.runOnUiThread(mListView::invalidateViews);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, mListView::invalidateViews);
     }
 
     @Test
     public void testGetContextMenuInfo() throws Throwable {
         final MyListView listView = new MyListView(mContext, mAttributeSet);
 
-        mActivityRule.runOnUiThread(() ->  {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, listView, () ->  {
             mActivityRule.getActivity().setContentView(listView);
             listView.setAdapter(mCountriesAdapter);
             listView.setSelection(2);
         });
-        mInstrumentation.waitForIdleSync();
 
         final TextView v = (TextView) listView.getSelectedView();
         assertNull(listView.getContextMenuInfo());
@@ -747,10 +738,11 @@ public class AbsListViewTest {
         // Calling setItemChecked with the same value in multiple choice mode should not cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
 
@@ -760,29 +752,28 @@ public class AbsListViewTest {
         // Calling setItemChecked with the same value in single choice mode should not cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
     private boolean checkResult = false;
+
     @MediumTest
     @Test
     public void testSetItemChecked_multipleModeDifferentValue() throws Throwable {
         // Calling setItemChecked with a different value in multiple choice mode should cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
         checkResult = false;
-        mActivityRule.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, true);
-                checkResult = mListView.isLayoutRequested();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            mListView.setItemChecked(0, true);
+            checkResult = mListView.isLayoutRequested();
         });
         assertTrue(checkResult);
     }
@@ -793,16 +784,13 @@ public class AbsListViewTest {
         // Calling setItemChecked with a different value in single choice mode should cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
         checkResult = false;
-        mActivityRule.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, true);
-                checkResult = mListView.isLayoutRequested();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            mListView.setItemChecked(0, true);
+            checkResult = mListView.isLayoutRequested();
         });
         assertTrue(checkResult);
     }
@@ -869,12 +857,11 @@ public class AbsListViewTest {
         // at least yet.
         final MyListView listView = new MyListView(mContext, mAttributeSet);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, listView, () -> {
             mActivityRule.getActivity().setContentView(listView);
             listView.setAdapter(mCountriesAdapter);
             listView.setTextFilterEnabled(true);
         });
-        mInstrumentation.waitForIdleSync();
 
         // Set text filter to A - we expect four entries to be left displayed in the list
         mActivityRule.runOnUiThread(() -> listView.setFilterText("A"));
@@ -1162,8 +1149,8 @@ public class AbsListViewTest {
             return;
         }
 
-        mActivityRule.runOnUiThread(() -> mListView.setFastScrollAlwaysVisible(true));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setFastScrollAlwaysVisible(true));
         assertTrue(mListView.isFastScrollEnabled());
         assertTrue(mListView.isFastScrollAlwaysVisible());
 

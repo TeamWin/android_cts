@@ -209,7 +209,10 @@ public class TextClassificationManagerTest {
     @Test
     public void testOnTextClassifierEvent() {
         // Doesn't crash.
-        mClassifier.onTextClassifierEvent(new TextClassifierEvent.Builder(0, 0).build());
+        mClassifier.onTextClassifierEvent(
+                new TextClassifierEvent.ConversationActionsEvent.Builder(
+                        TextClassifierEvent.TYPE_SMART_ACTION)
+                        .build());
     }
 
     @Test
