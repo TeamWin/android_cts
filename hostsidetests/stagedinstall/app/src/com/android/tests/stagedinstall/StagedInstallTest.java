@@ -389,6 +389,21 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
     }
 
+    @Test
+    public void testsFailsNonStagedApexInstall() throws Exception {
+        PackageInstaller installer = getPackageInstaller();
+        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        params.setInstallAsApex();
+        try {
+            installer.createSession(params);
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException expected) {
+            assertThat(expected.getMessage()).contains(
+                    "APEX files can only be installed as part of a staged session");
+        }
+    }
+
     private static PackageInstaller getPackageInstaller() {
       return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager().getPackageInstaller();
     }
