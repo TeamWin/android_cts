@@ -16,8 +16,6 @@
 
 package android.app.cts;
 
-import android.app.cts.R;
-
 import static android.app.Notification.FLAG_BUBBLE;
 import static android.graphics.drawable.Icon.TYPE_ADAPTIVE_BITMAP;
 import static android.graphics.drawable.Icon.TYPE_RESOURCE;
@@ -637,7 +635,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(icon, data.getIcon());
         assertEquals(bubbleIntent, data.getIntent());
         assertEquals(deleteIntent, data.getDeleteIntent());
-        assertFalse(data.getSuppressNotification());
+        assertFalse(data.isNotificationSuppressed());
         assertFalse(data.getAutoExpandBubble());
     }
 
@@ -661,7 +659,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(bubbleIntent, metadata.getIntent());
         assertEquals(deleteIntent, metadata.getDeleteIntent());
         assertTrue(metadata.getAutoExpandBubble());
-        assertTrue(metadata.getSuppressNotification());
+        assertTrue(metadata.isNotificationSuppressed());
     }
 
     public void testBubbleMetadata_parcelResId() {
@@ -678,7 +676,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(icon, metadata.getIcon());
         assertEquals(bubbleIntent, metadata.getIntent());
         assertFalse(metadata.getAutoExpandBubble());
-        assertFalse(metadata.getSuppressNotification());
+        assertFalse(metadata.isNotificationSuppressed());
     }
 
     public void testBubbleMetadataBuilder_throwForNoIntent() {
