@@ -45,7 +45,6 @@ import android.net.sip.SipManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
-import android.platform.test.annotations.Presubmit;
 import android.telephony.TelephonyManager;
 
 import androidx.test.filters.FlakyTest;
@@ -68,7 +67,6 @@ import org.junit.runners.JUnit4;
 /**
  * Test for checking that the {@link PackageManager} is reporting the correct features.
  */
-@Presubmit
 @RunWith(JUnit4.class)
 public class SystemFeaturesTest {
 
