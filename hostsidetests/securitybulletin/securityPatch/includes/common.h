@@ -30,6 +30,9 @@
     exit(EXIT_FAILURE); \
   }
 
+#define _32_BIT UINTPTR_MAX == UINT32_MAX
+#define _64_BIT UINTPTR_MAX == UINT64_MAX
+
 time_t start_timer(void);
 int timer_active(time_t timer_started);
 
