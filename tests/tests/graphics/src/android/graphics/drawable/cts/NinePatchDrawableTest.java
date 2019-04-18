@@ -228,12 +228,12 @@ public class NinePatchDrawableTest {
     @Test
     public void testSetBlendMode() {
         mNinePatchDrawable.setTint(Color.BLACK);
-        mNinePatchDrawable.setTintMode(BlendMode.SRC_OVER);
+        mNinePatchDrawable.setTintBlendMode(BlendMode.SRC_OVER);
         assertEquals("Nine-patch is tinted", Color.BLACK,
                 DrawableTestUtils.getPixel(mNinePatchDrawable, 0, 0));
 
         mNinePatchDrawable.setTintList(null);
-        mNinePatchDrawable.setTintMode((BlendMode) null);
+        mNinePatchDrawable.setTintBlendMode((BlendMode) null);
     }
 
     @Test
