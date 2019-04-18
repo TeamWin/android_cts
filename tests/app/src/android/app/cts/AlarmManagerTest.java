@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.SystemClock;
-import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.Log;
@@ -36,7 +35,6 @@ import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 
-@Presubmit
 public class AlarmManagerTest extends AndroidTestCase {
     public static final String MOCKACTION = "android.app.AlarmManagerTest.TEST_ALARMRECEIVER";
     public static final String MOCKACTION2 = "android.app.AlarmManagerTest.TEST_ALARMRECEIVER2";

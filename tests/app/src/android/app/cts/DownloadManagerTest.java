@@ -43,7 +43,6 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -77,7 +76,6 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
 
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerTest {
     private static final String TAG = "DownloadManagerTest";

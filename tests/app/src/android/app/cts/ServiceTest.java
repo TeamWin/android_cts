@@ -45,7 +45,6 @@ import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.platform.test.annotations.Presubmit;
 import android.service.notification.StatusBarNotification;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
@@ -68,7 +67,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-@Presubmit
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
