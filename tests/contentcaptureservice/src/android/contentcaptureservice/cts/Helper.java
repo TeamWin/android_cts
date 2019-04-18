@@ -30,6 +30,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.Timeout;
+
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +55,9 @@ public final class Helper {
     public static final String RESOURCE_STRING_SERVICE_NAME = "config_defaultContentCaptureService";
 
     public static final Context sContext = InstrumentationRegistry.getTargetContext();
+
+    private static final Timeout MY_TIMEOUT = new Timeout("MY_TIMEOUT", GENERIC_TIMEOUT_MS, 2F,
+            GENERIC_TIMEOUT_MS);
 
     /**
      * Awaits for a latch to be counted down.
@@ -127,6 +133,14 @@ public final class Helper {
         final Resources resources = sContext.getResources();
         final int stringId = resources.getIdentifier(id, "string", "android");
         return resources.getString(stringId);
+    }
+
+    /**
+     * Runs an {@code assertion}, retrying until {@link #MY_TIMEOUT} is reached.
+     */
+    public static void eventually(@NonNull String description,
+            @NonNull Callable<Boolean> assertion) throws Exception {
+        MY_TIMEOUT.run(description, assertion);
     }
 
     private Helper() {
