@@ -37,9 +37,12 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -83,6 +86,28 @@ public class DisplayCutoutTests {
     public final ActivityTestRule<TestActivity> mDisplayCutoutActivity =
             new ActivityTestRule<>(TestActivity.class, false /* initialTouchMode */,
                     false /* launchActivity */);
+
+    @Test
+    public void testConstructor() {
+        final Insets safeInsets = Insets.of(1, 2, 3, 4);
+        final Rect boundLeft = new Rect(5, 6, 7, 8);
+        final Rect boundTop = new Rect(9, 0, 10, 1);
+        final Rect boundRight = new Rect(2, 3, 4, 5);
+        final Rect boundBottom = new Rect(6, 7, 8, 9);
+
+        final DisplayCutout displayCutout =
+                new DisplayCutout(safeInsets, boundLeft, boundTop, boundRight, boundBottom);
+
+        assertEquals(safeInsets.left, displayCutout.getSafeInsetLeft());
+        assertEquals(safeInsets.top, displayCutout.getSafeInsetTop());
+        assertEquals(safeInsets.right, displayCutout.getSafeInsetRight());
+        assertEquals(safeInsets.bottom, displayCutout.getSafeInsetBottom());
+
+        assertTrue(boundLeft.equals(displayCutout.getBoundingRectLeft()));
+        assertTrue(boundTop.equals(displayCutout.getBoundingRectTop()));
+        assertTrue(boundRight.equals(displayCutout.getBoundingRectRight()));
+        assertTrue(boundBottom.equals(displayCutout.getBoundingRectBottom()));
+    }
 
     @Test
     public void testDisplayCutout_default_portrait() {

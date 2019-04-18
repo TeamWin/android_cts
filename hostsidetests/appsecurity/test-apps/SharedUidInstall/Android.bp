@@ -17,7 +17,7 @@ android_test {
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     sdk_version: "current",
-    static_libs: ["androidx.test.rules"],
+    static_libs: ["androidx.test.rules", "android.test.base.stubs"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",

@@ -39,6 +39,8 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
+import android.graphics.BlendModeColorFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -405,6 +407,20 @@ public class ImageViewTest {
 
     @UiThreadTest
     @Test
+    public void testSetColorFilterTintBlendMode() {
+        final Drawable drawable = mActivity.getDrawable(R.drawable.testimage);
+        mImageViewRegular.setImageDrawable(drawable);
+
+        mImageViewRegular.setColorFilter(null);
+        assertNull(drawable.getColorFilter());
+
+        mImageViewRegular.setColorFilter(new BlendModeColorFilter(0, BlendMode.CLEAR));
+        assertNotNull(drawable.getColorFilter());
+        assertNotNull(mImageViewRegular.getColorFilter());
+    }
+
+    @UiThreadTest
+    @Test
     public void testClearColorFilter() {
         final Drawable drawable = mActivity.getDrawable(R.drawable.testimage);
         mImageViewRegular.setImageDrawable(drawable);
@@ -526,6 +542,22 @@ public class ImageViewTest {
     }
 
     @Test
+    public void testSetColorFilterPreservesDrawablePropertiesTintBlendMode() {
+        ImageView imageView = new ImageView(InstrumentationRegistry.getTargetContext());
+
+        int colorAlpha = 128;
+        MockDrawable mockDrawable = new MockDrawable();
+        mockDrawable.setAlpha(colorAlpha);
+        mockDrawable.setTintBlendMode(BlendMode.SRC_IN);
+
+        imageView.setImageDrawable(mockDrawable);
+
+        imageView.setColorFilter(Color.RED);
+        assertEquals(colorAlpha, mockDrawable.getAlpha());
+        assertNotNull(mockDrawable.getBlendMode());
+    }
+
+    @Test
     public void testImageViewSetColorFilterPropagatedToDrawable() {
         ImageView imageView = new ImageView(InstrumentationRegistry.getTargetContext());
 
@@ -580,6 +612,20 @@ public class ImageViewTest {
 
     @UiThreadTest
     @Test
+    public void testImageTintBlendModeBasics() {
+        ImageView imageViewTinted = (ImageView) mActivity.findViewById(R.id.imageview_tint);
+
+        assertEquals("Image tint inflated correctly",
+                Color.WHITE, imageViewTinted.getImageTintList().getDefaultColor());
+        assertEquals("Image tint mode inflated correctly",
+                BlendMode.SRC_OVER, imageViewTinted.getImageTintBlendMode());
+
+        imageViewTinted.setImageTintMode(PorterDuff.Mode.SRC_IN);
+        assertEquals(BlendMode.SRC_IN, imageViewTinted.getImageTintBlendMode());
+    }
+
+    @UiThreadTest
+    @Test
     public void testImageTintDrawableUpdates() {
         Drawable drawable = spy(mActivity.getDrawable(R.drawable.icon_red));
 
@@ -622,6 +668,35 @@ public class ImageViewTest {
         // Switch to DST mode. This should completely ignore the last set tint color and use the
         // the original drawable set on the image view.
         imageViewTinted.setImageTintMode(PorterDuff.Mode.DST);
+        TestUtils.assertAllPixelsOfColor("All pixels should be red", imageViewTinted,
+                0xFFFF0000, 1, false);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testImageTintBlendModeVisuals() {
+        ImageView imageViewTinted = (ImageView) mActivity.findViewById(
+                R.id.imageview_tint_with_source);
+
+        TestUtils.assertAllPixelsOfColor("All pixels should be white", imageViewTinted,
+                0xFFFFFFFF, 1, false);
+
+        // Use translucent white tint. Together with SRC_OVER mode (defined in XML) the end
+        // result should be a fully opaque image view with solid fill color in between red
+        // and white.
+        imageViewTinted.setImageTintList(ColorStateList.valueOf(0x80FFFFFF));
+        TestUtils.assertAllPixelsOfColor("All pixels should be light red", imageViewTinted,
+                0xFFFF8080, 1, false);
+
+        // Switch to SRC_IN mode. This should completely ignore the original drawable set on
+        // the image view and use the last set tint color (50% alpha white).
+        imageViewTinted.setImageTintBlendMode(BlendMode.SRC_IN);
+        TestUtils.assertAllPixelsOfColor("All pixels should be 50% alpha white", imageViewTinted,
+                0x80FFFFFF, 1, false);
+
+        // Switch to DST mode. This should completely ignore the last set tint color and use the
+        // the original drawable set on the image view.
+        imageViewTinted.setImageTintBlendMode(BlendMode.DST);
         TestUtils.assertAllPixelsOfColor("All pixels should be red", imageViewTinted,
                 0xFFFF0000, 1, false);
     }
@@ -778,6 +853,7 @@ public class ImageViewTest {
         private ColorFilter mFilter;
         private int mAlpha;
         private Xfermode mXfermode;
+        private BlendMode mBlendMode;
 
         @Override
         public void draw(Canvas canvas) {
@@ -803,8 +879,17 @@ public class ImageViewTest {
             mXfermode = mode;
         }
 
+        @Override
+        public void setTintBlendMode(BlendMode mode) {
+            mBlendMode = mode;
+        }
+
         public @Nullable Xfermode getXfermode() {
             return mXfermode;
+        }
+
+        public @Nullable BlendMode getBlendMode() {
+            return mBlendMode;
         }
 
         @Override

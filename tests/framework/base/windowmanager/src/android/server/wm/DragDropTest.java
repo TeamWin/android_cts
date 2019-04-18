@@ -16,9 +16,9 @@
 
 package android.server.wm;
 
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;

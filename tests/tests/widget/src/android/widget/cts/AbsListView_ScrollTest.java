@@ -44,6 +44,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.CtsTouchUtils.EventInjectionListener;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -95,8 +96,8 @@ public class AbsListView_ScrollTest {
                 R.layout.listitemfixed_layout, COUNTRY_LIST);
 
         mListView = (ListView) activity.findViewById(R.id.listview_default);
-        mActivityRule.runOnUiThread(() -> mListView.setAdapter(mCountriesAdapter));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
+                () -> mListView.setAdapter(mCountriesAdapter));
 
         mRowHeightPx = activity.getResources().getDimensionPixelSize(R.dimen.listrow_height);
     }
@@ -674,9 +675,8 @@ public class AbsListView_ScrollTest {
     public void testFriction() throws Throwable {
         // Set an adapter with 100K items so that no matter how fast our fling is, we won't
         // get to the bottom of the list in one fling
-        mActivityRule.runOnUiThread(
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(new LargeContentAdapter(mContext, 100000)));
-        mInstrumentation.waitForIdleSync();
 
         final CountDownLatch initialFlingLatch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(initialFlingLatch));

@@ -33,7 +33,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \
     androidx.test.rules \
     platform-test-annotations \
-    cts-amwm-util \
+    cts-wm-util \
     androidx.test.rules \
     platformprotosnano
 

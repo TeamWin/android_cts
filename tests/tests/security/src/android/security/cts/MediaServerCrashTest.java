@@ -53,7 +53,7 @@ public class MediaServerCrashTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mFlFilePath = new File(Environment.getExternalStorageDirectory(),
+        mFlFilePath = new File(getContext().getExternalFilesDir(null),
                 "temp.fl").getAbsolutePath();
 
         mOnPrepareCalled.close();
