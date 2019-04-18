@@ -14,18 +14,22 @@
 
 package android.accessibilityservice.cts;
 
+import static org.junit.Assert.fail;
+
 import android.app.Instrumentation;
 import android.view.accessibility.AccessibilityEvent;
+
 import java.util.ArrayList;
+import java.util.List;
 
 /** Accessibility service stub, which will collect recognized gestures. */
 public class GestureDetectionStubAccessibilityService extends InstrumentedAccessibilityService {
     private static final long GESTURE_RECOGNIZE_TIMEOUT_MS = 3000;
-    private static final long EVENT_RECOGNIZE_TIMEOUT_MS = 3000;
+    private static final long EVENT_RECOGNIZE_TIMEOUT_MS = 5000;
     // Member variables
-    private final Object mLock = new Object();
+    protected final Object mLock = new Object();
     private ArrayList<Integer> mCollectedGestures = new ArrayList();
-    private ArrayList<Integer> mCollectedEvents = new ArrayList();
+    protected ArrayList<Integer> mCollectedEvents = new ArrayList();
 
     public static GestureDetectionStubAccessibilityService enableSelf(
             Instrumentation instrumentation) {
@@ -120,6 +124,39 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    /** Insure that the specified accessibility events have been received. */
+    public void assertPropagated(int... events) {
+        waitUntilEvent(events.length);
+        // Set up readable error reporting.
+        List<String> received = new ArrayList<>();
+        List<String> expected = new ArrayList<>();
+        for (int event : events) {
+            expected.add(AccessibilityEvent.eventTypeToString(event));
+        }
+        for (int i = 0; i < getEventsSize(); ++i) {
+            received.add(AccessibilityEvent.eventTypeToString(getEvent(i)));
+        }
+
+        if (events.length != getEventsSize()) {
+            String message =
+                    String.format(
+                            "Received %d events when expecting %d. Received %s, expected %s",
+                            received.size(),
+                            expected.size(),
+                            received.toString(),
+                            expected.toString());
+            fail(message);
+        }
+        else if (!expected.equals(received)) {
+            String message =
+                    String.format(
+                            "Received %s, expected %s",
+                            received.toString(),
+                            expected.toString());
+            fail(message);
         }
     }
 }

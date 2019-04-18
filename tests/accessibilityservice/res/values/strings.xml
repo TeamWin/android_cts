@@ -147,7 +147,9 @@
 
     <string name="stub_gesture_dispatch_a11y_service_description">com.android.accessibilityservice.cts.StubGestureAccessibilityService</string>
 
-    <string name="stub_gesture_detector_a11y_service_description">com.android.accessibilityservice.cts.StubService</string>
+    <string name="stub_gesture_detector_a11y_service_description">com.android.accessibilityservice.cts.GestureDetectionStubAccessibilityService</string>
+
+    <string name="stub_touch_exploration_a11y_service_description">com.android.accessibilityservice.cts.TouchExplorationStubAccessibilityService</string>
 
     <string name="stub_fprint_a11y_service_description">com.android.accessibilityservice.cts.StubFingerprintGestureAccessibilityService</string>
 
