@@ -44,6 +44,7 @@ import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -146,6 +147,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 130800326)
     public void testActivityBlockedWhenForegroundActivityRestartsItself() throws Exception {
         // Start AppA foreground activity
         Intent intent = new Intent();
@@ -178,6 +180,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 130800326)
     public void testPendingIntentActivityNotBlocked_appAIsForeground() throws Exception {
         // Start AppA foreground activity
         Intent intent = new Intent();
