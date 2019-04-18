@@ -142,9 +142,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
-        LifecycleVerifier.assertSequenceMatchesOneOf(ThirdActivity.class, getLifecycleLog(),
-                Arrays.asList(new ArrayList<>(), LifecycleVerifier.getRelaunchSequence(ON_RESUME)),
-                "moveToSide");
+        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(), "moveToSide");
         LifecycleVerifier.assertRestartAndResumeSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_PAUSE, ON_STOP), "moveToSide");
