@@ -25,7 +25,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -58,7 +57,6 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
     }
 
     @Test
-    @Ignore("b/130782219")
     public void testCompatibilityDialog() throws Exception {
         // Launch target app.
         launchActivity(MAIN_ACTIVITY);
