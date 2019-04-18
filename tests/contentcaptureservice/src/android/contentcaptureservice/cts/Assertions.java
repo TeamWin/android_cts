@@ -29,6 +29,7 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APP
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.ComponentName;
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.util.Log;
@@ -56,9 +57,17 @@ final class Assertions {
     public static void assertRightActivity(@NonNull Session session,
             @NonNull ContentCaptureSessionId expectedSessionId,
             @NonNull AbstractContentCaptureActivity activity) {
+        assertRightActivity(session, expectedSessionId, activity.getComponentName());
+    }
+
+    /**
+     * Asserts a session belongs to the right activity.
+     */
+    public static void assertRightActivity(@NonNull Session session,
+            @NonNull ContentCaptureSessionId expectedSessionId,
+            @NonNull ComponentName componentName) {
         assertWithMessage("wrong activity for %s", session)
-                .that(session.context.getActivityComponent())
-                .isEqualTo(activity.getComponentName());
+                .that(session.context.getActivityComponent()).isEqualTo(componentName);
         // TODO(b/123540602): merge both or replace check above by:
         //  assertMainSessionContext(session, activity);
         assertThat(session.id).isEqualTo(expectedSessionId);
@@ -253,12 +262,20 @@ final class Assertions {
     public static void assertNoViewLevelEvents(@NonNull Session session,
             @NonNull AbstractContentCaptureActivity activity) {
         assertRightActivity(session, session.id, activity);
-
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events on " + activity + ": " + events);
         assertThat(events).hasSize(2);
         assertSessionResumed(events, 0);
         assertSessionPaused(events, 1);
+    }
+
+    /**
+     * Asserts that a session for the given activity has events at all.
+     */
+    public static void assertNoEvents(@NonNull Session session,
+            @NonNull ComponentName componentName) {
+        assertRightActivity(session, session.id, componentName);
+        assertThat(session.getEvents()).isEmpty();
     }
 
     /**
