@@ -365,8 +365,8 @@ public final class MockIme extends InputMethodService {
             }
 
             // Ensuring bar contrast interferes with the tests.
-            getWindow().getWindow().setEnsuringStatusBarContrastWhenTransparent(false);
-            getWindow().getWindow().setEnsuringNavigationBarContrastWhenTransparent(false);
+            getWindow().getWindow().setStatusBarContrastEnforced(false);
+            getWindow().getWindow().setNavigationBarContrastEnforced(false);
 
             if (mSettings.hasNavigationBarColor()) {
                 getWindow().getWindow().setNavigationBarColor(mSettings.getNavigationBarColor());
