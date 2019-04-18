@@ -51,6 +51,8 @@
         <option name="push" value="CtsAppThatAccessesStorageOnCommand28v3.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesStorageOnCommand28v3.apk" />
         <option name="push" value="CtsAppWithSharedUidThatRequestsPermissions.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsPermissions.apk" />
         <option name="push" value="CtsAppWithSharedUidThatRequestsNoPermissions.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsNoPermissions.apk" />
+        <option name="push" value="CtsAppWithSharedUidThatRequestsLocationPermission28.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsLocationPermission28.apk" />
+        <option name="push" value="CtsAppWithSharedUidThatRequestsLocationPermission29.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsLocationPermission29.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
