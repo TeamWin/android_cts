@@ -4965,18 +4965,8 @@ Follow the instructions on the screen to measure the frequency response for the 
         is still on the screen, and the notification is now visible in the notification shade.
     </string>
     <string name="bubbles_notification_test_button_3">Update bubble to show notification</string>
-    <string name="bubbles_notification_test_title_4">Step 4: remove bubble</string>
-    <string name="bubbles_notification_test_verify_4">Click the button below and verify that the
-        bubble is removed from the screen, and the notification is still visible in the notification
-        shade.</string>
-    <string name="bubbles_notification_test_button_4">Remove bubble</string>
-    <string name="bubbles_notification_test_title_5">Step 5: add bubble</string>
-    <string name="bubbles_notification_test_verify_5">Click the button below and verify that the
-        bubble appears on the screen, and the notification is still visible in the notification
-        shade.</string>
-    <string name="bubbles_notification_test_button_5">Add bubble</string>
-    <string name="bubbles_notification_test_title_6">Step 6: open bubble</string>
-    <string name="bubbles_notification_test_verify_6">Tap on the bubble to open it, then tap on the
+    <string name="bubbles_notification_test_title_4">Step 4: open bubble</string>
+    <string name="bubbles_notification_test_verify_4">Tap on the bubble to open it, then tap on the
         bubble again to collapse it and return to this screen. Verify that after opening the bubble,
         there is no longer a notification for it visible in the notification shade.</string>
     <string name="bubbles_test_summary_title">Test Complete</string>
