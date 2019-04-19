@@ -191,8 +191,8 @@ public class MediaSession2ServiceTest {
             assertTrue(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints));
 
             // The controller should be connected to the right session.
-            assertNotEquals(mToken, controller.getConnectedSessionToken());
-            assertEquals(testSession.getSessionToken(), controller.getConnectedSessionToken());
+            assertNotEquals(mToken, controller.getConnectedToken());
+            assertEquals(testSession.getToken(), controller.getConnectedToken());
         }
     }
 
@@ -208,7 +208,7 @@ public class MediaSession2ServiceTest {
             MediaSession2 onGetSession(ControllerInfo controllerInfo) {
                 MediaSession2 session = createMediaSession2(
                         "testOnGetSession_returnsDifferentSessions" + System.currentTimeMillis());
-                tokens.add(session.getSessionToken());
+                tokens.add(session.getToken());
                 return session;
             }
         });
@@ -216,14 +216,14 @@ public class MediaSession2ServiceTest {
         MediaController2 controller1 = createConnectedController(mToken);
         MediaController2 controller2 = createConnectedController(mToken);
 
-        assertNotEquals(mToken, controller1.getConnectedSessionToken());
-        assertNotEquals(mToken, controller2.getConnectedSessionToken());
+        assertNotEquals(mToken, controller1.getConnectedToken());
+        assertNotEquals(mToken, controller2.getConnectedToken());
 
-        assertNotEquals(controller1.getConnectedSessionToken(),
-                controller2.getConnectedSessionToken());
+        assertNotEquals(controller1.getConnectedToken(),
+                controller2.getConnectedToken());
         assertEquals(2, tokens.size());
-        assertEquals(tokens.get(0), controller1.getConnectedSessionToken());
-        assertEquals(tokens.get(1), controller2.getConnectedSessionToken());
+        assertEquals(tokens.get(0), controller1.getConnectedToken());
+        assertEquals(tokens.get(1), controller2.getConnectedToken());
     }
 
     /**
@@ -250,7 +250,7 @@ public class MediaSession2ServiceTest {
 
         // MediaController2.ControllerCallback#onDisconnected() should be called.
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        assertNull(controller.getConnectedSessionToken());
+        assertNull(controller.getConnectedToken());
     }
 
     @Test
