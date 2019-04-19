@@ -21,7 +21,7 @@ LOCAL_MODULE_TAGS := tests optional
 
 # TODO(b/129909356): Remove this once CtsActivityManagerDeviceSdk28TestCases is renamed to
 # CtsWindowManagerSdk28TestCases
-LOCAL_PACKAGE_NAME := CtsWindowManagerSdk28TestCases
+LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceSdk28TestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_SDK_VERSION := 28

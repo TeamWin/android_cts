@@ -20,8 +20,7 @@
 
     <uses-sdk android:targetSdkVersion="28" />
 
-    <!-- TODO(b/129909356): Rename this to CtsWindowManagerSdk28TestCases -->
-    <application android:label="CtsActivityManagerDeviceSdk28TestCases">
+    <application android:label="CtsWindowManagerSdk28TestCases">
         <uses-library android:name="android.test.runner" />
 
         <activity
