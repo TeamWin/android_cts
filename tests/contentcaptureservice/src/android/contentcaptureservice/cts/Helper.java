@@ -21,6 +21,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.SystemClock;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureSession;
 import android.widget.TextView;
@@ -31,6 +32,10 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.Timeout;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -136,9 +141,32 @@ public final class Helper {
     /**
      * Runs an {@code assertion}, retrying until {@link #MY_TIMEOUT} is reached.
      */
-    public static void eventually(@NonNull String description,
-            @NonNull Callable<Boolean> assertion) throws Exception {
-        MY_TIMEOUT.run(description, assertion);
+    public static <T> T eventually(@NonNull String description, @NonNull Callable<T> assertion)
+            throws Exception {
+        return MY_TIMEOUT.run(description, assertion);
+    }
+
+    /**
+     * Creates a Set with the given objects.
+     */
+    public static <T> ArraySet<T> toSet(@SuppressWarnings("unchecked") @Nullable T... objs) {
+        final ArraySet<T> set = new ArraySet<>();
+        if (objs != null) {
+            for (int i = 0; i < objs.length; i++) {
+                final T t = objs[i];
+                set.add(t);
+            }
+        }
+        return set;
+    }
+
+    /**
+     * Gets the content of the given file.
+     */
+    public static String read(@NonNull File file) throws IOException {
+        Log.d(TAG, "Reading " + file);
+        final byte[] bytes = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+        return bytes == null ? null : new String(bytes);
     }
 
     private Helper() {
