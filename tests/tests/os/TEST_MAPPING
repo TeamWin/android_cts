@@ -4,9 +4,6 @@
       "name": "CtsOsTestCases",
       "options": [
         {
-          "exclude-filter": "android.os.cts.BuildTest#testBuildConstants"
-        },
-        {
           "exclude-filter": "android.os.cts.BuildTest#testSdkInt"
         },
         {
