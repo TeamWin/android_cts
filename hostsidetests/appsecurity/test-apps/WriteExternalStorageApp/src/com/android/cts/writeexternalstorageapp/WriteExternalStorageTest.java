@@ -329,7 +329,9 @@ public class WriteExternalStorageTest extends AndroidTestCase {
 
         final File after = new File(before.getAbsolutePath()
                 .replace(getContext().getPackageName(), "com.example.does.not.exist"));
-        after.getParentFile().mkdirs();
+        final File afterParent = after.getParentFile();
+        afterParent.mkdirs();
+        deleteContents(afterParent);
 
         Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
 
@@ -359,8 +361,13 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                 getContext().getObbDir(),
         }) {
             next.mkdirs();
-            assertTrue("Failed to move from " + cur + " to " + next,
-                    new File(cur, name).renameTo(new File(next, name)));
+
+            final File before = new File(cur, name);
+            final File after = new File(next, name);
+
+            Log.v(TAG, "Moving " + before + " to " + after);
+            Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
+
             cur = next;
         }
 

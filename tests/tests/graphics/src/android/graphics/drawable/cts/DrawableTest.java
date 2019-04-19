@@ -813,9 +813,9 @@ public class DrawableTest {
     public void testPorterDuffTintWithUnsupportedBlendMode() {
         // Setting a BlendMode should delegate to the PorterDuff.Mode API
         TestTintDrawable testTintDrawable = new TestTintDrawable();
-        testTintDrawable.setTintMode(BlendMode.LUMINOSITY);
-        // 1 time invoking setTintMode because the default is applied if there is no equivalent for
-        // the luminosity blend mode on older API levels
+        testTintDrawable.setTintBlendMode(BlendMode.LUMINOSITY);
+        // 1 time invoking setTintBlendMode because the default is applied if
+        // there is no equivalent for the luminosity blend mode on older API levels
         assertEquals(1, testTintDrawable.getNumTimesTintModeInvoked());
         assertEquals(2, testTintDrawable.getNumTimesBlendModeInvoked());
     }
@@ -823,7 +823,7 @@ public class DrawableTest {
     @Test
     public void testPorterDuffTintWithSupportedBlendMode() {
         TestTintDrawable testTintDrawable = new TestTintDrawable();
-        testTintDrawable.setTintMode(BlendMode.SRC_OVER);
+        testTintDrawable.setTintBlendMode(BlendMode.SRC_OVER);
         assertEquals(1, testTintDrawable.getNumTimesTintModeInvoked());
         assertEquals(2, testTintDrawable.getNumTimesBlendModeInvoked());
     }
@@ -832,7 +832,7 @@ public class DrawableTest {
     public void testBlendModeImplementationInvokedWithBlendMode() {
         TestBlendModeImplementedDrawable test = new TestBlendModeImplementedDrawable();
 
-        test.setTintMode(BlendMode.SRC);
+        test.setTintBlendMode(BlendMode.SRC);
         assertEquals(1, test.getNumTimesBlendModeInvoked());
         assertEquals(0, test.getNumTimesTintModeInvoked());
     }
@@ -849,7 +849,7 @@ public class DrawableTest {
     @Test
     public void testPorterDuffImplementationInvokedWithBlendMode() {
         TestPorterDuffImplementedDrawable test = new TestPorterDuffImplementedDrawable();
-        test.setTintMode(BlendMode.CLEAR);
+        test.setTintBlendMode(BlendMode.CLEAR);
 
         assertEquals(1, test.getNumTimesBlendModeInvoked());
         assertEquals(1, test.getNumTimesTintModeInvoked());
@@ -874,7 +874,7 @@ public class DrawableTest {
     @Test
     public void testNullBlendModeReturnsDefaultPorterDuffMode() {
         TestNullPorterDuffDrawable d = new TestNullPorterDuffDrawable();
-        d.setTintMode((BlendMode) null);
+        d.setTintBlendMode((BlendMode) null);
         assertEquals(PorterDuff.Mode.SRC_IN, d.mode);
     }
 
@@ -952,9 +952,9 @@ public class DrawableTest {
         }
 
         @Override
-        public void setTintMode(BlendMode blendMode) {
+        public void setTintBlendMode(BlendMode blendMode) {
             mSetBlendModeInvoked++;
-            super.setTintMode(blendMode);
+            super.setTintBlendMode(blendMode);
         }
 
         public int getNumTimesTintModeInvoked() {
@@ -1016,7 +1016,7 @@ public class DrawableTest {
         }
 
         @Override
-        public void setTintMode(BlendMode blendMode) {
+        public void setTintBlendMode(BlendMode blendMode) {
             mode = blendMode;
         }
 
@@ -1058,7 +1058,7 @@ public class DrawableTest {
         }
 
         @Override
-        public void setTintMode(BlendMode blendMode) {
+        public void setTintBlendMode(BlendMode blendMode) {
             // Intentionally not delegating to super class implementation
             mSetBlendModeInvoked++;
         }
@@ -1104,9 +1104,9 @@ public class DrawableTest {
         }
 
         @Override
-        public void setTintMode(BlendMode blendMode) {
+        public void setTintBlendMode(BlendMode blendMode) {
             mSetBlendModeInvoked++;
-            super.setTintMode(blendMode);
+            super.setTintBlendMode(blendMode);
         }
 
         public int getNumTimesTintModeInvoked() {

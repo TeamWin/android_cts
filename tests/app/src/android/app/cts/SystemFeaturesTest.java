@@ -45,7 +45,6 @@ import android.net.sip.SipManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
-import android.platform.test.annotations.Presubmit;
 import android.telephony.TelephonyManager;
 
 import androidx.test.filters.FlakyTest;
@@ -68,7 +67,6 @@ import org.junit.runners.JUnit4;
 /**
  * Test for checking that the {@link PackageManager} is reporting the correct features.
  */
-@Presubmit
 @RunWith(JUnit4.class)
 public class SystemFeaturesTest {
 
@@ -316,24 +314,6 @@ public class SystemFeaturesTest {
             assertAvailable(PackageManager.FEATURE_RAM_LOW);
         } else {
             assertAvailable(PackageManager.FEATURE_RAM_NORMAL);
-        }
-    }
-
-    @Test
-    public void testNfcFeatures() {
-        if (NfcAdapter.getDefaultAdapter(mContext) != null) {
-            // Watches MAY support all FEATURE_NFC features when an NfcAdapter is available, but
-            // non-watches MUST support them both.
-            if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-                assertOneAvailable(PackageManager.FEATURE_NFC,
-                    PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
-            } else {
-                assertAvailable(PackageManager.FEATURE_NFC);
-                assertAvailable(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
-            }
-        } else {
-            assertNotAvailable(PackageManager.FEATURE_NFC);
-            assertNotAvailable(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
         }
     }
 

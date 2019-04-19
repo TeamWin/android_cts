@@ -68,8 +68,7 @@ public class MediaScannerTest extends AndroidTestCase {
         super.setUp();
         // prepare the media file.
 
-        mFileDir = Environment.buildPath(MediaStore.getVolumePath(MediaStore.VOLUME_EXTERNAL),
-                "Android", "media", "android.media.cts").getAbsolutePath();
+        mFileDir = mContext.getExternalMediaDirs()[0].getAbsolutePath();
 
         cleanup();
         String fileName = mFileDir + "/test" + System.currentTimeMillis() + ".mp3";
