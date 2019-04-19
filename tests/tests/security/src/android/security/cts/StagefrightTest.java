@@ -61,6 +61,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
+import java.net.BindException;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.io.File;
@@ -1042,8 +1043,16 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestMediaMetadataRetriever(rid);
 
         Context context = getInstrumentation().getContext();
+        CtsTestServer server = null;
+        try {
+            server = new CtsTestServer(context);
+        } catch (BindException e) {
+            // Instant Apps security policy does not allow
+            // listening for incoming connections.
+            // Server based tests cannot be run.
+            return;
+        }
         Resources resources =  context.getResources();
-        CtsTestServer server = new CtsTestServer(context);
         String rname = resources.getResourceEntryName(rid);
         String url = server.getAssetUrl("raw/" + rname);
         verifyServer(rid, url);
