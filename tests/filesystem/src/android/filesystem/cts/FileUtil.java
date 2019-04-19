@@ -143,15 +143,14 @@ public class FileUtil {
     public static File createNewFilledFile(Context context, String dirName, long length)
             throws IOException {
         File file = createNewFile(context, dirName);
-        FileOutputStream out = new FileOutputStream(file);
+        final RandomAccessFile randomFile = new RandomAccessFile(file, "rwd"); // force O_SYNC
         byte[] data = generateRandomData(BUFFER_SIZE);
-        long written = 0;
-        while (written < length) {
-            out.write(data);
-            written += BUFFER_SIZE;
+
+        while (file.length() < length) {
+            randomFile.write(data);
         }
-        out.flush();
-        out.close();
+
+        randomFile.close();
         return file;
     }
 
