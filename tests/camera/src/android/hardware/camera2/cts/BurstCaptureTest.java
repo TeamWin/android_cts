@@ -47,10 +47,27 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testYuvBurst() throws Exception {
+        final int YUV_BURST_SIZE = 100;
+        testBurst(ImageFormat.YUV_420_888, YUV_BURST_SIZE, true/*checkFrameRate*/);
+    }
+
+    /**
+     * Test JPEG burst capture with full-AUTO control.
+     *
+     * Also verifies sensor settings operation if READ_SENSOR_SETTINGS is available.
+     * Compared to testYuvBurst, this test uses STILL_CAPTURE intent, and exercises path where
+     * enableZsl is enabled.
+     */
+    @Test
+    public void testJpegBurst() throws Exception {
+        final int JPEG_BURST_SIZE = 10;
+        testBurst(ImageFormat.JPEG, JPEG_BURST_SIZE, false/*checkFrameRate*/);
+    }
+
+    private void testBurst(int fmt, int burstSize, boolean checkFrameRate) throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 String id = mCameraIds[i];
-                Log.i(TAG, "Testing YUV Burst for camera " + id);
 
                 StaticMetadata staticInfo = mAllStaticInfo.get(id);
                 if (!staticInfo.isColorOutputSupported()) {
@@ -69,7 +86,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
                 }
 
                 openDevice(id);
-                yuvBurstTestByCamera(id);
+                burstTestByCamera(id, fmt, burstSize, checkFrameRate);
             } finally {
                 closeDevice();
                 closeImageReader();
@@ -77,19 +94,19 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    private void yuvBurstTestByCamera(String cameraId) throws Exception {
+    private void burstTestByCamera(String cameraId, int fmt, int burstSize,
+            boolean checkFrameRate) throws Exception {
         // Parameters
         final int MAX_CONVERGENCE_FRAMES = 150; // 5 sec at 30fps
         final long MAX_PREVIEW_RESULT_TIMEOUT_MS = 2000;
-        final int BURST_SIZE = 100;
         final float FRAME_DURATION_MARGIN_FRACTION = 0.1f;
 
         // Find a good preview size (bound to 1080p)
         final Size previewSize = mOrderedPreviewSizes.get(0);
 
-        // Get maximum YUV_420_888 size
+        // Get maximum size for fmt
         final Size stillSize = getSortedSizesForFormat(
-                cameraId, mCameraManager, ImageFormat.YUV_420_888, /*bound*/null).get(0);
+                cameraId, mCameraManager, fmt, /*bound*/null).get(0);
 
         // Find max pipeline depth and sync latency
         final int maxPipelineDepth = mStaticInfo.getCharacteristics().get(
@@ -97,11 +114,11 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         final int maxSyncLatency = mStaticInfo.getCharacteristics().get(
             CameraCharacteristics.SYNC_MAX_LATENCY);
 
-        // Find minimum frame duration for full-res YUV_420_888
+        // Find minimum frame duration for full-res resolution
         StreamConfigurationMap config = mStaticInfo.getCharacteristics().get(
             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         final long minStillFrameDuration =
-                config.getOutputMinFrameDuration(ImageFormat.YUV_420_888, stillSize);
+                config.getOutputMinFrameDuration(fmt, stillSize);
 
 
         Range<Integer> targetRange = getSuitableFpsRangeForDuration(cameraId, minStillFrameDuration);
@@ -117,8 +134,12 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
 
         CaptureRequest.Builder previewBuilder =
             mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        CaptureRequest.Builder burstBuilder =
-            mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        int burstTemplate = (fmt == ImageFormat.JPEG) ?
+                CameraDevice.TEMPLATE_STILL_CAPTURE : CameraDevice.TEMPLATE_PREVIEW;
+        CaptureRequest.Builder burstBuilder = mCamera.createCaptureRequest(burstTemplate);
+        Boolean enableZsl = burstBuilder.get(CaptureRequest.CONTROL_ENABLE_ZSL);
+        boolean zslStillEnabled = enableZsl != null && enableZsl &&
+                burstTemplate == CameraDevice.TEMPLATE_STILL_CAPTURE;
 
         previewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
                 targetRange);
@@ -136,13 +157,13 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         prepareCaptureAndStartPreview(
             previewBuilder, burstBuilder,
             previewSize, stillSize,
-            ImageFormat.YUV_420_888, resultListener,
+            fmt, resultListener,
             /*maxNumImages*/ 3, imageDropper);
 
         // Create burst
 
         List<CaptureRequest> burst = new ArrayList<>();
-        for (int i = 0; i < BURST_SIZE; i++) {
+        for (int i = 0; i < burstSize; i++) {
             burst.add(burstBuilder.build());
         }
 
@@ -313,7 +334,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
 
             // Get next result
             burstIndex++;
-            if (burstIndex == BURST_SIZE) {
+            if (burstIndex == burstSize) {
                 burstEndTimeStamp = burstResult.get(CaptureResult.SENSOR_TIMESTAMP);
                 break;
             }
@@ -321,11 +342,12 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         }
 
         // Verify no preview frames interleaved in burst results
-        while (true)         {
+        while (true) {
             CaptureResult previewResult =
                     resultListener.getCaptureResult(MAX_PREVIEW_RESULT_TIMEOUT_MS);
             long previewTimestamp = previewResult.get(CaptureResult.SENSOR_TIMESTAMP);
-            if (previewTimestamp >= burstStartTimestamp && previewTimestamp <= burstEndTimeStamp) {
+            if (!zslStillEnabled && previewTimestamp >= burstStartTimestamp
+                    && previewTimestamp <= burstEndTimeStamp) {
                 fail("Preview frame is interleaved with burst frames! Preview timestamp:" +
                         previewTimestamp + ", burst [" + burstStartTimestamp + ", " +
                         burstEndTimeStamp + "]");
@@ -335,39 +357,40 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         }
 
         // Verify inter-frame durations
+        if (checkFrameRate) {
+            long meanFrameSum = 0;
+            for (Long duration : frameDurations) {
+                meanFrameSum += duration;
+            }
+            float meanFrameDuration = (float) meanFrameSum / frameDurations.size();
 
-        long meanFrameSum = 0;
-        for (Long duration : frameDurations) {
-            meanFrameSum += duration;
-        }
-        float meanFrameDuration = (float) meanFrameSum / frameDurations.size();
+            float stddevSum = 0;
+            for (Long duration : frameDurations) {
+                stddevSum += (duration - meanFrameDuration) * (duration - meanFrameDuration);
+            }
+            float stddevFrameDuration = (float)
+                    Math.sqrt(1.f / (frameDurations.size() - 1 ) * stddevSum);
 
-        float stddevSum = 0;
-        for (Long duration : frameDurations) {
-            stddevSum += (duration - meanFrameDuration) * (duration - meanFrameDuration);
-        }
-        float stddevFrameDuration = (float)
-                Math.sqrt(1.f / (frameDurations.size() - 1 ) * stddevSum);
+            Log.i(TAG, String.format("Cam %s: Burst frame duration mean: %.1f, stddev: %.1f",
+                    cameraId, meanFrameDuration, stddevFrameDuration));
 
-        Log.i(TAG, String.format("Cam %s: Burst frame duration mean: %.1f, stddev: %.1f", cameraId,
-                meanFrameDuration, stddevFrameDuration));
+            assertTrue(
+                String.format("Cam %s: Burst frame duration mean %.1f ns is larger than " +
+                    "acceptable, expecting below %d ns, allowing below %d", cameraId,
+                    meanFrameDuration, minStillFrameDuration, frameDurationBound),
+                meanFrameDuration <= frameDurationBound);
 
-        assertTrue(
-            String.format("Cam %s: Burst frame duration mean %.1f ns is larger than acceptable, " +
-                "expecting below %d ns, allowing below %d", cameraId,
-                meanFrameDuration, minStillFrameDuration, frameDurationBound),
-            meanFrameDuration <= frameDurationBound);
+            // Calculate upper 97.5% bound (assuming durations are normally distributed...)
+            float limit95FrameDuration = meanFrameDuration + 2 * stddevFrameDuration;
 
-        // Calculate upper 97.5% bound (assuming durations are normally distributed...)
-        float limit95FrameDuration = meanFrameDuration + 2 * stddevFrameDuration;
-
-        // Don't enforce this yet, but warn
-        if (limit95FrameDuration > frameDurationBound) {
-            Log.w(TAG,
-                String.format("Cam %s: Standard deviation is too large compared to limit: " +
-                    "mean: %.1f ms, stddev: %.1f ms: 95%% bound: %f ms", cameraId,
-                    meanFrameDuration/1e6, stddevFrameDuration/1e6,
-                    limit95FrameDuration/1e6));
+            // Don't enforce this yet, but warn
+            if (limit95FrameDuration > frameDurationBound) {
+                Log.w(TAG,
+                    String.format("Cam %s: Standard deviation is too large compared to limit: " +
+                        "mean: %.1f ms, stddev: %.1f ms: 95%% bound: %f ms", cameraId,
+                        meanFrameDuration/1e6, stddevFrameDuration/1e6,
+                        limit95FrameDuration/1e6));
+            }
         }
     }
 }
