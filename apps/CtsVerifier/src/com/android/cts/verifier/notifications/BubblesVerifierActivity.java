@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
@@ -103,8 +104,6 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         mTests.add(new SendBubbleTest());
         mTests.add(new SuppressNotifTest());
         mTests.add(new AddNotifTest());
-        mTests.add(new RemoveMetadataTest());
-        mTests.add(new AddMetadataTest());
         mTests.add(new ExpandBubbleTest());
 
         setPassFailButtonClickListeners();
@@ -195,7 +194,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "SendBubbleTest");
+                    getBasicNotifBuilder("Bubble notification", "Step 1 bubble");
             builder.setBubbleMetadata(getBasicBubbleBuilder().build());
 
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
@@ -222,7 +221,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "SuppressNotifTest");
+                    getBasicNotifBuilder("Bubble notification", "Step 2 bubble");
 
             Notification.BubbleMetadata metadata = getBasicBubbleBuilder()
                     .setSuppressNotification(true)
@@ -253,7 +252,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "AddNotifTest");
+                    getBasicNotifBuilder("Bubble notification", "Step 3 bubble");
 
             Notification.BubbleMetadata metadata = getBasicBubbleBuilder()
                     .setSuppressNotification(false)
@@ -264,13 +263,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         }
     }
 
-    private class RemoveMetadataTest extends BubblesTestStep {
-
-        @Override
-        public int getButtonText() {
-            return R.string.bubbles_notification_test_button_4;
-        }
-
+    private class ExpandBubbleTest extends BubblesTestStep {
         @Override
         public int getTestTitle() {
             return R.string.bubbles_notification_test_title_4;
@@ -279,54 +272,6 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public int getTestDescription() {
             return R.string.bubbles_notification_test_verify_4;
-        }
-
-        @Override
-        public void performTestAction() {
-            Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "RemoveMetadataTest");
-            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
-        }
-    }
-
-    private class AddMetadataTest extends BubblesTestStep {
-
-        @Override
-        public int getButtonText() {
-            return R.string.bubbles_notification_test_button_5;
-        }
-
-        @Override
-        public int getTestTitle() {
-            return R.string.bubbles_notification_test_title_5;
-        }
-
-        @Override
-        public int getTestDescription() {
-            return R.string.bubbles_notification_test_verify_5;
-        }
-
-        @Override
-        public void performTestAction() {
-            Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "AddMetadataTest");
-
-            Notification.BubbleMetadata metadata = getBasicBubbleBuilder().build();
-            builder.setBubbleMetadata(metadata);
-
-            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
-        }
-    }
-
-    private class ExpandBubbleTest extends BubblesTestStep {
-        @Override
-        public int getTestTitle() {
-            return R.string.bubbles_notification_test_title_6;
-        }
-
-        @Override
-        public int getTestDescription() {
-            return R.string.bubbles_notification_test_verify_6;
         }
     }
 
