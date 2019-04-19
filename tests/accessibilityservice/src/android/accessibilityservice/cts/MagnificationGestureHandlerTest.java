@@ -24,6 +24,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.GestureUtils.distance;
 import static android.accessibilityservice.cts.utils.GestureUtils.drag;
+import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.lastPointOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
@@ -31,6 +32,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.pointerDown;
 import static android.accessibilityservice.cts.utils.GestureUtils.pointerUp;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
+import static android.accessibilityservice.cts.utils.GestureUtils.tripleTap;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
@@ -195,9 +197,9 @@ public class MagnificationGestureHandlerTest {
 
     private void setZoomByTripleTapping(boolean desiredZoomState) {
         if (isZoomed() == desiredZoomState) return;
-        dispatch(tripleTap());
+        dispatch(tripleTap(mTapLocation));
         waitOn(mZoomLock, () -> isZoomed() == desiredZoomState);
-        assertNoTouchInputPropagated();
+        mTouchListener.assertNonePropagated();
     }
 
     private void tripleTapAndDragViewport() {
@@ -209,10 +211,10 @@ public class MagnificationGestureHandlerTest {
         dispatch(drag);
         waitOn(mZoomLock, () -> distance(mCurrentZoomCenter, oldCenter) >= mPan / 5);
         assertTrue(isZoomed());
-        assertNoTouchInputPropagated();
+        mTouchListener.assertNonePropagated();
 
         dispatch(pointerUp(drag));
-        assertNoTouchInputPropagated();
+        mTouchListener.assertNonePropagated();
     }
 
     private StrokeDescription tripleTapAndHold() {
@@ -226,22 +228,18 @@ public class MagnificationGestureHandlerTest {
 
     private void assertGesturesPropagateToView() {
         dispatch(click(mTapLocation));
-        assertPropagated(ACTION_DOWN, ACTION_UP);
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
 
         dispatch(longClick(mTapLocation));
-        assertPropagated(ACTION_DOWN, ACTION_UP);
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
 
-        dispatch(doubleTap());
-        assertPropagated(ACTION_DOWN, ACTION_UP, ACTION_DOWN, ACTION_UP);
+        dispatch(doubleTap(mTapLocation));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP, ACTION_DOWN, ACTION_UP);
 
         dispatch(swipe(
                 mTapLocation,
                 add(mTapLocation, 0, 29)));
-        assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
-    }
-
-    private void assertNoTouchInputPropagated() {
-        assertThat(prettyPrintable(mTouchListener.events), is(empty()));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
     }
 
     private void setMagnificationEnabled(boolean enabled) {
@@ -251,50 +249,6 @@ public class MagnificationGestureHandlerTest {
 
     private boolean isZoomed() {
         return mCurrentScale >= MIN_SCALE;
-    }
-
-    private void assertPropagated(int... eventTypes) {
-        MotionEvent ev;
-        try {
-            while (true) {
-                if (eventTypes.length == 0) return;
-                int expectedEventType = eventTypes[0];
-                long startedPollingAt = SystemClock.uptimeMillis();
-                ev = mTouchListener.events.poll(5, SECONDS);
-                assertNotNull("Expected "
-                        + MotionEvent.actionToString(expectedEventType)
-                        + " but none present after "
-                        + (SystemClock.uptimeMillis() - startedPollingAt) + "ms",
-                        ev);
-                int action = ev.getActionMasked();
-                if (action == expectedEventType) {
-                    eventTypes = Arrays.copyOfRange(eventTypes, 1, eventTypes.length);
-                } else {
-                    if (action != ACTION_MOVE) fail("Unexpected event: " + ev);
-                }
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private GestureDescription doubleTap() {
-        return multiTap(2);
-    }
-
-    private GestureDescription tripleTap() {
-        return multiTap(3);
-    }
-
-    private GestureDescription multiTap(int taps) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
-        long time = 0;
-        for (int i = 0; i < taps; i++) {
-            StrokeDescription stroke = click(mTapLocation);
-            builder.addStroke(startingAt(time, stroke));
-            time += stroke.getDuration() + 20;
-        }
-        return builder.build();
     }
 
     public void dispatch(StrokeDescription firstStroke, StrokeDescription... rest) {
@@ -308,18 +262,5 @@ public class MagnificationGestureHandlerTest {
 
     public void dispatch(GestureDescription gesture) {
         await(dispatchGesture(mService, gesture));
-    }
-
-    private static <T> Collection<T> prettyPrintable(Collection<T> c) {
-        return new ArrayList<T>(c) {
-
-            @Override
-            public String toString() {
-                return stream()
-                        .map(t -> "\n" + t)
-                        .reduce(String::concat)
-                        .orElse("");
-            }
-        };
     }
 }
