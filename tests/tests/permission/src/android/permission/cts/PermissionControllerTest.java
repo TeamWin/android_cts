@@ -17,6 +17,7 @@
 package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
@@ -174,7 +175,7 @@ public class PermissionControllerTest {
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(APP)).isNotNull();
         assertThat(result.get(APP)).containsExactly(ACCESS_FINE_LOCATION,
-                ACCESS_BACKGROUND_LOCATION);
+                ACCESS_BACKGROUND_LOCATION, ACCESS_COARSE_LOCATION);
     }
 
     @Test
