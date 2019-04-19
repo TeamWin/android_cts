@@ -3855,6 +3855,15 @@
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
+
+        <activity android:name=".instantapps.NotificationTestActivity"
+                 android:label="@string/ia_notification">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
+        </activity>
     </application>
 
 </manifest>

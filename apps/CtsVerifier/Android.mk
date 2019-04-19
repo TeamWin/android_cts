@@ -111,6 +111,9 @@ pre-installed-apps := \
     CtsPermissionApp \
     NotificationBot
 
+# Apps to be installed as Instant App using adb install --instant
+pre-installed-instant-app := CtsVerifierInstantApp
+
 other-required-apps := \
     CtsVerifierUSBCompanion \
     CtsVpnFirewallAppApi23 \
@@ -119,6 +122,7 @@ other-required-apps := \
 
 apps-to-include := \
     $(pre-installed-apps) \
+    $(pre-installed-instant-app) \
     $(other-required-apps)
 
 define apk-location-for
@@ -127,10 +131,11 @@ endef
 
 # Builds and launches CTS Verifier on a device.
 .PHONY: cts-verifier
-cts-verifier: CtsVerifier adb $(pre-installed-apps)
+cts-verifier: CtsVerifier adb $(pre-installed-apps) $(pre-installed-instant-app)
 	adb install -r $(PRODUCT_OUT)/data/app/CtsVerifier/CtsVerifier.apk \
 		$(foreach app,$(pre-installed-apps), \
 		    && adb install -r -t $(call apk-location-for,$(app))) \
+		&& adb install -r --instant $(call apk-location-for,$(pre-installed-instant-app)) \
 		&& adb shell "am start -n com.android.cts.verifier/.CtsVerifierActivity"
 
 #
