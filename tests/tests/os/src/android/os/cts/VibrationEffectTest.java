@@ -127,7 +127,8 @@ public class VibrationEffectTest {
     public void testCreatePrebaked() {
         int[] ids = { VibrationEffect.EFFECT_CLICK, VibrationEffect.EFFECT_DOUBLE_CLICK,
                 VibrationEffect.EFFECT_TICK, VibrationEffect.EFFECT_THUD,
-                VibrationEffect.EFFECT_POP, VibrationEffect.EFFECT_HEAVY_CLICK };
+                VibrationEffect.EFFECT_POP, VibrationEffect.EFFECT_HEAVY_CLICK,
+                VibrationEffect.EFFECT_TEXTURE_TICK };
         boolean[] fallbacks = { false, true };
         for (int id : ids) {
             for (boolean fallback : fallbacks) {
