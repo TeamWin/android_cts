@@ -53,7 +53,7 @@ public class BatteryConstraintTest extends ConstraintTest {
     public static final int BATTERY_JOB_ID = BatteryConstraintTest.class.hashCode();
 
     private JobInfo.Builder mBuilder;
-	private int mLowBatteryWarningLevel = 15;
+    private int mLowBatteryWarningLevel = 15;
     /**
      * Record of the previous state of power save mode trigger level to reset it after the test
      * finishes.
@@ -301,13 +301,12 @@ public class BatteryConstraintTest extends ConstraintTest {
             return;
         }
 
-        setBatteryState(false, mLowBatteryWarningLevel);
-
-        if(getInstrumentation().getContext().getPackageManager().hasSystemFeature(FEATURE_WATCH) &&
-               getInstrumentation().getContext().getPackageManager().hasSystemFeature(
-               TWM_HARDWARE_FEATURE)) {
+        // Skip this test on products that do not support a low battery state
+        if (mLowBatteryWarningLevel <= 0) {
             return;
         }
+
+        setBatteryState(false, mLowBatteryWarningLevel);
 
         // setBatteryState() waited for the charging/not-charging state to formally settle,
         // but battery level reporting lags behind that.  wait a moment to let that happen
