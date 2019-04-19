@@ -17,14 +17,9 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Assertions.assertNoEvents;
-import static android.contentcaptureservice.cts.Helper.eventually;
-import static android.contentcaptureservice.cts.Helper.sContext;
-import static android.contentcaptureservice.cts.OutOfProcessActivity.getStartedMarker;
-import static android.contentcaptureservice.cts.OutOfProcessActivity.getStoppedMarker;
+import static android.contentcaptureservice.cts.OutOfProcessActivity.killOutOfProcessActivity;
+import static android.contentcaptureservice.cts.OutOfProcessActivity.startAndWaitOutOfProcessActivity;
 
-import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
-import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -47,27 +42,4 @@ public class AppKilledTest extends AbstractContentCaptureIntegrationActivityLess
 
         assertNoEvents(session, OutOfProcessActivity.COMPONENT_NAME);
     }
-
-    private void startAndWaitOutOfProcessActivity() throws Exception {
-        final Intent startIntent = new Intent(sContext,
-                OutOfProcessActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        getStartedMarker(sContext).delete();
-        sContext.startActivity(startIntent);
-        eventually("getStartedMarker()", () -> {
-            return getStartedMarker(sContext).exists();
-        });
-        getStartedMarker(sContext).delete();
-    }
-
-    private void killOutOfProcessActivity() throws Exception {
-        // Waiting for activity to stop (stop marker appears)
-        eventually("getStoppedMarker()", () -> {
-            return getStoppedMarker(sContext).exists();
-        });
-
-        // Kill it!
-        runShellCommand("am broadcast --receiver-foreground "
-                + "-n android.contentcaptureservice.cts/.SelfDestructReceiver");
-    }
-
 }

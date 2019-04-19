@@ -20,14 +20,17 @@ import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.Helper.setService;
+import static android.contentcaptureservice.cts.Helper.toSet;
 import static android.provider.Settings.Secure.CONTENT_CAPTURE_ENABLED;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
+import android.content.ComponentName;
 import android.content.ContentCaptureOptions;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.provider.DeviceConfig;
 import android.util.Log;
+import android.util.Pair;
 import android.view.contentcapture.ContentCaptureManager;
 
 import androidx.annotation.NonNull;
@@ -48,6 +51,9 @@ import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
+
+import java.util.Set;
 
 /**
  * Base class for all (or most :-) integration tests in this CTS suite.
@@ -82,18 +88,35 @@ public abstract class AbstractContentCaptureIntegrationTest {
 
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
-            .run(() -> {
-                Log.v(mTag, "@SafeCleaner: resetDefaultService()");
-                resetService();
-
-                if (mServiceWatcher != null) {
-                    mServiceWatcher.waitOnDestroy();
-                }
-
-            })
             .add(() -> {
                 return CtsContentCaptureService.getExceptions();
             });
+
+    private final TestRule mServiceDisablerRule = (base, description) -> {
+        return new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                try {
+                    base.evaluate();
+                } finally {
+                    Log.v(mTag, "@mServiceDisablerRule: safelyDisableService()");
+                    safelyDisableService();
+                }
+            }
+        };
+    };
+
+    private void safelyDisableService() {
+        try {
+            resetService();
+
+            if (mServiceWatcher != null) {
+                mServiceWatcher.waitOnDestroy();
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "error disabling service", t);
+        }
+    }
 
     private final DeviceConfigStateChangerRule mKillSwitchKillerRule =
             new DeviceConfigStateChangerRule(sKillSwitchManager, "true");
@@ -105,6 +128,10 @@ public abstract class AbstractContentCaptureIntegrationTest {
     public final RuleChain mLookAllTheseRules = RuleChain
             // mRequiredServiceRule should be first so the test can be skipped right away
             .outerRule(mRequiredServiceRule)
+
+            // service must be disable at the last step, otherwise it's contents are not dump in
+            // case of error
+            .around(mServiceDisablerRule)
 
             // log everything
             .around(mVerboseLoggingRule)
@@ -184,20 +211,23 @@ public abstract class AbstractContentCaptureIntegrationTest {
      * its created, then whitelist the CTS test package.
      */
     public CtsContentCaptureService enableService() throws InterruptedException {
-        return enableService(/* whitelistSelf= */ true);
+        return enableService(toSet(MY_PACKAGE), /* whitelistedComponents= */ null);
     }
 
-    public CtsContentCaptureService enableService(boolean whitelistSelf)
-            throws InterruptedException {
+    public CtsContentCaptureService enableService(@Nullable Set<String> whitelistedPackages,
+            @Nullable Set<ComponentName> whitelistedComponents) throws InterruptedException {
+        return enableService(new Pair<>(whitelistedPackages, whitelistedComponents));
+    }
+
+    public CtsContentCaptureService enableService(
+            @Nullable Pair<Set<String>, Set<ComponentName>> whitelist) throws InterruptedException {
         if (mServiceWatcher != null) {
             throw new IllegalStateException("There Can Be Only One!");
         }
         mServiceWatcher = CtsContentCaptureService.setServiceWatcher();
         setService(CtsContentCaptureService.SERVICE_NAME);
 
-        if (whitelistSelf) {
-            mServiceWatcher.whitelistPackage(MY_PACKAGE);
-        }
+        mServiceWatcher.whitelist(whitelist);
 
         return mServiceWatcher.waitOnCreate();
     }
