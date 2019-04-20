@@ -48,6 +48,7 @@ import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
+import org.junit.rules.RuleChain;
 
 import java.util.function.Supplier;
 
@@ -55,16 +56,21 @@ import java.util.function.Supplier;
  * Tests for Window's setEnsureStatusBarContrastWhenTransparent and
  * setEnsureNavigationBarContrastWhenTransparent.
  */
+@FlakyTest(bugId = 130843045)
 @Presubmit
 public class EnsureBarContrastTest {
 
-    @Rule
-    public final ErrorCollector mErrorCollector = new ErrorCollector();
-
-    @Rule
-    public final ActivityTestRule<TestActivity> mTestActivity =
+    private final ErrorCollector mErrorCollector = new ErrorCollector();
+    private final DumpOnFailure mDumper = new DumpOnFailure();
+    private final ActivityTestRule<TestActivity> mTestActivity =
             new ActivityTestRule<>(TestActivity.class, false /* initialTouchMode */,
                     false /* launchActivity */);
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumper)
+            .around(mErrorCollector)
+            .around(mTestActivity);
 
     @Test
     public void test_ensureContrast_darkBars() {
@@ -81,7 +87,7 @@ public class EnsureBarContrastTest {
     public void runTestEnsureContrast(boolean lightBars) {
         TestActivity activity = launchAndWait(mTestActivity, lightBars, true /* ensureContrast */);
         for (Bar bar : Bar.BARS) {
-            Bitmap bitmap = getOnMainSync(() -> activity.screenshotBar(bar));
+            Bitmap bitmap = getOnMainSync(() -> activity.screenshotBar(bar, mDumper));
 
             if (getOnMainSync(() -> activity.barIsTapThrough(bar))) {
                 assertThat(bar.name + "Bar is tap through, therefore must NOT be scrimmed.", bitmap,
@@ -110,7 +116,7 @@ public class EnsureBarContrastTest {
     public void runTestDontEnsureContrast(boolean lightBars) {
         TestActivity activity = launchAndWait(mTestActivity, lightBars, false /* ensureContrast */);
         for (Bar bar : Bar.BARS) {
-            Bitmap bitmap = getOnMainSync(() -> activity.screenshotBar(bar));
+            Bitmap bitmap = getOnMainSync(() -> activity.screenshotBar(bar, mDumper));
 
             assertThat(bar.name + "Bar: contrast NOT requested, therefore must NOT be scrimmed.",
                     bitmap, hasNoScrim(lightBars));
@@ -273,7 +279,7 @@ public class EnsureBarContrastTest {
                     < bar.getInset(insets.getSystemWindowInsets());
         }
 
-        Bitmap screenshotBar(Bar bar) {
+        Bitmap screenshotBar(Bar bar, DumpOnFailure dumper) {
             final View dv = getWindow().getDecorView();
             final Insets insets = dv.getRootWindowInsets().getSystemWindowInsets();
 
@@ -281,7 +287,11 @@ public class EnsureBarContrastTest {
                     new Rect(dv.getLeft(), dv.getTop(), dv.getRight(), dv.getBottom()));
 
             Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
-            return Bitmap.createBitmap(fullBitmap, r.left, r.top, r.width(), r.height());
+            dumper.dumpOnFailure("full" + bar.name, fullBitmap);
+            Bitmap barBitmap = Bitmap.createBitmap(fullBitmap, r.left, r.top, r.width(),
+                    r.height());
+            dumper.dumpOnFailure("bar" + bar.name, barBitmap);
+            return barBitmap;
         }
     }
 

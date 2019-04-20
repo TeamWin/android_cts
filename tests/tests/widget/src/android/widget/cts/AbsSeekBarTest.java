@@ -215,8 +215,8 @@ public class AbsSeekBarTest {
     @Test
     public void testAccessKeyProgressIncrement() throws Throwable {
         // AbsSeekBar is an abstract class, use its subclass: SeekBar to do this test.
-        mActivityRule.runOnUiThread(() -> mActivity.setContentView(R.layout.seekbar_layout));
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActivity.getWindow().getDecorView(),
+                () -> mActivity.setContentView(R.layout.seekbar_layout));
 
         final SeekBar seekBar = (SeekBar) mActivity.findViewById(R.id.seekBar);
         final int keyProgressIncrement = 2;
