@@ -24,7 +24,6 @@ import static org.junit.Assert.assertThat;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.AspectRatioTestsBase;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -33,7 +32,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *  atest CtsActivityManagerDeviceSdk28TestCases:AspectRatioSdk28Tests
+ *  atest CtsWindowManagerSdk28TestCases:AspectRatioSdk28Tests
  */
 @Presubmit
 public class AspectRatioSdk28Tests extends AspectRatioTestsBase {
