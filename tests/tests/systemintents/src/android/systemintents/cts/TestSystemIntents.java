@@ -72,9 +72,6 @@ public class TestSystemIntents {
                     .setData(Uri.parse("package:android.systemintents.cts"))),
             new IntentEntry(0, new Intent(Settings.ACTION_IGNORE_BACKGROUND_DATA_RESTRICTIONS_SETTINGS)
                     .setData(Uri.parse("package:android.systemintents.cts"))),
-            new IntentEntry(EXCLUDE_TV|EXCLUDE_WATCH,
-                    new Intent(Settings.ACTION_APP_BATTERY_SETTINGS)
-                            .setData(Uri.parse("package:android.systemintents.cts"))),
             new IntentEntry(0, new Intent(Settings.ACTION_HOME_SETTINGS)),
             new IntentEntry(EXCLUDE_NON_TELEPHONY,
                     new Intent(Settings.ACTION_APN_SETTINGS)),

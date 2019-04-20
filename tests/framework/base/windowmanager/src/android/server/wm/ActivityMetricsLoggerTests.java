@@ -61,6 +61,8 @@ import android.platform.test.annotations.Presubmit;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.collection.IsIn;
@@ -213,6 +215,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * metrics logs. Verify we output the correct launch state.
      */
     @Test
+    @FlakyTest(bugId = 130764822)
     public void testAppWarmLaunchSetsWaitResultDelayData() {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -249,6 +252,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * metrics logs. Verify we output the correct launch state.
      */
     @Test
+    @FlakyTest(bugId = 130764822)
     public void testAppHotLaunchSetsWaitResultDelayData() {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -279,12 +283,13 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 containsString("HOT"));
     }
 
-  /**
+    /**
      * Cold launch an activity with wait option and verify that {@link android.app.WaitResult#totalTime}
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
     @Test
+    @FlakyTest(bugId = 130764822)
     public void testAppColdLaunchSetsWaitResultDelayData() {
         final String amStartOutput = SystemUtil.runShellCommand(
                 "am start -S -W " + TEST_ACTIVITY.flattenToShortString());

@@ -41,6 +41,7 @@
     <string name="test_category_telecom">Telecom</string>
     <string name="test_category_telephony">Telephony</string>
     <string name="test_category_tv">TV</string>
+    <string name="test_category_instant_apps">Instant Apps</string>
     <string name="test_category_other">Other</string>
     <string name="clear">Clear</string>
     <string name="test_results_clear_title">Remove all test results?</string>
@@ -4965,11 +4966,47 @@ Follow the instructions on the screen to measure the frequency response for the 
         is still on the screen, and the notification is now visible in the notification shade.
     </string>
     <string name="bubbles_notification_test_button_3">Update bubble to show notification</string>
-    <string name="bubbles_notification_test_title_4">Step 4: open bubble</string>
-    <string name="bubbles_notification_test_verify_4">Tap on the bubble to open it, then tap on the
+    <string name="bubbles_notification_test_title_4">Step 4: remove bubble</string>
+    <string name="bubbles_notification_test_verify_4">Click the button below and verify that the
+        bubble is removed from the screen, and the notification is still visible in the notification
+        shade.</string>
+    <string name="bubbles_notification_test_button_4">Remove bubble</string>
+    <string name="bubbles_notification_test_title_5">Step 5: add bubble</string>
+    <string name="bubbles_notification_test_verify_5">Click the button below and verify that the
+        bubble appears on the screen, and the notification is still visible in the notification
+        shade.</string>
+    <string name="bubbles_notification_test_button_5">Add bubble</string>
+    <string name="bubbles_notification_test_title_6">Step 6: open bubble</string>
+    <string name="bubbles_notification_test_verify_6">Tap on the bubble to open it, then tap on the
         bubble again to collapse it and return to this screen. Verify that after opening the bubble,
         there is no longer a notification for it visible in the notification shade.</string>
     <string name="bubbles_test_summary_title">Test Complete</string>
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
     <string name="bubble_activity_title">Bubble Activity</string>
+
+    <!-- Strings for Instant Apps -->
+    <string name="ia_instruction_heading_label">Instructions:</string>
+    <string name="ia_instruction_text_photo_label">READ BEFORE STARTING TEST</string>
+    <string name="ia_start_test_button_caption">Start Test</string>
+    <string name="ia_install_dialog_title">Install Instant App</string>
+    <string name="ia_install_dialog_text">
+    For this test you need to install CtsVerifierInstantApp.apk by running \n
+    adb install -r --instant /path/to/CtsVerifierInstantApp.apk \n\n
+    CtsVerifierInstantApp.apk can be found in android-cts-verifier.zip that you have downloaded.
+    </string>
+    <string name="ia_notification">Instant Apps Notification Test</string>
+    <string name="ia_notification_info">
+    This test verifies that Instant Apps notification is shown when an Instant App is at foreground.\n\n
+    - Read the message above the \"Start Test\" button for
+    step-by-step instructions.
+    </string>
+    <string name="ia_notification_instruction_label">\n
+    1. Click Start Test. \n\n
+    2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
+    3. Drag down the notification bar when the sample Instant App is at foreground. \n\n
+    4. Check if Instant App is shown in notification area with the following (Please expand the notification if it is collapsed): \n
+    \u0020\u0020\u0020a. It provides information about Instant Apps not requiring installation and an action that provides more information about the Instant App. \n
+    \u0020\u0020\u0020b. It provides an action allowing the user to launch the associated link with web browser. \n\n
+    5. Click Pass button if all checks in step 4 passed, otherwise click Fail button.
+    </string>
 </resources>

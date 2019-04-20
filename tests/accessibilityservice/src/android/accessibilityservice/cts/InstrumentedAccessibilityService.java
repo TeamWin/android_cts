@@ -16,6 +16,9 @@
 
 package android.accessibilityservice.cts;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
@@ -23,11 +26,9 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
-import androidx.annotation.CallSuper;
-import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
-
+import androidx.annotation.CallSuper;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +36,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 
 public class InstrumentedAccessibilityService extends AccessibilityService {
 
@@ -48,7 +46,7 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
 
     // Timeout disabled in #DEBUG mode to prevent breakpoint-related failures
     private static final int TIMEOUT_SERVICE_ENABLE = DEBUG ? Integer.MAX_VALUE : 10000;
-    private static final int TIMEOUT_SERVICE_PERFORM_SYNC = DEBUG ? Integer.MAX_VALUE : 5000;
+    private static final int TIMEOUT_SERVICE_PERFORM_SYNC = DEBUG ? Integer.MAX_VALUE : 10000;
 
     private static final HashMap<Class, WeakReference<InstrumentedAccessibilityService>>
             sInstances = new HashMap<>();
@@ -56,7 +54,6 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
     private final Handler mHandler = new Handler();
     final Object mInterruptWaitObject = new Object();
     public boolean mOnInterruptCalled;
-
 
     @Override
     @CallSuper
@@ -104,13 +101,14 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
     public <T extends Object> T getOnService(Callable<T> callable) {
         AtomicReference<T> returnValue = new AtomicReference<>(null);
         AtomicReference<Throwable> throwable = new AtomicReference<>(null);
-        runOnServiceSync(() -> {
-            try {
-                returnValue.set(callable.call());
-            } catch (Throwable e) {
-                throwable.set(e);
-            }
-        });
+        runOnServiceSync(
+                () -> {
+                    try {
+                        returnValue.set(callable.call());
+                    } catch (Throwable e) {
+                        throwable.set(e);
+                    }
+                });
         if (throwable.get() != null) {
             throw new RuntimeException(throwable.get());
         }
@@ -155,21 +153,23 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
             Instrumentation instrumentation, Class<T> clazz) {
         final String serviceName = clazz.getSimpleName();
         final Context context = instrumentation.getContext();
-        final String enabledServices = Settings.Secure.getString(
-                context.getContentResolver(),
-                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        final String enabledServices =
+                Settings.Secure.getString(
+                        context.getContentResolver(),
+                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
         if (enabledServices != null) {
             assertFalse("Service is already enabled", enabledServices.contains(serviceName));
         }
-        final AccessibilityManager manager = (AccessibilityManager) context.getSystemService(
-                Context.ACCESSIBILITY_SERVICE);
+        final AccessibilityManager manager =
+                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
         final List<AccessibilityServiceInfo> serviceInfos =
                 manager.getInstalledAccessibilityServiceList();
         for (AccessibilityServiceInfo serviceInfo : serviceInfos) {
             final String serviceId = serviceInfo.getId();
             if (serviceId.endsWith(serviceName)) {
                 ShellCommandBuilder.create(instrumentation)
-                        .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                        .putSecureSetting(
+                                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
                                 enabledServices + COMPONENT_NAME_SEPARATOR + serviceId)
                         .putSecureSetting(Settings.Secure.ACCESSIBILITY_ENABLED, "1")
                         .run();
@@ -177,11 +177,15 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
                 final T instance = getInstanceForClass(clazz, TIMEOUT_SERVICE_ENABLE);
                 if (instance == null) {
                     ShellCommandBuilder.create(instrumentation)
-                            .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-                                    enabledServices)
+                            .putSecureSetting(
+                                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, enabledServices)
                             .run();
-                    throw new RuntimeException("Starting accessibility service " + serviceName
-                            + " took longer than " + TIMEOUT_SERVICE_ENABLE + "ms");
+                    throw new RuntimeException(
+                            "Starting accessibility service "
+                                    + serviceName
+                                    + " took longer than "
+                                    + TIMEOUT_SERVICE_ENABLE
+                                    + "ms");
                 }
                 return instance;
             }
@@ -189,8 +193,8 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         throw new RuntimeException("Accessibility service " + serviceName + " not found");
     }
 
-    private static <T extends InstrumentedAccessibilityService> T getInstanceForClass(Class clazz,
-            long timeoutMillis) {
+    private static <T extends InstrumentedAccessibilityService> T getInstanceForClass(
+            Class clazz, long timeoutMillis) {
         final long timeoutTimeMillis = SystemClock.uptimeMillis() + timeoutMillis;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
             synchronized (sInstances) {
@@ -218,11 +222,12 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         final Context context = instrumentation.getContext();
         final AccessibilityManager manager =
                 (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        manager.addAccessibilityStateChangeListener(b -> {
-            synchronized (waitLockForA11yOff) {
-                waitLockForA11yOff.notifyAll();
-            }
-        });
+        manager.addAccessibilityStateChangeListener(
+                b -> {
+                    synchronized (waitLockForA11yOff) {
+                        waitLockForA11yOff.notifyAll();
+                    }
+                });
 
         ShellCommandBuilder.create(instrumentation)
                 .deleteSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
@@ -233,7 +238,8 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
             synchronized (waitLockForA11yOff) {
                 if (manager.getEnabledAccessibilityServiceList(
-                        AccessibilityServiceInfo.FEEDBACK_ALL_MASK).isEmpty()) {
+                                AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+                        .isEmpty()) {
                     return;
                 }
                 try {
@@ -243,7 +249,9 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
                 }
             }
         }
-        throw new RuntimeException("Disabling all accessibility services took longer than "
-                + TIMEOUT_SERVICE_ENABLE + "ms");
+        throw new RuntimeException(
+                "Disabling all accessibility services took longer than "
+                        + TIMEOUT_SERVICE_ENABLE
+                        + "ms");
     }
 }

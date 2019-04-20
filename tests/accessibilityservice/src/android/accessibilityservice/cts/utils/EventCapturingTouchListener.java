@@ -16,22 +16,92 @@
 
 package android.accessibilityservice.cts.utils;
 
+import static android.view.MotionEvent.ACTION_MOVE;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class EventCapturingTouchListener implements View.OnTouchListener {
-
+    // whether or not to keep events from propagating to other listeners
+    private boolean shouldConsumeEvents;
+    // Todo (b/128917646): fix the tests that rely on this being public.
     public final BlockingQueue<MotionEvent> events = new LinkedBlockingQueue<>();
+
+    public EventCapturingTouchListener(boolean shouldConsumeEvents) {
+        this.shouldConsumeEvents = shouldConsumeEvents;
+    }
+
+    public EventCapturingTouchListener() {
+        this.shouldConsumeEvents = true;
+    }
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         assertTrue(events.offer(MotionEvent.obtain(motionEvent)));
-        return true;
+        return shouldConsumeEvents;
+    }
+
+    /** Insure that no touch events have been detected. */
+    public void assertNonePropagated() {
+        try {
+            long waitTime = 1; // seconds
+            MotionEvent event = events.poll(waitTime, SECONDS);
+            if (event != null) {
+                fail("Unexpected touch event " + event.toString());
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Check for the specified touch events. Note that specifying ACTION_MOVE will match one or more
+     * consecutive ACTION_MOVE events.
+     */
+    public void assertPropagated(int... eventTypes) {
+        MotionEvent ev;
+        long waitTime = 5; // seconds
+        try {
+            List<String> expected = new ArrayList<>();
+            List<String> received = new ArrayList<>();
+            for (int e : eventTypes) {
+                expected.add(MotionEvent.actionToString(e));
+            }
+            ev = events.poll(waitTime, SECONDS);
+            assertNotNull(
+                    "Expected " + expected + " but none present after " + waitTime + " seconds",
+                    ev);
+            // By this point there is at least one received event.
+            received.add(MotionEvent.actionToString(ev.getActionMasked()));
+            ev = events.poll(waitTime, SECONDS);
+            while (ev != null) {
+                int action = ev.getActionMasked();
+                if (action != ACTION_MOVE) {
+                    received.add(MotionEvent.actionToString(action));
+                } else {
+                    // Add the current event if the previous received event was not ACTION_MOVE
+                    String prev = received.get(received.size() - 1);
+                    if (!prev.equals(MotionEvent.actionToString(ACTION_MOVE))) {
+                        received.add(MotionEvent.actionToString(action));
+                    }
+                }
+                ev = events.poll(waitTime, SECONDS);
+            }
+            assertEquals(expected, received);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

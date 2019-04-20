@@ -108,13 +108,12 @@ public class CheckedTextViewTest {
 
     @Test
     public void testChecked() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
             mListView.setAdapter(new CheckedTextViewAdapter());
 
             mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
             mListView.setItemChecked(1, true);
         });
-        mInstrumentation.waitForIdleSync();
 
         assertEquals(1, mListView.getCheckedItemPosition());
         assertTrue(mListView.isItemChecked(1));
@@ -128,11 +127,10 @@ public class CheckedTextViewTest {
         assertTrue(view1.isChecked());
         assertFalse(view2.isChecked());
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
             mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
             mListView.setItemChecked(2, true);
         });
-        mInstrumentation.waitForIdleSync();
         assertFalse(view0.isChecked());
         assertTrue(view1.isChecked());
         assertTrue(view2.isChecked());
@@ -172,22 +170,20 @@ public class CheckedTextViewTest {
 
     @Test
     public void testSetPadding() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
             mListView.setPadding(1, 2, 3, 4);
             mListView.requestLayout();
         });
-        mInstrumentation.waitForIdleSync();
 
         final int origTop = mListView.getPaddingTop();
         final int origBottom = mListView.getPaddingBottom();
         final int origLeft = mListView.getPaddingLeft();
         final int origRight = mListView.getPaddingRight();
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
             mListView.setPadding(10, 20, 30, 40);
             mListView.requestLayout();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertTrue(origTop < mListView.getPaddingTop());
         assertTrue(origBottom < mListView.getPaddingBottom());

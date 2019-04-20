@@ -40,6 +40,7 @@ import android.hardware.cts.helpers.sensorverification.EventTimestampSynchroniza
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.AppModeFull;
@@ -663,13 +664,15 @@ public class SensorTest extends SensorTestCase {
 
     private static void makeMyPackageActive() throws IOException {
         final String command = "cmd sensorservice reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName();
+                +  InstrumentationRegistry.getTargetContext().getPackageName()
+                + " --user " + Process.myUserHandle().getIdentifier();
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
     private void makeMyPackageIdle() throws IOException {
         final String command = "cmd sensorservice set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle";
+                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle"
+                + " --user " + Process.myUserHandle().getIdentifier();
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 

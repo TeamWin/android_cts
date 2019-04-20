@@ -66,7 +66,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
         Key<StreamConfigurationMap> key =
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP;
         final float SIZE_ERROR_MARGIN = 0.03f;
-        for (String id : mCameraIds) {
+        for (String id : mAllCameraIds) {
             initStaticMetadata(id);
             StreamConfigurationMap configs = mStaticInfo.getValueFromKeyNonNull(key);
             Rect activeRect = mStaticInfo.getActiveArraySizeChecked();
@@ -139,7 +139,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
      * Test max number of output stream reported by device
      */
     public void testMaxNumOutputStreams() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mAllCameraIds) {
             initStaticMetadata(id);
             int maxNumStreamsRaw = mStaticInfo.getMaxNumOutputStreamsRawChecked();
             int maxNumStreamsProc = mStaticInfo.getMaxNumOutputStreamsProcessedChecked();
@@ -167,7 +167,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
      * Test advertised capability does match available keys and vice versa
      */
     public void testCapabilities() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mAllCameraIds) {
             initStaticMetadata(id);
             List<Integer> availableCaps = mStaticInfo.getAvailableCapabilitiesChecked();
 
@@ -534,7 +534,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
      * Test lens facing.
      */
     public void testLensFacing() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mAllCameraIds) {
             initStaticMetadata(id);
             mStaticInfo.getLensFacingChecked();
         }

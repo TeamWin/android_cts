@@ -20,6 +20,8 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -85,6 +87,29 @@ public class MediaStorageTest {
 
     private void doSandboxed(boolean sandboxed) throws Exception {
         assertEquals(sandboxed, Environment.isExternalStorageSandboxed());
+
+        // We can always see mounted state
+        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
+
+        // We might have top-level access
+        final File probe = new File(Environment.getExternalStorageDirectory(),
+                "cts" + System.nanoTime());
+        if (sandboxed) {
+            try {
+                probe.createNewFile();
+                fail();
+            } catch (IOException expected) {
+            }
+            assertNull(Environment.getExternalStorageDirectory().list());
+        } else {
+            assertTrue(probe.createNewFile());
+            assertNotNull(Environment.getExternalStorageDirectory().list());
+        }
+
+        // We always have our package directories
+        final File probePackage = new File(mContext.getExternalFilesDir(null),
+                "cts" + System.nanoTime());
+        assertTrue(probePackage.createNewFile());
 
         final File jpg = stageFile(Environment.buildPath(Environment.getExternalStorageDirectory(),
                 Environment.DIRECTORY_DOWNLOADS, System.nanoTime() + ".jpg"));

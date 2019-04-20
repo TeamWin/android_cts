@@ -294,7 +294,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             assertTrue(sessionCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-            Session2Token currentToken = session.getSessionToken();
+            Session2Token currentToken = session.getToken();
             assertTrue(listContainsToken(listener.mTokens, currentToken));
             assertTrue(listContainsToken(mSessionManager.getSession2Tokens(), currentToken));
         }
@@ -319,7 +319,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
                 .setSessionCallback(handlerExecutor, sessionCallback)
                 .build()) {
             assertTrue(listener1.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-            Session2Token currentToken = session.getSessionToken();
+            Session2Token currentToken = session.getToken();
             assertTrue(listContainsToken(listener1.mTokens, currentToken));
 
             // Test removing listener

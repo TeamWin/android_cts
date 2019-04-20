@@ -84,12 +84,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final Config MEDIA_FULL = new Config("CtsMediaStorageAppFull.apk",
             "com.android.cts.mediastorageappfull", MEDIA_CLAZZ);
 
-    private static final String PKG_A = "com.android.cts.storageapp_a";
-    private static final String PKG_B = "com.android.cts.storageapp_b";
-    private static final String APK_A = "CtsStorageAppA.apk";
-    private static final String APK_B = "CtsStorageAppB.apk";
-    private static final String CLASS = "com.android.cts.storageapp.StorageTest";
-
     private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
 
@@ -114,8 +108,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         getDevice().uninstallPackage(READ_PKG);
         getDevice().uninstallPackage(WRITE_PKG);
         getDevice().uninstallPackage(MULTIUSER_PKG);
-        getDevice().uninstallPackage(PKG_A);
-        getDevice().uninstallPackage(PKG_B);
 
         wipePrimaryExternalStorage();
     }
@@ -141,9 +133,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageNone() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeFalse(hasIsolatedStorage());
-
         try {
             wipePrimaryExternalStorage();
 
@@ -167,9 +156,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageRead() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeFalse(hasIsolatedStorage());
-
         try {
             wipePrimaryExternalStorage();
 
@@ -193,9 +179,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageWrite() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeFalse(hasIsolatedStorage());
-
         try {
             wipePrimaryExternalStorage();
 
@@ -218,9 +201,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageGifts() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeFalse(hasIsolatedStorage());
-
         try {
             wipePrimaryExternalStorage();
 
@@ -271,7 +251,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testObbGifts", user);
             }
 
-            Assume.assumeTrue(hasIsolatedStorage());
             for (int user : mUsers) {
                 runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testRemoveObbGifts", user);
             }
@@ -327,62 +306,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test isolated external storage, ensuring that two apps are running in
-     * complete isolation.
-     */
-    @Test
-    public void testExternalStorageIsolated() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
-        try {
-            wipePrimaryExternalStorage();
-
-            getDevice().uninstallPackage(PKG_A);
-            getDevice().uninstallPackage(PKG_B);
-
-            installPackage(APK_A);
-            installPackage(APK_B);
-
-            for (int user : mUsers) {
-                runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedWrite", user);
-                runDeviceTests(PKG_B, CLASS, "testExternalStorageIsolatedRead", user);
-            }
-        } finally {
-            getDevice().uninstallPackage(PKG_A);
-            getDevice().uninstallPackage(PKG_B);
-        }
-    }
-
-    /**
-     * Test isolated external storage, ensuring that legacy apps behave as
-     * expected.
-     */
-    @Test
-    public void testExternalStorageIsolatedLegacy() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
-        final int owner = mUsers[0];
-        try {
-            wipePrimaryExternalStorage();
-            getDevice().executeShellCommand("touch /sdcard/cts_top");
-
-            getDevice().uninstallPackage(PKG_A);
-            installPackage(APK_A);
-
-            updateAppOp(PKG_A, true, owner, "android:legacy_storage", true);
-            runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedLegacy", owner);
-            runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedWrite", owner);
-
-            updateAppOp(PKG_A, true, owner, "android:legacy_storage", false);
-            runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedNonLegacy", owner);
-        } finally {
-            getDevice().uninstallPackage(PKG_A);
-        }
-    }
-
-    /**
      * Test multi-user emulated storage environment, ensuring that each user has
      * isolated storage.
      */
@@ -434,9 +357,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testMultiViewMoveConsistency() throws Exception {
-        // TODO: remove this test once isolated storage is always enabled
-        Assume.assumeFalse(hasIsolatedStorage());
-
         try {
             wipePrimaryExternalStorage();
 
@@ -556,9 +476,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void doMediaSandboxed(Config config, boolean sandboxed) throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
         installPackage(config.apk);
         for (int user : mUsers) {
             updatePermissions(config.pkg, user, new String[] {
@@ -588,9 +505,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void doMediaNone(Config config) throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
         installPackage(config.apk);
         for (int user : mUsers) {
             updatePermissions(config.pkg, user, new String[] {
@@ -616,9 +530,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void doMediaRead(Config config) throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
         installPackage(config.apk);
         for (int user : mUsers) {
             updatePermissions(config.pkg, user, new String[] {
@@ -646,9 +557,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void doMediaWrite(Config config) throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
         installPackage(config.apk);
         for (int user : mUsers) {
             updatePermissions(config.pkg, user, new String[] {
@@ -674,9 +582,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void doMediaEscalation(Config config) throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(hasIsolatedStorage());
-
         installPackage(config.apk);
 
         // TODO: extend test to exercise secondary users
@@ -722,11 +627,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand(
                 "cmd appops set --user " + userId + (targetsUid ? " --uid " : " ") + packageName
                         + " " + appOp + " " + verb);
-    }
-
-    private boolean hasIsolatedStorage() throws DeviceNotAvailableException {
-        return getDevice().executeShellCommand("getprop sys.isolated_storage_snapshot")
-                .contains("true");
     }
 
     private void wipePrimaryExternalStorage() throws DeviceNotAvailableException {
