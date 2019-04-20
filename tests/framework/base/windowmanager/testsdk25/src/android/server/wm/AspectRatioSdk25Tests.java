@@ -28,7 +28,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *  atest CtsActivityManagerDeviceSdk25TestCases:AspectRatioSdk25Tests
+ *  atest CtsWindowManagerSdk25TestCases:AspectRatioSdk25Tests
  */
 @Presubmit
 public class AspectRatioSdk25Tests extends AspectRatioTestsBase {

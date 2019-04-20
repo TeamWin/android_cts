@@ -19,8 +19,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests optional
 
-# TODO(b/129909356): Rename this to CtsWindowManagerSdk28TestCases
-LOCAL_PACKAGE_NAME := CtsActivityManagerDeviceSdk28TestCases
+LOCAL_PACKAGE_NAME := CtsWindowManagerSdk28TestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../src/android/server/wm/AspectRatioTestsBase.java
