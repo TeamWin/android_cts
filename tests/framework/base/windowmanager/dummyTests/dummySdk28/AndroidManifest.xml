@@ -22,7 +22,7 @@
 
     <!-- TODO(b/129909356): Remove this once CtsActivityManagerDeviceSdk28TestCases is renamed to
          CtsWindowManagerSdk28TestCases -->
-    <application android:label="CtsWindowManagerSdk28TestCases">
+    <application android:label="CtsActivityManagerDeviceSdk28TestCases">
         <uses-library android:name="android.test.runner" />
     </application>
 
