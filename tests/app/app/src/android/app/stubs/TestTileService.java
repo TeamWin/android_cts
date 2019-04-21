@@ -19,6 +19,9 @@ package android.app.stubs;
 import android.content.ComponentName;
 import android.os.Debug;
 import android.service.quicksettings.TileService;
+import android.util.Log;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestTileService extends TileService {
 
@@ -27,7 +30,9 @@ public class TestTileService extends TileService {
     public static final int ICON_ID = R.drawable.robot;
 
     private static TestTileService sTestTileService = null;
-    boolean isConnected;
+    AtomicBoolean isConnected = new AtomicBoolean(false);
+    AtomicBoolean isListening = new AtomicBoolean(false);
+    AtomicBoolean hasBeenClicked = new AtomicBoolean(false);
 
     public static String getId() {
         return String.format("%s/%s", TestTileService.class.getPackage().getName(),
@@ -48,21 +53,49 @@ public class TestTileService extends TileService {
         return sTestTileService;
     }
 
-    public boolean isConnected() {
-        return isConnected;
+    public static boolean isConnected() {
+        return sTestTileService != null && sTestTileService.isConnected.get();
+    }
+
+    public static boolean isListening() {
+        return sTestTileService.isListening.get();
+    }
+
+    public static boolean hasBeenClicked() {
+        return sTestTileService.hasBeenClicked.get();
+    }
+
+    @Override
+    public void onStartListening() {
+        super.onStartListening();
+        isListening.set(true);
+    }
+
+    @Override
+    public void onStopListening() {
+        super.onStopListening();
+        isListening.set(false);
+    }
+
+    @Override
+    public void onClick() {
+        super.onClick();
+        hasBeenClicked.set(true);
     }
 
     @Override
     public void onTileAdded() {
         super.onTileAdded();
         sTestTileService = this;
-        isConnected = true;
+        isConnected.set(true);
     }
 
     @Override
     public void onTileRemoved() {
         super.onTileRemoved();
-        isConnected = false;
         sTestTileService = null;
+        isConnected.set(false);
+        isListening.set(false);
+        hasBeenClicked.set(false);
     }
 }

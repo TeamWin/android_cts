@@ -45,8 +45,8 @@ public class TextClassifierEventTest {
         TextClassifierEvent.TextSelectionEvent result =
                 parcelizeDeparcelize(event, TextClassifierEvent.TextSelectionEvent.CREATOR);
 
-        assertMinimalTextClassifierEvent(event);
-        assertMinimalTextClassifierEvent(result);
+        assertMinimalTextSelectionEvent(event);
+        assertMinimalTextSelectionEvent(result);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class TextClassifierEventTest {
                 .build();
     }
 
-    private void assertMinimalTextClassifierEvent(TextClassifierEvent.TextSelectionEvent event) {
+    private void assertMinimalTextSelectionEvent(TextClassifierEvent.TextSelectionEvent event) {
         assertThat(event.getEventCategory()).isEqualTo(TextClassifierEvent.CATEGORY_SELECTION);
         assertThat(event.getEventType()).isEqualTo(TextClassifierEvent.TYPE_SELECTION_DESTROYED);
         assertThat(event.getEventIndex()).isEqualTo(0);
@@ -150,6 +150,7 @@ public class TextClassifierEventTest {
         assertThat(event.getExtras().size()).isEqualTo(0);
         assertThat(event.getEventContext()).isNull();
         assertThat(event.getEntityTypes()).isEmpty();
+        assertThat(event.getLocale()).isNull();
     }
 
     private TextClassifierEvent.TextSelectionEvent createFullTextSelectionEvent() {
@@ -172,6 +173,7 @@ public class TextClassifierEventTest {
                         .build())
                 .setScores(0.5f)
                 .setEntityTypes(TextClassifier.TYPE_ADDRESS, TextClassifier.TYPE_DATE)
+                .setLocale(ULocale.US)
                 .build();
     }
 
@@ -194,6 +196,7 @@ public class TextClassifierEventTest {
         assertThat(event.getEventContext().getWidgetVersion()).isEqualTo(TextView.class.getName());
         assertThat(event.getScores()).hasLength(1);
         assertThat(event.getScores()[0]).isWithin(TOLERANCE).of(0.5f);
+        assertThat(event.getLocale()).isEqualTo(ULocale.US);
     }
 
     private TextClassifierEvent.TextLinkifyEvent createMinimalTextLinkifyEvent() {
@@ -212,6 +215,7 @@ public class TextClassifierEventTest {
         assertThat(event.getExtras().size()).isEqualTo(0);
         assertThat(event.getEventContext()).isNull();
         assertThat(event.getEntityTypes()).isEmpty();
+        assertThat(event.getLocale()).isNull();
     }
 
     private TextClassifierEvent.TextLinkifyEvent createFullTextLinkifyEvent() {
@@ -230,6 +234,7 @@ public class TextClassifierEventTest {
                         .build())
                 .setScores(0.5f)
                 .setEntityTypes(TextClassifier.TYPE_ADDRESS, TextClassifier.TYPE_DATE)
+                .setLocale(ULocale.US)
                 .build();
     }
 
@@ -248,6 +253,7 @@ public class TextClassifierEventTest {
         assertThat(event.getEventContext().getWidgetVersion()).isEqualTo(TextView.class.getName());
         assertThat(event.getScores()).hasLength(1);
         assertThat(event.getScores()[0]).isWithin(TOLERANCE).of(0.5f);
+        assertThat(event.getLocale()).isEqualTo(ULocale.US);
     }
 
     private TextClassifierEvent.ConversationActionsEvent createMinimalConversationActionsEvent() {
@@ -268,6 +274,7 @@ public class TextClassifierEventTest {
         assertThat(event.getExtras().size()).isEqualTo(0);
         assertThat(event.getEventContext()).isNull();
         assertThat(event.getEntityTypes()).isEmpty();
+        assertThat(event.getLocale()).isNull();
     }
 
     private TextClassifierEvent.ConversationActionsEvent createFullConversationActionsEvent() {
@@ -286,6 +293,7 @@ public class TextClassifierEventTest {
                         .build())
                 .setScores(0.5f)
                 .setEntityTypes(TextClassifier.TYPE_ADDRESS, TextClassifier.TYPE_DATE)
+                .setLocale(ULocale.US)
                 .build();
     }
 
@@ -306,6 +314,7 @@ public class TextClassifierEventTest {
         assertThat(event.getEventContext().getWidgetVersion()).isEqualTo(TextView.class.getName());
         assertThat(event.getScores()).hasLength(1);
         assertThat(event.getScores()[0]).isWithin(TOLERANCE).of(0.5f);
+        assertThat(event.getLocale()).isEqualTo(ULocale.US);
     }
 
     private TextClassifierEvent.LanguageDetectionEvent createMinimalLanguageDetectionEvent() {
@@ -326,6 +335,7 @@ public class TextClassifierEventTest {
         assertThat(event.getExtras().size()).isEqualTo(0);
         assertThat(event.getEventContext()).isNull();
         assertThat(event.getEntityTypes()).isEmpty();
+        assertThat(event.getLocale()).isNull();
     }
 
     private TextClassifierEvent.LanguageDetectionEvent createFullLanguageDetectionEvent() {
@@ -337,7 +347,6 @@ public class TextClassifierEventTest {
                 .setEntityTypes(TextClassifier.TYPE_ADDRESS)
                 .setResultId("androidtc-en-v606-1234")
                 .setActionIndices(1, 2, 5)
-                .setLocale(ULocale.US)
                 .setExtras(extra)
                 .setEventContext(new TextClassificationContext.Builder(
                         "pkg", TextClassifier.WIDGET_TYPE_TEXTVIEW)
@@ -345,6 +354,7 @@ public class TextClassifierEventTest {
                         .build())
                 .setScores(0.5f)
                 .setEntityTypes(TextClassifier.TYPE_ADDRESS, TextClassifier.TYPE_DATE)
+                .setLocale(ULocale.US)
                 .build();
     }
 
