@@ -16,13 +16,21 @@
 
 package android.media.cts;
 
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.cts.R;
 import android.platform.test.annotations.AppModeFull;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class SoundPoolHapticTest extends SoundPoolTest {
-    // Test files are mocked audio-haptic coupled ogg files for regression testing.
-    // TODO: Update with actual audio-haptic ogg files.
+    @Override
+    protected AudioAttributes getAudioAttributes() {
+        // Unmute haptic channels here so that haptic playback
+        // will be selected if it is available.
+        return new AudioAttributes.Builder()
+                .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+                .setHapticChannelsMuted(false).build();
+    }
 
     @Override
     protected int getSoundA() {
