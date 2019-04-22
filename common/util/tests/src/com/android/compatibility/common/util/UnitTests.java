@@ -28,6 +28,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     BusinessLogicTest.class,
     CaseResultTest.class,
+    CrashUtilsTest.class,
     DynamicConfigTest.class,
     LightInvocationResultTest.class,
     MetricsXmlSerializerTest.class,
