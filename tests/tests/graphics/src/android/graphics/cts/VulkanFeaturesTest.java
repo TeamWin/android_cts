@@ -104,7 +104,7 @@ public class VulkanFeaturesTest {
         mVulkanDevices = getVulkanDevices();
         mBestDevice = getBestDevice();
     }
-    @CddTest(requirement="7.1.4.2/C-1-1,C-2-1")
+    @CddTest(requirement = "7.1.4.2/C-1-1,C-2-1")
     @Test
     public void testVulkanHardwareFeatures() throws JSONException {
         if (DEBUG) {
@@ -173,7 +173,7 @@ public class VulkanFeaturesTest {
         }
     }
 
-    @CddTest(requirement="7.9.2/C-1-5")
+    @CddTest(requirement = "7.1.4.2/C-3-1")
     @Test
     public void testVulkan1_1Requirements() throws JSONException {
         if (mVulkanHardwareVersion == null || mVulkanHardwareVersion.version < VULKAN_1_1
@@ -201,6 +201,7 @@ public class VulkanFeaturesTest {
                            .getInt("samplerYcbcrConversion") != 0);
     }
 
+    @CddTest(requirement = "7.9.2/C-1-5")
     @Test
     public void testVulkanVersionForVrHighPerformance() {
         if (!mPm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE))
