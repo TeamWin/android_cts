@@ -151,11 +151,30 @@ public class WideColorGamutTests extends ActivityTestBase {
                             .001f));
     }
 
+    private static Color plus(Color a, Color b) {
+        final ColorSpace cs = a.getColorSpace();
+        Assert.assertSame(cs, b.getColorSpace());
+
+        float[] ac = a.getComponents();
+        float[] bc = b.getComponents();
+        float[] result = new float[ac.length];
+        for (int i = 0; i < ac.length; ++i) {
+            // BlendMode.PLUS clamps to [0,1]
+            result[i] = Math.max(Math.min(ac[i] + bc[i], 1.0f), 0.0f);
+        }
+        return Color.valueOf(result, cs);
+    }
+
     @Test
     public void testCanvasDrawColorLongBlendMode() {
         final Color greenP3 = Color.valueOf(0, 1.0f, 0, 1.0f, DISPLAY_P3);
         final Color redP3 = Color.valueOf(1.0f, 0, 0, 1.0f, DISPLAY_P3);
-        final Color expected = Color.valueOf(1.0f, 1.0f, 0, 1.0f, DISPLAY_P3);
+
+        final ColorSpace displaySpace = displaySpace();
+        final Color greenDisplay = greenP3.convert(displaySpace);
+        final Color redDisplay = redP3.convert(displaySpace);
+
+        final Color expected = plus(greenDisplay, redDisplay);
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
                     canvas.drawColor(greenP3.pack());
@@ -167,16 +186,19 @@ public class WideColorGamutTests extends ActivityTestBase {
                             .002f));
     }
 
-    @Test
-    public void testProPhoto() {
-        Color blueProPhoto = Color.valueOf(0, 0, 1, 1,
-                ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB));
+    private ColorSpace displaySpace() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         WindowManager window = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display defaultDisplay = window.getDefaultDisplay();
         ColorSpace displaySpace = defaultDisplay.getPreferredWideGamutColorSpace();
-        final Color blueDisplay = blueProPhoto.convert(displaySpace == null
-                ? ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB) : displaySpace);
+        return displaySpace == null ? ColorSpace.get(ColorSpace.Named.SRGB) : displaySpace;
+    }
+
+    @Test
+    public void testProPhoto() {
+        Color blueProPhoto = Color.valueOf(0, 0, 1, 1,
+                ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB));
+        final Color blueDisplay = blueProPhoto.convert(displaySpace());
         createTest()
                 .addCanvasClient("RGBA16F_ProPhoto", (canvas, width, height) -> {
                     AssetManager assets = getActivity().getResources().getAssets();
