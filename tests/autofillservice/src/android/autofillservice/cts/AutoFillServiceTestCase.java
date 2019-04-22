@@ -20,6 +20,8 @@ import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.content.Context.CLIPBOARD_SERVICE;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
@@ -34,8 +36,7 @@ import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
@@ -176,7 +177,7 @@ public final class AutoFillServiceTestCase {
 
         protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
 
-        protected static final Context sContext = InstrumentationRegistry.getTargetContext();
+        protected static final Context sContext = getInstrumentation().getTargetContext();
 
         // Hack because JUnit requires that @ClassRule instance belong to a public class.
         protected static final SettingsStateKeeperRule sTheRealServiceSettingsKeeper =

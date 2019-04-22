@@ -15,6 +15,8 @@
  */
 package android.contentcaptureservice.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.content.ComponentName;
@@ -27,7 +29,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.Timeout;
 
@@ -53,7 +54,7 @@ public final class Helper {
 
     public static final String RESOURCE_STRING_SERVICE_NAME = "config_defaultContentCaptureService";
 
-    public static final Context sContext = InstrumentationRegistry.getTargetContext();
+    public static final Context sContext = getInstrumentation().getTargetContext();
 
     private static final Timeout MY_TIMEOUT = new Timeout("MY_TIMEOUT", GENERIC_TIMEOUT_MS, 2F,
             GENERIC_TIMEOUT_MS);

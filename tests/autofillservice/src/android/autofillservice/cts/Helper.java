@@ -60,7 +60,7 @@ import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.OneTimeSettingsListener;
