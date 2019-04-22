@@ -16,16 +16,17 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.wm.debuggable">
+          package="android.server.wm.profileable">
 
     <!--
-     * Security policy requires that only debuggable processes can be profiled
-     * which is tested by AmProfileTests.
+     * Security policy requires that only profileable and debuggable processes
+     * can be profiled which is tested by AmProfileTests.
      -->
-    <application android:debuggable="true">
-        <activity android:name=".DebuggableAppActivity"
+    <application>
+        <activity android:name=".ProfileableAppActivity"
                   android:resizeableActivity="true"
                   android:exported="true" />
+        <profileable android:shell="true" />
     </application>
 
 </manifest>

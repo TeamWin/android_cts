@@ -18,7 +18,7 @@ package android.server.wm;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
-import static android.server.wm.debuggable.Components.DEBUGGABLE_APP_ACTIVITY;
+import static android.server.wm.profileable.Components.PROFILEABLE_APP_ACTIVITY;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -97,16 +97,16 @@ public class AmProfileTests extends ActivityManagerTestBase {
     private void testProfile(final boolean startActivityFirst, final boolean sampling,
             final boolean streaming) throws Exception {
         if (startActivityFirst) {
-            launchActivity(DEBUGGABLE_APP_ACTIVITY);
+            launchActivity(PROFILEABLE_APP_ACTIVITY);
         }
 
         executeShellCommand(
-                getStartCmd(DEBUGGABLE_APP_ACTIVITY, startActivityFirst, sampling, streaming));
+                getStartCmd(PROFILEABLE_APP_ACTIVITY, startActivityFirst, sampling, streaming));
         // Go to home screen and then warm start the activity to generate some interesting trace.
         pressHomeButton();
-        launchActivity(DEBUGGABLE_APP_ACTIVITY);
+        launchActivity(PROFILEABLE_APP_ACTIVITY);
 
-        executeShellCommand(getStopProfileCmd(DEBUGGABLE_APP_ACTIVITY));
+        executeShellCommand(getStopProfileCmd(PROFILEABLE_APP_ACTIVITY));
 
         // Sleep for 0.3 second (300 milliseconds) so the generation of the profiling
         // file is complete.
