@@ -25,10 +25,6 @@ import android.os.Bundle;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-import junit.framework.Assert;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
