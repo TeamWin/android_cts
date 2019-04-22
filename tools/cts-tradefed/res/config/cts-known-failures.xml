@@ -207,7 +207,4 @@
     <!-- test fails if usb charging is disabled which is not mandatory -->
     <option name="compatibility:exclude-filter" value="CtsDumpsysHostTestCases  android.dumpsys.cts.StoragedDumpsysTest#testStoragedOutput" />
 
-    <!-- b/126515980 -->
-    <!-- fails on some devices because the IME blocks the screen, causing UIAutomator queries to fail -->
-    <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.SimpleSaveActivityTest#testTapLink_changeOrientationThenTapBack" />
 </configuration>
