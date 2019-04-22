@@ -28,6 +28,6 @@ LOCAL_SDK_VERSION := test_current
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsDeviceDebuggableApp
+LOCAL_PACKAGE_NAME := CtsDeviceProfileableApp
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
