@@ -130,10 +130,6 @@ public class Poc17_01 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2017-01")
     public void testPocCVE_2017_0386() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2017-0386", getDevice(), 60);
-
-        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertMatchesMultiLine("No Integer overflow", logcat);
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2017-0386", getDevice(), 60);
     }
 }
