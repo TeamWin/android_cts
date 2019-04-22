@@ -18,6 +18,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
+LOCAL_JAVA_RESOURCE_DIRS := res
+
 LOCAL_JAVA_LIBRARIES := junit kxml2-2.3.0 tradefed-prebuilt compatibility-common-util-hostsidelib
 
 LOCAL_MODULE := compatibility-common-util-tests
