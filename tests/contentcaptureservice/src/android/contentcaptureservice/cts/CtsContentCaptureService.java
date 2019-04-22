@@ -25,8 +25,8 @@ import android.content.ComponentName;
 import android.service.contentcapture.ActivityEvent;
 import android.service.contentcapture.ContentCaptureService;
 import android.util.ArrayMap;
-import android.util.ArraySet;
 import android.util.Log;
+import android.util.Pair;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSessionId;
@@ -41,6 +41,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 // TODO(b/123540602): if we don't move this service to a separate package, we need to handle the
@@ -117,6 +118,12 @@ public class CtsContentCaptureService extends ContentCaptureService {
     @Nullable
     private DisconnectListener mOnDisconnectListener;
 
+    /**
+     * When set, doesn't throw exceptions when it receives an event from a session that doesn't
+     * exist.
+     */
+    private boolean mIgnoreOrphanSessionEvents;
+
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
         if (sServiceWatcher != null) {
@@ -125,7 +132,6 @@ public class CtsContentCaptureService extends ContentCaptureService {
         sServiceWatcher = new ServiceWatcher();
         return sServiceWatcher;
     }
-
 
     public static void resetStaticState() {
         sExceptions.clear();
@@ -140,6 +146,18 @@ public class CtsContentCaptureService extends ContentCaptureService {
             Log.wtf(TAG, "resetStaticState(): should not have sServiceWatcher");
             sServiceWatcher = null;
         }
+    }
+
+
+    /**
+     * When set, doesn't throw exceptions when it receives an event from a session that doesn't
+     * exist.
+     */
+    // TODO: try to refactor WhitelistTest so it doesn't need this hack.
+    public void setIgnoreOrphanSessionEvents(boolean newValue) {
+        Log.d(TAG, "setIgnoreOrphanSessionEvents(): changing from " + mIgnoreOrphanSessionEvents
+                + " to " + newValue);
+        mIgnoreOrphanSessionEvents = newValue;
     }
 
     @Override
@@ -210,8 +228,9 @@ public class CtsContentCaptureService extends ContentCaptureService {
     @Override
     public void onCreateContentCaptureSession(ContentCaptureContext context,
             ContentCaptureSessionId sessionId) {
-        Log.i(TAG, "onCreateContentCaptureSession(id=" + mId + ", ctx=" + context
-                + ", session=" + sessionId);
+        Log.i(TAG, "onCreateContentCaptureSession(id=" + mId + ", ignoreOrpahn="
+                + mIgnoreOrphanSessionEvents + ", ctx=" + context + ", session=" + sessionId);
+        if (mIgnoreOrphanSessionEvents) return;
         mAllSessions.add(sessionId);
 
         safeRun(() -> {
@@ -227,7 +246,9 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onDestroyContentCaptureSession(ContentCaptureSessionId sessionId) {
-        Log.i(TAG, "onDestroyContentCaptureSession(id=" + mId + ", session=" + sessionId + ")");
+        Log.i(TAG, "onDestroyContentCaptureSession(id=" + mId + ", ignoreOrpahn="
+                + mIgnoreOrphanSessionEvents + ", session=" + sessionId + ")");
+        if (mIgnoreOrphanSessionEvents) return;
         safeRun(() -> {
             final Session session = getExistingSession(sessionId);
             session.finish();
@@ -245,8 +266,9 @@ public class CtsContentCaptureService extends ContentCaptureService {
     @Override
     public void onContentCaptureEvent(ContentCaptureSessionId sessionId,
             ContentCaptureEvent event) {
-        Log.i(TAG, "onContentCaptureEventsRequest(id=" + mId + ", session=" + sessionId + "): "
-                + event);
+        Log.i(TAG, "onContentCaptureEventsRequest(id=" + mId + ", ignoreOrpahn="
+                + mIgnoreOrphanSessionEvents + ", session=" + sessionId + "): " + event);
+        if (mIgnoreOrphanSessionEvents) return;
         final ViewNode node = event.getViewNode();
         if (node != null) {
             Log.v(TAG, "onContentCaptureEvent(): parentId=" + node.getParentAutofillId());
@@ -345,6 +367,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
         pw.print("mLifecycleEventsCounter: "); pw.println(mLifecycleEventsCounter);
         pw.print("mActivityEventsCounter: "); pw.println(mActivityEventsCounter);
         pw.print("mActivityLifecycleEvents: "); pw.println(mActivityEvents);
+        pw.print("mIgnoreOrphanSessionEvents: "); pw.println(mIgnoreOrphanSessionEvents);
     }
 
     @NonNull
@@ -370,7 +393,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
                 + ".\nOpen=" + mOpenSessions
                 + ".\nLatches=" + mUnfinishedSessionLatches
                 + ".\nFinished=" + mFinishedSessions
-                + ".\nLifecycles=" + mActivityEvents);
+                + ".\nLifecycles=" + mActivityEvents
+                + ".\nIgnoringOrphan=" + mIgnoreOrphanSessionEvents);
     }
 
     private Session getExistingSession(@NonNull ContentCaptureSessionId sessionId) {
@@ -454,7 +478,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
         private final CountDownLatch mCreated = new CountDownLatch(1);
         private final CountDownLatch mDestroyed = new CountDownLatch(1);
-        private final ArraySet<String> mWhitelistedPackages = new ArraySet<>();
+        private Pair<Set<String>, Set<ComponentName>> mWhitelist;
 
         private CtsContentCaptureService mService;
 
@@ -466,9 +490,9 @@ public class CtsContentCaptureService extends ContentCaptureService {
                 throw new IllegalStateException("not created");
             }
 
-            if (!mWhitelistedPackages.isEmpty()) {
-                Log.d(TAG, "Whitelisting packages: " + mWhitelistedPackages);
-                mService.setContentCaptureWhitelist(mWhitelistedPackages, null);
+            if (mWhitelist != null) {
+                Log.d(TAG, "Whitelisting after created: " + mWhitelist);
+                mService.setContentCaptureWhitelist(mWhitelist.first, mWhitelist.second);
             }
 
             return mService;
@@ -479,17 +503,17 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
 
         /**
-         * Whitelist a package when the service connects.
+         * Whitelist stuff when the service connects.
          */
-        public void whitelistPackage(@NonNull String packageName) {
-            mWhitelistedPackages.add(packageName);
+        public void whitelist(@Nullable Pair<Set<String>, Set<ComponentName>> whitelist) {
+            mWhitelist = whitelist;
         }
 
         @Override
         public String toString() {
             return "mService: " + mService + " created: " + (mCreated.getCount() == 0)
                     + " destroyed: " + (mDestroyed.getCount() == 0)
-                    + " whitelisted: " + mWhitelistedPackages;
+                    + " whitelist: " + mWhitelist;
         }
     }
 
