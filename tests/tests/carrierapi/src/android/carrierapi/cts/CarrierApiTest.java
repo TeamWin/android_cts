@@ -106,6 +106,7 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ICCID_FILE_ID = "2FE2";
     // File ID for the master file. TS 102 221
     private static final String MF_FILE_ID = "3F00";
+    private static final int MF_FILE_ID_HEX = 0x3F00;
     // File ID for the MF Access Rule Reference. TS 102 221
     private static final String MF_ARR_FILE_ID = "2F06";
     private static final String ALPHA_TAG_A = "tagA";
@@ -776,6 +777,44 @@ public class CarrierApiTest extends AndroidTestCase {
             // Reset original alpha tag and number values.
             mTelephonyManager.setVoiceMailNumber(originalAlphaTag, originalNumber);
         }
+    }
+
+    /**
+     * This test verifies that {@link TelephonyManager#iccExchangeSimIO(int, int, int, int, int,
+     * String)} correctly transmits iccIO commands to the UICC card. First, the MF is selected via a
+     * SELECT apdu via the basic channel, then a STATUS AT-command is sent.
+     */
+    public void testIccExchangeSimIO() {
+        if (!hasCellular) return;
+
+        // select the MF first. This makes sure the next STATUS AT-command returns a FCP template
+        // for the right file.
+        int cla = CLA_SELECT;
+        int p1 = 0; // select EF by FID
+        int p2 = 0x0C; // requesting FCP template
+        int p3 = 2; // length of 'data' payload
+        String data = MF_FILE_ID;
+        String response = mTelephonyManager
+                .iccTransmitApduBasicChannel(cla, COMMAND_SELECT, p1, p2, p3, data);
+        assertEquals(STATUS_NORMAL_STRING, response);
+
+        // The iccExchangeSimIO command implements the +CRSM command defined in TS 27.007 section
+        // 8.18. A STATUS command is sent and the returned value will be an FCP template.
+        byte[] result = mTelephonyManager.iccExchangeSimIO(
+                0, // fileId: not required for STATUS
+                COMMAND_STATUS,  // command: STATUS
+                0, // p1: not required for STATUS
+                0, // p2: not required for STATUS
+                0, // p3: not required for STATUS
+                ""); // filePath: not required for STATUS
+        String resultString = bytesToHexString(result);
+        assertTrue("TelephonyManager#iccExchangeSimIO should not give an empty response",
+                !resultString.isEmpty());
+        // TODO(b/131353609): uncomment logic to fully check TelMan#iccExchangeSimIO response
+        // FcpTemplate fcpTemplate = FcpTemplate.parseFcpTemplate(resultString);
+        // assertTrue(containsFileId(fcpTemplate, MF_FILE_ID));
+        // assertEquals("iccExchangeSimIO returned non-normal Status byte: " + resultString,
+        //         STATUS_NORMAL_STRING, fcpTemplate.getStatus());
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
