@@ -124,4 +124,12 @@ public class Poc17_01 extends SecurityTestCase {
             assertTrue(!result.equals("Vulnerable"));
         }
     }
+
+    /**
+     *  b/32255299
+     */
+    @SecurityTest(minPatchLevel = "2017-01")
+    public void testPocCVE_2017_0386() throws Exception {
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2017-0386", getDevice(), 60);
+    }
 }
