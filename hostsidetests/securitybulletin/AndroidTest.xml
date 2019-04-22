@@ -81,6 +81,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0386->/data/local/tmp/CVE-2017-0386" />
 
         <!--__________________-->
         <!-- Bulletin 2017-02 -->
