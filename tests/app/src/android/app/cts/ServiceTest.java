@@ -1160,6 +1160,31 @@ public class ServiceTest extends ActivityTestsBase {
     }
 
     /**
+     * Verify that certain characters are prohibited in instanceName.
+     */
+    public void testFailBindIsoaltedServiceWithInvalidInstanceName() throws Exception {
+        String[] badNames = {
+            "t\rest",
+            "test\n",
+            "test-three",
+            "test four",
+            "escape\u00a9seq",
+            "\u0164est",
+        };
+        for (String instanceName : badNames) {
+            EmptyConnection conn = new EmptyConnection();
+            try {
+                mContext.bindIsolatedService(mIsolatedService, Context.BIND_AUTO_CREATE,
+                        instanceName, mContextMainExecutor, conn);
+                mContext.unbindService(conn);
+                fail("Didn't get IllegalArgumentException: " + instanceName);
+            } catch (IllegalArgumentException e) {
+                // This is expected.
+            }
+        }
+    }
+
+    /**
      * Verify that bindIsolatedService() correctly makes different instances when given
      * different instance names.
      */
