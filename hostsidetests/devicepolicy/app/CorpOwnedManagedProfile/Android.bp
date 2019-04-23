@@ -44,10 +44,6 @@ android_test_helper_app {
         "vts",
         "general-tests",
     ],
-    // Temporary until b/130798034 is fixed
-    optimize: {
-        enabled: true,
-    },
 }
 
 // === App 2 ===
@@ -83,8 +79,4 @@ android_test_helper_app {
         "--rename-instrumentation-target-package",
         "com.android.cts.comp2",
     ],
-    // Temporary until b/130798034 is fixed
-    optimize: {
-        enabled: true,
-    },
 }
