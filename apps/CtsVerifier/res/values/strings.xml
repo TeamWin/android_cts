@@ -4296,7 +4296,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="error_screen_pinning_did_not_exit">Screen was not unpinned.</string>
     <string name="error_screen_pinning_couldnt_exit">Could not exit screen pinning through API.</string>
 
-    <!--  Audio Devices Notifcations Tests -->
+    <!--  Audio Devices Notifications Tests -->
     <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
     <string name="audio_out_devices_notification_instructions">
           Click the "Clear Messages" button then connect and disconnect a wired headset.
@@ -5008,5 +5008,33 @@ Follow the instructions on the screen to measure the frequency response for the 
     \u0020\u0020\u0020a. It provides information about Instant Apps not requiring installation and an action that provides more information about the Instant App. \n
     \u0020\u0020\u0020b. It provides an action allowing the user to launch the associated link with web browser. \n\n
     5. Click Pass button if all checks in step 4 passed, otherwise click Fail button.
+    </string>
+    <string name="ia_recents">Instant Apps Recents Test</string>
+    <string name="ia_recents_info">
+    This test verifies that Instant App can be accessed in Recent Apps screen.\n\n
+    - Read the message above the \"Start Test\" button for
+    step-by-step instructions.
+    </string>
+    <string name="ia_recents_instruction_label">\n
+    1. Click Start Test. \n\n
+    2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
+    3. Tap Recents button, verify the sample Instant App is shown in Recent Apps screen. \n\n
+    4. Tap the sample Instant App in Recent Apps screen, verify the Instant App is opened in the foreground. \n\n
+    5. Click Pass button if checks in step 3 and 4 passed, otherwise click Fail button.
+    </string>
+    <string name="ia_app_info">View/Delete Instant Apps Test</string>
+    <string name="ia_app_info_info">
+    This test verifies that Instant App can be viewed and deleted in Settings.\n\n
+    - Read the message above the \"Start Test\" button for
+    step-by-step instructions.
+    </string>
+    <string name="ia_app_info_instruction_label">\n
+    1. Click Start Test. \n\n
+    2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
+    3. Open Settings App. \n\n
+    4. Tap Apps &amp; Notifications. \n\n
+    5. Verify the sample Instant App can be found and it is shown as \"Instant App\". \n\n
+    6. Verify there is an action allowing user to clear/delete app. \n\n
+    7. Click Pass button if checks in step 5 and 6 passed, otherwise click Fail button.
     </string>
 </resources>

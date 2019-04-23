@@ -21,19 +21,20 @@ import android.widget.TextView;
 import com.android.cts.verifier.R;
 
 /**
- * Test for manual verification of Instant Apps notification.
+ * Test for manual verification of the functionality to view/delete Instant Apps
+ * locally cached for each individual app package.
  *
- * The test verifies that an Instant App notification will be shown when
- * an Instant App is at foreground.
+ * The test verifies that Instant App can be viewed and deleted in
+ * Apps and Notifiction Settings.
  */
-public class NotificationTestActivity extends BaseTestActivity {
+public class AppInfoTestActivity extends BaseTestActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setInfoResources(R.string.ia_notification, R.string.ia_notification_info, -1);
+        setInfoResources(R.string.ia_app_info, R.string.ia_app_info_info, -1);
         TextView extraText = (TextView) findViewById(R.id.instruction_extra_text);
-        extraText.setText(R.string.ia_notification_instruction_label);
+        extraText.setText(R.string.ia_app_info_instruction_label);
     }
 }
