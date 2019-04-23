@@ -28,6 +28,10 @@ import com.android.compatibility.common.util.SystemUtil;
 public class BaseTestCase extends AndroidTestCase {
     @Override
     public void setUp() throws Exception {
+        // Instant Apps cannot access WifiManager, skip wifi check.
+        if (getContext().getPackageManager().isInstantApp()) {
+            return;
+        }
         WifiManager wifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         if (!wifiManager.isWifiEnabled()) {
             SystemUtil.runShellCommand("svc wifi enable"); // toggle wifi on.
