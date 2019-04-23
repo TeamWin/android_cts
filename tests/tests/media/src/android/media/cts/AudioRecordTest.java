@@ -531,9 +531,9 @@ public class AudioRecordTest {
         AudioRecord record = null;
 
         try {
-            final int NANOS_PER_MILLIS = 1000000;
-            final long RECORD_TIME_IN_MS = 2000;
-            final long RECORD_TIME_IN_NANOS = RECORD_TIME_IN_MS * NANOS_PER_MILLIS;
+            final int NANOS_PER_MILLISECOND = 1000000;
+            final long RECORD_TIME_MS = 2000;
+            final long RECORD_TIME_NS = RECORD_TIME_MS * NANOS_PER_MILLISECOND;
             final int RECORD_ENCODING = AudioFormat.ENCODING_PCM_16BIT; // fixed at this time.
             final int RECORD_CHANNEL_MASK = AudioFormat.CHANNEL_IN_STEREO;
             final int RECORD_SAMPLE_RATE = 23456;  // requires resampling
@@ -554,34 +554,36 @@ public class AudioRecordTest {
             final int bytesPerFrame = numChannels * bytesPerSample;
             // careful about integer overflow in the formula below:
             final int targetFrames =
-                    (int)((long)RECORD_TIME_IN_MS * RECORD_SAMPLE_RATE / 1000);
+                    (int)((long)RECORD_TIME_MS * RECORD_SAMPLE_RATE / 1000);
             final int targetSamples = targetFrames * numChannels;
             final int BUFFER_FRAMES = 512;
             final int BUFFER_SAMPLES = BUFFER_FRAMES * numChannels;
 
             final int tries = 2;
             for (int i = 0; i < tries; ++i) {
-                long startTime = System.nanoTime();
-                long startTimeBoot = android.os.SystemClock.elapsedRealtimeNanos();
+                final long trackStartTimeNs = System.nanoTime();
+                final long trackStartTimeBootNs = android.os.SystemClock.elapsedRealtimeNanos();
 
                 record.startRecording();
 
-                AudioTimestamp startTs = new AudioTimestamp();
+                final AudioTimestamp ts = new AudioTimestamp();
                 int samplesRead = 0;
-                boolean timestampRead = false;
                 // For 16 bit data, use shorts
-                short[] shortData = new short[BUFFER_SAMPLES];
+                final short[] shortData = new short[BUFFER_SAMPLES];
+                final AudioHelper.TimestampVerifier tsVerifier =
+                        new AudioHelper.TimestampVerifier(TAG, RECORD_SAMPLE_RATE);
+
                 while (samplesRead < targetSamples) {
-                    int amount = samplesRead == 0 ? numChannels :
-                        Math.min(BUFFER_SAMPLES, targetSamples - samplesRead);
-                    int ret = record.read(shortData, 0, amount);
-                    assertEquals(TEST_NAME, amount, ret);
+                    final int amount = samplesRead == 0 ? numChannels :
+                            Math.min(BUFFER_SAMPLES, targetSamples - samplesRead);
+                    final int ret = record.read(shortData, 0, amount);
+                    assertEquals("read incorrect amount", amount, ret);
                     // timestamps follow a different path than data, so it is conceivable
                     // that first data arrives before the first timestamp is ready.
-                    if (!timestampRead) {
-                        timestampRead =
-                                record.getTimestamp(startTs, AudioTimestamp.TIMEBASE_MONOTONIC)
-                                    == AudioRecord.SUCCESS;
+
+                    if (record.getTimestamp(ts, AudioTimestamp.TIMEBASE_MONOTONIC)
+                            == AudioRecord.SUCCESS) {
+                        tsVerifier.add(ts);
                     }
                     samplesRead += ret;
                 }
@@ -606,9 +608,10 @@ public class AudioRecordTest {
 
                 assertEquals(stopTs.framePosition, stopTsBoot.framePosition);
                 assertTrue(stopTs.framePosition >= targetFrames);
-                assertTrue(stopTs.nanoTime - startTime > RECORD_TIME_IN_NANOS);
-                assertTrue(stopTsBoot.nanoTime - startTimeBoot > RECORD_TIME_IN_NANOS);
-                verifyContinuousTimestamps(startTs, stopTs, RECORD_SAMPLE_RATE);
+                assertTrue(stopTs.nanoTime - trackStartTimeNs > RECORD_TIME_NS);
+                assertTrue(stopTsBoot.nanoTime - trackStartTimeBootNs > RECORD_TIME_NS);
+
+                tsVerifier.verifyAndLog(trackStartTimeNs, "test_timestamp" /* logName */);
             }
         } finally {
             if (record != null) {
