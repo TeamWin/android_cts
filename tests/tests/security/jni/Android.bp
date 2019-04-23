@@ -17,7 +17,6 @@ cc_library {
     srcs: [
         "CtsSecurityJniOnLoad.cpp",
         "android_security_cts_CharDeviceTest.cpp",
-        "android_security_cts_KernelSettingsTest.cpp",
         "android_security_cts_LinuxRngTest.cpp",
         "android_security_cts_NativeCodeTest.cpp",
         "android_security_cts_SELinuxTest.cpp",
