@@ -36,8 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class EventCapturingTouchListener implements View.OnTouchListener {
     // whether or not to keep events from propagating to other listeners
     private boolean shouldConsumeEvents;
-    // Todo (b/128917646): fix the tests that rely on this being public.
-    public final BlockingQueue<MotionEvent> events = new LinkedBlockingQueue<>();
+    private final BlockingQueue<MotionEvent> events = new LinkedBlockingQueue<>();
 
     public EventCapturingTouchListener(boolean shouldConsumeEvents) {
         this.shouldConsumeEvents = shouldConsumeEvents;
