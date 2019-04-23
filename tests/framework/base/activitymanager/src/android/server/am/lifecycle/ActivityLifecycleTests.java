@@ -397,7 +397,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getLaunchActivityBuilder().execute();
 
         waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
-
+        waitAndAssertActivityStates(state(firstActivity, ON_STOP));
         getLifecycleLog().clear();
 
         // Finish top activity
