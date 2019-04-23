@@ -395,7 +395,7 @@ extern "C" JNIEXPORT jstring JNICALL
                   runtime_public_libraries,
                   // System.loadLibrary("icuuc") would fail since a copy exists in /system.
                   // TODO(b/124218500): Change to true when the bug is resolved.
-                  /*test_system_load_library=*/false,
+                  /*test_system_load_library=*/true,
                   check_absence, &errors)) {
     success = false;
   }

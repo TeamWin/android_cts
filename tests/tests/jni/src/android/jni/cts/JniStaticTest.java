@@ -337,9 +337,8 @@ public class JniStaticTest extends JniTestCase {
 
         for (String lib : libs) {
             File f = new File(systemBaseDir, lib);
-            // TODO (b/124218500): Re-enable this check when the app compat issue is resolved.
-            // assertFalse("The same native library should exist in the Runtime APEX."
-            //     + " It should not exist in /system: " + f , f.exists());
+            assertFalse("The same native library should exist in the Runtime APEX."
+                + " It should not exist in /system: " + f , f.exists());
             String error = LinkerNamespacesHelper.tryDlopen(f.toString());
             assertNotNull("The native library file does not exist in the file system, "
                 + "but dlopen(" + f + ", RTLD_NOW) succeeds.", error);
