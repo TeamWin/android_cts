@@ -44,6 +44,7 @@ android_test_helper_app {
     manifest : "app/AndroidManifest.xml",
 
     java_resources:  [
+        ":StagedInstallTestApexV1_NotPreInstalled",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV2_AdditionalFile",
         ":StagedInstallTestApexV2_AdditionalFolder",
@@ -127,5 +128,12 @@ prebuilt_apex {
     name: "StagedInstallTestApexV2_WrongSha",
     src: "testdata/apex/com.android.apex.cts.shim.v2_wrong_sha.apex",
     filename: "com.android.apex.cts.shim.v2_wrong_sha.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV1_NotPreInstalled",
+    src: "testdata/apex/com.android.apex.cts.shim_not_pre_installed.apex",
+    filename: "com.android.apex.cts.shim_not_pre_installed.apex",
     installable: false,
 }
