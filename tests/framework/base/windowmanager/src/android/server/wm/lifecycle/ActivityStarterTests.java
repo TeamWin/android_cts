@@ -39,8 +39,6 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityLauncher;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Test;
 
 /**
@@ -319,7 +317,6 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
      * A top activity is finished when an activity is launched with FLAG_ACTIVITY_CLEAR_TOP.
      */
     @Test
-    @FlakyTest
     public void testLaunchActivityWithFlagClearTop() {
         // Launch a standard activity
         getLaunchActivityBuilder()
@@ -356,8 +353,12 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         assertEquals("Activity must be in same task.", taskId,
                 mAmWmState.getAmState().getTaskByActivity(STANDARD_ACTIVITY).getTaskId());
         // Make sure the second standard activity is finished.
-        assertEquals("Instance of second standard activity must not exist", 0,
-                mAmWmState.getAmState().getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY));
+        final String waitFinishMsg = "Instance of second standard activity must not exist";
+        mAmWmState.waitForWithAmState((amState) ->
+            0 == amState.getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY),
+            waitFinishMsg);
+        assertEquals(waitFinishMsg, 0,
+            mAmWmState.getAmState().getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY));
     }
 
     @Test

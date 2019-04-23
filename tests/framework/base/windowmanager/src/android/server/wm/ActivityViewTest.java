@@ -24,6 +24,7 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityView;
@@ -62,6 +63,7 @@ public class ActivityViewTest extends ActivityManagerTestBase {
 
     @Before
     public void setup() {
+        assumeTrue(supportsMultiDisplay());
         mInstrumentation = getInstrumentation();
         SystemUtil.runWithShellPermissionIdentity(() -> {
             ActivityViewTestActivity activity = mActivityRule.launchActivity(null);

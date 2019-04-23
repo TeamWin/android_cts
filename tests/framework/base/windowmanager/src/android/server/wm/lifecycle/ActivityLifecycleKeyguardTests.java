@@ -97,6 +97,9 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
         // Wait for second activity to resume.
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+        // Leaving the minimized dock, the stack state on the primary split screen should change
+        // from Paused to Resumed.
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Show and hide lock screen
         getLifecycleLog().clear();
