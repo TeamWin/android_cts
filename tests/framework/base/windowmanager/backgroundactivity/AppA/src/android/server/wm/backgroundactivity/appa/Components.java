@@ -29,6 +29,8 @@ public class Components extends ComponentsBase {
             component(Components.class, "SendPendingIntentReceiver");
     public static final ComponentName APP_A_START_ACTIVITY_RECEIVER =
             component(Components.class, "StartBackgroundActivityReceiver");
+    public static final ComponentName APP_A_SIMPLE_ADMIN_RECEIVER =
+            component(Components.class, "SimpleAdminReceiver");
 
     /** Extra key constants for {@link #APP_A_FOREGROUND_ACTIVITY}. */
     public static class ForegroundActivity {
@@ -37,4 +39,13 @@ public class Components extends ComponentsBase {
         public static final String RELAUNCH_FOREGROUND_ACTIVITY_EXTRA =
                 "RELAUNCH_FOREGROUND_ACTIVITY_EXTRA";
     }
+    /** Extra key constants for {@link #APP_A_SEND_PENDING_INTENT_RECEIVER} */
+    public static class SendPendingIntentReceiver {
+        public static final String IS_BROADCAST_EXTRA = "IS_BROADCAST_EXTRA";
+    }
+    /** Extra key constants for {@link #APP_A_START_ACTIVITY_RECEIVER} */
+    public static class StartBackgroundActivityReceiver {
+        public static final String START_ACTIVITY_DELAY_MS_EXTRA = "START_ACTIVITY_DELAY_MS_EXTRA";
+    }
+
 }

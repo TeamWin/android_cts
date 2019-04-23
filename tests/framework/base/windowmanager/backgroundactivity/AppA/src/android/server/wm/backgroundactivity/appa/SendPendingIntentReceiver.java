@@ -16,7 +16,11 @@
 
 package android.server.wm.backgroundactivity.appa;
 
+
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
+import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_ACTIVITY_RECEIVER;
+import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.IS_BROADCAST_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
 import static android.server.wm.backgroundactivity.appb.Components.APP_B_START_PENDING_INTENT_RECEIVER;
 import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
 
@@ -31,15 +35,28 @@ import android.content.Intent;
 public class SendPendingIntentReceiver extends BroadcastReceiver {
 
     @Override
-    public void onReceive(Context context, Intent notUsed) {
+    public void onReceive(Context context, Intent receivedIntent) {
+        boolean isBroadcast = receivedIntent.getBooleanExtra(IS_BROADCAST_EXTRA, false);
+        int startActivityDelayMs = receivedIntent.getIntExtra(START_ACTIVITY_DELAY_MS_EXTRA, 0);
 
-        // Create a pendingIntent to launch appA's BackgroundActivity
-        Intent newIntent = new Intent();
-        newIntent.setComponent(APP_A_BACKGROUND_ACTIVITY);
-        newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final PendingIntent pendingIntent;
+        if (isBroadcast) {
+            // Create a pendingIntent to launch send broadcast to appA and appA will start
+            // background activity.
+            Intent newIntent = new Intent();
+            newIntent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
+            newIntent.putExtra(START_ACTIVITY_DELAY_MS_EXTRA, startActivityDelayMs);
+            pendingIntent = PendingIntent.getBroadcast(context, 0,
+                    newIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        } else {
+            // Create a pendingIntent to launch appA's BackgroundActivity
+            Intent newIntent = new Intent();
+            newIntent.setComponent(APP_A_BACKGROUND_ACTIVITY);
+            newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
-                newIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            pendingIntent = PendingIntent.getActivity(context, 0,
+                    newIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
 
         // Send the pendingIntent to appB
         Intent intent = new Intent();
