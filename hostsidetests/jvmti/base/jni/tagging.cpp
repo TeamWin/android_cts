@@ -113,17 +113,21 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_android_jvmti_cts_JvmtiTaggingTes
   }
 
   auto callback = [&](jint i) -> jobject {
+    jobject ret = nullptr;
     switch(i) {
       case 0:
-        return resultObjectArray;
+        ret = resultObjectArray;
+        break;
       case 1:
-        return resultTagArray;
+        ret = resultTagArray;
+        break;
       case 2:
-        return count_integer;
+        ret = count_integer;
+        break;
       default:
         LOG(FATAL) << "Unexpected";
-        return nullptr;
     }
+    return ret;
   };
   return CreateObjectArray(env, 3, "java/lang/Object", callback);
 }

@@ -118,14 +118,14 @@ void JNICALL CommonClassFileLoadHookRetransformable(jvmtiEnv* local_jvmti_env,
   std::vector<unsigned char> dex_data;
   if (data.RetrieveRedefinition(name_str, &dex_data)) {
     unsigned char* jvmti_dex_data;
-    if (JVMTI_ERROR_NONE != local_jvmti_env->Allocate(dex_data.size(), &jvmti_dex_data)) {
+    if (JVMTI_ERROR_NONE == local_jvmti_env->Allocate(dex_data.size(), &jvmti_dex_data)) {
+      memcpy(jvmti_dex_data, dex_data.data(), dex_data.size());
+      *new_class_data_len = dex_data.size();
+      *new_class_data = jvmti_dex_data;
+      data.PopRedefinition(name);
+    } else {
       LOG(FATAL) << "Unable to allocate output buffer for " << name;
-      return;
     }
-    memcpy(jvmti_dex_data, dex_data.data(), dex_data.size());
-    *new_class_data_len = dex_data.size();
-    *new_class_data = jvmti_dex_data;
-    data.PopRedefinition(name);
   }
 }
 
