@@ -21,9 +21,9 @@ import static android.carrierapi.cts.IccUtils.bytesToHexString;
 import static android.carrierapi.cts.IccUtils.hexStringToBytes;
 import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
 import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
-import static android.telephony.IccOpenLogicalChannelResponse.STATUS_UNKNOWN_ERROR;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderClient;
@@ -471,13 +471,13 @@ public class CarrierApiTest extends AndroidTestCase {
         verifyValidIccOpenLogicalChannelResponse(response);
         mTelephonyManager.iccCloseLogicalChannel(response.getChannel());
 
-        // Only values 0x00, 0x04, 0x08, and 0x0C are allowed for p2. Any p2 values that produce
-        // non '9000'/'62xx'/'63xx' status words are treated as an error and the channel is not
-        // opened.
-        p2 = 0x02;
+        // Valid p2 values are defined in TS 102 221 Table 11.2. Per Table 11.2, 0xF0 should be
+        // invalid. Any p2 values that produce non '9000'/'62xx'/'63xx' status words are treated as
+        // an error and the channel is not opened.
+        p2 = 0xF0;
         response = mTelephonyManager.iccOpenLogicalChannel("", p2);
         assertEquals(INVALID_CHANNEL, response.getChannel());
-        assertEquals(STATUS_UNKNOWN_ERROR, response.getStatus());
+        assertNotEquals(STATUS_NO_ERROR, response.getStatus());
     }
 
     /**
