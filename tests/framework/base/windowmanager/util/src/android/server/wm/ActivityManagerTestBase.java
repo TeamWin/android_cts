@@ -30,6 +30,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
@@ -1361,6 +1362,11 @@ public abstract class ActivityManagerTestBase {
             }
         }
         return events;
+    }
+
+    protected boolean supportsMultiDisplay() {
+        return mContext.getPackageManager().hasSystemFeature(
+                FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
     /**

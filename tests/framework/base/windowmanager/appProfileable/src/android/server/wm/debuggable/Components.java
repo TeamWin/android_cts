@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.server.wm.debuggable;
+package android.server.wm.profileable;
 
 import android.content.ComponentName;
 import android.server.wm.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
 
-    public static final ComponentName DEBUGGABLE_APP_ACTIVITY =
-            component(Components.class, "DebuggableAppActivity");
+    public static final ComponentName PROFILEABLE_APP_ACTIVITY =
+            component(Components.class, "ProfileableAppActivity");
 }

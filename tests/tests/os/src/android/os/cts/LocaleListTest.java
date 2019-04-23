@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import android.icu.util.ULocale;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
@@ -521,5 +522,16 @@ public class LocaleListTest extends AndroidTestCase {
         assertEquals(
                 Locale.forLanguageTag("sr"),
                 LocaleList.forLanguageTags("sr,qaa").getFirstMatch(onePrivateLocale));
+    }
+
+    public void testIsPseudoLocale() {
+        assertTrue(LocaleList.isPseudoLocale(ULocale.forLanguageTag("en-XA")));
+        assertTrue(LocaleList.isPseudoLocale(ULocale.forLanguageTag("ar-XB")));
+        assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("en-US")));
+        assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("ar-AR")));
+        assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("fa-IR")));
+        assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("zh-CN")));
+        assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("fr-CA")));
+        assertFalse(LocaleList.isPseudoLocale(null));
     }
 }

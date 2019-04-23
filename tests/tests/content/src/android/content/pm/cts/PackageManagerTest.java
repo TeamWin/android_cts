@@ -16,8 +16,6 @@
 
 package android.content.pm.cts;
 
-import android.content.cts.R;
-
 import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -33,17 +31,18 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.cts.R;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ServiceInfo;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
@@ -79,6 +78,8 @@ public class PackageManagerTest extends AndroidTestCase {
             "android.content.cts.CALL_ABROAD_PERMISSION";
     private static final String PROVIDER_NAME = "android.content.cts.MockContentProvider";
     private static final String PERMISSIONGROUP_NAME = "android.permission-group.COST_MONEY";
+    private static final String PERMISSION_TREE_ROOT =
+            "android.content.cts.permission.TEST_DYNAMIC";
     // There are 11 activities/activity-alias in AndroidManifest
     private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 11;
 
@@ -756,5 +757,38 @@ public class PackageManagerTest extends AndroidTestCase {
             fail("Exception expected");
         } catch (NameNotFoundException expected) {
         }
+    }
+
+    public void testAddPermission_cantAddOutsideRoot() {
+        PermissionInfo permissionInfo = new PermissionInfo();
+        permissionInfo.name = "some.other.permission.tree.some-permission";
+        permissionInfo.nonLocalizedLabel = "Some Permission";
+        permissionInfo.protectionLevel = PermissionInfo.PROTECTION_NORMAL;
+        // Remove first
+        try {
+            mPackageManager.removePermission(permissionInfo.name);
+        } catch (SecurityException se) {
+        }
+        try {
+            mPackageManager.addPermission(permissionInfo);
+            fail("Must not add permission outside the permission tree defined in the manifest.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testAddPermission() throws NameNotFoundException {
+        PermissionInfo permissionInfo = new PermissionInfo();
+        permissionInfo.name = PERMISSION_TREE_ROOT + ".some-permission";
+        permissionInfo.protectionLevel = PermissionInfo.PROTECTION_NORMAL;
+        permissionInfo.nonLocalizedLabel = "Some Permission";
+        // Remove first
+        try {
+            mPackageManager.removePermission(permissionInfo.name);
+        } catch (SecurityException se) {
+        }
+        mPackageManager.addPermission(permissionInfo);
+        PermissionInfo savedInfo = mPackageManager.getPermissionInfo(permissionInfo.name, 0);
+        assertEquals(PACKAGE_NAME, savedInfo.packageName);
+        assertEquals(PermissionInfo.PROTECTION_NORMAL, savedInfo.protectionLevel);
     }
 }

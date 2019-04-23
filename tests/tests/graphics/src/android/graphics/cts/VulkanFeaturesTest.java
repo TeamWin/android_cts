@@ -66,6 +66,7 @@ public class VulkanFeaturesTest {
     private static final int VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION = 2;
     private static final int VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT = 0x8;
     private static final int VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT = 0x10;
+    private static final int VK_PHYSICAL_DEVICE_TYPE_CPU = 4;
 
     private static final int API_LEVEL_BEFORE_ANDROID_HARDWARE_BUFFER_REQ = 28;
 
@@ -104,7 +105,7 @@ public class VulkanFeaturesTest {
         mVulkanDevices = getVulkanDevices();
         mBestDevice = getBestDevice();
     }
-    @CddTest(requirement="7.1.4.2/C-1-1,C-2-1")
+    @CddTest(requirement = "7.1.4.2/C-1-1,C-2-1")
     @Test
     public void testVulkanHardwareFeatures() throws JSONException {
         if (DEBUG) {
@@ -122,6 +123,11 @@ public class VulkanFeaturesTest {
                        mVulkanHardwareCompute);
             return;
         }
+
+        if (hasOnlyCpuDevice()) {
+            return;
+        }
+
         assertNotNull("Vulkan physical devices are available, but system feature " +
                       PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL + " is not supported",
                       mVulkanHardwareLevel);
@@ -173,12 +179,19 @@ public class VulkanFeaturesTest {
         }
     }
 
-    @CddTest(requirement="7.9.2/C-1-5")
+    @CddTest(requirement = "7.1.4.2/C-3-1")
     @Test
     public void testVulkan1_1Requirements() throws JSONException {
         if (mVulkanHardwareVersion == null || mVulkanHardwareVersion.version < VULKAN_1_1
                 || !PropertyUtil.isVendorApiLevelNewerThan(
                         API_LEVEL_BEFORE_ANDROID_HARDWARE_BUFFER_REQ)) {
+            return;
+        }
+        assertTrue("Devices with Vulkan 1.1 must support sampler YCbCr conversion",
+                mBestDevice.getJSONObject("samplerYcbcrConversionFeatures")
+                           .getInt("samplerYcbcrConversion") != 0);
+
+        if (hasOnlyCpuDevice()) {
             return;
         }
         assertTrue("Devices with Vulkan 1.1 must support " +
@@ -196,11 +209,9 @@ public class VulkanFeaturesTest {
                 hasHandleType(mBestDevice.getJSONArray("externalFenceProperties"),
                     VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
                     "externalFenceFeatures", 0x3 /* importable + exportable */));
-        assertTrue("Devices with Vulkan 1.1 must support sampler YCbCr conversion",
-                mBestDevice.getJSONObject("samplerYcbcrConversionFeatures")
-                           .getInt("samplerYcbcrConversion") != 0);
     }
 
+    @CddTest(requirement = "7.9.2/C-1-5")
     @Test
     public void testVulkanVersionForVrHighPerformance() {
         if (!mPm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE))
@@ -235,6 +246,16 @@ public class VulkanFeaturesTest {
             }
         }
         return bestDevice;
+    }
+
+    private boolean hasOnlyCpuDevice() throws JSONException {
+        for (JSONObject device : mVulkanDevices) {
+            if (device.getJSONObject("properties").getInt("deviceType")
+                    != VK_PHYSICAL_DEVICE_TYPE_CPU) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private int determineHardwareLevel(JSONObject device) throws JSONException {

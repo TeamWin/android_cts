@@ -30,7 +30,6 @@ import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
-import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
@@ -1140,7 +1139,7 @@ public class ChildlessActivityTest
 
         // Re-enable feature
         final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
-        reconnectionWatcher.whitelistPackage(MY_PACKAGE);
+        reconnectionWatcher.whitelistSelf();
         setFeatureEnabled(service1, reason, /* enabled= */ true);
         final CtsContentCaptureService service2 = reconnectionWatcher.waitOnCreate();
         assertThat(mgr.isContentCaptureFeatureEnabled()).isTrue();

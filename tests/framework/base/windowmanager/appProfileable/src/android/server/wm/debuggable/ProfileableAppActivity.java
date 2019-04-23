@@ -14,9 +14,9 @@
  * limitations under the License
  */
 
-package android.server.wm.debuggable;
+package android.server.wm.profileable;
 
 import android.app.Activity;
 
-public class DebuggableAppActivity extends Activity {
+public class ProfileableAppActivity extends Activity {
 }
