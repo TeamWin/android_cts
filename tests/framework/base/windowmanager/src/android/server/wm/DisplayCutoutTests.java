@@ -137,12 +137,13 @@ public class DisplayCutoutTests {
 
         if (displayCutout != null) {
             commonAsserts(activity, insets, displayCutout);
-            assertCutoutsAreConsistentWithInsets(insets, displayCutout);
+            assertCutoutsAreConsistentWithInsets(displayCutout);
         }
         test.run(activity, insets, displayCutout, ROOT);
 
         if (dispatchedDisplayCutout != null) {
             commonAsserts(activity, dispatchedInsets, dispatchedDisplayCutout);
+            assertCutoutsAreConsistentWithInsets(dispatchedDisplayCutout);
         }
         test.run(activity, dispatchedInsets, dispatchedDisplayCutout, DISPATCHED);
     }
@@ -169,16 +170,13 @@ public class DisplayCutoutTests {
         }
     }
 
-    public void assertCutoutsAreConsistentWithInsets(WindowInsets insets, DisplayCutout cutout) {
-        final Rect systemWindowInsets = systemWindowInsets(insets);
-        assertCutoutIsConsistentWithInset("top", systemWindowInsets.top,
-                cutout.getBoundingRectTop());
-        assertCutoutIsConsistentWithInset("bottom", systemWindowInsets.bottom,
+    public void assertCutoutsAreConsistentWithInsets(DisplayCutout cutout) {
+        final Rect safeInsets = safeInsets(cutout);
+        assertCutoutIsConsistentWithInset("top", safeInsets.top, cutout.getBoundingRectTop());
+        assertCutoutIsConsistentWithInset("bottom", safeInsets.bottom,
                 cutout.getBoundingRectBottom());
-        assertCutoutIsConsistentWithInset("left", systemWindowInsets.left,
-                cutout.getBoundingRectLeft());
-        assertCutoutIsConsistentWithInset("right", systemWindowInsets.right,
-                cutout.getBoundingRectRight());
+        assertCutoutIsConsistentWithInset("left", safeInsets.left, cutout.getBoundingRectLeft());
+        assertCutoutIsConsistentWithInset("right", safeInsets.right, cutout.getBoundingRectRight());
     }
 
     private void assertSafeInsetsValid(DisplayCutout displayCutout) {
