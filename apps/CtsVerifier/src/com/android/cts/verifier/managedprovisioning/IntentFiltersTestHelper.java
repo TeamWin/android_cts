@@ -251,7 +251,7 @@ public class IntentFiltersTestHelper {
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
-            forwardedIntentsFromManaged.addAll(Arrays.asList(
+            notForwardedIntentsFromManaged.addAll(Arrays.asList(
                     new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS),
                     new Intent(Settings.ACTION_INPUT_METHOD_SUBTYPE_SETTINGS)));
         }
