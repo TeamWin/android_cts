@@ -16,7 +16,6 @@ cc_library {
     name: "libctssecurity_jni",
     srcs: [
         "CtsSecurityJniOnLoad.cpp",
-        "android_security_cts_CharDeviceTest.cpp",
         "android_security_cts_LinuxRngTest.cpp",
         "android_security_cts_NativeCodeTest.cpp",
         "android_security_cts_SELinuxTest.cpp",
