@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:MultiDisplayPolicyTests
+ *     atest CtsWindowManagerDeviceTestCases:MultiDisplayPolicyTests
  *
  * Tests each expected policy on multi-display environment.
  */
