@@ -35,7 +35,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:FreeformWindowingModeTests
+ *     atest CtsWindowManagerDeviceTestCases:FreeformWindowingModeTests
  */
 @Presubmit
 public class FreeformWindowingModeTests extends MultiDisplayTestBase {
