@@ -416,6 +416,38 @@ public class StagedInstallTest {
         assertThat(sessionInfo).isStagedSessionFailed();
     }
 
+    @Test
+    public void testStageApkWithSameNameAsApexShouldFail_Commit() throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppSamePackageNameAsApex.apk").assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStageApkWithSameNameAsApexShouldFail_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+    }
+
+    @Test
+    public void testNonStagedInstallApkWithSameNameAsApexShouldFail() throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        PackageInstaller packageInstaller = getPackageInstaller();
+        PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        int sessionId = packageInstaller.createSession(sessionParams);
+        PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+        writeApk(session, "StagedInstallTestAppSamePackageNameAsApex.apk");
+        session.commit(LocalIntentSender.getIntentSender());
+        final String errorMessage = extractErrorMessage(LocalIntentSender.getIntentSenderResult());
+        assertThat(errorMessage).contains("is an APEX package and can't be installed as an APK");
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+    }
+
     private static PackageInstaller getPackageInstaller() {
         return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
                 .getPackageInstaller();
@@ -589,21 +621,25 @@ public class StagedInstallTest {
         }
 
         public String getErrorMessage() {
-            int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
-                    PackageInstaller.STATUS_FAILURE);
-            if (status == -1) {
-                throw new AssertionError("PENDING USER ACTION");
-            }
-            if (status == 0) {
-                throw new AssertionError("Result was successful");
-            }
-            return result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+            return extractErrorMessage(result);
         }
 
         public StageSessionResult assertSuccessful() {
             assertStatusSuccess(result);
             return this;
         }
+    }
+
+    private static String extractErrorMessage(Intent result) {
+        int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                PackageInstaller.STATUS_FAILURE);
+        if (status == -1) {
+            throw new AssertionError("PENDING USER ACTION");
+        }
+        if (status == 0) {
+            throw new AssertionError("Result was successful");
+        }
+        return result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
     }
 
     private static void abandonSession(int sessionId) {
