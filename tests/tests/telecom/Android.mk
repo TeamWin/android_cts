@@ -27,6 +27,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	compatibility-device-util-axt \
 	ctstestrunner-axt \
+	androidx.test.core \
 	androidx.test.rules
 
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
@@ -44,7 +45,6 @@ LOCAL_AIDL_INCLUDES := ThirdPtyInCallServiceTestApp/aidl/ \
 	               CallScreeningServiceTestApp/aidl/
 
 LOCAL_SDK_VERSION := test_current
-LOCAL_MIN_SDK_VERSION := 21
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
