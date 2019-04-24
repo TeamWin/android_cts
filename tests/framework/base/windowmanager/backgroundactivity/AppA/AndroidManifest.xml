@@ -40,5 +40,8 @@
         <activity
             android:name=".BackgroundActivity"
             android:exported="true" />
+        <activity
+            android:name=".SecondBackgroundActivity"
+            android:exported="true" />
     </application>
 </manifest>
