@@ -16,6 +16,11 @@
 
 package android.app.cts;
 
+import static androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread;
+
+import static org.junit.Assert.assertTrue;
+
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Instrumentation;
@@ -30,8 +35,8 @@ import android.content.DialogInterface.OnKeyListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.SmallTest;
+
+
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,16 +45,28 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
+import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+
 @SmallTest
-public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<DialogStubActivity> {
+@RunWith(JUnit4.class)
+public class AlertDialog_BuilderTest  {
     private Builder mBuilder;
-    private Context mContext;
     private Instrumentation mInstrumentation;
     private final CharSequence mTitle = "title";
     private Drawable mDrawable;
@@ -70,33 +87,29 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
 
     private OnItemSelectedListener mOnItemSelectedListener = mock(OnItemSelectedListener.class);
 
+    @Rule
+    public ActivityTestRule<DialogStubActivity> mActivityRule =
+            new ActivityTestRule<>(DialogStubActivity.class);
+
+    private Context mContext;
+
     private OnMultiChoiceClickListener mOnMultiChoiceClickListener =
             mock(OnMultiChoiceClickListener.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mBuilder = null;
-        mInstrumentation = getInstrumentation();
-        mContext = getActivity();
-
-        PollingCheck.waitFor(() -> getActivity().hasWindowFocus());
-
-        mButton = null;
-        mView = null;
-        mListView = null;
-        mDialog = null;
-        mSelectedItem = null;
+    @Before
+    public void setUp() throws Exception {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        Activity activity = mActivityRule.getActivity();
+        mContext = activity;
+        PollingCheck.waitFor(activity::hasWindowFocus);
     }
 
-    public AlertDialog_BuilderTest() {
-        super("android.app.stubs", DialogStubActivity.class);
-    }
-
+    @Test
     public void testConstructor() {
         new AlertDialog.Builder(mContext);
     }
 
+    @Test
     public void testConstructorWithThemeId() {
         mBuilder = new AlertDialog.Builder(mContext, R.style.DialogTheme_Test);
 
@@ -109,8 +122,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(20, ta.getInt(0, 0));
     }
 
+    @Test
     public void testSetIconWithParamInt() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mDrawable = mContext.getResources().getDrawable(android.R.drawable.btn_default);
                 mBuilder = new AlertDialog.Builder(mContext);
@@ -121,8 +135,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testSetIconWithParamDrawable() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mDrawable = mContext.getResources().getDrawable(android.R.drawable.btn_default);
                 mBuilder = new AlertDialog.Builder(mContext);
@@ -133,8 +148,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testSetIconAttribute() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mDrawable = mContext.getResources().getDrawable(android.R.drawable.btn_default);
                 mBuilder = new AlertDialog.Builder(mContext);
@@ -145,8 +161,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testSetPositiveButtonWithParamInt() throws Throwable {
-       runTestOnUiThread(new Runnable() {
+       runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setPositiveButton(android.R.string.yes, mOnClickListener);
@@ -166,8 +183,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnDismissListener);
     }
 
+    @Test
     public void testSetPositiveButtonWithParamCharSequence() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setPositiveButton(android.R.string.yes, mOnClickListener);
@@ -186,8 +204,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnDismissListener);
     }
 
+    @Test
     public void testSetNegativeButtonWithParamCharSequence() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNegativeButton(mTitle, mOnClickListener);
@@ -206,8 +225,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnDismissListener);
     }
 
+    @Test
     public void testSetNegativeButtonWithParamInt() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNegativeButton(R.string.notify, mOnClickListener);
@@ -226,8 +246,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnDismissListener);
     }
 
+    @Test
     public void testSetNeutralButtonWithParamInt() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNeutralButton(R.string.notify, mOnClickListener);
@@ -246,8 +267,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnDismissListener);
     }
 
+    @Test
     public void testSetNeutralButtonWithParamCharSequence() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNeutralButton(mTitle, mOnClickListener);
@@ -267,7 +289,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
     }
 
     private void testCancelable(final boolean cancelable) throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setCancelable(cancelable);
@@ -300,16 +322,19 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         }.run();
     }
 
+    @Test
     public void testSetCancelable() throws Throwable {
         testCancelable(true);
     }
 
+    @Test
     public void testDisableCancelable() throws Throwable {
         testCancelable(false);
     }
 
+    @Test
     public void testSetOnCancelListener() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setOnCancelListener(mOnCancelListener);
@@ -322,8 +347,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnCancelListener);
     }
 
+    @Test
     public void testSetOnDismissListener() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setOnDismissListener(mOnDismissListener);
@@ -336,8 +362,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnDismissListener);
     }
 
+    @Test
     public void testSetOnKeyListener() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setOnKeyListener(mOnKeyListener);
@@ -345,7 +372,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             }
         });
         mInstrumentation.waitForIdleSync();
-        sendKeys(KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1);
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_1);
+        mInstrumentation.waitForIdleSync();
         // Use Mockito captures so that we can verify that each "sent" key code resulted
         // in one DOWN event and one UP event.
         ArgumentCaptor<KeyEvent> keyEvent0Captor = ArgumentCaptor.forClass(KeyEvent.class);
@@ -361,8 +390,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(KeyEvent.ACTION_UP, keyEvent1Captor.getAllValues().get(1).getAction());
     }
 
+    @Test
     public void testSetItemsWithParamInt() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setItems(R.array.difficultyLevel, mOnClickListener);
@@ -377,11 +407,12 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(levels[0], mListView.getItemAtPosition(0));
     }
 
+    @Test
     public void testSetItemsWithParamCharSequence() throws Throwable {
         final CharSequence[] expect = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
 
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setItems(expect, mOnClickListener);
@@ -393,9 +424,10 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(expect[0], mListView.getItemAtPosition(0));
     }
 
+    @Test
     public void testSetAdapter() throws Throwable {
         final ListAdapter adapter = new AdapterTest();
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setAdapter(adapter, mOnClickListener);
@@ -407,12 +439,13 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(adapter, mListView.getAdapter());
     }
 
+    @Test
     public void testSetMultiChoiceItemsWithParamInt() throws Throwable {
 
         final CharSequence[] items = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
 
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setMultiChoiceItems(R.array.difficultyLevel, null,
@@ -432,11 +465,12 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(items[0], mListView.getItemAtPosition(0));
     }
 
+    @Test
     public void testSetMultiChoiceItemsWithParamCharSequence() throws Throwable {
         final CharSequence[] items = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
 
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setMultiChoiceItems(items, null, mOnMultiChoiceClickListener);
@@ -455,11 +489,12 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(items[0], mListView.getItemAtPosition(0));
     }
 
+    @Test
     public void testSetSingleChoiceItemsWithParamInt() throws Throwable {
         final CharSequence[] items = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
 
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setSingleChoiceItems(R.array.difficultyLevel, 0,
@@ -477,11 +512,12 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnClickListener);
     }
 
+    @Test
     public void testSetSingleChoiceItemsWithParamCharSequence() throws Throwable {
         final CharSequence[] items = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
 
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setSingleChoiceItems(items, 0, mOnClickListener);
@@ -498,11 +534,12 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnClickListener);
     }
 
+    @Test
     public void testSetSingleChoiceItems() throws Throwable {
         final CharSequence[] items = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
 
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setSingleChoiceItems(new ArrayAdapter<CharSequence>(mContext,
@@ -521,8 +558,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnClickListener);
     }
 
+    @Test
     public void testSetOnItemSelectedListener() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setOnItemSelectedListener(mOnItemSelectedListener);
@@ -538,10 +576,11 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         verifyNoMoreInteractions(mOnItemSelectedListener);
     }
 
+    @Test
     public void testSetView() throws Throwable {
         final View view = new View(mContext);
         view.setId(100);
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setView(view);
@@ -553,8 +592,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(view, mView);
     }
 
+    @Test
     public void testSetViewFromInflater() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setView(LayoutInflater.from(mBuilder.getContext()).inflate(
@@ -569,8 +609,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertNotNull(mView.findViewById(R.id.username_edit));
     }
 
+    @Test
     public void testSetViewById() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setView(R.layout.alert_dialog_text_entry_2);
@@ -584,8 +625,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertNotNull(mView.findViewById(R.id.username_edit));
     }
 
+    @Test
     public void testSetCustomTitle() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setCustomTitle(LayoutInflater.from(mBuilder.getContext()).inflate(
@@ -596,8 +638,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testSetInverseBackgroundForced() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setInverseBackgroundForced(true);
@@ -608,8 +651,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testCreate() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mDialog = mBuilder.create();
@@ -621,8 +665,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertTrue(mDialog.isShowing());
     }
 
+    @Test
     public void testShow() throws Throwable {
-        runTestOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mDialog = mBuilder.show();
