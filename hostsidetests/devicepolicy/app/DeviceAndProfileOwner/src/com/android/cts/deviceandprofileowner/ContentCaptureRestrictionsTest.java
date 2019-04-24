@@ -27,12 +27,12 @@ import android.content.Intent;
 public class ContentCaptureRestrictionsTest extends BaseDeviceAdminTest {
 
     // TODO(b/123540602): use @TestAPI to get max duration constant from ContentCaptureManager
-    private static final int MAX_TIME_TEMPORARY_SERVICE_CAN_BE_SET= 12000;
+    private static final int MAX_TIME_TEMPORARY_SERVICE_CAN_BE_SET= 120000;
 
     private static final int SLEEP_TIME_WAITING_FOR_SERVICE_CONNECTION_MS = 100;
 
     private static final String SERVICE_NAME =
-            "com.android.cts.devicepolicy.contentcapture/.SimpleContentCaptureService";
+            "com.android.cts.devicepolicy.contentcaptureservice/.SimpleContentCaptureService";
 
     int mUserId;
 
@@ -57,32 +57,23 @@ public class ContentCaptureRestrictionsTest extends BaseDeviceAdminTest {
     public void testDisallowContentCapture_allowed() throws Exception {
         enableService();
 
-        final boolean enabledBefore = launchActivityAndGetEnabled();
-        assertTrue(enabledBefore);
-
-        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, DISALLOW_CONTENT_CAPTURE);
-
-        // Must try a couple times because it will be disabled asynchronously.
-        for (int i = 1; i <= 5; i++) {
-            final boolean disabledAfter = !launchActivityAndGetEnabled();
-            if (disabledAfter) {
-                return;
-            }
-            Thread.sleep(100);
-        }
-        fail("Not disabled after 2.5s");
-    }
-
-    private boolean launchActivityAndGetEnabled() throws Exception {
         final Intent launchIntent = new Intent();
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         launchIntent.setClassName(CONTENT_CAPTURE_PACKAGE_NAME, CONTENT_CAPTURE_ACTIVITY_NAME);
         final ContentCaptureActivity activity = launchActivity(
                 "com.android.cts.deviceandprofileowner", ContentCaptureActivity.class, null);
-        return activity.isContentCaptureEnabled();
+
+        activity.waitContentCaptureEnabled(true);
+
+        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, DISALLOW_CONTENT_CAPTURE);
+
+        activity.waitContentCaptureEnabled(false);
     }
 
     private void enableService() throws Exception {
+        runShellCommand("settings put secure --user %d %s %d default",
+                mUserId, USER_SETUP_COMPLETE, 1);
+
         runShellCommand("cmd content_capture set temporary-service %d %s %d", mUserId,
                 SERVICE_NAME, MAX_TIME_TEMPORARY_SERVICE_CAN_BE_SET);
         // TODO: ideally it should wait until the service's onConnected() is called, but that

@@ -17,9 +17,13 @@
 package com.android.cts.deviceandprofileowner;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,18 +32,23 @@ import java.util.concurrent.TimeUnit;
  * Wrapper class used to call the activity in the non-test APK and wait for its result.
  */
 public class ContentCaptureActivity extends Activity {
+    private static final String TAG = "ContentCaptureActivity";
 
     public static final String CONTENT_CAPTURE_PACKAGE_NAME =
             "com.android.cts.devicepolicy.contentcaptureapp";
     public static final String CONTENT_CAPTURE_ACTIVITY_NAME = CONTENT_CAPTURE_PACKAGE_NAME
             + ".SimpleActivity";
 
-    private final CountDownLatch mLatch = new CountDownLatch(1);
-    private boolean mEnabled;
+    private CountDownLatch mEnabledLatch = new CountDownLatch(1);
+    private CountDownLatch mDisabledLatch = new CountDownLatch(1);
+
+    private ContentCaptureActivityReceiver mReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mReceiver = new ContentCaptureActivityReceiver();
+        registerReceiver(mReceiver, new IntentFilter(ContentCaptureActivityReceiver.ACTION));
 
         final Intent launchIntent = new Intent();
         launchIntent.setComponent(
@@ -47,19 +56,42 @@ public class ContentCaptureActivity extends Activity {
         startActivityForResult(launchIntent, 42);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mEnabled = resultCode == 1;
-        mLatch.countDown();
+    public void waitContentCaptureEnabled(boolean enabled) throws InterruptedException {
+        final Intent broadcastIntent = new Intent().setAction("SimpleActivityReceiver");
+        sendBroadcast(broadcastIntent);
+
+        final CountDownLatch latch = enabled ? mEnabledLatch : mDisabledLatch;
+        final boolean called = latch.await(2, TimeUnit.SECONDS);
+
+        if (!called) {
+            Log.e(TAG, CONTENT_CAPTURE_PACKAGE_NAME
+                    + " didn't get " + (enabled ? "enabled" : "disabled") + " state in 2 seconds");
+        }
     }
 
-    public boolean isContentCaptureEnabled() throws InterruptedException {
-        final boolean called = mLatch.await(2, TimeUnit.SECONDS);
-        if (!called) {
-            throw new IllegalStateException(CONTENT_CAPTURE_PACKAGE_NAME
-                    + " didn't finish in 2 seconds");
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+    }
+
+    private class ContentCaptureActivityReceiver extends BroadcastReceiver {
+        private static final String ACTION = "ContentCaptureActivityReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean enabled = intent.getBooleanExtra("enabled", false);
+            if (enabled) {
+                if (mEnabledLatch.getCount() == 0) {
+                    Log.e(TAG, "already received enabled broadcast");
+                }
+                mEnabledLatch.countDown();
+            } else {
+                if (mDisabledLatch.getCount() == 0) {
+                    Log.e(TAG, "already received disabled broadcast");
+                }
+                mDisabledLatch.countDown();
+            }
         }
-        finish();
-        return mEnabled;
     }
 }
