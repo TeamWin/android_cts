@@ -96,4 +96,20 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
         final int policy = aa.getAllowedCapturePolicy();
         assertEquals("Wrong default capture policy", AudioAttributes.ALLOW_CAPTURE_BY_ALL, policy);
     }
+
+    // -----------------------------------------------------------------
+    // Regression tests
+    // ----------------------------------
+    // Test against regression where setLegacyStreamType() was creating a different Builder
+    public void testSetLegacyStreamOnBuilder() throws Exception {
+        final int stream = AudioManager.STREAM_MUSIC;
+        AudioAttributes.Builder builder1 = new AudioAttributes.Builder();
+        builder1.setLegacyStreamType(stream);
+        AudioAttributes attr1 = builder1.build();
+
+        AudioAttributes.Builder builder2 = new AudioAttributes.Builder().setLegacyStreamType(stream);
+        AudioAttributes attr2 = builder2.build();
+
+        assertEquals(attr1, attr2);
+    }
 }
