@@ -67,6 +67,18 @@ static void fillRgbaHardwareBuffer(JNIEnv* env, jclass, jobject hwBuffer) {
     AHardwareBuffer_unlock(hardware_buffer, nullptr);
 }
 
+static jint getFormat(JNIEnv* env, jclass, jobject jbitmap) {
+    AndroidBitmapInfo info;
+    info.format = ANDROID_BITMAP_FORMAT_NONE;
+    int err = 0;
+    err = AndroidBitmap_getInfo(env, jbitmap, &info);
+    if (err != ANDROID_BITMAP_RESULT_SUCCESS) {
+        fail(env, "AndroidBitmap_getInfo failed, err=%d", err);
+        return ANDROID_BITMAP_FORMAT_NONE;
+    }
+    return info.format;
+}
+
 static JNINativeMethod gMethods[] = {
     { "nValidateBitmapInfo", "(Landroid/graphics/Bitmap;IIZ)V",
         (void*) validateBitmapInfo },
@@ -74,6 +86,7 @@ static JNINativeMethod gMethods[] = {
         (void*) validateNdkAccessAfterRecycle },
     { "nFillRgbaHwBuffer", "(Landroid/hardware/HardwareBuffer;)V",
         (void*) fillRgbaHardwareBuffer },
+    { "nGetFormat", "(Landroid/graphics/Bitmap;)I", (void*) getFormat },
 };
 
 int register_android_graphics_cts_BitmapTest(JNIEnv* env) {
