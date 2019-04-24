@@ -16,6 +16,8 @@ package android.accessibilityservice.cts;
 
 import static org.junit.Assert.fail;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
+
 import android.app.Instrumentation;
 import android.view.accessibility.AccessibilityEvent;
 
