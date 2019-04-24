@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.ActivityManagerState.STATE_INITIALIZING;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
@@ -23,10 +24,12 @@ import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_FOREGROUND_ACTIVITY;
+import static android.server.wm.backgroundactivity.appa.Components.APP_A_SECOND_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SEND_PENDING_INTENT_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SIMPLE_ADMIN_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_ACTIVITY_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.RELAUNCH_FOREGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.IS_BROADCAST_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
@@ -149,7 +152,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testActivityNotBlockedwhenForegroundActivityLaunch() throws Exception {
+    public void testActivityNotBlockedWhenForegroundActivityLaunch() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
         // successfully
         Intent intent = new Intent();
@@ -182,6 +185,24 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         result = waitForActivity(APP_A_FOREGROUND_ACTIVITY);
         assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
+    }
+
+    @Test
+    public void testSecondActivityNotBlockedWhenForegroundActivityLaunch() throws Exception {
+        // Start AppA foreground activity, which will immediately launch one activity
+        // and then the second.
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, true);
+        intent.putExtra(LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA, true);
+        mContext.startActivity(intent);
+
+        boolean result = waitForActivity(APP_A_SECOND_BACKGROUND_ACTIVITY);
+        assertTrue("Not able to launch second background activity", result);
+
+        waitAndAssertActivityState(APP_A_BACKGROUND_ACTIVITY, STATE_INITIALIZING,
+                "First activity should have been created");
     }
 
     @Test
