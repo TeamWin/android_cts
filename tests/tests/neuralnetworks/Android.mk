@@ -36,7 +36,7 @@ LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/
 LOCAL_C_INCLUDES += frameworks/ml/nn/common/include
 LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
 
-LOCAL_CFLAGS := -Werror -Wall -DNNTEST_ONLY_PUBLIC_API
+LOCAL_CFLAGS := -Werror -Wall -DNNTEST_ONLY_PUBLIC_API -DNNTEST_CTS
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
 LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgmock_ndk
