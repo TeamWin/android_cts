@@ -43,6 +43,6 @@ LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := system_current
 
 include $(BUILD_CTS_PACKAGE)
