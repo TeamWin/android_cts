@@ -340,7 +340,8 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
 
         runWithShellPermissionIdentity(() -> mRoleManager.addRoleHolderAsUser(roleName,
-                packageName, 0, user, executor, successful -> {
+                packageName, RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, user, executor,
+                successful -> {
                     try {
                         queue.put(successful);
                     } catch (InterruptedException e) {
@@ -358,7 +359,8 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
 
         runWithShellPermissionIdentity(() -> mRoleManager.removeRoleHolderAsUser(roleName,
-                packageName, 0, user, executor, successful -> {
+                packageName, RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, user, executor,
+                successful -> {
                     try {
                         queue.put(successful);
                     } catch (InterruptedException e) {
