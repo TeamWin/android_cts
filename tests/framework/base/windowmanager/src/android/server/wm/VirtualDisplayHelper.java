@@ -42,9 +42,15 @@ import java.util.function.Predicate;
  */
 class VirtualDisplayHelper {
 
+    private boolean mPublicDisplay = false;
+    private boolean mCanShowWithInsecureKeyguard = false;
+    private boolean mShowSystemDecorations = false;
+
     private static final String VIRTUAL_DISPLAY_NAME = "CtsVirtualDisplay";
     /** See {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD}. */
     private static final int VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD = 1 << 5;
+    /** See {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS}. */
+    private static final int VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS = 1 << 9;
 
     private static final int DENSITY = 160;
     static final int HEIGHT = 480;
@@ -54,20 +60,28 @@ class VirtualDisplayHelper {
     private VirtualDisplay mVirtualDisplay;
     private boolean mCreated;
 
-    void createAndWaitForDisplay(boolean requestShowWhenLocked) {
+    VirtualDisplayHelper setPublicDisplay(boolean publicDisplay) {
+        mPublicDisplay = publicDisplay;
+        return this;
+    }
+
+    VirtualDisplayHelper setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
+        mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
+        return this;
+    }
+
+    VirtualDisplayHelper setShowSystemDecorations(boolean showSystemDecorations) {
+        mShowSystemDecorations = showSystemDecorations;
+        return this;
+    }
+
+    int createAndWaitForDisplay() {
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            createVirtualDisplay(requestShowWhenLocked, 0 /* virtualDisplayFlags */);
+            createVirtualDisplay();
             waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* default */,
                     true /* on */);
             mCreated = true;
         });
-    }
-
-    int createAndWaitForPublicDisplay(boolean requestShowWhenLocked) {
-        createVirtualDisplay(requestShowWhenLocked, VIRTUAL_DISPLAY_FLAG_PUBLIC);
-        waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* default */,
-                true /* on */);
-        mCreated = true;
         return mVirtualDisplay.getDisplay().getDisplayId();
     }
 
@@ -100,18 +114,29 @@ class VirtualDisplayHelper {
         });
     }
 
-    private void createVirtualDisplay(boolean requestShowWhenLocked, int virtualDisplayFlags) {
+    private void createVirtualDisplay() {
         mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888, 2);
 
         final DisplayManager displayManager = getInstrumentation()
                 .getContext().getSystemService(DisplayManager.class);
 
-        int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
-                | virtualDisplayFlags;
+        int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 
-        if (requestShowWhenLocked) {
+        if (mPublicDisplay) {
+            flags |= VIRTUAL_DISPLAY_FLAG_PUBLIC;
+        }
+        if (mCanShowWithInsecureKeyguard) {
             flags |= VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
         }
+        if (mShowSystemDecorations) {
+            flags |= VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
+        }
+
+        logAlways("createVirtualDisplay: " + WIDTH + "x" + HEIGHT + ", dpi: " + DENSITY
+                + ", publicDisplay=" + mPublicDisplay
+                + ", canShowWithInsecureKeyguard=" + mCanShowWithInsecureKeyguard
+                + ", showSystemDecorations=" + mShowSystemDecorations);
+
         mVirtualDisplay = displayManager.createVirtualDisplay(
                 VIRTUAL_DISPLAY_NAME, WIDTH, HEIGHT, DENSITY, mReader.getSurface(), flags);
     }
