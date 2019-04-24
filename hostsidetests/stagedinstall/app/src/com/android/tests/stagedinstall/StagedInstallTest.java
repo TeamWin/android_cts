@@ -81,6 +81,8 @@ public class StagedInstallTest {
     private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
     private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
+    private static final String NOT_PRE_INSTALLED_SHIM_APEX_PACKAGE_NAME =
+            "com.android.apex.cts.shim_not_pre_installed";
 
     private File mTestStateFile = new File(
             InstrumentationRegistry.getInstrumentation().getContext().getFilesDir(),
@@ -404,8 +406,19 @@ public class StagedInstallTest {
         }
     }
 
+    @Test
+    public void testInstallStagedNonPreInstalledApex_UserBuild_Fails() throws Exception {
+        assertThat(getInstalledVersion(NOT_PRE_INSTALLED_SHIM_APEX_PACKAGE_NAME)).isEqualTo(-1);
+        int sessionId = stageSingleApk(
+                "com.android.apex.cts.shim_not_pre_installed.apex")
+                .assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+    }
+
     private static PackageInstaller getPackageInstaller() {
-      return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager().getPackageInstaller();
+        return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
+                .getPackageInstaller();
     }
 
     private static long getInstalledVersion(String packageName) {
@@ -641,16 +654,21 @@ public class StagedInstallTest {
     private void waitForIsReadyBroadcast(int sessionId) {
         Log.i(TAG, "Waiting for session " + sessionId + " to be ready");
         try {
-            PackageInstaller.SessionInfo info =
-                    SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-            assertThat(info).isNotNull();
-            assertThat(info.getSessionId()).isEqualTo(sessionId);
+            PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
             assertThat(info.isStagedSessionReady()).isTrue();
             assertThat(info.isStagedSessionApplied()).isFalse();
             assertWithMessage(info.getStagedSessionErrorMessage())
                     .that(info.isStagedSessionFailed()).isFalse();
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             throw new AssertionError(e);
         }
+    }
+
+    private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) throws Exception {
+        PackageInstaller.SessionInfo info =
+                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
+        assertThat(info).isNotNull();
+        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        return info;
     }
 }
