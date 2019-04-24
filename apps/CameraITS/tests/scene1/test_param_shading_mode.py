@@ -24,7 +24,9 @@ from matplotlib import pylab
 import numpy
 
 NAME = os.path.basename(__file__).split('.')[0]
+NUM_FRAMES = 4  # number of frames for temporal info to settle
 NUM_SHADING_MODE_SWITCH_LOOPS = 3
+SHADING_MODES = ['OFF', 'FAST', 'HQ']
 THRESHOLD_DIFF_RATIO = 0.15
 
 
@@ -59,13 +61,14 @@ def main():
         # Get the reference lens shading maps for OFF, FAST, and HIGH_QUALITY
         # in different sessions.
         # reference_maps[mode]
-        reference_maps = [[] for mode in range(3)]
+        num_shading_modes = len(SHADING_MODES)
+        reference_maps = [[] for mode in range(num_shading_modes)]
         num_map_gains = 0
-        for mode in range(1, 3):
+        for mode in range(1, num_shading_modes):
             req = its.objects.auto_capture_request()
             req['android.statistics.lensShadingMapMode'] = 1
             req['android.shading.mode'] = mode
-            cap_res = cam.do_capture(req)['metadata']
+            cap_res = cam.do_capture([req]*NUM_FRAMES)[NUM_FRAMES-1]['metadata']
             lsc_map = cap_res['android.statistics.lensShadingCorrectionMap']
             assert(lsc_map.has_key('width') and
                    lsc_map.has_key('height') and
@@ -79,25 +82,26 @@ def main():
         # Get the lens shading maps while switching modes in one session.
         reqs = []
         for i in range(NUM_SHADING_MODE_SWITCH_LOOPS):
-            for mode in range(3):
-                req = its.objects.auto_capture_request()
-                req['android.statistics.lensShadingMapMode'] = 1
-                req['android.shading.mode'] = mode
-                reqs.append(req)
+            for mode in range(num_shading_modes):
+                for _ in range(NUM_FRAMES):
+                    req = its.objects.auto_capture_request()
+                    req['android.statistics.lensShadingMapMode'] = 1
+                    req['android.shading.mode'] = mode
+                    reqs.append(req)
 
         caps = cam.do_capture(reqs)
 
         # shading_maps[mode][loop]
         shading_maps = [[[] for loop in range(NUM_SHADING_MODE_SWITCH_LOOPS)]
-                        for mode in range(3)]
+                        for mode in range(num_shading_modes)]
 
         # Get the shading maps out of capture results
-        for i in range(len(caps)):
-            shading_maps[i % 3][i / 3] = \
-                    caps[i]['metadata']['android.statistics.lensShadingCorrectionMap']['map']
+        for i in range(len(caps)/NUM_FRAMES):
+            shading_maps[i%num_shading_modes][i/NUM_SHADING_MODE_SWITCH_LOOPS] = \
+                    caps[(i+1)*NUM_FRAMES-1]['metadata']['android.statistics.lensShadingCorrectionMap']['map']
 
         # Draw the maps
-        for mode in range(3):
+        for mode in range(num_shading_modes):
             for i in range(NUM_SHADING_MODE_SWITCH_LOOPS):
                 pylab.clf()
                 pylab.figure(figsize=(5, 5))
@@ -128,15 +132,16 @@ def main():
                 pylab.tight_layout()
                 matplotlib.pyplot.savefig('%s.png' % name)
 
-        print 'Verifying lens shading maps with mode OFF are all 1.0'
-        for i in range(NUM_SHADING_MODE_SWITCH_LOOPS):
-            assert numpy.allclose(shading_maps[0][i], reference_maps[0])
-
-        for mode in range(1, 3):
-            print 'Verifying lens shading maps with mode', mode, 'are similar'
+        for mode in range(num_shading_modes):
+            if mode == 0:
+                print 'Verifying lens shading maps with mode %s are all 1.0' % (
+                        SHADING_MODES[mode])
+            else:
+                print 'Verifying lens shading maps with mode %s are similar' % (
+                        SHADING_MODES[mode])
             for i in range(NUM_SHADING_MODE_SWITCH_LOOPS):
-                e_msg = 'FAIL mode: %d, loop: %d, THRESH: %.2f' % (
-                        mode, i, THRESHOLD_DIFF_RATIO)
+                e_msg = 'FAIL mode: %s, loop: %d, THRESH: %.2f' % (
+                        SHADING_MODES[mode], i, THRESHOLD_DIFF_RATIO)
                 assert (numpy.allclose(shading_maps[mode][i],
                                        reference_maps[mode],
                                        rtol=THRESHOLD_DIFF_RATIO)), e_msg
