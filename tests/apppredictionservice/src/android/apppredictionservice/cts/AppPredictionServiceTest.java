@@ -216,6 +216,25 @@ public class AppPredictionServiceTest {
         client.destroy();
     }
 
+    @Test
+    public void testFailureWithoutPermission() {
+        setService(null);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().revokeRuntimePermission(
+                InstrumentationRegistry.getTargetContext().getPackageName(),
+                android.Manifest.permission.PACKAGE_USAGE_STATS);
+        assertFails(() -> createTestPredictor(createTestPredictionContext()));
+    }
+
+    @Test
+    public void testSuccessWithPermission() {
+        setService(null);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                InstrumentationRegistry.getTargetContext().getPackageName(),
+                android.Manifest.permission.PACKAGE_USAGE_STATS);
+        AppPredictor predictor = createTestPredictor(createTestPredictionContext());
+        predictor.destroy();
+    }
+
     private void assertFails(Runnable r) {
         try {
             r.run();
