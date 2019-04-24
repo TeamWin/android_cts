@@ -43,7 +43,7 @@
                   android:theme="@style/MyAutofilledHighlight"/>
         <activity android:name=".LoginWithStringsActivity" />
         <activity android:name=".WelcomeActivity" android:taskAffinity=".WelcomeActivity"/>
-        <activity android:name=".ViewAttributesTestActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".ViewAttributesTestActivity" />
         <activity android:name=".AuthenticationActivity" />
         <activity android:name=".ManualAuthenticationActivity" />
         <activity android:name=".CheckoutActivity" android:taskAffinity=".CheckoutActivity"/>
