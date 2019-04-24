@@ -21,19 +21,18 @@ import android.widget.TextView;
 import com.android.cts.verifier.R;
 
 /**
- * Test for manual verification of Instant Apps notification.
+ * Test for manual verification of Instant Apps Recents function.
  *
- * The test verifies that an Instant App notification will be shown when
- * an Instant App is at foreground.
+ * The test verifies that Instant App can be accessed in Recent Apps screen.
  */
-public class NotificationTestActivity extends BaseTestActivity {
+public class RecentAppsTestActivity extends BaseTestActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setInfoResources(R.string.ia_notification, R.string.ia_notification_info, -1);
+        setInfoResources(R.string.ia_recents, R.string.ia_recents_info, -1);
         TextView extraText = (TextView) findViewById(R.id.instruction_extra_text);
-        extraText.setText(R.string.ia_notification_instruction_label);
+        extraText.setText(R.string.ia_recents_instruction_label);
     }
 }
