@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.ActivityManagerState.STATE_INITIALIZING;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
@@ -23,14 +24,23 @@ import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_FOREGROUND_ACTIVITY;
+import static android.server.wm.backgroundactivity.appa.Components.APP_A_SECOND_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SEND_PENDING_INTENT_RECEIVER;
+import static android.server.wm.backgroundactivity.appa.Components.APP_A_SIMPLE_ADMIN_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_ACTIVITY_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.RELAUNCH_FOREGROUND_ACTIVITY_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.IS_BROADCAST_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
 import static android.server.wm.backgroundactivity.appb.Components.APP_B_FOREGROUND_ACTIVITY;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -63,6 +73,8 @@ import org.junit.runners.model.Statement;
  */
 @Presubmit
 public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
+
+    private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
 
     /** Copied from {@link Settings.Global#BACKGROUND_ACTIVITY_STARTS_ENABLED}. */
     private static final String BACKGROUND_ACTIVITY_STARTS_ENABLED =
@@ -103,6 +115,12 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public void tearDown() throws Exception {
         pressHomeButton();
         mAmWmState.waitForHomeActivityVisible();
+        runWithShellPermissionIdentity(() -> {
+            runShellCommand("dpm remove-active-admin --user current "
+                    + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
+        });
+        // TODO(b/130169434): Remove it when app switch protection bug is fixed
+        SystemClock.sleep(5000);
     }
 
     @Test
@@ -134,7 +152,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testActivityNotBlockedwhenForegroundActivityLaunch() throws Exception {
+    public void testActivityNotBlockedWhenForegroundActivityLaunch() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
         // successfully
         Intent intent = new Intent();
@@ -170,11 +188,27 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testSecondActivityNotBlockedWhenForegroundActivityLaunch() throws Exception {
+        // Start AppA foreground activity, which will immediately launch one activity
+        // and then the second.
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, true);
+        intent.putExtra(LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA, true);
+        mContext.startActivity(intent);
+
+        boolean result = waitForActivity(APP_A_SECOND_BACKGROUND_ACTIVITY);
+        assertTrue("Not able to launch second background activity", result);
+
+        waitAndAssertActivityState(APP_A_BACKGROUND_ACTIVITY, STATE_INITIALIZING,
+                "First activity should have been created");
+    }
+
+    @Test
     public void testPendingIntentActivityBlocked() throws Exception {
         // Cannot start activity by pending intent, as both appA and appB are in background
-        Intent intent = new Intent();
-        intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
-        mContext.sendBroadcast(intent);
+        sendPendingIntentActivity();
         boolean result = waitForActivity(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
     }
@@ -192,9 +226,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        intent = new Intent();
-        intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
-        mContext.sendBroadcast(intent);
+        sendPendingIntentActivity();
         result = waitForActivity(APP_A_BACKGROUND_ACTIVITY);
         assertTrue("Not able to launch background activity", result);
     }
@@ -211,16 +243,100 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        intent = new Intent();
-        intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
-        mContext.sendBroadcast(intent);
+        sendPendingIntentActivity();
         result = waitForActivity(APP_A_BACKGROUND_ACTIVITY);
         assertTrue("Not able to launch background activity", result);
     }
 
-    // Return true if the activity is shown within a reasonable time.
+    @Test
+    public void testPendingIntentBroadcastTimeout_noDelay() throws Exception {
+        aseertPendingIntentBroadcastTimeoutTest(0, true);
+    }
+
+    @Test
+    public void testPendingIntentBroadcastTimeout_delay1s() throws Exception {
+        aseertPendingIntentBroadcastTimeoutTest(1000, true);
+    }
+
+    @Test
+    public void testPendingIntentBroadcastTimeout_delay12s() throws Exception {
+        aseertPendingIntentBroadcastTimeoutTest(12000, false);
+    }
+
+    @Test
+    public void testPendingIntentBroadcast_appBIsBackground() throws Exception {
+        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
+        // activity in App A
+        sendPendingIntentBroadcast(0);
+        boolean result = waitForActivity(APP_A_BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
+    public void testDeviceOwner() throws Exception {
+        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
+        // activity in App A
+        String cmdResult = runShellCommand("dpm set-device-owner --user cur "
+                + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
+        assertThat(cmdResult).contains("Success");
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
+        mContext.sendBroadcast(intent);
+        boolean result = waitForActivity(APP_A_BACKGROUND_ACTIVITY);
+        assertTrue("Not able to launch background activity", result);
+    }
+
+    private void aseertPendingIntentBroadcastTimeoutTest(int delayMs, boolean expectedResult) {
+        // Start AppB foreground activity
+        Intent intent = new Intent();
+        intent.setComponent(APP_B_FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        boolean result = waitForActivity(APP_B_FOREGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground Activity", result);
+
+        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
+        // activity in App A
+        sendPendingIntentBroadcast(delayMs);
+        result = waitForActivity(ACTIVITY_FOCUS_TIMEOUT_MS + delayMs, APP_A_BACKGROUND_ACTIVITY);
+        assertEquals(expectedResult, result);
+    }
+
     private boolean waitForActivity(ComponentName componentName) {
-        mAmWmState.waitForActivityState(componentName, STATE_RESUMED);
+        return waitForActivity(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+    }
+
+    // Return true if the activity is shown before timeout
+    private boolean waitForActivity(int timeoutMs, ComponentName componentName) {
+        long endTime = System.currentTimeMillis() + timeoutMs;
+        while (endTime > System.currentTimeMillis()) {
+            mAmWmState.getAmState().computeState();
+            mAmWmState.getWmState().computeState();
+            if (mAmWmState.getAmState().hasActivityState(componentName, STATE_RESUMED)) {
+                SystemClock.sleep(200);
+                mAmWmState.getAmState().computeState();
+                mAmWmState.getWmState().computeState();
+                break;
+            }
+            SystemClock.sleep(200);
+        }
         return getActivityName(componentName).equals(mAmWmState.getAmState().getFocusedActivity());
+    }
+
+    private void sendPendingIntentActivity() {
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
+        intent.putExtra(IS_BROADCAST_EXTRA, false);
+        mContext.sendBroadcast(intent);
+    }
+
+    private void sendPendingIntentBroadcast(int delayMs) {
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
+        intent.putExtra(IS_BROADCAST_EXTRA, true);
+        if (delayMs > 0) {
+            intent.putExtra(START_ACTIVITY_DELAY_MS_EXTRA, delayMs);
+        }
+        mContext.sendBroadcast(intent);
     }
 }

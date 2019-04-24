@@ -23,9 +23,13 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.LocationCheck" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <!-- TODO(b/129909356): Consolidate this to CtsWindowManagerDeviceTestCases.apk -->
-        <option name="test-file-name" value="CtsActivityManagerBackgroundActivityTestCases.apk" />
+        <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsBackgroundActivityAppA.apk" />
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <!-- TODO(b/129909356): Rename to CtsWindowManagerDeviceTestCases.apk -->
+        <option name="test-file-name" value="CtsActivityManagerBackgroundActivityTestCases.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppB.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">

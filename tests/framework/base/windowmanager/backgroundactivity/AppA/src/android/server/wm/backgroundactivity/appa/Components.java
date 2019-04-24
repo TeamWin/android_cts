@@ -23,18 +23,33 @@ public class Components extends ComponentsBase {
 
     public static final ComponentName APP_A_BACKGROUND_ACTIVITY =
             component(Components.class, "BackgroundActivity");
+    public static final ComponentName APP_A_SECOND_BACKGROUND_ACTIVITY =
+            component(Components.class, "SecondBackgroundActivity");
     public static final ComponentName APP_A_FOREGROUND_ACTIVITY =
             component(Components.class, "ForegroundActivity");
     public static final ComponentName APP_A_SEND_PENDING_INTENT_RECEIVER =
             component(Components.class, "SendPendingIntentReceiver");
     public static final ComponentName APP_A_START_ACTIVITY_RECEIVER =
             component(Components.class, "StartBackgroundActivityReceiver");
+    public static final ComponentName APP_A_SIMPLE_ADMIN_RECEIVER =
+            component(Components.class, "SimpleAdminReceiver");
 
     /** Extra key constants for {@link #APP_A_FOREGROUND_ACTIVITY}. */
     public static class ForegroundActivity {
         public static final String LAUNCH_BACKGROUND_ACTIVITY_EXTRA =
                 "LAUNCH_BACKGROUND_ACTIVITY_EXTRA";
+        public static final String LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA =
+                "LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA";
         public static final String RELAUNCH_FOREGROUND_ACTIVITY_EXTRA =
                 "RELAUNCH_FOREGROUND_ACTIVITY_EXTRA";
     }
+    /** Extra key constants for {@link #APP_A_SEND_PENDING_INTENT_RECEIVER} */
+    public static class SendPendingIntentReceiver {
+        public static final String IS_BROADCAST_EXTRA = "IS_BROADCAST_EXTRA";
+    }
+    /** Extra key constants for {@link #APP_A_START_ACTIVITY_RECEIVER} */
+    public static class StartBackgroundActivityReceiver {
+        public static final String START_ACTIVITY_DELAY_MS_EXTRA = "START_ACTIVITY_DELAY_MS_EXTRA";
+    }
+
 }

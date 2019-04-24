@@ -20,12 +20,19 @@ import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
+import android.content.Context;
+import android.content.res.Configuration;
+import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.util.Size;
+import android.view.Display;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -63,6 +70,25 @@ public class DisplayTests extends MultiDisplayTestBase {
             final int newDensityDpi = newDisplay.mFullConfiguration.densityDpi;
             assertEquals(CUSTOM_DENSITY_DPI, newDensityDpi);
         }
+    }
+
+    @Test
+    @FlakyTest(bugId = 129521230)
+    public void testNonDefaultDisplayResourcesConfiguration() throws Exception {
+        final int smallDisplaySize = 1000;
+        final int longDisplaySize = 1920;
+
+        // Get land-sized display's resources configuration.
+        final int smallestScreenWidthForLandDisplay = getDisplayResourcesConfiguration(
+                longDisplaySize, smallDisplaySize).smallestScreenWidthDp;
+
+        // Get port-sized display's resources configuration.
+        final int smallestScreenWidthForPortDisplay = getDisplayResourcesConfiguration(
+                smallDisplaySize, longDisplaySize).smallestScreenWidthDp;
+
+        // Check whether smallestScreenWidthDp configuration is proper.
+        assertEquals("smallestScreenWidthDp configuration should be set to smallest possible size.",
+                smallestScreenWidthForLandDisplay, smallestScreenWidthForPortDisplay);
     }
 
     /**
@@ -148,6 +174,24 @@ public class DisplayTests extends MultiDisplayTestBase {
             displayMetrics = displayMetricsSession.getDisplayMetrics();
             assertEquals(overrideSize, displayMetrics.overrideSize);
             assertEquals(overrideDensity, displayMetrics.overrideDensity);
+        }
+    }
+
+    private Configuration getDisplayResourcesConfiguration(int displayWidth, int displayHeight)
+            throws Exception  {
+        final Context context = getInstrumentation().getContext();
+        final DisplayManager displayManager =
+                (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay activityDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true)
+                    .setSimulationDisplaySize(displayWidth, displayHeight)
+                    .createDisplay();
+            final Display display = displayManager.getDisplay(activityDisplay.mId);
+            Configuration config = context.createDisplayContext(display)
+                    .getResources().getConfiguration();
+            return config;
         }
     }
 

@@ -1430,6 +1430,38 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Get the largest size by area within (less than) bound
+     *
+     * @param sizes an array of sizes, must have at least 1 element
+     *
+     * @return Largest Size. Null if no such size exists within bound.
+     *
+     * @throws IllegalArgumentException if sizes was null or had 0 elements, or bound is invalid.
+     */
+    public static Size getMaxSizeWithBound(Size[] sizes, int bound) {
+        if (sizes == null || sizes.length == 0) {
+            throw new IllegalArgumentException("sizes was empty");
+        }
+        if (bound <= 0) {
+            throw new IllegalArgumentException("bound is invalid");
+        }
+
+        Size sz = null;
+        for (Size size : sizes) {
+            if (size.getWidth() * size.getHeight() >= bound) {
+                continue;
+            }
+
+            if (sz == null ||
+                    size.getWidth() * size.getHeight() > sz.getWidth() * sz.getHeight()) {
+                sz = size;
+            }
+        }
+
+        return sz;
+    }
+
+    /**
      * Returns true if the given {@code array} contains the given element.
      *
      * @param array {@code array} to check for {@code elem}

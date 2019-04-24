@@ -36,6 +36,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -61,7 +63,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
@@ -74,8 +75,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.util.Arrays;
@@ -87,7 +86,6 @@ import java.util.concurrent.CountDownLatch;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a location "
         + "access check notification for instant apps.")
-@FlakyTest
 public class LocationAccessCheckTest {
     private static final String LOG_TAG = LocationAccessCheckTest.class.getSimpleName();
 
@@ -199,7 +197,7 @@ public class LocationAccessCheckTest {
                 if (System.currentTimeMillis() - start < timeout) {
                     Log.d(LOG_TAG, "Ignoring exception", e);
 
-                    Thread.sleep(100);
+                    Thread.sleep(500);
                 } else {
                     throw e;
                 }
@@ -530,23 +528,23 @@ public class LocationAccessCheckTest {
         assertNotNull(getNotification(false));
     }
 
-    // @Test
-    // public void notificationIsShownAgainAfterUninstallAndReinstall() throws Throwable {
-    //     accessLocation();
-    //     getNotification(true);
-    //
-    //     uninstallBackgroundAccessApp();
-    //
-    //     // Wait until package permission controller has cleared the state
-    //     Thread.sleep(2000);
-    //
-    //     installBackgroundAccessApp();
-    //
-    //     eventually(() -> {
-    //         accessLocation();
-    //         assertNotNull(getNotification(false));
-    //     }, UNEXPECTED_TIMEOUT_MILLIS);
-    // }
+    @Test
+    public void notificationIsShownAgainAfterUninstallAndReinstall() throws Throwable {
+        accessLocation();
+        getNotification(true);
+
+        uninstallBackgroundAccessApp();
+
+        // Wait until package permission controller has cleared the state
+        Thread.sleep(2000);
+
+        installBackgroundAccessApp();
+
+        eventually(() -> {
+            accessLocation();
+            assertNotNull(getNotification(false));
+        }, UNEXPECTED_TIMEOUT_MILLIS);
+    }
 
     @Test
     public void removeNotificationOnUninstall() throws Throwable {

@@ -33,7 +33,7 @@ import android.service.autofill.Validator;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

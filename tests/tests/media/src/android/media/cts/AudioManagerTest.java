@@ -999,10 +999,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mContext.getPackageName(), getInstrumentation(), true);
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             int musicVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
             mAudioManager.adjustStreamVolume(
                     AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             assertEquals(musicVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
 
         } finally {
@@ -1020,9 +1021,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
 
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             int musicVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
             mAudioManager.adjustStreamVolume(
                     AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             int volumeDelta =
                     getVolumeDelta(mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
             assertEquals(musicVolume + volumeDelta,

@@ -16,9 +16,12 @@
 
 package android.server.wm.backgroundactivity.appa;
 
+import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 
 /**
  * A class to help test case to start background activity.
@@ -26,7 +29,19 @@ import android.content.Intent;
 public class StartBackgroundActivityReceiver extends BroadcastReceiver {
 
     @Override
-    public void onReceive(Context context, Intent notUsed) {
+    public void onReceive(Context context, Intent intent) {
+        if (!intent.hasExtra(START_ACTIVITY_DELAY_MS_EXTRA)) {
+            startActivityNow(context);
+            return;
+        }
+        final int startActivityDelayMs = intent.getIntExtra(START_ACTIVITY_DELAY_MS_EXTRA, 0);
+        new Thread(() -> {
+            SystemClock.sleep(startActivityDelayMs);
+            startActivityNow(context);
+        }).start();
+    }
+
+    private void startActivityNow(Context context) {
         Intent newIntent = new Intent(context, BackgroundActivity.class);
         newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(newIntent);

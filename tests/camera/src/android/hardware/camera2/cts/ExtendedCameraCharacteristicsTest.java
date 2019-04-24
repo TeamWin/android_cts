@@ -1184,8 +1184,12 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             Size maxFastYuvSize = maxYuvSize;
 
             Size[] slowYuvSizes = config.getHighResolutionOutputSizes(ImageFormat.YUV_420_888);
+            Size maxSlowYuvSizeLessThan24M = null;
             if (haveBurstCapability && slowYuvSizes != null && slowYuvSizes.length > 0) {
                 Size maxSlowYuvSize = CameraTestUtils.getMaxSize(slowYuvSizes);
+                final int SIZE_24MP_BOUND = 24000000;
+                maxSlowYuvSizeLessThan24M =
+                        CameraTestUtils.getMaxSizeWithBound(slowYuvSizes, SIZE_24MP_BOUND);
                 maxYuvSize = CameraTestUtils.getMaxSize(new Size[]{maxYuvSize, maxSlowYuvSize});
             }
 
@@ -1205,13 +1209,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             boolean haveAwbLock = CameraTestUtils.getValueNotNull(
                     c, CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE);
 
-            // Ensure that max YUV output is fast enough - needs to be at least 10 fps
-
-            long maxYuvRate =
-                config.getOutputMinFrameDuration(ImageFormat.YUV_420_888, maxYuvSize);
-            final long MIN_MAXSIZE_DURATION_BOUND_NS = 100000000; // 100 ms, 10 fps
-            boolean haveMaxYuvRate = maxYuvRate <= MIN_MAXSIZE_DURATION_BOUND_NS;
-
             // Ensure that some >=8MP YUV output is fast enough - needs to be at least 20 fps
 
             long maxFastYuvRate =
@@ -1222,6 +1219,16 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             final int SIZE_8MP_BOUND = 8000000;
             boolean havefast8MPYuv = (maxFastYuvSize.getWidth() * maxFastYuvSize.getHeight()) >
                     SIZE_8MP_BOUND;
+
+            // Ensure that max YUV output smaller than 24MP is fast enough
+            // - needs to be at least 10 fps
+            final long MIN_MAXSIZE_DURATION_BOUND_NS = 100000000; // 100 ms, 10 fps
+            long maxYuvRate = maxFastYuvRate;
+            if (maxSlowYuvSizeLessThan24M != null) {
+                maxYuvRate = config.getOutputMinFrameDuration(
+                        ImageFormat.YUV_420_888, maxSlowYuvSizeLessThan24M);
+            }
+            boolean haveMaxYuvRate = maxYuvRate <= MIN_MAXSIZE_DURATION_BOUND_NS;
 
             // Ensure that there's an FPS range that's fast enough to capture at above
             // minFrameDuration, for full-auto bursts at the fast resolutions
