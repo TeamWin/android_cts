@@ -35,7 +35,7 @@ import android.view.contentcapture.ContentCaptureManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.DeviceConfigStateManager;

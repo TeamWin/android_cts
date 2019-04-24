@@ -24,6 +24,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.annotation_annotation \
+    androidx.test.ext.junit \
     compatibility-device-util-axt \
     ctstestrunner-axt \
     truth-prebuilt \

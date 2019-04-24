@@ -15,10 +15,10 @@
  */
 package android.autofillservice.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import android.service.autofill.CustomDescription;
 import android.widget.RemoteViews;
-
-import androidx.test.InstrumentationRegistry;
 
 public final class CustomDescriptionHelper {
 
@@ -30,7 +30,7 @@ public final class CustomDescriptionHelper {
     public static final String ID_PASSWORD_MASKED = "password_masked";
 
     private static final String sPackageName =
-            InstrumentationRegistry.getTargetContext().getPackageName();
+            getInstrumentation().getTargetContext().getPackageName();
 
 
     public static CustomDescription.Builder newCustomDescriptionWithUsernameAndPassword() {

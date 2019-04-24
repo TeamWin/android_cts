@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -26,8 +28,6 @@ import android.service.autofill.VisibilitySetterAction;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.test.InstrumentationRegistry;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -36,7 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @AppModeFull(reason = "Unit test")
 public class VisibilitySetterActionTest {
 
-    private static final Context sContext = InstrumentationRegistry.getContext();
+    private static final Context sContext = getInstrumentation().getTargetContext();
     private final ViewGroup mRootView = new ViewGroup(sContext) {
 
         @Override
