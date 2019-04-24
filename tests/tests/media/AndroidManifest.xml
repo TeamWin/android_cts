@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER" />
     <uses-permission android:name="android.permission.SET_MEDIA_KEY_LISTENER" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.INSTANT_APP_FOREGROUND_SERVICE" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
