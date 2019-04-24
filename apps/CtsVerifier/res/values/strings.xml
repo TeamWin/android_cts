@@ -2475,7 +2475,7 @@ You should be prompted to select credentials; choose the ones you just installed
         1. Please press the Go button to start the provisioning.\n
         2. Press \"Accept and continue\" button to start work profile provisioning\n
         3. Check that the CtsVerifier logo is displayed during provisioning\n
-        4. After successful provisioning, you should be automatically redirected back to this page
+        4. After successful provisioning, come back to this page. You might need to press a button on the final provisioning screen.
     </string>
     <string name="provisioning_tests_byod_custom_terms">Custom terms</string>
     <string name="provisioning_tests_byod_custom_terms_instructions">
