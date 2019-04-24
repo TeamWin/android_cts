@@ -28,7 +28,6 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.RemoteException;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
@@ -84,7 +83,6 @@ public class AtomicInstallTest {
     }
 
     @Test
-    @FlakyTest(bugId = 129859594)
     public void testFailInconsistentMultiPackageCommit() throws Exception {
         // Test inconsistency in staged settings
         for (boolean staged : new boolean[]{false, true}) {

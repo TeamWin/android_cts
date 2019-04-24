@@ -41,14 +41,20 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
     // In JB MR1 access to the TelephonyProvider's Carriers table was clamped down and would
     // throw a SecurityException when queried. That was fixed in JB MR2. Verify that 3rd parties
     // can access the APN info the carriers table, after JB MR1.
+
+    // However, in R, a security bug was discovered that let apps read the password by querying
+    // multiple times and matching passwords against a regex in the query. Due to this hole, we're
+    // locking down the API and no longer allowing the exception. Accordingly, the behavior of this
+    // test is now reversed and we expect a SecurityException to be thrown.
     public void testAccessToApns() {
         try {
             String selection = Carriers.CURRENT + " IS NOT NULL";
             String[] selectionArgs = null;
             Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
                     APN_PROJECTION, selection, selectionArgs, null);
+            fail("No SecurityException thrown");
         } catch (SecurityException e) {
-            fail("No access to current APN");
+            // expected
         }
     }
 }

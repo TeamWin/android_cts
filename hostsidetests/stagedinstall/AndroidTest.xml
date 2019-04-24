@@ -31,5 +31,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="com.android.tests.stagedinstall.host.StagedInstallTest" />
+        <option name="class" value="com.android.tests.stagedinstall.host.ApexShimValidationTest" />
     </test>
 </configuration>

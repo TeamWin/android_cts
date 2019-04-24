@@ -72,7 +72,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsActivityManagerDeviceTestCases:MultiDisplaySecurityTests
+ *     atest CtsWindowManagerDeviceTestCases:MultiDisplaySecurityTests
  *
  * Tests if be allowed to launch an activity on multi-display environment.
  */
