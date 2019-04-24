@@ -28,19 +28,32 @@ import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.ArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
+import androidx.test.rule.ActivityTestRule
+import androidx.test.uiautomator.UiDevice
+import org.junit.Rule
 
 @RunWith(AndroidJUnit4::class)
 class HistoricalAppopsTest {
     private val uid = Process.myUid()
     private var appOpsManager: AppOpsManager? = null
     private var packageName: String? = null
+
+    // Start an activity to make sure this app counts as being in the foreground
+    @Rule @JvmField
+    var activityRule = ActivityTestRule(UidStateForceActivity::class.java)
+
+    @Before
+    fun wakeScreenUp() {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        device.wakeUp()
+        device.executeShellCommand("wm dismiss-keyguard")
+    }
 
     @Before
     fun setUpTest() {
@@ -61,31 +74,26 @@ class HistoricalAppopsTest {
     }
 
     @Test
-    @Ignore
     fun testGetHistoricalPackageOpsForegroundAccessInMemoryBucket() {
         testGetHistoricalPackageOpsForegroundAtDepth(0)
     }
 
     @Test
-    @Ignore
     fun testGetHistoricalPackageOpsForegroundAccessFirstOnDiskBucket() {
         testGetHistoricalPackageOpsForegroundAtDepth(1)
     }
 
     @Test
-    @Ignore
     fun testHistoricalAggregationOneLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(0)
     }
 
     @Test
-    @Ignore
     fun testHistoricalAggregationTwoLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(1)
     }
 
     @Test
-    @Ignore
     fun testHistoricalAggregationOverflow() {
         // Configure historical registry behavior.
         appOpsManager!!.setHistoryParameters(
@@ -123,7 +131,6 @@ class HistoricalAppopsTest {
     }
 
     @Test
-    @Ignore
     fun testHistoryTimeTravel() {
         // Configure historical registry behavior.
         appOpsManager!!.setHistoryParameters(
@@ -222,6 +229,8 @@ class HistoricalAppopsTest {
         appOpsManager!!.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
                 AppOpsManager.MODE_ALLOWED)
 
+        activityRule.activity.waitForResumed()
+
         try {
             val noteCount = 5
 
@@ -282,11 +291,11 @@ class HistoricalAppopsTest {
                     .isEqualTo(noteCount)
             assertThat(op.getBackgroundAccessCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
             assertThat(getAccessCount(op, AppOpsManager.UID_STATE_PERSISTENT)).isEqualTo(0)
-            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_TOP)).isEqualTo(0)
+            assertThat(getAccessCount(op, AppOpsManager.UID_STATE_TOP)).isEqualTo(noteCount)
             assertThat(getAccessCount(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE_LOCATION))
                     .isEqualTo(0)
             assertThat(getAccessCount(op, AppOpsManager.UID_STATE_FOREGROUND_SERVICE))
-                    .isEqualTo(noteCount)
+                    .isEqualTo(0)
             assertThat(getAccessCount(op, AppOpsManager.UID_STATE_FOREGROUND)).isEqualTo(0)
             assertThat(getAccessCount(op, AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
             assertThat(getAccessCount(op, AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
