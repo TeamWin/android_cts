@@ -239,6 +239,7 @@ public class BitmapTest {
         assertEquals(10, ret.getWidth());
         assertEquals(10, ret.getHeight());
         assertEquals(Config.RGB_565, ret.getConfig());
+        assertEquals(ANDROID_BITMAP_FORMAT_RGB_565, nGetFormat(ret));
     }
 
     @Test(expected=IllegalArgumentException.class)
@@ -261,6 +262,7 @@ public class BitmapTest {
         ret = Bitmap.createBitmap(mBitmap, 10, 10, 50, 50);
         assertNotNull(ret);
         assertFalse(mBitmap.equals(ret));
+        assertEquals(ANDROID_BITMAP_FORMAT_RGBA_8888, nGetFormat(mBitmap));
     }
 
     @Test(expected=IllegalArgumentException.class)
@@ -2178,6 +2180,10 @@ public class BitmapTest {
     private static native void nValidateNdkAccessAfterRecycle(Bitmap bitmap);
 
     private static native void nFillRgbaHwBuffer(HardwareBuffer hwBuffer);
+
+    private static final int ANDROID_BITMAP_FORMAT_RGBA_8888 = 1;
+    private static final int ANDROID_BITMAP_FORMAT_RGB_565 = 4;
+    private static native int nGetFormat(Bitmap bitmap);
 
     private static HardwareBuffer createTestBuffer(int width, int height, boolean cpuAccess) {
         long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
