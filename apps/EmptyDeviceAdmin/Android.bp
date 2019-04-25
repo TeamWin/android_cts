@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2010 The Android Open Source Project
+// Copyright (C) 2016 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-cc_test_library {
-    name: "libctsverifier_jni",
-    srcs: [
-        "CtsVerifierJniOnLoad.cpp",
-        "com_android_cts_verifier_camera_StatsImage.cpp",
-    ],
+android_test_helper_app {
+    name: "CtsEmptyDeviceAdmin",
+    defaults: ["cts_defaults"],
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
     sdk_version: "current",
-    stl: "system",
-    shared_libs: ["liblog"],
-    cflags: [
-        "-Wall",
-        "-Werror",
-        "-Wno-unused-parameter",
-        "-Wno-unused-variable",
+    min_sdk_version: "12",
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
     ],
 }
