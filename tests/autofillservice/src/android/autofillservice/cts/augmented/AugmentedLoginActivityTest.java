@@ -32,6 +32,7 @@ import static org.testng.Assert.assertThrows;
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.LoginActivity;
+import android.autofillservice.cts.MyAutofillCallback;
 import android.autofillservice.cts.OneTimeCancellationSignalListener;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.content.ComponentName;
@@ -304,6 +305,80 @@ public class AugmentedLoginActivityTest
         ui.click();
         mActivity.assertAutoFilled();
         mAugmentedUiBot.assertUiGone();
+    }
+
+    @Test
+    public void testAugmentedAutoFill_callback() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        callback.assertUiShownEvent(username);
+        mAugmentedUiBot.assertUiShown(usernameId, "req1");
+
+        // Move focus away to make sure Augmented Autofill UI is gone.
+        mActivity.onLogin(View::requestFocus);
+        mAugmentedUiBot.assertUiGone();
+        callback.assertUiHiddenEvent(username);
+
+        // Tap on password field
+        final EditText password = mActivity.getPassword();
+        final AutofillId passwordId = password.getAutofillId();
+        final AutofillValue passwordValue = password.getAutofillValue();
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req2")
+                        .build(), passwordId)
+                .build());
+        mActivity.onPassword(View::requestFocus);
+        mUiBot.assertNoDatasetsEver();
+        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
+
+        callback.assertUiShownEvent(password);
+        mAugmentedUiBot.assertUiShown(passwordId, "req2");
+
+        // Tap on username again...
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .setField(passwordId, "sweet")
+                        .build(), usernameId)
+                .build());
+
+        mActivity.onUsername(View::requestFocus);
+        final AugmentedFillRequest request3 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request3, mActivity, usernameId, usernameValue);
+        final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+
+        // ...and autofill this time
+        mActivity.expectAutoFill("dude", "sweet");
+        ui.click();
+        mActivity.assertAutoFilled();
+        mAugmentedUiBot.assertUiGone();
+        callback.assertUiHiddenEvent(password);
     }
 
     @Test
