@@ -19,6 +19,10 @@ package android.app.cts;
 import static androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -35,8 +39,7 @@ import android.content.DialogInterface.OnKeyListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
-
-
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,10 +57,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 
 import com.android.compatibility.common.util.PollingCheck;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.*;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -297,13 +296,8 @@ public class AlertDialog_BuilderTest  {
             }
         });
         mInstrumentation.waitForIdleSync();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return mDialog.isShowing();
-            }
-        }.run();
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+        PollingCheck.waitFor(mDialog::isShowing);
+        sendKeySync(KeyEvent.KEYCODE_BACK);
         mInstrumentation.waitForIdleSync();
         new PollingCheck() {
             @Override
@@ -372,8 +366,8 @@ public class AlertDialog_BuilderTest  {
             }
         });
         mInstrumentation.waitForIdleSync();
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_1);
+        sendKeySync(KeyEvent.KEYCODE_0);
+        sendKeySync(KeyEvent.KEYCODE_1);
         mInstrumentation.waitForIdleSync();
         // Use Mockito captures so that we can verify that each "sent" key code resulted
         // in one DOWN event and one UP event.
@@ -675,6 +669,17 @@ public class AlertDialog_BuilderTest  {
         });
         mInstrumentation.waitForIdleSync();
         assertTrue(mDialog.isShowing());
+    }
+
+    private void sendKeySync(int keyCode) {
+        final long downTime = SystemClock.uptimeMillis();
+        final KeyEvent downEvent =
+                new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, keyCode, 0);
+        mInstrumentation.getUiAutomation().injectInputEvent(downEvent, true /*sync*/);
+
+        final KeyEvent upEvent =
+                new KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, keyCode, 0);
+        mInstrumentation.getUiAutomation().injectInputEvent(upEvent, true /*sync*/);
     }
 
     private static class AdapterTest implements android.widget.ListAdapter {
