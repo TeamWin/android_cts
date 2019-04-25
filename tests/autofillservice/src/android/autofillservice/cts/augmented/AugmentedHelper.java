@@ -79,15 +79,21 @@ public final class AugmentedHelper {
     public static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,
             @NonNull Activity activity, @NonNull AutofillId expectedFocusedId,
             @NonNull AutofillValue expectedFocusedValue) {
+        assertBasicRequestInfo(request, activity, expectedFocusedId,
+                expectedFocusedValue.getTextValue().toString());
+    }
+
+    public static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,
+            @NonNull Activity activity, @NonNull AutofillId expectedFocusedId,
+            @NonNull String expectedFocusedValue) {
         Preconditions.checkNotNull(activity);
         Preconditions.checkNotNull(expectedFocusedId);
         assertWithMessage("no AugmentedFillRequest").that(request).isNotNull();
         assertWithMessage("no FillRequest on %s", request).that(request.request).isNotNull();
         assertWithMessage("no FillController on %s", request).that(request.controller).isNotNull();
         assertWithMessage("no FillCallback on %s", request).that(request.callback).isNotNull();
-        // TODO(b/122728762): re-add when set
-//        assertWithMessage("no CancellationSignal on %s", request).that(request.cancellationSignal)
-//                .isNotNull();
+        assertWithMessage("no CancellationSignal on %s", request).that(request.cancellationSignal)
+                .isNotNull();
         // NOTE: task id can change, we might need to set it in the activity's onCreate()
         assertWithMessage("wrong task id on %s", request).that(request.request.getTaskId())
                 .isEqualTo(activity.getTaskId());
@@ -105,16 +111,21 @@ public final class AugmentedHelper {
         assertAutofillValue(expectedFocusedValue, actualFocusedValue);
     }
 
-    public static void assertAutofillValue(final AutofillValue expectedValue,
-            final AutofillValue actualValue) {
+    public static void assertAutofillValue(@NonNull AutofillValue expectedValue,
+            @NonNull AutofillValue actualValue) {
         // It only supports text values for now...
         assertWithMessage("expected value is not text: %s", expectedValue)
                 .that(expectedValue.isText()).isTrue();
+        assertAutofillValue(expectedValue.getTextValue().toString(), actualValue);
+    }
+
+    public static void assertAutofillValue(@NonNull String expectedValue,
+            @NonNull AutofillValue actualValue) {
         assertWithMessage("actual value is not text: %s", actualValue)
                 .that(actualValue.isText()).isTrue();
 
-        assertWithMessage("wrong autofill value").that(actualValue.getTextValue())
-                .isEqualTo(expectedValue.getTextValue());
+        assertWithMessage("wrong autofill value").that(actualValue.getTextValue().toString())
+                .isEqualTo(expectedValue);
     }
 
     @NonNull
