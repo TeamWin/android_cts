@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -37,6 +36,8 @@ import android.view.accessibility.AccessibilityManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
@@ -47,10 +48,15 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 
+import junit.framework.Assert;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -63,7 +69,6 @@ public class ToastTest {
     private static final long TIME_OUT = 5000L;
     private Toast mToast;
     private Context mContext;
-    private Instrumentation mInstrumentation;
     private boolean mLayoutDone;
     private ViewTreeObserver.OnGlobalLayoutListener mLayoutListener;
 
@@ -73,7 +78,6 @@ public class ToastTest {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = InstrumentationRegistry.getTargetContext();
         mLayoutListener = () -> mLayoutDone = true;
     }
@@ -118,7 +122,6 @@ public class ToastTest {
     private void makeToast() throws Throwable {
         mActivityRule.runOnUiThread(
                 () -> mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG));
-        mInstrumentation.waitForIdleSync();
     }
 
     @Test
@@ -131,8 +134,7 @@ public class ToastTest {
         assertNull(view.getParent());
         assertEquals(View.VISIBLE, view.getVisibility());
 
-        mActivityRule.runOnUiThread(mToast::show);
-        mInstrumentation.waitForIdleSync();
+        runOnMainAndDrawSync(view, mToast::show);
 
         // view will be attached to screen when show it
         assertEquals(View.VISIBLE, view.getVisibility());
@@ -160,7 +162,6 @@ public class ToastTest {
             mToast.show();
             mToast.cancel();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertNotShowToast(view);
     }
@@ -174,11 +175,10 @@ public class ToastTest {
         Drawable drawable = mContext.getResources().getDrawable(R.drawable.pass);
         imageView.setImageDrawable(drawable);
 
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(imageView, () -> {
             mToast.setView(imageView);
             mToast.show();
         });
-        mInstrumentation.waitForIdleSync();
         assertSame(imageView, mToast.getView());
         assertShowAndHide(imageView);
     }
@@ -187,8 +187,7 @@ public class ToastTest {
     public void testAccessDuration() throws Throwable {
         long start = SystemClock.uptimeMillis();
         makeToast();
-        mActivityRule.runOnUiThread(mToast::show);
-        mInstrumentation.waitForIdleSync();
+        runOnMainAndDrawSync(mToast.getView(), mToast::show);
         assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
 
         View view = mToast.getView();
@@ -196,11 +195,10 @@ public class ToastTest {
         long longDuration = SystemClock.uptimeMillis() - start;
 
         start = SystemClock.uptimeMillis();
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(mToast.getView(), () -> {
             mToast.setDuration(Toast.LENGTH_SHORT);
             mToast.show();
         });
-        mInstrumentation.waitForIdleSync();
         assertEquals(Toast.LENGTH_SHORT, mToast.getDuration());
 
         view = mToast.getView();
@@ -218,8 +216,7 @@ public class ToastTest {
             mToast.show();
         };
         long start = SystemClock.uptimeMillis();
-        mActivityRule.runOnUiThread(showToast);
-        mInstrumentation.waitForIdleSync();
+        runOnMainAndDrawSync(mToast.getView(), showToast);
         assertShowAndHide(mToast.getView());
         final long shortDuration = SystemClock.uptimeMillis() - start;
 
@@ -232,8 +229,7 @@ public class ToastTest {
             waitForA11yRecommendedTimeoutChanged(mContext,
                     ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS, a11ySettingDuration);
             start = SystemClock.uptimeMillis();
-            mActivityRule.runOnUiThread(showToast);
-            mInstrumentation.waitForIdleSync();
+            runOnMainAndDrawSync(mToast.getView(), showToast);
             assertShowAndHide(mToast.getView());
             final long a11yDuration = SystemClock.uptimeMillis() - start;
             assertTrue(a11yDuration >= a11ySettingDuration);
@@ -284,12 +280,11 @@ public class ToastTest {
 
         final float horizontal1 = 1.0f;
         final float vertical1 = 1.0f;
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(view, () -> {
             mToast.setMargin(horizontal1, vertical1);
             mToast.show();
             registerLayoutListener(mToast.getView());
         });
-        mInstrumentation.waitForIdleSync();
         assertShowToast(view);
 
         assertEquals(horizontal1, mToast.getHorizontalMargin(), 0.0f);
@@ -305,12 +300,11 @@ public class ToastTest {
 
         final float horizontal2 = 0.1f;
         final float vertical2 = 0.1f;
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(view, () -> {
             mToast.setMargin(horizontal2, vertical2);
             mToast.show();
             registerLayoutListener(mToast.getView());
         });
-        mInstrumentation.waitForIdleSync();
         assertShowToast(view);
 
         assertEquals(horizontal2, mToast.getHorizontalMargin(), 0.0f);
@@ -342,12 +336,11 @@ public class ToastTest {
     @Test
     public void testAccessGravity() throws Throwable {
         makeToast();
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(mToast.getView(), () -> {
             mToast.setGravity(Gravity.CENTER, 0, 0);
             mToast.show();
             registerLayoutListener(mToast.getView());
         });
-        mInstrumentation.waitForIdleSync();
         View view = mToast.getView();
         assertShowToast(view);
         assertEquals(Gravity.CENTER, mToast.getGravity());
@@ -358,12 +351,11 @@ public class ToastTest {
         view.getLocationOnScreen(centerXY);
         assertShowAndHide(view);
 
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(mToast.getView(), () -> {
             mToast.setGravity(Gravity.BOTTOM, 0, 0);
             mToast.show();
             registerLayoutListener(mToast.getView());
         });
-        mInstrumentation.waitForIdleSync();
         view = mToast.getView();
         assertShowToast(view);
         assertEquals(Gravity.BOTTOM, mToast.getGravity());
@@ -381,12 +373,11 @@ public class ToastTest {
 
         final int xOffset = 20;
         final int yOffset = 10;
-        mActivityRule.runOnUiThread(() -> {
+        runOnMainAndDrawSync(mToast.getView(), () -> {
             mToast.setGravity(Gravity.BOTTOM, xOffset, yOffset);
             mToast.show();
             registerLayoutListener(mToast.getView());
         });
-        mInstrumentation.waitForIdleSync();
         view = mToast.getView();
         assertShowToast(view);
         assertEquals(Gravity.BOTTOM, mToast.getGravity());
@@ -425,7 +416,7 @@ public class ToastTest {
 
     @UiThreadTest
     @Test(expected=NullPointerException.class)
-    public void testMaketTextFromStringNullContext() {
+    public void testMakeTextFromStringNullContext() {
         Toast.makeText(null, "test", Toast.LENGTH_LONG);
     }
 
@@ -448,7 +439,7 @@ public class ToastTest {
 
     @UiThreadTest
     @Test(expected=NullPointerException.class)
-    public void testMaketTextFromResourceNullContext() {
+    public void testMakeTextFromResourceNullContext() {
         Toast.makeText(null, R.string.hello_android, Toast.LENGTH_SHORT);
     }
 
@@ -489,5 +480,39 @@ public class ToastTest {
         Toast toast = Toast.makeText(mContext, R.string.text, Toast.LENGTH_LONG);
         toast.setView(null);
         toast.setText(null);
+    }
+
+    private void runOnMainAndDrawSync(@NonNull final View toastView,
+            @Nullable final Runnable runner) {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            mActivityRule.runOnUiThread(() -> {
+                final ViewTreeObserver.OnDrawListener listener =
+                        new ViewTreeObserver.OnDrawListener() {
+                            @Override
+                            public void onDraw() {
+                                // posting so that the sync happens after the draw that's about
+                                // to happen
+                                toastView.post(() -> {
+                                    toastView.getViewTreeObserver().removeOnDrawListener(this);
+                                    latch.countDown();
+                                });
+                            }
+                        };
+
+                toastView.getViewTreeObserver().addOnDrawListener(listener);
+
+                if (runner != null) {
+                    runner.run();
+                }
+                toastView.invalidate();
+            });
+
+            Assert.assertTrue("Expected toast draw pass occurred within 5 seconds",
+                    latch.await(5, TimeUnit.SECONDS));
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 }

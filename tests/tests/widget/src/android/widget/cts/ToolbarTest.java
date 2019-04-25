@@ -45,6 +45,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -167,13 +168,11 @@ public class ToolbarTest {
 
         // Ask to show overflow menu and check that it's showing
         mActivityRule.runOnUiThread(() -> mMainToolbar.showOverflowMenu());
-        mInstrumentation.waitForIdleSync();
-        assertTrue(mMainToolbar.isOverflowMenuShowing());
+        PollingCheck.waitFor(() -> mMainToolbar.isOverflowMenuShowing());
 
         // Ask to hide the overflow menu and check that it's not showing
         mActivityRule.runOnUiThread(() -> mMainToolbar.hideOverflowMenu());
-        mInstrumentation.waitForIdleSync();
-        assertFalse(mMainToolbar.isOverflowMenuShowing());
+        PollingCheck.waitFor(() -> !mMainToolbar.isOverflowMenuShowing());
     }
 
     @Test
@@ -185,8 +184,7 @@ public class ToolbarTest {
 
         // Ask to show overflow menu and check that it's showing
         mActivityRule.runOnUiThread(mMainToolbar::showOverflowMenu);
-        mInstrumentation.waitForIdleSync();
-        assertTrue(mMainToolbar.isOverflowMenuShowing());
+        PollingCheck.waitFor(() -> mMainToolbar.isOverflowMenuShowing());
 
         // Register a mock menu item click listener on the toolbar
         Toolbar.OnMenuItemClickListener menuItemClickListener =
@@ -203,8 +201,7 @@ public class ToolbarTest {
 
         // Ask to dismiss all the popups and check that we're not showing the overflow menu
         mActivityRule.runOnUiThread(mMainToolbar::dismissPopupMenus);
-        mInstrumentation.waitForIdleSync();
-        assertFalse(mMainToolbar.isOverflowMenuShowing());
+        PollingCheck.waitFor(() -> !mMainToolbar.isOverflowMenuShowing());
     }
 
     @Test
@@ -234,29 +231,25 @@ public class ToolbarTest {
         // action view
         final MenuItem searchMenuItem = mMainToolbar.getMenu().findItem(R.id.action_search);
         mActivityRule.runOnUiThread(searchMenuItem::expandActionView);
-        mInstrumentation.waitForIdleSync();
-        assertTrue(searchMenuItem.isActionViewExpanded());
-        assertTrue(mMainToolbar.hasExpandedActionView());
+        PollingCheck.waitFor(() ->
+                searchMenuItem.isActionViewExpanded() && mMainToolbar.hasExpandedActionView());
 
         // Collapse search menu item's action view and verify that main toolbar doesn't have an
         // expanded action view
         mActivityRule.runOnUiThread(searchMenuItem::collapseActionView);
-        mInstrumentation.waitForIdleSync();
-        assertFalse(searchMenuItem.isActionViewExpanded());
-        assertFalse(mMainToolbar.hasExpandedActionView());
+        PollingCheck.waitFor(() ->
+                !searchMenuItem.isActionViewExpanded() && !mMainToolbar.hasExpandedActionView());
 
         // Expand search menu item's action view again
         mActivityRule.runOnUiThread(searchMenuItem::expandActionView);
-        mInstrumentation.waitForIdleSync();
-        assertTrue(searchMenuItem.isActionViewExpanded());
-        assertTrue(mMainToolbar.hasExpandedActionView());
+        PollingCheck.waitFor(() ->
+                searchMenuItem.isActionViewExpanded() && mMainToolbar.hasExpandedActionView());
 
         // Now collapse search menu item's action view via toolbar's API and verify that main
         // toolbar doesn't have an expanded action view
         mActivityRule.runOnUiThread(mMainToolbar::collapseActionView);
-        mInstrumentation.waitForIdleSync();
-        assertFalse(searchMenuItem.isActionViewExpanded());
-        assertFalse(mMainToolbar.hasExpandedActionView());
+        PollingCheck.waitFor(() ->
+                !searchMenuItem.isActionViewExpanded() && !mMainToolbar.hasExpandedActionView());
     }
 
     @Test
@@ -294,7 +287,8 @@ public class ToolbarTest {
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu_search));
         final MenuItem searchMenuItem = mMainToolbar.getMenu().findItem(R.id.action_search);
         mActivityRule.runOnUiThread(searchMenuItem::expandActionView);
-        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(() ->
+                searchMenuItem.isActionViewExpanded() && mMainToolbar.hasExpandedActionView());
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setCollapseIcon(R.drawable.icon_green));
