@@ -178,20 +178,45 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         }
     }
 
+    private static final String QUALCOMM_SOC_FILE = "/sys/devices/soc0/chip_name";
+
+    private String getHardware() throws Exception {
+        /* lookup for Qualcomm devices */
+        if (mDevice.doesFileExist(QUALCOMM_SOC_FILE)) {
+            return mDevice.pullFileContents(QUALCOMM_SOC_FILE).trim();
+        }
+        /* TODO lookup for other non-vulnerable devices. */
+        return "DEFAULT";
+    }
+
+    private Map<String, String[]> hardwareMitigations = new HashMap<String, String[]>() {
+    {
+        put("SM8150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
+            "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
+    }};
+
+    private String[] lookupMitigations() throws Exception {
+        return hardwareMitigations.get(getHardware());
+    }
+
     /**
-     * Test that the kernel has KTPI enabled for architectures and kernel versions that support it.
+     * Test that the kernel has Spectre/Meltdown mitigations for architectures and kernel versions
+     * that support it. Exempt platforms which are known to not be vulnerable.
      *
      * @throws Exception
      */
     @CddTest(requirement="9.7")
-    public void testConfigKTPI() throws Exception {
+    public void testConfigHardwareMitigations() throws Exception {
         if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
             return;
         }
 
         if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
-            assertTrue("Linux kernel must have KPTI enabled: CONFIG_UNMAP_KERNEL_AT_EL0=y",
-                    configSet.contains("CONFIG_UNMAP_KERNEL_AT_EL0=y"));
+            for (String mitigation : lookupMitigations()) {
+                assertTrue("Linux kernel must have " + mitigation + " enabled.",
+                        configSet.contains(mitigation));
+            }
         } else if (CpuFeatures.isX86(mDevice)) {
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",
                     configSet.contains("CONFIG_PAGE_TABLE_ISOLATION=y"));
