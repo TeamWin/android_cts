@@ -40,6 +40,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -908,8 +909,13 @@ public class TelephonyManagerTest {
                 TelephonyManager.RADIO_POWER_ON);
         assertThat(mRadioRebootTriggered).isFalse();
         assertThat(mHasRadioPowerOff).isFalse();
-        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+        boolean success = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.rebootRadio());
+        //skip this test if not supported or unsuccessful (success=false)
+        if(!success) {
+            return;
+        }
+
         t.start();
         synchronized (mLock) {
             // reboot takes longer time
