@@ -22,6 +22,8 @@ import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -29,8 +31,6 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.UserData;
-
-import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 
@@ -46,7 +46,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @AppModeFull(reason = "Unit test")
 public class UserDataTest {
 
-    private static final Context sContext = InstrumentationRegistry.getContext();
+    private static final Context sContext = getInstrumentation().getTargetContext();
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMaxFcSizeChanger =

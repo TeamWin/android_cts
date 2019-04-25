@@ -60,11 +60,13 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
 
+    private String mFilePath;
     private static final String OUTPUT_FILENAME = "output.heic";
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        mFilePath = mContext.getExternalFilesDir(null).getPath();
     }
 
     @Override
@@ -116,8 +118,7 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
                             String filename = "Cam" + id + "_" + width + "x" + height +
                                     "_" + cap + ".heic";
                             builder.setOutputPath(
-                                    new File(Environment.getExternalStorageDirectory(),
-                                    filename).getAbsolutePath());
+                                    new File(mFilePath, filename).getAbsolutePath());
                             TestConfig config = builder.build();
 
                             try {
@@ -132,6 +133,9 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
                                     .build();
                             } catch (IOException e) {
                                 // Continue in case the size is not supported
+                                sessionFailure = true;
+                                Log.i(TAG, "Skip due to heifWriter creation failure: "
+                                        + e.getMessage());
                                 continue;
                             }
 

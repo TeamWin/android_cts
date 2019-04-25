@@ -25,12 +25,13 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class MainlineNetworkStackPermissionTest{
@@ -41,6 +42,7 @@ public class MainlineNetworkStackPermissionTest{
      * and is a system package
      */
     @Test
+    @AppModeFull(reason = "Instant apps cannot access PackageManager#getPermissionInfo")
     public void testPackageWithMainlineNetworkStackPermission() throws Exception {
         final PackageManager packageManager = mContext.getPackageManager();
         assertNotNull("Unable to find PackageManager.", packageManager);

@@ -23,7 +23,8 @@ android_test {
         "compatibility-device-util-axt",
         "androidx.legacy_legacy-support-v4",
         "platform-test-annotations",
-        "truth-prebuilt"
+        "truth-prebuilt",
+        "androidx.test.uiautomator_uiautomator"
     ],
 
     test_suites: [

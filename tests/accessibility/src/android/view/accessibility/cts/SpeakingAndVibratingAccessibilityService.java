@@ -16,48 +16,16 @@
 
 package android.view.accessibility.cts;
 
-import android.accessibilityservice.AccessibilityService;
-import android.accessibilityservice.AccessibilityServiceInfo;
-import android.content.Intent;
-import android.util.Log;
-import android.view.accessibility.AccessibilityEvent;
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.app.Instrumentation;
 
 /**
  * Stub accessibility service that reports itself as providing multiple feedback types.
  */
-public class SpeakingAndVibratingAccessibilityService extends AccessibilityService {
-    private static final String LOG_TAG =
-            SpeakingAndVibratingAccessibilityService.class.getSimpleName();
-    public static Object sWaitObjectForConnecting = new Object();
-
-    public static SpeakingAndVibratingAccessibilityService sConnectedInstance;
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        Log.v(LOG_TAG, "onUnbind [" + this + "]");
-        return false;
-    }
-
-    @Override
-    public void onDestroy() {
-        sConnectedInstance = null;
-        Log.v(LOG_TAG, "onDestroy ["  + this + "]");
-    }
-
-    @Override
-    protected void onServiceConnected() {
-        synchronized (sWaitObjectForConnecting) {
-            sConnectedInstance = this;
-            sWaitObjectForConnecting.notifyAll();
-        }
-        Log.v(LOG_TAG, "onServiceConnected ["  + this + "]");
-    }
-
-    @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) {
-    }
-
-    @Override
-    public void onInterrupt() {
+public class SpeakingAndVibratingAccessibilityService extends InstrumentedAccessibilityService {
+    public static SpeakingAndVibratingAccessibilityService enableSelf(
+            Instrumentation instrumentation) {
+        return InstrumentedAccessibilityService.enableService(instrumentation,
+                SpeakingAndVibratingAccessibilityService.class);
     }
 }

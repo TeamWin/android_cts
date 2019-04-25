@@ -45,6 +45,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Activity;
@@ -497,6 +499,7 @@ public class AccessibilityEndToEndTest {
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
                 sInstrumentation, InstrumentedAccessibilityService.class);
+
         try {
             assertFalse(service.wasOnInterruptCalled());
 
