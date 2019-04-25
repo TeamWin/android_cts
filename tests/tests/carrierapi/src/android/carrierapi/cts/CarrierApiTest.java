@@ -82,17 +82,21 @@ public class CarrierApiTest extends AndroidTestCase {
     // 11.1.17.1
     private static final int MAX_LOGICAL_CHANNEL = 3;
     // Class bytes. The logical channel used should be included for bits b2b1. TS 102 221 Table 11.5
+    private static final String CLA_ENVELOPE = "80";
     private static final int CLA_GET_RESPONSE = 0x00;
     private static final int CLA_MANAGE_CHANNEL = 0x00;
     private static final int CLA_READ_BINARY = 0x00;
     private static final int CLA_SELECT = 0x00;
     private static final int CLA_STATUS = 0x80;
+    private static final String CLA_STATUS_STRING = "80";
     // APDU Instruction Bytes. TS 102 221 Section 10.1.2
+    private static final String COMMAND_ENVELOPE = "C2";
     private static final int COMMAND_GET_RESPONSE = 0xC0;
     private static final int COMMAND_MANAGE_CHANNEL = 0x70;
     private static final int COMMAND_READ_BINARY = 0xB0;
     private static final int COMMAND_SELECT = 0xA4;
     private static final int COMMAND_STATUS = 0xF2;
+    private static final String COMMAND_STATUS_STRING = "F2";
     // Status words. TS 102 221 Section 10.2.1
     private static final byte[] STATUS_NORMAL = {(byte) 0x90, (byte) 0x00};
     private static final String STATUS_NORMAL_STRING = "9000";
@@ -802,6 +806,31 @@ public class CarrierApiTest extends AndroidTestCase {
         // assertTrue(containsFileId(fcpTemplate, MF_FILE_ID));
         // assertEquals("iccExchangeSimIO returned non-normal Status byte: " + resultString,
         //         STATUS_NORMAL_STRING, fcpTemplate.getStatus());
+    }
+
+    /**
+     * This test checks that a STATUS apdu can be sent as an encapsulated envelope to the UICC via
+     * {@link TelephonyManager#sendEnvelopeWithStatus(String)}.
+     */
+    public void testSendEnvelopeWithStatus() {
+        // STATUS apdu as hex String
+        String envelope =
+                CLA_STATUS_STRING
+                + COMMAND_STATUS_STRING
+                + "00" // p1: no indication of application status
+                + "00"; // p2: identical parameters to
+        String lc = "0" + (envelope.length() / 2); // number of bytes in data field
+        String response = mTelephonyManager.sendEnvelopeWithStatus(
+                CLA_ENVELOPE
+                + COMMAND_ENVELOPE
+                + "00" // p1: value required for Envelope command
+                + "00" // p2: value required for Envelope command
+                + lc
+                + envelope);
+        assertNotNull("sendEnvelopeWithStatus returned: " + response, response);
+        // TODO(b/131422420): uncomment logic to fully check TelMan#sendEnvelopeWithStatus response
+        // assertEquals("sendEnvelopeWithStatus returned: " + response,
+        //         STATUS_NORMAL_STRING, response);
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
