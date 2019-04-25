@@ -46,11 +46,15 @@ public final class MediaDeviceInfo extends DeviceInfo {
 
             store.startGroup();
             store.addResult("name", info.getName());
+            store.addResult("canonical", info.getCanonicalName());
             store.addResult("encoder", info.isEncoder());
+            store.addResult("alias", info.isAlias());
+            store.addResult("software", info.isSoftwareOnly());
+            store.addResult("hardware", info.isHardwareAccelerated());
+            store.addResult("vendor", info.isVendor());
 
             store.startArray("supported_type");
             for (String type : info.getSupportedTypes()) {
-
                 store.startGroup();
                 store.addResult("type", type);
                 CodecCapabilities codecCapabilities = info.getCapabilitiesForType(type);
@@ -63,6 +67,13 @@ public final class MediaDeviceInfo extends DeviceInfo {
                         store.endGroup();
                     }
                     store.endArray(); // codec_profile_level
+                }
+                if (codecCapabilities.colorFormats.length > 0) {
+                    store.startArray("codec_color_format");
+                    for (int format : codecCapabilities.colorFormats) {
+                        store.addResult("format", format);
+                    }
+                    store.endArray(); // codec_color_format
                 }
                 store.addResult("supported_secure_playback", codecCapabilities.isFeatureSupported(
                         CodecCapabilities.FEATURE_SecurePlayback));
