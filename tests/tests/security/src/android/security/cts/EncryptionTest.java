@@ -36,19 +36,14 @@ public class EncryptionTest extends AndroidTestCase {
     // First API level where there are no speed exemptions.
     private static final int MIN_ALL_SPEEDS_API_LEVEL = Build.VERSION_CODES.Q;
 
+    // First API level at which file based encryption must be used.
+    private static final int MIN_FBE_REQUIRED_API_LEVEL = Build.VERSION_CODES.Q;
+
     private static final String TAG = "EncryptionTest";
 
     private static native boolean aesIsFast();
 
-    public void testEncryption() throws Exception {
-        if ("encrypted".equals(PropertyUtil.getProperty("ro.crypto.state"))) {
-            Log.d(TAG, "Device is encrypted.");
-            // TODO(b/111311698): If we're able to determine if the hardware
-            //     has AES instructions, confirm that AES, and only AES,
-            //     is in use.  If the hardware does not have AES instructions,
-            //     confirm that either AES or Adiantum is in use.
-            return;
-        }
+    private void handleUnencryptedDevice() {
         if (PropertyUtil.getFirstApiLevel() < MIN_ENCRYPTION_REQUIRED_API_LEVEL) {
             Log.d(TAG, "Exempt from encryption due to an old starting API level.");
             return;
@@ -63,5 +58,29 @@ public class EncryptionTest extends AndroidTestCase {
             }
         }
         fail("Device encryption is required");
+    }
+
+    private void handleEncryptedDevice() {
+        if ("file".equals(PropertyUtil.getProperty("ro.crypto.type"))) {
+            Log.d(TAG, "Device is encrypted with file-based encryption.");
+            // TODO(b/111311698): If we're able to determine if the hardware
+            //     has AES instructions, confirm that AES, and only AES,
+            //     is in use.  If the hardware does not have AES instructions,
+            //     confirm that either AES or Adiantum is in use.
+            return;
+        }
+        if (PropertyUtil.getFirstApiLevel() < MIN_FBE_REQUIRED_API_LEVEL) {
+            Log.d(TAG, "Device is encrypted.");
+            return;
+        }
+        fail("File-based encryption is required");
+    }
+
+    public void testEncryption() throws Exception {
+        if ("encrypted".equals(PropertyUtil.getProperty("ro.crypto.state"))) {
+            handleEncryptedDevice();
+        } else {
+            handleUnencryptedDevice();
+        }
     }
 }
