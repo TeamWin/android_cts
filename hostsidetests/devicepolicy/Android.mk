@@ -37,6 +37,10 @@ LOCAL_CTS_TEST_PACKAGE := android.adminhostside
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts arcts vts general-tests
 
+# Disabled from continuous runs for now
+# TODO(b/131253053): Re-enable this once module is stable
+LOCAL_PRESUBMIT_DISABLED := true
+
 # Need the dependency to build/run the module solely by atest.
 LOCAL_TARGET_REQUIRED_MODULES := cts-current-api
 
