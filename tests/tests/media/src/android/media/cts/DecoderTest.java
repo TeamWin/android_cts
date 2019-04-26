@@ -160,6 +160,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepwav, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepwav);
     }
+    public void testDecodeFlacMkv() throws Exception {
+        decode(R.raw.sinesweepflacmkv, 0.0f);
+        testTimeStampOrdering(R.raw.sinesweepflacmkv);
+    }
     public void testDecodeFlac() throws Exception {
         decode(R.raw.sinesweepflac, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflac);
@@ -1758,6 +1762,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3lame);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3smpb);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepwav);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflacmkv);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflac);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepogg);
     }
