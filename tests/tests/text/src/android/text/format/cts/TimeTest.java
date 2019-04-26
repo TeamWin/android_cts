@@ -1572,7 +1572,7 @@ public class TimeTest {
     }
 
     @Test
-    public void testToMillis_beforeTzRecords() {
+    public void testToMillis_before32BitSeconds() {
         int[] timeFields = new int[] { 1900, 0, 1, 2, 3, 4, -999 /* not used */, 9, 9, 9 };
         verifyToMillisInvalid(timeFields, PstPdt.ID);
         verifyToMillisInvalid(timeFields, Time.TIMEZONE_UTC);
@@ -1613,7 +1613,7 @@ public class TimeTest {
     }
 
     @Test
-    public void testToMillis_afterTzRecords() {
+    public void testToMillis_after32BitSeconds() {
         int[] timeFields = new int[] { 2039, 0, 1, 2, 3, 4, -999 /* not used */, 9, 9, 9 };
         verifyToMillisInvalid(timeFields, PstPdt.ID);
         verifyToMillisInvalid(timeFields, Time.TIMEZONE_UTC);
@@ -2515,7 +2515,7 @@ public class TimeTest {
     }
 
     @Test
-    public void testNormalize_beforeTzRecords() {
+    public void testNormalize_before32BitSeconds() {
         int[] timeFields = new int[] { 1900, 0, 1, 2, 3, 4, -999 /* not used */, 9, 9, 9 };
         verifyNormalizeInvalid(timeFields, PstPdt.ID);
         verifyNormalizeInvalid(timeFields, Time.TIMEZONE_UTC);
@@ -2569,7 +2569,7 @@ public class TimeTest {
     }
 
     @Test
-    public void testNormalize_afterTzRecords() {
+    public void testNormalize_after32BitSeconds() {
         int[] timeFields = new int[] { 2039, 0, 1, 2, 3, 4, -999 /* not used */, 9, 9, 9 };
         verifyNormalizeInvalid(timeFields, PstPdt.ID);
         verifyNormalizeInvalid(timeFields, Time.TIMEZONE_UTC);
@@ -2843,7 +2843,7 @@ public class TimeTest {
         LocalDateTime localDateTime = LocalDateTime.of(2018, Month.OCTOBER, 30, 12, 48, 32);
         assertLocalTimeMillis("Asia/Singapore", localDateTime, 1540874912000L);
 
-        // The following tests check the upper limits of what we support. There's no guarantee
+        // The following tests check the upper limits of what Time supports. There's no guarantee
         // we can't deal with values higher that this but the exact value depends on the version of
         // zic being used as a transition at exactly Integer.MAX_VALUE can affect our ability to
         // deal with times. So, we just assert what we know we must be able to do to catch major
@@ -2861,16 +2861,21 @@ public class TimeTest {
         // Negative offset, has no MAX_VALUE transition with zic 2018e.
         checkUpperSupportedLimit("America/Los_Angeles");
 
-        // See comment above, but for Integer.MIN_VALUE / lower bound. Most zones have a MIN_VALUE
-        // transition with zic 2018e so it is harder to test zones without them so we just cover the
-        // same ones as we do for upper bound above.
+        // See comment above, but for Integer.MIN_VALUE / lower bound. Most zones do not have an
+        // explicit MIN_VALUE transition with zic 2018e 64-bit data but some zones differ around
+        // whether there are known transitions before Integer.MIN_VALUE.
 
-        // Positive offset, has MIN_VALUE transition with zic 2018e.
+        // Positive offset zones with first transition before Integer.MIN_VALUE.
         checkLowerSupportedLimit("Asia/Singapore");
         checkLowerSupportedLimit("Asia/Shanghai");
-        // Negative offset, has MIN_VALUE transition with zic 2018e.
+        // Negative offset zones with first transition before Integer.MIN_VALUE.
         checkLowerSupportedLimit("America/Argentina/Buenos_Aires");
         checkLowerSupportedLimit("America/Los_Angeles");
+
+        // Positive offset zone with first transition after Integer.MIN_VALUE.
+        checkLowerSupportedLimit("Asia/Kathmandu");
+        // Negative offset zone with first transition after Integer.MIN_VALUE.
+        checkLowerSupportedLimit("America/Yellowknife");
     }
 
     private static void checkUpperSupportedLimit(String timeZoneId) {
