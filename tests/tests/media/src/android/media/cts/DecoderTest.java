@@ -1757,6 +1757,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepm4a);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3lame);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3smpb);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepopus);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepwav);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflac);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepogg);
