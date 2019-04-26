@@ -14,6 +14,8 @@
 
 package android.accessibilityservice.cts;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
+
 import android.app.Instrumentation;
 import android.view.accessibility.AccessibilityEvent;
 import java.util.ArrayList;
