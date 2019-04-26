@@ -26,6 +26,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "CtsShortcutBackupPublisher4oldLib",
+        "compatibility-device-util-axt",
     ],
     certificate: ":cts-testkey1",
 }

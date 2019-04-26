@@ -4,5 +4,6 @@ java_library {
     libs: [
         "android.test.base.stubs",
         "ShortcutManagerTestUtils",
+        "compatibility-device-util-axt",
     ],
 }
