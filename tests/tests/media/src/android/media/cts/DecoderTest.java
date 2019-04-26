@@ -164,6 +164,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepflac, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflac);
     }
+    public void testDecodeFlacMp4() throws Exception {
+        decode(R.raw.sinesweepflacmp4, 0.0f);
+        testTimeStampOrdering(R.raw.sinesweepflacmp4);
+    }
 
     public void testDecodeMonoMp3() throws Exception {
         monoTest(R.raw.monotestmp3, 44100);
@@ -199,6 +203,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testDecodeOpus() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepopus);
+    }
+    public void testDecodeOpusMp4() throws Exception {
+        testTimeStampOrdering(R.raw.sinesweepopusmp4);
     }
 
     public void testDecode51M4a() throws Exception {
@@ -1758,8 +1765,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3lame);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3smpb);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepopus);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepopusmp4);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepwav);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflac);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflacmp4);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepogg);
     }
 
