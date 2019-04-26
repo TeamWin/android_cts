@@ -117,6 +117,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     public void testExtractor() throws Exception {
         testExtractor(R.raw.sinesweepogg);
         testExtractor(R.raw.sinesweepoggmkv);
+        testExtractor(R.raw.sinesweepoggmp4);
         testExtractor(R.raw.sinesweepmp3lame);
         testExtractor(R.raw.sinesweepmp3smpb);
         testExtractor(R.raw.sinesweepopus);
@@ -314,6 +315,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int testsRun =
             testDecoder(R.raw.sinesweepogg) +
             testDecoder(R.raw.sinesweepoggmkv) +
+            testDecoder(R.raw.sinesweepoggmp4) +
             testDecoder(R.raw.sinesweepmp3lame) +
             testDecoder(R.raw.sinesweepmp3smpb) +
             testDecoder(R.raw.sinesweepopus) +

@@ -160,6 +160,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepoggmkv, 168.f);
         testTimeStampOrdering(R.raw.sinesweepoggmkv);
     }
+    public void testDecodeOggMp4() throws Exception {
+        decode(R.raw.sinesweepoggmp4, 168.f);
+        testTimeStampOrdering(R.raw.sinesweepoggmp4);
+    }
     public void testDecodeWav() throws Exception {
         decode(R.raw.sinesweepwav, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepwav);
@@ -191,6 +195,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         monoTest(R.raw.monotestoggmkv, 44100);
         testTimeStampOrdering(R.raw.monotestoggmkv);
     }
+    public void testDecodeMonoOggMp4() throws Exception {
+        monoTest(R.raw.monotestoggmp4, 44100);
+        testTimeStampOrdering(R.raw.monotestoggmp4);
+    }
 
     public void testDecodeMonoGsm() throws Exception {
         if (MediaUtils.hasCodecsForResource(mContext, R.raw.monotestgsm)) {
@@ -207,6 +215,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testDecodeVorbis() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepvorbis);
+    }
+    public void testDecodeVorbisMp4() throws Exception {
+        testTimeStampOrdering(R.raw.sinesweepvorbismp4);
     }
 
     public void testDecodeOpus() throws Exception {
@@ -1779,6 +1790,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflacmp4);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepogg);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepoggmkv);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepoggmp4);
     }
 
     /* setting EOS on the last full input buffer should be equivalent to setting EOS on an empty
@@ -2874,6 +2886,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testFlush(R.raw.loudsoftwav);
         testFlush(R.raw.loudsoftogg);
         testFlush(R.raw.loudsoftoggmkv);
+        testFlush(R.raw.loudsoftoggmp4);
         testFlush(R.raw.loudsoftmp3);
         testFlush(R.raw.loudsoftaac);
         testFlush(R.raw.loudsoftfaac);
