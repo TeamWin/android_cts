@@ -1146,8 +1146,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!shouldRunTelecomTest()) {
             return;
         }
-        getDevice().setSetting(
-                mProfileUserId, "secure", "dialer_default_application", MANAGED_PROFILE_PKG);
+        getDevice().executeShellCommand("telecom set-default-dialer " + MANAGED_PROFILE_PKG);
 
         // Place a outgoing call through work phone account using TelecomManager and verify the
         // call is inserted properly.
