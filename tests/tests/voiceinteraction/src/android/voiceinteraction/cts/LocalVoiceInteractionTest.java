@@ -16,23 +16,13 @@
 
 package android.voiceinteraction.cts;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Bundle;
 import android.test.ActivityInstrumentationTestCase2;
-import android.util.Log;
 
-import junit.framework.Assert;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import android.voiceinteraction.common.Utils;
 
 public class LocalVoiceInteractionTest
         extends ActivityInstrumentationTestCase2<TestLocalInteractionActivity> {

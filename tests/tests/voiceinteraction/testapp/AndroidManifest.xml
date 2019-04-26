@@ -30,5 +30,11 @@
               <category android:name="android.intent.category.VOICE" />
           </intent-filter>
       </activity>
+
+       <activity android:name=".DirectActionsActivity"
+                android:label="Direct actions activity"
+                android:exported="true">
+        </activity>
+
     </application>
 </manifest>
