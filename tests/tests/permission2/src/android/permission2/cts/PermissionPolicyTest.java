@@ -18,6 +18,8 @@ package android.permission2.cts;
 
 import static android.os.Build.VERSION.SECURITY_PATCH;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -26,13 +28,16 @@ import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
-import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Xml;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
@@ -50,7 +55,8 @@ import java.util.Set;
  * Tests for permission policy on the platform.
  */
 @AppModeFull(reason = "Instant apps cannot read the system servers permission")
-public class PermissionPolicyTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class PermissionPolicyTest {
     private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
             = "android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS";
@@ -70,13 +76,17 @@ public class PermissionPolicyTest extends AndroidTestCase {
     private static final String ATTR_PERMISSION_GROUP = "permissionGroup";
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
 
-    public void testPlatformPermissionPolicyUnaltered() throws Exception {
+    private static final Context sContext =
+            InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+    @Test
+    public void platformPermissionPolicyIsUnaltered() throws Exception {
         Map<String, PermissionInfo> declaredPermissionsMap =
-                getPermissionsForPackage(getContext(), PLATFORM_PACKAGE_NAME);
+                getPermissionsForPackage(sContext, PLATFORM_PACKAGE_NAME);
 
         List<String> offendingList = new ArrayList<>();
 
-        List<PermissionGroupInfo> declaredGroups = getContext().getPackageManager()
+        List<PermissionGroupInfo> declaredGroups = sContext.getPackageManager()
                 .getAllPermissionGroups(0);
         Set<String> declaredGroupsSet = new ArraySet<>();
         for (PermissionGroupInfo declaredGroup : declaredGroups) {
@@ -87,10 +97,10 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 R.raw.android_manifest);
         List<PermissionInfo> expectedPermissions = loadExpectedPermissions(R.raw.android_manifest);
 
-        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             expectedPermissions.addAll(loadExpectedPermissions(R.raw.automotive_android_manifest));
             declaredPermissionsMap.putAll(
-                    getPermissionsForPackage(getContext(), AUTOMOTIVE_SERVICE_PACKAGE_NAME));
+                    getPermissionsForPackage(sContext, AUTOMOTIVE_SERVICE_PACKAGE_NAME));
         }
 
         for (PermissionInfo expectedPermission : expectedPermissions) {
@@ -185,16 +195,12 @@ public class PermissionPolicyTest extends AndroidTestCase {
         }
 
         // Fail on any offending item
-        String errMsg =
-                String.format(
-                        "Platform Permission Policy Unaltered:\n%s",
-                        TextUtils.join("\n", offendingList));
-        assertTrue(errMsg, offendingList.isEmpty());
+        assertThat(offendingList).named("list of offending permissions").isEmpty();
     }
 
     private List<PermissionInfo> loadExpectedPermissions(int resourceId) throws Exception {
         List<PermissionInfo> permissions = new ArrayList<>();
-        try (InputStream in = getContext().getResources().openRawResource(resourceId)) {
+        try (InputStream in = sContext.getResources().openRawResource(resourceId)) {
             XmlPullParser parser = Xml.newPullParser();
             parser.setInput(in, null);
 
@@ -237,7 +243,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
     private Set<String> loadExpectedPermissionGroupNames(int resourceId) throws Exception {
         ArraySet<String> permissionGroups = new ArraySet<>();
-        try (InputStream in = getContext().getResources().openRawResource(resourceId)) {
+        try (InputStream in = sContext.getResources().openRawResource(resourceId)) {
             XmlPullParser parser = Xml.newPullParser();
             parser.setInput(in, null);
 
