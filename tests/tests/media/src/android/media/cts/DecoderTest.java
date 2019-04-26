@@ -156,6 +156,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepogg, 168.f);
         testTimeStampOrdering(R.raw.sinesweepogg);
     }
+    public void testDecodeOggMkv() throws Exception {
+        decode(R.raw.sinesweepoggmkv, 168.f);
+        testTimeStampOrdering(R.raw.sinesweepoggmkv);
+    }
     public void testDecodeWav() throws Exception {
         decode(R.raw.sinesweepwav, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepwav);
@@ -182,6 +186,10 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testDecodeMonoOgg() throws Exception {
         monoTest(R.raw.monotestogg, 44100);
         testTimeStampOrdering(R.raw.monotestogg);
+    }
+    public void testDecodeMonoOggMkv() throws Exception {
+        monoTest(R.raw.monotestoggmkv, 44100);
+        testTimeStampOrdering(R.raw.monotestoggmkv);
     }
 
     public void testDecodeMonoGsm() throws Exception {
@@ -1770,6 +1778,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflac);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflacmp4);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepogg);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepoggmkv);
     }
 
     /* setting EOS on the last full input buffer should be equivalent to setting EOS on an empty
@@ -2864,6 +2873,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testFlush() throws Exception {
         testFlush(R.raw.loudsoftwav);
         testFlush(R.raw.loudsoftogg);
+        testFlush(R.raw.loudsoftoggmkv);
         testFlush(R.raw.loudsoftmp3);
         testFlush(R.raw.loudsoftaac);
         testFlush(R.raw.loudsoftfaac);
