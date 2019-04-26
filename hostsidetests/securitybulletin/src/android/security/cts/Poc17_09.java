@@ -26,12 +26,14 @@ public class Poc17_09 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocCVE_2017_0770() throws Exception {
+        AdbUtils.pushResource("/cve_2017_0770.mp4", "/sdcard/cve_2017_0770.mp4",
+                getDevice());
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0770", getDevice(), 30);
+        AdbUtils.runCommandLine("rm /sdcard/cve_2017_0770.mp4", getDevice());
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
-                         "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<[\\s\\n\\S]*", logcat);
+        assertNotMatchesMultiLine(
+                "Fatal signal 11 \\(SIGSEGV\\).*?>>> /system/bin/mediaserver <<<", logcat);
     }
 
     /**
