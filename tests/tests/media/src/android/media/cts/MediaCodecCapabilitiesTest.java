@@ -735,6 +735,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_OPUS     ) ||
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_RAW      ) ||
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_VORBIS   ) ||
+            type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_AV1      ) ||
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_AVC      ) ||
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_H263     ) ||
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_HEVC     ) ||

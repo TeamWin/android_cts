@@ -194,6 +194,20 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallStagedNonPreInstalledApex_UserBuild_Fails");
     }
 
+    @Test
+    public void testStageApkWithSameNameAsApexShouldFail() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testStageApkWithSameNameAsApexShouldFail_Commit");
+        getDevice().reboot();
+        runPhase("testStageApkWithSameNameAsApexShouldFail_VerifyPostReboot");
+    }
+
+    @Test
+    public void testNonStagedInstallApkWithSameNameAsApexShouldFail() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testNonStagedInstallApkWithSameNameAsApexShouldFail");
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");

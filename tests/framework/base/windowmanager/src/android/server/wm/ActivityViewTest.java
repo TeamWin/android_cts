@@ -18,10 +18,15 @@ package android.server.wm;
 
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.app.Components.INPUT_METHOD_TEST_ACTIVITY;
+import static android.server.wm.app.Components.InputMethodTestActivity.EXTRA_PRIVATE_IME_OPTIONS;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -31,6 +36,7 @@ import android.app.ActivityView;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -42,10 +48,15 @@ import androidx.test.annotation.UiThreadTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -53,6 +64,7 @@ import org.junit.Test;
  */
 @Presubmit
 public class ActivityViewTest extends ActivityManagerTestBase {
+    private static final long IME_EVENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     private Instrumentation mInstrumentation;
     private ActivityView mActivityView;
@@ -173,10 +185,41 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         assertLifecycleCounts(TEST_ACTIVITY, 0, 1, 1, 0, 0, 0, CountSpec.DONT_CARE);
     }
 
+    @Test
+    public void testInputMethod() throws Exception {
+        assumeTrue("MockIme cannot be used for devices that do not support installable IMEs",
+                mInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_INPUT_METHODS));
+
+        final String uniqueKey =
+                ActivityViewTest.class.getSimpleName() + "/" + SystemClock.elapsedRealtimeNanos();
+
+        final String privateImeOptions = uniqueKey + "/privateImeOptions";
+
+        final Bundle extras = new Bundle();
+        extras.putString(EXTRA_PRIVATE_IME_OPTIONS, privateImeOptions);
+
+        try (final MockImeSession imeSession = MockImeSession.create(mContext,
+                mInstrumentation.getUiAutomation(), new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            launchActivityInActivityView(INPUT_METHOD_TEST_ACTIVITY, extras);
+
+            // IME's seeing uniqueStringValue means that a valid connection is successfully
+            // established from INPUT_METHOD_TEST_ACTIVITY the MockIme
+            expectEvent(stream, editorMatcher("onStartInput", privateImeOptions),
+                    IME_EVENT_TIMEOUT);
+        }
+    }
+
     private void launchActivityInActivityView(ComponentName activity) {
+        launchActivityInActivityView(activity, new Bundle());
+    }
+
+    private void launchActivityInActivityView(ComponentName activity, Bundle extras) {
         Intent intent = new Intent();
         intent.setComponent(activity);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        intent.putExtras(extras);
         SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.startActivity(intent));
         mAmWmState.waitForValidState(activity);
     }

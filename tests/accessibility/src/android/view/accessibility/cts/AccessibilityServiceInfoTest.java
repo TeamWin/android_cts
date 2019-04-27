@@ -16,6 +16,7 @@
 
 package android.view.accessibility.cts;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
 import android.test.InstrumentationTestCase;
@@ -36,12 +37,13 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
 
     @Override
     public void setUp() throws Exception {
-        ServiceControlUtils.enableSpeakingAndVibratingServices(getInstrumentation());
+        SpeakingAccessibilityService.enableSelf(getInstrumentation());
+        VibratingAccessibilityService.enableSelf(getInstrumentation());
     }
 
     @Override
     public void tearDown() {
-        ServiceControlUtils.turnAccessibilityOff(getInstrumentation());
+        InstrumentedAccessibilityService.disableAllServices(getInstrumentation());
     }
 
     /**
