@@ -211,10 +211,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Wait navigation bar show on default display and record the states.
+            mAmWmState.waitAndAssertNavBarShownOnDisplay(DEFAULT_DISPLAY);
+            final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
+
             virtualDisplaySession.setPublicDisplay(true)
                     .setShowSystemDecorations(false).createDisplay();
-
-            final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
             waitAndAssertNavBarStatesAreTheSame(expected);
         }
@@ -227,10 +229,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Wait navigation bar show on default display and record the states.
+            mAmWmState.waitAndAssertNavBarShownOnDisplay(DEFAULT_DISPLAY);
+            final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
+
             virtualDisplaySession.setPublicDisplay(false)
                     .setShowSystemDecorations(true).createDisplay();
-
-            final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
             waitAndAssertNavBarStatesAreTheSame(expected);
         }
@@ -252,6 +256,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             // This display has finished his task. Just close it.
         }
 
+        mAmWmState.computeState(true);
         final List<WindowState> result = mAmWmState.getWmState().getAllNavigationBarStates();
 
         assertEquals("The number of nav bars should be the same", expected.size(), result.size());

@@ -18,6 +18,8 @@
     package="android.apppredictionservice.cts"
     android:targetSandboxVersion="2">
 
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
     <application>
         <uses-library android:name="android.test.runner" />
 

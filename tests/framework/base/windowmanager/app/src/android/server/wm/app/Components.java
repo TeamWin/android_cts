@@ -363,6 +363,8 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_START_ACTIVITY = "start_activity";
         // Adds a click listener to finish this activity when it is clicked
         public static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
+        // Dismiss keyguard when activity show.
+        public static final String EXTRA_DISMISS_KEYGUARD = "dismiss_keyguard";
     }
 
     /**
