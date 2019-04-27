@@ -86,7 +86,7 @@ public class MediaStorageTest {
     }
 
     private void doSandboxed(boolean sandboxed) throws Exception {
-        assertEquals(sandboxed, Environment.isExternalStorageLegacy());
+        assertEquals(!sandboxed, Environment.isExternalStorageLegacy());
 
         // We can always see mounted state
         assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
