@@ -16,6 +16,8 @@
 
 package android.permission2.cts;
 
+import static android.content.pm.PermissionInfo.FLAG_INSTALLED;
+import static android.content.pm.PermissionInfo.PROTECTION_MASK_BASE;
 import static android.os.Build.VERSION.SECURITY_PATCH;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -33,6 +35,8 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Xml;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -74,7 +78,9 @@ public class PermissionPolicyTest {
 
     private static final String ATTR_NAME = "name";
     private static final String ATTR_PERMISSION_GROUP = "permissionGroup";
+    private static final String ATTR_PERMISSION_FLAGS = "permissionFlags";
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
+    private static final String ATTR_BACKGROUND_PERMISSION = "backgroundPermission";
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -95,7 +101,8 @@ public class PermissionPolicyTest {
 
         Set<String> expectedPermissionGroups = loadExpectedPermissionGroupNames(
                 R.raw.android_manifest);
-        List<PermissionInfo> expectedPermissions = loadExpectedPermissions(R.raw.android_manifest);
+        List<ExpectedPermissionInfo> expectedPermissions = loadExpectedPermissions(
+                R.raw.android_manifest);
 
         if (sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             expectedPermissions.addAll(loadExpectedPermissions(R.raw.automotive_android_manifest));
@@ -103,7 +110,7 @@ public class PermissionPolicyTest {
                     getPermissionsForPackage(sContext, AUTOMOTIVE_SERVICE_PACKAGE_NAME));
         }
 
-        for (PermissionInfo expectedPermission : expectedPermissions) {
+        for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
                 continue;
@@ -121,9 +128,9 @@ public class PermissionPolicyTest {
 
             // OEMs cannot change permission protection
             final int expectedProtection = expectedPermission.protectionLevel
-                    & PermissionInfo.PROTECTION_MASK_BASE;
+                    & PROTECTION_MASK_BASE;
             final int declaredProtection = declaredPermission.protectionLevel
-                    & PermissionInfo.PROTECTION_MASK_BASE;
+                    & PROTECTION_MASK_BASE;
             if (expectedProtection != declaredProtection) {
                 offendingList.add(
                         String.format(
@@ -131,8 +138,21 @@ public class PermissionPolicyTest {
                                 expectedPermissionName, declaredProtection, expectedProtection));
             }
 
+            // OEMs cannot change permission flags
+            final int expectedFlags = expectedPermission.flags;
+            final int declaredFlags = (declaredPermission.flags & ~FLAG_INSTALLED);
+            if (expectedFlags != declaredFlags) {
+                offendingList.add(
+                        String.format(
+                                "Permission %s invalid flags %x, expected %x",
+                                expectedPermissionName,
+                                declaredFlags,
+                                expectedFlags));
+            }
+
             // OEMs cannot change permission protection flags
-            final int expectedProtectionFlags = expectedPermission.getProtectionFlags();
+            final int expectedProtectionFlags =
+                    expectedPermission.protectionLevel & ~PROTECTION_MASK_BASE;
             final int declaredProtectionFlags = declaredPermission.getProtectionFlags();
             if (expectedProtectionFlags != declaredProtectionFlags) {
                 offendingList.add(
@@ -157,6 +177,17 @@ public class PermissionPolicyTest {
                     offendingList.add(
                             "Permission group " + expectedPermission.group + " must be defined");
                 }
+            }
+
+            // OEMs cannot change background permission mapping
+            if (!Objects.equals(expectedPermission.backgroundPermission,
+                    declaredPermission.backgroundPermission)) {
+                offendingList.add(
+                        String.format(
+                                "Permission %s invalid background permission %s, expected %s",
+                                expectedPermissionName,
+                                declaredPermission.backgroundPermission,
+                                expectedPermission.backgroundPermission));
             }
         }
 
@@ -198,8 +229,8 @@ public class PermissionPolicyTest {
         assertThat(offendingList).named("list of offending permissions").isEmpty();
     }
 
-    private List<PermissionInfo> loadExpectedPermissions(int resourceId) throws Exception {
-        List<PermissionInfo> permissions = new ArrayList<>();
+    private List<ExpectedPermissionInfo> loadExpectedPermissions(int resourceId) throws Exception {
+        List<ExpectedPermissionInfo> permissions = new ArrayList<>();
         try (InputStream in = sContext.getResources().openRawResource(resourceId)) {
             XmlPullParser parser = Xml.newPullParser();
             parser.setInput(in, null);
@@ -212,11 +243,14 @@ public class PermissionPolicyTest {
                     continue;
                 }
                 if (TAG_PERMISSION.equals(parser.getName())) {
-                    PermissionInfo permissionInfo = new PermissionInfo();
-                    permissionInfo.name = parser.getAttributeValue(null, ATTR_NAME);
-                    permissionInfo.group = parser.getAttributeValue(null, ATTR_PERMISSION_GROUP);
-                    permissionInfo.protectionLevel = parseProtectionLevel(
-                            parser.getAttributeValue(null, ATTR_PROTECTION_LEVEL));
+                    ExpectedPermissionInfo permissionInfo = new ExpectedPermissionInfo(
+                            parser.getAttributeValue(null, ATTR_NAME),
+                            parser.getAttributeValue(null, ATTR_PERMISSION_GROUP),
+                            parser.getAttributeValue(null, ATTR_BACKGROUND_PERMISSION),
+                            parsePermissionFlags(
+                                    parser.getAttributeValue(null, ATTR_PERMISSION_FLAGS)),
+                            parseProtectionLevel(
+                                    parser.getAttributeValue(null, ATTR_PROTECTION_LEVEL)));
                     permissions.add(permissionInfo);
                 } else {
                     Log.e(LOG_TAG, "Unknown tag " + parser.getName());
@@ -226,9 +260,9 @@ public class PermissionPolicyTest {
 
         // STOPSHIP: remove this once isolated storage is always enabled
         if (!StorageManager.hasIsolatedStorage()) {
-            Iterator<PermissionInfo> it = permissions.iterator();
+            Iterator<ExpectedPermissionInfo> it = permissions.iterator();
             while (it.hasNext()) {
-                final PermissionInfo pi = it.next();
+                final ExpectedPermissionInfo pi = it.next();
                 switch (pi.name) {
                     case android.Manifest.permission.ACCESS_MEDIA_LOCATION:
                     case android.Manifest.permission.WRITE_OBB:
@@ -262,6 +296,35 @@ public class PermissionPolicyTest {
             }
         }
         return permissionGroups;
+    }
+
+    private static int parsePermissionFlags(@Nullable String permissionFlagsString) {
+        if (permissionFlagsString == null) {
+            return 0;
+        }
+
+        int protectionFlags = 0;
+        String[] fragments = permissionFlagsString.split("\\|");
+        for (String fragment : fragments) {
+            switch (fragment.trim()) {
+                case "removed": {
+                    protectionFlags |= PermissionInfo.FLAG_REMOVED;
+                } break;
+                case "costsMoney": {
+                    protectionFlags |= PermissionInfo.FLAG_COSTS_MONEY;
+                } break;
+                case "hardRestricted": {
+                    protectionFlags |= PermissionInfo.FLAG_HARD_RESTRICTED;
+                } break;
+                case "immutablyRestricted": {
+                    protectionFlags |= PermissionInfo.FLAG_IMMUTABLY_RESTRICTED;
+                } break;
+                case "softRestricted": {
+                    protectionFlags |= PermissionInfo.FLAG_SOFT_RESTRICTED;
+                } break;
+            }
+        }
+        return protectionFlags;
     }
 
     private static int parseProtectionLevel(String protectionLevelString) {
@@ -371,5 +434,22 @@ public class PermissionPolicyTest {
         return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE) &&
                 HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION.equals(permissionName);
 
+    }
+
+    private class ExpectedPermissionInfo {
+        final @NonNull String name;
+        final @Nullable String group;
+        final @Nullable String backgroundPermission;
+        final int flags;
+        final int protectionLevel;
+
+        private ExpectedPermissionInfo(@NonNull String name, @Nullable String group,
+                @Nullable String backgroundPermission, int flags, int protectionLevel) {
+            this.name = name;
+            this.group = group;
+            this.backgroundPermission = backgroundPermission;
+            this.flags = flags;
+            this.protectionLevel = protectionLevel;
+        }
     }
 }
