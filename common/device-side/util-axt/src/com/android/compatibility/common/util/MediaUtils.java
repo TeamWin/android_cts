@@ -205,9 +205,12 @@ public class MediaUtils {
     // returns the list of codecs that support any one of the formats
     private static String[] getCodecNames(
             boolean isEncoder, Boolean isGoog, MediaFormat... formats) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         ArrayList<String> result = new ArrayList<>();
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
+            if (info.isAlias()) {
+                // don't consider aliases here
+                continue;
+            }
             if (info.isEncoder() != isEncoder) {
                 continue;
             }

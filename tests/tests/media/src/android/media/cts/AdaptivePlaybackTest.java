@@ -1369,17 +1369,19 @@ class Codec {
     public CodecCapabilities capabilities;
     public Media[] mediaList;
     public boolean adaptive;
-    public Codec(String n, CodecCapabilities c, Media[] m) {
-        name = n;
+    public boolean vendor;
+    public Codec(MediaCodecInfo info, CodecCapabilities c, Media[] m) {
+        name = info.getName();
         capabilities = c;
         List<Media> medias = new ArrayList<Media>();
 
         if (capabilities == null) {
             adaptive = false;
+            vendor = true;
         } else {
             Log.w(TAG, "checking capabilities of " + name + " for " + m[0].getMime());
             adaptive = capabilities.isFeatureSupported(CodecCapabilities.FEATURE_AdaptivePlayback);
-
+            vendor = info.isVendor();
             for (Media media : m) {
                 if (media.getHeight() >= 720 &&
                         !capabilities.isFormatSupported(media.getFormat())) {
@@ -1430,13 +1432,16 @@ class CodecFamily extends CodecList {
             /* enumerate codecs */
             MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
             for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
+                if (codecInfo.isAlias()) {
+                    continue;
+                }
                 if (codecInfo.isEncoder()) {
                     continue;
                 }
                 for (String type : codecInfo.getSupportedTypes()) {
                     if (type.equals(mime)) {
                         add(new Codec(
-                                codecInfo.getName(),
+                                codecInfo,
                                 codecInfo.getCapabilitiesForType(mime),
                                 mediaList));
                         break;
@@ -1455,7 +1460,7 @@ class CodecFamilySpecific extends CodecList {
     public CodecFamilySpecific(
             Context context, String mime, boolean isGoogle, int ... resources) {
         for (Codec c: new CodecFamily(context, mime, resources)) {
-            if (MediaUtils.isGoogle(c.name) == isGoogle) {
+            if (!c.vendor == isGoogle) {
                 add(c);
             }
         }
