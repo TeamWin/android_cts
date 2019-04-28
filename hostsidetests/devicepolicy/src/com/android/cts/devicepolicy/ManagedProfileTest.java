@@ -94,7 +94,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     //The maximum time to wait for user to be unlocked.
     private static final long USER_UNLOCK_TIMEOUT_NANO = 30_000_000_000L;
 
-    private static final String USER_UNLOCKED_SHELL_OUTPUT = "RUNNING_UNLOCKED";
+    private static final String USER_STATE_UNLOCKED = "RUNNING_UNLOCKED";
+    private static final String USER_STATE_LOCKED = "RUNNING_LOCKED";
 
     private int mParentUserId;
 
@@ -130,7 +131,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         final String command = String.format("am get-started-user-state %d", mProfileUserId);
         final long deadline = System.nanoTime() + USER_UNLOCK_TIMEOUT_NANO;
         while (System.nanoTime() <= deadline) {
-            if (getDevice().executeShellCommand(command).startsWith(USER_UNLOCKED_SHELL_OUTPUT)) {
+            if (getDevice().executeShellCommand(command).startsWith(USER_STATE_UNLOCKED)) {
                 return;
             }
             Thread.sleep(100);
@@ -265,15 +266,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     private void waitUntilProfileLocked() throws Exception {
-        final String cmd = "dumpsys activity | grep 'User #" + mProfileUserId + ": state='";
-        final Pattern p = Pattern.compile("state=([\\p{Upper}_]+)$");
-        SuccessCondition userLocked = () -> {
-            final String activityDump = getDevice().executeShellCommand(cmd);
-            final Matcher m = p.matcher(activityDump);
-            return m.find() && m.group(1).equals("RUNNING_LOCKED");
-        };
+        final String cmd = String.format("am get-started-user-state %d", mProfileUserId);
         tryWaitForSuccess(
-                userLocked,
+                () -> getDevice().executeShellCommand(cmd).startsWith(USER_STATE_LOCKED),
                 "The managed profile has not been locked after calling "
                         + "lockNow(FLAG_SECURE_USER_DATA)",
                 TIMEOUT_USER_LOCKED_MILLIS);
