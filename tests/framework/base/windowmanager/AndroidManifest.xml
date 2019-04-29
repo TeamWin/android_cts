@@ -277,7 +277,8 @@
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
                   android:theme="@style/no_starting_window" />
         <activity android:name="android.server.wm.LocationInWindowTests$TestActivity" />
-        <activity android:name="android.server.wm.EnsureBarContrastTest$TestActivity" />
+        <activity android:name="android.server.wm.EnsureBarContrastTest$TestActivity"
+                  android:theme="@style/no_starting_window" />
         <activity android:name="android.server.wm.WindowFocusTests$PrimaryActivity" />
         <activity android:name="android.server.wm.WindowFocusTests$SecondaryActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
