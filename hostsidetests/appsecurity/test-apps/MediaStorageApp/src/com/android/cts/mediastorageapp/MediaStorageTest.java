@@ -256,7 +256,14 @@ public class MediaStorageTest {
         }
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "r")) {
         }
-        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+        if (Environment.isExternalStorageLegacy()) {
+            try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+            }
+        } else {
+            try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+                fail("Expected write access to be blocked");
+            } catch (SecurityException | FileNotFoundException expected) {
+            }
         }
     }
 
