@@ -170,6 +170,9 @@ public class MediaRandomTest extends ActivityInstrumentationTestCase2<MediaStubA
             afd.close();
         }
     }
+    public void testPlayerRandomActionAV1() throws Exception {
+        testPlayerRandomAction(R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz);
+    }
     public void testPlayerRandomActionH264() throws Exception {
         testPlayerRandomAction(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
     }
