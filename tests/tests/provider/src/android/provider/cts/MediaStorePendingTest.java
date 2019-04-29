@@ -30,6 +30,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -384,6 +385,53 @@ public class MediaStorePendingTest {
         final File rawFile = getRawFile(uri);
         assertEquals("Kittens", rawFile.getParentFile().getName());
         assertEquals(Environment.DIRECTORY_DCIM, rawFile.getParentFile().getParentFile().getName());
+    }
+
+    @Test
+    public void testMutableColumns() throws Exception {
+        // Stage pending content
+        final ContentValues values = new ContentValues();
+        values.put(MediaColumns.MIME_TYPE, "image/png");
+        values.put(MediaColumns.IS_PENDING, 1);
+        values.put(MediaColumns.HEIGHT, 32);
+        final Uri uri = mResolver.insert(mExternalImages, values);
+        try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
+                OutputStream out = mResolver.openOutputStream(uri)) {
+            FileUtils.copy(in, out);
+        }
+
+        // Verify that initial values are present
+        try (Cursor c = mResolver.query(uri, null, null, null)) {
+            c.moveToFirst();
+            assertEquals(32, c.getLong(c.getColumnIndexOrThrow(MediaColumns.HEIGHT)));
+        }
+
+        // Verify that we can update values while pending
+        values.clear();
+        values.put(MediaColumns.HEIGHT, 64);
+        mResolver.update(uri, values, null, null);
+        try (Cursor c = mResolver.query(uri, null, null, null)) {
+            c.moveToFirst();
+            assertEquals(64, c.getLong(c.getColumnIndexOrThrow(MediaColumns.HEIGHT)));
+        }
+
+        // Publishing triggers scan of underlying file
+        values.clear();
+        values.put(MediaColumns.IS_PENDING, 0);
+        mResolver.update(uri, values, null, null);
+        try (Cursor c = mResolver.query(uri, null, null, null)) {
+            c.moveToFirst();
+            assertEquals(107, c.getLong(c.getColumnIndexOrThrow(MediaColumns.HEIGHT)));
+        }
+
+        // Ignored now that we're published
+        values.clear();
+        values.put(MediaColumns.HEIGHT, 48);
+        mResolver.update(uri, values, null, null);
+        try (Cursor c = mResolver.query(uri, null, null, null)) {
+            c.moveToFirst();
+            assertEquals(107, c.getLong(c.getColumnIndexOrThrow(MediaColumns.HEIGHT)));
+        }
     }
 
     private void assertCreatePending(PendingParams params) {
