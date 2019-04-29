@@ -29,7 +29,6 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.Surface;
 
-import java.nio.ByteBuffer;
 
 public class SurfacePixelValidator2 {
     private static final String TAG = "SurfacePixelValidator";
@@ -64,58 +63,18 @@ public class SurfacePixelValidator2 {
                 throw new IllegalStateException("pixel stride != " + PIXEL_STRIDE + "? "
                                                 + plane.getPixelStride());
             }
-            int rowStride = plane.getRowStride();
-            ByteBuffer buffer = plane.getBuffer();
             Trace.endSection();
 
-            Trace.beginSection("compare and sum");
+            boolean success = mPixelChecker.validatePlane(plane, mBoundsToCheck, mWidth, mHeight);
 
-            final short maxAlpha = mPixelChecker.getColor().mMaxAlpha;
-            final short minAlpha = mPixelChecker.getColor().mMinAlpha;
-            final short maxRed = mPixelChecker.getColor().mMaxRed;
-            final short minRed = mPixelChecker.getColor().mMinRed;
-            final short maxGreen = mPixelChecker.getColor().mMaxGreen;
-            final short minGreen = mPixelChecker.getColor().mMinGreen;
-            final short maxBlue = mPixelChecker.getColor().mMaxBlue;
-            final short minBlue = mPixelChecker.getColor().mMinBlue;
-
-            int blackishPixelCount = 0;
-
-            final int bytesWidth = mBoundsToCheck.width() * PIXEL_STRIDE;
-            byte[] scanline = new byte[bytesWidth];
-            for (int row = mBoundsToCheck.top; row < mBoundsToCheck.bottom; row++) {
-                buffer.position(rowStride * row + mBoundsToCheck.left * PIXEL_STRIDE);
-                buffer.get(scanline, 0, scanline.length);
-                for (int i = 0; i < bytesWidth; i += PIXEL_STRIDE) {
-                    // Format is RGBA_8888 not ARGB_8888
-                    final int red = scanline[i + 0] & 0xFF;
-                    final int green = scanline[i + 1] & 0xFF;
-                    final int blue = scanline[i + 2] & 0xFF;
-                    final int alpha = scanline[i + 3] & 0xFF;
-
-                    if (alpha <= maxAlpha
-                            && alpha >= minAlpha
-                            && red <= maxRed
-                            && red >= minRed
-                            && green <= maxGreen
-                            && green >= minGreen
-                            && blue <= maxBlue
-                            && blue >= minBlue) {
-                        blackishPixelCount++;
-                    }
-                }
-            }
-            Trace.endSection();
-
-            boolean success = mPixelChecker.checkPixels(blackishPixelCount, mWidth, mHeight);
             synchronized (mResultLock) {
                 if (success) {
                     mResultSuccessFrames++;
                 } else {
                     mResultFailureFrames++;
                     int totalFramesSeen = mResultSuccessFrames + mResultFailureFrames;
-                    Log.d(TAG, "Failure (pixel count = " + blackishPixelCount
-                            + ") occurred on frame " + totalFramesSeen);
+                    Log.d(TAG, "Failure (" + mPixelChecker.getLastError() + ") occurred on frame "
+                            + totalFramesSeen);
 
                     if (mFirstFailures.size() < MAX_CAPTURED_FAILURES) {
                         Log.d(TAG, "Capturing bitmap #" + mFirstFailures.size());
