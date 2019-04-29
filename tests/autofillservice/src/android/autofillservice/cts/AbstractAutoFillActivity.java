@@ -109,7 +109,7 @@ public abstract class AbstractAutoFillActivity extends Activity {
      * <p>Note: caller doesn't need to call {@link #unregisterCallback()}, it will be automatically
      * unregistered on {@link #finish()}.
      */
-    protected MyAutofillCallback registerCallback() {
+    public MyAutofillCallback registerCallback() {
         assertWithMessage("already registered").that(mCallback).isNull();
         mCallback = new MyAutofillCallback();
         getAutofillManager().registerCallback(mCallback);
