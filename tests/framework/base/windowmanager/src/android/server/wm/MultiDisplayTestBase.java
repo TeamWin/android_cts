@@ -236,6 +236,10 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     protected void tapOnDisplayCenter(int displayId) {
         final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
         tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId);
+        // This is needed after a tap in multi-display to ensure that the display focus has really
+        // changed, if needed. The call to syncInputTransaction will wait until focus change has
+        // propagated from WMS to native input before returning.
+        getInstrumentation().getUiAutomation().syncInputTransactions();
     }
 
     public class VirtualDisplaySession implements AutoCloseable {
