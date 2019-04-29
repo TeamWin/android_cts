@@ -49,6 +49,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -404,9 +405,8 @@ public class SpinnerTest {
 
         // Dismiss the popup with the emulated back key
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-        mInstrumentation.waitForIdleSync();
         // Verify that we're not showing the popup
-        assertFalse(mSpinnerDropdownMode.isPopupShowing());
+        PollingCheck.waitFor(() -> !mSpinnerDropdownMode.isPopupShowing());
 
         // Set yellow background on the popup
         mActivityRule.runOnUiThread(() ->
@@ -444,9 +444,8 @@ public class SpinnerTest {
 
         // Dismiss the popup with the emulated back key
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-        mInstrumentation.waitForIdleSync();
         // Verify that we're not showing the popup
-        assertFalse(mSpinnerDialogMode.isPopupShowing());
+        PollingCheck.waitFor(() -> !mSpinnerDropdownMode.isPopupShowing());
 
         // Set yellow background on the popup
         mActivityRule.runOnUiThread(() ->
