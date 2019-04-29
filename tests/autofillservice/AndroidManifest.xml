@@ -40,6 +40,8 @@
                   android:theme="@style/MyAutofilledHighlight"/>
         <activity android:name=".LoginWithStringsActivity" />
         <activity android:name=".LoginNotImportantForAutofillActivity" />
+        <activity android:name=".LoginNotImportantForAutofillWrappedActivityContextActivity" />
+        <activity android:name=".LoginNotImportantForAutofillWrappedApplicationContextActivity" />
         <activity android:name=".WelcomeActivity" android:taskAffinity=".WelcomeActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
         <activity android:name=".AuthenticationActivity" />
