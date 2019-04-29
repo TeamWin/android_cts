@@ -51,6 +51,7 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_WithPostInstallHook",
         ":StagedInstallTestApexV2_WithPreInstallHook",
         ":StagedInstallTestApexV2_WrongSha",
+        ":StagedInstallTestApexV3",
         ":StagedInstallTestAppAv1",
         ":StagedInstallTestAppAv2",
         ":StagedInstallTestAppBv1",
@@ -102,6 +103,13 @@ prebuilt_apex {
     name: "StagedInstallTestApexV2",
     src: "testdata/apex/com.android.apex.cts.shim.v2.apex",
     filename: "com.android.apex.cts.shim.v2.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV3",
+    src: "testdata/apex/com.android.apex.cts.shim.v3.apex",
+    filename: "com.android.apex.cts.shim.v3.apex",
     installable: false,
 }
 
