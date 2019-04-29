@@ -435,7 +435,7 @@ public class UiAutomationTest {
             uiAutomation.destroy();
             assertTrue(UiAutomationTestA11yService.sConnectedInstance.isConnected());
             getInstrumentation().getUiAutomation(); // Should suppress
-            assertFalse(UiAutomationTestA11yService.sConnectedInstance.isConnected());
+            waitForAccessibilityServiceToUnbind();
         } finally {
             turnAccessibilityOff();
         }
@@ -454,7 +454,7 @@ public class UiAutomationTest {
             UiAutomation suppressingUiAutomation = getInstrumentation().getUiAutomation();
             // We verify above that the connection is broken here. Make sure we see a new one
             // after we destroy it
-            UiAutomationTestA11yService.sConnectedInstance = null;
+            waitForAccessibilityServiceToUnbind();
             suppressingUiAutomation.destroy();
             waitForAccessibilityServiceToStart();
         } finally {
@@ -474,7 +474,7 @@ public class UiAutomationTest {
             getInstrumentation().getUiAutomation();
             // We verify above that the connection is broken here. Make sure we see a new one
             // after we change the flags
-            UiAutomationTestA11yService.sConnectedInstance = null;
+            waitForAccessibilityServiceToUnbind();
             getInstrumentation()
                     .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
             waitForAccessibilityServiceToStart();
@@ -541,12 +541,12 @@ public class UiAutomationTest {
     private void waitForAccessibilityServiceToStart() {
         long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-            synchronized(UiAutomationTestA11yService.sWaitObjectForConnecting) {
+            synchronized(UiAutomationTestA11yService.sWaitObjectForConnectOrUnbind) {
                 if (UiAutomationTestA11yService.sConnectedInstance != null) {
                     return;
                 }
                 try {
-                    UiAutomationTestA11yService.sWaitObjectForConnecting.wait(
+                    UiAutomationTestA11yService.sWaitObjectForConnectOrUnbind.wait(
                             timeoutTimeMillis - SystemClock.uptimeMillis());
                 } catch (InterruptedException e) {
                     // Ignored; loop again
@@ -554,6 +554,24 @@ public class UiAutomationTest {
             }
         }
         throw new RuntimeException("Test accessibility service not starting");
+    }
+
+    private void waitForAccessibilityServiceToUnbind() {
+        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
+        while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
+            synchronized(UiAutomationTestA11yService.sWaitObjectForConnectOrUnbind) {
+                if (UiAutomationTestA11yService.sConnectedInstance == null) {
+                    return;
+                }
+                try {
+                    UiAutomationTestA11yService.sWaitObjectForConnectOrUnbind.wait(
+                            timeoutTimeMillis - SystemClock.uptimeMillis());
+                } catch (InterruptedException e) {
+                    // Ignored; loop again
+                }
+            }
+        }
+        throw new RuntimeException("Test accessibility service doesn't unbind");
     }
 
     private void turnAccessibilityOff() {
@@ -574,7 +592,6 @@ public class UiAutomationTest {
         ContentResolver cr = context.getContentResolver();
         Settings.Secure.putString(
                 cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, null);
-        UiAutomationTestA11yService.sConnectedInstance = null;
         long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
             synchronized (waitLockForA11yOff) {
