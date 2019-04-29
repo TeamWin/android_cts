@@ -2228,7 +2228,7 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Verify that the background image contains a suitcase.\n
         4. Verify that the background color of the remaining image is blue.\n
         5. Verify that the header text says \"CtsVerifier\".\n
-        6. Confirm your credentials and verify that the credentials you entered previously work.
+        6. Confirm your credentials and verify that the credentials you entered previously work.\n
         7. The work app should be launched.
     </string>
     <string name="provisioning_byod_confirm_work_credentials_header">
@@ -2240,10 +2240,11 @@ You should be prompted to select credentials; choose the ones you just installed
 
         1. Verify that you get sent to the page for Choosing a new work lock.\n
         2. Set a pattern lock.\n
-        3. Open a work app.\n
-        4. Verify that a screen asking you for your work credentials is shown.\n
-        5. Confirm your credentials and verify that the credentials you entered previously work.\n
-        6. The work app should be launched.
+        3. Press the power button to turn the screen off and then back on and swipe to unlock.\n
+        4. Open a work app.\n
+        5. Verify that a screen asking you for your work credentials is shown.\n
+        6. Confirm your credentials and verify that the credentials you entered previously work.\n
+        7. The work app should be launched.
     </string>
     <string name="provisioning_byod_recents">Recents redaction test</string>
     <string name="provisioning_byod_recents_info">
