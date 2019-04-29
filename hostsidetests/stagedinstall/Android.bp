@@ -54,6 +54,7 @@ android_test_helper_app {
         ":StagedInstallTestAppAv1",
         ":StagedInstallTestAppAv2",
         ":StagedInstallTestAppBv1",
+        ":StagedInstallTestAppSamePackageNameAsApex",
     ],
     static_libs: [
         "androidx.test.runner",
@@ -87,6 +88,14 @@ android_test_helper_app {
     srcs:   ["testdata/apk/src/**/*java"],
 
     manifest:   "testdata/apk/Bv1.xml",
+}
+
+android_test_helper_app {
+    name: "StagedInstallTestAppSamePackageNameAsApex",
+
+    srcs:   ["testdata/apk/src/**/*java"],
+
+    manifest:   "testdata/apk/StagedInstallTestAppSamePackageNameAsApex.xml",
 }
 
 prebuilt_apex {
