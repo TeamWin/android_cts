@@ -97,6 +97,9 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         thirdIntent.setFlags(FLAG_ACTIVITY_MULTIPLE_TASK | FLAG_ACTIVITY_NEW_TASK);
         mThirdActivityTestRule.launchActivity(thirdIntent);
 
+        // Wait for SecondActivity in primary split screen leave minimize dock.
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+
         // Finish top activity
         secondActivity.finish();
 
@@ -112,7 +115,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
-    @FlakyTest(bugId = 127741025)
     public void testOccludingMovedBetweenStacks() throws Exception {
         // Launch first activity
         final Activity firstActivity =

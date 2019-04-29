@@ -324,6 +324,14 @@ public class ActivityAndWindowManagersState {
         return waitFor((amState, wmState) -> waitCondition.test(wmState), message);
     }
 
+    public void waitWindowingModeTopFocus(int windowingMode, boolean topFocus, String message) {
+        waitForWithAmState(amState -> {
+            final ActivityStack stack = amState.getStandardStackByWindowingMode(windowingMode);
+            return stack != null
+                    && topFocus == (amState.getFocusedStackId() == stack.getStackId());
+        }, message);
+    }
+
     /** @return {@code true} if the wait is successful; {@code false} if timeout occurs. */
     boolean waitFor(
             BiPredicate<ActivityManagerState, WindowManagerState> waitCondition, String message) {
