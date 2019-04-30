@@ -21,6 +21,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := CtsNNAPITests_static
 LOCAL_SRC_FILES := \
      $(call all-cpp-files-under,generated/tests) \
+     $(call all-cpp-files-under,fuzzing/operation_signatures) \
+     fuzzing/OperationManager.cpp \
+     fuzzing/RandomGraphGenerator.cpp \
+     fuzzing/RandomGraphGeneratorUtils.cpp \
+     fuzzing/RandomVariable.cpp \
+     fuzzing/TestRandomGraph.cpp \
      TestGenerated.cpp \
      TestMemory.cpp \
      TestTrivialModel.cpp \
