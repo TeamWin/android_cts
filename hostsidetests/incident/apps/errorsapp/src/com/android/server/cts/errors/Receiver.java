@@ -16,25 +16,17 @@
 
 package com.android.server.cts.errors;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Bundle;
 import android.util.Log;
-import android.view.WindowManager;
 
-/**
- * Used by ErrorsTest.
- */
-public class ANRActivity extends Activity {
-    private static final String TAG = "ANRActivity";
-
+public class Receiver extends BroadcastReceiver {
+    private static final String TAG = "ErrorsTests.Receiver";
+    
     @Override
-    public void onCreate(Bundle bundle) {
-        super.onCreate(bundle);
-        Log.d(TAG, "gonna do while (true) {}");
-        while (true) {}
+    public void onReceive(Context context, Intent intent) {
+        Log.d(TAG, "Receiver.onReceive");
+        throw new RuntimeException("If this broadcast was received, then the app didn't ANR");
     }
 }
