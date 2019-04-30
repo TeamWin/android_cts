@@ -31,7 +31,7 @@ import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.Log;
 
-import androidx.test.filters.FlakyTest;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -228,7 +228,7 @@ public class AlarmManagerTest extends AndroidTestCase {
         }
     }
 
-    @FlakyTest
+    @LargeTest
     public void testSetRepeating() throws Exception {
         mMockAlarmReceiver.setAlarmedFalse();
         mWakeupTime = System.currentTimeMillis() + TEST_ALARM_FUTURITY;
