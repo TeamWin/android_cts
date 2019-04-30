@@ -35,10 +35,14 @@ import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.WindowManagerState.Display;
 import android.server.am.WindowManagerState.WindowState;
+import androidx.test.InstrumentationRegistry;
+import android.support.test.uiautomator.UiDevice;
 
 import org.junit.Test;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Build/Install/Run:
@@ -95,7 +99,38 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     public void testMinimalSizeDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        testMinimalSize(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        // We are allowed to set device density to anything different than default,
+        // however, the way we realize is to set a new property to overlay it,
+        // so mDisplay.getDpi() cannot get our real density, now we will run command
+        // automatically switch to native density before the test excecutes and restore later.
+        UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        int density = 0;
+        try {
+             density = resetDensityIfNeeded(uiDevice);
+
+             testMinimalSize(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+
+        } finally {
+             restoreDensityIfNeeded(uiDevice, density);
+        }
+    }
+
+    private int resetDensityIfNeeded(UiDevice device) throws Exception {
+        final String output = device.executeShellCommand("wm density");
+         final Pattern p = Pattern.compile("Override density: (\\d+)");
+         final Matcher m = p.matcher(output);
+         if (m.find()) {
+             device.executeShellCommand("wm density reset");
+             int restoreDensity = Integer.parseInt(m.group(1));
+             return restoreDensity;
+         }
+         return -1;
+    }
+
+    private void restoreDensityIfNeeded(UiDevice device, int restoreDensity) throws Exception {
+        if (restoreDensity > 0) {
+            device.executeShellCommand("wm density " + restoreDensity);
+        }
     }
 
     private void testMinimalSize(int windowingMode) throws Exception {
