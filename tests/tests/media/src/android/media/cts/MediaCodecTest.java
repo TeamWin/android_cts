@@ -2051,13 +2051,10 @@ public class MediaCodecTest extends AndroidTestCase {
             // check if float
             final MediaFormat actualFormat =
                     encode ? mCodec.getInputFormat() : mCodec.getOutputFormat();
-            Integer actualEncoding = null;
-            try {
-                actualEncoding = actualFormat.getInteger(MediaFormat.KEY_PCM_ENCODING);
-            } catch (Exception e) {
-                ; // trying to get a non-existent key throws exception
-            }
-            mIsFloat = actualEncoding != null && actualEncoding == AudioFormat.ENCODING_PCM_FLOAT;
+
+            mIsFloat = actualFormat.getInteger(
+                    MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
+                            == AudioFormat.ENCODING_PCM_FLOAT;
 
             mCodec.start();
         }
