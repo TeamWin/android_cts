@@ -28,6 +28,7 @@ import android.media.MediaFormat;
 import android.media.cts.CodecImage;
 import android.media.cts.CodecUtils;
 import android.media.cts.YUVImage;
+import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -140,6 +141,15 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     }
 
     private TestConfig mTestConfig;
+
+    // Performance numbers only make sense on real devices, so skip on non-real devices
+    public static boolean frankenDevice() {
+        if (("Android".equals(Build.BRAND) || "generic".equals(Build.BRAND)) &&
+            (Build.MODEL.startsWith("AOSP on ") || Build.PRODUCT.startsWith("aosp_"))) {
+            return true;
+        }
+        return false;
+    }
 
     @Override
     protected void setUp() throws Exception {
@@ -696,6 +706,10 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         mTestConfig.mMaxTimeMs = Math.min(
                 mTestConfig.mMaxTimeMs, MAX_TEST_TIMEOUT_MS / 5 * 4 / codingPasses
                         / mTestConfig.mNumberOfRepeat);
+        // reduce test-run on non-real devices
+        if (frankenDevice()) {
+            mTestConfig.mMaxTimeMs /= 10;
+        }
 
         mVideoWidth = w;
         mVideoHeight = h;
@@ -802,7 +816,12 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         if (isPerf) {
             String error = MediaPerfUtils.verifyAchievableFrameRates(
                     encoderName, mimeType, w, h, measuredFps);
-            assertNull(error, error);
+            if (frankenDevice() && error != null) {
+                // ensure there is data, but don't insist that it is correct
+                assertFalse(error, error.startsWith("Failed to get "));
+            } else {
+                assertNull(error, error);
+            }
         }
         assertTrue(success);
     }

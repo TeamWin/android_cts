@@ -25,6 +25,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
@@ -83,6 +84,15 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
+    // Performance numbers only make sense on real devices, so skip on non-real devices
+    public static boolean frankenDevice() {
+        if (("Android".equals(Build.BRAND) || "generic".equals(Build.BRAND)) &&
+            (Build.MODEL.startsWith("AOSP on ") || Build.PRODUCT.startsWith("aosp_"))) {
+            return true;
+        }
+        return false;
+    }
+
     private void decode(String name, int resourceId, MediaFormat format) throws Exception {
         int width = format.getInteger(MediaFormat.KEY_WIDTH);
         int height = format.getInteger(MediaFormat.KEY_HEIGHT);
@@ -91,6 +101,10 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         // Ensure we can finish this test within the test timeout. Allow 25% slack (4/5).
         long maxTimeMs = Math.min(
                 MAX_TEST_TIMEOUT_MS * 4 / 5 / NUMBER_OF_REPEATS, MAX_TIME_MS);
+        // reduce test run on non-real device
+        if (frankenDevice()) {
+            maxTimeMs /= 10;
+        }
         double measuredFps[] = new double[NUMBER_OF_REPEATS];
 
         for (int i = 0; i < NUMBER_OF_REPEATS; ++i) {
@@ -107,7 +121,12 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
         String error =
             MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
-        assertNull(error, error);
+        if (frankenDevice() && error != null) {
+            // ensure there is data, but don't insist that it is correct
+            assertFalse(error, error.startsWith("Failed to get "));
+        } else {
+            assertNull(error, error);
+        }
         mSamplesInMemory.clear();
     }
 
