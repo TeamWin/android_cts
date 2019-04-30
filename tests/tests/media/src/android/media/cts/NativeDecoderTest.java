@@ -119,6 +119,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testExtractor(R.raw.sinesweepmp3lame);
         testExtractor(R.raw.sinesweepmp3smpb);
         testExtractor(R.raw.sinesweepm4a);
+        testExtractor(R.raw.sinesweepflacmkv);
         testExtractor(R.raw.sinesweepflac);
         testExtractor(R.raw.sinesweepwav);
 
@@ -313,6 +314,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             testDecoder(R.raw.sinesweepmp3lame) +
             testDecoder(R.raw.sinesweepmp3smpb) +
             testDecoder(R.raw.sinesweepm4a) +
+            testDecoder(R.raw.sinesweepflacmkv) +
             testDecoder(R.raw.sinesweepflac) +
             testDecoder(R.raw.sinesweepwav) +
 
