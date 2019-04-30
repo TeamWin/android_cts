@@ -21,6 +21,7 @@ import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController.OnShowModeChangedListener;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
