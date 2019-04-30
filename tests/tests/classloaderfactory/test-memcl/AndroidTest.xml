@@ -16,13 +16,8 @@
 <configuration description="Configuration for app Tests">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="misc" />
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="mkdir -p /data/local/tmp/classloaderfactory-test" />
-        <option name="teardown-command" value="rm -rf /data/local/tmp/classloaderfactory-test" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="classloaderfactory-secondary.jar->/data/local/tmp/classloaderfactory-test/secondary.jar" />
-    </target_preparer>
+    <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsClassLoaderFactoryInMemoryDexClassLoaderTestCases.apk" />
