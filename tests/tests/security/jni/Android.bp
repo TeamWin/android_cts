@@ -35,10 +35,4 @@ cc_library {
         "cpufeatures",
         "libcutils",
     ],
-    cflags: [
-        "-Wno-unused-parameter",
-        "-Wno-sign-compare",
-        "-Wno-unused-label",
-        "-Wno-unused-variable",
-    ],
 }
