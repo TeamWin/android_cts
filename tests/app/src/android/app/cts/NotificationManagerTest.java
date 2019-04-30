@@ -2404,7 +2404,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
-        sendAndVerifyBubble(1, nb, null /* use default metadata */, true /* shouldBeBubble */);
+        boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+        sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
     }
 
     public void testNotificationManagerBubblePolicy_flagForPhonecall() {
@@ -2412,8 +2413,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
         mContext.startService(serviceIntent);
 
+        boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
         if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                true /* shouldExist */, true /* shouldBeBubble */)) {
+                true /* shouldExist */, shouldBeBubble)) {
             fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
         }
     }
@@ -2515,8 +2517,10 @@ public class NotificationManagerTest extends AndroidTestCase {
         // The notif should be allowed to update as a bubble
         a.sendBubble(2);
 
+        boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+
         if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                true /* shouldExist */, true /* shouldBeBubble */)) {
+                true /* shouldExist */, shouldBeBubble)) {
             fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
         }
 
