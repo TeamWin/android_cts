@@ -757,21 +757,21 @@ public class PixelCopyTest {
     private void assertBitmapEdgeColor(Bitmap bitmap, int edgeColor) {
         // Just quickly sample a few pixels on the edge and assert
         // they are edge color, then assert that just inside the edge is a different color
-        assertBitmapColor("Top edge", bitmap, edgeColor, bitmap.getWidth() / 2, 0);
-        assertBitmapNotColor("Top edge", bitmap, edgeColor, bitmap.getWidth() / 2, 1);
+        assertBitmapColor("Top edge", bitmap, edgeColor, bitmap.getWidth() / 2, 1);
+        assertBitmapNotColor("Top edge", bitmap, edgeColor, bitmap.getWidth() / 2, 2);
 
-        assertBitmapColor("Left edge", bitmap, edgeColor, 0, bitmap.getHeight() / 2);
-        assertBitmapNotColor("Left edge", bitmap, edgeColor, 1, bitmap.getHeight() / 2);
+        assertBitmapColor("Left edge", bitmap, edgeColor, 1, bitmap.getHeight() / 2);
+        assertBitmapNotColor("Left edge", bitmap, edgeColor, 2, bitmap.getHeight() / 2);
 
         assertBitmapColor("Bottom edge", bitmap, edgeColor,
-                bitmap.getWidth() / 2, bitmap.getHeight() - 1);
-        assertBitmapNotColor("Bottom edge", bitmap, edgeColor,
                 bitmap.getWidth() / 2, bitmap.getHeight() - 2);
+        assertBitmapNotColor("Bottom edge", bitmap, edgeColor,
+                bitmap.getWidth() / 2, bitmap.getHeight() - 3);
 
         assertBitmapColor("Right edge", bitmap, edgeColor,
-                bitmap.getWidth() - 1, bitmap.getHeight() / 2);
-        assertBitmapNotColor("Right edge", bitmap, edgeColor,
                 bitmap.getWidth() - 2, bitmap.getHeight() / 2);
+        assertBitmapNotColor("Right edge", bitmap, edgeColor,
+                bitmap.getWidth() - 3, bitmap.getHeight() / 2);
     }
 
     private boolean pixelsAreSame(int ideal, int given, int threshold) {
