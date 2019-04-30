@@ -181,6 +181,17 @@ public class SensorTest extends SensorTestCase {
             assertNull(sensor);
         }
 
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        boolean hasPressure = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_BAROMETER);
+        // pressure sensor is optional
+        if (hasPressure) {
+            assertEquals(Sensor.TYPE_PRESSURE, sensor.getType());
+            assertSensorValues(sensor);
+        } else {
+            assertNull(sensor);
+        }
+
         sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         // Note: orientation sensor is deprecated.
         if (sensor != null) {
@@ -527,7 +538,9 @@ public class SensorTest extends SensorTestCase {
                 sensor.getName(), sensor.getPower() >= 0);
         assertTrue("Max resolution must be positive. Resolution=" + sensor.getResolution() +
                 " " + sensor.getName(), sensor.getResolution() >= 0);
-        if (SensorCtsHelper.hasResolutionRequirement(sensor)) {
+        boolean hasHifiSensors = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_HIFI_SENSORS);
+        if (SensorCtsHelper.hasResolutionRequirement(sensor, hasHifiSensors)) {
             float requiredResolution = SensorCtsHelper.getRequiredResolutionForSensor(sensor);
             assertTrue("Resolution must be <= " + requiredResolution + ". Resolution=" +
                     sensor.getResolution() + " " + sensor.getName(),
