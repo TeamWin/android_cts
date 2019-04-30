@@ -16,7 +16,7 @@
 
 package android.deviceconfig.cts;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.provider.DeviceConfig;
@@ -194,7 +194,8 @@ public final class DeviceConfigApiPermissionTests {
 
         try {
             String property = DeviceConfig.getProperty(NAMESPACE, KEY);
-            assertThat(property).isEqualTo(VALUE);
+            assertEquals("Value read from DeviceConfig API does not match written value.",
+                    property, VALUE);
         } catch (SecurityException e) {
             violations.append("DeviceConfig.getProperty() must be accessible with"
                     + " READ_DEVICE_CONFIG permission\n");
@@ -226,14 +227,25 @@ public final class DeviceConfigApiPermissionTests {
 
         try {
             DeviceConfig.setProperty(PUBLIC_NAMESPACE, KEY, VALUE, /*makeDefault=*/ false);
-            violations.append("DeviceConfig.setProperty() must not be accessible with"
-                    + " WRITE_DEVICE_CONFIG permission\n");
+            violations.append("DeviceConfig.setProperty() for public namespaces must not be "
+                    + "accessible without WRITE_DEVICE_CONFIG permission\n");
         } catch (SecurityException e) {
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG_PERMISSION);
+
+        try {
+            DeviceConfig.setProperty(PUBLIC_NAMESPACE, KEY, VALUE, /*makeDefault=*/ false);
+        } catch (SecurityException e) {
+            violations.append("DeviceConfig.setProperty() must be accessible with"
+                    + " WRITE_DEVICE_CONFIG permission\n");
         }
 
         try {
             String property = DeviceConfig.getProperty(PUBLIC_NAMESPACE, KEY);
-            assertThat(property).isEqualTo(VALUE);
+            assertEquals("Value read from DeviceConfig API public namespace does not match written"
+                    + " value.", property, VALUE);
         } catch (SecurityException e) {
             violations.append("DeviceConfig.getProperty() for public namespaces must be accessible"
                     + "without READ_DEVICE_CONFIG permission\n");

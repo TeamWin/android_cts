@@ -246,8 +246,9 @@ public class CtsSyncManagerTest {
         addAccountAndLetInitialSyncRun(ACCOUNT_1_A, APP1_AUTHORITY);
 
         // App should be brought out of the NEVER bucket to handle the sync
-        assertEquals(UsageStatsManager.STANDBY_BUCKET_WORKING_SET,
-                AmUtils.getStandbyBucket(APP1_PACKAGE));
+        assertTrue("Standby bucket should be WORKING_SET or better",
+                AmUtils.getStandbyBucket(APP1_PACKAGE)
+                        <= UsageStatsManager.STANDBY_BUCKET_WORKING_SET);
 
         // Check the sync request parameters.
         Response res = mRpc.invoke(APP1_PACKAGE,

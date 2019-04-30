@@ -44,6 +44,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
+import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputBinding;
@@ -518,6 +519,12 @@ public final class MockIme extends InputMethodService {
         return getTracer().onKeyDown(keyCode, event, () -> super.onKeyDown(keyCode, event));
     }
 
+    @Override
+    public void onUpdateCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo) {
+        getTracer().onUpdateCursorAnchorInfo(cursorAnchorInfo,
+                () -> super.onUpdateCursorAnchorInfo(cursorAnchorInfo));
+    }
+
     @CallSuper
     public boolean onEvaluateInputViewShown() {
         return getTracer().onEvaluateInputViewShown(() -> {
@@ -733,6 +740,13 @@ public final class MockIme extends InputMethodService {
             arguments.putInt("keyCode", keyCode);
             arguments.putParcelable("event", event);
             return recordEventInternal("onKeyDown", supplier::getAsBoolean, arguments);
+        }
+
+        public void onUpdateCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("cursorAnchorInfo", cursorAnchorInfo);
+            recordEventInternal("onUpdateCursorAnchorInfo", runnable, arguments);
         }
 
         public boolean onShowInputRequested(int flags, boolean configChange,

@@ -51,9 +51,11 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_WithPostInstallHook",
         ":StagedInstallTestApexV2_WithPreInstallHook",
         ":StagedInstallTestApexV2_WrongSha",
+        ":StagedInstallTestApexV3",
         ":StagedInstallTestAppAv1",
         ":StagedInstallTestAppAv2",
         ":StagedInstallTestAppBv1",
+        ":StagedInstallTestAppSamePackageNameAsApex",
     ],
     static_libs: [
         "androidx.test.runner",
@@ -89,10 +91,25 @@ android_test_helper_app {
     manifest:   "testdata/apk/Bv1.xml",
 }
 
+android_test_helper_app {
+    name: "StagedInstallTestAppSamePackageNameAsApex",
+
+    srcs:   ["testdata/apk/src/**/*java"],
+
+    manifest:   "testdata/apk/StagedInstallTestAppSamePackageNameAsApex.xml",
+}
+
 prebuilt_apex {
     name: "StagedInstallTestApexV2",
     src: "testdata/apex/com.android.apex.cts.shim.v2.apex",
     filename: "com.android.apex.cts.shim.v2.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV3",
+    src: "testdata/apex/com.android.apex.cts.shim.v3.apex",
+    filename: "com.android.apex.cts.shim.v3.apex",
     installable: false,
 }
 
