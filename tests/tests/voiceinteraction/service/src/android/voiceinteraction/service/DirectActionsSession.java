@@ -21,7 +21,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.os.Handler;
 import android.os.RemoteCallback;
 import android.service.voice.VoiceInteractionSession;
 import android.voiceinteraction.common.Utils;
@@ -32,24 +31,27 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
  * Sessions for testing direct action related functionality
  */
 public class DirectActionsSession extends VoiceInteractionSession {
+    private final ReentrantLock mLock = new ReentrantLock();
+    private final Condition mCondition = mLock.newCondition();
+
+    // GuardedBy("mLock")
     private @Nullable ActivityId mActivityId;
 
-    private @NonNull Handler mHandler;
+    // GuardedBy("mLock")
+    private boolean mActionsInvalidated;
 
-    private static final int OPERATION_TIMEOUT_MS = 5000;
-
-    private Runnable mPendingWork;
-    private Runnable mPendingCancel;
+    private static final int OPERATION_TIMEOUT_MS = 1000000;//5000;
 
     public DirectActionsSession(@NonNull Context context) {
         super(context);
-        mHandler = new Handler(context.getMainLooper());
     }
 
     @Override
@@ -75,6 +77,9 @@ public class DirectActionsSession extends VoiceInteractionSession {
                 case Utils.DIRECT_ACTIONS_SESSION_CMD_FINISH: {
                     executeWithAssist(this::performHide, commandCallback);
                 } break;
+                case Utils.DIRECT_ACTIONS_SESSION_CMD_DETECT_ACTIONS_CHANGED: {
+                    executeWithAssist(this::detectDirectActionsInvalidated, commandCallback);
+                } break;
             }
         });
 
@@ -86,48 +91,64 @@ public class DirectActionsSession extends VoiceInteractionSession {
     @Override
     public void onHandleAssist(AssistState state) {
         if (state.getIndex() == 0) {
-            mActivityId = state.getActivityId();
-            performPendingCommand();
+            mLock.lock();
+            try {
+                mActivityId = state.getActivityId();
+                mCondition.signalAll();
+            } finally {
+                mLock.unlock();
+            }
         }
+    }
+
+    @Override
+    public void onDirectActionsInvalidated(ActivityId activityId) {
+         mLock.lock();
+         try {
+            mActionsInvalidated = true;
+            mCondition.signalAll();
+        } finally {
+             mLock.unlock();
+         }
     }
 
     private void executeWithAssist(@Nullable Consumer<Bundle> command,
             @NonNull RemoteCallback callback) {
-        mPendingWork = () -> {
+        mLock.lock();
+        try {
+            if (mActivityId == null) {
+                try {
+                    mCondition.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    /* ignore */
+                }
+            }
             final Bundle result = new Bundle();
-            command.accept(result);
-            callback.sendResult(result);
-        };
-
-        if (mActivityId != null) {
-            mPendingWork.run();
-            mPendingWork = null;
-        } else {
-            mPendingCancel = () -> callback.sendResult(new Bundle());
-            mHandler.postDelayed(mPendingCancel, OPERATION_TIMEOUT_MS);
+            if (mActivityId != null) {
+                command.accept(result);
+                callback.sendResult(result);
+            } else {
+                callback.sendResult(result);
+            }
+        } finally {
+            mLock.unlock();
         }
-    }
-
-    private void performPendingCommand() {
-        if (mPendingWork == null) {
-            return;
-        }
-        if (mActivityId != null && mHandler.hasCallbacks(mPendingCancel)) {
-            mPendingWork.run();
-            mPendingWork = null;
-        }
-        mHandler.removeCallbacks(mPendingCancel);
-        mPendingCancel = null;
     }
 
     private void getDirectActions(@NonNull Bundle outResult) {
         final ArrayList<DirectAction> actions = new ArrayList<>();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        requestDirectActions(mActivityId, AsyncTask.THREAD_POOL_EXECUTOR, (b) -> {
-            actions.addAll(b);
-            latch.countDown();
-        });
+
+        mLock.lock();
+        try {
+            requestDirectActions(mActivityId,null, AsyncTask.THREAD_POOL_EXECUTOR, (b) -> {
+                actions.addAll(b);
+                latch.countDown();
+            });
+        } finally {
+            mLock.unlock();
+        }
         try {
             latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
@@ -159,23 +180,57 @@ public class DirectActionsSession extends VoiceInteractionSession {
     private void performDirectActionAndCancel(@NonNull Bundle args, @NonNull Bundle outResult) {
         final DirectAction action = args.getParcelable(Utils.DIRECT_ACTIONS_KEY_ACTION);
         final Bundle arguments = args.getBundle(Utils.DIRECT_ACTIONS_KEY_ARGUMENTS);
+        final Bundle result = new Bundle();
+
+        final CountDownLatch cancelLatch = new CountDownLatch(1);
+        final RemoteCallback cancelCallback = new RemoteCallback((b) -> {
+            result.clear();
+            result.putAll(b);
+            cancelLatch.countDown();
+        });
+        arguments.putParcelable(Utils.DIRECT_ACTIONS_KEY_CANCEL_CALLBACK, cancelCallback);
+
         final CancellationSignal cancellationSignal = new CancellationSignal();
 
-        final Bundle result  = new Bundle();
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+
         performDirectAction(action, arguments, cancellationSignal,
-                AsyncTask.THREAD_POOL_EXECUTOR, (b) -> {
-            result.putAll(b);
-            latch.countDown();
-        });
-        cancellationSignal.cancel();
+                AsyncTask.THREAD_POOL_EXECUTOR, (b) ->
+            resultLatch.countDown()
+        );
+
         try {
-            latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            resultLatch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            /* ignore */
+        }
+
+        cancellationSignal.cancel();
+
+        try {
+            cancelLatch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             /* ignore */
         }
 
         outResult.putBundle(Utils.DIRECT_ACTIONS_KEY_RESULT, result);
+    }
+
+    private void detectDirectActionsInvalidated(@NonNull Bundle outResult) {
+        mLock.lock();
+        try {
+            if (!mActionsInvalidated) {
+                try {
+                    mCondition.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    /* ignore */
+                }
+            }
+            outResult.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, mActionsInvalidated);
+            mActionsInvalidated = false;
+        } finally {
+            mLock.unlock();
+        }
     }
 
     private void performHide(@NonNull Bundle outResult) {
