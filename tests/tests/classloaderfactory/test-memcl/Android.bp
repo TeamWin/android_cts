@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test_helper_app {
-    name: "ClassLoaderFactoryTestSecondary",
-    srcs: [ "src-ex/**/*.java" ],
-    manifest: "src-ex/AndroidManifest.xml",
-}
-
-filegroup {
-    name: "cts-classloaderfactorytest-srcs",
-    srcs: [ "src/**/*.java" ],
-}
-
-java_defaults {
-    name: "cts_classloaderfactorytest_defaults",
-    static_libs: [
-        "androidx.test.rules",
-        "ctstestrunner-axt",
-        "junit",
+android_test {
+    name: "CtsClassLoaderFactoryInMemoryDexClassLoaderTestCases",
+    defaults: [ "cts_classloaderfactorytest_defaults" ],
+    srcs: [ ":cts-classloaderfactorytest-srcs" ],
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+        "cts_instant",
     ],
-    java_resources: [ ":ClassLoaderFactoryTestSecondary" ],
-    sdk_version: "test_current",
 }
