@@ -105,18 +105,9 @@ class CtsAngleCommon {
         String propDisablePreloading = device.getProperty(PROPERTY_DISABLE_OPENGL_PRELOADING);
         String propGfxDriver = device.getProperty(PROPERTY_GFX_DRIVER);
 
-        // Make sure ANGLE exists on the device
-        if((angleSupported == null) || (angleSupported.equals("false"))) {
-            return false;
-        }
-
-        // This logic is attempting to mimic ZygoteInit.java::ZygoteInit#preloadOpenGL()
-        if (((propDisablePreloading != null) && propDisablePreloading.equals("false")) &&
-                ((propGfxDriver == null) || propGfxDriver.isEmpty())) {
-            return false;
-        }
-
-        return true;
+        return (angleSupported != null) && (angleSupported.equals("true")) &&
+                (((propDisablePreloading != null) && propDisablePreloading.equals("true")) ||
+                        ((propGfxDriver != null) && !propGfxDriver.isEmpty()));
     }
 
     static void startActivity(ITestDevice device, String action) throws Exception {
