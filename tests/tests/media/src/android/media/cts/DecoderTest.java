@@ -3086,6 +3086,9 @@ public class DecoderTest extends MediaPlayerTestBase {
         List<CodecCapabilities> caps = new ArrayList<CodecCapabilities>();
         for (int i = 0; i < numCodecs; i++) {
             MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
+            if (codecInfo.isAlias()) {
+                continue;
+            }
             if (codecInfo.isEncoder()) {
                 continue;
             }
