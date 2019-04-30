@@ -57,6 +57,7 @@ import android.server.wm.WindowManagerState.WindowState;
 import android.text.TextUtils;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -64,6 +65,7 @@ import android.widget.LinearLayout;
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
@@ -521,11 +523,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     /**
-     * Test that the IME should be shown in default display and verify committed texts can deliver
-     * to target display which does not support system decoration.
+     * Test that the IME can be shown in a different display (actually the default display) than
+     * the display on which the target IME application is shown.  Then test several basic operations
+     * in {@link InputConnection}.
      */
     @Test
-    public void testImeShowAndCommitTextsInDefaultDisplayWhenNoSysDecor() throws Exception {
+    public void testCrossDisplayBasicImeOperations() throws Exception {
         final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
         try (final VirtualDisplaySession virtualDisplaySession  = new VirtualDisplaySession();
@@ -564,6 +567,13 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             imeTestActivitySession.runOnMainAndAssertWithTimeout(
                     () -> TextUtils.equals(commitText, editText.getText()), TIMEOUT,
                     "The input text should be delivered");
+
+            // Since the IME and the IME target app are running in different displays,
+            // InputConnection#requestCursorUpdates() is not supported and it should return false.
+            // See InputMethodServiceTest#testOnUpdateCursorAnchorInfo() for the normal scenario.
+            final ImeCommand callCursorUpdates = mockImeSession.callRequestCursorUpdates(
+                    InputConnection.CURSOR_UPDATE_IMMEDIATE);
+            assertFalse(expectCommand(stream, callCursorUpdates, TIMEOUT).getReturnBooleanValue());
         }
     }
 
