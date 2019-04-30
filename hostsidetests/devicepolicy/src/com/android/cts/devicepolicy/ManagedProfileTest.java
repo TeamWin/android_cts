@@ -1325,6 +1325,20 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
     }
 
+    public void testClearPasswordWithTokenBeforeUnlock() throws Exception {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
+            return;
+        }
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testSetupWorkProfile", mProfileUserId);
+        lockProfile();
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
+                "testClearPasswordBeforeUnlock", mProfileUserId);
+        // Make sure profile has no password
+        verifyUserCredential("", mProfileUserId);
+    }
+
     /**
      * Test password reset token is still functional after the primary user clears and
      * re-adds back its device lock. This is to detect a regression where the work profile
