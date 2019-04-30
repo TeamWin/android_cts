@@ -751,6 +751,14 @@ public class DecoderTest extends MediaPlayerTestBase {
                 staticInfo, true /*metadataInContainer*/);
     }
 
+    public void testAV1HdrStaticMetadata() throws Exception {
+        final String staticInfo =
+                "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
+                "40 e8 03 64 00 e8 03 2c  01                     " ;
+        testHdrStaticMetadata(R.raw.video_1280x720_av1_hdr_static_3mbps,
+                staticInfo, false /*metadataInContainer*/);
+    }
+
     public void testH265HDR10StaticMetadata() throws Exception {
         // Expected value of MediaFormat.KEY_HDR_STATIC_INFO key.
         // The associated value is a ByteBuffer. This buffer contains the raw contents of the
@@ -806,6 +814,11 @@ public class DecoderTest extends MediaPlayerTestBase {
                 // it here so that we only test HDR when decoder supports it.
                 format.setInteger(MediaFormat.KEY_PROFILE,
                         MediaCodecInfo.CodecProfileLevel.VP9Profile2HDR);
+            } else if (MediaFormat.MIMETYPE_VIDEO_AV1.equals(mime)) {
+                // The muxer might not have put AV1 CSD in the webm, we manually patch
+                // it here so that we only test HDR when decoder supports it.
+                format.setInteger(MediaFormat.KEY_PROFILE,
+                        MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10HDR10);
             } else {
                 fail("Codec " + mime + " shouldn't be tested with this test!");
             }
