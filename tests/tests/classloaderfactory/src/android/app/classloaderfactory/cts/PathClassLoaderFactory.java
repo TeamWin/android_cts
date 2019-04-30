@@ -17,12 +17,18 @@ package android.app.classloaderfactory.cts;
 import android.app.AppComponentFactory;
 import android.content.pm.ApplicationInfo;
 import dalvik.system.PathClassLoader;
+import java.io.File;
 
 // AppComponentFactory which sets up PathClassLoader as the main class loader
 // of the process.
 public class PathClassLoaderFactory extends AppComponentFactory {
     @Override
     public ClassLoader instantiateClassLoader(ClassLoader defaultCL, ApplicationInfo aInfo) {
-        return new PathClassLoader(AppComponentFactoryTest.SECONDARY_APK_PATH, defaultCL);
+        try {
+            File apkFile = AppComponentFactoryTest.writeSecondaryApkToDisk(aInfo);
+            return new PathClassLoader(apkFile.getAbsolutePath(), defaultCL);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
