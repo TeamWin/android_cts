@@ -1750,10 +1750,7 @@ public class MediaCodecTest extends AndroidTestCase {
     private static boolean supportsCodec(String mimeType, boolean encoder) {
         MediaCodecList list = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo info : list.getCodecInfos()) {
-            if (encoder && !info.isEncoder()) {
-                continue;
-            }
-            if (!encoder && info.isEncoder()) {
+            if (encoder != info.isEncoder()) {
                 continue;
             }
 
