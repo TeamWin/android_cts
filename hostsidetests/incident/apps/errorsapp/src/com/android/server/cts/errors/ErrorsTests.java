@@ -82,13 +82,18 @@ public class ErrorsTests {
     public void testANR() throws Exception {
         Log.i(TAG, "testANR");
 
+        // Require that we get an ANR entry that shows that the activity is blocked in onCreate.
         registerReceiver(mContext, mResultsReceivedSignal, ANR_TAG,
                 mContext.getPackageName() + ":TestProcess",
-                "Subject: Broadcast of Intent { act=android.intent.action.SCREEN_ON");
+                "com.android.server.cts.errors.ANRActivity.onCreate");
         Intent intent = new Intent();
         intent.setClass(mContext, ANRActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
+
+        final Intent receiver = new Intent(mContext, Receiver.class);
+        mContext.sendBroadcast(receiver);
+        Log.i(TAG, "testANR -- sent broadcast to " + receiver);
 
         assertTrue(mResultsReceivedSignal.await(TIMEOUT_SECS, TimeUnit.SECONDS));
     }
@@ -114,17 +119,24 @@ public class ErrorsTests {
             public void onReceive(Context context, Intent intent) {
                 // DropBox might receive other entries while we're waiting for the error
                 // entry, so we need to check the tag and stack trace before continuing.
-                DropBoxManager.Entry entry = mDropbox.getNextEntry(wantTag, mStartMs);
-                if (entry != null) {
-                    String stackTrace = entry.getText(10000); // Only need to check a few lines.
+                while (true) {
+                    final DropBoxManager.Entry entry = mDropbox.getNextEntry(wantTag, mStartMs);
+                    if (entry == null) {
+                        break;
+                    }
+                    Log.d(TAG, "ErrorsTest got message from drobpox: " + entry.getTag());
+                    mStartMs = entry.getTimeMillis();
+                    String stackTrace = entry.getText(64 * 1024);
                     boolean allMatches = true;
                     for (String line : wantInStackTrace) {
-                        allMatches &= stackTrace.contains(line);
+                        boolean matched = stackTrace.contains(line);
+                        Log.d(TAG, "   matched=" + matched + " line: " + line);
+                        allMatches &= matched;
                     }
-                    entry.close();
                     if (allMatches) {
                         onReceiveLatch.countDown();
                     }
+                    entry.close();
                 }
             }
         }, new IntentFilter(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED));
