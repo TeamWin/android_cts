@@ -44,11 +44,6 @@ public class CameraVulkanGpuTest {
             return;
         }
 
-        if(PropertyUtil.getFirstApiLevel() < Build.VERSION.SDK_INT){
-            // HAL3 is not required for P upgrade devices.
-            return;
-        }
-
         loadCameraAndVerifyFrameImport(InstrumentationRegistry.getContext().getAssets());
     }
 
