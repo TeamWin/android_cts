@@ -118,6 +118,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testNonResizeableNotDocked() throws Exception {
         launchActivityInSplitScreenWithRecents(NON_RESIZEABLE_ACTIVITY);
 
@@ -431,6 +432,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testRotationWhileDockMinimized() throws Exception {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
 
@@ -574,6 +576,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testDifferentProcessActivityResumedPreQ() {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(SDK_27_TEST_ACTIVITY),
