@@ -17,6 +17,7 @@ import static android.content.Context.AUDIO_SERVICE;
 
 import static org.junit.Assert.assertEquals;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;

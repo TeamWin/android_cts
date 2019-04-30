@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibility.cts.common;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -28,20 +29,33 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 
+/**
+ * A helper class to execute batch of shell commands.
+ */
 public class ShellCommandBuilder {
-    private final LinkedList<Runnable> mCommands = new LinkedList<>();
+    private static final String LOG_TAG = "ShellCommandBuilder";
 
-    private final Instrumentation mInstrumentation;
+    private final LinkedList<Runnable> mCommands = new LinkedList<>();
     private final UiAutomation mUiAutomation;
 
+    /**
+     * Returns a {@link ShellCommandBuilder} with an {@link UiAutomation} which doesn't suppress
+     * accessibility service.
+     */
     public static ShellCommandBuilder create(Instrumentation instrumentation) {
-        return new ShellCommandBuilder(instrumentation);
+        return new ShellCommandBuilder(instrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES));
     }
 
-    private ShellCommandBuilder(Instrumentation instrumentation) {
-        mInstrumentation = instrumentation;
-        mUiAutomation = mInstrumentation.getUiAutomation(
-                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+    /**
+     * Returns a {@link ShellCommandBuilder} with {@code uiAutomation}.
+     */
+    public static ShellCommandBuilder create(UiAutomation uiAutomation) {
+        return new ShellCommandBuilder(uiAutomation);
+    }
+
+    private ShellCommandBuilder(UiAutomation uiAutomation) {
+        mUiAutomation = uiAutomation;
     }
 
     public void run() {
@@ -75,6 +89,7 @@ public class ShellCommandBuilder {
     }
 
     public static void execShellCommand(UiAutomation automation, String command) {
+        Log.i(LOG_TAG, "command [" + command + "]");
         try (ParcelFileDescriptor fd = automation.executeShellCommand(command)) {
             try (InputStream inputStream = new FileInputStream(fd.getFileDescriptor())) {
                 try (BufferedReader reader = new BufferedReader(
@@ -85,7 +100,7 @@ public class ShellCommandBuilder {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to exec shell command", e);
+            throw new RuntimeException("Failed to exec shell command [" + command + "]", e);
         }
     }
 }

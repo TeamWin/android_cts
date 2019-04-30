@@ -93,7 +93,7 @@
         </service>
 
         <service
-            android:name=".InstrumentedAccessibilityService"
+            android:name="android.accessibility.cts.common.InstrumentedAccessibilityService"
             android:label="@string/title_soft_keyboard_modes_accessibility_service"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>

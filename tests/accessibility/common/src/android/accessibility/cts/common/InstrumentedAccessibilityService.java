@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package android.accessibilityservice.cts;
+package android.accessibility.cts.common;
+
+import static com.android.compatibility.common.util.TestUtils.waitOn;
+
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
-import androidx.annotation.CallSuper;
-import android.test.InstrumentationTestCase;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+
+import androidx.annotation.CallSuper;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -34,20 +42,16 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-
 public class InstrumentedAccessibilityService extends AccessibilityService {
+    private static final String LOG_TAG = "InstrumentedA11yService";
 
     private static final boolean DEBUG = false;
 
     // Match com.android.server.accessibility.AccessibilityManagerService#COMPONENT_NAME_SEPARATOR
     private static final String COMPONENT_NAME_SEPARATOR = ":";
-
-    // Timeout disabled in #DEBUG mode to prevent breakpoint-related failures
-    private static final int TIMEOUT_SERVICE_ENABLE = DEBUG ? Integer.MAX_VALUE : 10000;
     private static final int TIMEOUT_SERVICE_PERFORM_SYNC = DEBUG ? Integer.MAX_VALUE : 5000;
 
     private static final HashMap<Class, WeakReference<InstrumentedAccessibilityService>>
@@ -55,8 +59,11 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
 
     private final Handler mHandler = new Handler();
     final Object mInterruptWaitObject = new Object();
+
     public boolean mOnInterruptCalled;
 
+    // Timeout disabled in #DEBUG mode to prevent breakpoint-related failures
+    public static final int TIMEOUT_SERVICE_ENABLE = DEBUG ? Integer.MAX_VALUE : 10000;
 
     @Override
     @CallSuper
@@ -65,6 +72,13 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
             sInstances.put(getClass(), new WeakReference<>(this));
             sInstances.notifyAll();
         }
+        Log.v(LOG_TAG, "onServiceConnected ["  + this + "]");
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.v(LOG_TAG, "onUnbind [" + this + "]");
+        return false;
     }
 
     @Override
@@ -72,6 +86,7 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         synchronized (sInstances) {
             sInstances.remove(getClass());
         }
+        Log.v(LOG_TAG, "onDestroy ["  + this + "]");
     }
 
     @Override
@@ -151,7 +166,7 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         }
     }
 
-    protected static <T extends InstrumentedAccessibilityService> T enableService(
+    public static <T extends InstrumentedAccessibilityService> T enableService(
             Instrumentation instrumentation, Class<T> clazz) {
         final String serviceName = clazz.getSimpleName();
         final Context context = instrumentation.getContext();
@@ -189,7 +204,7 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         throw new RuntimeException("Accessibility service " + serviceName + " not found");
     }
 
-    private static <T extends InstrumentedAccessibilityService> T getInstanceForClass(Class clazz,
+    public static <T extends InstrumentedAccessibilityService> T getInstanceForClass(Class clazz,
             long timeoutMillis) {
         final long timeoutTimeMillis = SystemClock.uptimeMillis() + timeoutMillis;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
@@ -218,32 +233,23 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         final Context context = instrumentation.getContext();
         final AccessibilityManager manager =
                 (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        // Updates to manager.isEnabled() aren't synchronized
+        final AtomicBoolean accessibilityEnabled = new AtomicBoolean(manager.isEnabled());
         manager.addAccessibilityStateChangeListener(b -> {
             synchronized (waitLockForA11yOff) {
                 waitLockForA11yOff.notifyAll();
+                accessibilityEnabled.set(b);
             }
         });
-
-        ShellCommandBuilder.create(instrumentation)
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        ShellCommandBuilder.create(uiAutomation)
                 .deleteSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
                 .deleteSecureSetting(Settings.Secure.ACCESSIBILITY_ENABLED)
                 .run();
+        uiAutomation.destroy();
 
-        final long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_SERVICE_ENABLE;
-        while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-            synchronized (waitLockForA11yOff) {
-                if (manager.getEnabledAccessibilityServiceList(
-                        AccessibilityServiceInfo.FEEDBACK_ALL_MASK).isEmpty()) {
-                    return;
-                }
-                try {
-                    waitLockForA11yOff.wait(timeoutTimeMillis - SystemClock.uptimeMillis());
-                } catch (InterruptedException e) {
-                    // Ignored; loop again
-                }
-            }
-        }
-        throw new RuntimeException("Disabling all accessibility services took longer than "
-                + TIMEOUT_SERVICE_ENABLE + "ms");
+        waitOn(waitLockForA11yOff, () -> !accessibilityEnabled.get(), TIMEOUT_SERVICE_ENABLE,
+                "Accessibility turns off");
     }
 }
