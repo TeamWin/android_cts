@@ -18,6 +18,7 @@ package android.security.cts;
 
 import com.android.compatibility.common.util.PropertyUtil;
 
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import junit.framework.TestCase;
@@ -49,6 +50,9 @@ public class EncryptionTest extends AndroidTestCase {
         return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL;
     }
 
+    // "getprop", used by PropertyUtil.getProperty(), is not executable
+    // to instant apps
+    @AppModeFull
     public void testEncryption() throws Exception {
         if (!isRequired() || deviceIsEncrypted()) {
             return;
