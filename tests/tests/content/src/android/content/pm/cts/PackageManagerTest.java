@@ -27,6 +27,7 @@ import static android.content.pm.PackageManager.GET_RECEIVERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -44,14 +45,18 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.content.pm.Signature;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This test is based on the declarations in AndroidManifest.xml. We create mock declarations
@@ -60,6 +65,8 @@ import java.util.List;
  */
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class PackageManagerTest extends AndroidTestCase {
+    private static final String TAG = "PackageManagerTest";
+
     private PackageManager mPackageManager;
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String CONTENT_PKG_NAME = "android.content.cts";
@@ -82,6 +89,8 @@ public class PackageManagerTest extends AndroidTestCase {
             "android.content.cts.permission.TEST_DYNAMIC";
     // There are 11 activities/activity-alias in AndroidManifest
     private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 11;
+
+    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
     @Override
     protected void setUp() throws Exception {
@@ -790,5 +799,124 @@ public class PackageManagerTest extends AndroidTestCase {
         PermissionInfo savedInfo = mPackageManager.getPermissionInfo(permissionInfo.name, 0);
         assertEquals(PACKAGE_NAME, savedInfo.packageName);
         assertEquals(PermissionInfo.PROTECTION_NORMAL, savedInfo.protectionLevel);
+    }
+
+    public void testGetPackageInfo_ApexSupported_ApexPackage_MatchesApex() throws Exception {
+        // This really should be a assumeTrue(isUpdatingApexSupported()), but JUnit3 doesn't support
+        // assumptions framework.
+        // TODO: change to assumeTrue after migrating tests to JUnit4.
+        if (!isUpdatingApexSupported()) {
+            Log.i(TAG, "Device doesn't support updating APEX");
+            return;
+        }
+        PackageInfo packageInfo = mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
+                PackageManager.MATCH_APEX);
+        assertShimApexInfoIsCorrect(packageInfo);
+    }
+
+    public void testGetPackageInfo_ApexSupported_ApexPackage_DoesNotMatchApex() {
+        // This really should be a assumeTrue(isUpdatingApexSupported()), but JUnit3 doesn't support
+        // assumptions framework.
+        // TODO: change to assumeTrue after migrating tests to JUnit4.
+        if (!isUpdatingApexSupported()) {
+            Log.i(TAG, "Device doesn't support updating APEX");
+            return;
+        }
+        try {
+            mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, 0 /* flags */);
+            fail("NameNotFoundException expected");
+        } catch (NameNotFoundException expected) {
+        }
+    }
+
+    public void testGetPackageInfo_ApexNotSupported_ApexPackage_MatchesApex() {
+        if (isUpdatingApexSupported()) {
+            Log.i(TAG, "Device supports updating APEX");
+            return;
+        }
+        try {
+            mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
+            fail("NameNotFoundException expected");
+        } catch (NameNotFoundException expected) {
+        }
+    }
+
+    public void testGetPackageInfo_ApexNotSupported_ApexPackage_DoesNotMatchApex() {
+        if (isUpdatingApexSupported()) {
+            Log.i(TAG, "Device supports updating APEX");
+            return;
+        }
+        try {
+            mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, 0);
+            fail("NameNotFoundException expected");
+        } catch (NameNotFoundException expected) {
+        }
+    }
+
+    public void testGetInstalledPackages_ApexSupported_MatchesApex() {
+        if (!isUpdatingApexSupported()) {
+            Log.i(TAG, "Device doesn't support updating APEX");
+            return;
+        }
+        List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
+                PackageManager.MATCH_APEX);
+        List<PackageInfo> shimApex = installedPackages.stream().filter(
+                packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
+                Collectors.toList());
+        assertWithMessage("More than one shim apex found").that(shimApex).hasSize(1);
+        assertShimApexInfoIsCorrect(shimApex.get(0));
+    }
+
+    public void testGetInstalledPackages_ApexSupported_DoesNotMatchApex() {
+        if (!isUpdatingApexSupported()) {
+            Log.i(TAG, "Device doesn't support updating APEX");
+            return;
+        }
+        List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(0);
+        List<PackageInfo> shimApex = installedPackages.stream().filter(
+                packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
+                Collectors.toList());
+        assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
+    }
+
+    public void testGetInstalledPackages_ApexNotSupported_MatchesApex() {
+        if (isUpdatingApexSupported()) {
+            Log.i(TAG, "Device supports updating APEX");
+            return;
+        }
+        List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
+                PackageManager.MATCH_APEX);
+        List<PackageInfo> shimApex = installedPackages.stream().filter(
+                packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
+                Collectors.toList());
+        assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
+    }
+
+    public void testGetInstalledPackages_ApexNotSupported_DoesNotMatchApex() {
+        if (isUpdatingApexSupported()) {
+            Log.i(TAG, "Device supports updating APEX");
+            return;
+        }
+        List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(0);
+        List<PackageInfo> shimApex = installedPackages.stream().filter(
+                packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
+                Collectors.toList());
+        assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
+    }
+
+    private boolean isUpdatingApexSupported() {
+        return SystemProperties.getBoolean("ro.apex.updatable", false);
+    }
+
+    private static void assertShimApexInfoIsCorrect(PackageInfo packageInfo) {
+        assertThat(packageInfo.packageName).isEqualTo(SHIM_APEX_PACKAGE_NAME);
+        assertThat(packageInfo.getLongVersionCode()).isEqualTo(1);
+        assertThat(packageInfo.isApex).isTrue();
+        assertThat(packageInfo.applicationInfo.sourceDir).isEqualTo(
+                "/system/apex/com.android.apex.cts.shim.apex");
+        // Verify that legacy mechanism for handling signatures is supported.
+        Signature[] pastSigningCertificates =
+                packageInfo.signingInfo.getSigningCertificateHistory();
+        assertThat(packageInfo.signatures).asList().containsExactly(pastSigningCertificates);
     }
 }
