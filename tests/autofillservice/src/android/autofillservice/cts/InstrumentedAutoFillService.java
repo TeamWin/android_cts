@@ -356,12 +356,12 @@ public class InstrumentedAutoFillService extends AutofillService {
      * CancellationSignal, FillCallback)} that can be asserted at the end of a test case.
      */
     public static final class FillRequest {
-        final AssistStructure structure;
-        final List<FillContext> contexts;
-        final Bundle data;
-        final CancellationSignal cancellationSignal;
-        final FillCallback callback;
-        final int flags;
+        public final AssistStructure structure;
+        public final List<FillContext> contexts;
+        public final Bundle data;
+        public final CancellationSignal cancellationSignal;
+        public final FillCallback callback;
+        public final int flags;
 
         private FillRequest(List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
@@ -655,15 +655,15 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 switch (mIdMode) {
                     case RESOURCE_ID:
-                        fillResponse = response.asFillResponse(
+                        fillResponse = response.asFillResponse(contexts,
                                 (id) -> Helper.findNodeByResourceId(contexts, id));
                         break;
                     case HTML_NAME:
-                        fillResponse = response.asFillResponse(
+                        fillResponse = response.asFillResponse(contexts,
                                 (name) -> Helper.findNodeByHtmlName(contexts, name));
                         break;
                     case HTML_NAME_OR_RESOURCE_ID:
-                        fillResponse = response.asFillResponse(
+                        fillResponse = response.asFillResponse(contexts,
                                 (id) -> Helper.findNodeByHtmlNameOrResourceId(contexts, id));
                         break;
                     default:

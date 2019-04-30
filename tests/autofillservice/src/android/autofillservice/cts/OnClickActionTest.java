@@ -25,6 +25,7 @@ import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescr
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_INPUT;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
@@ -33,6 +34,7 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
+import android.service.autofill.FillContext;
 import android.service.autofill.OnClickAction;
 import android.service.autofill.VisibilitySetterAction;
 import android.support.test.uiautomator.UiObject2;
@@ -70,36 +72,38 @@ public class OnClickActionTest
         enableService();
 
         // Set expectations.
-        final AutofillId usernameId = mActivity.mInput.getAutofillId();
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
-
-        final CharSequenceTransformation usernameTrans =
-                new CharSequenceTransformation.Builder(usernameId, MATCH_ALL, "$1").build();
-        final CharSequenceTransformation passwordTrans =
-                new CharSequenceTransformation.Builder(passwordId, MATCH_ALL, "$1").build();
-
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
-                .setCustomDescription(newCustomDescriptionWithHiddenFields()
-                        .addChild(R.id.username_plain, usernameTrans)
-                        .addChild(R.id.password_plain, passwordTrans)
-                        .addOnClickAction(R.id.show, new VisibilitySetterAction
-                                .Builder(R.id.hide, View.VISIBLE)
-                                .setVisibility(R.id.show, View.GONE)
-                                .setVisibility(R.id.username_plain, View.VISIBLE)
-                                .setVisibility(R.id.password_plain, View.VISIBLE)
-                                .setVisibility(R.id.username_masked, View.GONE)
-                                .setVisibility(R.id.password_masked, View.GONE)
-                                .build())
-                        .addOnClickAction(R.id.hide, new VisibilitySetterAction
-                                .Builder(R.id.show, View.VISIBLE)
-                                .setVisibility(R.id.hide, View.GONE)
-                                .setVisibility(R.id.username_masked, View.VISIBLE)
-                                .setVisibility(R.id.password_masked, View.VISIBLE)
-                                .setVisibility(R.id.username_plain, View.GONE)
-                                .setVisibility(R.id.password_plain, View.GONE)
-                                .build())
-                        .build())
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId usernameId = findAutofillIdByResourceId(context, ID_INPUT);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+
+                    final CharSequenceTransformation usernameTrans = new CharSequenceTransformation
+                            .Builder(usernameId, MATCH_ALL, "$1").build();
+                    final CharSequenceTransformation passwordTrans = new CharSequenceTransformation
+                            .Builder(passwordId, MATCH_ALL, "$1").build();
+                    builder.setCustomDescription(newCustomDescriptionWithHiddenFields()
+                            .addChild(R.id.username_plain, usernameTrans)
+                            .addChild(R.id.password_plain, passwordTrans)
+                            .addOnClickAction(R.id.show, new VisibilitySetterAction
+                                    .Builder(R.id.hide, View.VISIBLE)
+                                    .setVisibility(R.id.show, View.GONE)
+                                    .setVisibility(R.id.username_plain, View.VISIBLE)
+                                    .setVisibility(R.id.password_plain, View.VISIBLE)
+                                    .setVisibility(R.id.username_masked, View.GONE)
+                                    .setVisibility(R.id.password_masked, View.GONE)
+                                    .build())
+                            .addOnClickAction(R.id.hide, new VisibilitySetterAction
+                                    .Builder(R.id.show, View.VISIBLE)
+                                    .setVisibility(R.id.hide, View.GONE)
+                                    .setVisibility(R.id.username_masked, View.VISIBLE)
+                                    .setVisibility(R.id.password_masked, View.VISIBLE)
+                                    .setVisibility(R.id.username_plain, View.GONE)
+                                    .setVisibility(R.id.password_plain, View.GONE)
+                                    .build())
+                            .build());
+                })
                 .build());
 
         // Trigger autofill.

@@ -23,18 +23,20 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.service.autofill.CustomDescription;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
+import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
-import android.service.autofill.Sanitizer;
 import android.service.autofill.SaveInfo;
 import android.service.autofill.UserData;
-import android.service.autofill.Validator;
+import android.util.Log;
 import android.util.Pair;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,17 +63,16 @@ import java.util.regex.Pattern;
  */
 public final class CannedFillResponse {
 
+    private static final String TAG = CannedFillResponse.class.getSimpleName();
+
     private final ResponseType mResponseType;
     private final List<CannedDataset> mDatasets;
-    private final ArrayList<Pair<Sanitizer, AutofillId[]>> mSanitizers;
     private final String mFailureMessage;
     private final int mSaveType;
-    private final Validator mValidator;
     private final String[] mRequiredSavableIds;
     private final String[] mOptionalSavableIds;
     private final AutofillId[] mRequiredSavableAutofillIds;
     private final String mSaveDescription;
-    private final CustomDescription mCustomDescription;
     private final Bundle mExtras;
     private final RemoteViews mPresentation;
     private final RemoteViews mHeader;
@@ -85,21 +86,21 @@ public final class CannedFillResponse {
     private final int mFillResponseFlags;
     private final AutofillId mSaveTriggerId;
     private final long mDisableDuration;
-    private final AutofillId[] mFieldClassificationIds;
+    private final String[] mFieldClassificationIds;
     private final boolean mFieldClassificationIdsOverflow;
     private final SaveInfoDecorator mSaveInfoDecorator;
     private final UserData mUserData;
+    private final DoubleVisitor<List<FillContext>, FillResponse.Builder> mVisitor;
+    private DoubleVisitor<List<FillContext>, SaveInfo.Builder> mSaveInfoVisitor;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
         mDatasets = builder.mDatasets;
         mFailureMessage = builder.mFailureMessage;
-        mValidator = builder.mValidator;
         mRequiredSavableIds = builder.mRequiredSavableIds;
         mRequiredSavableAutofillIds = builder.mRequiredSavableAutofillIds;
         mOptionalSavableIds = builder.mOptionalSavableIds;
         mSaveDescription = builder.mSaveDescription;
-        mCustomDescription = builder.mCustomDescription;
         mSaveType = builder.mSaveType;
         mExtras = builder.mExtras;
         mPresentation = builder.mPresentation;
@@ -110,7 +111,6 @@ public final class CannedFillResponse {
         mIgnoredIds = builder.mIgnoredIds;
         mNegativeActionStyle = builder.mNegativeActionStyle;
         mNegativeActionListener = builder.mNegativeActionListener;
-        mSanitizers = builder.mSanitizers;
         mSaveInfoFlags = builder.mSaveInfoFlags;
         mFillResponseFlags = builder.mFillResponseFlags;
         mSaveTriggerId = builder.mSaveTriggerId;
@@ -119,6 +119,8 @@ public final class CannedFillResponse {
         mFieldClassificationIdsOverflow = builder.mFieldClassificationIdsOverflow;
         mSaveInfoDecorator = builder.mSaveInfoDecorator;
         mUserData = builder.mUserData;
+        mVisitor = builder.mVisitor;
+        mSaveInfoVisitor = builder.mSaveInfoVisitor;
     }
 
     /**
@@ -158,7 +160,8 @@ public final class CannedFillResponse {
      * Creates a new response, replacing the dataset field ids by the real ids from the assist
      * structure.
      */
-    public FillResponse asFillResponse(Function<String, ViewNode> nodeResolver) {
+    public FillResponse asFillResponse(@Nullable List<FillContext> contexts,
+            @NonNull Function<String, ViewNode> nodeResolver) {
         final FillResponse.Builder builder = new FillResponse.Builder()
                 .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
@@ -168,54 +171,49 @@ public final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
-        final SaveInfo.Builder saveInfo;
+        final SaveInfo.Builder saveInfoBuilder;
         if (mRequiredSavableIds != null || mOptionalSavableIds != null
                 || mRequiredSavableAutofillIds != null || mSaveInfoDecorator != null) {
             if (mRequiredSavableAutofillIds != null) {
-                saveInfo = new SaveInfo.Builder(mSaveType, mRequiredSavableAutofillIds);
+                saveInfoBuilder = new SaveInfo.Builder(mSaveType, mRequiredSavableAutofillIds);
             } else {
-                saveInfo = mRequiredSavableIds == null || mRequiredSavableIds.length == 0
+                saveInfoBuilder = mRequiredSavableIds == null || mRequiredSavableIds.length == 0
                         ? new SaveInfo.Builder(mSaveType)
                             : new SaveInfo.Builder(mSaveType,
                                     getAutofillIds(nodeResolver, mRequiredSavableIds));
             }
 
-            saveInfo.setFlags(mSaveInfoFlags);
+            saveInfoBuilder.setFlags(mSaveInfoFlags);
 
-            if (mValidator != null) {
-                saveInfo.setValidator(mValidator);
-            }
             if (mOptionalSavableIds != null) {
-                saveInfo.setOptionalIds(getAutofillIds(nodeResolver, mOptionalSavableIds));
+                saveInfoBuilder.setOptionalIds(getAutofillIds(nodeResolver, mOptionalSavableIds));
             }
             if (mSaveDescription != null) {
-                saveInfo.setDescription(mSaveDescription);
+                saveInfoBuilder.setDescription(mSaveDescription);
             }
             if (mNegativeActionListener != null) {
-                saveInfo.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
+                saveInfoBuilder.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
             }
-
-            if (mCustomDescription != null) {
-                saveInfo.setCustomDescription(mCustomDescription);
-            }
-
-            for (Pair<Sanitizer, AutofillId[]> sanitizer : mSanitizers) {
-                saveInfo.addSanitizer(sanitizer.first, sanitizer.second);
-            }
-
             if (mSaveTriggerId != null) {
-                saveInfo.setTriggerId(mSaveTriggerId);
+                saveInfoBuilder.setTriggerId(mSaveTriggerId);
             }
         } else if (mSaveInfoFlags != 0) {
-            saveInfo = new SaveInfo.Builder(mSaveType).setFlags(mSaveInfoFlags);
+            saveInfoBuilder = new SaveInfo.Builder(mSaveType).setFlags(mSaveInfoFlags);
         } else {
-            saveInfo = null;
+            saveInfoBuilder = null;
         }
-        if (saveInfo != null) {
+        if (saveInfoBuilder != null) {
+            // TODO: merge decorator and visitor
             if (mSaveInfoDecorator != null) {
-                mSaveInfoDecorator.decorate(saveInfo, nodeResolver);
+                mSaveInfoDecorator.decorate(saveInfoBuilder, nodeResolver);
             }
-            builder.setSaveInfo(saveInfo.build());
+            if (mSaveInfoVisitor != null) {
+                Log.d(TAG, "Visiting saveInfo " + saveInfoBuilder);
+                mSaveInfoVisitor.visit(contexts, saveInfoBuilder);
+            }
+            final SaveInfo saveInfo = saveInfoBuilder.build();
+            Log.d(TAG, "saveInfo:" + saveInfo);
+            builder.setSaveInfo(saveInfo);
         }
         if (mIgnoredIds != null) {
             builder.setIgnoredIds(getAutofillIds(nodeResolver, mIgnoredIds));
@@ -235,7 +233,8 @@ public final class CannedFillResponse {
             }
             builder.setFieldClassificationIds(fieldIds);
         } else if (mFieldClassificationIds != null) {
-            builder.setFieldClassificationIds(mFieldClassificationIds);
+            builder.setFieldClassificationIds(
+                    getAutofillIds(nodeResolver, mFieldClassificationIds));
         }
         if (mExtras != null) {
             builder.setClientState(mExtras);
@@ -249,7 +248,14 @@ public final class CannedFillResponse {
         if (mUserData != null) {
             builder.setUserData(mUserData);
         }
-        return builder.build();
+        if (mVisitor != null) {
+            Log.d(TAG, "Visiting " + builder);
+            mVisitor.visit(contexts, builder);
+        }
+
+        final FillResponse response = builder.build();
+        Log.v(TAG, "Response: " + response);
+        return response;
     }
 
     @Override
@@ -263,20 +269,20 @@ public final class CannedFillResponse {
                 + ", fillResponseFlags=" + mFillResponseFlags
                 + ", failureMessage=" + mFailureMessage
                 + ", saveDescription=" + mSaveDescription
-                + ", mCustomDescription=" + mCustomDescription
                 + ", hasPresentation=" + (mPresentation != null)
                 + ", hasHeader=" + (mHeader != null)
                 + ", hasFooter=" + (mFooter != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
                 + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
                 + ", ignoredIds=" + Arrays.toString(mIgnoredIds)
-                + ", sanitizers =" + mSanitizers
                 + ", saveTriggerId=" + mSaveTriggerId
                 + ", disableDuration=" + mDisableDuration
                 + ", fieldClassificationIds=" + Arrays.toString(mFieldClassificationIds)
                 + ", fieldClassificationIdsOverflow=" + mFieldClassificationIdsOverflow
                 + ", saveInfoDecorator=" + mSaveInfoDecorator
                 + ", userData=" + mUserData
+                + ", visitor=" + mVisitor
+                + ", saveInfoVisitor=" + mSaveInfoVisitor
                 + "]";
     }
 
@@ -290,15 +296,12 @@ public final class CannedFillResponse {
 
     public static final class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
-        private final ArrayList<Pair<Sanitizer, AutofillId[]>> mSanitizers = new ArrayList<>();
         private final ResponseType mResponseType;
         private String mFailureMessage;
-        private Validator mValidator;
         private String[] mRequiredSavableIds;
         private String[] mOptionalSavableIds;
         private AutofillId[] mRequiredSavableAutofillIds;
         private String mSaveDescription;
-        public CustomDescription mCustomDescription;
         public int mSaveType = -1;
         private Bundle mExtras;
         private RemoteViews mPresentation;
@@ -313,10 +316,12 @@ public final class CannedFillResponse {
         private int mFillResponseFlags;
         private AutofillId mSaveTriggerId;
         private long mDisableDuration;
-        private AutofillId[] mFieldClassificationIds;
+        private String[] mFieldClassificationIds;
         private boolean mFieldClassificationIdsOverflow;
         private SaveInfoDecorator mSaveInfoDecorator;
         private UserData mUserData;
+        private DoubleVisitor<List<FillContext>, FillResponse.Builder> mVisitor;
+        private DoubleVisitor<List<FillContext>, SaveInfo.Builder> mSaveInfoVisitor;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -333,28 +338,11 @@ public final class CannedFillResponse {
         }
 
         /**
-         * Sets the validator for this request
-         */
-        public Builder setValidator(Validator validator) {
-            mValidator = validator;
-            return this;
-        }
-
-        /**
          * Sets the required savable ids based on their {@code resourceId}.
          */
         public Builder setRequiredSavableIds(int type, String... ids) {
             mSaveType = type;
             mRequiredSavableIds = ids;
-            return this;
-        }
-
-        /**
-         * Sets the required savable ids based on their {@code autofillId}.
-         */
-        public Builder setRequiredSavableAutofillIds(int type, AutofillId... ids) {
-            mSaveType = type;
-            mRequiredSavableAutofillIds = ids;
             return this;
         }
 
@@ -381,14 +369,6 @@ public final class CannedFillResponse {
          */
         public Builder setSaveDescription(String description) {
             mSaveDescription = description;
-            return this;
-        }
-
-        /**
-         * Sets the description passed to the {@link SaveInfo}.
-         */
-        public Builder setCustomDescription(CustomDescription description) {
-            mCustomDescription = description;
             return this;
         }
 
@@ -435,14 +415,6 @@ public final class CannedFillResponse {
             return this;
         }
 
-        /**
-         * Adds a save sanitizer.
-         */
-        public Builder addSanitizer(Sanitizer sanitizer, AutofillId... ids) {
-            mSanitizers.add(new Pair<>(sanitizer, ids));
-            return this;
-        }
-
         public CannedFillResponse build() {
             return new CannedFillResponse(this);
         }
@@ -474,7 +446,7 @@ public final class CannedFillResponse {
         /**
          * Sets the ids used for field classification.
          */
-        public Builder setFieldClassificationIds(AutofillId... ids) {
+        public Builder setFieldClassificationIds(String... ids) {
             assertWithMessage("already set").that(mFieldClassificationIds).isNull();
             mFieldClassificationIds = ids;
             return this;
@@ -516,6 +488,30 @@ public final class CannedFillResponse {
             mUserData = userData;
             return this;
         }
+
+        /**
+         * Sets a generic visitor for the "real" request and response.
+         *
+         * <p>Typically used in cases where the test need to infer data from the request to build
+         * the response.
+         */
+        public Builder setVisitor(
+                @NonNull DoubleVisitor<List<FillContext>, FillResponse.Builder> visitor) {
+            mVisitor = visitor;
+            return this;
+        }
+
+        /**
+         * Sets a generic visitor for the "real" request and save info.
+         *
+         * <p>Typically used in cases where the test need to infer data from the request to build
+         * the response.
+         */
+        public Builder setSaveInfoVisitor(
+                @NonNull DoubleVisitor<List<FillContext>, SaveInfo.Builder> visitor) {
+            mSaveInfoVisitor = visitor;
+            return this;
+        }
     }
 
     /**
@@ -535,8 +531,6 @@ public final class CannedFillResponse {
      */
     public static class CannedDataset {
         private final Map<String, AutofillValue> mFieldValues;
-        private final Map<AutofillId, AutofillValue> mFieldValuesById;
-        private final Map<AutofillId, RemoteViews> mFieldPresentationsById;
         private final Map<String, RemoteViews> mFieldPresentations;
         private final Map<String, Pair<Boolean, Pattern>> mFieldFilters;
         private final RemoteViews mPresentation;
@@ -545,8 +539,6 @@ public final class CannedFillResponse {
 
         private CannedDataset(Builder builder) {
             mFieldValues = builder.mFieldValues;
-            mFieldValuesById = builder.mFieldValuesById;
-            mFieldPresentationsById = builder.mFieldPresentationsById;
             mFieldPresentations = builder.mFieldPresentations;
             mFieldFilters = builder.mFieldFilters;
             mPresentation = builder.mPresentation;
@@ -588,20 +580,6 @@ public final class CannedFillResponse {
                     }
                 }
             }
-            if (mFieldValuesById != null) {
-                // NOTE: filter is not yet supported when calling methods that explicitly pass
-                // autofill id
-                for (Map.Entry<AutofillId, AutofillValue> entry : mFieldValuesById.entrySet()) {
-                    final AutofillId autofillId = entry.getKey();
-                    final AutofillValue value = entry.getValue();
-                    final RemoteViews presentation = mFieldPresentationsById.get(autofillId);
-                    if (presentation != null) {
-                        builder.setValue(autofillId, value, presentation);
-                    } else {
-                        builder.setValue(autofillId, value);
-                    }
-                }
-            }
             builder.setId(mId).setAuthentication(mAuthentication);
             return builder.build();
         }
@@ -610,18 +588,14 @@ public final class CannedFillResponse {
         public String toString() {
             return "CannedDataset " + mId + " : [hasPresentation=" + (mPresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
-                    + ", fieldPresentationsById=" + (mFieldPresentationsById)
                     + ", hasAuthentication=" + (mAuthentication != null)
                     + ", fieldValues=" + mFieldValues
-                    + ", fieldValuesById=" + mFieldValuesById
                     + ", fieldFilters=" + mFieldFilters + "]";
         }
 
         public static class Builder {
             private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
-            private final Map<AutofillId, AutofillValue> mFieldValuesById = new HashMap<>();
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
-            private final Map<AutofillId, RemoteViews> mFieldPresentationsById = new HashMap<>();
             private final Map<String, Pair<Boolean, Pattern>> mFieldFilters = new HashMap<>();
 
             private RemoteViews mPresentation;
@@ -708,21 +682,6 @@ public final class CannedFillResponse {
             }
 
             /**
-             * Sets the canned value of a date field based on its {@code autofillId}.
-             */
-            public Builder setField(AutofillId autofillId, AutofillValue value) {
-                mFieldValuesById.put(autofillId, value);
-                return this;
-            }
-
-            /**
-             * Sets the canned value of a date field based on its {@code autofillId}.
-             */
-            public Builder setField(AutofillId autofillId, String text) {
-                return setField(autofillId, AutofillValue.forText(text));
-            }
-
-            /**
              * Sets the canned value of a date field based on its {@code id}.
              *
              * <p>The meaning of the id is defined by the object using the canned dataset.
@@ -746,15 +705,6 @@ public final class CannedFillResponse {
             public Builder setField(String id, String text, RemoteViews presentation) {
                 setField(id, text);
                 mFieldPresentations.put(id, presentation);
-                return this;
-            }
-
-            /**
-             * Sets the canned value of a date field based on its {@code autofillId}.
-             */
-            public Builder setField(AutofillId autofillId, String text, RemoteViews presentation) {
-                setField(autofillId, AutofillValue.forText(text));
-                mFieldPresentationsById.put(autofillId, presentation);
                 return this;
             }
 

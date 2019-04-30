@@ -29,5 +29,5 @@ package android.autofillservice.cts;
 // TODO: move to common code
 public interface Visitor<T> {
 
-    void visit(T view);
+    void visit(T object);
 }
