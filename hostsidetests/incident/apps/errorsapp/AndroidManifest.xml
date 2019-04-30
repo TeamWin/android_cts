@@ -24,10 +24,10 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
-
-        <activity android:name=".ANRActivity" android:label="ANR Test Activity" android:process=":TestProcess" />
-        <activity android:name=".ExceptionActivity" android:label="Exception Test Activity" android:process=":TestProcess" />
-        <activity android:name=".NativeActivity" android:label="Native Crash Test Activity" android:process=":TestProcess" />
+        <activity android:name=".ANRActivity" android:process=":TestProcess" />
+        <activity android:name=".ExceptionActivity" android:process=":TestProcess" />
+        <activity android:name=".NativeActivity" android:process=":TestProcess" />
+        <receiver android:name=".Receiver" android:process=":TestProcess" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

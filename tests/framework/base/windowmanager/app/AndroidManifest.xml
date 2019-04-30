@@ -61,7 +61,7 @@
                 android:resizeableActivity="true"
                 android:allowEmbedded="true"
                 android:exported="true"
-                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
         />
         <activity android:name=".NonResizeableActivity"
                 android:resizeableActivity="false"
@@ -84,7 +84,7 @@
         />
         <activity android:name=".NoRelaunchActivity"
                 android:resizeableActivity="true"
-                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale|colorMode|density|touchscreen"
                 android:exported="true"
                 android:taskAffinity="nobody.but.NoRelaunchActivity"
         />
