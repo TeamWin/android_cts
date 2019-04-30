@@ -19,6 +19,8 @@ package android.media.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 import android.content.pm.PackageManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -31,6 +33,7 @@ import android.media.MediaFormat;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Size;
 
 import androidx.test.filters.SmallTest;
@@ -99,6 +102,10 @@ public class MediaCodecListTest extends AndroidTestCase {
             super(mime, isEncoder, MediaFormat.createVideoFormat(
                     mime, 176 /* width */, 144 /* height */));
         }
+    }
+
+    public static boolean hasExpandedCodecInfo() {
+        return PropertyUtil.isVendorApiLevelNewerThan(29);
     }
 
     public static void testMediaCodecXmlFileExist() {
@@ -712,15 +719,82 @@ public class MediaCodecListTest extends AndroidTestCase {
                    .covers(new VideoCapabilities.PerformancePoint(1280, 720, 68)));
     }
 
-    public void verifyPerformancePoints(
+    private void verifyPerformancePoints(
             MediaCodecInfo info, String mediaType,
             List<VideoCapabilities.PerformancePoint> points) {
+        List<VideoCapabilities.PerformancePoint> standardPoints = Arrays.asList(
+                VideoCapabilities.PerformancePoint.UHD_240,
+                VideoCapabilities.PerformancePoint.UHD_200,
+                VideoCapabilities.PerformancePoint.UHD_120,
+                VideoCapabilities.PerformancePoint.UHD_100,
+                VideoCapabilities.PerformancePoint.UHD_60,
+                VideoCapabilities.PerformancePoint.UHD_50,
+                VideoCapabilities.PerformancePoint.UHD_30,
+                VideoCapabilities.PerformancePoint.UHD_25,
+                VideoCapabilities.PerformancePoint.UHD_24,
+                VideoCapabilities.PerformancePoint.FHD_240,
+                VideoCapabilities.PerformancePoint.FHD_200,
+                VideoCapabilities.PerformancePoint.FHD_120,
+                VideoCapabilities.PerformancePoint.FHD_100,
+                VideoCapabilities.PerformancePoint.FHD_60,
+                VideoCapabilities.PerformancePoint.FHD_50,
+                VideoCapabilities.PerformancePoint.FHD_30,
+                VideoCapabilities.PerformancePoint.FHD_25,
+                VideoCapabilities.PerformancePoint.FHD_24,
+                VideoCapabilities.PerformancePoint.HD_240,
+                VideoCapabilities.PerformancePoint.HD_200,
+                VideoCapabilities.PerformancePoint.HD_120,
+                VideoCapabilities.PerformancePoint.HD_100,
+                VideoCapabilities.PerformancePoint.HD_60,
+                VideoCapabilities.PerformancePoint.HD_50,
+                VideoCapabilities.PerformancePoint.HD_30,
+                VideoCapabilities.PerformancePoint.HD_25,
+                VideoCapabilities.PerformancePoint.HD_24,
+                VideoCapabilities.PerformancePoint.SD_60,
+                VideoCapabilities.PerformancePoint.SD_50,
+                VideoCapabilities.PerformancePoint.SD_48,
+                VideoCapabilities.PerformancePoint.SD_30,
+                VideoCapabilities.PerformancePoint.SD_25,
+                VideoCapabilities.PerformancePoint.SD_24);
+
         // Components must list all supported standard performance points unless those performance
         // points are covered by other listed standard performance points.
-
-
-        // TODO: verify performance points listed conform to the requirements ... once those
-        // requirements are agreed upon.
+        for (VideoCapabilities.PerformancePoint pp : points) {
+            if (standardPoints.contains(pp)) {
+                // standard points must not be covered by other listed standard points
+                for (VideoCapabilities.PerformancePoint pp2 : points) {
+                    if (!standardPoints.contains(pp2)) {
+                        continue;
+                    }
+                    // using object equality to determine otherness
+                    assertFalse("standard " + pp2 + " for " + info.getCanonicalName()
+                            + " for media type " + mediaType + " covers standard " + pp,
+                            pp2 != pp && pp2.covers(pp));
+                }
+            } else {
+                // non-standard points must list all covered standard point not covered by another
+                // listed standard point
+                for (VideoCapabilities.PerformancePoint spp : standardPoints) {
+                    if (pp.covers(spp)) {
+                        // Must be either listed or covered by another standard. Since a point
+                        // covers itself, it is sufficient to check that it is covered by a listed
+                        // standard point.
+                        boolean covered = false;
+                        for (VideoCapabilities.PerformancePoint pp2 : points) {
+                            // using object equality to determine otherness
+                            if (standardPoints.contains(pp2) && pp2.covers(spp)) {
+                                covered = true;
+                                break;
+                            }
+                        }
+                        assertTrue(pp + " for " + info.getCanonicalName() + " for media type "
+                                + mediaType + " covers standard " + spp
+                                + " that is not covered by a listed standard point",
+                                covered);
+                    }
+                }
+            }
+        }
     }
 
     public void testAllHardwareAcceleratedVideoCodecsPublishPerformancePoints() {
@@ -737,20 +811,46 @@ public class MediaCodecListTest extends AndroidTestCase {
             FEATURE_TunneledPlayback,
         };
 
+        Set<Pair<String, Integer>> describedTypes = new HashSet<>(); // mediaType - featureIndex
+        Set<Pair<String, Integer>> supportedTypes = new HashSet<>(); // mediaType - featureIndex
+
+        // Once any hardware codec performance is described, we assume that all hardware codecs
+        // must be described, even if we cannot confirm expanded codec info support.
+        boolean hasPerformancePoints = hasExpandedCodecInfo();
+        if (!hasPerformancePoints) {
+            for (MediaCodecInfo info : mAllInfos) {
+                String[] types = info.getSupportedTypes();
+                for (int j = 0; j < types.length; ++j) {
+                    String mediaType = types[j];
+                    CodecCapabilities cap = info.getCapabilitiesForType(mediaType);
+                    VideoCapabilities videoCap = cap.getVideoCapabilities();
+                    if (videoCap != null
+                            && videoCap.getSupportedPerformancePoints() != null) {
+                        hasPerformancePoints = true;
+                        break;
+                    }
+                }
+                if (hasPerformancePoints) {
+                    break;
+                }
+            }
+        }
+
         for (MediaCodecInfo info : mAllInfos) {
             String[] types = info.getSupportedTypes();
             for (int j = 0; j < types.length; ++j) {
-                CodecCapabilities cap = info.getCapabilitiesForType(types[j]);
+                String mediaType = types[j];
+                CodecCapabilities cap = info.getCapabilitiesForType(mediaType);
                 MediaFormat defaultFormat = cap.getDefaultFormat();
                 VideoCapabilities videoCap = cap.getVideoCapabilities();
 
                 Log.d(TAG, "codec: " + info.getName() + " canonical: " + info.getCanonicalName()
-                        + " type: " + types[j]);
+                        + " type: " + mediaType);
 
                 if (videoCap == null) {
-                    assertFalse("no video capabilities for video media type " + types[j] + " of "
+                    assertFalse("no video capabilities for video media type " + mediaType + " of "
                                     + info.getName(),
-                                types[j].toLowerCase().startsWith("video/"));
+                                mediaType.toLowerCase().startsWith("video/"));
                     continue;
                 }
 
@@ -775,16 +875,29 @@ public class MediaCodecListTest extends AndroidTestCase {
                         supportedFeatureConfigs.add(cfg_ix);
                     }
                 }
-                int[] supportedFeatureConfigsArray =
-                    supportedFeatureConfigs.stream().mapToInt(Integer::intValue).toArray();
 
-                Log.d(TAG, "codec supports configs "
-                        + Arrays.toString(supportedFeatureConfigsArray));
+                Log.d(TAG, "codec supports configs " + Arrays.toString(
+                        supportedFeatureConfigs.stream().mapToInt(Integer::intValue).toArray()));
+                boolean isMandatory = mandatoryTypes.contains(mediaType);
+                if (info.isHardwareAccelerated()) {
+                    for (Integer cfg_ix : supportedFeatureConfigs) {
+                        Pair<String, Integer> type = Pair.create(mediaType, cfg_ix);
+                        if (hasPerformancePoints && isMandatory) {
+                            supportedTypes.add(type);
+                        }
+                        if (pps != null && pps.size() > 0) {
+                            describedTypes.add(type);
+                        }
+                    }
+                }
+
                 if (pps == null) {
-                    // Hardware-accelerated video components must publish performance points,
-                    // even if it is an empty list.
-                    assertFalse("HW-accelerated codec '" + info.getName()
-                            + "' must publish performance points", info.isHardwareAccelerated());
+                    if (hasExpandedCodecInfo()) {
+                        // Hardware-accelerated video components must publish performance points,
+                        // even if it is an empty list.
+                        assertFalse("HW-accelerated codec '" + info.getName()
+                                + "' must publish performance points", info.isHardwareAccelerated());
+                    }
 
                     continue;
                 }
@@ -792,7 +905,7 @@ public class MediaCodecListTest extends AndroidTestCase {
                 // At least one hardware accelerated codec for each media type (including secure
                 // codecs) must publish valid performance points for AVC/VP8/VP9/HEVC/AV1.
                 if (pps.size() == 0) {
-                    if (mandatoryTypes.contains(types[j])) {
+                    if (isMandatory) {
                         Log.d(TAG, "empty performance points list published by HW accelerated" +
                                    "component " + info.getName() + " for " + types[j]);
                     }
@@ -800,8 +913,15 @@ public class MediaCodecListTest extends AndroidTestCase {
                     for (VideoCapabilities.PerformancePoint p : pps) {
                         Log.d(TAG, "got performance point " + p);
                     }
+                    verifyPerformancePoints(info, types[j], pps);
                 }
             }
+        }
+
+        for (Pair<String, Integer> type : supportedTypes) {
+            assertTrue("codecs for media type " + type.first + " in configuration " + type.second
+                    + " do not have substantial performance point data",
+                    describedTypes.contains(type));
         }
     }
 }
