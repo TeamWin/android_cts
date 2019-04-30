@@ -31,7 +31,7 @@ public class InMemoryDexClassLoaderFactory extends AppComponentFactory {
         try {
             // InMemoryDexClassLoader will not load a zip file. Must extract
             // dex files into ByteBuffers.
-            ZipFile zipFile = new ZipFile(AppComponentFactoryTest.SECONDARY_APK_PATH);
+            ZipFile zipFile = new ZipFile(AppComponentFactoryTest.writeSecondaryApkToDisk(aInfo));
 
             ArrayList<ByteBuffer> dexFiles = new ArrayList<>();
             for (int dexId = 0;; dexId++) {
@@ -68,6 +68,5 @@ public class InMemoryDexClassLoaderFactory extends AppComponentFactory {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-
     }
 }
