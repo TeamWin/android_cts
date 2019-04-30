@@ -29,6 +29,7 @@ import static android.permission.cts.PermissionUtils.getPermissionFlags;
 import static android.permission.cts.PermissionUtils.getPermissions;
 import static android.permission.cts.PermissionUtils.grantPermission;
 import static android.permission.cts.PermissionUtils.isGranted;
+import static android.permission.cts.PermissionUtils.revokePermission;
 import static android.permission.cts.PermissionUtils.setAppOp;
 import static android.permission.cts.PermissionUtils.setPermissionFlags;
 import static android.permission.cts.PermissionUtils.uninstallApp;
@@ -78,34 +79,13 @@ public class SplitPermissionTest {
             TMP_DIR + "CtsAppThatRequestsLocationPermission22.apk";
     private static final String APK_LOCATION_BACKGROUND_29 =
             TMP_DIR + "CtsAppThatRequestsLocationAndBackgroundPermission29.apk";
+    private static final String APK_SHARED_UID_LOCATION_29 =
+            TMP_DIR + "CtsAppWithSharedUidThatRequestsLocationPermission29.apk";
+    private static final String APK_SHARED_UID_LOCATION_28 =
+            TMP_DIR + "CtsAppWithSharedUidThatRequestsLocationPermission28.apk";
 
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
-
-    /**
-     * Revoke a permission from an app.
-     *
-     * <p>This correctly handles pre-M apps by setting the app-ops.
-     * <p>This also correctly handles the location background permission, but does not handle any
-     * other background permission
-     *
-     * @param packageName The app that should have the permission revoked
-     * @param permission The permission to revoke
-     */
-    private void revokePermission(@NonNull String packageName, @NonNull String permission)
-            throws Exception {
-        sUiAutomation.revokeRuntimePermission(packageName, permission);
-
-        if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
-            // The app-op for background location is encoded into the mode of the foreground
-            // location
-            if (isGranted(packageName, ACCESS_COARSE_LOCATION)) {
-                setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
-            }
-        } else {
-            setAppOp(packageName, permission, MODE_IGNORED);
-        }
-    }
 
     /**
      * Assert that {@link #APP_PKG} requests a certain permission.
@@ -272,6 +252,22 @@ public class SplitPermissionTest {
         grantPermission(APP_PKG, ACCESS_COARSE_LOCATION);
 
         install(APK_LOCATION_28);
+
+        assertPermissionGranted(ACCESS_BACKGROUND_LOCATION);
+    }
+
+    /**
+     * If a permission was granted before the split happens, the new permission should inherit the
+     * granted state.
+     *
+     * <p>App using a shared uid
+     */
+    @Test
+    public void inheritGrantedPermissionStateSharedUidApp() throws Exception {
+        install(APK_SHARED_UID_LOCATION_29);
+        grantPermission(APP_PKG, ACCESS_COARSE_LOCATION);
+
+        install(APK_SHARED_UID_LOCATION_28);
 
         assertPermissionGranted(ACCESS_BACKGROUND_LOCATION);
     }

@@ -39,6 +39,7 @@ import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
@@ -128,8 +129,10 @@ public class PermissionUtils {
      *
      * @return {@code true} iff the permission is granted
      */
-    static boolean isPermissionGranted(@NonNull String packageName, @NonNull String permission) {
-        return sContext.getPackageManager().checkPermission(permission, packageName)
+    static boolean isPermissionGranted(@NonNull String packageName, @NonNull String permission)
+            throws Exception {
+        return sContext.checkPermission(permission, Process.myPid(),
+                sContext.getPackageManager().getPackageUid(packageName, 0))
                 == PERMISSION_GRANTED;
     }
 
@@ -170,7 +173,8 @@ public class PermissionUtils {
      * @param packageName The app that should have the permission granted
      * @param permission The permission to grant
      */
-    static void grantPermission(@NonNull String packageName, @NonNull String permission) {
+    static void grantPermission(@NonNull String packageName, @NonNull String permission)
+            throws Exception {
         sUiAutomation.grantRuntimePermission(packageName, permission);
 
         if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
@@ -190,6 +194,31 @@ public class PermissionUtils {
             }
         } else {
             setAppOp(packageName, permission, MODE_ALLOWED);
+        }
+    }
+
+    /**
+     * Revoke a permission from an app.
+     *
+     * <p>This correctly handles pre-M apps by setting the app-ops.
+     * <p>This also correctly handles the location background permission, but does not handle any
+     * other background permission
+     *
+     * @param packageName The app that should have the permission revoked
+     * @param permission The permission to revoke
+     */
+    static void revokePermission(@NonNull String packageName, @NonNull String permission)
+            throws Exception {
+        sUiAutomation.revokeRuntimePermission(packageName, permission);
+
+        if (permission.equals(ACCESS_BACKGROUND_LOCATION)) {
+            // The app-op for background location is encoded into the mode of the foreground
+            // location
+            if (isGranted(packageName, ACCESS_COARSE_LOCATION)) {
+                setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
+            }
+        } else {
+            setAppOp(packageName, permission, MODE_IGNORED);
         }
     }
 
