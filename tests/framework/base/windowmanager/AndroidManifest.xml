@@ -156,6 +156,12 @@
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity2" />
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper" />
 
+        <activity android:name="android.server.wm.MultiDisplayClientTests$ClientTestActivity" />
+        <activity android:name="android.server.wm.MultiDisplayClientTests$NoRelaunchActivity"
+                  android:resizeableActivity="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
+        />
+
         <activity android:name="android.server.wm.KeyguardLockedTests$ShowWhenLockedImeActivity" />
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$StandardActivity"
