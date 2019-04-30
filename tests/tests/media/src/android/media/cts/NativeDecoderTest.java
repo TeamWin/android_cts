@@ -133,6 +133,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testExtractor(R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz);
         testExtractor(R.raw.video_1280x720_webm_av1_2000kbps_30fps_vorbis_stereo_128kbps_48000hz);
         testExtractor(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz);
+        testExtractor(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz);
         testExtractor(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
 
         CtsTestServer foo = new CtsTestServer(mContext);
@@ -332,6 +333,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             testDecoder(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz) +
             testDecoder(R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz) +
             testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz) +
+            testDecoder(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz);
             testDecoder(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
@@ -563,6 +565,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
                     R.raw.video_640x360_webm_av1_470kbps_30fps_vorbis_stereo_128kbps_48000hz) +
             testVideoPlayback(
                     R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz) +
+            testVideoPlayback(
+                    R.raw.video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz) +
             testVideoPlayback(
                     R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
         if (testsRun == 0) {
