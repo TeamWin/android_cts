@@ -62,6 +62,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
@@ -127,6 +129,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * Tests that wallpaper shows on secondary displays.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testWallpaperShowOnSecondaryDisplays() throws Exception {
         try (final ChangeWallpaperSession wallpaperSession = new ChangeWallpaperSession();
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -229,6 +232,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * supports system decoration.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Wait navigation bar show on default display and record the states.
@@ -377,6 +381,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     // IME related tests
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testImeWindowCanSwitchToDifferentDisplays() throws Exception {
         try (final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
                 TestActivitySession<>();
@@ -427,6 +432,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testImeApiForBug118341760() throws Exception {
         final long TIMEOUT_START_INPUT = TimeUnit.SECONDS.toMillis(5);
 
@@ -466,6 +472,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testImeWindowCanSwitchWhenTopFocusedDisplayChange() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final TestActivitySession<ImeTestActivity> imeTestActivitySession = new

@@ -31,6 +31,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
@@ -46,6 +47,7 @@ import java.util.Arrays;
 public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestBase {
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testSingleLaunch() throws Exception {
         assumeTrue(supportsSecureLock());
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
@@ -59,6 +61,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testKeyguardShowHide() throws Exception {
         assumeTrue(supportsSecureLock());
 
@@ -81,6 +84,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testKeyguardShowHideOverSplitScreen() throws Exception {
         assumeTrue(supportsSecureLock());
         assumeTrue(supportsSplitScreenMultiWindow());
@@ -120,6 +124,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testKeyguardShowHideOverPip() throws Exception {
         if (!supportsPip()) {
             // Skipping test: no Picture-In-Picture support

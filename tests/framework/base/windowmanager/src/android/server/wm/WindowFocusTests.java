@@ -133,6 +133,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can receive display-unspecified cancel events.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testKeyReceiving() throws InterruptedException {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
@@ -188,6 +189,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if a display targeted by a key event can be moved to top in a single-focus system.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
 
