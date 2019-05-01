@@ -1,10 +1,16 @@
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+
+import android.stats.devicepolicy.EventId;
+
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * In the test, managed profile and secondary user are created. We then verify
@@ -86,12 +92,50 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         verifyCrossProfileAppsApi(mProfileId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
+    public void testStartMainActivity_logged() throws Exception {
+        assertMetricsLogged(
+                getDevice(),
+                () -> {
+                    runDeviceTest(
+                            mProfileId,
+                            mPrimaryUserId,
+                            TARGET_USER_TEST_CLASS,
+                            "testStartMainActivity_noAsserts");
+                },
+                new DevicePolicyEventWrapper
+                        .Builder(EventId.CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE)
+                        .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
+                        .build());
+    }
+
+    public void testGetTargetUserProfiles_logged() throws Exception {
+        assertMetricsLogged(
+                getDevice(),
+                () -> {
+                    runDeviceTest(
+                            mProfileId,
+                            mPrimaryUserId,
+                            TARGET_USER_TEST_CLASS,
+                            "testGetTargetUserProfiles_noAsserts");
+                },
+                new DevicePolicyEventWrapper
+                        .Builder(EventId.CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE)
+                        .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
+                        .build());
+    }
+
     private void verifyCrossProfileAppsApi(int fromUserId, int targetUserId, String testClass)
+            throws Exception {
+        runDeviceTest(fromUserId, targetUserId, testClass, /* testMethod= */ null);
+    }
+
+    private void runDeviceTest(
+            int fromUserId, int targetUserId, String testClass, @Nullable String testMethod)
             throws Exception {
         runDeviceTestsAsUser(
                 TEST_PACKAGE,
                 testClass,
-                null,
+                testMethod,
                 fromUserId,
                 createTargetUserParam(targetUserId));
     }
