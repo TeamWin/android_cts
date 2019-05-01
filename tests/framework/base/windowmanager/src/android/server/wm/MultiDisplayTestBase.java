@@ -58,10 +58,14 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
 import android.util.Size;
+import android.util.SparseBooleanArray;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -252,12 +256,14 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mPresentationDisplay = false;
         private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
+        // Used to restore the supportSystemDecors state of the simulate displays.
+        private final SparseBooleanArray mSimulateSystemDecors = new SparseBooleanArray();
         private boolean mMustBeCreated = true;
         private Size mSimulationDisplaySize = new Size(1024 /* width */, 768 /* height */);
 
         private boolean mVirtualDisplayCreated = false;
         private final OverlayDisplayDevicesSession mOverlayDisplayDeviceSession =
-                new OverlayDisplayDevicesSession();
+                new OverlayDisplayDevicesSession(mContext);
 
         VirtualDisplaySession setDensityDpi(int densityDpi) {
             mDensityDpi = densityDpi;
@@ -335,6 +341,15 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         @Override
         public void close() throws Exception {
+            if (mSimulateSystemDecors.size() > 0) {
+                final WindowManager wm = mContext.getSystemService(WindowManager.class);
+                for (int index = mSimulateSystemDecors.size() - 1; index >= 0; index--) {
+                    final int displayId = mSimulateSystemDecors.keyAt(index);
+                    final boolean shouldShow = mSimulateSystemDecors.valueAt(index);
+                    SystemUtil.runWithShellPermissionIdentity(() ->
+                        wm.setShouldShowSystemDecors(displayId, shouldShow));
+                }
+            }
             mOverlayDisplayDeviceSession.close();
             if (mVirtualDisplayCreated) {
                 destroyVirtualDisplays();
@@ -354,8 +369,15 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
             // Create virtual display with custom density dpi and specified size.
             mOverlayDisplayDeviceSession.set(mSimulationDisplaySize + "/" + mDensityDpi);
+            final List<ActivityDisplay> newDisplays = assertAndGetNewDisplays(1, originalDs);
 
-            return assertAndGetNewDisplays(1, originalDs);
+            if (mShowSystemDecorations) {
+                for (ActivityDisplay display : newDisplays) {
+                    mOverlayDisplayDeviceSession.addAndConfigDisplayState(display,
+                            true /* requestShowSysDecors */, true /* requestShowIme */);
+                }
+            }
+            return newDisplays;
         }
 
         /**
@@ -522,10 +544,60 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     /** Helper class to save, set, and restore overlay_display_devices preference. */
     private static class OverlayDisplayDevicesSession extends SettingsSession<String> {
-        OverlayDisplayDevicesSession() {
+        private final List<OverlayDisplayState> mDisplayStates = new ArrayList<>();
+        private final WindowManager mWm;
+
+        OverlayDisplayDevicesSession(Context context) {
             super(Settings.Global.getUriFor(Settings.Global.OVERLAY_DISPLAY_DEVICES),
                     Settings.Global::getString,
                     Settings.Global::putString);
+            mWm = context.getSystemService(WindowManager.class);
+        }
+
+        void addAndConfigDisplayState(ActivityDisplay display, boolean requestShowSysDecors,
+                boolean requestShowIme) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                final boolean showSystemDecors = mWm.shouldShowSystemDecors(display.mId);
+                final boolean showIme = mWm.shouldShowIme(display.mId);
+                mDisplayStates.add(new OverlayDisplayState(display.mId, showSystemDecors, showIme));
+                if (requestShowSysDecors != showSystemDecors) {
+                    mWm.setShouldShowSystemDecors(display.mId, requestShowSysDecors);
+                    TestUtils.waitUntil("Waiting for display show system decors",
+                            5 /* timeoutSecond */,
+                            () -> mWm.shouldShowSystemDecors(display.mId));
+                }
+                if (requestShowIme != showIme) {
+                    mWm.setShouldShowIme(display.mId, requestShowIme);
+                    TestUtils.waitUntil("Waiting for display show Ime",
+                            5 /* timeoutSecond */,
+                            () -> mWm.shouldShowIme(display.mId));
+                }
+            });
+        }
+
+        private void restoreDisplayStates() {
+            mDisplayStates.forEach(state -> SystemUtil.runWithShellPermissionIdentity(() -> {
+                mWm.setShouldShowSystemDecors(state.mId, state.mShouldShowSystemDecors);
+                mWm.setShouldShowIme(state.mId, state.mShouldShowIme);
+            }));
+        }
+
+        @Override
+        public void close() throws Exception {
+            super.close();
+            restoreDisplayStates();
+        }
+
+        private class OverlayDisplayState {
+            int mId;
+            boolean mShouldShowSystemDecors;
+            boolean mShouldShowIme;
+
+            OverlayDisplayState(int displayId, boolean showSysDecors, boolean showIme) {
+                mId = displayId;
+                mShouldShowSystemDecors = showSysDecors;
+                mShouldShowIme = showIme;
+            }
         }
     }
 
