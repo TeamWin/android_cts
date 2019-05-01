@@ -148,25 +148,21 @@ public class SensorStats {
     /**
      * Utility method to log the stats to a file. Will overwrite the file if it already exists.
      */
-    public void logToFile(String fileName) {
+    public void logToFile(String fileName) throws IOException {
         // Check that external storage is mounted before attempting to write the recorded sensor
         // data to file. This is necessary since Instant Apps do not have access to external
         // storage.
-        try {
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
-                File logFile = new File(statsDirectory, fileName);
-                final Map<String, Object> flattened = flatten();
-                FileWriter fileWriter = new FileWriter(logFile, false /* append */);
-                try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
-                    for (String key : getSortedKeys(flattened)) {
-                        Object value = flattened.get(key);
-                        writer.write(String.format("%s: %s\n", key, getValueString(value)));
-                    }
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
+            File logFile = new File(statsDirectory, fileName);
+            final Map<String, Object> flattened = flatten();
+            FileWriter fileWriter = new FileWriter(logFile, false /* append */);
+            try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
+                for (String key : getSortedKeys(flattened)) {
+                    Object value = flattened.get(key);
+                    writer.write(String.format("%s: %s\n", key, getValueString(value)));
                 }
             }
-        } catch (IOException e) {
-            Log.e("SensorStats", "Failed to log stats to file\n" + e.getMessage());
         }
     }
 
