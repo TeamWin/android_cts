@@ -50,6 +50,7 @@ import android.telephony.TelephonyManager;
 import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -160,6 +161,7 @@ public class SystemFeaturesTest {
         }
     }
 
+    @CddTest(requirement="7.5.4/C-0-8")
     private void checkCamera2Features() throws Exception {
         String[] cameraIds = mCameraManager.getCameraIdList();
         boolean fullCamera = false;
@@ -167,6 +169,7 @@ public class SystemFeaturesTest {
         boolean manualPostProcessing = false;
         boolean motionTracking = false;
         boolean raw = false;
+        boolean hasFlash = false;
         CameraCharacteristics[] cameraChars = new CameraCharacteristics[cameraIds.length];
         for (String cameraId : cameraIds) {
             CameraCharacteristics chars = mCameraManager.getCameraCharacteristics(cameraId);
@@ -195,6 +198,11 @@ public class SystemFeaturesTest {
                         break;
                 }
             }
+
+            Boolean flashAvailable = chars.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+            if (flashAvailable) {
+                hasFlash = true;
+            }
         }
         assertFeature(fullCamera, PackageManager.FEATURE_CAMERA_LEVEL_FULL);
         assertFeature(manualSensor, PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_SENSOR);
@@ -215,6 +223,7 @@ public class SystemFeaturesTest {
           // available
           assertNotAvailable(PackageManager.FEATURE_CAMERA_AR);
         }
+        assertFeature(hasFlash, PackageManager.FEATURE_CAMERA_FLASH);
     }
 
     private void checkFrontCamera() {
