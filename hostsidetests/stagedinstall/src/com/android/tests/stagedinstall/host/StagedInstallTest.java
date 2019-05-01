@@ -145,6 +145,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_DebugBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+
         runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
         getDevice().reboot();
         runPhase("testStagedInstallDowngrade_DowngradeRequested_DebugBuild_VerifyPostReboot");
@@ -153,6 +154,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_UserBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+
         runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
         getDevice().reboot();
         runPhase("testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot");
@@ -161,6 +163,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testShimApexShouldPreInstalledIfUpdatingApexIsSupported() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         final ITestDevice.ApexInfo shimApex = getShimApex();
         assertThat(shimApex.versionCode).isEqualTo(1);
     }
@@ -168,6 +171,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testInstallStagedApex() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testInstallStagedApex_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApex_VerifyPostReboot");
@@ -176,6 +180,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testInstallStagedApexAndApk() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testInstallStagedApexAndApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApexAndApk_VerifyPostReboot");
@@ -184,6 +189,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testsFailsNonStagedApexInstall() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testsFailsNonStagedApexInstall");
     }
 
@@ -191,12 +197,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testInstallStagedNonPreInstalledApex_UserBuild_Fails() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testInstallStagedNonPreInstalledApex_UserBuild_Fails");
     }
 
     @Test
     public void testStageApkWithSameNameAsApexShouldFail() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testStageApkWithSameNameAsApexShouldFail_Commit");
         getDevice().reboot();
         runPhase("testStageApkWithSameNameAsApexShouldFail_VerifyPostReboot");
@@ -206,6 +214,54 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testNonStagedInstallApkWithSameNameAsApexShouldFail() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testNonStagedInstallApkWithSameNameAsApexShouldFail");
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV3Apex();
+        runPhase("testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_VerifyPostReboot");
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV3Apex();
+        runPhase("testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild_VerifyPostReboot");
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails()
+            throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV3Apex();
+        runPhase("testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails_"
+                + "VerifyPostReboot");
+    }
+
+    @Test
+    public void testInstallStagedApex_SameGrade() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV3Apex();
+        installV3Apex();
+    }
+
+    private void installV3Apex()throws Exception {
+        runPhase("testInstallV3Apex_Commit");
+        getDevice().reboot();
+        runPhase("testInstallV3Apex_VerifyPostReboot");
     }
 
     private boolean isUpdatingApexSupported() throws Exception {
