@@ -29,6 +29,7 @@
 #include <jni.h>
 #include <stdio.h>
 #include <string.h>
+#include <set>
 
 #include <android/native_window_jni.h>
 
@@ -46,6 +47,11 @@ namespace {
     const int MAX_ERROR_STRING_LEN = 512;
     char errorString[MAX_ERROR_STRING_LEN];
 }
+
+template <>
+struct std::default_delete<ACameraMetadata> {
+    inline void operator()(ACameraMetadata* chars) const { ACameraMetadata_free(chars); }
+};
 
 class CameraServiceListener {
   public:
@@ -265,6 +271,7 @@ class CaptureResultListener {
     ~CaptureResultListener() {
         std::unique_lock<std::mutex> l(mMutex);
         clearSavedRequestsLocked();
+        clearFailedFrameNumbersLocked();
     }
 
     static void onCaptureStart(void* /*obj*/, ACameraCaptureSession* /*session*/,
@@ -401,7 +408,7 @@ class CaptureResultListener {
         }
         CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
         std::lock_guard<std::mutex> lock(thiz->mMutex);
-        thiz->mLastFailedFrameNumber = failure->frameNumber;
+        thiz->mFailedFrameNumbers.insert(failure->frameNumber);
         thiz->mResultCondition.notify_one();
     }
 
@@ -416,7 +423,7 @@ class CaptureResultListener {
         }
         CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
         std::lock_guard<std::mutex> lock(thiz->mMutex);
-        thiz->mLastFailedFrameNumber = failure->captureFailure.frameNumber;
+        thiz->mFailedFrameNumbers.insert(failure->captureFailure.frameNumber);
         thiz->mResultCondition.notify_one();
     }
 
@@ -474,8 +481,7 @@ class CaptureResultListener {
         std::unique_lock<std::mutex> l(mMutex);
 
         while ((mLastCompletedFrameNumber != frameNumber) &&
-                (mLastLostFrameNumber != frameNumber) &&
-                (mLastFailedFrameNumber != frameNumber)) {
+                (mLastLostFrameNumber != frameNumber) && !checkForFailureLocked(frameNumber)) {
             auto timeout = std::chrono::system_clock::now() +
                            std::chrono::seconds(timeoutSec);
             if (std::cv_status::timeout == mResultCondition.wait_until(l, timeout)) {
@@ -484,8 +490,7 @@ class CaptureResultListener {
         }
 
         if ((mLastCompletedFrameNumber == frameNumber) ||
-                (mLastLostFrameNumber == frameNumber) ||
-                (mLastFailedFrameNumber == frameNumber)) {
+                (mLastLostFrameNumber == frameNumber) || checkForFailureLocked(frameNumber)) {
             ret = true;
         }
 
@@ -514,15 +519,20 @@ class CaptureResultListener {
         }
     }
 
+    bool checkForFailure(int64_t frameNumber) {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return checkForFailureLocked(frameNumber);
+    }
+
     void reset() {
         std::lock_guard<std::mutex> lock(mMutex);
         mLastSequenceIdCompleted = -1;
         mLastSequenceFrameNumber = -1;
         mLastCompletedFrameNumber = -1;
         mLastLostFrameNumber = -1;
-        mLastFailedFrameNumber = -1;
         mSaveCompletedRequests = false;
         clearSavedRequestsLocked();
+        clearFailedFrameNumbersLocked();
     }
 
   private:
@@ -532,7 +542,7 @@ class CaptureResultListener {
     int64_t mLastSequenceFrameNumber = -1;
     int64_t mLastCompletedFrameNumber = -1;
     int64_t mLastLostFrameNumber = -1;
-    int64_t mLastFailedFrameNumber = -1;
+    std::set<int64_t> mFailedFrameNumbers;
     bool    mSaveCompletedRequests = false;
     std::vector<ACaptureRequest*> mCompletedRequests;
     // Registered physical camera Ids that are being requested upon.
@@ -543,6 +553,14 @@ class CaptureResultListener {
             ACaptureRequest_free(req);
         }
         mCompletedRequests.clear();
+    }
+
+    void clearFailedFrameNumbersLocked() {
+        mFailedFrameNumbers.clear();
+    }
+
+    bool checkForFailureLocked(int64_t frameNumber) {
+        return mFailedFrameNumbers.find(frameNumber) != mFailedFrameNumbers.end();
     }
 };
 
@@ -1368,6 +1386,18 @@ class PreviewTestCase {
                     mSession, &mLogicalCameraResultCb, 1, &mPreviewRequest, sequenceId);
         }
         return ret;
+    }
+
+    camera_status_t startRepeatingRequest(int *sequenceId, ACaptureRequest *request,
+            ACameraCaptureSession_captureCallbacks *resultCb) {
+        if (mSession == nullptr || request == nullptr || resultCb == nullptr) {
+            ALOGE("Testcase cannot start repeating request: session %p, request %p resultCb %p",
+                    mSession, request, resultCb);
+            return ACAMERA_ERROR_UNKNOWN;
+        }
+
+        return ACameraCaptureSession_setRepeatingRequest(mSession, resultCb, 1, &request,
+                sequenceId);
     }
 
     camera_status_t stopPreview() {
@@ -3316,6 +3346,180 @@ cleanup:
     if (!pass) {
         throwAssertionError(env, errorString);
     }
+    return pass;
+}
+
+// Test the camera NDK capture failure path by acquiring the maximum amount of ImageReader
+// buffers available. Since there is no circulation of camera images, the registered output
+// surface will eventually run out of free buffers and start reporting capture errors.
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
+testCameraDeviceCaptureFailureNative(JNIEnv* env) {
+    const size_t NUM_TEST_IMAGES = 10;
+    const size_t NUM_FAILED_FRAMES = 3; // Wait for at least 3 consecutive failed capture requests
+    const int64_t NUM_TOTAL_FRAMES = 60; // Avoid waiting for more than 60 frames
+    const size_t TEST_WIDTH  = 640;
+    const size_t TEST_HEIGHT = 480;
+    media_status_t mediaRet = AMEDIA_ERROR_UNKNOWN;
+    int numCameras = 0;
+    bool pass = false;
+    PreviewTestCase testCase;
+    uint32_t timeoutSec = 10; // It is important to keep this timeout bigger than the framework
+                              // timeout
+
+    camera_status_t ret = testCase.initWithErrorLog();
+    if (ret != ACAMERA_OK) {
+        // Don't log error here. testcase did it
+        goto exit;
+    }
+
+    numCameras = testCase.getNumCameras();
+    if (numCameras < 0) {
+        LOG_ERROR(errorString, "Testcase returned negative number of cameras: %d", numCameras);
+        goto exit;
+    }
+
+    for (int i = 0; i < numCameras; i++) {
+        const char* cameraId = testCase.getCameraId(i);
+        if (cameraId == nullptr) {
+            LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
+            goto exit;
+        }
+
+        std::unique_ptr<ACameraMetadata> chars(testCase.getCameraChars(i));
+        if (chars.get() == nullptr) {
+            LOG_ERROR(errorString, "Get camera %s characteristics failure", cameraId);
+            goto exit;
+        }
+        StaticInfo staticInfo(chars.get());
+
+        if (!staticInfo.isColorOutputSupported()) {
+            continue;
+        }
+
+        ret = testCase.openCamera(cameraId);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
+            goto exit;
+        }
+
+        if (testCase.isCameraAvailable(cameraId)) {
+            LOG_ERROR(errorString, "Camera %s should be unavailable now", cameraId);
+            goto exit;
+        }
+
+        ImageReaderListener readerListener;
+        AImageReader_ImageListener readerCb =
+                { &readerListener, ImageReaderListener::acquireImageCb };
+        mediaRet = testCase.initImageReaderWithErrorLog(TEST_WIDTH, TEST_HEIGHT,
+                AIMAGE_FORMAT_YUV_420_888, NUM_TEST_IMAGES, &readerCb);
+        if (mediaRet != AMEDIA_OK) {
+            // Don't log error here. testcase did it
+            goto exit;
+        }
+
+        ret = testCase.createCaptureSessionWithLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto exit;
+        }
+
+        ret = testCase.createRequestsWithErrorLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto exit;
+        }
+
+        CaptureResultListener resultListener;
+        ACameraCaptureSession_captureCallbacks resultCb {
+            &resultListener,
+            CaptureResultListener::onCaptureStart,
+            CaptureResultListener::onCaptureProgressed,
+            CaptureResultListener::onCaptureCompleted,
+            CaptureResultListener::onCaptureFailed,
+            CaptureResultListener::onCaptureSequenceCompleted,
+            CaptureResultListener::onCaptureSequenceAborted,
+            CaptureResultListener::onCaptureBufferLost
+        };
+        ACaptureRequest* requestTemplate = nullptr;
+        ret = testCase.getStillRequest(&requestTemplate);
+        if (ret != ACAMERA_OK || requestTemplate == nullptr) {
+            // Don't log error here. testcase did it
+            goto exit;
+        }
+
+        int seqId;
+        ret = testCase.startRepeatingRequest(&seqId, requestTemplate, &resultCb);
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto exit;
+        }
+
+        size_t failedRequestCount;
+        int64_t lastFrameNumber;
+        int64_t lastFailedRequestNumber = -1;
+        failedRequestCount = lastFrameNumber = 0;
+        while ((failedRequestCount < NUM_FAILED_FRAMES) && (lastFrameNumber < NUM_TOTAL_FRAMES)) {
+            auto frameArrived = resultListener.waitForFrameNumber(lastFrameNumber, timeoutSec);
+            if (!frameArrived) {
+                LOG_ERROR(errorString, "Camera %s timed out waiting on last frame number!",
+                        cameraId);
+                goto exit;
+            }
+            auto failedFrameNumber = resultListener.checkForFailure(lastFrameNumber) ?
+                    lastFrameNumber : -1;
+            if (lastFailedRequestNumber != failedFrameNumber) {
+                if ((lastFailedRequestNumber + 1) == failedFrameNumber) {
+                    failedRequestCount++;
+                } else {
+                    failedRequestCount = 1;
+                }
+                lastFailedRequestNumber = failedFrameNumber;
+            }
+            lastFrameNumber++;
+        }
+
+        ret = testCase.stopPreview();
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "stopPreview failed!");
+            goto exit;
+        }
+
+        ret = testCase.resetWithErrorLog();
+        if (ret != ACAMERA_OK) {
+            // Don't log error here. testcase did it
+            goto exit;
+        }
+
+        usleep(100000); // sleep to give some time for callbacks to happen
+
+        if (!testCase.isCameraAvailable(cameraId)) {
+            LOG_ERROR(errorString, "Camera %s should be available now", cameraId);
+            goto exit;
+        }
+
+        if (failedRequestCount < NUM_FAILED_FRAMES) {
+            LOG_ERROR(errorString, "Unable to receive %zu consecutive capture failures within"
+                    " %" PRId64 " capture requests", NUM_FAILED_FRAMES, NUM_TOTAL_FRAMES);
+            goto exit;
+        }
+    }
+
+    ret = testCase.deInit();
+    if (ret != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Testcase deInit failed: ret %d", ret);
+        goto exit;
+    }
+
+    pass = true;
+
+exit:
+
+    ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
+    if (!pass) {
+        throwAssertionError(env, errorString);
+    }
+
     return pass;
 }
 
