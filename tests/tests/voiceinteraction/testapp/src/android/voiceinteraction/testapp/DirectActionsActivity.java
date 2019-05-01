@@ -27,11 +27,8 @@ import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.NonNull;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -41,11 +38,10 @@ import java.util.function.Consumer;
  * Activity to test direct action behaviors.
  */
 public final class DirectActionsActivity extends Activity {
-    private boolean mWaitForCancel;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onResume() {
+        super.onResume();
         final Bundle args = getIntent().getExtras();
         final RemoteCallback callback = args.getParcelable(Utils.DIRECT_ACTIONS_KEY_CALLBACK);
 
@@ -57,13 +53,15 @@ public final class DirectActionsActivity extends Activity {
                             Utils.DIRECT_ACTIONS_KEY_CALLBACK);
                     detectDestroyedInteractor(commandCallback);
                 } break;
-                case Utils.DIRECT_ACTIONS_ACTIVITY_CMD_SET_ACTION_BEHAVIOR: {
-                    mWaitForCancel = cmdArgs.getBoolean(Utils.DIRECT_ACTIONS_KEY_WIAT_FOR_CANCEL);
-                } break;
                 case Utils.DIRECT_ACTIONS_ACTIVITY_CMD_FINISH: {
                     final RemoteCallback commandCallback = cmdArgs.getParcelable(
                             Utils.DIRECT_ACTIONS_KEY_CALLBACK);
                     doFinish(commandCallback);
+                } break;
+                case Utils.DIRECT_ACTIONS_ACTIVITY_CMD_INVALIDATE_ACTIONS: {
+                    final RemoteCallback commandCallback = cmdArgs.getParcelable(
+                            Utils.DIRECT_ACTIONS_KEY_CALLBACK);
+                    invalidateDirectActions(commandCallback);
                 } break;
             }
         });
@@ -74,7 +72,12 @@ public final class DirectActionsActivity extends Activity {
     }
 
     @Override
-    public List<DirectAction> onGetDirectActions() {
+    public void onGetDirectActions(@NonNull CancellationSignal cancellationSignal,
+            @NonNull Consumer<List<DirectAction>> callback) {
+        if (getVoiceInteractor() == null) {
+            callback.accept(Collections.emptyList());
+            return;
+        }
         final DirectAction action = new DirectAction.Builder(Utils.DIRECT_ACTIONS_ACTION_ID)
                 .setExtras(Utils.DIRECT_ACTIONS_ACTION_EXTRAS)
                 .setLocusId(Utils.DIRECT_ACTIONS_LOCUS_ID)
@@ -82,7 +85,7 @@ public final class DirectActionsActivity extends Activity {
 
         final ArrayList<DirectAction> actions = new ArrayList<>();
         actions.add(action);
-        return actions;
+        callback.accept(actions);
     }
 
     @Override
@@ -93,8 +96,13 @@ public final class DirectActionsActivity extends Activity {
             reportActionFailed(callback);
             return;
         }
-        cancellationSignal.setOnCancelListener(() -> reportActionCancelled(callback));
-        if (!mWaitForCancel) {
+        final RemoteCallback cancelCallback = arguments.getParcelable(
+                Utils.DIRECT_ACTIONS_KEY_CANCEL_CALLBACK);
+        if (cancelCallback != null) {
+            cancellationSignal.setOnCancelListener(() -> reportActionCancelled(
+                    cancelCallback::sendResult));
+            reportActionExecuting(callback);
+        } else {
             reportActionPerformed(callback);
         }
     }
@@ -105,7 +113,9 @@ public final class DirectActionsActivity extends Activity {
 
         final VoiceInteractor interactor = getVoiceInteractor();
         interactor.registerOnDestroyedCallback(AsyncTask.THREAD_POOL_EXECUTOR, () -> {
-            result.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, true);
+            if (interactor.isDestroyed() && getVoiceInteractor() == null) {
+                result.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, true);
+            }
             latch.countDown();
         });
 
@@ -115,6 +125,13 @@ public final class DirectActionsActivity extends Activity {
             /* ignore */
         }
 
+        callback.sendResult(result);
+    }
+
+    private void invalidateDirectActions(@NonNull RemoteCallback callback) {
+        getVoiceInteractor().notifyDirectActionsChanged();
+        final Bundle result = new Bundle();
+        result.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, true);
         callback.sendResult(result);
     }
 
@@ -139,16 +156,14 @@ public final class DirectActionsActivity extends Activity {
         callback.accept(result);
     }
 
+    private static void reportActionExecuting(Consumer<Bundle> callback) {
+        final Bundle result = new Bundle();
+        result.putString(Utils.DIRECT_ACTIONS_KEY_RESULT,
+                Utils.DIRECT_ACTIONS_RESULT_EXECUTING);
+        callback.accept(result);
+    }
 
     private static void reportActionFailed(Consumer<Bundle> callback) {
         callback.accept( new Bundle());
-    }
-
-    private File getDirectActionFile() throws IOException {
-        final File file = new File(getFilesDir(), Utils.DIRECT_ACTION_FILE_NAME);
-        try (PrintWriter writer = new PrintWriter(new FileOutputStream(file))) {
-            writer.print(Utils.DIRECT_ACTION_FILE_CONTENT);
-        }
-        return file;
     }
 }

@@ -416,13 +416,10 @@ public class MediaExtractorTest extends AndroidTestCase {
                 }
             }
             assertNotNull("MediaExtractor cannot find mime type " + mime, mFormat);
-            Integer actualEncoding = null;
-            try {
-                actualEncoding = mFormat.getInteger(MediaFormat.KEY_PCM_ENCODING);
-            } catch (Exception e) {
-                ; // trying to get a non-existent key throws exception
-            }
-            mIsFloat = actualEncoding != null && actualEncoding == AudioFormat.ENCODING_PCM_FLOAT;
+            mIsFloat = mFormat.getInteger(
+                    MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
+                            == AudioFormat.ENCODING_PCM_FLOAT;
+
         }
 
         public MediaExtractorStream(

@@ -43,6 +43,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,6 +106,9 @@ public class MediaStore_DownloadsTest {
 
     @Test
     public void testScannedDownload() throws Exception {
+        Assume.assumeTrue(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)
+                || MediaStore.VOLUME_EXTERNAL_PRIMARY.equals(mVolumeName));
+
         final File downloadFile = new File(mDownloadsDir, "colors.txt");
         downloadFile.createNewFile();
         final String fileContents = "RED;GREEN;BLUE";
@@ -116,6 +120,9 @@ public class MediaStore_DownloadsTest {
 
     @Test
     public void testScannedMediaDownload() throws Exception {
+        Assume.assumeTrue(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)
+                || MediaStore.VOLUME_EXTERNAL_PRIMARY.equals(mVolumeName));
+
         final File downloadFile = new File(mDownloadsDir, "scenery.png");
         downloadFile.createNewFile();
         try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
@@ -135,6 +142,9 @@ public class MediaStore_DownloadsTest {
 
     @Test
     public void testMediaInDownloadsDir() throws Exception {
+        Assume.assumeTrue(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)
+                || MediaStore.VOLUME_EXTERNAL_PRIMARY.equals(mVolumeName));
+
         final String displayName = "cts" + System.nanoTime();
         final Uri insertUri = insertImage(displayName, "test image",
                 new File(mDownloadsDir, displayName + ".jpg"), "image/jpeg", R.raw.scenery);

@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
 LOCAL_MODULE_TAGS := tests
+LOCAL_SDK_VERSION := test_current
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    androidx.test.rules \
+    ub-uiautomator
 
-# tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
-LOCAL_MODULE := CtsSampleHostTestCases
+LOCAL_SRC_FILES := $(call all-java-files-under, ../StorageApp/src/)
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
+LOCAL_PACKAGE_NAME := CtsStorageAppB
 
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_DEX_PREOPT := false
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_SUPPORT_PACKAGE)

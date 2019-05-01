@@ -437,7 +437,11 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         return format.containsKey(key) ? format.getInteger(key) : 0;
     }
 
+    // Find first secure decoder for media type. If none found, return
+    // the name of the first regular codec with ".secure" suffix added.
+    // If all else fails, return null.
     protected String getSecureDecoderNameForMime(String mime) {
+        String firstDecoderName = null;
         int n = MediaCodecList.getCodecCount();
         for (int i = 0; i < n; ++i) {
             MediaCodecInfo info = MediaCodecList.getCodecInfoAt(i);
@@ -450,9 +454,17 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
 
             for (int j = 0; j < supportedTypes.length; ++j) {
                 if (supportedTypes[j].equalsIgnoreCase(mime)) {
-                    return info.getName() + ".secure";
+                    if (info.getCapabilitiesForType(mime).isFeatureSupported(
+                            MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback)) {
+                        return info.getName();
+                    } else if (firstDecoderName == null) {
+                        firstDecoderName = info.getName();
+                    }
                 }
             }
+        }
+        if (firstDecoderName != null) {
+            return firstDecoderName + ".secure";
         }
         return null;
     }

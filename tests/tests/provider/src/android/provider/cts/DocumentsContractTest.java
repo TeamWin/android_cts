@@ -69,6 +69,9 @@ import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Path;
 import android.provider.DocumentsProvider;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,9 +80,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 public class DocumentsContractTest {
@@ -142,6 +142,23 @@ public class DocumentsContractTest {
     }
 
     @Test
+    public void testRootUri_returnFalse() {
+        final String auth = "com.example";
+        final String rootId = "rootId";
+        final PackageManager pm = mock(PackageManager.class);
+        final List<ResolveInfo> infoList = new ArrayList<>();
+
+        doReturn(pm).when(mContext).getPackageManager();
+        doReturn(infoList).when(pm).queryIntentContentProviders(any(Intent.class), anyInt());
+
+        final Uri uri = DocumentsContract.buildRootUri(auth, rootId);
+
+        assertEquals(auth, uri.getAuthority());
+        assertEquals(rootId, DocumentsContract.getRootId(uri));
+        assertFalse(DocumentsContract.isRootUri(mContext, uri));
+    }
+
+    @Test
     public void testRootsUri() {
         final String auth = "com.example";
         final PackageManager pm = mock(PackageManager.class);
@@ -159,6 +176,20 @@ public class DocumentsContractTest {
         final Uri uri = DocumentsContract.buildRootsUri(auth);
         assertEquals(auth, uri.getAuthority());
         assertTrue(DocumentsContract.isRootsUri(mContext, uri));
+    }
+
+    @Test
+    public void testRootsUri_returnsFalse() {
+        final String auth = "com.example";
+        final PackageManager pm = mock(PackageManager.class);
+        final List<ResolveInfo> infoList = new ArrayList<>();
+
+        doReturn(pm).when(mContext).getPackageManager();
+        doReturn(infoList).when(pm).queryIntentContentProviders(any(Intent.class), anyInt());
+
+        final Uri uri = DocumentsContract.buildRootsUri(auth);
+        assertEquals(auth, uri.getAuthority());
+        assertFalse(DocumentsContract.isRootsUri(mContext, uri));
     }
 
     @Test

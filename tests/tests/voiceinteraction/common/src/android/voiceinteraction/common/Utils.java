@@ -74,28 +74,30 @@ public class Utils {
             "android.voiceinteraction.testapp.fileprovider";
 
     public static final String DIRECT_ACTIONS_KEY_CALLBACK = "callback";
+    public static final String DIRECT_ACTIONS_KEY_CANCEL_CALLBACK = "cancelCallback";
     public static final String DIRECT_ACTIONS_KEY_CONTROL = "control";
     public static final String DIRECT_ACTIONS_KEY_COMMAND = "command";
     public static final String DIRECT_ACTIONS_KEY_RESULT = "result";
     public static final String DIRECT_ACTIONS_KEY_ACTION = "action";
-    public static final String DIRECT_ACTIONS_KEY_ACTIONS = "actions";
-    public static final String DIRECT_ACTIONS_KEY_WIAT_FOR_CANCEL = "action";
     public static final String DIRECT_ACTIONS_KEY_ARGUMENTS = "arguments";
     public static final String DIRECT_ACTIONS_KEY_CLASS = "class";
 
     public static final String DIRECT_ACTIONS_SESSION_CMD_PERFORM_ACTION = "performAction";
     public static final String DIRECT_ACTIONS_SESSION_CMD_PERFORM_ACTION_CANCEL =
             "performActionCancel";
+    public static final String DIRECT_ACTIONS_SESSION_CMD_DETECT_ACTIONS_CHANGED =
+            "detectActionsChanged";
     public static final String DIRECT_ACTIONS_SESSION_CMD_GET_ACTIONS = "getActions";
     public static final String DIRECT_ACTIONS_SESSION_CMD_FINISH = "hide";
 
-    public static final String DIRECT_ACTIONS_ACTIVITY_CMD_SET_ACTION_BEHAVIOR = "setAction";
     public static final String DIRECT_ACTIONS_ACTIVITY_CMD_DESTROYED_INTERACTOR =
             "destroyedInteractor";
     public static final String DIRECT_ACTIONS_ACTIVITY_CMD_FINISH = "finish";
+    public static final String DIRECT_ACTIONS_ACTIVITY_CMD_INVALIDATE_ACTIONS = "invalidateActions";
 
     public static final String DIRECT_ACTIONS_RESULT_PERFORMED = "performed";
     public static final String DIRECT_ACTIONS_RESULT_CANCELLED = "cancelled";
+    public static final String DIRECT_ACTIONS_RESULT_EXECUTING = "executing";
 
 
     public static final String DIRECT_ACTIONS_ACTION_ID = "actionId";

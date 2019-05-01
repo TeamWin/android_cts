@@ -106,6 +106,9 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         mTests.add(new RemoveMetadataTest());
         mTests.add(new AddMetadataTest());
         mTests.add(new ExpandBubbleTest());
+        mTests.add(new DismissBubbleTest());
+        mTests.add(new DismissNotificationTest());
+        mTests.add(new AutoExpandBubbleTest());
 
         setPassFailButtonClickListeners();
 
@@ -195,7 +198,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "SendBubbleTest");
+                    getBasicNotifBuilder("Bubble notification", "1: SendBubbleTest");
             builder.setBubbleMetadata(getBasicBubbleBuilder().build());
 
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
@@ -222,7 +225,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "SuppressNotifTest");
+                    getBasicNotifBuilder("Bubble notification", "2: SuppressNotifTest");
 
             Notification.BubbleMetadata metadata = getBasicBubbleBuilder()
                     .setSuppressNotification(true)
@@ -253,7 +256,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "AddNotifTest");
+                    getBasicNotifBuilder("Bubble notification", "3: AddNotifTest");
 
             Notification.BubbleMetadata metadata = getBasicBubbleBuilder()
                     .setSuppressNotification(false)
@@ -284,7 +287,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "RemoveMetadataTest");
+                    getBasicNotifBuilder("Bubble notification", "4: RemoveMetadataTest");
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
         }
     }
@@ -309,7 +312,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
         @Override
         public void performTestAction() {
             Notification.Builder builder =
-                    getBasicNotifBuilder("Bubble notification", "AddMetadataTest");
+                    getBasicNotifBuilder("Bubble notification", "5: AddMetadataTest");
 
             Notification.BubbleMetadata metadata = getBasicBubbleBuilder().build();
             builder.setBubbleMetadata(metadata);
@@ -329,6 +332,93 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             return R.string.bubbles_notification_test_verify_6;
         }
     }
+
+    private class DismissBubbleTest extends BubblesTestStep {
+        @Override
+        public int getButtonText() {
+            return R.string.bubbles_notification_test_button_7;
+        }
+
+        @Override
+        public int getTestTitle() {
+            return R.string.bubbles_notification_test_title_7;
+        }
+
+        @Override
+        public int getTestDescription() {
+            return R.string.bubbles_notification_test_verify_7;
+        }
+
+        @Override
+        public void performTestAction() {
+            Notification.Builder builder =
+                    getBasicNotifBuilder("Bubble notification", "7: DismissBubbleTest");
+
+            Notification.BubbleMetadata metadata = getBasicBubbleBuilder().build();
+            builder.setBubbleMetadata(metadata);
+
+            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+        }
+    }
+
+    private class DismissNotificationTest extends BubblesTestStep {
+        @Override
+        public int getButtonText() {
+            return R.string.bubbles_notification_test_button_8;
+        }
+
+        @Override
+        public int getTestTitle() {
+            return R.string.bubbles_notification_test_title_8;
+        }
+
+        @Override
+        public int getTestDescription() {
+            return R.string.bubbles_notification_test_verify_8;
+        }
+
+        @Override
+        public void performTestAction() {
+            Notification.Builder builder =
+                    getBasicNotifBuilder("Bubble notification",
+                            "8: DismissNotificationTest: Dismiss me!!");
+
+            Notification.BubbleMetadata metadata = getBasicBubbleBuilder().build();
+            builder.setBubbleMetadata(metadata);
+
+            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+        }
+    }
+
+    private class AutoExpandBubbleTest extends BubblesTestStep {
+        @Override
+        public int getButtonText() {
+            return R.string.bubbles_notification_test_button_9;
+        }
+
+        @Override
+        public int getTestTitle() {
+            return R.string.bubbles_notification_test_title_9;
+        }
+
+        @Override
+        public int getTestDescription() {
+            return R.string.bubbles_notification_test_verify_9;
+        }
+
+        @Override
+        public void performTestAction() {
+            Notification.Builder builder =
+                    getBasicNotifBuilder("Bubble notification", "9: Auto expanded bubble");
+
+            Notification.BubbleMetadata metadata =
+                    getBasicBubbleBuilder().setAutoExpandBubble(true).build();
+            builder.setBubbleMetadata(metadata);
+
+            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+        }
+    }
+
 
     /** Creates a minimally filled out {@link android.app.Notification.BubbleMetadata.Builder} */
     private Notification.BubbleMetadata.Builder getBasicBubbleBuilder() {

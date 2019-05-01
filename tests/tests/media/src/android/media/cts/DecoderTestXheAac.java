@@ -71,6 +71,9 @@ public class DecoderTestXheAac {
         final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         final MediaCodecInfo[] mediaCodecInfos = mediaCodecList.getCodecInfos();
         for (MediaCodecInfo mediaCodecInfo : mediaCodecInfos) {
+            if (mediaCodecInfo.isAlias()) {
+                continue;
+            }
             if (mediaCodecInfo.isEncoder()) {
                 continue;
             }

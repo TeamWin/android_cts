@@ -86,7 +86,7 @@ public class MediaStorageTest {
     }
 
     private void doSandboxed(boolean sandboxed) throws Exception {
-        assertEquals(sandboxed, Environment.isExternalStorageLegacy());
+        assertEquals(!sandboxed, Environment.isExternalStorageLegacy());
 
         // We can always see mounted state
         assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
@@ -256,7 +256,14 @@ public class MediaStorageTest {
         }
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "r")) {
         }
-        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+        if (Environment.isExternalStorageLegacy()) {
+            try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+            }
+        } else {
+            try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+                fail("Expected write access to be blocked");
+            } catch (SecurityException | FileNotFoundException expected) {
+            }
         }
     }
 

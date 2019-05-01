@@ -300,6 +300,53 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testGetSession2TokensWithTwoSessions() throws Exception {
+        final Context context = getInstrumentation().getTargetContext();
+        Handler handler = createHandler();
+        Executor handlerExecutor = (runnable) -> {
+            if (handler != null) {
+                handler.post(() -> {
+                    runnable.run();
+                });
+            }
+        };
+
+        Session2TokenListener listener = new Session2TokenListener();
+        mSessionManager.addOnSession2TokensChangedListener(listener, handler);
+
+        try (MediaSession2 session1 = new MediaSession2.Builder(context)
+                .setSessionCallback(handlerExecutor, new Session2Callback())
+                .setId("testGetSession2TokensWithTwoSessions_session1")
+                .build()) {
+
+            assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            Session2Token session1Token = session1.getToken();
+            assertTrue(listContainsToken(mSessionManager.getSession2Tokens(), session1Token));
+
+            // Create another session and check the result of getSession2Token().
+            listener.resetCountDownLatch();
+            Session2Token session2Token = null;
+            try (MediaSession2 session2 = new MediaSession2.Builder(context)
+                    .setSessionCallback(handlerExecutor, new Session2Callback())
+                    .setId("testGetSession2TokensWithTwoSessions_session2")
+                    .build()) {
+
+                assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+                session2Token = session2.getToken();
+                assertNotNull(session2Token);
+                assertTrue(listContainsToken(mSessionManager.getSession2Tokens(), session1Token));
+                assertTrue(listContainsToken(mSessionManager.getSession2Tokens(), session2Token));
+
+                listener.resetCountDownLatch();
+            }
+
+            // Since the session2 is closed, getSession2Tokens() shouldn't include session2's token.
+            assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(listContainsToken(mSessionManager.getSession2Tokens(), session1Token));
+            assertFalse(listContainsToken(mSessionManager.getSession2Tokens(), session2Token));
+        }
+    }
+
     public void testAddAndRemoveSession2TokensListener() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();

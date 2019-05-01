@@ -156,13 +156,29 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepogg, 168.f);
         testTimeStampOrdering(R.raw.sinesweepogg);
     }
+    public void testDecodeOggMkv() throws Exception {
+        decode(R.raw.sinesweepoggmkv, 168.f);
+        testTimeStampOrdering(R.raw.sinesweepoggmkv);
+    }
+    public void testDecodeOggMp4() throws Exception {
+        decode(R.raw.sinesweepoggmp4, 168.f);
+        testTimeStampOrdering(R.raw.sinesweepoggmp4);
+    }
     public void testDecodeWav() throws Exception {
         decode(R.raw.sinesweepwav, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepwav);
     }
+    public void testDecodeFlacMkv() throws Exception {
+        decode(R.raw.sinesweepflacmkv, 0.0f);
+        testTimeStampOrdering(R.raw.sinesweepflacmkv);
+    }
     public void testDecodeFlac() throws Exception {
         decode(R.raw.sinesweepflac, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflac);
+    }
+    public void testDecodeFlacMp4() throws Exception {
+        decode(R.raw.sinesweepflacmp4, 0.0f);
+        testTimeStampOrdering(R.raw.sinesweepflacmp4);
     }
 
     public void testDecodeMonoMp3() throws Exception {
@@ -178,6 +194,14 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testDecodeMonoOgg() throws Exception {
         monoTest(R.raw.monotestogg, 44100);
         testTimeStampOrdering(R.raw.monotestogg);
+    }
+    public void testDecodeMonoOggMkv() throws Exception {
+        monoTest(R.raw.monotestoggmkv, 44100);
+        testTimeStampOrdering(R.raw.monotestoggmkv);
+    }
+    public void testDecodeMonoOggMp4() throws Exception {
+        monoTest(R.raw.monotestoggmp4, 44100);
+        testTimeStampOrdering(R.raw.monotestoggmp4);
     }
 
     public void testDecodeMonoGsm() throws Exception {
@@ -196,9 +220,15 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testDecodeVorbis() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepvorbis);
     }
+    public void testDecodeVorbisMp4() throws Exception {
+        testTimeStampOrdering(R.raw.sinesweepvorbismp4);
+    }
 
     public void testDecodeOpus() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepopus);
+    }
+    public void testDecodeOpusMp4() throws Exception {
+        testTimeStampOrdering(R.raw.sinesweepopusmp4);
     }
 
     public void testDecode51M4a() throws Exception {
@@ -721,6 +751,14 @@ public class DecoderTest extends MediaPlayerTestBase {
                 staticInfo, true /*metadataInContainer*/);
     }
 
+    public void testAV1HdrStaticMetadata() throws Exception {
+        final String staticInfo =
+                "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
+                "40 e8 03 64 00 e8 03 2c  01                     " ;
+        testHdrStaticMetadata(R.raw.video_1280x720_av1_hdr_static_3mbps,
+                staticInfo, false /*metadataInContainer*/);
+    }
+
     public void testH265HDR10StaticMetadata() throws Exception {
         // Expected value of MediaFormat.KEY_HDR_STATIC_INFO key.
         // The associated value is a ByteBuffer. This buffer contains the raw contents of the
@@ -776,6 +814,11 @@ public class DecoderTest extends MediaPlayerTestBase {
                 // it here so that we only test HDR when decoder supports it.
                 format.setInteger(MediaFormat.KEY_PROFILE,
                         MediaCodecInfo.CodecProfileLevel.VP9Profile2HDR);
+            } else if (MediaFormat.MIMETYPE_VIDEO_AV1.equals(mime)) {
+                // The muxer might not have put AV1 CSD in the webm, we manually patch
+                // it here so that we only test HDR when decoder supports it.
+                format.setInteger(MediaFormat.KEY_PROFILE,
+                        MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10HDR10);
             } else {
                 fail("Codec " + mime + " shouldn't be tested with this test!");
             }
@@ -1757,9 +1800,15 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepm4a);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3lame);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepmp3smpb);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepopus);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepopusmp4);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepwav);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflacmkv);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflac);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepflacmp4);
         testDecodeWithEOSOnLastBuffer(R.raw.sinesweepogg);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepoggmkv);
+        testDecodeWithEOSOnLastBuffer(R.raw.sinesweepoggmp4);
     }
 
     /* setting EOS on the last full input buffer should be equivalent to setting EOS on an empty
@@ -2912,6 +2961,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testFlush() throws Exception {
         testFlush(R.raw.loudsoftwav);
         testFlush(R.raw.loudsoftogg);
+        testFlush(R.raw.loudsoftoggmkv);
+        testFlush(R.raw.loudsoftoggmp4);
         testFlush(R.raw.loudsoftmp3);
         testFlush(R.raw.loudsoftaac);
         testFlush(R.raw.loudsoftfaac);
@@ -3106,6 +3157,9 @@ public class DecoderTest extends MediaPlayerTestBase {
         List<CodecCapabilities> caps = new ArrayList<CodecCapabilities>();
         for (int i = 0; i < numCodecs; i++) {
             MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
+            if (codecInfo.isAlias()) {
+                continue;
+            }
             if (codecInfo.isEncoder()) {
                 continue;
             }
