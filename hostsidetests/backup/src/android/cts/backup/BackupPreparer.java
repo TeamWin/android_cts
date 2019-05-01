@@ -16,6 +16,7 @@
 
 package android.cts.backup;
 
+import com.android.compatibility.common.util.BackupHostSideUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -27,6 +28,7 @@ import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,9 +54,6 @@ public class BackupPreparer implements ITargetCleaner {
 
     private static final String LOCAL_TRANSPORT =
             "com.android.localtransport/.LocalTransport";
-
-    private static final int BACKUP_PROVISIONING_TIMEOUT_SECONDS = 30;
-    private static final int BACKUP_PROVISIONING_POLL_INTERVAL_SECONDS = 1;
 
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
@@ -87,7 +86,11 @@ public class BackupPreparer implements ITargetCleaner {
                     mOldTransport = setBackupTransport(LOCAL_TRANSPORT);
                     CLog.d("Old transport : %s", mOldTransport);
                 }
-                waitForBackupInitialization();
+                try {
+                    BackupHostSideUtils.createBackupUtils(mDevice).waitForBackupInitialization();
+                } catch (IOException e) {
+                    throw new TargetSetupError("Backup not initialized", e);
+                }
             }
         }
     }
@@ -147,27 +150,6 @@ public class BackupPreparer implements ITargetCleaner {
         } else {
             throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
         }
-    }
-
-    private void waitForBackupInitialization()
-        throws TargetSetupError, DeviceNotAvailableException {
-        long tryUntilNanos = System.nanoTime()
-            + TimeUnit.SECONDS.toNanos(BACKUP_PROVISIONING_TIMEOUT_SECONDS);
-        while (System.nanoTime() < tryUntilNanos) {
-            String output = mDevice.executeShellCommand("dumpsys backup");
-            if (output.matches("(?s)"  // DOTALL
-                + "^Backup Manager is .* not pending init.*")) {
-                return;
-            }
-            try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(BACKUP_PROVISIONING_POLL_INTERVAL_SECONDS));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-        throw new TargetSetupError("Timed out waiting for backup initialization",
-            mDevice.getDeviceDescriptor());
     }
 
     // Copied over from BaseDevicePolicyTest

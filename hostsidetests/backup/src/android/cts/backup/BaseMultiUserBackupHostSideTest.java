@@ -58,7 +58,7 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
             FULL_BACKUP_TEST_PACKAGE + ".ProfileFullBackupRestoreTest";
 
     protected final BackupUtils mBackupUtils = getBackupUtils();
-    protected ITestDevice mDevice;
+    private ITestDevice mDevice;
 
     // Store initial device state as Optional as tearDown() will execute even if we have assumption
     // failures in setUp().
