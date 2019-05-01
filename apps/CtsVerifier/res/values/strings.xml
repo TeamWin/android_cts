@@ -1272,7 +1272,7 @@
     4. Launch Camera application. \n
     5. Capture photo within 1 minute. \n
     6. Return to CTS verifier app. \n
-    7. Pass button will light up if URI trigger was fired.\n
+    7. Pass button will light up if intent and URI triggers were fired.\n
     8. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
     <string name="ci_instruction_text_app_video_label">\n
@@ -1281,14 +1281,14 @@
     3. Launch Camera application. \n
     4. Capture video within 1 minute. \n
     5. Return to CTS verifier app. \n
-    6. Pass button will light up if URI trigger was fired.\n
+    6. Pass button will light up if intent and URI triggers were fired.\n
     7. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
     <string name="ci_instruction_text_intent_picture_label">\n
     1. Click Start Test.\n
     2. Camera app will launch, prompting to take photo.\n
     3. Capture/confirm photo using camera app controls within 1 minute.\n
-    4. Pass button will light up if URI trigger was NOT received.\n
+    4. Pass button will light up if intent and URI trigger were NOT received.\n
     5. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
     <string name="ci_instruction_text_intent_video_label">\n
