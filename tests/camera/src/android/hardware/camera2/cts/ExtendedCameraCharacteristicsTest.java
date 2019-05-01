@@ -35,14 +35,18 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Rational;
 import android.util.Range;
 import android.util.Size;
 import android.util.Pair;
 import android.util.Patterns;
+import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
+
+import com.android.compatibility.common.util.CddTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2239,6 +2243,61 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             assertTrue("availableAwbModes must not be null", awbAvailableModes != null);
             assertTrue("availableAwbModes must contain only AUTO", awbAvailableModes.length == 1 &&
                     awbAvailableModes[0] == CaptureRequest.CONTROL_AWB_MODE_AUTO);
+        }
+    }
+
+    /**
+     * Check camera orientation against device orientation
+     */
+    @CddTest(requirement="7.5.5/C-1-1")
+    public void testCameraOrientationAlignedWithDevice() {
+        WindowManager windowManager =
+                (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics);
+
+        // For square screen, test is guaranteed to pass
+        if (metrics.widthPixels == metrics.heightPixels) {
+            return;
+        }
+
+        // Handle display rotation
+        int displayRotation = display.getRotation();
+        if (displayRotation == Surface.ROTATION_90 || displayRotation == Surface.ROTATION_270) {
+            int tmp = metrics.widthPixels;
+            metrics.widthPixels = metrics.heightPixels;
+            metrics.heightPixels = tmp;
+        }
+        boolean isDevicePortrait = metrics.widthPixels < metrics.heightPixels;
+
+        int counter = 0;
+        for (CameraCharacteristics c : mCharacteristics) {
+            // Camera size
+            Size pixelArraySize = c.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+            // Camera orientation
+            int sensorOrientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+            // For square sensor, test is guaranteed to pass
+            if (pixelArraySize.getWidth() == pixelArraySize.getHeight()) {
+                counter++;
+                continue;
+            }
+
+            // Camera size adjusted for device native orientation.
+            Size adjustedSensorSize;
+            if (sensorOrientation == 90 || sensorOrientation == 270) {
+                adjustedSensorSize = new Size(
+                        pixelArraySize.getHeight(), pixelArraySize.getWidth());
+            } else {
+                adjustedSensorSize = pixelArraySize;
+            }
+
+            boolean isCameraPortrait =
+                    adjustedSensorSize.getWidth() < adjustedSensorSize.getHeight();
+            assertFalse("Camera " + mAllCameraIds[counter] + "'s long dimension must "
+                    + "align with screen's long dimension", isDevicePortrait^isCameraPortrait);
+            counter++;
         }
     }
 
