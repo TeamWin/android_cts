@@ -2024,9 +2024,9 @@ During installation you may be prompted for a name - accept the default suggesti
 In the case that these credentials were already installed, you may skip this step.</string>
     <string name="keychain_https_desc">The last test involves setting up an HTTPS connection using credentials from the KeyChain.\n\n
 You should be prompted to select credentials; choose the ones you just installed in the previous step.</string>
-    <string name="keychain_reset_desc">Before marking this test as passed, tap \'Next\' to open security settings and reset the following items:\n
- 1. Clear device credentials.\n
- 2. Change the lock screen type to \'None\'.</string>
+    <string name="keychain_reset_desc">Before marking this test as passed, tap \'Next\' to open security settings to clear credentials:\n
+ 1. Open Encryption and credentials.\n
+ 2. Tap Clear credentials.</string>
 
     <!-- Strings for Widget -->
     <string name="widget_framework_test">Widget Framework Test</string>
