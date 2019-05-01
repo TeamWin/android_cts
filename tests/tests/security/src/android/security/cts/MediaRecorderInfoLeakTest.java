@@ -20,6 +20,8 @@ import android.platform.test.annotations.SecurityTest;
 import android.media.MediaRecorder;
 import android.test.AndroidTestCase;
 
+import java.io.File;
+
 @SecurityTest
 public class MediaRecorderInfoLeakTest extends AndroidTestCase {
 
@@ -39,7 +41,8 @@ public class MediaRecorderInfoLeakTest extends AndroidTestCase {
               mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
               mediaRecorder.setVideoFrameRate(30);
               mediaRecorder.setVideoSize(352, 288);
-              mediaRecorder.setOutputFile("/sdcard/record.output");
+              mediaRecorder.setOutputFile(
+                      new File(getContext().getExternalFilesDir(null), "record.output").getPath());
               mediaRecorder.prepare();
               int test = mediaRecorder.getMaxAmplitude();
               mediaRecorder.release();
