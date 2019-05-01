@@ -42,7 +42,7 @@ public class MediaRecorderInfoLeakTest extends AndroidTestCase {
               mediaRecorder.setVideoFrameRate(30);
               mediaRecorder.setVideoSize(352, 288);
               mediaRecorder.setOutputFile(
-                      new File(getContext().getExternalFilesDir(null), "record.output").getPath());
+                      new File(getContext().getFilesDir(), "record.output").getPath());
               mediaRecorder.prepare();
               int test = mediaRecorder.getMaxAmplitude();
               mediaRecorder.release();
