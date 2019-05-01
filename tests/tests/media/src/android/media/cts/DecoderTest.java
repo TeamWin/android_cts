@@ -1910,6 +1910,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz, 240);
     }
 
+    public void testCodecBasicAV1() throws Exception {
+        testDecode(R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz, 300);
+    }
+
     public void testH264Decode320x240() throws Exception {
         testDecode(R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz, 300);
     }
@@ -2105,6 +2109,36 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300);
     }
 
+    public void testAV1Decode320x180() throws Exception {
+        testDecode(R.raw.video_320x180_webm_av1_200kbps_30fps_vorbis_stereo_128kbps_48000hz, 300);
+    }
+
+    public void testAV1Decode640x360() throws Exception {
+        testDecode(
+                R.raw.video_640x360_webm_av1_470kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                300);
+    }
+
+    public void testAV1Decode30fps1280x720() throws Exception {
+        testDecode(
+                R.raw.video_1280x720_webm_av1_2000kbps_30fps_vorbis_stereo_128kbps_48000hz, 300);
+    }
+
+    public void testAV1Decode60fps1920x1080() throws Exception {
+        testDecode(
+                R.raw.video_1920x1080_webm_av1_7000kbps_60fps_vorbis_stereo_128kbps_48000hz, 300);
+    }
+
+    public void testAV1Decode30fps3840x2160() throws Exception {
+        testDecode(
+                R.raw.video_3840x2160_webm_av1_11000kbps_30fps_vorbis_stereo_128kbps_48000hz, 150);
+    }
+
+    public void testAV1Decode60fps3840x2160() throws Exception {
+        testDecode(
+                R.raw.video_3840x2160_webm_av1_18000kbps_60fps_vorbis_stereo_128kbps_48000hz, 300);
+    }
+
     public void testHEVCDecode352x288() throws Exception {
         testDecode(
                 R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz, 300);
@@ -2196,6 +2230,12 @@ public class DecoderTest extends MediaPlayerTestBase {
                 120 /* eosframe */);
     }
 
+    public void testCodecEarlyEOSAV1() throws Exception {
+        testCodecEarlyEOS(
+                R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                120 /* eosframe */);
+    }
+
     public void testCodecResetsH264WithoutSurface() throws Exception {
         testCodecResets(
                 R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, null);
@@ -2256,10 +2296,21 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz, null);
     }
 
+    public void testCodecResetsAV1WithoutSurface() throws Exception {
+        testCodecResets(
+                R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz, null);
+    }
+
     public void testCodecResetsVP9WithSurface() throws Exception {
         Surface s = getActivity().getSurfaceHolder().getSurface();
         testCodecResets(
                 R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz, s);
+    }
+
+    public void testCodecResetsAV1WithSurface() throws Exception {
+        Surface s = getActivity().getSurfaceHolder().getSurface();
+        testCodecResets(
+                R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz, s);
     }
 
 //    public void testCodecResetsOgg() throws Exception {
@@ -2740,6 +2791,13 @@ public class DecoderTest extends MediaPlayerTestBase {
         // this video has an I frame at 44
         testEOSBehavior(
                 R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
+                new int[] {1, 44, 45, 55, 43});
+    }
+
+    public void testEOSBehaviorAV1() throws Exception {
+        // this video has an I frame at 44
+        testEOSBehavior(
+                R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz,
                 new int[] {1, 44, 45, 55, 43});
     }
 
