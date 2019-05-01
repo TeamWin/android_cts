@@ -239,6 +239,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_multipleRequests() throws Exception {
         // Set services
         enableService();
@@ -382,6 +383,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_rotateDevice() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
 
@@ -484,6 +486,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_mainServiceDisabled() throws Exception {
         // Set services
         Helper.disableAutofillService(sContext);
@@ -520,6 +523,48 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAugmentedAutoFill_mainServiceDisabled_valueChangedOnSecondRequest()
+            throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue initialValue = username.getAutofillValue();
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request1, mActivity, usernameId, initialValue);
+
+        // Make sure UIs were not shown
+        mUiBot.assertNoDatasetsEver();
+        mAugmentedUiBot.assertUiNeverShown();
+
+        // Change field value
+        mActivity.onUsername((v) -> v.setText("DOH"));
+
+        // Trigger autofill again
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+        mActivity.onUsername(View::performClick);
+        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+
+        // Assert 2nd request
+        assertBasicRequestInfo(request2, mActivity, usernameId, "DOH");
+
+        // Make sure UIs were not shown
+        mUiBot.assertNoDatasetsEver();
+        mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testSetAugmentedAutofillWhitelist_noStandardServiceSet() throws Exception {
         final AutofillManager mgr = mActivity.getAutofillManager();
         assertThrows(SecurityException.class,
@@ -528,6 +573,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testSetAugmentedAutofillWhitelist_notAugmentedService() throws Exception {
         enableService();
         final AutofillManager mgr = mActivity.getAutofillManager();
@@ -537,6 +583,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutofill_packageNotWhitelisted() throws Exception {
         // Set services
         enableService();
@@ -563,6 +610,7 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutofill_activityNotWhitelisted() throws Exception {
         // Set services
         enableService();
