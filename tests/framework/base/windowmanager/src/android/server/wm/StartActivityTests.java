@@ -25,6 +25,7 @@ import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.rule.ActivityTestRule;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -90,6 +91,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
      * @throws Exception
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testLegacyStartActivityFromNonActivityContext() throws Exception {
         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
                 .setLaunchingActivity(SDK_27_LAUNCHING_ACTIVITY)
