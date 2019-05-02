@@ -19,6 +19,7 @@ package com.android.cts.verifier.camera.performance;
 
 import android.app.Instrumentation;
 import android.os.Bundle;
+import android.content.Context;
 
 import android.util.Log;
 
@@ -27,17 +28,34 @@ import com.android.compatibility.common.util.ReportLog.Metric;
 
 import java.util.Set;
 
+// A custom Instrumentation intended to be used only for
+// collecting camera performance test result data.
+// Instantiation is done explicitly by the application and not
+// automatically through the Android manifest. Clients are
+// also responsible for the instrumentation registration.
 public class CameraTestInstrumentation extends Instrumentation {
     private static final String TAG = "CameraTestInstrumentation";
 
     private MetricListener mMetricListener;
+    private Context mTargetContext;
 
     public interface MetricListener {
         public void onResultMetric(Metric metric);
     }
 
-    public void addMetricListener(MetricListener listener) {
+    public void initialize(Context targetContext, MetricListener listener) {
+        mTargetContext = targetContext;
         mMetricListener = listener;
+    }
+
+    public void release() {
+        mTargetContext = null;
+        mMetricListener = null;
+    }
+
+    @Override
+    public Context getTargetContext() {
+        return mTargetContext;
     }
 
     @Override
