@@ -1559,6 +1559,8 @@ public class ServiceTest extends ActivityTestsBase {
      * Test that the system properly orders processes bound by an activity within the
      * LRU list.
      */
+    // TODO(b/131059432): Re-enable the test after that bug is fixed.
+    @FlakyTest
     @MediumTest
     public void testActivityServiceBindingLru() throws Exception {
         // Bring up the activity we will hang services off of.
