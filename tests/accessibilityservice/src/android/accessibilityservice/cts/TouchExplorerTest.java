@@ -192,37 +192,6 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test the case where we double tap and no item has accessibility focus, so TouchExplorer sends
-     * touch events to the last touch-explored coordinates to simulate a click.
-     */
-    @Test
-    @AppModeFull
-    public void testDoubleTapNoAccessibilityFocus() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
-        // Do a single tap so there is a valid last touch-explored location.
-        dispatch(click(mTapLocation));
-        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
-        // We don't really care about these events but we need to make sure all the events we want
-        // to clear have arrived before we clear them.
-        mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
-                TYPE_TOUCH_INTERACTION_START,
-                TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                TYPE_VIEW_HOVER_ENTER,
-                TYPE_VIEW_HOVER_EXIT,
-                TYPE_TOUCH_EXPLORATION_GESTURE_END,
-                TYPE_TOUCH_INTERACTION_END);
-        mService.clearEvents();
-        dispatch(doubleTap(mTapLocation));
-        mHoverListener.assertNonePropagated();
-        // The click gets delivered as a series of touch events.
-        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
-        mService.assertPropagated(
-                TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END, TYPE_VIEW_CLICKED);
-        mClickListener.assertClicked(mView);
-    }
-
-    /**
      * Test the case where we want to click on the item that has accessibility focus by using
      * AccessibilityNodeInfo.performAction.
      */
@@ -245,12 +214,11 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test the case where we double tap but there is neither an accessibility focus or a last
-     * touch-explored location. Nothing should happen.
+     * Test the case where we double tap but there is no  accessibility focus. Nothing should happen.
      */
     @Test
     @AppModeFull
-    public void testDoubleTapNoFocus() {
+    public void testDoubleTapNoAccessibilityFocus() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(doubleTap(mTapLocation));
         mHoverListener.assertNonePropagated();
@@ -269,9 +237,8 @@ public class TouchExplorerTest {
         syncAccessibilityFocusToInputFocus();
         dispatch(doubleTapAndHold(mTapLocation));
         mHoverListener.assertNonePropagated();
-        // The long click still gets delivered as a series of touch events even though we derive the
-        // location from accessibility focus.
-        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
+        // The click should not be delivered via touch events in this case.
+        mTouchListener.assertNonePropagated();
         mService.assertPropagated(
                 TYPE_VIEW_FOCUSED,
                 TYPE_VIEW_ACCESSIBILITY_FOCUSED,
@@ -282,44 +249,12 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test the case where we double tap and hold and no item has accessibility focus, so
-     * TouchExplorer sends touch events to the last touch-explored coordinates to simulate a long
-     * click.
+     * Test the case where we double tap and hold but there is no accessibility focus.
+     * Nothing should happen.
      */
     @Test
     @AppModeFull
     public void testDoubleTapAndHoldNoAccessibilityFocus() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
-        // Do a single tap so there is a valid last touch-explored location.
-        dispatch(click(mTapLocation));
-        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
-        // We don't really care about these events but we need to make sure all the events we want
-        // to clear have arrived before we clear them.
-        mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
-                TYPE_TOUCH_INTERACTION_START,
-                TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                TYPE_VIEW_HOVER_ENTER,
-                TYPE_VIEW_HOVER_EXIT,
-                TYPE_TOUCH_EXPLORATION_GESTURE_END,
-                TYPE_TOUCH_INTERACTION_END);
-        mService.clearEvents();
-        dispatch(doubleTapAndHold(mTapLocation));
-        mHoverListener.assertNonePropagated();
-        // The click gets delivered as a series of touch events.
-        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
-        mService.assertPropagated(
-                TYPE_TOUCH_INTERACTION_START, TYPE_VIEW_LONG_CLICKED, TYPE_TOUCH_INTERACTION_END);
-        mLongClickListener.assertLongClicked(mView);
-    }
-
-    /**
-     * Test the case where we double tap and hold but there is neither an accessibility focus or a
-     * last touch-explored location. Nothing should happen.
-     */
-    @Test
-    @AppModeFull
-    public void testDoubleTapAndHoldNoFocus() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(doubleTap(mTapLocation));
         mHoverListener.assertNonePropagated();
