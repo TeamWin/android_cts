@@ -47,6 +47,7 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
+import android.app.RemoteInput;
 import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubblesTestActivity;
@@ -2390,7 +2391,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 badNumberString);
     }
 
-    public void testNotificationManagerBubblePolicy_flagForMessage() {
+    public void testNotificationManagerBubblePolicy_flagForMessage_failsNoRemoteInput() {
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
@@ -2404,6 +2405,33 @@ public class NotificationManagerTest extends AndroidTestCase {
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
+        sendAndVerifyBubble(1, nb, null /* use default metadata */, false);
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForMessage_succeeds() {
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+
+        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
+        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                inputIntent).addRemoteInput(remoteInput)
+                .build();
+
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setActions(replyAction)
+                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
         boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
         sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
     }
