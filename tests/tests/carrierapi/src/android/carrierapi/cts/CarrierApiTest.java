@@ -82,17 +82,21 @@ public class CarrierApiTest extends AndroidTestCase {
     // 11.1.17.1
     private static final int MAX_LOGICAL_CHANNEL = 3;
     // Class bytes. The logical channel used should be included for bits b2b1. TS 102 221 Table 11.5
+    private static final String CLA_ENVELOPE = "80";
     private static final int CLA_GET_RESPONSE = 0x00;
     private static final int CLA_MANAGE_CHANNEL = 0x00;
     private static final int CLA_READ_BINARY = 0x00;
     private static final int CLA_SELECT = 0x00;
     private static final int CLA_STATUS = 0x80;
+    private static final String CLA_STATUS_STRING = "80";
     // APDU Instruction Bytes. TS 102 221 Section 10.1.2
+    private static final String COMMAND_ENVELOPE = "C2";
     private static final int COMMAND_GET_RESPONSE = 0xC0;
     private static final int COMMAND_MANAGE_CHANNEL = 0x70;
     private static final int COMMAND_READ_BINARY = 0xB0;
     private static final int COMMAND_SELECT = 0xA4;
     private static final int COMMAND_STATUS = 0xF2;
+    private static final String COMMAND_STATUS_STRING = "F2";
     // Status words. TS 102 221 Section 10.2.1
     private static final byte[] STATUS_NORMAL = {(byte) 0x90, (byte) 0x00};
     private static final String STATUS_NORMAL_STRING = "9000";
@@ -107,6 +111,7 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ICCID_FILE_ID = "2FE2";
     // File ID for the master file. TS 102 221
     private static final String MF_FILE_ID = "3F00";
+    private static final int MF_FILE_ID_HEX = 0x3F00;
     // File ID for the MF Access Rule Reference. TS 102 221
     private static final String MF_ARR_FILE_ID = "2F06";
     private static final String ALPHA_TAG_A = "tagA";
@@ -763,6 +768,69 @@ public class CarrierApiTest extends AndroidTestCase {
             // Reset original alpha tag and number values.
             mTelephonyManager.setVoiceMailNumber(originalAlphaTag, originalNumber);
         }
+    }
+
+    /**
+     * This test verifies that {@link TelephonyManager#iccExchangeSimIO(int, int, int, int, int,
+     * String)} correctly transmits iccIO commands to the UICC card. First, the MF is selected via a
+     * SELECT apdu via the basic channel, then a STATUS AT-command is sent.
+     */
+    public void testIccExchangeSimIO() {
+        if (!hasCellular) return;
+
+        // select the MF first. This makes sure the next STATUS AT-command returns a FCP template
+        // for the right file.
+        int cla = CLA_SELECT;
+        int p1 = 0; // select EF by FID
+        int p2 = 0x0C; // requesting FCP template
+        int p3 = 2; // length of 'data' payload
+        String data = MF_FILE_ID;
+        String response = mTelephonyManager
+                .iccTransmitApduBasicChannel(cla, COMMAND_SELECT, p1, p2, p3, data);
+        assertEquals(STATUS_NORMAL_STRING, response);
+
+        // The iccExchangeSimIO command implements the +CRSM command defined in TS 27.007 section
+        // 8.18. A STATUS command is sent and the returned value will be an FCP template.
+        byte[] result = mTelephonyManager.iccExchangeSimIO(
+                0, // fileId: not required for STATUS
+                COMMAND_STATUS,  // command: STATUS
+                0, // p1: not required for STATUS
+                0, // p2: not required for STATUS
+                0, // p3: not required for STATUS
+                ""); // filePath: not required for STATUS
+        String resultString = bytesToHexString(result);
+        assertTrue("TelephonyManager#iccExchangeSimIO should not give an empty response",
+                !resultString.isEmpty());
+        // TODO(b/131353609): uncomment logic to fully check TelMan#iccExchangeSimIO response
+        // FcpTemplate fcpTemplate = FcpTemplate.parseFcpTemplate(resultString);
+        // assertTrue(containsFileId(fcpTemplate, MF_FILE_ID));
+        // assertEquals("iccExchangeSimIO returned non-normal Status byte: " + resultString,
+        //         STATUS_NORMAL_STRING, fcpTemplate.getStatus());
+    }
+
+    /**
+     * This test checks that a STATUS apdu can be sent as an encapsulated envelope to the UICC via
+     * {@link TelephonyManager#sendEnvelopeWithStatus(String)}.
+     */
+    public void testSendEnvelopeWithStatus() {
+        // STATUS apdu as hex String
+        String envelope =
+                CLA_STATUS_STRING
+                + COMMAND_STATUS_STRING
+                + "00" // p1: no indication of application status
+                + "00"; // p2: identical parameters to
+        String lc = "0" + (envelope.length() / 2); // number of bytes in data field
+        String response = mTelephonyManager.sendEnvelopeWithStatus(
+                CLA_ENVELOPE
+                + COMMAND_ENVELOPE
+                + "00" // p1: value required for Envelope command
+                + "00" // p2: value required for Envelope command
+                + lc
+                + envelope);
+        assertNotNull("sendEnvelopeWithStatus returned: " + response, response);
+        // TODO(b/131422420): uncomment logic to fully check TelMan#sendEnvelopeWithStatus response
+        // assertEquals("sendEnvelopeWithStatus returned: " + response,
+        //         STATUS_NORMAL_STRING, response);
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
