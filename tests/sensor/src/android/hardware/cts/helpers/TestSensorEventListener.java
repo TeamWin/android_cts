@@ -259,7 +259,8 @@ public class TestSensorEventListener implements SensorEventListener2 {
             }
         }
 
-        File eventsDirectory = SensorCtsHelper.getSensorTestDataDirectory("events/");
+        File eventsDirectory = SensorCtsHelper.getSensorTestDataDirectory(
+                mEnvironment.getContext(), "events/");
         File logFile = new File(eventsDirectory, fileName);
         FileWriter fileWriter = new FileWriter(logFile, false /* append */);
         try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
