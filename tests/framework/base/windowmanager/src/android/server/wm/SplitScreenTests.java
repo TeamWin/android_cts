@@ -461,6 +461,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testMinimizeAndUnminimizeThenGoingHome() throws Exception {
         // Rotate the screen to check that minimize, unminimize, dismiss the docked stack and then
         // going home has the correct app transition
@@ -588,6 +589,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
         launchActivity(TEST_ACTIVITY);
         mAmWmState.computeState(TEST_ACTIVITY);
@@ -649,6 +651,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testStackListOrderOnSplitScreenDismissed() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
