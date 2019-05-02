@@ -36,6 +36,14 @@ android_test {
         "android.test.base.stubs",
     ],
 
+    jni_libs: [
+        "libctstext_jni",
+        "libc++",
+    ],
+    // Include both the 32 and 64 bit versions of libctstext_jni, where
+    // applicable.
+    compile_multilib: "both",
+
     test_suites: [
         "cts",
         "vts",
