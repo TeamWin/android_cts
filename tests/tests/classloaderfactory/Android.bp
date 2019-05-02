@@ -12,11 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_library_static {
-    name: "CtsClassLoaderFactoryTestCasesSecondaryDex",
-    srcs: [
-        "src-ex/**/*.java",
+android_test_helper_app {
+    name: "ClassLoaderFactoryTestSecondary",
+    srcs: [ "src-ex/**/*.java" ],
+    manifest: "src-ex/AndroidManifest.xml",
+}
+
+filegroup {
+    name: "cts-classloaderfactorytest-srcs",
+    srcs: [ "src/**/*.java" ],
+}
+
+java_defaults {
+    name: "cts_classloaderfactorytest_defaults",
+    static_libs: [
+        "androidx.test.rules",
+        "ctstestrunner-axt",
+        "junit",
     ],
-    installable: false,
-    compile_dex: true,
+    java_resources: [ ":ClassLoaderFactoryTestSecondary" ],
+    sdk_version: "test_current",
 }

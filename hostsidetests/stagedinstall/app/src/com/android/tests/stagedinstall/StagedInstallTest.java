@@ -448,6 +448,88 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
 
+    @Test
+    public void testInstallV3Apex_Commit() throws Exception {
+        int sessionId = stageSingleApk(
+                "com.android.apex.cts.shim.v3.apex").assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallV3Apex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_Commit()
+            throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        int sessionId = stageSingleApk(
+                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+        // Also verify that correct session info is reported by PackageManager.
+        assertSessionFailed(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_VerifyPostReboot()
+            throws Exception {
+        // TODO: uncomment after we start to persist finalized staged sessions.
+        // int sessionId = retrieveLastSessionId();
+        // assertSessionFailed(sessionId);
+        // INSTALL_REQUEST_DOWNGRADE wasn't set, so apex shouldn't be downgraded.
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild_Commit()
+            throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        int sessionId = stageDowngradeSingleApk(
+                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild_VerifyPostReboot()
+            throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        // Apex should be downgraded.
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails_Commit()
+            throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        int sessionId = stageDowngradeSingleApk(
+                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+        // Also verify that correct session info is reported by PackageManager.
+        assertSessionFailed(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails_VerifyPostReboot()
+            throws Exception {
+        // TODO: uncomment after we start to persist finalized staged sessions.
+        // int sessionId = retrieveLastSessionId();
+        // assertSessionFailed(sessionId);
+        // Apex shouldn't be downgraded.
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+    }
+
     private static PackageInstaller getPackageInstaller() {
         return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
                 .getPackageInstaller();

@@ -260,7 +260,10 @@ public class SensorIntegrationTests extends SensorTestCase {
 
         // Create a second operation that will run in parallel and request the fastest rate after
         // an initial delay. The delay is to ensure that the first operation has enabled the sensor.
-        // The sensor should begin reporting at the newly requested rate.
+        // The sensor should begin reporting at the newly requested rate. Execute a flush prior to
+        // the reconfiguration to ensure that the lower frequency events are not received after the
+        // reconfiguration of the sensor.
+        SequentialSensorOperation sequentialSensorOperation = new SequentialSensorOperation();
         environment = new TestSensorEnvironment(
                 context,
                 sensor,
@@ -268,15 +271,22 @@ public class SensorIntegrationTests extends SensorTestCase {
                 true, /* isIntegrationTest */
                 sensor.getMinDelay(),
                 0 /* max reporting latency */);
+
+        // Create the flush operation with a delay to ensure the low frequency configuration was
+        // handled and executed.
+        TestSensorOperation flushOperation = TestSensorOperation.createFlushOperation(
+                environment, DELAY_BEFORE_CHANGING_RATE_SEC, TimeUnit.SECONDS);
+        sequentialSensorOperation.add(flushOperation);
+
+        // Create the reconfiguration request and add it after the flush
         TestSensorOperation sensorOperationFast = TestSensorOperation.createOperation(
                 environment, EVENTS_FOR_VERIFICATION);
         sensorOperationFast.addVerification(FrequencyVerification.getDefault(environment));
-        DelaySensorOperation delaySensorOperation = new DelaySensorOperation(
-                sensorOperationFast,
-                DELAY_BEFORE_CHANGING_RATE_SEC,
-                TimeUnit.SECONDS);
-        operation.add(delaySensorOperation);
+        sequentialSensorOperation.add(sensorOperationFast);
 
+        // Add the sequential operation containing the flush and high frequency request to the
+        // existing parallel operation that already contains the low frequency request.
+        operation.add(sequentialSensorOperation);
         operation.execute(getCurrentTestNode());
         operation.getStats().log(TAG);
     }

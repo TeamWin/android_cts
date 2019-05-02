@@ -140,7 +140,6 @@ public final class CannedFillResponse {
     public static final CannedFillResponse DO_NOT_REPLY_RESPONSE =
             new Builder(ResponseType.TIMEOUT).build();
 
-
     /**
      * Constant used to call {@link FillCallback#onFailure(CharSequence)} method.
      */

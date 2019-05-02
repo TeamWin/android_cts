@@ -113,6 +113,12 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 testCameraDeviceLogicalPhysicalSettingsNative(mPreviewSurface));
     }
 
+    @Test
+    public void testCameraDeviceCaptureFailure() {
+        assertTrue("testCameraDeviceCaptureFailure fail, see log for details",
+                testCameraDeviceCaptureFailureNative());
+    }
+
     private static native boolean testCameraDeviceOpenAndCloseNative();
     private static native boolean testCameraDeviceCreateCaptureRequestNative();
     private static native boolean testCameraDeviceSessionOpenAndCloseNative(Surface preview);
@@ -122,5 +128,6 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static native boolean testCameraDeviceSharedOutputUpdate(Surface src, Surface dst);
     private static native boolean testCameraDeviceLogicalPhysicalStreamingNative(Surface preview);
     private static native boolean testCameraDeviceLogicalPhysicalSettingsNative(Surface preview);
+    private static native boolean testCameraDeviceCaptureFailureNative();
 
 }

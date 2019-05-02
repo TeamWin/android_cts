@@ -1898,6 +1898,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz, 122);
     }
 
+    public void testCodecBasicMpeg2() throws Exception {
+        testDecode(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+    }
+
     public void testCodecBasicMpeg4() throws Exception {
         testDecode(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz, 249);
     }
@@ -2185,6 +2189,38 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.bbb_s2_3840x2160_mp4_hevc_mp51_20mbps_60fps_aac_lc_6ch_384kbps_32000hz, 300);
     }
 
+    public void testMpeg2Decode352x288() throws Exception {
+        testDecode(R.raw.video_352x288_mp4_mpeg2_1000kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+    }
+
+    public void testMpeg2Decode720x480() throws Exception {
+        testDecode(R.raw.video_720x480_mp4_mpeg2_2000kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+    }
+
+    public void testMpeg2Decode30fps1280x720Tv() throws Exception {
+        if (checkTv()) {
+            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_MPEG2, 1280, 720, 30));
+        }
+    }
+
+    public void testMpeg2Decode30fps1280x720() throws Exception {
+        testDecode(R.raw.video_1280x720_mp4_mpeg2_6000kbps_30fps_aac_stereo_128kbps_48000hz, 150);
+    }
+
+    public void testMpeg2Decode30fps1920x1080Tv() throws Exception {
+        if (checkTv()) {
+            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_MPEG2, 1920, 1080, 30));
+        }
+    }
+
+    public void testMpeg2Decode30fps1920x1080() throws Exception {
+        testDecode(R.raw.video_1920x1080_mp4_mpeg2_12000kbps_30fps_aac_stereo_128kbps_48000hz, 150);
+    }
+
+    public void testMpeg2Decode30fps3840x2160() throws Exception {
+        testDecode(R.raw.video_3840x2160_mp4_mpeg2_20000kbps_30fps_aac_stereo_128kbps_48000hz, 150);
+    }
+
     private void testCodecEarlyEOS(int resid, int eosFrame) throws Exception {
         if (!MediaUtils.checkCodecForResource(mContext, resid, 0 /* track */)) {
             return; // skip
@@ -2209,6 +2245,12 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testCodecEarlyEOSHEVC() throws Exception {
         testCodecEarlyEOS(
                 R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz,
+                120 /* eosframe */);
+    }
+
+    public void testCodecEarlyEOSMpeg2() throws Exception {
+        testCodecEarlyEOS(
+                R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz,
                 120 /* eosframe */);
     }
 
@@ -2256,6 +2298,17 @@ public class DecoderTest extends MediaPlayerTestBase {
         Surface s = getActivity().getSurfaceHolder().getSurface();
         testCodecResets(
                 R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, s);
+    }
+
+    public void testCodecResetsMpeg2WithoutSurface() throws Exception {
+        testCodecResets(
+                R.raw.video_1280x720_mp4_mpeg2_6000kbps_30fps_aac_stereo_128kbps_48000hz, null);
+    }
+
+    public void testCodecResetsMpeg2WithSurface() throws Exception {
+        Surface s = getActivity().getSurfaceHolder().getSurface();
+        testCodecResets(
+                R.raw.video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz, s);
     }
 
     public void testCodecResetsH263WithoutSurface() throws Exception {
@@ -2764,6 +2817,12 @@ public class DecoderTest extends MediaPlayerTestBase {
         testEOSBehavior(
             R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz,
             new int[] {1, 17, 23, 49});
+    }
+
+    public void testEOSBehaviorMpeg2() throws Exception {
+        testEOSBehavior(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz, 17);
+        testEOSBehavior(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz, 23);
+        testEOSBehavior(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz, 49);
     }
 
     public void testEOSBehaviorH263() throws Exception {

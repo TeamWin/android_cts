@@ -17,9 +17,13 @@ package android.server.wm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.UiDeviceUtils.pressUnlockButton;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Surface;
@@ -27,6 +31,7 @@ import android.view.SurfaceControl;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
+import android.view.cts.surfacevalidator.RectChecker;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 
 import androidx.test.filters.LargeTest;
@@ -41,10 +46,11 @@ import org.junit.rules.TestName;
 @LargeTest
 @Presubmit
 public class SurfaceControlTest {
-    private static final int DEFAULT_LAYOUT_WIDTH = 100;
-    private static final int DEFAULT_LAYOUT_HEIGHT = 100;
+    private static final int DEFAULT_LAYOUT_WIDTH = 640;
+    private static final int DEFAULT_LAYOUT_HEIGHT = 480;
     private static final int DEFAULT_BUFFER_WIDTH = 640;
     private static final int DEFAULT_BUFFER_HEIGHT = 480;
+    private static final int DEFAULT_SURFACE_SIZE = 100;
 
     @Rule
     public ActivityTestRule<CapturedActivity> mActivityRule =
@@ -64,6 +70,9 @@ public class SurfaceControlTest {
 
     @Before
     public void setup() {
+        pressWakeupButton();
+        pressUnlockButton();
+
         mActivity = mActivityRule.getActivity();
         mActivity.dismissPermissionDialog();
     }
@@ -90,7 +99,7 @@ public class SurfaceControlTest {
 
     private SurfaceControl buildDefaultSurface(SurfaceControl parent) {
         return new SurfaceControl.Builder()
-            .setBufferSize(DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT)
+            .setBufferSize(DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE)
             .setName("CTS surface")
             .setParent(parent)
             .build();
@@ -105,10 +114,14 @@ public class SurfaceControlTest {
         s.unlockCanvasAndPost(c);
     }
 
-    private SurfaceControl buildDefaultRedSurface(SurfaceControl parent) {
+    private SurfaceControl buildDefaultSurface(SurfaceControl parent, int color) {
         final SurfaceControl sc = buildDefaultSurface(parent);
-        fillWithColor(sc, Color.RED);
+        fillWithColor(sc, color);
         return sc;
+    }
+
+    private SurfaceControl buildDefaultRedSurface(SurfaceControl parent) {
+        return buildDefaultSurface(parent, Color.RED);
     }
 
     /**
@@ -127,12 +140,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
-                    }
-                });
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
     }
 
     /**
@@ -151,19 +159,33 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.BLACK) { //10000
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.WHITE));
+    }
+
+    /**
+     * Like testHide but we reparent the surface off-screen instead.
+     */
+    @Test
+    public void testReparentOff() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount == 0;
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+
+                        new SurfaceControl.Transaction().reparent(sc, null).apply();
+
+                        sc.release();
                     }
-                });
+                },
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.WHITE));
     }
 
     /**
      * Here we use the same red-surface set up but construct it off-screen and then re-parent it.
      */
     @Test
-    public void testReparent() throws Throwable {
+    public void testReparentOn() throws Throwable {
         verifyTest(
                 new SurfaceControlTestCase.ParentSurfaceConsumer () {
                     @Override
@@ -177,11 +199,101 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //10000
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
+    }
+
+    /**
+     * Test that a surface with Layer "2" appears over a surface with Layer "1".
+     */
+    @Test
+    public void testSetLayer() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 9000 && pixelCount < 11000;
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        final SurfaceControl sc2 = buildDefaultSurface(parent, Color.GREEN);
+
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setVisibility(sc2, true)
+                            .setLayer(sc, 1)
+                            .setLayer(sc2, 2)
+                            .apply();
+
+                        sc.release();
                     }
-                });
+                },
+                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.GREEN));
+    }
+
+    /**
+     * Try setting the position of a surface with the top-left corner off-screen.
+     */
+    @Test
+    public void testSetGeometry_dstBoundsOffScreen() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setGeometry(sc, null, new Rect(-50, -50, 50, 50), Surface.ROTATION_0)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+
+                // The rect should be offset by -50 pixels
+                new RectChecker(
+                        new RectChecker.Target(new Rect(0, 0, 50, 50), PixelColor.RED),
+                        new RectChecker.Target(new Rect(50, 50, 150, 150), PixelColor.WHITE)));
+    }
+
+    /**
+     * Try setting the position of a surface with the top-left corner on-screen.
+     */
+    @Test
+    public void testSetGeometry_dstBoundsOnScreen() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setGeometry(sc, null, new Rect(50, 50, 150, 150), Surface.ROTATION_0)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+
+                // The rect should be offset by 50 pixels
+                new RectChecker(
+                        new RectChecker.Target(new Rect(50, 50, 150, 150), PixelColor.RED)));
+    }
+
+    /**
+     * Try scaling a surface
+     */
+    @Test
+    public void testSetGeometry_dstBoundsScaled() throws Throwable {
+        verifyTest(
+                new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                        final SurfaceControl sc = buildDefaultRedSurface(parent);
+                        new SurfaceControl.Transaction().setVisibility(sc, true)
+                            .setGeometry(sc, new Rect(0, 0, DEFAULT_SURFACE_SIZE, DEFAULT_SURFACE_SIZE),
+                                    new Rect(0, 0, DEFAULT_SURFACE_SIZE * 2, DEFAULT_SURFACE_SIZE*2),
+                                    Surface.ROTATION_0)
+                            .apply();
+
+                        sc.release();
+                    }
+                },
+
+                new RectChecker(
+                        new RectChecker.Target(new Rect(0, 0, 200, 200), PixelColor.RED)));
     }
 }

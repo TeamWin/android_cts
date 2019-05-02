@@ -196,7 +196,9 @@ public class CapturedActivity extends Activity {
         }
 
         final long timeOutMs = mOnEmbedded ? 125000 : 62500;
-        final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + getCaptureDurationMs();
+        final long captureDuration = animationTestCase.hasAnimation() ?
+            getCaptureDurationMs() : 200;
+        final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + captureDuration;
         final long endDelayMs = endCaptureDelayMs + 1000;
 
         int count = 0;

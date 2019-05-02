@@ -57,6 +57,8 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 import android.util.SparseArray;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -748,6 +750,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      * Tests that toast works on a secondary display.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testSecondaryDisplayShowToast() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay =

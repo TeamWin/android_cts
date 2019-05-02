@@ -44,7 +44,7 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        int profileUserId = createProfileUser(mDevice.getCurrentUser(), "MU-State");
+        int profileUserId = createProfileUser(getDevice().getCurrentUser(), "MU-State");
         mProfileUserId = Optional.of(profileUserId);
         startUser(profileUserId);
     }
@@ -54,7 +54,7 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
     @Override
     public void tearDown() throws Exception {
         if (mProfileUserId.isPresent()) {
-            assertTrue(mDevice.removeUser(mProfileUserId.get()));
+            assertTrue(getDevice().removeUser(mProfileUserId.get()));
             mProfileUserId = Optional.empty();
         }
         super.tearDown();
@@ -77,7 +77,7 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
 
         assertTrue(mBackupUtils.isBackupActivatedForUser(profileUserId));
 
-        assertTrue(mDevice.removeUser(profileUserId));
+        assertTrue(getDevice().removeUser(profileUserId));
         mProfileUserId = Optional.empty();
 
         HostSideTestUtils.waitUntil("wait for backup to be deactivated for removed user",
