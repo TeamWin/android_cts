@@ -2935,6 +2935,9 @@ public class TimeTest {
                 testLocalTime.getSecond(),
                 0 /* isDst */, 0, 0, 0);
         assertEquals(expectedMillis, t.toMillis(true /* ignoreDst */));
+
+        // Check that Time agrees with native localtime / mktime.
+        NativeTimeFunctions.assertNativeTimeResults(timeZoneId, testLocalTime, expectedMillis);
     }
 
     /**
@@ -2970,8 +2973,26 @@ public class TimeTest {
                         + time, timeZone.inDaylightTime(new Date(timeInMillis)), (time.isDst != 0));
                 assertEquals(timeZone.getOffset(timeInMillis),
                         Duration.ofSeconds(time.gmtoff).toMillis());
+
+                // Check that Time agrees with native localtime / mktime.
+                NativeTimeFunctions.assertNativeTimeResults(
+                        tzId, createLocalDateTime(calendar), timeInMillis);
             }
         }
+    }
+
+    /**
+     * Creates a LocalDateTime from a Calendar by reading out the current date/time (to second
+     * precision only!).
+     */
+    private static LocalDateTime createLocalDateTime(Calendar calendar) {
+        return LocalDateTime.of(
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.DAY_OF_MONTH),
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                calendar.get(Calendar.SECOND));
     }
 
     private static List<Long> calculateToMillisTestTimes(String tzId) {
@@ -3047,7 +3068,8 @@ public class TimeTest {
         // should pass regardless of zic version used as the Android behavior is stable for this
         // zone as we have fixed the logic used to determine the offset before the first transition
         // AND the first transition for the zone is after Integer.MIN_VALUE.
-        Time t = new Time("Africa/Abidjan");
+        String tzId = "Africa/Abidjan";
+        Time t = new Time(tzId);
         // Jan 1, 1912 12:16:08 AM UTC / Jan 1, 1912 00:00:00 local time
         Instant oldEarliestTransition = Instant.ofEpochSecond(-1830383032);
         Instant beforeOldEarliestTransition = oldEarliestTransition.minus(Duration.ofDays(1));
@@ -3055,10 +3077,14 @@ public class TimeTest {
 
         // The expected local time equivalent to the oldEarliestTransition time minus 1 day and
         // offset by -968 seconds.
-        Time expected = new Time("Africa/Abidjan");
+        Time expected = new Time(tzId);
         Fields.set(expected, 1911, 11, 31, 0, 0, 0, 0 /* isDst */, -968, 364, 0);
-
         Fields.verifyTimeEquals(expected, t);
+
+        // Check that Time agrees with native localtime / mktime.
+        NativeTimeFunctions.assertNativeTimeResults(
+                tzId, LocalDateTime.of(1911, Month.DECEMBER, 31, 0, 0, 0),
+                beforeOldEarliestTransition.toEpochMilli());
     }
 
     private static void verifyNormalizeResult(boolean normalizeArgument, Time toNormalize,
