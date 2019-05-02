@@ -25,6 +25,7 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
+
 import com.google.common.collect.ImmutableMap;
 
 import java.io.File;
@@ -115,7 +116,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String AUTOFILL_APP_PKG = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_APP_APK = "CtsDevicePolicyAutofillApp.apk";
 
+    private static final String CONTENT_CAPTURE_APP_PKG = "com.android.cts.devicepolicy.contentcaptureapp";
     private static final String CONTENT_CAPTURE_APP_APK = "CtsDevicePolicyContentCaptureApp.apk";
+
+    private static final String CONTENT_CAPTURE_SERVICE_PKG = "com.android.cts.devicepolicy.contentcaptureservice";
+    private static final String CONTENT_CAPTURE_SERVICE_APK = "CtsDevicePolicyContentCaptureService.apk";
 
     protected static final String ASSIST_APP_PKG = "com.android.cts.devicepolicy.assistapp";
     protected static final String ASSIST_APP_APK = "CtsDevicePolicyAssistApp.apk";
@@ -183,6 +188,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
             getDevice().uninstallPackage(AUTOFILL_APP_PKG);
+            getDevice().uninstallPackage(CONTENT_CAPTURE_SERVICE_PKG);
+            getDevice().uninstallPackage(CONTENT_CAPTURE_APP_PKG);
             getDevice().uninstallPackage(PRINTING_APP_PKG);
             getDevice().uninstallPackage(METERED_DATA_APP_PKG);
             getDevice().uninstallPackage(TEST_APP_PKG);
@@ -870,9 +877,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testDisallowAutofill_allowed");
     }
 
-    // TODO(b/124127364): currently disabled becase ContentCaptureManager.isContentCaptureEnabled()
-    // doesn't return right value when the service is disabled after the activity already launched
-    public void disabledtestDisallowContentCapture_allowed() throws Exception {
+    public void testDisallowContentCapture_allowed() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -881,6 +886,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!hasContentCapture) {
             return;
         }
+        installAppAsUser(CONTENT_CAPTURE_SERVICE_APK, mUserId);
         installAppAsUser(CONTENT_CAPTURE_APP_APK, mUserId);
 
         setDefaultContentCaptureServiceEnabled(false);

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.cts.devicepolicy.contentcaptureapp;
+package com.android.cts.devicepolicy.contentcaptureservice;
 
+import android.content.ComponentName;
 import android.service.contentcapture.ContentCaptureService;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureSessionId;
@@ -28,6 +30,12 @@ public class SimpleContentCaptureService extends ContentCaptureService {
     @Override
     public void onConnected() {
         Log.d(TAG, "onConnected()");
+        final ArraySet<String> packages = new ArraySet<>();
+        packages.add("com.android.cts.devicepolicy.contentcaptureapp");
+        packages.add("com.android.cts.devicepolicy.contentcaptureservice");
+        packages.add("com.android.cts.deviceandprofileowner");
+
+        setContentCaptureWhitelist(packages, null);
     }
 
     @Override
