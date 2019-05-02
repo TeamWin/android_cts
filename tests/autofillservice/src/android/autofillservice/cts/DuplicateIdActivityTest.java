@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.DuplicateIdActivity.DUPLICATE_ID;
+import static android.autofillservice.cts.Helper.assertEqualsIgnoreSession;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -158,8 +159,10 @@ public class DuplicateIdActivityTest
         // We just need
         // - to restore as many views as we can (i.e. one)
         // - make sure the autofill ids are still unique after
-        final boolean view1WasRestored = (recreatedId1.equals(id1) || recreatedId1.equals(id2));
-        final boolean view2WasRestored = (recreatedId2.equals(id1) || recreatedId2.equals(id2));
+        final boolean view1WasRestored = (recreatedId1.equalsIgnoreSession(id1)
+                || recreatedId1.equalsIgnoreSession(id2));
+        final boolean view2WasRestored = (recreatedId2.equalsIgnoreSession(id1)
+                || recreatedId2.equalsIgnoreSession(id2));
 
         // One id was restored
         assertThat(view1WasRestored || view2WasRestored).isTrue();
@@ -168,6 +171,6 @@ public class DuplicateIdActivityTest
         assertThat(recreatedId1).isNotEqualTo(recreatedId2);
 
         // Assert id of new view
-        assertThat(newId1).isEqualTo(child.getAutofillId());
+        assertEqualsIgnoreSession(newId1, child.getAutofillId());
     }
 }
