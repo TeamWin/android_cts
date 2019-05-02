@@ -913,11 +913,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             Log.i(TAG, String.format(
                     "Testing Camera %s for abandoning surface of a repeating request", id));
 
-            openDevice(id);
-            if (!mStaticInfo.isColorOutputSupported()) {
+            StaticMetadata staticInfo = mAllStaticInfo.get(id);
+            if (!staticInfo.isColorOutputSupported()) {
                 Log.i(TAG, "Camera " + id + " does not support color output, skipping");
                 continue;
             }
+
+            openDevice(id);
 
             try {
 
