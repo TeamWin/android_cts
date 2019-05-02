@@ -532,6 +532,6 @@ public class LocaleListTest extends AndroidTestCase {
         assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("fa-IR")));
         assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("zh-CN")));
         assertFalse(LocaleList.isPseudoLocale(ULocale.forLanguageTag("fr-CA")));
-        assertFalse(LocaleList.isPseudoLocale(null));
+        assertFalse(LocaleList.isPseudoLocale((ULocale) null));
     }
 }
