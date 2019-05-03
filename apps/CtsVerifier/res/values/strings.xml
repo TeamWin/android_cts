@@ -1117,6 +1117,12 @@
     <string name="snsr_step_counter_event">%1$d | Step Counter event. count=%2$d.</string>
     <string name="snsr_step_detector_event">%1$d | Step Detector event.</string>
 
+    <!-- Step Counter and Detector Permission -->
+    <string name="snsr_step_permission_test">Step Permission Test</string>
+    <string name="snsr_step_permission_disable">Please change the \'Physical Activity\' permission for CtsVerifier to \'Deny\'</string>
+    <string name="snsr_step_permission_enable">Please change the \'Physical Activity\' permission for CtsVerifier to \'Allow\'</string>
+    <string name="snsr_step_permission_walk">Please begin walking while holding the device. A sound will play when you may stop walking</string>
+
     <!-- Device suspend tests -->
     <string name="snsr_device_suspend_test">Device Suspend Tests</string>
     <string name="snsr_device_did_not_go_into_suspend">Device did not go into suspend mode during test execution </string>
