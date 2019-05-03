@@ -15,8 +15,13 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.GridActivity.ID_L1C1;
+import static android.autofillservice.cts.GridActivity.ID_L1C2;
+import static android.autofillservice.cts.GridActivity.ID_L2C1;
+import static android.autofillservice.cts.GridActivity.ID_L2C2;
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.provider.Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
@@ -31,6 +36,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.UserData;
 import android.view.autofill.AutofillId;
@@ -43,6 +49,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "Service-specific test")
 public class FieldsClassificationTest extends AbstractGridActivityTestCase {
@@ -176,9 +183,8 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
                 .build());
 
         // Trigger autofill
@@ -211,9 +217,11 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
+        final AtomicReference<AutofillId> fieldId = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
+                .setVisitor((contexts, builder) -> fieldId
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
                 .build());
 
         // Trigger autofill
@@ -231,7 +239,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForFieldsClassification(events.get(0), fieldId, "cat", 1);
+        assertFillEventForFieldsClassification(events.get(0), fieldId.get(), "cat", 1);
     }
 
     @Test
@@ -247,9 +255,11 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
+        final AtomicReference<AutofillId> fieldId = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
+                .setVisitor((contexts, builder) -> fieldId
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
                 .build());
 
         // Trigger autofill
@@ -267,7 +277,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForFieldsClassification(events.get(0), fieldId, "cat", 1);
+        assertFillEventForFieldsClassification(events.get(0), fieldId.get(), "cat", 1);
     }
 
     private void simpleHitTest(boolean setAlgorithm, String algorithm) throws Exception {
@@ -282,9 +292,11 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         mAfm.setUserData(userData.build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
+        final AtomicReference<AutofillId> fieldId = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
+                .setVisitor((contexts, builder) -> fieldId
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
                 .build());
 
         // Trigger autofill
@@ -302,7 +314,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
         // Assert results
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForFieldsClassification(events.get(0), fieldId, "myId", 1);
+        assertFillEventForFieldsClassification(events.get(0), fieldId.get(), "myId", 1);
     }
 
     @Test
@@ -317,9 +329,11 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
+        final AtomicReference<AutofillId> fieldId = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
+                .setVisitor((contexts, builder) -> fieldId
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
                 .build());
 
         // Trigger autofill
@@ -339,7 +353,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId,
+                        new FieldClassificationResult(fieldId.get(),
                                 new String[] { "cat1", "cat2"},
                                 new float[] {1, 1})
                 });
@@ -364,9 +378,11 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .add("Iam2ND", "2ndId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
+        final AtomicReference<AutofillId> fieldId = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
+                .setVisitor((contexts, builder) -> fieldId
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
                 .build());
 
         // Trigger autofill
@@ -387,11 +403,11 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         // Best match is 0.66 (4 of 6), worst is 0.5 (3 of 6)
         if (firstMatch) {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
-                    new FieldClassificationResult(fieldId, new String[] { "1stId", "2ndId" },
+                    new FieldClassificationResult(fieldId.get(), new String[] { "1stId", "2ndId" },
                             new float[] { 0.66F, 0.5F })});
         } else {
             assertFillEventForFieldsClassification(events.get(0), new FieldClassificationResult[] {
-                    new FieldClassificationResult(fieldId, new String[] { "2ndId", "1stId" },
+                    new FieldClassificationResult(fieldId.get(), new String[] { "2ndId", "1stId" },
                             new float[] { 0.66F, 0.5F }) });
         }
     }
@@ -405,11 +421,15 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
-        final AutofillId fieldId1 = field1.getAutofillId();
-        final EditText field2 = mActivity.getCell(1, 2);
-        final AutofillId fieldId2 = field2.getAutofillId();
+        final AtomicReference<AutofillId> fieldId1 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId2 = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId1, fieldId2)
+                .setFieldClassificationIds(ID_L1C1, ID_L1C2)
+                .setVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    fieldId1.set(findAutofillIdByResourceId(context, ID_L1C1));
+                    fieldId2.set(findAutofillIdByResourceId(context, ID_L1C2));
+                })
                 .build());
 
         // Trigger autofill
@@ -430,8 +450,8 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, "myId", 1.0F),
-                        new FieldClassificationResult(fieldId2, "myId", 0.6F),
+                        new FieldClassificationResult(fieldId1.get(), "myId", 1.0F),
+                        new FieldClassificationResult(fieldId2.get(), "myId", 0.6F),
                 });
     }
 
@@ -447,15 +467,19 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
-        final AutofillId fieldId1 = field1.getAutofillId();
-        final EditText field2 = mActivity.getCell(1, 2);
-        final AutofillId fieldId2 = field2.getAutofillId();
-        final EditText field3 = mActivity.getCell(2, 1);
-        final AutofillId fieldId3 = field3.getAutofillId();
-        final EditText field4 = mActivity.getCell(2, 2);
-        final AutofillId fieldId4 = field4.getAutofillId();
+        final AtomicReference<AutofillId> fieldId1 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId2 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId3 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId4 = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId1, fieldId2)
+                .setFieldClassificationIds(ID_L1C1, ID_L1C2)
+                .setVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    fieldId1.set(findAutofillIdByResourceId(context, ID_L1C1));
+                    fieldId2.set(findAutofillIdByResourceId(context, ID_L1C2));
+                    fieldId3.set(findAutofillIdByResourceId(context, ID_L2C1));
+                    fieldId4.set(findAutofillIdByResourceId(context, ID_L2C2));
+                })
                 .build());
 
         // Trigger autofill
@@ -478,14 +502,14 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId2, new String[] { "otherId", "myId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId3, new String[] { "myId", "otherId" },
-                                new float[] { 0.6F, 0.2F }),
-                        new FieldClassificationResult(fieldId4, new String[] { "otherId", "myId"},
-                                new float[] { 0.80F, 0.2F })});
+                        new FieldClassificationResult(fieldId1.get(),
+                                new String[] { "myId", "otherId" }, new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId2.get(),
+                                new String[] { "otherId", "myId" }, new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId3.get(),
+                                new String[] { "myId", "otherId" }, new float[] { 0.6F, 0.2F }),
+                        new FieldClassificationResult(fieldId4.get(),
+                                new String[] { "otherId", "myId"}, new float[] { 0.80F, 0.2F })});
     }
 
     @Test
@@ -505,13 +529,17 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
-        final AutofillId fieldId1 = field1.getAutofillId();
-        final EditText field2 = mActivity.getCell(1, 2);
-        final AutofillId fieldId2 = field2.getAutofillId();
-        final EditText field3 = mActivity.getCell(2, 1);
-        final AutofillId fieldId3 = field3.getAutofillId();
+        final AtomicReference<AutofillId> fieldId1 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId2 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId3 = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId1, fieldId2)
+                .setFieldClassificationIds(ID_L1C1, ID_L1C2)
+                .setVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    fieldId1.set(findAutofillIdByResourceId(context, ID_L1C1));
+                    fieldId2.set(findAutofillIdByResourceId(context, ID_L1C2));
+                    fieldId3.set(findAutofillIdByResourceId(context, ID_L2C1));
+                })
                 .build());
 
         // Trigger autofill
@@ -533,12 +561,12 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId2, new String[] { "otherId" },
-                                new float[] { 1.0F }),
-                        new FieldClassificationResult(fieldId3, new String[] { "otherId" },
-                                new float[] { 0.2F })});
+                        new FieldClassificationResult(fieldId1.get(),
+                                new String[] { "myId", "otherId" }, new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId2.get(),
+                                new String[] { "otherId" }, new float[] { 1.0F }),
+                        new FieldClassificationResult(fieldId3.get(),
+                                new String[] { "otherId" }, new float[] { 0.2F })});
     }
 
     @Test
@@ -555,15 +583,19 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                 .build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
-        final AutofillId fieldId1 = field1.getAutofillId();
-        final EditText field2 = mActivity.getCell(1, 2);
-        final AutofillId fieldId2 = field2.getAutofillId();
-        final EditText field3 = mActivity.getCell(2, 1);
-        final AutofillId fieldId3 = field3.getAutofillId();
-        final EditText field4 = mActivity.getCell(2, 2);
-        final AutofillId fieldId4 = field4.getAutofillId();
+        final AtomicReference<AutofillId> fieldId1 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId2 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId3 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId4 = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId1, fieldId2)
+                .setFieldClassificationIds(ID_L1C1, ID_L1C2)
+                .setVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    fieldId1.set(findAutofillIdByResourceId(context, ID_L1C1));
+                    fieldId2.set(findAutofillIdByResourceId(context, ID_L1C2));
+                    fieldId3.set(findAutofillIdByResourceId(context, ID_L2C1));
+                    fieldId4.set(findAutofillIdByResourceId(context, ID_L2C2));
+                })
                 .build());
 
         // Trigger autofill
@@ -586,14 +618,14 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId2, new String[] { "otherId", "myId" },
-                                new float[] { 1.0F, 0.2F }),
-                        new FieldClassificationResult(fieldId3, new String[] { "myId", "otherId" },
-                                new float[] { 0.6F, 0.2F }),
-                        new FieldClassificationResult(fieldId4, new String[] { "otherId", "myId"},
-                                new float[] { 0.80F, 0.2F })});
+                        new FieldClassificationResult(fieldId1.get(),
+                                new String[] { "myId", "otherId" }, new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId2.get(),
+                                new String[] { "otherId", "myId" }, new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId3.get(),
+                                new String[] { "myId", "otherId" }, new float[] { 0.6F, 0.2F }),
+                        new FieldClassificationResult(fieldId4.get(),
+                                new String[] { "otherId", "myId"}, new float[] { 0.80F, 0.2F })});
     }
 
     @Test
@@ -605,9 +637,8 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         mAfm.setUserData(new UserData.Builder("id", "ABCDEF", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
                 .build());
 
         // Trigger autofill
@@ -637,9 +668,8 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
                 .build());
 
         // Trigger autofill
@@ -669,15 +699,14 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field = mActivity.getCell(1, 1);
-        final AutofillId fieldId = field.getAutofillId();
+        final AtomicReference<AutofillId> fieldId1 = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
+                .setFieldClassificationIds(ID_L1C1)
+                .setVisitor((contexts, builder) -> fieldId1
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
                 .setUserData(new UserData.Builder("id2", "TEST2", "cat")
                         .setFieldClassificationAlgorithm(null, null)
                         .build())
-                .build())
-                .addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId)
                 .build());
 
         // Trigger autofill
@@ -694,7 +723,14 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         mAfm.commit();
 
         final Event packageUserDataEvent = InstrumentedAutoFillService.getFillEvents(1).get(0);
-        assertFillEventForFieldsClassification(packageUserDataEvent, fieldId, "cat", 0.8F);
+        assertFillEventForFieldsClassification(packageUserDataEvent, fieldId1.get(), "cat", 0.8F);
+
+        final AtomicReference<AutofillId> fieldId2 = new AtomicReference<>();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setVisitor((contexts, builder) -> fieldId2
+                        .set(findAutofillIdByResourceId(contexts.get(0), ID_L1C1)))
+                .setFieldClassificationIds(ID_L1C1)
+                .build());
 
         // Need to switch focus first
         mActivity.focusCell(1, 2);
@@ -711,7 +747,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
         // Assert results
         final Event defaultUserDataEvent = InstrumentedAutoFillService.getFillEvents(1).get(0);
-        assertFillEventForFieldsClassification(defaultUserDataEvent, fieldId, "cat", 1.0F);
+        assertFillEventForFieldsClassification(defaultUserDataEvent, fieldId2.get(), "cat", 1.0F);
     }
 
     @Test
@@ -723,11 +759,15 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         mAfm.setUserData(new UserData.Builder("id", "FULLY", "myId").build());
         final MyAutofillCallback callback = mActivity.registerCallback();
         final EditText field1 = mActivity.getCell(1, 1);
-        final AutofillId fieldId1 = field1.getAutofillId();
-        final EditText field2 = mActivity.getCell(1, 2);
-        final AutofillId fieldId2 = field2.getAutofillId();
+        final AtomicReference<AutofillId> fieldId1 = new AtomicReference<>();
+        final AtomicReference<AutofillId> fieldId2 = new AtomicReference<>();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setFieldClassificationIds(fieldId1, fieldId2)
+                .setFieldClassificationIds(ID_L1C1, ID_L1C2)
+                .setVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    fieldId1.set(findAutofillIdByResourceId(context, ID_L1C1));
+                    fieldId2.set(findAutofillIdByResourceId(context, ID_L1C2));
+                })
                 .setUserData(new UserData.Builder("id2", "FOOLY", "otherId")
                         .add("EMPTY", "myId")
                         .build())
@@ -751,10 +791,10 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
         assertFillEventForFieldsClassification(events.get(0),
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId1, new String[] { "otherId", "myId" },
-                                new float[] { 0.6F, 0.2F }),
-                        new FieldClassificationResult(fieldId2, new String[] { "myId", "otherId" },
-                                new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId1.get(),
+                                new String[] { "otherId", "myId" }, new float[] { 0.6F, 0.2F }),
+                        new FieldClassificationResult(fieldId2.get(),
+                                new String[] { "myId", "otherId" }, new float[] { 1.0F, 0.2F }),
                 });
     }
 

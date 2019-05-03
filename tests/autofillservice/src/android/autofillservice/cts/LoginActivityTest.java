@@ -20,6 +20,7 @@ import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPON
 import static android.autofillservice.cts.CannedFillResponse.FAIL;
 import static android.autofillservice.cts.CannedFillResponse.NO_MOAR_RESPONSES;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.Helper.ID_EMPTY;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
@@ -33,7 +34,7 @@ import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.disallowOverlays;
 import static android.autofillservice.cts.Helper.dumpStructure;
-import static android.autofillservice.cts.Helper.findNodeByAutofillId;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.isAutofillWindowFullScreen;
 import static android.autofillservice.cts.Helper.setUserComplete;
@@ -84,6 +85,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.service.autofill.FillContext;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
@@ -146,7 +148,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
             .addResponse(NO_RESPONSE)
             .addResponse(NO_MOAR_RESPONSES);
 
-        // Trigger a
+        // Trigger autofill
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
         mUiBot.assertNoDatasetsEver();
@@ -182,6 +184,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Try again, in a field that was added after the first request
         final EditText child = new EditText(mActivity);
+        child.setId(R.id.empty);
         mActivity.addChild(child);
         final OneTimeTextWatcher watcher = new OneTimeTextWatcher("child", child,
                 "new view on the block");
@@ -189,7 +192,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
                 .setField(ID_PASSWORD, "sweet")
-                .setField(child.getAutofillId(), "new view on the block")
+                .setField(ID_EMPTY, "new view on the block")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.syncRunOnUiThread(() -> child.requestFocus());
@@ -284,12 +287,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Try again, in a field that was added after the first request
         final EditText child = new EditText(mActivity);
+        child.setId(R.id.empty);
         mActivity.addChild(child);
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableAutofillIds(SAVE_DATA_TYPE_PASSWORD,
-                        mActivity.getUsername().getAutofillId(),
-                        mActivity.getPassword().getAutofillId(),
-                        child.getAutofillId())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD,
+                        ID_USERNAME,
+                        ID_PASSWORD,
+                        ID_EMPTY)
                 .build());
         mActivity.syncRunOnUiThread(() -> child.requestFocus());
 
@@ -322,8 +326,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         assertTextAndValue(username, "malkovich");
         final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
         assertTextAndValue(password, "malkovich");
-        final ViewNode childNode = findNodeByAutofillId(saveRequest.structure,
-                child.getAutofillId());
+        final ViewNode childNode = findNodeByResourceId(saveRequest.structure, ID_EMPTY);
         assertTextAndValue(childNode, "NOT MR.M");
     }
 
@@ -467,8 +470,9 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         final FillRequest request = sReplier.getNextFillRequest();
         assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
         assertTextIsSanitized(request.structure, ID_PASSWORD);
-        assertThat(request.contexts.get(request.contexts.size() - 1).getFocusedId())
-                .isEqualTo(mActivity.getUsername().getAutofillId());
+        final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
+        assertThat(fillContext.getFocusedId())
+                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
 
         // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(

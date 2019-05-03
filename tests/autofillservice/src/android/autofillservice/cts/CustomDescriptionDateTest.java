@@ -17,6 +17,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.AbstractDatePickerActivity.ID_DATE_PICKER;
 import static android.autofillservice.cts.AbstractDatePickerActivity.ID_OUTPUT;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
@@ -59,18 +60,20 @@ public class CustomDescriptionDateTest
         // Set service.
         enableService();
 
-        final AutofillId id = mActivity.getDatePicker().getAutofillId();
-
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(new CustomDescription
-                        .Builder(newTemplate(R.layout.two_horizontal_text_fields))
-                        .addChild(R.id.first,
-                                new DateTransformation(id, new SimpleDateFormat("MM/yyyy")))
-                        .addChild(R.id.second,
-                                new DateTransformation(id, new SimpleDateFormat("MM-yy")))
-                        .build())
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_DATE_PICKER)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final AutofillId id = findAutofillIdByResourceId(contexts.get(0),
+                            ID_DATE_PICKER);
+                    builder.setCustomDescription(new CustomDescription
+                            .Builder(newTemplate(R.layout.two_horizontal_text_fields))
+                            .addChild(R.id.first,
+                                    new DateTransformation(id, new SimpleDateFormat("MM/yyyy")))
+                            .addChild(R.id.second,
+                                    new DateTransformation(id, new SimpleDateFormat("MM-yy")))
+                            .build());
+                })
                 .build());
 
         // Trigger auto-fill.
@@ -111,8 +114,6 @@ public class CustomDescriptionDateTest
         // Set service.
         enableService();
 
-        final AutofillId id = mActivity.getDatePicker().getAutofillId();
-
         // Set expectations.
         final Calendar cal = Calendar.getInstance();
         cal.clear();
@@ -134,7 +135,10 @@ public class CustomDescriptionDateTest
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_DATE_PICKER);
 
         if (withSanitization) {
-            response.addSanitizer(new DateValueSanitizer(new SimpleDateFormat("MM/yyyy")), id);
+            response.setSaveInfoVisitor((contexts, builder) -> {
+                final AutofillId id = findAutofillIdByResourceId(contexts.get(0), ID_DATE_PICKER);
+                builder.addSanitizer(new DateValueSanitizer(new SimpleDateFormat("MM/yyyy")), id);
+            });
         }
         sReplier.addResponse(response.build());
 
