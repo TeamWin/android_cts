@@ -39,12 +39,17 @@ public class CustomView extends View {
         super(context, attrs);
     }
 
-    public void onProvideContentCaptureStructure(ViewStructure structure) {
+    public void onProvideContentCaptureStructure(@NonNull ViewStructure structure) {
+        Log.v(TAG, "onProvideContentCaptureStructure(): delegate=" + mDelegate);
         if (mDelegate != null) {
             Log.d(TAG, "onProvideContentCaptureStructure(): delegating");
             structure.setClassName(getAccessibilityClassName().toString());
             mDelegate.visit(structure);
             Log.d(TAG, "onProvideContentCaptureStructure(): delegated");
+        }
+        else {
+            Log.d(TAG, "onProvideContentCaptureStructure(): explicitly setting class name");
+            structure.setClassName(getAccessibilityClassName().toString());
         }
     }
 
@@ -60,7 +65,9 @@ public class CustomView extends View {
 
     @Override
     public CharSequence getAccessibilityClassName() {
-        return CustomView.class.getName();
+        final String name = CustomView.class.getName();
+        Log.d(TAG, "getAccessibilityClassName(): " + name);
+        return name;
     }
 
     void setContentCaptureDelegate(@NonNull Visitor<ViewStructure> delegate) {
