@@ -94,8 +94,7 @@ public class TileServiceTest extends AndroidTestCase {
         waitForListening(true);
         assertFalse(mTileService.isSecure());
     }
-
-    @FlakyTest // b/130796699
+    
     public void testTile_hasCorrectIcon() throws Exception {
         if (!TileService.isQuickSettingsSupported()) return;
         startTileService();
