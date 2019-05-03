@@ -16,6 +16,7 @@
 
 package android.hardware.cts.helpers;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.cts.helpers.sensoroperations.SensorOperation;
 import android.os.Environment;
@@ -148,31 +149,27 @@ public class SensorStats {
     /**
      * Utility method to log the stats to a file. Will overwrite the file if it already exists.
      */
-    public void logToFile(String fileName) {
+    public void logToFile(Context context, String fileName) throws IOException {
         // Check that external storage is mounted before attempting to write the recorded sensor
         // data to file. This is necessary since Instant Apps do not have access to external
         // storage.
-        try {
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
-                File logFile = new File(statsDirectory, fileName);
-                final Map<String, Object> flattened = flatten();
-                FileWriter fileWriter = new FileWriter(logFile, false /* append */);
-                try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
-                    for (String key : getSortedKeys(flattened)) {
-                        Object value = flattened.get(key);
-                        writer.write(String.format("%s: %s\n", key, getValueString(value)));
-                    }
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory(context, "stats/");
+            File logFile = new File(statsDirectory, fileName);
+            final Map<String, Object> flattened = flatten();
+            FileWriter fileWriter = new FileWriter(logFile, false /* append */);
+            try (BufferedWriter writer = new BufferedWriter(fileWriter)) {
+                for (String key : getSortedKeys(flattened)) {
+                    Object value = flattened.get(key);
+                    writer.write(String.format("%s: %s\n", key, getValueString(value)));
                 }
             }
-        } catch (IOException e) {
-            Log.e("SensorStats", "Failed to log stats to file\n" + e.getMessage());
         }
     }
 
     /**
      * Provides a sanitized sensor name, that can be used in file names.
-     * See {@link #logToFile(String)}.
+     * See {@link #logToFile(Context, String)}.
      */
     public static String getSanitizedSensorName(Sensor sensor) throws SensorTestPlatformException {
         return SensorCtsHelper.sanitizeStringForFileName(sensor.getStringType());
