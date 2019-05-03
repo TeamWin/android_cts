@@ -41,6 +41,8 @@ import com.android.cts.verifier.wifi.CallbackUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,9 +53,11 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     private static final String TAG = "NetworkSuggestionTestCase";
     private static final boolean DBG = true;
 
+    private static final int PERIODIC_SCAN_INTERVAL_MS = 10_000;
     private static final int CALLBACK_TIMEOUT_MS = 40_000;
 
     private final Object mLock = new Object();
+    private final ScheduledExecutorService mExecutorService;
     private final List<WifiNetworkSuggestion> mNetworkSuggestions = new ArrayList<>();
 
     private ConnectivityManager mConnectivityManager;
@@ -68,6 +72,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     public NetworkSuggestionTestCase(Context context, boolean setBssid,
                                      boolean setRequiresAppInteraction) {
         super(context);
+        mExecutorService = Executors.newSingleThreadScheduledExecutor();
         mSetBssid = setBssid;
         mSetRequiresAppInteraction = setRequiresAppInteraction;
     }
@@ -143,7 +148,15 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             return false;
         }
 
-        // Step 5: Wait for connection.
+        // Step 5: Trigger scans periodically to trigger network selection quicker.
+        if (DBG) Log.v(TAG, "Triggering scan periodically");
+        mExecutorService.scheduleAtFixedRate(() -> {
+            if (!mWifiManager.startScan()) {
+                Log.w(TAG, "Failed to trigger scan");
+            }
+        }, 0, PERIODIC_SCAN_INTERVAL_MS, TimeUnit.MILLISECONDS);
+
+        // Step 6: Wait for connection.
         if (DBG) Log.v(TAG, "Waiting for connection");
         mListener.onTestMsgReceived(mContext.getString(
                 R.string.wifi_status_suggestion_wait_for_connect));
@@ -156,7 +169,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         mListener.onTestMsgReceived(
                 mContext.getString(R.string.wifi_status_suggestion_connect));
 
-        // Step 6: Ensure that we connected to the suggested network (optionally, the correct
+        // Step 7: Ensure that we connected to the suggested network (optionally, the correct
         // BSSID).
         if (!mTestUtils.isConnected("\"" + openNetwork.SSID + "\"",
                 // TODO: This might fail if there are other BSSID's for the same network & the
@@ -185,7 +198,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
                     mContext.getString(R.string.wifi_status_suggestion_post_connect_bcast));
         }
 
-        // Step 7: Remove the suggestions from the app.
+        // Step 8: Remove the suggestions from the app.
         if (DBG) Log.v(TAG, "Removing suggestion");
         mListener.onTestMsgReceived(mContext.getString(R.string.wifi_status_suggestion_remove));
         if (mWifiManager.removeNetworkSuggestions(mNetworkSuggestions)
@@ -194,7 +207,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             return false;
         }
 
-        // Step 8: Ensure we don't disconnect immediately on suggestion removal.
+        // Step 9: Ensure we don't disconnect immediately on suggestion removal.
         mListener.onTestMsgReceived(
                 mContext.getString(R.string.wifi_status_suggestion_wait_for_disconnect));
         if (DBG) Log.v(TAG, "Ensuring we don't disconnect immediately");
@@ -224,6 +237,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     @Override
     protected void tearDown() {
+        mExecutorService.shutdownNow();
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }
