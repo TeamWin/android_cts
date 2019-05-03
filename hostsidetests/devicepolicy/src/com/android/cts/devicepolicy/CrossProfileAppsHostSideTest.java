@@ -28,6 +28,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private int mProfileId;
     private int mSecondaryUserId;
     private boolean mHasManagedUserFeature;
+    private boolean mCanTestMultiUser;
 
     @Override
     protected void setUp() throws Exception {
@@ -40,9 +41,10 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
             createAndStartManagedProfile();
             installRequiredApps(mProfileId);
         }
-        if (mSupportsMultiUser) {
+        if (canCreateAdditionalUsers(1)) {
             mSecondaryUserId = createUser();
             installRequiredApps(mSecondaryUserId);
+            mCanTestMultiUser = true;
         }
     }
 
@@ -71,14 +73,14 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testPrimaryUserToSecondaryUser() throws Exception {
-        if (!mSupportsMultiUser) {
+        if (!mCanTestMultiUser) {
             return;
         }
         verifyCrossProfileAppsApi(mPrimaryUserId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
     public void testSecondaryUserToManagedProfile() throws Exception {
-        if (!mSupportsMultiUser || !mHasManagedUserFeature) {
+        if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
         }
         verifyCrossProfileAppsApi(mSecondaryUserId, mProfileId, NON_TARGET_USER_TEST_CLASS);
@@ -86,7 +88,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testManagedProfileToSecondaryUser() throws Exception {
-        if (!mSupportsMultiUser || !mHasManagedUserFeature) {
+        if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
         }
         verifyCrossProfileAppsApi(mProfileId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
