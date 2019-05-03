@@ -16,6 +16,8 @@
 
 package com.android.cts.mockime;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -208,6 +210,12 @@ public class MockImeSession implements AutoCloseable {
 
         PollingCheck.check("Make sure that MockIME becomes available", TIMEOUT,
                 () -> getMockImeId().equals(getCurrentInputMethodId()));
+    }
+
+    /** @see #create(Context, UiAutomation, ImeSettings.Builder) */
+    @NonNull
+    public static MockImeSession create(@NonNull Context context) throws Exception {
+        return create(context, getInstrumentation().getUiAutomation(), new ImeSettings.Builder());
     }
 
     /**
@@ -944,5 +952,11 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putInt("keyEventCode", keyEventCode);
         return callCommandInternal("sendDownUpKeyEvents", params);
+    }
+
+    @NonNull
+    public ImeCommand callGetDisplayId() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("getDisplayId", params);
     }
 }
