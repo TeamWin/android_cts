@@ -439,4 +439,9 @@ public class AvailableIntentsTest extends AndroidTestCase {
         Intent intent = new Intent(Settings.ACTION_REQUEST_ENABLE_CONTENT_CAPTURE);
         assertCanBeHandled(intent);
     }
+
+    public void testVoiceInputSettingsIntent() {
+        Intent intent = new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS);
+        assertCanBeHandled(intent);
+    }
 }
