@@ -1,0 +1,21 @@
+cc_test_library {
+    name: "libaudioloopback_jni",
+    srcs: [
+        "sles.cpp",
+        "jni_sles.c",
+        "audio_utils/atomic.c",
+        "audio_utils/fifo.c",
+        "audio_utils/roundup.c",
+    ],
+    shared_libs: [
+        "libOpenSLES",
+        "liblog",
+    ],
+    ldflags: ["-Wl,--hash-style=sysv"],
+    cflags: [
+        "-DSTDC_HEADERS",
+        "-Werror",
+        "-Wall",
+    ],
+    sdk_version: "23",
+}
