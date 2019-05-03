@@ -31,6 +31,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.Parcelable;
 import android.os.cts.ParcelFileDescriptorPeer.FutureCloseListener;
+import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -95,6 +96,7 @@ public class ParcelFileDescriptorTest {
     }
 
     @Test
+    @AppModeFull // opening a listening socket not permitted for instant apps
     public void testFromSocket() throws Throwable {
         final int PORT = 12222;
         final int DATA = 1;
