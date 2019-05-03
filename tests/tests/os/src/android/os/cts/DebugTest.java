@@ -17,6 +17,7 @@ package android.os.cts;
 
 import android.content.Context;
 import android.os.Debug;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.TestThread;
@@ -56,10 +57,6 @@ public class DebugTest extends AndroidTestCase {
         final int bufSize = 1024 * 1024 * 2;
         final int debug_flag = Debug.TRACE_COUNT_ALLOCS;
 
-        Debug.startMethodTracing();
-        Thread.sleep(debugTime);
-        Debug.stopMethodTracing();
-
         Debug.startMethodTracing(traceName);
         Thread.sleep(debugTime);
         Debug.stopMethodTracing();
@@ -69,6 +66,17 @@ public class DebugTest extends AndroidTestCase {
         Debug.stopMethodTracing();
 
         Debug.startMethodTracing(traceName, bufSize, debug_flag);
+        Thread.sleep(debugTime);
+        Debug.stopMethodTracing();
+    }
+
+    @AppModeFull(
+            reason = "Default trace in Context#getExternalFilesDir not accessible by instant apps"
+    )
+    public void testStartMethodTracingDefaultExternalStorage() throws InterruptedException {
+        final long debugTime = 3000;
+
+        Debug.startMethodTracing();
         Thread.sleep(debugTime);
         Debug.stopMethodTracing();
     }
