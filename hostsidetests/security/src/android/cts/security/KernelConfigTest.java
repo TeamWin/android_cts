@@ -181,12 +181,18 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
     private static final String QUALCOMM_SOC_FILE = "/sys/devices/soc0/chip_name";
 
     private String getHardware() throws Exception {
+        String hardware = "DEFAULT";
         /* lookup for Qualcomm devices */
-        if (mDevice.doesFileExist(QUALCOMM_SOC_FILE)) {
-            return mDevice.pullFileContents(QUALCOMM_SOC_FILE).trim();
+        if (doesFileExist(QUALCOMM_SOC_FILE)) {
+            hardware = mDevice.pullFileContents(QUALCOMM_SOC_FILE).trim();
         }
-        /* TODO lookup for other non-vulnerable devices. */
-        return "DEFAULT";
+        /* TODO lookup other hardware as we get exemption requests. */
+        return hardwareMitigations.containsKey(hardware) ? hardware : "DEFAULT";
+    }
+
+    private boolean doesFileExist(String filePath) throws Exception {
+        String lsGrep = mDevice.executeShellCommand(String.format("ls \"%s\"", filePath));
+        return lsGrep.trim().equals(filePath);
     }
 
     private Map<String, String[]> hardwareMitigations = new HashMap<String, String[]>() {
