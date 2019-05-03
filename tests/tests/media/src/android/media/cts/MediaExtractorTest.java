@@ -28,6 +28,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.R;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
@@ -272,6 +273,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot bind sockets.")
     public void testExtractorGetCachedDuration() throws Exception {
         CtsTestServer foo = new CtsTestServer(getContext());
         String url = foo.getAssetUrl("ringer.mp3");
