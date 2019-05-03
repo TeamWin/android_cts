@@ -61,10 +61,11 @@ import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.Until;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -108,7 +109,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class BasePrintTest {
     private static final String LOG_TAG = "BasePrintTest";
 
-    protected static final long OPERATION_TIMEOUT_MILLIS = 60000;
+    protected static final long OPERATION_TIMEOUT_MILLIS = 20000;
     protected static final String PRINT_JOB_NAME = "Test";
     static final String TEST_ID = "BasePrintTest.EXTRA_TEST_ID";
 
@@ -543,6 +544,17 @@ public abstract class BasePrintTest {
         mCreateActivityCallCounter.reset();
     }
 
+    protected UiObject2 findUiObject(BySelector selector) throws UiObjectNotFoundException,
+            IOException {
+        UiObject2 uiObject = getUiDevice().wait(Until.findObject(selector),
+                OPERATION_TIMEOUT_MILLIS);
+        if (uiObject == null) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException("Cannot find UiObject with selector: " + selector);
+        }
+        return uiObject;
+    }
+
     /**
      * Wait until the message is shown that indicates that a printer is unavailable.
      *
@@ -551,8 +563,7 @@ public abstract class BasePrintTest {
     protected void waitForPrinterUnavailable() throws Exception {
         final String printerUnavailableMessage = "This printer isn\'t available right now.";
 
-        UiObject message = getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.printspooler:id/message"));
+        UiObject2 message = findUiObject(By.res("com.android.printspooler:id/message"));
         if (!message.getText().equals(printerUnavailableMessage)) {
             throw new Exception("Wrong message: " + message.getText() + " instead of "
                     + printerUnavailableMessage);
@@ -561,13 +572,11 @@ public abstract class BasePrintTest {
 
     protected void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
-            long delay = 1;
+            long delay = 100;
             while (true) {
                 try {
-                    UiDevice uiDevice = getUiDevice();
-                    UiObject destinationSpinner = uiDevice.findObject(new UiSelector()
-                            .resourceId("com.android.printspooler:id/destination_spinner"));
-
+                    UiObject2 destinationSpinner = findUiObject(By.res(
+                            "com.android.printspooler:id/destination_spinner"));
                     destinationSpinner.click();
                     getUiDevice().waitForIdle();
 
@@ -575,12 +584,11 @@ public abstract class BasePrintTest {
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException e) {
-                        // ignore
+                        // Ignore
                     }
 
-                    // try to select printer
-                    UiObject printerOption = uiDevice.findObject(
-                            new UiSelector().text(printerName));
+                    // Try to select printer
+                    UiObject2 printerOption = findUiObject(By.text(printerName));
                     printerOption.click();
                 } catch (UiObjectNotFoundException e) {
                     Log.e(LOG_TAG, "Could not select printer " + printerName, e);
@@ -598,8 +606,8 @@ public abstract class BasePrintTest {
                             delay *= 2;
                         } else {
                             throw new UiObjectNotFoundException(
-                                    "Could find printer " + printerName
-                                            + " even though we retried");
+                                    "Could not find printer " + printerName
+                                            + " even though we retried.");
                         }
                     }
                 } else {
@@ -612,115 +620,76 @@ public abstract class BasePrintTest {
         }
     }
 
-    protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
-        UiObject button;
+    protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException,
+            IOException {
+        UiObject2 button;
         if (confirm) {
-            button = getUiDevice().findObject(new UiSelector().resourceId("android:id/button1"));
+            button = findUiObject(By.res("android:id/button1"));
         } else {
-            button = getUiDevice().findObject(new UiSelector().resourceId("android:id/button2"));
+            button = findUiObject(By.res("android:id/button2"));
         }
         button.click();
     }
 
     protected void changeOrientation(String orientation) throws UiObjectNotFoundException,
             IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject orientationSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/orientation_spinner"));
-            orientationSpinner.click();
-            UiObject orientationOption = uiDevice.findObject(new UiSelector().text(orientation));
-            orientationOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 orientationSpinner = findUiObject(By.res(
+                "com.android.printspooler:id/orientation_spinner"));
+        orientationSpinner.click();
+        UiObject2 orientationOption = findUiObject(By.text(orientation));
+        orientationOption.click();
     }
 
     public String getOrientation() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject orientationSpinner = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/orientation_spinner"));
-            return orientationSpinner.getText();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 orientationSpinner = findUiObject(By.res(
+                "com.android.printspooler:id/orientation_spinner"));
+        return orientationSpinner.getText();
     }
 
     protected void changeMediaSize(String mediaSize) throws UiObjectNotFoundException, IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject mediaSizeSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/paper_size_spinner"));
-            mediaSizeSpinner.click();
-            UiObject mediaSizeOption = uiDevice.findObject(new UiSelector().text(mediaSize));
-            mediaSizeOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 mediaSizeSpinner = findUiObject(By.res(
+                "com.android.printspooler:id/paper_size_spinner"));
+        mediaSizeSpinner.click();
+        UiObject2 mediaSizeOption = findUiObject(By.text(mediaSize));
+        mediaSizeOption.click();
     }
 
     protected void changeColor(String color) throws UiObjectNotFoundException, IOException {
+        UiObject2 colorSpinner = findUiObject(By.res("com.android.printspooler:id/color_spinner"));
+        colorSpinner.click();
+        // The color spinner and the color option both contain the same text, so give the
+        // spinner some time to expand
+        long delay = 100;
         try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject colorSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/color_spinner"));
-            colorSpinner.click();
-            UiObject colorOption = uiDevice.findObject(new UiSelector().text(color));
-            colorOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            // Ignore
         }
+        UiObject2 colorOption = findUiObject(By.text(color));
+        colorOption.click();
     }
 
     public String getColor() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject colorSpinner = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/color_spinner"));
-            return colorSpinner.getText();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 colorSpinner = findUiObject(By.res("com.android.printspooler:id/color_spinner"));
+        return colorSpinner.getText();
     }
 
     protected void changeDuplex(String duplex) throws UiObjectNotFoundException, IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject duplexSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/duplex_spinner"));
-            duplexSpinner.click();
-            UiObject duplexOption = uiDevice.findObject(new UiSelector().text(duplex));
-            duplexOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 duplexSpinner = findUiObject(By.res(
+                "com.android.printspooler:id/duplex_spinner"));
+        duplexSpinner.click();
+        UiObject2 duplexOption = findUiObject(By.text(duplex));
+        duplexOption.click();
     }
 
     protected void changeCopies(int newCopies) throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject copies = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/copies_edittext"));
-            copies.setText(Integer.valueOf(newCopies).toString());
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 copies = findUiObject(By.res("com.android.printspooler:id/copies_edittext"));
+        copies.setText(Integer.valueOf(newCopies).toString());
     }
 
     protected String getCopies() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject copies = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/copies_edittext"));
-            return copies.getText();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 copies = findUiObject(By.res("com.android.printspooler:id/copies_edittext"));
+        return copies.getText();
     }
 
     protected void assertNoPrintButton() throws UiObjectNotFoundException, IOException {
@@ -728,25 +697,13 @@ public abstract class BasePrintTest {
     }
 
     public void clickPrintButton() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject printButton = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/print_button"));
-            printButton.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 printButton = findUiObject(By.res("com.android.printspooler:id/print_button"));
+        printButton.click();
     }
 
     protected void clickRetryButton() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject retryButton = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/action_button"));
-            retryButton.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        UiObject2 retryButton = findUiObject(By.res("com.android.printspooler:id/action_button"));
+        retryButton.click();
     }
 
     public void dumpWindowHierarchy() throws IOException {
@@ -784,14 +741,14 @@ public abstract class BasePrintTest {
         waitForActivityCreateCallbackCalled(createBefore + 1);
     }
 
-    protected void openPrintOptions() throws UiObjectNotFoundException {
-        UiObject expandHandle = getUiDevice().findObject(new UiSelector().resourceId(
+    protected void openPrintOptions() throws UiObjectNotFoundException, IOException {
+        UiObject2 expandHandle = findUiObject(By.res(
                 "com.android.printspooler:id/expand_collapse_handle"));
         expandHandle.click();
     }
 
-    protected void openCustomPrintOptions() throws UiObjectNotFoundException {
-        UiObject expandHandle = getUiDevice().findObject(new UiSelector().resourceId(
+    protected void openCustomPrintOptions() throws UiObjectNotFoundException, IOException {
+        UiObject2 expandHandle = findUiObject(By.res(
                 "com.android.printspooler:id/more_options_button"));
         expandHandle.click();
     }
@@ -969,15 +926,14 @@ public abstract class BasePrintTest {
     }
 
     protected void selectPages(String pages, int totalPages) throws Exception {
-        UiObject pagesSpinner = getUiDevice().findObject(new UiSelector().resourceId(
+        UiObject2 pagesSpinner = findUiObject(By.res(
                 "com.android.printspooler:id/range_options_spinner"));
         pagesSpinner.click();
 
-        UiObject rangeOption = getUiDevice().findObject(new UiSelector().textContains("Range of "
-                + totalPages));
+        UiObject2 rangeOption = findUiObject(By.textContains("Range of " + totalPages));
         rangeOption.click();
 
-        UiObject pagesEditText = getUiDevice().findObject(new UiSelector().resourceId(
+        UiObject2 pagesEditText = findUiObject(By.res(
                 "com.android.printspooler:id/page_range_edittext"));
         pagesEditText.setText(pages);
 

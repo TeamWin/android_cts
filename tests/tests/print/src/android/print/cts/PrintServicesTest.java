@@ -59,9 +59,8 @@ import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiObject2;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -403,9 +402,8 @@ public class PrintServicesTest extends BasePrintTest {
         print(adapter);
 
         // Open printer selection dropdown list to display icon on screen
-        UiObject destinationSpinner = UiDevice.getInstance(getInstrumentation())
-                .findObject(new UiSelector().resourceId(
-                        "com.android.printspooler:id/destination_spinner"));
+        UiObject2 destinationSpinner = findUiObject(By.res(
+                "com.android.printspooler:id/destination_spinner"));
         destinationSpinner.click();
 
         // Get the print service's icon
@@ -625,8 +623,7 @@ public class PrintServicesTest extends BasePrintTest {
         });
 
         // Open info activity which executed the code above
-        UiObject moreInfoButton = getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.printspooler:id/more_info"));
+        UiObject2 moreInfoButton = findUiObject(By.res("com.android.printspooler:id/more_info"));
         moreInfoButton.click();
 
         // Wait until printer is selected and thereby tracked
