@@ -41,7 +41,6 @@ import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillId;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.regex.Pattern;
@@ -322,7 +321,6 @@ public class MultiScreenLoginTest
         saveBothFieldsCustomDescription(false);
     }
 
-    @Ignore("TODO(b/113593220): need new API to set context id")
     @Test
     public void testSaveBothFieldsCustomDescription_sameIds() throws Exception {
         saveBothFieldsCustomDescription(true);
