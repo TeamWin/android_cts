@@ -255,7 +255,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
         grantRequisitePermissions(pkg, req, locationPermissions);
 
-        Result result = getImageOrVideoCaptureIntentResult(intent, false, pkg);
+        Result result = getImageCaptureIntentResult(intent, pkg);
 
         assertTrue("exists", target.exists());
         assertTrue("has data", target.length() > 65536);
@@ -267,7 +267,9 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         assertAttribute(exif, ExifInterface.TAG_MODEL);
         assertAttribute(exif, ExifInterface.TAG_DATETIME);
         float[] latLong = new float[2];
-        assertTrue("Should not contain location information ", !exif.getLatLong(latLong));
+        Boolean hasLocation = exif.getLatLong(latLong);
+        assertTrue("Should not contain location information latitude: " + latLong[0] +
+                " longitude: " + latLong[1], !hasLocation);
         revokeRequisitePermissions(pkg, req, locationPermissions);
     }
 
@@ -292,75 +294,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         }
     }
 
-    /**
-     * Verify that whoever handles {@link MediaStore#ACTION_VIDEO_CAPTURE} can
-     * correctly write the contents into a passed {@code content://} Uri, without location
-     * information.
-     */
-    public void testVideoCaptureWithInadequeteLocationPermissions() throws Exception {
-        Set<String> perms = new HashSet<>();
-        perms.add(ACCESS_COARSE_LOCATION);
-        perms.add(ACCESS_BACKGROUND_LOCATION);
-        perms.add(ACCESS_MEDIA_LOCATION);
-        testVideoCaptureWithoutLocation(perms);
-    }
-
-    /**
-     * Helper method to verify that whoever handles {@link MediaStore#ACTION_VIDEO_CAPTURE} can
-     * correctly write the contents into a passed {@code content://} Uri, necessarily without
-     * location information when ACCESS_FINE_LOCATION permissions aren't given.
-     */
-
-    private void testVideoCaptureWithoutLocation(Set<String> locationPermissions)
-            throws Exception {
-        assertFalse("testVideoCaptureWithoutLocation should not be passed ACCESS_FINE_LOCATION",
-                locationPermissions.contains(ACCESS_FINE_LOCATION));
-        final Context context = getInstrumentation().getContext();
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            Log.d(TAG, "Skipping due to lack of camera");
-            return;
-        }
-
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-
-        final File targetDir = new File(context.getFilesDir(), "debug");
-        final File target = new File(targetDir, timeStamp  + "video.mp4");
-
-        targetDir.mkdirs();
-        assertFalse(target.exists());
-
-        final Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                FileProvider.getUriForFile(context, "android.providerui.cts.fileprovider", target));
-
-        // Figure out who is going to answer the request
-        final ResolveInfo ri = context.getPackageManager().resolveActivity(intent, 0);
-        final String pkg = ri.activityInfo.packageName;
-        Log.d(TAG, "We're probably launching " + ri);
-
-        final PackageInfo pi = context.getPackageManager().getPackageInfo(pkg,
-                PackageManager.GET_PERMISSIONS);
-        final Set<String> req = new HashSet<>();
-        req.addAll(Arrays.asList(pi.requestedPermissions));
-
-        grantRequisitePermissions(pkg, req, locationPermissions);
-        Result result = getImageOrVideoCaptureIntentResult(intent, true, pkg);
-
-        assertTrue("exists", target.exists());
-        assertTrue("has data", target.length() > 65536);
-
-        // Check that the metadata retriever can at least identify video being present.
-        final  MediaMetadataRetriever mediaRetriever = new MediaMetadataRetriever();
-        mediaRetriever.setDataSource(target.toString());
-        assertNotNull(mediaRetriever.extractMetadata(METADATA_KEY_HAS_VIDEO));
-        Log.d(TAG, "duration of video: " + mediaRetriever.extractMetadata(METADATA_KEY_DURATION));
-        Log.d(TAG, "location of video: " + mediaRetriever.extractMetadata(METADATA_KEY_LOCATION));
-        assertNull(mediaRetriever.extractMetadata(METADATA_KEY_LOCATION));
-        revokeRequisitePermissions(pkg, req, locationPermissions);
-        mediaRetriever.release();
-    }
-
-    private Result getImageOrVideoCaptureIntentResult(Intent intent, boolean isVideo, String pkg)
+    private Result getImageCaptureIntentResult(Intent intent, String pkg)
             throws Exception {
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
@@ -374,10 +308,6 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         mDevice.pressKeyCode(KeyEvent.KEYCODE_CAMERA);
         mDevice.waitForIdle();
         SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-        if (isVideo) {
-            // Stop recording
-            mDevice.pressKeyCode(KeyEvent.KEYCODE_CAMERA);
-        }
         // We're done.
         mDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_CENTER);
         mDevice.waitForIdle();
@@ -406,9 +336,6 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
             maybeClick(By.pkg(pkg).descContains("Capture"));
             mDevice.waitForIdle();
             SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-            if (isVideo) {
-                maybeClick(By.pkg(pkg).descContains("Stop"));
-            }
             maybeClick(By.pkg(pkg).descContains("Done"));
             mDevice.waitForIdle();
 
