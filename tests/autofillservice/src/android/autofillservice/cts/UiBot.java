@@ -1043,15 +1043,22 @@ public final class UiBot {
     public void assertChild(@NonNull UiObject2 parent, @NonNull String childId,
             @Nullable Visitor<UiObject2> assertion) {
         final UiObject2 child = parent.findObject(By.res(mPackageName, childId));
-        if (assertion != null) {
-            assertWithMessage("Didn't find child with id '%s'", childId).that(child).isNotNull();
-            try {
-                assertion.visit(child);
-            } catch (Throwable t) {
-                throw new AssertionError("Error on child '" + childId + "'", t);
+        try {
+            if (assertion != null) {
+                assertWithMessage("Didn't find child with id '%s'", childId).that(child)
+                        .isNotNull();
+                try {
+                    assertion.visit(child);
+                } catch (Throwable t) {
+                    throw new AssertionError("Error on child '" + childId + "'", t);
+                }
+            } else {
+                assertWithMessage("Shouldn't find child with id '%s'", childId).that(child)
+                        .isNull();
             }
-        } else {
-            assertWithMessage("Shouldn't find child with id '%s'", childId).that(child).isNull();
+        } catch (RuntimeException | Error e) {
+            dumpScreen("assertChild(" + childId + ") failed: " + e);
+            throw e;
         }
     }
 
@@ -1067,11 +1074,5 @@ public final class UiBot {
                     + timeout + "ms instead");
             SystemClock.sleep(timeout);
         }
-    }
-
-    private boolean getBoolean(String id) {
-        final Resources resources = mContext.getResources();
-        final int booleanId = resources.getIdentifier(id, "bool", "android");
-        return resources.getBoolean(booleanId);
     }
 }
