@@ -42,14 +42,21 @@ public class Components extends ComponentsBase {
                 "LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA";
         public static final String RELAUNCH_FOREGROUND_ACTIVITY_EXTRA =
                 "RELAUNCH_FOREGROUND_ACTIVITY_EXTRA";
+        public static final String START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA =
+                "START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA";
+        public static final String START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA =
+                "START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA";
     }
+
     /** Extra key constants for {@link #APP_A_SEND_PENDING_INTENT_RECEIVER} */
     public static class SendPendingIntentReceiver {
         public static final String IS_BROADCAST_EXTRA = "IS_BROADCAST_EXTRA";
     }
+
     /** Extra key constants for {@link #APP_A_START_ACTIVITY_RECEIVER} */
     public static class StartBackgroundActivityReceiver {
-        public static final String START_ACTIVITY_DELAY_MS_EXTRA = "START_ACTIVITY_DELAY_MS_EXTRA";
+        public static final String START_ACTIVITY_DELAY_MS_EXTRA =
+                "START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA";
     }
 
 }
