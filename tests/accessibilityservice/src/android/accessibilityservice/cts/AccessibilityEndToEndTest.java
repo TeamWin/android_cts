@@ -45,6 +45,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -101,6 +102,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.Iterator;
@@ -131,9 +133,16 @@ public class AccessibilityEndToEndTest {
 
     private AccessibilityEndToEndActivity mActivity;
 
-    @Rule
-    public ActivityTestRule<AccessibilityEndToEndActivity> mActivityRule =
+    private ActivityTestRule<AccessibilityEndToEndActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityEndToEndActivity.class, false, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {

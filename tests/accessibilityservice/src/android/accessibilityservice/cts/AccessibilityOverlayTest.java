@@ -20,6 +20,7 @@ import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 
 import static org.junit.Assert.assertTrue;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.utils.AsyncUtils;
@@ -36,6 +37,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +50,10 @@ public class AccessibilityOverlayTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     InstrumentedAccessibilityService mService;
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @BeforeClass
     public static void oneTimeSetUp() {

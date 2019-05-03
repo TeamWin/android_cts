@@ -17,6 +17,7 @@ import static android.content.Context.AUDIO_SERVICE;
 
 import static org.junit.Assert.assertEquals;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
@@ -28,6 +29,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +44,10 @@ public class AccessibilityVolumeTest {
     boolean mSingleVolume;
     // If a11y volume is stuck at a single value, don't run the tests
     boolean mFixedA11yVolume;
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @Before
     public void setUp() {

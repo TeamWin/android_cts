@@ -13,6 +13,7 @@
  */
 
 package android.accessibilityservice.cts;
+
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_AUTO;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_HIDDEN;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_IGNORE_HARD_KEYBOARD;
@@ -21,6 +22,7 @@ import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController.OnShowModeChangedListener;
@@ -36,6 +38,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,7 +60,9 @@ public class AccessibilitySoftKeyboardModesTest {
         }
     };
 
-
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @Before
     public void setUp() throws Exception {

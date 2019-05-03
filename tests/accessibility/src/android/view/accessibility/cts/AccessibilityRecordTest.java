@@ -16,17 +16,23 @@
 
 package android.view.accessibility.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.os.Message;
 import android.platform.test.annotations.Presubmit;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityRecord;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.TestCase;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -34,11 +40,18 @@ import java.util.List;
  * Class for testing {@link AccessibilityRecord}.
  */
 @Presubmit
-public class AccessibilityRecordTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityRecordTest {
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
     /**
      * Tests the cloning obtain method.
      */
     @SmallTest
+    @Test
     public void testObtain() {
         AccessibilityRecord originalRecord = AccessibilityRecord.obtain();
         fullyPopulateAccessibilityRecord(originalRecord);
@@ -50,6 +63,7 @@ public class AccessibilityRecordTest extends AndroidTestCase {
     * Tests if {@link AccessibilityRecord}s are properly recycled.
     */
    @SmallTest
+   @Test
    public void testRecycle() {
        // obtain and populate an event
        AccessibilityRecord populatedRecord = AccessibilityRecord.obtain();

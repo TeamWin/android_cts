@@ -48,9 +48,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -80,6 +80,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
@@ -108,13 +109,16 @@ public class AccessibilityWindowQueryTest {
 
     private AccessibilityWindowQueryActivity mActivity;
 
-    @Rule
-    public ActivityTestRule<AccessibilityWindowQueryActivity> mActivityRule =
+    private ActivityTestRule<AccessibilityWindowQueryActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityWindowQueryActivity.class, false, false);
 
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
     @Rule
-    public ActivityTestRule<AccessibilityEndToEndActivity> mEndToEndActivityRule =
-            new ActivityTestRule<>(AccessibilityEndToEndActivity.class, false, false);
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {

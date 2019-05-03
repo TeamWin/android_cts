@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityButtonController;
 import android.app.Instrumentation;
 import android.platform.test.annotations.AppModeFull;
@@ -25,6 +26,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,6 +38,10 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityButtonTest {
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     private StubAccessibilityButtonService mService;
     private AccessibilityButtonController mButtonController;
