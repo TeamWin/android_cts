@@ -827,6 +827,7 @@
         android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_sdcardRead"
         android:description="@string/permdesc_sdcardRead"
+        android:permissionFlags="softRestricted|immutablyRestricted"
         android:protectionLevel="dangerous" />
 
     <!-- Allows an application to write to external storage.
@@ -847,6 +848,7 @@
         android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_sdcardWrite"
         android:description="@string/permdesc_sdcardWrite"
+        android:permissionFlags="softRestricted|immutablyRestricted"
         android:protectionLevel="dangerous" />
 
     <!-- Allows an application to access any geographic locations persisted in the
