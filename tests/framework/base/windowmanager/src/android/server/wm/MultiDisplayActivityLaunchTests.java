@@ -202,8 +202,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
             assertEquals("Unexpected resumed activity",
                     0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession
+                    .setCanShowWithInsecureKeyguard(true).createVirtualDisplay();
 
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 

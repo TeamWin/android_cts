@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_HOME_ACTIVITY;
@@ -132,10 +133,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @FlakyTest(bugId = 131005232)
     public void testWallpaperShowOnSecondaryDisplays() throws Exception {
         try (final ChangeWallpaperSession wallpaperSession = new ChangeWallpaperSession();
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
 
-            final ActivityDisplay nonSystemDisplay = virtualDisplaySession
-                    .setPublicDisplay(true).setShowSystemDecorations(true).createDisplay();
+            final ActivityDisplay untrustedDisplay = externalDisplaySession
+                    .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
 
             final ActivityDisplay decoredSystemDisplay = virtualDisplaySession
                     .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
@@ -150,8 +152,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             assertTrue("Wallpaper must be displayed on system owned display with system decor flag",
                     isWallpaperOnDisplay(mAmWmState.getWmState(), decoredSystemDisplay.mId));
 
-            assertFalse("Wallpaper must not be displayed on the non-system owned display",
-                    isWallpaperOnDisplay(mAmWmState.getWmState(), nonSystemDisplay.mId));
+            assertFalse("Wallpaper must not be displayed on the untrusted display",
+                    isWallpaperOnDisplay(mAmWmState.getWmState(), untrustedDisplay.mId));
         }
     }
 
@@ -203,9 +205,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testNavBarShowingOnDisplayWithDecor() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            final ActivityDisplay newDisplay = virtualDisplaySession
-                    .setPublicDisplay(true).setShowSystemDecorations(true).createDisplay();
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            final ActivityDisplay newDisplay = externalDisplaySession
+                    .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
 
             mAmWmState.waitAndAssertNavBarShownOnDisplay(newDisplay.mId);
         }
@@ -216,13 +218,13 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Wait navigation bar show on default display and record the states.
             mAmWmState.waitAndAssertNavBarShownOnDisplay(DEFAULT_DISPLAY);
             final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
-            virtualDisplaySession.setPublicDisplay(true)
-                    .setShowSystemDecorations(false).createDisplay();
+            externalDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(false).createVirtualDisplay();
 
             waitAndAssertNavBarStatesAreTheSame(expected);
         }
@@ -235,13 +237,13 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     @FlakyTest(bugId = 131005232)
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Wait navigation bar show on default display and record the states.
             mAmWmState.waitAndAssertNavBarShownOnDisplay(DEFAULT_DISPLAY);
             final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
-            virtualDisplaySession.setPublicDisplay(false)
-                    .setShowSystemDecorations(true).createDisplay();
+            externalDisplaySession.setPublicDisplay(false)
+                    .setShowSystemDecorations(true).createVirtualDisplay();
 
             waitAndAssertNavBarStatesAreTheSame(expected);
         }
@@ -256,9 +258,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // display, go back to verify whether the nav bar states are unchanged to verify that no nav
         // bars were added to a display that was added before executing this method that shouldn't
         // have nav bars (i.e. private or without system ui decor).
-        try (final VirtualDisplaySession secondDisplaySession = new VirtualDisplaySession()) {
+        try (final ExternalDisplaySession secondDisplaySession = new ExternalDisplaySession()) {
             final ActivityDisplay supportsSysDecorDisplay = secondDisplaySession
-                    .setPublicDisplay(true).setShowSystemDecorations(true).createDisplay();
+                    .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
             mAmWmState.waitAndAssertNavBarShownOnDisplay(supportsSysDecorDisplay.mId);
             // This display has finished his task. Just close it.
         }
@@ -283,9 +285,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testLaunchHomeActivityOnSecondaryDisplayWithoutDecorations() throws Exception {
         try (final HomeActivitySession homeSession =
                      new HomeActivitySession(SECONDARY_HOME_ACTIVITY);
-             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Create new virtual display without system decoration support.
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
 
             // Secondary home activity can't be launched on the display without system decoration
             // support.
@@ -301,10 +303,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(SINGLE_HOME_ACTIVITY);
-             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Create new virtual display with system decoration support.
             final ActivityDisplay newDisplay
-                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+                    = externalDisplaySession.setShowSystemDecorations(true).createVirtualDisplay();
 
             // If default home doesn't support multi-instance, default secondary home activity
             // should be automatically launched on the new display.
@@ -323,10 +325,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession =
                      new HomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
-             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Create new virtual display with system decoration support.
             final ActivityDisplay newDisplay
-                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+                    = externalDisplaySession.setShowSystemDecorations(true).createVirtualDisplay();
 
             // If provided secondary home doesn't support multi-instance, default secondary home
             // activity should be automatically launched on the new display.
@@ -344,10 +346,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY);
-             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Create new virtual display with system decoration support.
             final ActivityDisplay newDisplay
-                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+                    = externalDisplaySession.setShowSystemDecorations(true).createVirtualDisplay();
 
             // If default home doesn't have SECONDARY_HOME category, default secondary home
             // activity should be automatically launched on the new display.
@@ -366,10 +368,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testLaunchSecondaryHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession =
                      new HomeActivitySession(SECONDARY_HOME_ACTIVITY);
-             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+             final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Create new virtual display with system decoration support.
             final ActivityDisplay newDisplay
-                    = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+                    = externalDisplaySession.setShowSystemDecorations(true).createVirtualDisplay();
 
             // Provided secondary home activity should be automatically launched on the new
             // display.
