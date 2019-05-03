@@ -223,8 +223,8 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
             if (response.getResponseType() == NULL) {
                 result = null;
             } else {
-                result = response
-                        .asFillResponse((id) -> Helper.findNodeByResourceId(structure, id));
+                result = response.asFillResponse(/* contexts= */ null,
+                        (id) -> Helper.findNodeByResourceId(structure, id));
             }
         } else if (dataset != null) {
             result = dataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));

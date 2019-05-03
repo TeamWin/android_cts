@@ -17,6 +17,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.PreSimpleSaveActivity.ID_PRE_INPUT;
@@ -35,6 +36,7 @@ import android.service.autofill.Validator;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
+import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
 import java.util.regex.Pattern;
@@ -63,8 +65,9 @@ public class PreSimpleSaveActivityTest
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PRE_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(newCustomDescription(WelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -121,8 +124,9 @@ public class PreSimpleSaveActivityTest
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PRE_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(newCustomDescription(WelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -213,8 +217,9 @@ public class PreSimpleSaveActivityTest
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PRE_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(newCustomDescription(WelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -270,8 +275,9 @@ public class PreSimpleSaveActivityTest
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(TrampolineWelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PRE_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder.setCustomDescription(
+                        newCustomDescription(TrampolineWelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -334,23 +340,24 @@ public class PreSimpleSaveActivityTest
         // Set service.
         enableService();
 
-        final CustomDescription.Builder customDescription =
-                newCustomDescriptionBuilder(WelcomeActivity.class);
-        final RemoteViews update = newTemplate();
-        if (updateLinkView) {
-            update.setCharSequence(R.id.link, "setText", "TAP ME IF YOU CAN");
-        } else {
-            update.setCharSequence(R.id.static_text, "setText", "ME!");
-        }
-        Validator validCondition = new RegexValidator(mActivity.mPreInput.getAutofillId(),
-                Pattern.compile(".*"));
-        customDescription.batchUpdate(validCondition,
-                new BatchUpdates.Builder().updateTemplate(update).build());
-
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(customDescription.build())
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PRE_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final CustomDescription.Builder customDescription =
+                            newCustomDescriptionBuilder(WelcomeActivity.class);
+                    final RemoteViews update = newTemplate();
+                    if (updateLinkView) {
+                        update.setCharSequence(R.id.link, "setText", "TAP ME IF YOU CAN");
+                    } else {
+                        update.setCharSequence(R.id.static_text, "setText", "ME!");
+                    }
+                    final AutofillId id = findAutofillIdByResourceId(contexts.get(0), ID_PRE_INPUT);
+                    final Validator validCondition = new RegexValidator(id, Pattern.compile(".*"));
+                    customDescription.batchUpdate(validCondition,
+                            new BatchUpdates.Builder().updateTemplate(update).build());
+                    builder.setCustomDescription(customDescription.build());
+                })
                 .build());
 
         // Trigger autofill.
