@@ -1304,9 +1304,8 @@
     <string name="no_camera_manager">
         No camera manager exists!  This test device is in a bad state.
     </string>
-    <string name="all_legacy_devices">
-        All cameras on this device are LEGACY mode only - ITS tests are only required on LIMITED
-        or better devices.  Pass.
+    <string name="all_exempted_devices">
+        All cameras on this device are exempted from ITS - Pass.
     </string>
     <string name="its_test_passed">All Camera ITS tests passed.  Pass button enabled!</string>
     <string name="its_test_failed">Some Camera ITS tests failed.</string>

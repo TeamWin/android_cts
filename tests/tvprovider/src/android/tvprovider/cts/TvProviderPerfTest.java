@@ -86,6 +86,11 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
         final int TRANSACTION_SIZE = 1000;
         double[] applyBatchTimes = MeasureTime.measure(TRANSACTION_RUNS, new MeasureRun() {
             @Override
+            public void prepare(int i) {
+                mContentResolver.delete(Channels.CONTENT_URI, null, null);
+            }
+
+            @Override
             public void run(int i) {
                 operations.clear();
                 for (int j = 0; j < TRANSACTION_SIZE; ++j) {
