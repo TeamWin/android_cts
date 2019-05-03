@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,12 @@
 
 package android.security.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
-import android.platform.test.annotations.RootPermissionTest;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.Map;
-import java.util.HashMap;
 import com.android.ddmlib.Log;
 import java.util.concurrent.Callable;
 import java.math.BigInteger;
@@ -54,48 +42,13 @@ public class SecurityTestCase extends DeviceTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        kernelStartTime = System.currentTimeMillis()/1000 -
-            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
-        //TODO:(badash@): Watch for other things to track.
+        getDevice().waitForDeviceAvailable();
+        getDevice().disableAdbRoot();
+        updateKernelStartTime();
+        // TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
 
         oomCatcher.start();
-    }
-
-    /**
-     * Allows a CTS test to pass if called after a planned reboot.
-     */
-    public void updateKernelStartTime() throws Exception {
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        kernelStartTime = System.currentTimeMillis()/1000 -
-            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
-    }
-
-    /**
-     * Takes a device and runs a root command.  There is a more robust version implemented by
-     * NativeDevice, but due to some other changes it isnt trivially acessible, but I can get
-     * that implementation fairly easy if we think it is a better idea.
-     */
-    public void enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
-        boolean isUserDebug =
-            "userdebug".equals(mDevice.executeShellCommand("getprop ro.build.type").trim());
-        if (!isUserDebug) {
-            //TODO(badash@): This would Noop once cl: ag/1594311 is in
-            return;
-        }
-        mDevice.executeAdbCommand("root");
-    }
-
-    /**
-     * Check if a driver is present on a machine
-     */
-    public boolean containsDriver(ITestDevice mDevice, String driver) throws Exception {
-        String result = mDevice.executeShellCommand("ls -Zl " + driver);
-        if(result.contains("No such file or directory")) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -106,7 +59,13 @@ public class SecurityTestCase extends DeviceTestCase {
     public void tearDown() throws Exception {
         oomCatcher.stop(getDevice().getSerialNumber());
 
-        getDevice().waitForDeviceAvailable(120 * 1000);
+        try {
+            getDevice().waitForDeviceAvailable(90 * 1000);
+        } catch (DeviceNotAvailableException e) {
+            // Force a disconnection of all existing sessions to see if that unsticks adbd.
+            getDevice().executeAdbCommand("reconnect");
+            getDevice().waitForDeviceAvailable(30 * 1000);
+        }
 
         if (oomCatcher.isOomDetected()) {
             // we don't need to check kernel start time if we intentionally rebooted because oom
@@ -123,13 +82,11 @@ public class SecurityTestCase extends DeviceTestCase {
                     break;
             }
         } else {
-            String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-            assertTrue("Phone has had a hard reset",
-                (System.currentTimeMillis()/1000 -
-                    Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
-                        - kernelStartTime < 2));
-            //TODO(badash@): add ability to catch runtime restart
-            getDevice().executeAdbCommand("unroot");
+            long deviceTime = getDeviceUptime() + kernelStartTime;
+            long hostTime = System.currentTimeMillis() / 1000;
+            assertTrue("Phone has had a hard reset", (hostTime - deviceTime) < 2);
+
+            // TODO(badash@): add ability to catch runtime restart
         }
     }
 
@@ -213,5 +170,35 @@ public class SecurityTestCase extends DeviceTestCase {
         }
 
         return false;
+    }
+
+    /**
+     * Check if a driver is present on a machine.
+     * deprecated: use AdbUtils.stat() instead!
+     */
+    @Deprecated
+    protected boolean containsDriver(ITestDevice mDevice, String driver) throws Exception {
+        String result = mDevice.executeShellCommand("ls -Zl " + driver);
+        if(result.contains("No such file or directory")) {
+            return false;
+        }
+        return true;
+    }
+
+    private long getDeviceUptime() throws DeviceNotAvailableException {
+        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+        return Long.parseLong(uptime.substring(0, uptime.indexOf('.')));
+    }
+
+    /**
+     * Allows a test to pass if called after a planned reboot.
+     */
+    public void updateKernelStartTime() throws DeviceNotAvailableException {
+        long uptime = getDeviceUptime();
+        kernelStartTime = (System.currentTimeMillis() / 1000) - uptime;
+    }
+
+    public HostsideOomCatcher getOomCatcher() {
+        return oomCatcher;
     }
 }
