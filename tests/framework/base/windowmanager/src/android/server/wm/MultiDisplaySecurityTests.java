@@ -40,6 +40,8 @@ import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -64,7 +66,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -715,6 +720,205 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
             // Check that the display is not created.
             assertNull(newDisplay);
+        }
+    }
+
+    /**
+     * Test setting system decoration flag and show IME flag without sufficient permissions.
+     */
+    @Test
+    @FlakyTest(bugId = 130284250)
+    public void testSettingFlagWithoutInternalSystemPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // The reason to use a trusted display is that we can guarantee the security exception
+            // is coming from lacking internal system permission.
+            final ActivityDisplay trustedDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+
+            // Verify setting system decorations flag without internal system permission.
+            try {
+                wm.setShouldShowSystemDecors(trustedDisplay.mId, true);
+
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowSystemDecors(trustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowSystemDecors(trustedDisplay.mId));
+                fail("Should not allow setting system decoration flag without internal system "
+                        + "permission");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
+
+            // Verify setting show IME flag without internal system permission.
+            try {
+                wm.setShouldShowIme(trustedDisplay.mId, true);
+
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowIme(trustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for show IME flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowIme(trustedDisplay.mId));
+                fail("Should not allow setting show IME flag without internal system permission");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
+        }
+    }
+
+    /**
+     * Test getting system decoration flag and show IME flag without sufficient permissions.
+     */
+    @Test
+    @FlakyTest(bugId = 130284250)
+    public void testGettingFlagWithoutInternalSystemPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // The reason to use a trusted display is that we can guarantee the security exception
+            // is coming from lacking internal system permission.
+            final ActivityDisplay trustedDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+
+            // Verify getting system decorations flag without internal system permission.
+            try {
+                wm.shouldShowSystemDecors(trustedDisplay.mId);
+                fail("Only allow internal system to get system decoration flag");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
+
+            // Verify getting show IME flag without internal system permission.
+            try {
+                wm.shouldShowIme(trustedDisplay.mId);
+                fail("Only allow internal system to get show IME flag");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
+        }
+    }
+
+    /**
+     * Test setting system decoration flag and show IME flag to the untrusted display.
+     */
+    @Test
+    @FlakyTest(bugId = 130284250)
+    public void testSettingFlagToUntrustedDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay untrustedDisplay = virtualDisplaySession.createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+
+            // Verify setting system decoration flag to an untrusted display.
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                wm.setShouldShowSystemDecors(untrustedDisplay.mId, true);
+
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowSystemDecors(untrustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowSystemDecors(untrustedDisplay.mId));
+                fail("Should not allow setting system decoration flag to the untrusted virtual "
+                        + "display");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            } finally {
+                getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            }
+
+            // Verify setting show IME flag to an untrusted display.
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                wm.setShouldShowIme(untrustedDisplay.mId, true);
+
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowIme(untrustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for show IME flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowIme(untrustedDisplay.mId));
+                fail("Should not allow setting show IME flag to the untrusted virtual display");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            } finally {
+                getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            }
+        }
+    }
+
+    /**
+     * Test getting system decoration flag and show IME flag from the untrusted display.
+     */
+    @Test
+    @FlakyTest(bugId = 130284250)
+    public void testGettingFlagFromUntrustedDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay untrustedDisplay = virtualDisplaySession.createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+
+            // Verify getting system decoration flag from an untrusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(
+                    "Display should not support showing system decorations",
+                    wm.shouldShowSystemDecors(untrustedDisplay.mId)));
+
+            // Verify getting show IME flag from an untrusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(
+                    "Display should not support showing IME window",
+                    wm.shouldShowIme(untrustedDisplay.mId)));
+        }
+    }
+
+    /**
+     * Test setting system decoration flag and show IME flag to the trusted display.
+     */
+    @Test
+    @FlakyTest(bugId = 130284250)
+    public void testSettingFlagToTrustedDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay trustedDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+
+            // Verify setting system decoration flag to a trusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // Assume the display should not support system decorations by default.
+                assertFalse(wm.shouldShowSystemDecors(trustedDisplay.mId));
+
+                try {
+                    wm.setShouldShowSystemDecors(trustedDisplay.mId, true);
+                    TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> wm.shouldShowSystemDecors(trustedDisplay.mId));
+
+                    assertTrue(wm.shouldShowSystemDecors(trustedDisplay.mId));
+                } finally {
+                    // Restore flag to avoid affecting other tests.
+                    wm.setShouldShowSystemDecors(trustedDisplay.mId, false);
+                    TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> !wm.shouldShowSystemDecors(trustedDisplay.mId));
+                }
+            });
+
+            // Verify setting show IME flag to a trusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // Assume the display should not show IME window by default.
+                assertFalse(wm.shouldShowIme(trustedDisplay.mId));
+
+                try {
+                    wm.setShouldShowIme(trustedDisplay.mId, true);
+                    TestUtils.waitUntil("Waiting for show IME flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> wm.shouldShowIme(trustedDisplay.mId));
+
+                    assertTrue(wm.shouldShowIme(trustedDisplay.mId));
+                } finally {
+                    // Restore flag to avoid affecting other tests.
+                    wm.setShouldShowIme(trustedDisplay.mId, false);
+                    TestUtils.waitUntil("Waiting for show IME flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> !wm.shouldShowIme(trustedDisplay.mId));
+                }
+            });
         }
     }
 }
