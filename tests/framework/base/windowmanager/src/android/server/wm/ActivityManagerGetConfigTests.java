@@ -383,7 +383,7 @@ public class ActivityManagerGetConfigTests {
     @Test
     public void testDeviceConfigWithSecondaryDisplay() throws Exception {
         VirtualDisplayHelper vd = new VirtualDisplayHelper();
-        final int displayId = vd.createAndWaitForPublicDisplay(false);
+        final int displayId = vd.setPublicDisplay(true).createAndWaitForDisplay();
 
         DisplayManager dm = mContext.getSystemService(DisplayManager.class);
         Display display = dm.getDisplay(displayId);
