@@ -16,11 +16,15 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+all_shared_libs_modules :=
+
 $(foreach ver,$(call int_range_list,28,$(PLATFORM_SDK_VERSION)),\
   $(foreach api_level,public system,\
     $(foreach lib,$(filter-out android,$(filter-out %removed,\
       $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt))))),\
-        $(eval all_shared_libs_files += $(lib)-$(ver)-$(api_level).api))))
+        $(eval all_shared_libs_modules += $(lib)-$(ver)-$(api_level).api))))
+
+all_shared_libs_files := $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_shared_libs_modules))
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts-shared-libs-all.api
@@ -29,11 +33,13 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
-$(LOCAL_BUILT_MODULE): $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_shared_libs_files))
+$(LOCAL_BUILT_MODULE): $(SOONG_ZIP)
+$(LOCAL_BUILT_MODULE): PRIVATE_SHARED_LIBS_FILES := $(all_shared_libs_files)
+$(LOCAL_BUILT_MODULE): $(all_shared_libs_files)
 	@echo "Zip API files $^ -> $@"
 	@mkdir -p $(dir $@)
 	$(hide) rm -f $@
-	$(hide) zip -q $@ $^
+	$(hide) $(SOONG_ZIP) -o $@ -C . $(addprefix -f ,$(PRIVATE_SHARED_LIBS_FILES))
 
 include $(CLEAR_VARS)
 
@@ -58,7 +64,7 @@ LOCAL_PACKAGE_NAME := CtsSharedLibsApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
     shared-libs-all.api.zip \
-    $(all_shared_libs_files)
+    $(all_shared_libs_modules)
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-multilib-test
 
@@ -66,4 +72,5 @@ include $(LOCAL_PATH)/../build_signature_apk.mk
 
 LOCAL_JAVA_SDK_LIBRARIES :=
 all_shared_libs_files :=
+all_shared_libs_modules :=
 
