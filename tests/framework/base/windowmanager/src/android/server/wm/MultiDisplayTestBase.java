@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logAlways;
@@ -246,6 +247,14 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         getInstrumentation().getUiAutomation().syncInputTransactions();
     }
 
+    /**
+     * This class should only be used when you need to test virtual display created by a
+     * non-privileged app.
+     * Or when you need to test on simulated display.
+     *
+     * If you need to test virtual display created by a privileged app, please use
+     * {@link ExternalDisplaySession} instead.
+     */
     public class VirtualDisplaySession implements AutoCloseable {
         private int mDensityDpi = CUSTOM_DENSITY_DPI;
         private boolean mLaunchInSplitScreen = false;
@@ -636,22 +645,49 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
-    // TODO(b/121444086): Update ExternalDisplaySession/VirtualDisplaySession usages
+    /**
+     * This class is used when you need to test virtual display created by a privileged app.
+     *
+     * If you need to test virtual display created by a non-privileged app or when you need to test
+     * on simulated display, please use {@link VirtualDisplaySession} instead.
+     */
     public class ExternalDisplaySession implements AutoCloseable {
+
+        private boolean mCanShowWithInsecureKeyguard = false;
+        private boolean mPublicDisplay = false;
+        private boolean mShowSystemDecorations = false;
 
         @Nullable
         private VirtualDisplayHelper mExternalDisplayHelper;
 
+        ExternalDisplaySession setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
+            mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
+            return this;
+        }
+
+        ExternalDisplaySession setPublicDisplay(boolean publicDisplay) {
+            mPublicDisplay = publicDisplay;
+            return this;
+        }
+
+        ExternalDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
+            mShowSystemDecorations = showSystemDecorations;
+            return this;
+        }
+
         /**
          * Creates a private virtual display with insecure keyguard flags set.
          */
-        ActivityDisplay createVirtualDisplay(boolean showContentWhenLocked)
-                throws Exception {
+        ActivityDisplay createVirtualDisplay() throws Exception {
             final List<ActivityDisplay> originalDS = getDisplaysStates();
             final int originalDisplayCount = originalDS.size();
 
             mExternalDisplayHelper = new VirtualDisplayHelper();
-            mExternalDisplayHelper.createAndWaitForDisplay(showContentWhenLocked);
+            mExternalDisplayHelper
+                    .setPublicDisplay(mPublicDisplay)
+                    .setCanShowWithInsecureKeyguard(mCanShowWithInsecureKeyguard)
+                    .setShowSystemDecorations(mShowSystemDecorations)
+                    .createAndWaitForDisplay();
 
             // Wait for the virtual display to be created and get configurations.
             final List<ActivityDisplay> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
