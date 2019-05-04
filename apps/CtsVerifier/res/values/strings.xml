@@ -50,7 +50,7 @@
     <string name="test_results_cleared">Test results cleared.</string>
     <string name="view">View</string>
     <string name="test_results_error">Couldn\'t create test results report.</string>
-    <string name="runtime_permissions_error">Cannot continue. Please grant runtime permissions</string>
+    <string name="runtime_permissions_error">Please grant runtime permissions, otherwise, tests might fail.</string>
     <string name="export">Export</string>
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
     <string name="report_saved">Report saved to: %s</string>
@@ -1244,8 +1244,12 @@
     This test verifies that the default camera app is firing intents
     after pictures/videos are taken. It also verifies that when the
     default camera app is invoked via intents, the launch intents work,
-    and the broadcast intents are received when appropriate per the SDK
-    documentation.\n\n
+    ,broadcast intents are received when appropriate per the SDK
+    documentation and also, that the intent results do not have location
+    information in them. Before starting with the tests, please go to the
+    Settings app and deny location permissions to the CtsVerifier app, and
+    after finishing with the camera intent tests, please go to the Settings app and
+    restore location permissions, otherwise, other tests may fail.\n\n
     - Read the message above the \"Start Test\" button for
     step-by-step instructions.
     </string>
@@ -1255,16 +1259,21 @@
     <string name="ci_intents_label">Intents Test</string>
     <string name="ci_intents_direction_label">clockwise</string>
     <string name="ci_instruction_heading_label">Instructions:</string>
+    <string name="ci_location_permissions_error">Please give CTS Verifier location permissions before clicking on the pass / fail button</string>
+    <string name="ci_location_permissions_fail_error">Please give CTS Verifier location permissions if the fail button needs to be clicked</string>
+    <string name="ci_directory_creation_error">CTS Verifier debug directory could not be created, please try again</string>
     <string name="ci_instruction_text_photo_label">READ BEFORE STARTING TEST</string>
     <string name="ci_instruction_text_passfail_label">Choose \"Pass\" if the right intent is fired after taking a photo from the camera app. Otherwise, choose \"Fail\".</string>
     <string name="ci_instruction_text_app_picture_label">\n
-    1. Click Start Test. \n
-    2. Go to home screen (HOME key). \n
-    3. Launch Camera application. \n
-    4. Capture photo within 1 minute. \n
-    5. Return to CTS verifier app. \n
-    6. Pass button will light up if URI trigger was fired.\n
-    7. Click "Pass" if possible.
+
+    1. Click Open Settings and deny location permissions to CTS Verifier and return. \n
+    2. Click Start Test. \n
+    3. Go to home screen (HOME key). \n
+    4. Launch Camera application. \n
+    5. Capture photo within 1 minute. \n
+    6. Return to CTS verifier app. \n
+    7. Pass button will light up if URI trigger was fired.\n
+    8. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
     <string name="ci_instruction_text_app_video_label">\n
     1. Click Start Test. \n
@@ -1273,23 +1282,25 @@
     4. Capture video within 1 minute. \n
     5. Return to CTS verifier app. \n
     6. Pass button will light up if URI trigger was fired.\n
-    7. Click "Pass" if possible.
+    7. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
     <string name="ci_instruction_text_intent_picture_label">\n
     1. Click Start Test.\n
     2. Camera app will launch, prompting to take photo.\n
     3. Capture/confirm photo using camera app controls within 1 minute.\n
     4. Pass button will light up if URI trigger was NOT received.\n
-    5. Click "Pass" if possible.
+    5. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
     <string name="ci_instruction_text_intent_video_label">\n
     1. Click Start Test.\n
     2. Camera app will launch, prompting to take video.\n
     3. Capture/confirm video using camera app controls within 1 minute.\n
-    4. Pass button will light up if URI trigger was received.\n
+    4. Return to the CTS Verifier app. Click Open Settings and give back CTS Verifier location permissions \n
+    (Note this must be done before clicking on Pass / Fail).\n
     5. Click "Pass" if possible.
     </string>
     <string name="ci_start_test_button_caption">Start Test</string>
+    <string name="ci_settings_button_caption">Open Settings</string>
 
     <!-- Strings for Camera Formats -->
     <string name="camera_format">Camera Formats</string>
