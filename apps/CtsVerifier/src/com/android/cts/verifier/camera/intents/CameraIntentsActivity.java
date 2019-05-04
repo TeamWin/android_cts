@@ -22,7 +22,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.hardware.Camera;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -34,13 +37,22 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import androidx.core.content.FileProvider;
+import android.Manifest;
 
 import com.android.cts.verifier.camera.intents.CameraContentJobService;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
+import android.widget.Toast;
 
+import static android.media.MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO;
+import static android.media.MediaMetadataRetriever.METADATA_KEY_LOCATION;
+
+import java.io.File;
 import java.util.TreeSet;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /**
  * Tests for manual verification of uri trigger being fired.
@@ -80,7 +92,9 @@ implements OnClickListener, SurfaceHolder.Callback {
     private ImageButton mPassButton;
     private ImageButton mFailButton;
     private Button mStartTestButton;
-
+    private Button mSettingsButton;
+    private File mVideoTargetDir = null;
+    private File mVideoTarget = null;
     private int mState = STATE_OFF;
 
     private boolean mActivityResult = false;
@@ -198,7 +212,9 @@ implements OnClickListener, SurfaceHolder.Callback {
         mPassButton         = (ImageButton) findViewById(R.id.pass_button);
         mFailButton         = (ImageButton) findViewById(R.id.fail_button);
         mStartTestButton  = (Button) findViewById(R.id.start_test_button);
+        mSettingsButton  = (Button) findViewById(R.id.settings_button);
         mStartTestButton.setOnClickListener(this);
+        mSettingsButton.setOnClickListener(this);
 
         // This activity is reused multiple times
         // to test each camera/intents combination
@@ -236,6 +252,7 @@ implements OnClickListener, SurfaceHolder.Callback {
         cameraExtraLabel.setText(getStageInstructionLabel(getStageIndex()));
 
         mStartTestButton.setEnabled(true);
+        mSettingsButton.setEnabled(true);
     }
 
     @Override
@@ -247,6 +264,40 @@ implements OnClickListener, SurfaceHolder.Callback {
     @Override
     public void onResume() {
         super.onResume();
+        mFailButton.setEnabled(false);
+        /**
+         * If location is not enabled, fail buttons should be disabled, since they take us back to
+         * the original CTS Verifier activity where other tests might depend on these
+         * If we're in STAGE_INTENT_VIDEO even the pass button should be disabled till location
+         * access is turned back on for CTS Verifier.
+         */
+        Boolean locationEnabled = (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED);
+
+        if (getStageIndex() == STAGE_INTENT_VIDEO) {
+                /**
+                 * Don't enable the pass /fail button till the user grants CTS verifier location
+                 * access again.
+                 */
+                mPassButton.setEnabled(false);
+                if (locationEnabled) {
+                    if (mState == STATE_SUCCESSFUL) {
+                        mPassButton.setEnabled(true);
+                    } else {
+                        mFailButton.setEnabled(true);
+                    }
+                } else if (mState != STATE_OFF) {
+                    Toast.makeText(this, R.string.ci_location_permissions_error,
+                            Toast.LENGTH_SHORT).show();
+                }
+        } else {
+            if (locationEnabled) {
+                mFailButton.setEnabled(true);
+            } else {
+                Toast.makeText(this, R.string.ci_location_permissions_fail_error,
+                    Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
@@ -274,13 +325,38 @@ implements OnClickListener, SurfaceHolder.Callback {
         if (requestCode == 1337 + getStageIndex()) {
             Log.v(TAG, "Activity we launched was finished");
             mActivityResult = true;
-
+            int stageIndex = getStageIndex();
             if (mState != STATE_FAILED
-                && getStageIndex() == STAGE_INTENT_PICTURE) {
-                mPassButton.setEnabled(true);
-                mFailButton.setEnabled(false);
-
+                && (stageIndex == STAGE_INTENT_PICTURE || stageIndex == STAGE_INTENT_VIDEO)) {
                 mState = STATE_SUCCESSFUL;
+                /**
+                 * For images, we don't need to do more checks, since location in image exif is
+                 * checked by cts test: MediaStoreUiTest .
+                 */
+                if (stageIndex == STAGE_INTENT_PICTURE) {
+                    setPassButton(true);
+                    return;
+                }
+                if (mVideoTarget == null) {
+                    Log.d(TAG, "Video target was not set");
+                    return;
+                }
+                /**
+                 * Check that there is no location data in video.
+                 */
+                MediaMetadataRetriever mediaRetriever = new MediaMetadataRetriever();
+                mediaRetriever.setDataSource(mVideoTarget.toString());
+                if (mediaRetriever.extractMetadata(METADATA_KEY_HAS_VIDEO) == null ||
+                    mediaRetriever.extractMetadata(METADATA_KEY_LOCATION) != null) {
+                    mState = STATE_FAILED;
+                } else {
+                    mVideoTarget.delete();
+                }
+                Log.d(TAG, "METADATA_KEY_HAS_VIDEO: " +
+                        mediaRetriever.extractMetadata(METADATA_KEY_HAS_VIDEO) +
+                        " METADATA_KEY_LOCATION: " +
+                        mediaRetriever.extractMetadata(METADATA_KEY_LOCATION));
+                mediaRetriever.release();
                 /* successful, unless we get the URI trigger back
                  at some point later on */
             }
@@ -290,6 +366,11 @@ implements OnClickListener, SurfaceHolder.Callback {
     @Override
     public String getTestDetails() {
         return mReportBuilder.toString();
+    }
+
+    private void setPassButton(Boolean pass) {
+        mPassButton.setEnabled(pass);
+        mFailButton.setEnabled(!pass);
     }
 
     private class WaitForTriggerTask extends AsyncTask<Void, Void, Boolean> {
@@ -336,13 +417,7 @@ implements OnClickListener, SurfaceHolder.Callback {
         }
 
         protected void onPostExecute(Boolean pass) {
-            if (pass) {
-                mPassButton.setEnabled(true);
-                mFailButton.setEnabled(false);
-            } else {
-                mPassButton.setEnabled(false);
-                mFailButton.setEnabled(true);
-            }
+            setPassButton(pass);
         }
     }
 
@@ -351,10 +426,13 @@ implements OnClickListener, SurfaceHolder.Callback {
         Log.v(TAG, "Click detected");
 
         final int stageIndex = getStageIndex();
+        if (view == mSettingsButton) {
+            Log.v(TAG, "Opening up Settings app");
+            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+        }
 
         if (view == mStartTestButton) {
             Log.v(TAG, "Starting testing... ");
-
 
             mState = STATE_STARTED;
 
@@ -366,13 +444,22 @@ implements OnClickListener, SurfaceHolder.Callback {
 
             mTestEnv.setUp();
 
-            JobInfo job = makeJobInfo(TEST_JOB_TYPES[stageIndex]);
-            jobScheduler.schedule(job);
+            /**
+             * Video intents do not need to wait on a ContentProvider broadcast since we're starting
+             * the intent activity with EXTRA_OUTPUT set
+             */
+            if (stageIndex != STAGE_INTENT_VIDEO) {
+                JobInfo job = makeJobInfo(TEST_JOB_TYPES[stageIndex]);
+                jobScheduler.schedule(job);
+                new WaitForTriggerTask().execute();
+            }
 
-            new WaitForTriggerTask().execute();
-
-            /* we can allow user to fail immediately */
-            mFailButton.setEnabled(true);
+            /* we can allow user to fail immediately if location is on, otherwise they must
+             * enable location */
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED) {
+                mFailButton.setEnabled(true);
+            }
 
             /* trigger an ACTION_IMAGE_CAPTURE intent
                 which will run the camera app itself */
@@ -387,6 +474,21 @@ implements OnClickListener, SurfaceHolder.Callback {
 
             if (intentStr != null) {
                 cameraIntent = new Intent(intentStr);
+                if (stageIndex == STAGE_INTENT_VIDEO) {
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                    mVideoTargetDir = new File(this.getFilesDir(), "debug");
+                    mVideoTarget = new File(mVideoTargetDir, timeStamp  + "video.mp4");
+                    mVideoTargetDir.mkdirs();
+                    if (!mVideoTargetDir.exists()) {
+                        Toast.makeText(this, R.string.ci_directory_creation_error,
+                                Toast.LENGTH_SHORT).show();
+                        Log.v(TAG, "Could not create directory");
+                        return;
+                    }
+                    cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this,
+                              "com.android.cts.verifier.managedprovisioning.fileprovider",
+                              mVideoTarget));
+                }
                 startActivityForResult(cameraIntent, 1337 + getStageIndex());
             }
 
