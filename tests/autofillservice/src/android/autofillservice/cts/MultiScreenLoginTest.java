@@ -21,6 +21,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
@@ -40,7 +41,6 @@ import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillId;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.regex.Pattern;
@@ -321,7 +321,6 @@ public class MultiScreenLoginTest
         saveBothFieldsCustomDescription(false);
     }
 
-    @Ignore("TODO(b/113593220): need new API to set context id")
     @Test
     public void testSaveBothFieldsCustomDescription_sameIds() throws Exception {
         saveBothFieldsCustomDescription(true);
@@ -332,11 +331,11 @@ public class MultiScreenLoginTest
         enableService();
 
         // Set ids
-        final AutofillId usernameId = mActivity.getUsernameAutofillId();
-        final AutofillId passwordId = sameAutofillId ? usernameId
+        final AutofillId appUsernameId = mActivity.getUsernameAutofillId();
+        final AutofillId appPasswordId = sameAutofillId ? appUsernameId
                 : mActivity.getAutofillManager().getNextAutofillId();
-        mActivity.setPasswordAutofillId(passwordId);
-        Log.d(TAG, "usernameId: " + usernameId + ", passwordId: " + passwordId);
+        mActivity.setPasswordAutofillId(appPasswordId);
+        Log.d(TAG, "App: usernameId=" + appUsernameId + ", passwordId=" + appPasswordId);
 
         // First handle username...
 
@@ -364,19 +363,32 @@ public class MultiScreenLoginTest
         final PasswordOnlyActivity passwordActivity = AutofillTestWatcher
                 .getActivity(PasswordOnlyActivity.class);
 
+        // Must get AutofillIds from FillRequest, as they contain the proper session ids
+        final AutofillId svcUsernameId = findAutofillIdByResourceId(fillRequest1.contexts.get(0),
+                ID_USERNAME);
+        Log.d(TAG, "Service: usernameId=" + svcUsernameId);
 
         // Set expectations.
-        final CharSequenceTransformation usernameTrans =
-                new CharSequenceTransformation.Builder(usernameId, MATCH_ALL, "$1").build();
-        final CharSequenceTransformation passwordTrans =
-                new CharSequenceTransformation.Builder(passwordId, MATCH_ALL, "$1").build();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableAutofillIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
-                        passwordId)
-                .setCustomDescription(newCustomDescriptionWithUsernameAndPassword()
-                        .addChild(R.id.username, usernameTrans)
-                        .addChild(R.id.password, passwordTrans)
-                        .build())
+                .setVisitor((contexts, builder) -> {
+                    final AutofillId svcPasswordId =
+                            findAutofillIdByResourceId(contexts.get(1), ID_PASSWORD);
+                    Log.d(TAG, "Service: passwordId=" + svcPasswordId);
+                    final CharSequenceTransformation usernameTrans =
+                            new CharSequenceTransformation.Builder(svcUsernameId, MATCH_ALL, "$1")
+                            .build();
+                    final CharSequenceTransformation passwordTrans =
+                            new CharSequenceTransformation.Builder(svcPasswordId, MATCH_ALL, "$1")
+                            .build();
+                    builder.setSaveInfo(new SaveInfo.Builder(
+                            SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
+                            new AutofillId[] {svcPasswordId})
+                            .setCustomDescription(newCustomDescriptionWithUsernameAndPassword()
+                                    .addChild(R.id.username, usernameTrans)
+                                    .addChild(R.id.password, passwordTrans)
+                                    .build())
+                            .build());
+                })
                 .build());
 
         // Trigger autofill

@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.DoubleVisitor;
+import android.contentcaptureservice.cts.common.Visitor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -40,6 +41,9 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
     private static final String TAG = CustomViewActivity.class.getSimpleName();
 
     private static DoubleVisitor<CustomView, ViewStructure> sCustomViewDelegate;
+    private static Visitor<CustomViewActivity> sRootViewVisitor;
+
+    private static boolean sFlagSecure;
 
     /**
      * Mininum number of events generated when the activity starts.
@@ -59,6 +63,14 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
         sCustomViewDelegate = delegate;
     }
 
+    static void onRootView(@NonNull Visitor<CustomViewActivity> visitor) {
+        sRootViewVisitor = visitor;
+    }
+
+    static void setFlagSecure(boolean hasFlagSecure) {
+        sFlagSecure = hasFlagSecure;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +81,13 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
             Log.d(TAG, "Setting delegate on " + mCustomView);
             mCustomView.setContentCaptureDelegate(
                     (structure) -> sCustomViewDelegate.visit(mCustomView, structure));
+        }
+        if (sRootViewVisitor != null) {
+            try {
+                sRootViewVisitor.visit(this);
+            } finally {
+                sRootViewVisitor = null;
+            }
         }
     }
 

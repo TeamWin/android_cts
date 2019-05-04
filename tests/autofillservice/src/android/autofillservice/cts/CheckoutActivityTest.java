@@ -30,6 +30,7 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleValue;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -45,9 +46,11 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
+import android.service.autofill.FillContext;
 import android.service.autofill.ImageTransformation;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
+import android.view.autofill.AutofillId;
 import android.widget.ArrayAdapter;
 import android.widget.RemoteViews;
 import android.widget.Spinner;
@@ -269,31 +272,38 @@ public class CheckoutActivityTest
         // Set expectations.
         final String packageName = getContext().getPackageName();
 
-        final RemoteViews presentation = new RemoteViews(packageName,
-                R.layout.two_horizontal_text_fields);
-        final CharSequenceTransformation trans1 = new CharSequenceTransformation
-                .Builder(mActivity.getCcNumber().getAutofillId(), Pattern.compile("(.*)"), "$1")
-                .build();
-        final CharSequenceTransformation trans2 = new CharSequenceTransformation
-                .Builder(mActivity.getCcExpiration().getAutofillId(), Pattern.compile("(.*)"), "$1")
-                .build();
-        final ImageTransformation trans3 = (withContentDescription
-                ? new ImageTransformation.Builder(mActivity.getCcNumber().getAutofillId(),
-                        Pattern.compile("(.*)"), R.drawable.android,
-                        "One image is worth thousand words")
-                : new ImageTransformation.Builder(mActivity.getCcNumber().getAutofillId(),
-                        Pattern.compile("(.*)"), R.drawable.android))
-                .build();
-
-        final CustomDescription customDescription = new CustomDescription.Builder(presentation)
-                .addChild(R.id.first, trans1)
-                .addChild(R.id.second, trans2)
-                .addChild(R.id.img, trans3)
-                .build();
-
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_CREDIT_CARD, ID_CC_NUMBER, ID_CC_EXPIRATION)
-                .setCustomDescription(customDescription)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final RemoteViews presentation = new RemoteViews(packageName,
+                            R.layout.two_horizontal_text_fields);
+                    final FillContext context = contexts.get(0);
+                    final AutofillId ccNumberId = findAutofillIdByResourceId(context,
+                            ID_CC_NUMBER);
+                    final AutofillId ccExpirationId = findAutofillIdByResourceId(context,
+                            ID_CC_EXPIRATION);
+                    final CharSequenceTransformation trans1 = new CharSequenceTransformation
+                            .Builder(ccNumberId, Pattern.compile("(.*)"), "$1")
+                            .build();
+                    final CharSequenceTransformation trans2 = new CharSequenceTransformation
+                            .Builder(ccExpirationId, Pattern.compile("(.*)"), "$1")
+                            .build();
+                    final ImageTransformation trans3 = (withContentDescription
+                            ? new ImageTransformation.Builder(ccNumberId,
+                                    Pattern.compile("(.*)"), R.drawable.android,
+                                    "One image is worth thousand words")
+                            : new ImageTransformation.Builder(ccNumberId,
+                                    Pattern.compile("(.*)"), R.drawable.android))
+                            .build();
+
+                    final CustomDescription customDescription =
+                            new CustomDescription.Builder(presentation)
+                            .addChild(R.id.first, trans1)
+                            .addChild(R.id.second, trans2)
+                            .addChild(R.id.img, trans3)
+                            .build();
+                    builder.setCustomDescription(customDescription);
+                })
                 .build());
 
         // Dynamically change view contents
@@ -349,22 +359,29 @@ public class CheckoutActivityTest
 
         // Set expectations.
         final String packageName = getContext().getPackageName();
-        final RemoteViews presentation = new RemoteViews(packageName,
-                R.layout.two_horizontal_text_fields);
-        final CharSequenceTransformation trans1 = new CharSequenceTransformation
-                .Builder(mActivity.getCcNumber().getAutofillId(), Pattern.compile("(.*)"), "$1")
-                .build();
-        final CharSequenceTransformation trans2 = new CharSequenceTransformation
-                .Builder(mActivity.getCcExpiration().getAutofillId(), Pattern.compile("(.*)"), "$1")
-                .build();
-        final CustomDescription customDescription = new CustomDescription.Builder(presentation)
-                .addChild(R.id.first, trans1)
-                .addChild(R.id.second, trans2)
-                .build();
-
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_CREDIT_CARD, ID_CC_NUMBER, ID_CC_EXPIRATION)
-                .setCustomDescription(customDescription)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId ccNumberId = findAutofillIdByResourceId(context,
+                            ID_CC_NUMBER);
+                    final AutofillId ccExpirationId = findAutofillIdByResourceId(context,
+                            ID_CC_EXPIRATION);
+                    final RemoteViews presentation = new RemoteViews(packageName,
+                            R.layout.two_horizontal_text_fields);
+                    final CharSequenceTransformation trans1 = new CharSequenceTransformation
+                            .Builder(ccNumberId, Pattern.compile("(.*)"), "$1")
+                            .build();
+                    final CharSequenceTransformation trans2 = new CharSequenceTransformation
+                            .Builder(ccExpirationId, Pattern.compile("(.*)"), "$1")
+                            .build();
+                    final CustomDescription customDescription =
+                            new CustomDescription.Builder(presentation)
+                            .addChild(R.id.first, trans1)
+                            .addChild(R.id.second, trans2)
+                            .build();
+                    builder.setCustomDescription(customDescription);
+                })
                 .build());
 
         // Dynamically change view contents

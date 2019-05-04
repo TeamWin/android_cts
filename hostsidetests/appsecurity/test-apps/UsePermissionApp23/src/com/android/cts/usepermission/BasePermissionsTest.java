@@ -34,6 +34,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -59,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public abstract class BasePermissionsTest {
@@ -445,7 +447,8 @@ public abstract class BasePermissionsTest {
                     String confirmTitle = CaseMap.toUpper().apply(
                             resources.getConfiguration().getLocales().get(0),
                             resources.getString(confirmResId));
-                    getUiDevice().wait(Until.findObject(By.textStartsWith(confirmTitle)),
+                    getUiDevice().wait(Until.findObject(
+                            byTextStartsWithCaseInsensitive(confirmTitle)),
                             GLOBAL_TIMEOUT_MILLIS).click();
 
                     waitForIdle();
@@ -460,6 +463,10 @@ public abstract class BasePermissionsTest {
         waitForIdle();
         getUiDevice().pressBack();
         waitForIdle();
+    }
+
+    private BySelector byTextStartsWithCaseInsensitive(String prefix) {
+        return By.text(Pattern.compile(String.format("(?i)^%s.*$", Pattern.quote(prefix))));
     }
 
     private String getPermissionLabel(String permission) throws Exception {

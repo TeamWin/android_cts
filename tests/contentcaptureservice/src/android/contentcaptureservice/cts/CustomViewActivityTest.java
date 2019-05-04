@@ -26,6 +26,7 @@ import static android.contentcaptureservice.cts.Assertions.assertVirtualViewsDis
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.OTHER_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
+import static android.contentcaptureservice.cts.Helper.eventually;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 import static android.view.contentcapture.ContentCaptureCondition.FLAG_IS_REGEX;
@@ -43,11 +44,14 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewStructure;
+import android.view.WindowManager;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureCondition;
+import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.ContentCaptureSession;
+import android.view.contentcapture.ContentCaptureSessionId;
 
 import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;
@@ -452,6 +456,61 @@ public class CustomViewActivityTest extends
         final ContentCaptureManager mgr = activity.getContentCaptureManager();
         final Set<ContentCaptureCondition> actualConditions = mgr.getContentCaptureConditions();
         assertThat(actualConditions).isNull();
+    }
+
+    @Test
+    public void testContentCaptureEnabled_dynamicFlagSecure() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureManager mgr = activity.getContentCaptureManager();
+        assertThat(mgr.isContentCaptureEnabled()).isTrue();
+
+        activity.syncRunOnUiThread(() -> {
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        });
+
+        eventually("Waiting for flag secure to be disabled",
+                () -> mgr.isContentCaptureEnabled() ? null : "not_used");
+
+        activity.syncRunOnUiThread(() -> {
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        });
+
+        eventually("Waiting for flag secure to be re-enabled",
+                () -> mgr.isContentCaptureEnabled() ? "not_used" : null);
+    }
+
+    @Test
+    public void testDisabledByFlagSecure() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        CustomViewActivity.onRootView((activity) -> {
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        });
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureManager mgr = activity.getContentCaptureManager();
+        assertThat(mgr.isContentCaptureEnabled()).isFalse();
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        assertThat((session.context.getFlags()
+                & ContentCaptureContext.FLAG_DISABLED_BY_FLAG_SECURE) != 0).isTrue();
+
+        final ContentCaptureSessionId sessionId = session.id;
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        assertThat(events).isEmpty();
     }
 
     /**

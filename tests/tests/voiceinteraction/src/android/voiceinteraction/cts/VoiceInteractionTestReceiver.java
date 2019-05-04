@@ -16,12 +16,12 @@
 
 package android.voiceinteraction.cts;
 
+import static org.junit.Assert.fail;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-
-import junit.framework.TestCase;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,14 +31,13 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
     private static CountDownLatch sServiceStartedLatch = new CountDownLatch(1);
     private static Intent sReceivedIntent;
 
-    public static void waitSessionStarted(TestCase testCase, long timeout, TimeUnit unit)
-            throws InterruptedException {
-        if (!sServiceStartedLatch.await(5, TimeUnit.SECONDS)) {
-            testCase.fail("Timed out waiting for session to start");
+    public static void waitSessionStarted(long timeout, TimeUnit unit) throws InterruptedException {
+        if (!sServiceStartedLatch.await(timeout, unit)) {
+            fail("Timed out waiting for session to start");
         }
         String error = sReceivedIntent.getStringExtra("error");
         if (error != null) {
-            testCase.fail(error);
+            fail(error);
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package android.hardware.cts.helpers;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.os.Environment;
 import android.util.Log;
@@ -255,8 +256,8 @@ public class SensorCtsHelper {
     /**
      * @return A {@link File} representing a root directory to store sensor tests data.
      */
-    public static File getSensorTestDataDirectory() throws IOException {
-        File dataDirectory = new File(Environment.getExternalStorageDirectory(), "sensorTests/");
+    public static File getSensorTestDataDirectory(Context context) throws IOException {
+        File dataDirectory = context.getExternalFilesDir("sensorTests");
         return createDirectoryStructure(dataDirectory);
     }
 
@@ -265,8 +266,9 @@ public class SensorCtsHelper {
      *
      * @param subdirectory The sub-directory's name.
      */
-    public static File getSensorTestDataDirectory(String subdirectory) throws IOException {
-        File subdirectoryFile = new File(getSensorTestDataDirectory(), subdirectory);
+    public static File getSensorTestDataDirectory(Context context, String subdirectory)
+            throws IOException {
+        File subdirectoryFile = new File(getSensorTestDataDirectory(context), subdirectory);
         return createDirectoryStructure(subdirectoryFile);
     }
 

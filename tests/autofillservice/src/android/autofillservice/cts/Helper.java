@@ -96,6 +96,7 @@ public final class Helper {
     public static final String ID_LOGIN = "login";
     public static final String ID_OUTPUT = "output";
     public static final String ID_STATIC_TEXT = "static_text";
+    public static final String ID_EMPTY = "empty";
 
     public static final String NULL_DATASET_ID = null;
 
@@ -136,10 +137,6 @@ public final class Helper {
 
     private static final NodeFilter<ViewNode> RESOURCE_ID_FILTER = (node, id) -> {
         return id.equals(node.getIdEntry());
-    };
-
-    private static final NodeFilter<ViewNode> AUTOFILL_ID_FILTER = (node, id) -> {
-        return id.equals(node.getAutofillId());
     };
 
     private static final NodeFilter<ViewNode> HTML_NAME_FILTER = (node, id) -> {
@@ -404,6 +401,18 @@ public final class Helper {
     }
 
     /**
+     * Gets a node given its Android resource id.
+     */
+    @NonNull
+    public static AutofillId findAutofillIdByResourceId(@NonNull FillContext context,
+            @NonNull String resourceId) {
+        final ViewNode node = findNodeByFilter(context.getStructure(), resourceId,
+                RESOURCE_ID_FILTER);
+        assertWithMessage("No node for resourceId %s", resourceId).that(node).isNotNull();
+        return node.getAutofillId();
+    }
+
+    /**
      * Gets the {@code name} attribute of a node representing an HTML input tag.
      */
     @Nullable
@@ -462,14 +471,6 @@ public final class Helper {
             }
         }
         return null;
-    }
-
-    /**
-     * Gets a view (or a descendant of it) that has the given {@code id}, or {@code null} if
-     * not found.
-     */
-    public static ViewNode findNodeByAutofillId(AssistStructure structure, AutofillId id) {
-        return findNodeByFilter(structure, id, AUTOFILL_ID_FILTER);
     }
 
     /**
@@ -1400,6 +1401,16 @@ public final class Helper {
             Log.v(TAG, "assertEnabled(): expected=" + expected + ", actual=" + actual);
             return actual == expected ? "not_used" : null;
         });
+    }
+
+    /**
+     * Asserts these autofill ids are the same, except for the session.
+     */
+    public static void assertEqualsIgnoreSession(@NonNull AutofillId id1, @NonNull AutofillId id2) {
+        assertWithMessage("id1 is null").that(id1).isNotNull();
+        assertWithMessage("id2 is null").that(id2).isNotNull();
+        assertWithMessage("%s is not equal to %s", id1, id2).that(id1.equalsIgnoreSession(id2))
+                .isTrue();
     }
 
     /**

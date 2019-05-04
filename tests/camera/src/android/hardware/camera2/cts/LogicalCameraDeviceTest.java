@@ -116,7 +116,17 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 List<OutputConfiguration> outputs = new ArrayList<>();
                 OutputConfiguration outputConfig = new OutputConfiguration(
                         imageReader.getSurface());
+                OutputConfiguration outputConfigCopy =
+                        new OutputConfiguration(imageReader.getSurface());
+                assertTrue("OutputConfiguration must be equal to its copy",
+                        outputConfig.equals(outputConfigCopy));
                 outputConfig.setPhysicalCameraId(id);
+                assertFalse("OutputConfigurations with different physical Ids must be different",
+                        outputConfig.equals(outputConfigCopy));
+                String idCopy = new String(id);
+                outputConfigCopy.setPhysicalCameraId(idCopy);
+                assertTrue("OutputConfigurations with same physical Ids must be equal",
+                        outputConfig.equals(outputConfigCopy));
 
                 // Regardless of logical camera or non-logical camera, create a session of an
                 // output configuration with invalid physical camera id, verify that the

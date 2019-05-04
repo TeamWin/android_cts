@@ -265,8 +265,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
              final PrimaryDisplayStateSession displayStateSession =
                      new PrimaryDisplayStateSession()) {
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession
+                    .setCanShowWithInsecureKeyguard(true).createVirtualDisplay();
 
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
@@ -311,8 +311,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testExternalDisplayToggleState() throws Exception {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
 
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
@@ -351,8 +350,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         mAmWmState.getAmState().computeState();
         final int displayCount = mAmWmState.getAmState().getDisplayCount();
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
             launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                     "Virtual activity should be Top Resumed Activity.");
@@ -647,8 +645,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
             assertEquals("Unexpected resumed activity",
                     0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(true /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession
+                    .setCanShowWithInsecureKeyguard(true).createVirtualDisplay();
 
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
@@ -697,8 +695,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
             launchActivity(TEST_ACTIVITY);
 
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
             launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, newDisplay.mId);
 
             lockScreenSession.gotoKeyguard();
@@ -719,8 +716,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
             launchActivity(TEST_ACTIVITY);
             mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
 
-            final ActivityDisplay newDisplay =
-                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
             launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                     "Virtual activity should be Top Resumed Activity.");
