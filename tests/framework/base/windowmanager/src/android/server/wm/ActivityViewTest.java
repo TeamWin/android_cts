@@ -62,6 +62,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,11 +82,13 @@ public class ActivityViewTest extends ActivityManagerTestBase {
     private ActivityView mActivityView;
 
     @Rule
-    public ActivityTestRule<ActivityViewTestActivity> mActivityRule =
-            new ActivityTestRule<>(ActivityViewTestActivity.class);
+    public final ActivityTestRule<ActivityViewTestActivity> mActivityRule =
+            new ActivityTestRule<>(ActivityViewTestActivity.class, true /* initialTouchMode */,
+                false /* launchActivity */);
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
+        super.setUp();
         assumeTrue(supportsMultiDisplay());
         mInstrumentation = getInstrumentation();
         SystemUtil.runWithShellPermissionIdentity(() -> {
@@ -93,6 +96,14 @@ public class ActivityViewTest extends ActivityManagerTestBase {
             mActivityView = activity.getActivityView();
         });
         separateTestJournal();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        if (mActivityView != null) {
+            SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.release());
+        }
     }
 
     @Test
