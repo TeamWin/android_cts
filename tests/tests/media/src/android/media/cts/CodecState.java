@@ -338,12 +338,12 @@ public class CodecState {
 
         if (mAudioTrack != null) {
             ByteBuffer buffer = mCodecOutputBuffers[index];
+            byte[] audioArray = new byte[info.size];
+            buffer.get(audioArray);
             buffer.clear();
-            ByteBuffer audioBuffer = ByteBuffer.allocate(buffer.remaining());
-            audioBuffer.put(buffer);
-            audioBuffer.clear();
 
-            mAudioTrack.write(audioBuffer, info.size, info.presentationTimeUs*1000);
+            mAudioTrack.write(ByteBuffer.wrap(audioArray), info.size,
+                    info.presentationTimeUs*1000);
 
             mCodec.releaseOutputBuffer(index, false /* render */);
 
