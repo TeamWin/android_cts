@@ -195,7 +195,6 @@ public class MediaSession2Test {
     @Test
     public void testSession2Token_extrasSetToNull() {
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
-                .setExtras(null)
                 .build()) {
             Session2Token token = session.getToken();
             assertSame(Bundle.EMPTY, token.getExtras());

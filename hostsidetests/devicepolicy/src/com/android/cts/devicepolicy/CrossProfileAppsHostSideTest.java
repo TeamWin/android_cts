@@ -1,10 +1,16 @@
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+
+import android.stats.devicepolicy.EventId;
+
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * In the test, managed profile and secondary user are created. We then verify
@@ -22,6 +28,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private int mProfileId;
     private int mSecondaryUserId;
     private boolean mHasManagedUserFeature;
+    private boolean mCanTestMultiUser;
 
     @Override
     protected void setUp() throws Exception {
@@ -34,9 +41,10 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
             createAndStartManagedProfile();
             installRequiredApps(mProfileId);
         }
-        if (mSupportsMultiUser) {
+        if (canCreateAdditionalUsers(1)) {
             mSecondaryUserId = createUser();
             installRequiredApps(mSecondaryUserId);
+            mCanTestMultiUser = true;
         }
     }
 
@@ -65,14 +73,14 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testPrimaryUserToSecondaryUser() throws Exception {
-        if (!mSupportsMultiUser) {
+        if (!mCanTestMultiUser) {
             return;
         }
         verifyCrossProfileAppsApi(mPrimaryUserId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
     public void testSecondaryUserToManagedProfile() throws Exception {
-        if (!mSupportsMultiUser || !mHasManagedUserFeature) {
+        if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
         }
         verifyCrossProfileAppsApi(mSecondaryUserId, mProfileId, NON_TARGET_USER_TEST_CLASS);
@@ -80,18 +88,56 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testManagedProfileToSecondaryUser() throws Exception {
-        if (!mSupportsMultiUser || !mHasManagedUserFeature) {
+        if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
         }
         verifyCrossProfileAppsApi(mProfileId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
+    public void testStartMainActivity_logged() throws Exception {
+        assertMetricsLogged(
+                getDevice(),
+                () -> {
+                    runDeviceTest(
+                            mProfileId,
+                            mPrimaryUserId,
+                            TARGET_USER_TEST_CLASS,
+                            "testStartMainActivity_noAsserts");
+                },
+                new DevicePolicyEventWrapper
+                        .Builder(EventId.CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE)
+                        .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
+                        .build());
+    }
+
+    public void testGetTargetUserProfiles_logged() throws Exception {
+        assertMetricsLogged(
+                getDevice(),
+                () -> {
+                    runDeviceTest(
+                            mProfileId,
+                            mPrimaryUserId,
+                            TARGET_USER_TEST_CLASS,
+                            "testGetTargetUserProfiles_noAsserts");
+                },
+                new DevicePolicyEventWrapper
+                        .Builder(EventId.CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE)
+                        .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
+                        .build());
+    }
+
     private void verifyCrossProfileAppsApi(int fromUserId, int targetUserId, String testClass)
+            throws Exception {
+        runDeviceTest(fromUserId, targetUserId, testClass, /* testMethod= */ null);
+    }
+
+    private void runDeviceTest(
+            int fromUserId, int targetUserId, String testClass, @Nullable String testMethod)
             throws Exception {
         runDeviceTestsAsUser(
                 TEST_PACKAGE,
                 testClass,
-                null,
+                testMethod,
                 fromUserId,
                 createTargetUserParam(targetUserId));
     }

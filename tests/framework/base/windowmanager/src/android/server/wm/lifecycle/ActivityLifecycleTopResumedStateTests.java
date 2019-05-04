@@ -367,14 +367,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 state(secondActivity, ON_TOP_POSITION_GAINED));
         LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_TOP_POSITION_LOST), "switchTop");
-        List<ActivityCallback> expectedNewIntentSequence = Arrays.asList(
-                ON_PAUSE, ON_NEW_INTENT, ON_RESUME, ON_TOP_POSITION_GAINED);
-        List<ActivityCallback> extraPositionTransitionNewIntentSequence =
-                Arrays.asList(
-                        ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_NEW_INTENT,
-                ON_RESUME, ON_TOP_POSITION_GAINED);
-        LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
-                Arrays.asList(expectedNewIntentSequence, extraPositionTransitionNewIntentSequence),
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_PAUSE, ON_NEW_INTENT, ON_RESUME, ON_TOP_POSITION_GAINED),
                 "switchTop");
     }
 

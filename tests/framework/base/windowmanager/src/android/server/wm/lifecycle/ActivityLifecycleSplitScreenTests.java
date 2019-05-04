@@ -46,6 +46,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -70,6 +71,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testResumedWhenRecreatedFromInNonFocusedStack() throws Exception {
         // Launch first activity
         final Activity firstActivity =
@@ -142,9 +144,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
-        LifecycleVerifier.assertSequenceMatchesOneOf(ThirdActivity.class, getLifecycleLog(),
-                Arrays.asList(new ArrayList<>(), LifecycleVerifier.getRelaunchSequence(ON_RESUME)),
-                "moveToSide");
+        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(), "moveToSide");
         LifecycleVerifier.assertRestartAndResumeSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_PAUSE, ON_STOP), "moveToSide");

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -735,10 +734,26 @@ public class GradientDrawableTest {
         Bitmap bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        try {
             radiusDrawable.setBounds(0, 0, 10, 10);
             radiusDrawable.draw(canvas);
-        });
+        } catch (Exception e) {
+            fail("Threw exception: " + e + " with negative radius");
+        }
+    }
+
+    @Test
+    public void testInflatedGradientOrientationUpdated() {
+        final Context context = new ContextThemeWrapper(InstrumentationRegistry.getTargetContext(),
+                R.style.Theme_MixedGradientTheme);
+
+        GradientDrawable drawable = (GradientDrawable)
+                context.getDrawable(R.drawable.gradientdrawable);
+
+        assertEquals(Orientation.BL_TR, drawable.getOrientation());
+
+        drawable.setOrientation(Orientation.BOTTOM_TOP);
+        assertEquals(Orientation.BOTTOM_TOP, drawable.getOrientation());
     }
 
     private void verifyPreloadDensityInner(Resources res, int densityDpi)

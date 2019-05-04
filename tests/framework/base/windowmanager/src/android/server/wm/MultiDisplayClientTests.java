@@ -19,8 +19,13 @@ package android.server.wm;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.CommandSession.ActivityCallback.ON_CONFIGURATION_CHANGED;
 import static android.server.wm.CommandSession.ActivityCallback.ON_RESUME;
+import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
@@ -28,15 +33,27 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
+import android.os.Bundle;
+import android.view.Display;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.MockImeSession;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -44,6 +61,9 @@ import org.junit.Test;
  */
 @Presubmit
 public class MultiDisplayClientTests extends MultiDisplayTestBase {
+
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5); // 5 seconds
+    private static final String EXTRA_SHOW_IME = "show_ime";
 
     @Before
     @Override
@@ -72,7 +92,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         // Launch activity display.
         separateTestJournal();
         Activity activity = activityTestRule.launchActivity(new Intent());
-        final ComponentName activityName = getComponentName(activityClass);
+        final ComponentName activityName = activity.getComponentName();
         waitAndAssertResume(activityName);
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -107,10 +127,6 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         }
     }
 
-    private static ComponentName getComponentName(Class<? extends Activity> activity) {
-        return new ComponentName(getInstrumentation().getContext(), activity);
-    }
-
     private void waitAndAssertConfigurationChange(ComponentName activityName) {
         mAmWmState.waitForWithAmState((state) ->
                         getCallbackCount(activityName, ON_CONFIGURATION_CHANGED) == 1,
@@ -131,7 +147,106 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         return lifecycles.getCount(callback);
     }
 
-    public static class ClientTestActivity extends CommandSession.BasicTestActivity { }
+    @Test
+    @FlakyTest(bugId = 130379901, detail = "Promote to presubmit once proved stable")
+    public void testDisplayIdUpdateWhenImeMove_RelaunchActivity() throws Exception {
+        try (final TestActivitySession<ClientTestActivity> session = new TestActivitySession<>()) {
+            testDisplayIdUpdateWhenImeMove(ClientTestActivity.class);
+        }
+    }
 
-    public static class NoRelaunchActivity extends CommandSession.BasicTestActivity { }
+    @Test
+    @FlakyTest(bugId = 130379901, detail = "Promote to presubmit once proved stable")
+    public void testDisplayIdUpdateWhenImeMove_NoRelaunchActivity() throws Exception {
+        try (final TestActivitySession<NoRelaunchActivity> session = new TestActivitySession<>()) {
+            testDisplayIdUpdateWhenImeMove(NoRelaunchActivity.class);
+        }
+    }
+
+    private void testDisplayIdUpdateWhenImeMove(Class<? extends ImeTestActivity> activityClass)
+            throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+            final MockImeSession mockImeSession = MockImeSession.create(mContext)) {
+
+            assertImeShownAndMatchesDisplayId(
+                    activityClass, mockImeSession, DEFAULT_DISPLAY);
+
+            final ActivityManagerState.ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
+
+            // Launch activity on the secondary display and make IME show.
+            assertImeShownAndMatchesDisplayId(
+                    activityClass, mockImeSession, newDisplay.mId);
+        }
+    }
+
+    private  void assertImeShownAndMatchesDisplayId(Class<? extends ImeTestActivity> activityClass,
+            MockImeSession imeSession, int targetDisplayId) throws Exception {
+        final ImeEventStream stream = imeSession.openEventStream();
+
+        final Intent intent = new Intent(mContext, activityClass)
+                .putExtra(EXTRA_SHOW_IME, true).setFlags(FLAG_ACTIVITY_NEW_TASK);
+        separateTestJournal();
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchDisplayId(targetDisplayId);
+        getInstrumentation().getTargetContext().startActivity(intent, launchOptions.toBundle());
+
+
+        // Verify if IME is showed on the target display.
+        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+        mAmWmState.waitAndAssertImeWindowShownOnDisplay(targetDisplayId);
+
+        final int displayId = expectCommand(stream, imeSession.callGetDisplayId(), TIMEOUT)
+                .getReturnIntegerValue();
+        assertEquals("Display ID must match", targetDisplayId, displayId);
+    }
+
+    @Test
+    @FlakyTest(bugId = 130379901, detail = "Promote to presubmit once proved stable")
+    public void testInputMethodManagerDisplayId() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create a simulated display.
+            final ActivityManagerState.ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+
+            final Display display = mContext.getSystemService(DisplayManager.class)
+                    .getDisplay(newDisplay.mId);
+            final Context newDisplayContext = mContext.createDisplayContext(display);
+            final InputMethodManager imm =
+                    newDisplayContext.getSystemService(InputMethodManager.class);
+
+            assertEquals(newDisplay.mId, imm.getDisplayId());
+        }
+    }
+
+    public static class ClientTestActivity extends ImeTestActivity { }
+
+    public static class NoRelaunchActivity extends ImeTestActivity { }
+
+    public static class ImeTestActivity extends CommandSession.BasicTestActivity {
+        private EditText mEditText;
+        private boolean mShouldShowIme;
+
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            mShouldShowIme = getIntent().hasExtra(EXTRA_SHOW_IME);
+            if (mShouldShowIme) {
+                mEditText = new EditText(this);
+                final LinearLayout layout = new LinearLayout(this);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                layout.addView(mEditText);
+                setContentView(layout);
+            }
+        }
+
+        @Override
+        protected void onResume() {
+            super.onResume();
+            if (mShouldShowIme) {
+                getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                mEditText.requestFocus();
+            }
+        }
+    }
 }

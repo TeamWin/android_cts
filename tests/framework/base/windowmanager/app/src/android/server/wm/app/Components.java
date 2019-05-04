@@ -193,6 +193,7 @@ public class Components extends ComponentsBase {
      */
     public static class InputMethodTestActivity {
         public static final String EXTRA_PRIVATE_IME_OPTIONS = "private_ime_options";
+        public static final String EXTRA_TEST_CURSOR_ANCHOR_INFO = "cursor_anchor_info";
     }
 
     /**

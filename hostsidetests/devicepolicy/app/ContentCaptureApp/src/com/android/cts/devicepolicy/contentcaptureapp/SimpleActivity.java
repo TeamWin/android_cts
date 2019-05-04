@@ -17,25 +17,55 @@
 package com.android.cts.devicepolicy.contentcaptureapp;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureManager;
 
 public class SimpleActivity extends Activity {
 
-    public static final String TAG = SimpleActivity.class.getSimpleName();
+    public static final String TAG = SimpleActivity.class.getSimpleName() + "contentcapture";
+
+    private SimpleActivityReceiver mReceiver;
+
+    private ContentCaptureManager mManager;
+
+    @Override
+    protected void onCreate(Bundle saveInstanceState) {
+        super.onCreate(saveInstanceState);
+        mReceiver = new SimpleActivityReceiver();
+        registerReceiver(mReceiver, new IntentFilter(SimpleActivityReceiver.ACTION));
+    }
 
     @Override
     public void onStart() {
         Log.d(TAG, "onStart(): userId=" + android.os.Process.myUserHandle().getIdentifier());
         super.onStart();
-        final ContentCaptureManager mgr = getSystemService(ContentCaptureManager.class);
-        if (mgr == null) {
+        mManager = getSystemService(ContentCaptureManager.class);
+        if (mManager == null) {
             Log.e(TAG, "no manager");
-            return;
+            finish();
         }
-        final boolean enabled = mgr.isContentCaptureEnabled();
-        Log.v(TAG, "enabled: " + enabled);
-        setResult(enabled ? 1 : 0);
-        finish();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+    }
+
+    private class SimpleActivityReceiver extends BroadcastReceiver {
+        private static final String ACTION = "SimpleActivityReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final Intent broadcastIntent = new Intent()
+                    .setAction("ContentCaptureActivityReceiver")
+                    .putExtra("enabled", mManager.isContentCaptureEnabled());
+            sendBroadcast(broadcastIntent);
+        }
     }
 }

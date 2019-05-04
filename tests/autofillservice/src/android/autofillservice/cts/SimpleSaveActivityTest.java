@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
 import static android.autofillservice.cts.Helper.LARGE_STRING;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextValue;
+import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_COMMIT;
@@ -48,6 +49,7 @@ import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
+import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.RegexValidator;
 import android.service.autofill.SaveInfo;
@@ -398,8 +400,16 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
-                        ID_PASSWORD)
+                // Must explicitly set visitor, otherwise setRequiredSavableIds() would get the
+                // id from the 1st context
+                .setVisitor((contexts, builder) -> {
+                    final AutofillId passwordId =
+                            findAutofillIdByResourceId(contexts.get(1), ID_PASSWORD);
+                    builder.setSaveInfo(new SaveInfo.Builder(
+                            SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
+                            new AutofillId[] {passwordId})
+                            .build());
+                })
                 .build());
 
         // Trigger autofill on second "fragment"
@@ -747,8 +757,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(newCustomDescription(WelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -815,8 +826,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(newCustomDescription(WelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -900,8 +912,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(WelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(newCustomDescription(WelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -1013,8 +1026,10 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(newCustomDescription(TrampolineWelcomeActivity.class))
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setSaveInfoVisitor((contexts, builder) -> builder
+                        .setCustomDescription(
+                                newCustomDescription(TrampolineWelcomeActivity.class)))
                 .build());
 
         // Trigger autofill.
@@ -1071,11 +1086,15 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final AutofillId inputId = mActivity.mInput.getAutofillId();
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
-                .addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId, passwordId)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId inputId = findAutofillIdByResourceId(context, ID_INPUT);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+                    builder.addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId,
+                            passwordId);
+                })
                 .build());
 
         // Trigger autofill.
@@ -1107,12 +1126,16 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final AutofillId inputId = mActivity.mInput.getAutofillId();
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
                 .setOptionalSavableIds(ID_PASSWORD)
-                .addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId, passwordId)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId inputId = findAutofillIdByResourceId(context, ID_INPUT);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+                    builder.addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId,
+                            passwordId);
+                })
                 .build());
 
         // Trigger autofill.
@@ -1149,11 +1172,15 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final AutofillId inputId = mActivity.mInput.getAutofillId();
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
-                .addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId, passwordId)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId inputId = findAutofillIdByResourceId(context, ID_INPUT);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+                    builder.addSanitizer(new TextValueSanitizer(TRIMMER_PATTERN, "$1"), inputId,
+                            passwordId);
+                })
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_INPUT, "id")
                         .setField(ID_PASSWORD, "pass")
@@ -1183,11 +1210,15 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
                 .setOptionalSavableIds(ID_PASSWORD)
-                .addSanitizer(new TextValueSanitizer(Pattern.compile("(pass) "), "$1"), passwordId)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+                    builder.addSanitizer(new TextValueSanitizer(Pattern.compile("(pass) "), "$1"),
+                            passwordId);
+                })
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_INPUT, "id")
                         .setField(ID_PASSWORD, "pass")
@@ -1217,12 +1248,15 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final AutofillId inputId = mActivity.mInput.getAutofillId();
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
-                .addSanitizer(new TextValueSanitizer(Pattern.compile("dude"), "$1"),
-                        inputId, passwordId)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId inputId = findAutofillIdByResourceId(context, ID_INPUT);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+                    builder.addSanitizer(new TextValueSanitizer(Pattern.compile("dude"), "$1"),
+                            inputId, passwordId);
+                })
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_INPUT, "#id#")
                         .setField(ID_PASSWORD, "#pass#")
@@ -1252,13 +1286,17 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final AutofillId inputId = mActivity.mInput.getAutofillId();
-        final AutofillId passwordId = mActivity.mPassword.getAutofillId();
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
                 .setOptionalSavableIds(ID_PASSWORD)
-                .addSanitizer(new TextValueSanitizer(Pattern.compile("dude"), "$1"),
-                        inputId, passwordId)
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    final FillContext context = contexts.get(0);
+                    final AutofillId inputId = findAutofillIdByResourceId(context, ID_INPUT);
+                    final AutofillId passwordId = findAutofillIdByResourceId(context, ID_PASSWORD);
+                    builder.addSanitizer(new TextValueSanitizer(Pattern.compile("dude"), "$1"),
+                            inputId, passwordId);
+
+                })
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_INPUT, "id")
                         .setField(ID_PASSWORD, "#pass#")
@@ -1391,21 +1429,24 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         enableService();
 
         // Set expectations.
-        final CustomDescription.Builder customDescription =
-                newCustomDescriptionBuilder(WelcomeActivity.class);
-        final RemoteViews update = newTemplate();
-        if (updateLinkView) {
-            update.setCharSequence(R.id.link, "setText", "TAP ME IF YOU CAN");
-        } else {
-            update.setCharSequence(R.id.static_text, "setText", "ME!");
-        }
-        Validator validCondition = new RegexValidator(mActivity.mInput.getAutofillId(),
-                Pattern.compile(".*"));
-        customDescription.batchUpdate(validCondition,
-                new BatchUpdates.Builder().updateTemplate(update).build());
-
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setCustomDescription(customDescription.build())
+                .setSaveInfoVisitor((contexts, builder) -> {
+                    // Set response with custom description
+                    final AutofillId id = findAutofillIdByResourceId(contexts.get(0), ID_INPUT);
+                    final CustomDescription.Builder customDescription =
+                            newCustomDescriptionBuilder(WelcomeActivity.class);
+                    final RemoteViews update = newTemplate();
+                    if (updateLinkView) {
+                        update.setCharSequence(R.id.link, "setText", "TAP ME IF YOU CAN");
+                    } else {
+                        update.setCharSequence(R.id.static_text, "setText", "ME!");
+                    }
+                    Validator validCondition = new RegexValidator(id, Pattern.compile(".*"));
+                    customDescription.batchUpdate(validCondition,
+                            new BatchUpdates.Builder().updateTemplate(update).build());
+
+                    builder.setCustomDescription(customDescription.build());
+                })
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
                 .build());
 

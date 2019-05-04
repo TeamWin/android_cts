@@ -16,53 +16,67 @@
 
 package android.voiceinteraction.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.fail;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import android.voiceinteraction.common.Utils;
+
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import android.voiceinteraction.common.Utils;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.rule.ActivityTestRule;
 
-public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestStartActivity> {
+@RunWith(AndroidJUnit4.class)
+public class VoiceInteractionTest {
     static final String TAG = "VoiceInteractionTest";
     private static final int TIMEOUT_MS = 20 * 1000;
 
+    // TODO: use PackageManager's / make it @TestApi
+    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
+
     private TestStartActivity mTestActivity;
-    private Context mContext;
+    private final Context mContext = getInstrumentation().getTargetContext();
     private TestResultsReceiver mReceiver;
     private Bundle mResults;
     private final CountDownLatch mLatch = new CountDownLatch(1);
-    // TODO: convert test to JUnit4 so we can use @RequiredFeatureRule instead
-    protected boolean mHasFeature;
-    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
-    public VoiceInteractionTest() {
-        super(TestStartActivity.class);
-    }
+    @Rule
+    public final ActivityTestRule<TestStartActivity> mActivityTestRule =
+            new ActivityTestRule<>(TestStartActivity.class, false, false);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Rule
+    public final RequiredFeatureRule mRequiredFeatureRule = new RequiredFeatureRule(
+            FEATURE_VOICE_RECOGNIZERS);
 
-        mContext = getInstrumentation().getTargetContext();
-        mHasFeature = mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
-        if (!mHasFeature) return;
-
+    @Before
+    public void setUp() throws Exception {
         mReceiver = new TestResultsReceiver();
         mContext.registerReceiver(mReceiver, new IntentFilter(Utils.BROADCAST_INTENT));
         startTestActivity();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (mHasFeature && mReceiver != null) {
+    @After
+    public void tearDown() throws Exception {
+        if (mReceiver != null) {
             try {
                 mContext.unregisterReceiver(mReceiver);
             } catch (IllegalArgumentException e) {
@@ -72,25 +86,18 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
             }
             mReceiver = null;
         }
-        super.tearDown();
     }
 
     private void startTestActivity() throws Exception {
         Intent intent = new Intent();
         intent.setAction("android.intent.action.TEST_START_ACTIVITY");
-        intent.setComponent(new ComponentName(getInstrumentation().getContext(),
-                TestStartActivity.class));
-        setActivityIntent(intent);
-        mTestActivity = getActivity();
+        intent.setComponent(new ComponentName(mContext, TestStartActivity.class));
+        mTestActivity = mActivityTestRule.launchActivity(intent);
     }
 
+    @Test
     public void testAll() throws Exception {
-        if (!mHasFeature) {
-            Log.i(TAG, "The device doesn't support feature: " + FEATURE_VOICE_RECOGNIZERS);
-            return;
-        }
-
-        VoiceInteractionTestReceiver.waitSessionStarted(this, 5, TimeUnit.SECONDS);
+        VoiceInteractionTestReceiver.waitSessionStarted(5, TimeUnit.SECONDS);
 
         if (!mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             fail("Failed to receive broadcast in " + TIMEOUT_MS + "msec");
@@ -110,7 +117,7 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
                 verifySingleTestcaseResult(t, singleResult);
             }
         }
-        assertEquals(0, numFails);
+        assertThat(numFails).isEqualTo(0);
         mTestActivity.finish();
     }
 
@@ -118,37 +125,37 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
         Log.i(TAG, "Received testresult: " + result + " for " + testCaseType);
         switch (testCaseType) {
           case ABORT_REQUEST_CANCEL_TEST:
-              assertTrue(result.equals(Utils.ABORT_REQUEST_CANCEL_SUCCESS));
+              assertThat(result.equals(Utils.ABORT_REQUEST_CANCEL_SUCCESS)).isTrue();
               break;
           case ABORT_REQUEST_TEST:
-              assertTrue(result.equals(Utils.ABORT_REQUEST_SUCCESS));
+              assertThat(result.equals(Utils.ABORT_REQUEST_SUCCESS)).isTrue();
               break;
           case COMMANDREQUEST_TEST:
-              assertTrue(result.equals(Utils.COMMANDREQUEST_SUCCESS));
+              assertThat(result.equals(Utils.COMMANDREQUEST_SUCCESS)).isTrue();
               break;
           case COMMANDREQUEST_CANCEL_TEST:
-              assertTrue(result.equals(Utils.COMMANDREQUEST_CANCEL_SUCCESS));
+              assertThat(result.equals(Utils.COMMANDREQUEST_CANCEL_SUCCESS)).isTrue();
               break;
           case COMPLETION_REQUEST_CANCEL_TEST:
-              assertTrue(result.equals(Utils.COMPLETION_REQUEST_CANCEL_SUCCESS));
+              assertThat(result.equals(Utils.COMPLETION_REQUEST_CANCEL_SUCCESS)).isTrue();
               break;
           case COMPLETION_REQUEST_TEST:
-              assertTrue(result.equals(Utils.COMPLETION_REQUEST_SUCCESS));
+              assertThat(result.equals(Utils.COMPLETION_REQUEST_SUCCESS)).isTrue();
               break;
           case CONFIRMATION_REQUEST_CANCEL_TEST:
-              assertTrue(result.equals(Utils.CONFIRMATION_REQUEST_CANCEL_SUCCESS));
+              assertThat(result.equals(Utils.CONFIRMATION_REQUEST_CANCEL_SUCCESS)).isTrue();
               break;
           case CONFIRMATION_REQUEST_TEST:
-              assertTrue(result.equals(Utils.CONFIRMATION_REQUEST_SUCCESS));
+              assertThat(result.equals(Utils.CONFIRMATION_REQUEST_SUCCESS)).isTrue();
               break;
           case PICKOPTION_REQUEST_CANCEL_TEST:
-              assertTrue(result.equals(Utils.PICKOPTION_REQUEST_CANCEL_SUCCESS));
+              assertThat(result.equals(Utils.PICKOPTION_REQUEST_CANCEL_SUCCESS)).isTrue();
               break;
           case PICKOPTION_REQUEST_TEST:
-              assertTrue(result.equals(Utils.PICKOPTION_REQUEST_SUCCESS));
+              assertThat(result.equals(Utils.PICKOPTION_REQUEST_SUCCESS)).isTrue();
               break;
           case SUPPORTS_COMMANDS_TEST:
-              assertTrue(result.equals(Utils.SUPPORTS_COMMANDS_SUCCESS));
+              assertThat(result.equals(Utils.SUPPORTS_COMMANDS_SUCCESS)).isTrue();
               break;
           default:
               Log.wtf(TAG, "not expected");

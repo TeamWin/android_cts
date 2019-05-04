@@ -25,14 +25,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name=".SimpleContentCaptureService"
-            android:permission="android.permission.BIND_CONTENT_CAPTURE_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.contentcapture.ContentCaptureService" />
-            </intent-filter>
-        </service>
     </application>
 
 </manifest>
