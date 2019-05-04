@@ -17,6 +17,8 @@
 package android.server.wm.backgroundactivity.appa;
 
 import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;
 
 /**
  * A background activity that will be launched, for testing if app is able to start background
@@ -24,4 +26,23 @@ import android.app.Activity;
  */
 public class BackgroundActivity extends Activity {
 
+    public static final String TAG = "BackgroundActivity";
+
+    @Override
+    protected void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        Log.i(TAG, "onCreate");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "onResume");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause");
+    }
 }

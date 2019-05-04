@@ -19,6 +19,8 @@ package android.server.wm.backgroundactivity.appa;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.RELAUNCH_FOREGROUND_ACTIVITY_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA;
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -39,10 +41,22 @@ public class ForegroundActivity extends Activity {
         mRelaunch = intent.getBooleanExtra(RELAUNCH_FOREGROUND_ACTIVITY_EXTRA, false);
 
         boolean launchBackground = intent.getBooleanExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, false);
+        final int delay = intent.getIntExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 0);
+        boolean newTask = intent.getBooleanExtra(START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA, false);
         if (launchBackground) {
-            Intent newIntent = new Intent();
+            final Intent newIntent = new Intent();
             newIntent.setClass(this, BackgroundActivity.class);
-            startActivity(newIntent);
+            if (newTask) {
+                newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+            if (delay == 0) {
+                startActivity(newIntent);
+            } else {
+                new Thread(() -> {
+                    SystemClock.sleep(delay);
+                    startActivity(newIntent);
+                }).start();
+            }
         }
 
         boolean launchSecond = intent.getBooleanExtra(
