@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -256,6 +257,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
         installV3Apex();
         installV3Apex();
+    }
+
+    @Test
+    public void testInstallApex_DeviceDoesNotSupportApex_Fails() throws Exception {
+        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallApex_DeviceDoesNotSupportApex_Fails");
     }
 
     private void installV3Apex()throws Exception {

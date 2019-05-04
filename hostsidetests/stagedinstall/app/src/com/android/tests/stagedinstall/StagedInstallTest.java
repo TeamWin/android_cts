@@ -530,6 +530,17 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
 
+    @Test
+    public void testInstallApex_DeviceDoesNotSupportApex_Fails() throws Exception {
+        try {
+            stageSingleApk("com.android.apex.cts.shim.v2.apex");
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException expected) {
+            assertThat(expected.getMessage()).contains(
+                    "This device doesn't support the installation of APEX files");
+        }
+    }
+
     private static PackageInstaller getPackageInstaller() {
         return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
                 .getPackageInstaller();
