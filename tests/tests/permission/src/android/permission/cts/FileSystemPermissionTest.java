@@ -37,6 +37,8 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -343,8 +345,10 @@ public class FileSystemPermissionTest {
     @MediumTest
     @Test
     public void testProcNetSane() throws Exception {
-        for (String file : procNetFiles) {
-            procNetSane("/proc/net/" + file);
+        if (PropertyUtil.isVendorApiLevelNewerThan(28)) {
+            for (String file : procNetFiles) {
+                procNetSane("/proc/net/" + file);
+            }
         }
     }
 
