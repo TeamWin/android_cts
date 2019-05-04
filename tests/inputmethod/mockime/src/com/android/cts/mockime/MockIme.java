@@ -42,6 +42,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.CursorAnchorInfo;
@@ -267,6 +268,9 @@ public final class MockIme extends InputMethodService {
                         sendDownUpKeyEvents(keyEventCode);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
+                    case "getDisplayId":
+                        return getSystemService(WindowManager.class)
+                                .getDefaultDisplay().getDisplayId();
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
