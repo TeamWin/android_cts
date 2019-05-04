@@ -35,7 +35,6 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.net.ConnectivityManager;
 import android.telephony.ims.ImsReasonInfo;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -168,6 +167,67 @@ public class PhoneStateListenerTest {
         assertFalse(mOnServiceStateChangedCalled);
         t.start();
 
+        synchronized (mLock) {
+            if (!mOnServiceStateChangedCalled){
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertTrue(mOnServiceStateChangedCalled);
+    }
+
+    @Test
+    public void testOnUnRegisterFollowedByRegister() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onServiceStateChanged(ServiceState serviceState) {
+                        synchronized(mLock) {
+                            mOnServiceStateChangedCalled = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnServiceStateChangedCalled);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnServiceStateChangedCalled){
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertTrue(mOnServiceStateChangedCalled);
+
+        // reset and un-register
+        mOnServiceStateChangedCalled = false;
+        if (mListener != null) {
+            // un-register the listener
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+        }
+        synchronized (mLock) {
+            if (!mOnServiceStateChangedCalled){
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        assertFalse(mOnServiceStateChangedCalled);
+
+        // re-register the listener
+        mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled){
                 mLock.wait(WAIT_TIME);
