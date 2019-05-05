@@ -84,8 +84,8 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
     public void testGnssNavigationMessageRegistration() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+        if (!TestMeasurementUtil
+                .canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
             return;
         }
 
