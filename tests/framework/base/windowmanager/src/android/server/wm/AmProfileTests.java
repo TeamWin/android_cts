@@ -27,6 +27,8 @@ import static org.junit.Assert.assertEquals;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 /**
@@ -80,6 +82,7 @@ public class AmProfileTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testAmStartStartProfilerNoSamplingStreaming() throws Exception {
         testProfile(false, false, true);
     }
