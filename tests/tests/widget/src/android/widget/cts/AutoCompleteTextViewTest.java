@@ -457,7 +457,7 @@ public class AutoCompleteTextViewTest {
     public void refreshAutoCompleteResults_removeItem() throws Throwable {
         List<String> suggestions = new ArrayList<>(
                 ImmutableList.of("testOne", "testTwo", "testThree"));
-        mAdapter = new ArrayAdapter<String>(
+        mAdapter = new ArrayAdapter<>(
                 mActivity, android.R.layout.simple_dropdown_item_1line, suggestions);
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
@@ -465,15 +465,22 @@ public class AutoCompleteTextViewTest {
             mAutoCompleteTextView.setText("testT");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
+        PollingCheck.waitFor(() -> {
+            List<Object> autoCompleteSuggestions = getAutoCompleteSuggestions();
+            return (autoCompleteSuggestions.size() == 2)
+                    && autoCompleteSuggestions.contains("testTwo")
+                    && autoCompleteSuggestions.contains("testThree");
+        });
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAdapter.remove("testThree");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
+        PollingCheck.waitFor(() -> {
+            List<Object> autoCompleteSuggestions = getAutoCompleteSuggestions();
+            return (autoCompleteSuggestions.size() == 1)
+                    && autoCompleteSuggestions.contains("testTwo");
+        });
     }
 
     @Test
@@ -567,7 +574,7 @@ public class AutoCompleteTextViewTest {
             mAutoCompleteTextView.setThreshold(5);
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-        assertThat(mAutoCompleteTextView.isPopupShowing()).isTrue();
+        PollingCheck.waitFor(() -> mAutoCompleteTextView.isPopupShowing());
     }
 
     @Test
@@ -615,7 +622,7 @@ public class AutoCompleteTextViewTest {
     @Test
     public void refreshAutoCompleteResults() throws Throwable {
         List<String> suggestions = new ArrayList<>(ImmutableList.of("testOne", "testTwo"));
-        mAdapter = new ArrayAdapter<String>(mActivity, android.R.layout.simple_dropdown_item_1line,
+        mAdapter = new ArrayAdapter<>(mActivity, android.R.layout.simple_dropdown_item_1line,
                 suggestions);
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
@@ -623,15 +630,22 @@ public class AutoCompleteTextViewTest {
             mAutoCompleteTextView.setText("testT");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
+        PollingCheck.waitFor(() -> {
+            List<Object> autoCompleteSuggestions = getAutoCompleteSuggestions();
+            return (autoCompleteSuggestions.size() == 1)
+                    && autoCompleteSuggestions.contains("testTwo");
+        });
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAdapter.add("testThree");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
-
-        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
+        PollingCheck.waitFor(() -> {
+            List<Object> autoCompleteSuggestions = getAutoCompleteSuggestions();
+            return (autoCompleteSuggestions.size() == 2)
+                    && autoCompleteSuggestions.contains("testTwo")
+                    && autoCompleteSuggestions.contains("testThree");
+        });
     }
 
     @UiThreadTest
@@ -933,13 +947,12 @@ public class AutoCompleteTextViewTest {
             mAutoCompleteTextView.setOnItemClickListener(mockItemClickListener);
             mAutoCompleteTextView.setAdapter(mAdapter);
         });
-
-        assertFalse(mAutoCompleteTextView.isPopupShowing());
+        PollingCheck.waitFor(() -> !mAutoCompleteTextView.isPopupShowing());
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView,
                 () -> mAutoCompleteTextView.setText("testO", true));
+        PollingCheck.waitFor(() -> mAutoCompleteTextView.isPopupShowing());
 
-        assertTrue(mAutoCompleteTextView.isPopupShowing());
         verifyZeroInteractions(mockItemClickListener);
     }
 
