@@ -32,8 +32,9 @@ import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.Helper.sContext;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -44,8 +45,6 @@ import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.DisconnectListener;
 import android.contentcaptureservice.cts.CtsContentCaptureService.ServiceWatcher;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
-import android.contentcaptureservice.cts.common.ActivityLauncher;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -62,6 +61,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
+import com.android.compatibility.common.util.ActivityLauncher;
 
 import org.junit.After;
 import org.junit.Before;

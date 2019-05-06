@@ -17,13 +17,14 @@
 package android.contentcaptureservice.cts;
 
 import android.content.Context;
-import android.contentcaptureservice.cts.common.Visitor;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewStructure;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.Visitor;
 
 /**
  * A view that can be used to emulate custom behavior (like virtual children) on
