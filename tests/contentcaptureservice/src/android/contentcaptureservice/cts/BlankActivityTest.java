@@ -17,18 +17,20 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.CtsContentCaptureService.CONTENT_CAPTURE_SERVICE_COMPONENT_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 
 import org.junit.Test;
 

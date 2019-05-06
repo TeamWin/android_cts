@@ -31,16 +31,15 @@ import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.OTHER_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
 import static android.contentcaptureservice.cts.Helper.eventually;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 import static android.view.contentcapture.ContentCaptureCondition.FLAG_IS_REGEX;
+
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
-import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
@@ -59,6 +58,9 @@ import android.view.contentcapture.ContentCaptureSessionId;
 
 import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
+import com.android.compatibility.common.util.DoubleVisitor;
 
 import org.junit.Test;
 
