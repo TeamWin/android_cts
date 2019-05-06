@@ -17,13 +17,10 @@ package android.graphics.cts;
 
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.os.Build;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
