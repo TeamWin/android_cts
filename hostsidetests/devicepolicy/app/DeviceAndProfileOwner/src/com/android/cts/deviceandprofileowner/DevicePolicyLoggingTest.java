@@ -97,6 +97,11 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
                 UserManager.DISALLOW_CONTENT_CAPTURE);
         mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
                 UserManager.DISALLOW_CONTENT_CAPTURE);
+
+        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_CONTENT_SUGGESTIONS);
+        mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_CONTENT_SUGGESTIONS);
     }
 
     public void testSetSecureSettingLogged()

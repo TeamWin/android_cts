@@ -46,6 +46,7 @@ public class SecondaryProfileOwnerUserRestrictionsTest extends BaseUserRestricti
             UserManager.DISALLOW_SET_USER_ICON,
             UserManager.DISALLOW_AUTOFILL,
             UserManager.DISALLOW_CONTENT_CAPTURE,
+            UserManager.DISALLOW_CONTENT_SUGGESTIONS,
             UserManager.DISALLOW_UNIFIED_PASSWORD,
     };
 
