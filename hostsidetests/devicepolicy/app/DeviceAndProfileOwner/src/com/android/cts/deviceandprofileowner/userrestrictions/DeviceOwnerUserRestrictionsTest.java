@@ -59,6 +59,7 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_BLUETOOTH,
             UserManager.DISALLOW_AUTOFILL,
             UserManager.DISALLOW_CONTENT_CAPTURE,
+            UserManager.DISALLOW_CONTENT_SUGGESTIONS,
             UserManager.DISALLOW_UNIFIED_PASSWORD,
     };
 
