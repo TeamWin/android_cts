@@ -26,7 +26,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../UsePermissionApp26/src)  \
-    $(call all-java-files-under, ../UsePermissionAppP0/src)  \
+    $(call all-java-files-under, ../UsePermissionApp29/src)  \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionActivity.java \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionsTest.java
 LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp23/res
