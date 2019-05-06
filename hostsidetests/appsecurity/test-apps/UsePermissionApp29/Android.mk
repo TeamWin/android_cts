@@ -30,7 +30,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionsTest.java
 LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp23/res
 
-LOCAL_PACKAGE_NAME := CtsUsePermissionAppP0
+LOCAL_PACKAGE_NAME := CtsUsePermissionApp29
 
 # For ACCESS_BACKGROUND_LOCATION
 LOCAL_PRIVATE_PLATFORM_APIS := true

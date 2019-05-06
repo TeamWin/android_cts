@@ -27,9 +27,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Runtime permission behavior tests for apps targeting {@link android.os.Build.VERSION_CODES#P0}.
+ * Runtime permission behavior tests for apps targeting {@link android.os.Build.VERSION_CODES#Q}.
  */
-public class UsePermissionTestP0 extends BasePermissionsTest {
+public class UsePermissionTest29 extends BasePermissionsTest {
     private static final int REQUEST_CODE_PERMISSIONS = 42;
 
     public interface UiInteraction {
