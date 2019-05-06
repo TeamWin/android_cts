@@ -121,6 +121,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String CONTENT_CAPTURE_SERVICE_PKG = "com.android.cts.devicepolicy.contentcaptureservice";
     private static final String CONTENT_CAPTURE_SERVICE_APK = "CtsDevicePolicyContentCaptureService.apk";
+    private static final String CONTENT_SUGGESTIONS_APP_APK =
+            "CtsDevicePolicyContentSuggestionsApp.apk";
 
     protected static final String ASSIST_APP_PKG = "com.android.cts.devicepolicy.assistapp";
     protected static final String ASSIST_APP_APK = "CtsDevicePolicyAssistApp.apk";
@@ -896,6 +898,33 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         } finally {
             setDefaultContentCaptureServiceEnabled(true);
         }
+    }
+
+    public void testDisallowContentSuggestions_allowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        boolean hasContentSuggestions = hasService("content_suggestions");
+        if (!hasContentSuggestions) {
+            return;
+        }
+        installAppAsUser(CONTENT_SUGGESTIONS_APP_APK, mUserId);
+
+        setDefaultContentSuggestionsServiceEnabled(false);
+        try {
+            executeDeviceTestMethod(".ContentSuggestionsRestrictionsTest",
+                    "testDisallowContentSuggestions_allowed");
+        } finally {
+            setDefaultContentSuggestionsServiceEnabled(true);
+        }
+    }
+
+    private void setDefaultContentSuggestionsServiceEnabled(boolean enabled)
+            throws DeviceNotAvailableException {
+        CLog.d("setDefaultContentSuggestionsServiceEnabled(" + mUserId + "): " + enabled);
+        getDevice().executeShellCommand(
+                "cmd content_suggestions set default-service-enabled " + mUserId + " " + enabled);
     }
 
     private void setDefaultContentCaptureServiceEnabled(boolean enabled)
