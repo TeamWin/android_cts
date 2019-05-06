@@ -43,8 +43,6 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
     private static DoubleVisitor<CustomView, ViewStructure> sCustomViewDelegate;
     private static Visitor<CustomViewActivity> sRootViewVisitor;
 
-    private static boolean sFlagSecure;
-
     /**
      * Mininum number of events generated when the activity starts.
      *
@@ -65,10 +63,6 @@ public class CustomViewActivity extends AbstractContentCaptureActivity {
 
     static void onRootView(@NonNull Visitor<CustomViewActivity> visitor) {
         sRootViewVisitor = visitor;
-    }
-
-    static void setFlagSecure(boolean hasFlagSecure) {
-        sFlagSecure = hasFlagSecure;
     }
 
     @Override
