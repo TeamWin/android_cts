@@ -1032,14 +1032,34 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .setStrings(INTENT_RECEIVER_PKG)
                     .setBoolean(false)
                     .build());
-        // Verify that the package is suspended.
+        // Verify that the package is suspended from the PREVIOUS test and that the dialog is shown
         executeSuspendPackageTestMethod("testPackageSuspended");
+
         // Undo the suspend.
         executeDeviceTestMethod(".SuspendPackageTest", "testSetPackagesNotSuspended");
-        // Verify that the package is not suspended.
+        // Verify that the package is not suspended from the PREVIOUS test and that the app launches
         executeSuspendPackageTestMethod("testPackageNotSuspended");
+
         // Verify we cannot suspend not suspendable packages.
         executeDeviceTestMethod(".SuspendPackageTest", "testSuspendNotSuspendablePackages");
+    }
+
+    public void testSuspendPackageWithPackageManager() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(INTENT_SENDER_APK, mUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mUserId);
+        // Suspend a testing package with the PackageManager
+        executeDeviceTestMethod(".SuspendPackageTest",
+                "testSetPackagesSuspendedWithPackageManager");
+        // Verify that the package is suspended from the PREVIOUS test and that the dialog is shown
+        executeSuspendPackageTestMethod("testPackageSuspendedWithPackageManager");
+
+        // Undo the suspend.
+        executeDeviceTestMethod(".SuspendPackageTest", "testSetPackagesNotSuspended");
+        // Verify that the package is not suspended from the PREVIOUS test and that the app launches
+        executeSuspendPackageTestMethod("testPackageNotSuspended");
     }
 
     public void testTrustAgentInfo() throws Exception {
