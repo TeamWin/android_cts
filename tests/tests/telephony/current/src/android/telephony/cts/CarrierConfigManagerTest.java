@@ -79,6 +79,7 @@ public class CarrierConfigManagerTest {
 
     private boolean isSimCardPresent() {
         return mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE &&
+                mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_UNKNOWN &&
                 mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
     }
 
