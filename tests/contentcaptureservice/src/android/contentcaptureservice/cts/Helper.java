@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,9 @@ public final class Helper {
 
     public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
     public static final String OTHER_PACKAGE = "NOT.android.contentcaptureservice.cts";
+
+    public static final Set<String> NO_PACKAGES = null;
+    public static final Set<ComponentName> NO_ACTIVITIES = null;
 
     public static final long MY_EPOCH = SystemClock.uptimeMillis();
 
