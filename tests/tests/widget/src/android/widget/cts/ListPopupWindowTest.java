@@ -64,11 +64,16 @@ import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import junit.framework.Assert;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -109,9 +114,16 @@ public class ListPopupWindowTest {
 
     @After
     public void teardown() throws Throwable {
-        if ((mPopupWindowBuilder != null) && (mPopupWindow != null)) {
-            WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
-                    mActivity.getWindow().getDecorView(), mPopupWindowBuilder::dismiss);
+        if ((mPopupWindow != null) && (mPopupWindow.isShowing())) {
+            final CountDownLatch dismissLatch = new CountDownLatch(1);
+            try {
+                mPopupWindow.setOnDismissListener(dismissLatch::countDown);
+                mActivityRule.runOnUiThread(mPopupWindow::dismiss);
+                Assert.assertTrue("Expected popup dismissal occurred within 5 seconds",
+                        dismissLatch.await(5, TimeUnit.SECONDS));
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
         }
     }
 
@@ -748,7 +760,8 @@ public class ListPopupWindowTest {
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be dismissal of
         // the popup window
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation,listView, KeyEvent.KEYCODE_ENTER);
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActivity.getWindow().getDecorView(),
+                null);
 
         verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
         assertFalse(mPopupWindow.isShowing());
