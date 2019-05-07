@@ -64,6 +64,13 @@ import java.util.concurrent.Callable;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaStorageTest {
+    private static final File TEST_JPG = Environment.buildPath(
+            Environment.getExternalStorageDirectory(),
+            Environment.DIRECTORY_DOWNLOADS, "mediastoragetest_file1.jpg");
+    private static final File TEST_PDF = Environment.buildPath(
+            Environment.getExternalStorageDirectory(),
+            Environment.DIRECTORY_DOWNLOADS, "mediastoragetest_file2.pdf");
+
     private Context mContext;
     private ContentResolver mContentResolver;
     private int mUserId;
@@ -83,6 +90,22 @@ public class MediaStorageTest {
     @Test
     public void testNotSandboxed() throws Exception {
         doSandboxed(false);
+    }
+
+    @Test
+    public void testStageFiles() throws Exception {
+        final File jpg = stageFile(TEST_JPG);
+        assertTrue(jpg.exists());
+        final File pdf = stageFile(TEST_PDF);
+        assertTrue(pdf.exists());
+    }
+
+    @Test
+    public void testClearFiles() throws Exception {
+        TEST_JPG.delete();
+        assertNull(MediaStore.scanFileFromShell(mContext, TEST_JPG));
+        TEST_PDF.delete();
+        assertNull(MediaStore.scanFileFromShell(mContext, TEST_PDF));
     }
 
     private void doSandboxed(boolean sandboxed) throws Exception {
@@ -111,13 +134,11 @@ public class MediaStorageTest {
                 "cts" + System.nanoTime());
         assertTrue(probePackage.createNewFile());
 
-        final File jpg = stageFile(Environment.buildPath(Environment.getExternalStorageDirectory(),
-                Environment.DIRECTORY_DOWNLOADS, System.nanoTime() + ".jpg"));
-        final File pdf = stageFile(Environment.buildPath(Environment.getExternalStorageDirectory(),
-                Environment.DIRECTORY_DOWNLOADS, System.nanoTime() + ".pdf"));
+        assertTrue(TEST_JPG.exists());
+        assertTrue(TEST_PDF.exists());
 
-        final Uri jpgUri = MediaStore.scanFileFromShell(mContext, jpg);
-        final Uri pdfUri = MediaStore.scanFileFromShell(mContext, pdf);
+        final Uri jpgUri = MediaStore.scanFileFromShell(mContext, TEST_JPG);
+        final Uri pdfUri = MediaStore.scanFileFromShell(mContext, TEST_PDF);
 
         final HashSet<Long> seen = new HashSet<>();
         try (Cursor c = mContentResolver.query(
@@ -421,10 +442,8 @@ public class MediaStorageTest {
     }
 
     static File stageFile(File file) throws IOException {
-        runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "mkdir -p " + file.getParentFile().getAbsolutePath());
-        runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "touch " + file.getAbsolutePath());
+        file.getParentFile().mkdirs();
+        file.createNewFile();
         return file;
     }
 }
