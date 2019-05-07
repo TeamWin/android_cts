@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.contentcaptureservice.cts.common;
+package com.android.compatibility.common.util;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
-import android.support.test.rule.ActivityTestRule;
 
 import androidx.annotation.NonNull;
+import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 
 /**
  * Helper used to launch an activity and watch for its lifecycle events.
