@@ -219,6 +219,9 @@ public class AudioPlaybackCaptureTest {
             assertTrue("Expected silence, but some data was recorded",
                        onlySilence(rawBuffer.asShortBuffer()));
         }
+
+        mediaPlayer.release();
+        audioRecord.release();
     }
 
     public void testPlaybackCapture(boolean allowCapture,
