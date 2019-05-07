@@ -813,7 +813,12 @@ public final class UiBot {
     private String getString(String id) {
         final Resources resources = mContext.getResources();
         final int stringId = resources.getIdentifier(id, "string", "android");
-        return resources.getString(stringId);
+        try {
+            return resources.getString(stringId);
+        } catch (Resources.NotFoundException e) {
+            throw new IllegalStateException("no internal string for '" + id + "' / res=" + stringId
+                    + ": ", e);
+        }
     }
 
     /**
@@ -822,7 +827,12 @@ public final class UiBot {
     private String getString(String id, Object... formatArgs) {
         final Resources resources = mContext.getResources();
         final int stringId = resources.getIdentifier(id, "string", "android");
-        return resources.getString(stringId, formatArgs);
+        try {
+            return resources.getString(stringId, formatArgs);
+        } catch (Resources.NotFoundException e) {
+            throw new IllegalStateException("no internal string for '" + id + "' / res=" + stringId
+                    + ": ", e);
+        }
     }
 
     /**
