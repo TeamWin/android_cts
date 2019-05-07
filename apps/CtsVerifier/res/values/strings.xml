@@ -2537,7 +2537,7 @@ You should be prompted to select credentials; choose the ones you just installed
         1. Press the button below to start the managed provisioning flow.
         If your device has not been encrypted before, it will reboot to apply encryption.
         After reboot follow instructions in the notification area to complete the provisioning.\n
-        2. After successful provisioning, you should be automatically redirected back to this page.
+        2. After successful provisioning, come back to this page. You might need to press a button on the final provisioning screen.
         Please press through the following verification steps.
         Allow a few seconds after returning from provisioning, as the profile owner test should automatically pass.\n
         \n
