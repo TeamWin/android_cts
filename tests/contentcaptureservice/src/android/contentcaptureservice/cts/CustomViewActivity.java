@@ -24,8 +24,6 @@ import static android.contentcaptureservice.cts.Assertions.assertViewsOptionally
 import static com.google.common.truth.Truth.assertThat;
 
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
-import android.contentcaptureservice.cts.common.DoubleVisitor;
-import android.contentcaptureservice.cts.common.Visitor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -33,6 +31,9 @@ import android.view.ViewStructure;
 import android.view.contentcapture.ContentCaptureEvent;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.DoubleVisitor;
+import com.android.compatibility.common.util.Visitor;
 
 import java.util.List;
 

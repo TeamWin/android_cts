@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.contentcaptureservice.cts.common;
+package com.android.compatibility.common.util;
 
 import android.app.Activity;
 import android.app.Application.ActivityLifecycleCallbacks;
