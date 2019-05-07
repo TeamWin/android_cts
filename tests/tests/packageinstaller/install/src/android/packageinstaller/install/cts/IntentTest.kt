@@ -28,6 +28,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.TimeUnit
 
 private const val INSTALL_BUTTON_ID = "button1"
 private const val CANCEL_BUTTON_ID = "button2"
@@ -47,11 +48,11 @@ class IntentTest : PackageInstallerTestBase() {
      */
     @Test
     fun confirmInstallation() {
-        startInstallationViaIntent()
+        val installation = startInstallationViaIntent()
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
-        assertEquals(RESULT_OK, getInstallDialogResult())
+        assertEquals(RESULT_OK, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertInstalled()
     }
 
@@ -61,14 +62,12 @@ class IntentTest : PackageInstallerTestBase() {
      */
     @Test
     fun cancelInstallation() {
-        startInstallationViaIntent()
+        val installation = startInstallationViaIntent()
         clickInstallerUIButton(CANCEL_BUTTON_ID)
 
         // Install should have been aborted
-        assertEquals(RESULT_CANCELED, getInstallDialogResult())
+        assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertNotInstalled()
-
-        assertNoMoreInstallResults()
     }
 
     /**
@@ -85,12 +84,12 @@ class IntentTest : PackageInstallerTestBase() {
         intent.putExtra(Intent.EXTRA_RETURN_RESULT, true)
         intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
 
-        installDialogStarter.activity.startActivityForResult(intent, 0)
+        val reinstall = installDialogStarter.activity.startActivityForResult(intent)
 
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
-        assertEquals(RESULT_OK, getInstallDialogResult())
+        assertEquals(RESULT_OK, reinstall.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertInstalled()
     }
 }
