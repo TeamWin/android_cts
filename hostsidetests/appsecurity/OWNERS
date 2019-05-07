@@ -25,6 +25,7 @@ per-file PackageVisibilityTest.java = toddke@google.com
 per-file PermissionsHostTest.java = moltmann@google.com
 per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com
 per-file PrivilegedUpdateTests.java = toddke@google.com
+per-file RequestsOnlyCalendarApp22.java = moltmann@google.com
 per-file ScopedDirectoryAccessTest.java = jsharkey@google.com
 per-file SplitTests.java = toddke@google.com
 per-file StorageHostTest.java = jsharkey@google.com
