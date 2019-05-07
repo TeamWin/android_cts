@@ -34,4 +34,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_HOST_REQUIRED_MODULES := cts-dynamic-config
 
+LOCAL_REQUIRED_MODULES := \
+    cts-current-api \
+    cts-system-current-api \
+    cts-system-removed-api
+
 include $(BUILD_CTS_PACKAGE)
