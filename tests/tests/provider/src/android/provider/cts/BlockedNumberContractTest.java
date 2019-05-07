@@ -159,6 +159,29 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
 
         assertFalse(BlockedNumberContract.isBlocked(mContext, "9999@abcd.com"));
         assertFalse(BlockedNumberContract.isBlocked(mContext, "random string"));
+
+        assertInsertBlockedNumberSucceeds("IMASPAMMER", null);
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "IMASPAMMER"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "ALSOASPAMMER"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "9999@abcd.com"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "NOTASPAMMER"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "InTerCap"));
+
+        assertInsertBlockedNumberSucceeds("ALSOASPAMMER", null);
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "IMASPAMMER"));
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "ALSOASPAMMER"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "VMMyGovt"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "9999@abcd.com"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "NOTASPAMMER"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "InTerCap"));
+
+        assertInsertBlockedNumberSucceeds("VMMyGovt", null);
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "IMASPAMMER"));
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "ALSOASPAMMER"));
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "VMMyGovt"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "9999@abcd.com"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "NOTASPAMMER"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "InTerCap"));
     }
 
     public void testUnblock_succeeds() throws Exception {
@@ -178,6 +201,16 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         assertInsertBlockedNumberSucceeds("1234@abcd.com", null);
         assertEquals(1, BlockedNumberContract.unblock(mContext, "1234@abcd.com"));
         assertFalse(BlockedNumberContract.isBlocked(mContext, "1234@abcd.com"));
+
+        assertInsertBlockedNumberSucceeds("SpamSource", null);
+        assertInsertBlockedNumberSucceeds("SUPERSPAM", null);
+        assertEquals(1, BlockedNumberContract.unblock(mContext, "SpamSource"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "SpamSource"));
+        assertTrue(BlockedNumberContract.isBlocked(mContext, "SUPERSPAM"));
+
+        assertEquals(1, BlockedNumberContract.unblock(mContext, "SUPERSPAM"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "SpamSource"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "SUPERSPAM"));
     }
 
     public void testInsert_failsWithInvalidInputs() throws Exception {
