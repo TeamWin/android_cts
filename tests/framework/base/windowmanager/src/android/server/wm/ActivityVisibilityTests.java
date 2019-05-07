@@ -441,6 +441,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
             mAmWmState.waitForAllStoppedActivities();
             separateTestJournal();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+            mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY,
+                STATE_STOPPED);
             // Display should keep off, because setTurnScreenOn(false) has been called at
             // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
             assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
