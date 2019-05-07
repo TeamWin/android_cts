@@ -1812,6 +1812,33 @@ public class ViewTest {
         assertTrue(view.isClickable());
     }
 
+    @Test
+    public void testSetOnGenericMotionListener() {
+        View view = new View(mActivity);
+        MotionEvent event =
+                EventUtils.generateMouseEvent(0, 0, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        assertFalse(view.dispatchGenericMotionEvent(event));
+        event.recycle();
+
+        View.OnGenericMotionListener listener = mock(View.OnGenericMotionListener.class);
+        doReturn(true).when(listener).onGenericMotion(any(), any());
+        view.setOnGenericMotionListener(listener);
+
+        MotionEvent event2 =
+                EventUtils.generateMouseEvent(0, 0, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        assertTrue(view.dispatchGenericMotionEvent(event2));
+        event2.recycle();
+
+        view.setOnGenericMotionListener(null);
+        MotionEvent event3 =
+                EventUtils.generateMouseEvent(0, 0, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        assertFalse(view.dispatchGenericMotionEvent(event3));
+        event3.recycle();
+    }
+
     @Test(expected=NullPointerException.class)
     public void testPerformLongClickNullParent() {
         MockView view = new MockView(mActivity);
