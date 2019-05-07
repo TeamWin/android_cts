@@ -20,14 +20,15 @@ import static android.contentcaptureservice.cts.Helper.sContext;
 
 import android.app.Application;
 import android.content.Intent;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
-import android.contentcaptureservice.cts.common.Visitor;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ActivitiesWatcher;
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
+import com.android.compatibility.common.util.Visitor;
 
 import org.junit.After;
 import org.junit.Before;
