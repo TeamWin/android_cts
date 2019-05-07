@@ -804,7 +804,9 @@
     <string name="multinetwork_connectivity_test_all_prereq_1">Looks like your device does not support telephony or mobile data. If yes, you can mark test passed and proceed.</string>
     <string name="multinetwork_connectivity_test_all_prereq_2">Need mobile data to proceed. Please insert a mobile data capable sim and repeat the test. By marking test as passed, you acknowledge that the device cannot do mobile data.</string>
     <string name="multinetwork_status_wifi_connectivity_failed">Wi-Fi connectivity failed.</string>
-
+    <string name="multinetwork_connectivity_overlay_permission_message">This test requires the CTS verifier to have the system overlay permission, please enable it in the next screen.</string>
+    <string name="multinetwork_connectivity_overlay_permission_positive">Settings</string>
+    <string name="multinetwork_connectivity_overlay_permission_negative">Cancel</string>
     <!-- Strings for NfcTestActivity -->
     <string name="nfc_test">NFC Test</string>
     <string name="nfc_test_info">The Peer-to-Peer Data Exchange tests require two devices with
