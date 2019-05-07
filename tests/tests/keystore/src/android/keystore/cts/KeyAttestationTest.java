@@ -16,6 +16,8 @@
 
 package android.keystore.cts;
 
+import android.platform.test.annotations.RestrictedBuildTest;
+
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_SOFTWARE;
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
 import static android.keystore.cts.AuthorizationList.KM_ALGORITHM_EC;
@@ -138,6 +140,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertEquals(0, parseSystemOsVersion("99.99.100"));
     }
 
+    @RestrictedBuildTest
     public void testEcAttestation() throws Exception {
         // Note: Curve and key sizes arrays must correspond.
         String[] curves = {
@@ -239,6 +242,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @RestrictedBuildTest
     public void testRsaAttestation() throws Exception {
         int[] keySizes = { // Smallish sizes to keep test runtimes down.
                 512, 768, 1024
