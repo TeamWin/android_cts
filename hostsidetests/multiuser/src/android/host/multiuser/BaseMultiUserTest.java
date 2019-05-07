@@ -29,13 +29,13 @@ import java.util.ArrayList;
  * Base class for multi user tests.
  */
 public class BaseMultiUserTest implements IDeviceTest {
-    protected static final int USER_SYSTEM = 0; // From the UserHandle class.
-
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
     protected boolean mIsSplitSystemUser;
+    protected int mInitialUserId;
     protected int mPrimaryUserId;
-    /** Users we shouldn't delete in the tests */
+
+    /** Users we shouldn't delete in the tests. */
     private ArrayList<Integer> mFixedUsers;
 
     private ITestDevice mDevice;
@@ -44,22 +44,21 @@ public class BaseMultiUserTest implements IDeviceTest {
     public void setUp() throws Exception {
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
         mIsSplitSystemUser = checkIfSplitSystemUser();
+
+        mInitialUserId = getDevice().getCurrentUser();
         mPrimaryUserId = getDevice().getPrimaryUserId();
-        mFixedUsers = new ArrayList<>();
-        mFixedUsers.add(mPrimaryUserId);
-        if (mPrimaryUserId != USER_SYSTEM) {
-            mFixedUsers.add(USER_SYSTEM);
-        }
-        getDevice().switchUser(mPrimaryUserId);
-        removeTestUsers();
+
+        // Test should not modify / remove any of the existing users.
+        mFixedUsers = getDevice().listUsers();
     }
 
     @After
     public void tearDown() throws Exception {
-        if (getDevice().getCurrentUser() != mPrimaryUserId) {
-            CLog.w("User changed during test. Switching back to " + mPrimaryUserId);
-            getDevice().switchUser(mPrimaryUserId);
+        if (getDevice().getCurrentUser() != mInitialUserId) {
+            CLog.w("User changed during test. Switching back to " + mInitialUserId);
+            getDevice().switchUser(mInitialUserId);
         }
+        // Remove the users created during this test.
         removeTestUsers();
     }
 

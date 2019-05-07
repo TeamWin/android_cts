@@ -24,6 +24,7 @@ import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -55,7 +56,6 @@ public final class TestMeasurementUtil {
 
     private static final int YEAR_2016 = 2016;
     private static final int YEAR_2017 = 2017;
-    private static final int YEAR_2018 = 2018;
 
     private enum GnssBand {
         GNSS_L1,
@@ -68,6 +68,7 @@ public final class TestMeasurementUtil {
     // android/hardware/libhardware/include/hardware/gps.h
     public static final Set<Integer> GNSS_NAVIGATION_MESSAGE_TYPE =
         new HashSet<Integer>(Arrays.asList(
+            GnssNavigationMessage.TYPE_UNKNOWN,
             GnssNavigationMessage.TYPE_GPS_L1CA,
             GnssNavigationMessage.TYPE_GPS_L2CNAV,
             GnssNavigationMessage.TYPE_GPS_L5CNAV,
@@ -388,17 +389,17 @@ public final class TestMeasurementUtil {
                 softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
                                 "= CONSTELLATION_BEIDOU",
                         timeInNs,
-                        "1 <= X <= 36",
+                        "1 <= X <= 63",
                         svidValue,
-                        svid >= 1 && svid <= 36);
+                        svid >= 1 && svid <= 63);
                 break;
             case GnssStatus.CONSTELLATION_GALILEO:
                 softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
                                 "= CONSTELLATION_GALILEO",
                         timeInNs,
-                        "1 <= X <= 37",
+                        "1 <= X <= 36",
                         String.valueOf(svid),
-                        svid >= 1 && svid <= 37);
+                        svid >= 1 && svid <= 36);
                 break;
             default:
                 // Explicit fail if did not receive valid constellation type.
@@ -815,10 +816,10 @@ public final class TestMeasurementUtil {
     public static void verifyGnssCarrierFrequency(SoftAssert softAssert,
         TestLocationManager testLocationManager,
         boolean hasCarrierFrequency, float carrierFrequencyHz) {
-        // Enforcing CarrierFrequencyHz  check only for year 2018+
-        if (testLocationManager.getLocationManager().getGnssYearOfHardware() >= YEAR_2018) {
+        // Enforcing CarrierFrequencyHz present only for devices shipped with P+.
+        if (SystemProperties.getInt("ro.product.first_api_level", 0) >= Build.VERSION_CODES.P) {
             softAssert.assertTrue("Measurement has Carrier Frequency: " + hasCarrierFrequency,
-                hasCarrierFrequency);
+                    hasCarrierFrequency);
         }
 
         if (hasCarrierFrequency) {

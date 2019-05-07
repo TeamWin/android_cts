@@ -16,11 +16,12 @@
 
 package android.telephony.cts;
 
+import static com.android.compatibility.common.util.BlockedNumberUtil.deleteBlockedNumber;
+import static com.android.compatibility.common.util.BlockedNumberUtil.insertBlockedNumber;
 
 import android.app.PendingIntent;
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -29,7 +30,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.provider.BlockedNumberContract;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
@@ -118,7 +118,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
     @Override
     protected void tearDown() throws Exception {
         if (mBlockedNumberUri != null) {
-            mContext.getContentResolver().delete(mBlockedNumberUri, null, null);
+            unblockNumber(mBlockedNumberUri);
             mBlockedNumberUri = null;
         }
         if (mTestAppSetAsDefaultSmsApp) {
@@ -398,17 +398,18 @@ public class SmsManagerTest extends InstrumentationTestCase {
         getSmsManager().sendTextMessage(destAddr, null, text, sentIntent, deliveredIntent);
     }
 
-    private void blockNumber(String phoneNumber) {
-        ContentValues cv = new ContentValues();
-        cv.put(BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER, phoneNumber);
-        mBlockedNumberUri = mContext.getContentResolver().insert(
-                BlockedNumberContract.BlockedNumbers.CONTENT_URI, cv);
+    private void blockNumber(String number) {
+        mBlockedNumberUri = insertBlockedNumber(mContext, number);
+    }
+
+    private void unblockNumber(Uri uri) {
+        deleteBlockedNumber(mContext, uri);
     }
 
     private void setDefaultSmsApp(boolean setToSmsApp)
             throws Exception {
         String command = String.format(
-                "appops set %s WRITE_SMS %s",
+                "appops set --user 0 %s WRITE_SMS %s",
                 mContext.getPackageName(),
                 setToSmsApp ? "allow" : "default");
         assertTrue("Setting default SMS app failed : " + setToSmsApp,

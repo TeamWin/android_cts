@@ -55,6 +55,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static com.android.compatibility.common.util.PackageUtil.supportsRotation;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
@@ -495,6 +496,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     @Test
     public void testNonFullscreenActivityPermitted() throws Exception {
+        if(!supportsRotation()) {
+            //cannot physically rotate the screen on automotive device, skip
+            return;
+        }
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
 

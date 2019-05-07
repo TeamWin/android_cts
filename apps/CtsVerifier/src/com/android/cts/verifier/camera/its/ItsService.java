@@ -359,7 +359,8 @@ public class ItsService extends Service implements SensorEventListener {
                 // Initialize memory quota on this device
                 for (String camId : devices) {
                     CameraCharacteristics chars =  mCameraManager.getCameraCharacteristics(camId);
-                    Size maxYuvSize = ItsUtils.getYuvOutputSizes(chars)[0];
+                    Size maxYuvSize = ItsUtils.getMaxOutputSize(
+                            chars, ImageFormat.YUV_420_888);
                     // 4 bytes per pixel for RGBA8888 Bitmap and at least 3 Bitmaps per CDD
                     int quota = maxYuvSize.getWidth() * maxYuvSize.getHeight() * 4 * 3;
                     if (quota > mMemoryQuota) {

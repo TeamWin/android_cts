@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -171,21 +172,32 @@ public class OpenGlEsVersionTest {
         if (!supportsVrHighPerformance())
             return;
         restartActivityWithClientVersion(3);
+        final boolean isVrHeadset = (mActivity.getResources().getConfiguration().uiMode
+            & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_VR_HEADSET;
 
         String extensions = mActivity.getExtensionsString();
         final String requiredList[] = {
-            "GL_EXT_EGL_image_array",
-            "GL_EXT_external_buffer",
-            "GL_EXT_multisampled_render_to_texture2",
+            "GL_EXT_multisampled_render_to_texture",
             "GL_EXT_protected_textures",
             "GL_OVR_multiview",
             "GL_OVR_multiview2",
             "GL_OVR_multiview_multisampled_render_to_texture",
         };
+        final String vrHeadsetRequiredList[] = {
+            "GL_EXT_EGL_image_array",
+            "GL_EXT_external_buffer",
+            "GL_EXT_multisampled_render_to_texture2",
+        };
 
-        for (int i = 0; i < requiredList.length; ++i) {
-            assertTrue("Required extension for VR high-performance is missing: " + requiredList[i],
-                    hasExtension(extensions, requiredList[i]));
+        for (String requiredExtension : requiredList) {
+            assertTrue("Required extension for VR high-performance is missing: " + requiredExtension,
+                    hasExtension(extensions, requiredExtension));
+        }
+        if (isVrHeadset) {
+            for (String requiredExtension : vrHeadsetRequiredList) {
+                assertTrue("Required extension for VR high-performance is missing: " + requiredExtension,
+                        hasExtension(extensions, requiredExtension));
+            }
         }
 
         EGL10 egl = (EGL10) EGLContext.getEGL();
@@ -194,17 +206,25 @@ public class OpenGlEsVersionTest {
         final String requiredEglList[] = {
             "EGL_ANDROID_front_buffer_auto_refresh",
             "EGL_ANDROID_get_native_client_buffer",
-            "EGL_EXT_image_gl_colorspace",
             "EGL_EXT_protected_content",
             "EGL_IMG_context_priority",
             "EGL_KHR_fence_sync",
             "EGL_KHR_mutable_render_buffer",
             "EGL_KHR_wait_sync",
         };
+        final String vrHeadsetRequiredEglList[] = {
+            "EGL_EXT_image_gl_colorspace",
+        };
 
-        for (int i = 0; i < requiredEglList.length; ++i) {
-            assertTrue("Required EGL extension for VR high-performance is missing: " +
-                requiredEglList[i], hasExtension(extensions, requiredEglList[i]));
+        for (String requiredExtension : requiredEglList) {
+            assertTrue("Required EGL extension for VR high-performance is missing: " + requiredExtension,
+                    hasExtension(extensions, requiredExtension));
+        }
+        if (isVrHeadset) {
+            for (String requiredExtension : vrHeadsetRequiredEglList) {
+                assertTrue("Required EGL extension for VR high-performance is missing: " + requiredExtension,
+                        hasExtension(extensions, requiredExtension));
+            }
         }
     }
     @CddTest(requirement="7.1.4.1/C-6-1")

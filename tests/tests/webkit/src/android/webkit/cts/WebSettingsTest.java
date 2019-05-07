@@ -105,54 +105,91 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
      * compatibility definition (tokens in angle brackets are variables, tokens in square
      * brackets are optional):
      * <p/>
-     * Mozilla/5.0 (Linux;[ U;] Android <version>;[ <language>-<country>;]
-     * [<devicemodel>;] Build/<buildID>; wv) AppleWebKit/<major>.<minor> (KHTML, like Gecko)
-     * Version/<major>.<minor> Chrome/<major>.<minor>.<branch>.<build>[ Mobile]
-     * Safari/<major>.<minor>
+     * Mozilla/5.0 (Linux; Android <version>; [<devicemodel>] [Build/<buildID>]; wv)
+     * AppleWebKit/<major>.<minor> (KHTML, like Gecko) Version/<major>.<minor>
+     * Chrome/<major>.<minor>.<branch>.<build>[ Mobile] Safari/<major>.<minor>
      */
     public void testUserAgentString_default() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        final String actualUserAgentString = mSettings.getUserAgentString();
-        Log.i(LOG_TAG, String.format("Checking user agent string %s", actualUserAgentString));
-        final String patternString =
-                "Mozilla/5\\.0 \\(Linux;( U;)? Android ([^;]+);( (\\w+)-(\\w+);)?" +
-                "\\s?(.*)\\sBuild/(.+); wv\\) AppleWebKit/(\\d+)\\.(\\d+) " +
-                "\\(KHTML, like Gecko\\) " +
-                "Version/\\d+\\.\\d+ Chrome/\\d+\\.\\d+\\.\\d+\\.\\d+( Mobile)? " +
-                "Safari/(\\d+)\\.(\\d+)";
-        // Groups used:
-        //  1 - SSL encryption strength token " U;" (optional)
-        //  2 - Android version
-        //  3 - full locale string (optional)
-        //  4   - country
-        //  5   - language
-        //  6 - device model (optional)
-        //  7 - build ID
-        //  8 - AppleWebKit major version number
-        //  9 - AppleWebKit minor version number
-        // 10 - " Mobile" string (optional)
-        // 11 - Safari major version number
-        // 12 - Safari minor version number
-        Log.i(LOG_TAG, String.format("Trying to match pattern %s", patternString));
-        final Pattern userAgentExpr = Pattern.compile(patternString);
-        Matcher patternMatcher = userAgentExpr.matcher(actualUserAgentString);
-        assertTrue(String.format("User agent string did not match expected pattern. \nExpected " +
-                        "pattern:\n%s\nActual:\n%s", patternString, actualUserAgentString),
-                        patternMatcher.find());
-        if (patternMatcher.group(3) != null) {
-            Locale currentLocale = Locale.getDefault();
-            assertEquals(currentLocale.getLanguage().toLowerCase(), patternMatcher.group(4));
-            assertEquals(currentLocale.getCountry().toLowerCase(), patternMatcher.group(5));
-        }
+        checkUserAgentStringHelper(mSettings.getUserAgentString(), true);
+    }
+
+    /**
+     * Verifies that the useragent testing regex is actually correct, because it's very complex.
+     */
+    public void testUserAgentStringTest() {
+        // All test UAs share the same prefix and suffix; only the middle part varies.
+        final String prefix = "Mozilla/5.0 (Linux; Android " + Build.VERSION.RELEASE + "; ";
+        final String suffix = "wv) AppleWebKit/0.0 (KHTML, like Gecko) Version/4.0 Chrome/0.0.0.0 Safari/0.0";
+
+        // Valid cases:
+        // Both model and build present
+        checkUserAgentStringHelper(prefix + Build.MODEL + " Build/" + Build.ID + "; " + suffix, true);
+        // Just model
+        checkUserAgentStringHelper(prefix + Build.MODEL + "; " + suffix, true);
+        // Just build
+        checkUserAgentStringHelper(prefix + "Build/" + Build.ID + "; " + suffix, true);
+        // Neither
+        checkUserAgentStringHelper(prefix + suffix, true);
+
+        // Invalid cases:
+        // No space between model and build
+        checkUserAgentStringHelper(prefix + Build.MODEL + "Build/" + Build.ID + "; " + suffix, false);
+        // No semicolon after model and/or build
+        checkUserAgentStringHelper(prefix + Build.MODEL + " Build/" + Build.ID + suffix, false);
+        checkUserAgentStringHelper(prefix + Build.MODEL + suffix, false);
+        checkUserAgentStringHelper(prefix + "Build/" + Build.ID + suffix, false);
+        // Double semicolon when both omitted
+        checkUserAgentStringHelper(prefix + "; " + suffix, false);
+    }
+
+    /**
+     * Helper function to validate that a given useragent string is or is not valid.
+     */
+    private void checkUserAgentStringHelper(final String useragent, boolean shouldMatch) {
+        String expectedRelease;
         if ("REL".equals(Build.VERSION.CODENAME)) {
-            // Model is only added in release builds
-            assertEquals(Build.MODEL, patternMatcher.group(6));
-            // Release version is valid only in release builds
-            assertEquals(Build.VERSION.RELEASE, patternMatcher.group(2));
+            expectedRelease = Pattern.quote(Build.VERSION.RELEASE);
+        } else {
+            // Non-release builds don't include real release version, be lenient.
+            expectedRelease = "[^;]+";
         }
-        assertEquals(Build.ID, patternMatcher.group(7));
+
+        // Build expected regex inserting the appropriate variables, as this is easier to
+        // understand and get right than matching any possible useragent and comparing the
+        // variables afterward.
+        final String patternString =
+                // Release version always has a semicolon after it:
+                Pattern.quote("Mozilla/5.0 (Linux; Android ") + expectedRelease + ";" +
+                // Model is optional, but if present must have a space first:
+                "( " + Pattern.quote(Build.MODEL) + ")?" +
+                // Build is optional, but if present must have a space first:
+                "( Build/" + Pattern.quote(Build.ID) + ")?" +
+                // We want a semicolon before the wv token, but we don't want to have two in a row
+                // if both model and build are omitted. Lookbehind assertions ensure either:
+                // - the previous character is a semicolon
+                // - or the previous character is NOT a semicolon AND a semicolon is added here.
+                "((?<=;)|(?<!;);)" +
+                // After that we can just check for " wv)" to finish the platform section:
+                Pattern.quote(" wv) ") +
+                // The rest of the expression is browser tokens and is fairly simple:
+                "AppleWebKit/\\d+\\.\\d+ " +
+                Pattern.quote("(KHTML, like Gecko) Version/4.0 ") +
+                "Chrome/\\d+\\.\\d+\\.\\d+\\.\\d+ " +
+                "(Mobile )?Safari/\\d+\\.\\d+";
+        final Pattern userAgentExpr = Pattern.compile(patternString);
+        Matcher patternMatcher = userAgentExpr.matcher(useragent);
+        if (shouldMatch) {
+            assertTrue(String.format("CDD(3.4.1/C-1-3) User agent string did not match expected pattern. \n" +
+                            "Expected pattern:\n%s\nActual:\n%s", patternString, useragent),
+                    patternMatcher.find());
+        } else {
+            assertFalse(String.format("Known-bad user agent string incorrectly matched. \n" +
+                            "Expected pattern:\n%s\nActual:\n%s", patternString, useragent),
+                    patternMatcher.find());
+        }
     }
 
     public void testAccessUserAgentString() throws Exception {

@@ -27,6 +27,7 @@
         <option name="test-file-name" value="CtsCantSaveState2.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.app.cts" />
         <option name="runtime-hint" value="6m38s" />
         <option name="hidden-api-checks" value="false"/>

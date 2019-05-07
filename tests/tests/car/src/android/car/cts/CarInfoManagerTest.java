@@ -15,29 +15,38 @@
  */
 package android.car.cts;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.car.Car;
 import android.car.CarInfoManager;
 import android.os.Bundle;
 import android.platform.test.annotations.RequiresDevice;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
 @RequiresDevice
+@RunWith(AndroidJUnit4.class)
 public class CarInfoManagerTest extends CarApiTestBase {
 
     private CarInfoManager mCarInfoManager;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
         mCarInfoManager = (CarInfoManager) getCar().getCarManager(Car.INFO_SERVICE);
     }
 
+    @Test
     public void testVehicleId() throws Exception {
         assertNotNull(mCarInfoManager.getVehicleId());
     }
 
+    @Test
     public void testNullables() throws Exception {
         // no guarantee of existence. just call and check if it throws exception.
         mCarInfoManager.getManufacturer();

@@ -43,7 +43,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // Use ratios to flexibly accomodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
         assertColors(image, mAmWmState.getWmState().getStableBounds(),
-            Color.RED, 0.50f, Color.BLACK, 0.01f);
+            Color.RED, 0.50f, Color.BLACK, 0.02f);
     }
 
     private void assertColors(Bitmap img, Rect bounds, int primaryColor,

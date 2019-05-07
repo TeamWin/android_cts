@@ -167,7 +167,7 @@ public class RVCVXCheckTestActivity
 
             // acquire a partial wake lock just in case CPU fall asleep
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK,
                     "RVCVXCheckAnalyzer");
 
             wl.acquire();

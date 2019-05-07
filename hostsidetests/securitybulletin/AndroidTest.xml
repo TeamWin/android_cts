@@ -36,7 +36,6 @@
         <option name="push" value="CVE-2016-8431->/data/local/tmp/CVE-2016-8431" />
         <option name="push" value="CVE-2016-8432->/data/local/tmp/CVE-2016-8432" />
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
-        <option name="push" value="CVE-2016-2504->/data/local/tmp/CVE-2016-2504" />
 
         <!-- Bulletin 2016-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
@@ -57,12 +56,10 @@
         <!--__________________-->
         <!-- Bulletin 2016-07 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2016-3809->/data/local/tmp/CVE-2016-3809" />
         <option name="push" value="CVE-2016-3818->/data/local/tmp/CVE-2016-3818" />
 
         <!-- Bulletin 2016-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2015-8839->/data/local/tmp/CVE-2015-8839" />
         <option name="push" value="CVE-2016-2471->/data/local/tmp/CVE-2016-2471" />
 
         <!--__________________-->
@@ -161,17 +158,15 @@
         <option name="push" value="CVE-2018-9424->/data/local/tmp/CVE-2018-9424" />
 
         <!--__________________-->
-        <!-- Bulletin 2018-08 -->
-        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-
-        <!--__________________-->
-        <!-- Bulletin 2018-09 -->
-        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-
-        <!--__________________-->
         <!-- Bulletin 2018-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9490->/data/local/tmp/CVE-2018-9490" />
         <option name="push" value="CVE-2018-9515->/data/local/tmp/CVE-2018-9515" />
+
+        <!--__________________-->
+        <!-- Bulletin 2019-03 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="Bug-115739809->/data/local/tmp/Bug-115739809" />
 
         <option name="append-bitness" value="true" />
     </target_preparer>
@@ -188,6 +183,6 @@
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSecurityBulletinHostTestCases.jar" />
-        <option name="runtime-hint" value="8m40s" />
+        <option name="runtime-hint" value="18m26s" />
     </test>
 </configuration>

@@ -53,10 +53,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.ServerSocket;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
@@ -598,6 +600,54 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_3756);
     }
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testStagefright_bug_36592202() throws Exception {
+        Resources resources = getInstrumentation().getContext().getResources();
+        AssetFileDescriptor fd = resources.openRawResourceFd(R.raw.bug_36592202);
+        final int oggPageSize = 25627;
+        byte [] blob = new byte[oggPageSize];
+        // 127 bytes read and 25500 zeros constitute one Ogg page
+        FileInputStream fis = fd.createInputStream();
+        int numRead = fis.read(blob);
+        fis.close();
+        // Creating temp file
+        final File tempFile = File.createTempFile("poc_tmp", ".ogg", null);
+        try {
+            final FileOutputStream tempFos = new FileOutputStream(tempFile.getAbsolutePath());
+            int bytesWritten = 0;
+            final long oggPagesRequired = 50000;
+            long oggPagesAvailable = tempFile.getUsableSpace() / oggPageSize;
+            long numOggPages = Math.min(oggPagesRequired, oggPagesAvailable);
+            // Repeat data for specified number of pages
+            for (int i = 0; i < numOggPages; i++) {
+                tempFos.write(blob);
+                bytesWritten += oggPageSize;
+            }
+            tempFos.close();
+            final int fileSize = bytesWritten;
+            final int timeout = (10 * 60 * 1000);
+            runWithTimeout(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        doStagefrightTestMediaCodec(tempFile.getAbsolutePath());
+                    } catch (Exception | AssertionError e) {
+                        if (!tempFile.delete()) {
+                            Log.e(TAG, "Failed to delete temporary PoC file");
+                        }
+                        fail("Operation was not successful");
+                    }
+                }
+            }, timeout);
+        } catch (Exception e) {
+            fail("Failed to test b/36592202");
+        } finally {
+            if (!tempFile.delete()) {
+                Log.e(TAG, "Failed to delete temporary PoC file");
+            }
+        }
+    }
+
     @SecurityTest(minPatchLevel = "2016-11")
     public void testStagefright_bug_30822755() throws Exception {
         doStagefrightTest(R.raw.bug_30822755);
@@ -670,7 +720,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2015-12")
     public void testStagefright_bug_24157524() throws Exception {
-        doStagefrightTest(R.raw.bug_24157524);
+        doStagefrightTestMediaCodec(R.raw.bug_24157524);
     }
 
     @SecurityTest(minPatchLevel = "2015-10")
@@ -868,6 +918,41 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2018-03")
+    public void testStagefright_cve_2017_17773() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_17773);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-04")
+    public void testStagefright_cve_2017_18074() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_18074);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-06")
+    public void testStagefright_cve_2018_5894() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5894);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5874() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5874);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5875() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5875);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5876() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5876);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_5882() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_5882);
+    }
+
     @SecurityTest(minPatchLevel = "2017-12")
     public void testBug_65186291() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_65186291_framelen);
@@ -924,11 +1009,6 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2016-11")
     public void testStagefright_cve_2016_6699() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6699);
-    }
-
-    @SecurityTest(minPatchLevel = "2018-10")
-    public void testStagefright_bug_65484460() throws Exception {
-        doStagefrightTest(R.raw.bug_65484460);
     }
 
     @SecurityTest(minPatchLevel = "2018-06")

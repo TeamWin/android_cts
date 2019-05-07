@@ -39,7 +39,8 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static android.view.ViewTreeObserver.*;
+import static android.view.ViewTreeObserver.OnDrawListener;
+import static android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 /**

@@ -23,12 +23,14 @@
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING"/>
     <uses-permission android:name="android.permission.INJECT_EVENTS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
 
     <application>
 
         <uses-library android:name="android.test.runner" />
 
-        <activity android:name=".LoginActivity" >
+        <activity android:name=".LoginActivity"
+                  android:screenOrientation="portrait">
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
                      this app during CTS development... -->

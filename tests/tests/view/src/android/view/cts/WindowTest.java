@@ -704,8 +704,6 @@ public class WindowTest {
                 mPresentation.button1.getWidth() / 2,
                 mPresentation.button1.getY() + mPresentation.button1.getHeight() / 2);
         assertTrue(waitingSemaphore.tryAcquire(5, TimeUnit.SECONDS));
-
-        destroyPresentation();
     }
 
     private void checkPresentationButtonFocus(final boolean button1Focused,

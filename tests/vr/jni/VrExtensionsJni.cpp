@@ -265,7 +265,8 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestExternalBuffer(
     JNIEnv* env, jclass /* unused */) {
     // First, check for EXT_external_buffer in the extension string.
     auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-    ASSERT_TRUE(exts && strstr(exts, "GL_EXT_external_buffer"));
+    ASSERT_TRUE(exts);
+    if (strstr(exts, "GL_EXT_external_buffer") == nullptr) return;
     // Next, load entry points provided by extensions.
     LOAD_PROC(eglGetNativeClientBufferANDROID, PFNEGLGETNATIVECLIENTBUFFERANDROID);
     ASSERT_NE(eglGetNativeClientBufferANDROID, nullptr);
@@ -470,8 +471,7 @@ static void testLinearMagnification(JNIEnv* env, uint32_t flags, uint32_t* middl
         glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
     } else {
         GLenum internal_format = use_srgb_format ? GL_SRGB8_ALPHA8_EXT : GL_RGBA8_OES;
-        GLenum format = use_srgb_format ? GL_SRGB_ALPHA_EXT : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, kTextureWidth, 1, 0, format,
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, kTextureWidth, 1, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, kTextureData);
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -550,8 +550,7 @@ static void testFramebufferBlending(JNIEnv* env, uint32_t flags, uint32_t* final
         glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
     } else {
         GLenum internal_format = use_srgb_format ? GL_SRGB8_ALPHA8_EXT : GL_RGBA8_OES;
-        GLenum format = use_srgb_format ? GL_SRGB_ALPHA_EXT : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 1, 1, 0, format,
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 1, 1, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, nullptr);
     }
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
@@ -569,7 +568,7 @@ static void testFramebufferBlending(JNIEnv* env, uint32_t flags, uint32_t* final
     uint32_t cleared_color = 0;
     glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &cleared_color);
     LOGV("  Cleared Color: %8.8X", cleared_color);
-    ASSERT_EQ(cleared_color, kBlendDestColor);
+    ASSERT_NEAR_RGBA(cleared_color, kBlendDestColor, 1);
     // Draw the texture.
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

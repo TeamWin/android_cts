@@ -53,12 +53,9 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             mMainUserSerialNumber = Integer.toString(getUserSerialNumber(mParentUserId));
             startUser(mProfileUserId);
 
-            // Install test APK.
-            installTestApps();
-
-            // Also install on the managed profile too.
-            installAppAsUser(LAUNCHER_TESTS_APK, mProfileUserId);
-            installAppAsUser(LAUNCHER_TESTS_SUPPORT_APK, mProfileUserId);
+            // Install test APK on primary user and the managed profile.
+            installTestApps(mPrimaryUserId);
+            installTestApps(mProfileUserId);
         }
     }
 
@@ -110,7 +107,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         if (!mHasFeature) {
             return;
         }
-        startCallbackService();
+        startCallbackService(mPrimaryUserId);
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
@@ -123,7 +120,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             return;
         }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-        startCallbackService();
+        startCallbackService(mPrimaryUserId);
         getDevice().uninstallPackage(SIMPLE_APP_PKG);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
@@ -136,7 +133,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             return;
         }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-        startCallbackService();
+        startCallbackService(mPrimaryUserId);
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,

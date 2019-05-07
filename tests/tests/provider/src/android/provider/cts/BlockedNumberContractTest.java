@@ -26,6 +26,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BlockedNumberContract;
 import android.provider.BlockedNumberContract.BlockedNumbers;
+import android.telephony.TelephonyManager;
 
 import junit.framework.Assert;
 
@@ -69,6 +70,13 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
     }
 
     public void testProviderInteractionsAsRegularApp_fails() {
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+        // Don't run this test if we're carrier privileged.
+        if (telephonyManager.checkCarrierPrivilegesForPackage(mContext.getPackageName())
+                == TelephonyManager.CARRIER_PRIVILEGE_STATUS_HAS_ACCESS) {
+            return;
+        }
+
         try {
             mAddedUris.add(mContentResolver.insert(
                     BlockedNumbers.CONTENT_URI, getContentValues("1234567890")));

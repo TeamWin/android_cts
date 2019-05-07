@@ -18,7 +18,7 @@ package android.text.cts;
 
 import static org.junit.Assert.assertEquals;
 
-import android.content.Context;;
+import android.content.Context;
 import android.graphics.Typeface;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;

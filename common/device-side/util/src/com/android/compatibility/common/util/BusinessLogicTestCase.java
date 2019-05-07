@@ -51,6 +51,7 @@ public class BusinessLogicTestCase {
     @Before
     public void handleBusinessLogic() {
         loadBusinessLogic();
+        ensureAuthenticated();
         executeBusinessLogic();
     }
 
@@ -77,6 +78,27 @@ public class BusinessLogicTestCase {
         } else {
             mCanReadBusinessLogic = false;
         }
+    }
+
+    protected void ensureAuthenticated() {
+        if (!mCanReadBusinessLogic) {
+            // super class handles the condition that the service is unavailable.
+            return;
+        }
+
+        if (!mBusinessLogic.mConditionalTestsEnabled) {
+            skipTest("Execution of device specific tests is not enabled. "
+                    + "Enable with '--conditional-business-logic-tests-enabled'");
+        }
+
+        if (mBusinessLogic.isAuthorized()) {
+            // Run test as normal.
+            return;
+        }
+        String message = mBusinessLogic.getAuthenticationStatusMessage();
+
+        // Fail test since request was not authorized.
+        failTest(String.format("Unable to execute because %s.", message));
     }
 
     protected static Instrumentation getInstrumentation() {

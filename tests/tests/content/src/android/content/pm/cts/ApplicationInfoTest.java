@@ -36,6 +36,8 @@ import android.content.cts.R;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Parcel;
+import android.os.Process;
+import android.os.UserHandle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.StringBuilderPrinter;
@@ -153,14 +155,14 @@ public class ApplicationInfoTest {
         // The application "com.android.cts.stub" does not have any attributes set
         mApplicationInfo = getContext().getPackageManager().getApplicationInfo(
                 SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, 0);
+        int currentUserId = Process.myUserHandle().getIdentifier();
 
         assertNull(mApplicationInfo.className);
         assertNull(mApplicationInfo.permission);
         assertEquals(SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, mApplicationInfo.packageName);
         assertEquals(SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, mApplicationInfo.processName);
         assertEquals(SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, mApplicationInfo.taskAffinity);
-        assertTrue(FIRST_APPLICATION_UID <= mApplicationInfo.uid
-                && LAST_APPLICATION_UID >= mApplicationInfo.uid);
+        assertTrue(UserHandle.isApp(mApplicationInfo.uid));
         assertEquals(0, mApplicationInfo.theme);
         assertEquals(0, mApplicationInfo.requiresSmallestWidthDp);
         assertEquals(0, mApplicationInfo.compatibleWidthLimitDp);
@@ -169,11 +171,11 @@ public class ApplicationInfoTest {
         assertEquals(mApplicationInfo.sourceDir, mApplicationInfo.publicSourceDir);
         assertNull(mApplicationInfo.splitSourceDirs);
         assertArrayEquals(mApplicationInfo.splitSourceDirs, mApplicationInfo.splitPublicSourceDirs);
-        assertEquals("/data/user/0/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
+        assertEquals("/data/user/" + currentUserId + "/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
                 mApplicationInfo.dataDir);
-        assertEquals("/data/user_de/0/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
+        assertEquals("/data/user_de/" + currentUserId + "/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
                 mApplicationInfo.deviceProtectedDataDir);
-        assertEquals("/data/user/0/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
+        assertEquals("/data/user/" + currentUserId + "/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
                 mApplicationInfo.credentialProtectedDataDir);
         assertNull(mApplicationInfo.sharedLibraryFiles);
         assertTrue(mApplicationInfo.enabled);

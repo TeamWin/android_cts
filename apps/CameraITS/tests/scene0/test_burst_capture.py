@@ -23,7 +23,7 @@ def main():
        of fullsize capture + CPU read for at least some time.
     """
     NAME = os.path.basename(__file__).split(".")[0]
-    NUM_TEST_FRAMES = 20
+    NUM_TEST_FRAMES = 15
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()

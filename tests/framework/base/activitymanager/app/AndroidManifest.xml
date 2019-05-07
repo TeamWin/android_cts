@@ -179,10 +179,10 @@
                   android:resizeableActivity="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true">
-                  <layout android:defaultWidth="25%"
-                          android:defaultHeight="35%"
+                  <layout android:defaultWidth="50%"
+                          android:defaultHeight="70%"
                           android:gravity="top|right"
-                          android:minWidth="90dp"
+                          android:minWidth="50dp"
                           android:minHeight="80dp"
                   />
         </activity>
@@ -190,10 +190,10 @@
                   android:resizeableActivity="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true">
-                  <layout android:defaultWidth="25%"
-                          android:defaultHeight="35%"
+                  <layout android:defaultWidth="50%"
+                          android:defaultHeight="70%"
                           android:gravity="bottom|left"
-                          android:minWidth="90dp"
+                          android:minWidth="50dp"
                           android:minHeight="80dp"
                   />
         </activity>

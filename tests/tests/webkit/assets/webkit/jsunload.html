@@ -22,9 +22,15 @@
             return "this message will be a hardcoded string in chrome.";
         }
         window.onbeforeunload = fireUnload;
+        window.onload = function() {
+            document.addEventListener("touchend", function() {
+                setTimeout(() => {
+                    document.title = "touch received";
+                }, 0);
+            }, false);
+        }
     </script>
     <body>
         javascript unload test
     </body>
 </html>
-

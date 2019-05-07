@@ -187,7 +187,20 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         assertFeature(manualPostProcessing,
                 PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_POST_PROCESSING);
         assertFeature(raw, PackageManager.FEATURE_CAMERA_CAPABILITY_RAW);
-        assertFeature(motionTracking, PackageManager.FEATURE_CAMERA_AR);
+        if (!motionTracking) {
+          // FEATURE_CAMERA_AR requires the presence of
+          // CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING but
+          // MOTION_TRACKING does not require the presence of FEATURE_CAMERA_AR
+          //
+          // Logic table:
+          //    AR= F   T
+          // MT=F   Y   N
+          //   =T   Y   Y
+          //
+          // So only check the one disallowed condition: No motion tracking and FEATURE_CAMERA_AR is
+          // available
+          assertNotAvailable(PackageManager.FEATURE_CAMERA_AR);
+        }
     }
 
     private void checkFrontCamera() {
@@ -489,16 +502,14 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     }
 
     public void testUsbAccessory() {
-        // USB accessory mode is only a requirement for devices with USB ports supporting
-        // peripheral mode. As there is no public API to distinguish a device with only host
-        // mode support from having both peripheral and host support, the test may have
-        // false negatives.
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED) &&
                 !isAndroidEmulator() &&
-                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_PC)) {
+                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_PC) &&
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) &&
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
             // USB accessory mode is only a requirement for devices with USB ports supporting
             // peripheral mode. As there is no public API to distinguish a device with only host
             // mode support from having both peripheral and host support, the test may have
@@ -507,7 +518,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
-  public void testWifiFeature() throws Exception {
+    public void testWifiFeature() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // no WiFi, skip the test
             return;
@@ -519,6 +530,13 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
 
         } finally {
             mWifiManager.setWifiEnabled(enabled);
+        }
+    }
+
+    public void testAudioOutputFeature() throws Exception {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
+            assertAvailable(PackageManager.FEATURE_AUDIO_OUTPUT);
         }
     }
 
