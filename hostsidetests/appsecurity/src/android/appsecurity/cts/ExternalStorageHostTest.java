@@ -71,6 +71,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String WRITE_APK = "CtsWriteExternalStorageApp.apk";
     private static final String WRITE_PKG = "com.android.cts.writeexternalstorageapp";
     private static final String WRITE_CLASS = WRITE_PKG + ".WriteExternalStorageTest";
+    private static final String WRITE_APK_2 = "CtsWriteExternalStorageApp2.apk";
+    private static final String WRITE_PKG_2 = "com.android.cts.writeexternalstorageapp2";
     private static final String MULTIUSER_APK = "CtsMultiUserStorageApp.apk";
     private static final String MULTIUSER_PKG = "com.android.cts.multiuserstorageapp";
     private static final String MULTIUSER_CLASS = MULTIUSER_PKG + ".MultiUserStorageTest";
@@ -234,16 +236,23 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         try {
             wipePrimaryExternalStorage();
 
+            getDevice().uninstallPackage(WRITE_PKG_2);
             getDevice().uninstallPackage(NONE_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
 
             // We purposefully delay the installation of the reading apps to
             // verify that the daemon correctly invalidates any caches.
-            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK_2), false, options));
             for (int user : mUsers) {
-                updateAppOp(WRITE_PKG, user, "android:request_install_packages", true);
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", user);
+                updateAppOp(WRITE_PKG_2, user, "android:request_install_packages", true);
+                updatePermissions(WRITE_PKG_2, user, new String[] {
+                        PERM_READ_EXTERNAL_STORAGE,
+                        PERM_WRITE_EXTERNAL_STORAGE,
+                }, true);
+            }
+
+            for (int user : mUsers) {
+                runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest", "testObbGifts", user);
             }
 
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
@@ -252,17 +261,15 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             }
 
             for (int user : mUsers) {
-                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testRemoveObbGifts", user);
-            }
-
-            for (int user : mUsers) {
-                updateAppOp(WRITE_PKG, user, "android:request_install_packages", false);
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", user);
-                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testNoObbGifts", user);
+                runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest",
+                        "testAccessObbGifts", user);
+                updateAppOp(WRITE_PKG_2, user, "android:request_install_packages", false);
+                runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest",
+                        "testCantAccessObbGifts", user);
             }
         } finally {
+            getDevice().uninstallPackage(WRITE_PKG_2);
             getDevice().uninstallPackage(NONE_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
         }
     }
 
@@ -477,17 +484,28 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
     private void doMediaSandboxed(Config config, boolean sandboxed) throws Exception {
         installPackage(config.apk);
+        installPackage(MEDIA_FULL.apk);
         for (int user : mUsers) {
             updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, true);
+            updatePermissions(MEDIA_FULL.pkg, user, new String[] {
+                    PERM_READ_EXTERNAL_STORAGE,
+                    PERM_WRITE_EXTERNAL_STORAGE,
+            }, true);
+
+            // Create the files needed for the test from MEDIA_FULL pkg since shell
+            // can't access secondary user's storage.
+            runDeviceTests(MEDIA_FULL.pkg, MEDIA_FULL.clazz, "testStageFiles", user);
 
             if (sandboxed) {
                 runDeviceTests(config.pkg, config.clazz, "testSandboxed", user);
             } else {
                 runDeviceTests(config.pkg, config.clazz, "testNotSandboxed", user);
             }
+
+            runDeviceTests(MEDIA_FULL.pkg, MEDIA_FULL.clazz, "testClearFiles", user);
         }
     }
 

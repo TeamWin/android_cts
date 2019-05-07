@@ -19,6 +19,8 @@ package com.android.cts.writeexternalstorageapp;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_NONE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_READ;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_WRITE;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoAccess;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNoAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
@@ -79,6 +81,28 @@ public class WriteGiftTest extends AndroidTestCase {
 
             writeInt(none, 100);
             assertEquals(100, readInt(none));
+        }
+    }
+
+    /**
+     * Verify we can't access gifts in obb dirs.
+     */
+    public void testAccessObbGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+            assertFileReadWriteAccess(none);
+            assertEquals(100, readInt(none));
+        }
+    }
+
+    /**
+     * Verify we can't access gifts in obb dirs.
+     */
+    public void testCantAccessObbGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+            assertFileNoAccess(none);
+            assertDirNoAccess(none.getParentFile());
         }
     }
 }
