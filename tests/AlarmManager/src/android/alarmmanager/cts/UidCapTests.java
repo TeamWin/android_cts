@@ -33,7 +33,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -70,7 +69,7 @@ public class UidCapTests {
             try {
                 final PendingIntent pi = PendingIntent.getBroadcast(mContext, 0,
                         new Intent(ACTION_PREFIX + i), 0);
-                mAlarmManager.set(ALARM_TYPES[i % 4], Long.MAX_VALUE, pi);
+                mAlarmManager.set(ALARM_TYPES[i % ALARM_TYPES.length], Long.MAX_VALUE, pi);
                 mAlarmsSet.add(pi);
             } catch (Exception e) {
                 Log.e(TAG, "Could not set the " + i + "th alarm", e);
@@ -80,14 +79,13 @@ public class UidCapTests {
     }
 
     @Test
-    @Ignore("Until b/129995049 is resolved")
     public void alarmsCannotExceedLimit() {
         final int limit = 598;
         setMaxAlarmsPerUid(limit);
         for (int i = 0; i < limit; i++) {
             final PendingIntent pi = PendingIntent.getBroadcast(mContext, 0,
                     new Intent(ACTION_PREFIX + i), 0);
-            mAlarmManager.set(ALARM_TYPES[i % 4], Long.MAX_VALUE, pi);
+            mAlarmManager.set(ALARM_TYPES[i % ALARM_TYPES.length], Long.MAX_VALUE, pi);
             mAlarmsSet.add(pi);
         }
 
