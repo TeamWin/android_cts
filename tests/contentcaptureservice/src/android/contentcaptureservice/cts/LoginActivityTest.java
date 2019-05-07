@@ -32,9 +32,10 @@ import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
-import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 import static android.view.contentcapture.UserDataRemovalRequest.FLAG_IS_PREFIX;
+
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -42,8 +43,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.content.ComponentName;
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
-import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
-import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
@@ -62,6 +61,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
+import com.android.compatibility.common.util.DoubleVisitor;
 
 import org.junit.After;
 import org.junit.Before;

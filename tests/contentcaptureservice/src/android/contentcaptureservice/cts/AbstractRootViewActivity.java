@@ -16,13 +16,14 @@
 package android.contentcaptureservice.cts;
 
 import android.app.Activity;
-import android.contentcaptureservice.cts.common.DoubleVisitor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.DoubleVisitor;
 
 /**
  * Base class for classes that have a {@code root_view} root view.

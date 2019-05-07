@@ -16,6 +16,7 @@
 
 package android.security;
 
+import android.platform.test.annotations.AppModeInstant;
 import android.test.AndroidTestCase;
 import com.android.compatibility.common.util.PropertyUtil;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.io.IOException;
 /**
  * Verify the selinux domain for apps running in instant mode
  */
+@AppModeInstant
 public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
 {
     public void testCanNotExecuteFromHomeDir() throws Exception {
