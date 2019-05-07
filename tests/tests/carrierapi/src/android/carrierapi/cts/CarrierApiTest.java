@@ -824,10 +824,8 @@ public class CarrierApiTest extends AndroidTestCase {
                 + "00" // p2: value required for Envelope command
                 + lc
                 + envelope);
-        assertNotNull("sendEnvelopeWithStatus returned: " + response, response);
-        // TODO(b/131422420): uncomment logic to fully check TelMan#sendEnvelopeWithStatus response
-        // assertEquals("sendEnvelopeWithStatus returned: " + response,
-        //         STATUS_NORMAL_STRING, response);
+        assertEquals("sendEnvelopeWithStatus returned: " + response,
+                STATUS_NORMAL_STRING, response);
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
