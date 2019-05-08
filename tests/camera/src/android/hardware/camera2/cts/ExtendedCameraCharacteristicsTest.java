@@ -20,13 +20,16 @@ import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
@@ -87,6 +90,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final long MIN_FRONT_SENSOR_RESOLUTION = VGA.getHeight() * VGA.getWidth();
     private static final long LOW_LATENCY_THRESHOLD_MS = 200;
     private static final float LATENCY_TOLERANCE_FACTOR = 1.1f; // 10% tolerance
+    private static final float FOCAL_LENGTH_TOLERANCE = .01f;
     private static final int MAX_NUM_IMAGES = 5;
     private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
@@ -2243,6 +2247,103 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             assertTrue("availableAwbModes must not be null", awbAvailableModes != null);
             assertTrue("availableAwbModes must contain only AUTO", awbAvailableModes.length == 1 &&
                     awbAvailableModes[0] == CaptureRequest.CONTROL_AWB_MODE_AUTO);
+        }
+    }
+
+    private boolean matchParametersToCharacteritics(Camera.Parameters params,
+            Camera.CameraInfo info, CameraCharacteristics ch) {
+        Integer facing = ch.get(CameraCharacteristics.LENS_FACING);
+        switch (facing.intValue()) {
+            case CameraMetadata.LENS_FACING_EXTERNAL:
+            case CameraMetadata.LENS_FACING_FRONT:
+                if (info.facing != Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    return false;
+                }
+                break;
+            case CameraMetadata.LENS_FACING_BACK:
+                if (info.facing != Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+        }
+
+        Integer orientation = ch.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        if (orientation.intValue() != info.orientation) {
+            return false;
+        }
+
+        StaticMetadata staticMeta = new StaticMetadata(ch);
+        boolean legacyHasFlash = params.getSupportedFlashModes() != null;
+        if (staticMeta.hasFlash() != legacyHasFlash) {
+            return false;
+        }
+
+        List<String> legacyFocusModes = params.getSupportedFocusModes();
+        boolean legacyHasFocuser = !((legacyFocusModes.size() == 1) &&
+                (legacyFocusModes.contains(Camera.Parameters.FOCUS_MODE_FIXED)));
+        if (staticMeta.hasFocuser() != legacyHasFocuser) {
+            return false;
+        }
+
+        if (staticMeta.isVideoStabilizationSupported() != params.isVideoStabilizationSupported()) {
+            return false;
+        }
+
+        float legacyFocalLength = params.getFocalLength();
+        float [] focalLengths = staticMeta.getAvailableFocalLengthsChecked();
+        boolean found = false;
+        for (float focalLength : focalLengths) {
+            if (Math.abs(focalLength - legacyFocalLength) <= FOCAL_LENGTH_TOLERANCE) {
+                found = true;
+                break;
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Check that all devices available through the legacy API are also
+     * accessible via Camera2.
+     */
+    @CddTest(requirement="7.5.4/C-0-11")
+    public void testLegacyCameraDeviceParity() {
+        int legacyDeviceCount = Camera.getNumberOfCameras();
+        assertTrue("More legacy devices: " + legacyDeviceCount + " compared to Camera2 devices: " +
+                mCharacteristics.size(), legacyDeviceCount <= mCharacteristics.size());
+
+        ArrayList<CameraCharacteristics> chars = new ArrayList<> (mCharacteristics);
+        for (int i = 0; i < legacyDeviceCount; i++) {
+            Camera camera = null;
+            Camera.Parameters legacyParams = null;
+            Camera.CameraInfo legacyInfo = new Camera.CameraInfo();
+            try {
+                Camera.getCameraInfo(i, legacyInfo);
+                camera = Camera.open(i);
+                legacyParams = camera.getParameters();
+
+                assertNotNull("Camera parameters for device: " + i + "  must not be null",
+                        legacyParams);
+            } finally {
+                if (camera != null) {
+                    camera.release();
+                }
+            }
+
+            // Camera Ids between legacy devices and Camera2 device could be
+            // different try to match devices by using other common traits.
+            CameraCharacteristics found = null;
+            for (CameraCharacteristics ch : chars) {
+                if (matchParametersToCharacteritics(legacyParams, legacyInfo, ch)) {
+                    found = ch;
+                    break;
+                }
+            }
+            assertNotNull("No matching Camera2 device for legacy device id: " + i, found);
+
+            chars.remove(found);
         }
     }
 
