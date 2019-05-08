@@ -16,6 +16,7 @@
 
 package android.keystore.cts;
 
+import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_SOFTWARE;
@@ -776,8 +777,11 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertNotNull(rootOfTrust);
         assertNotNull(rootOfTrust.getVerifiedBootKey());
         assertTrue(rootOfTrust.getVerifiedBootKey().length >= 32);
-        assertTrue(rootOfTrust.isDeviceLocked());
-        assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
+        if (SystemProperties.getInt("ro.product.first_api_level", 0) >= 29) {
+            // Devices launched in Q and after should run CTS in LOCKED state.
+            assertTrue(rootOfTrust.isDeviceLocked());
+            assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
+        }
     }
 
     private void checkRsaKeyDetails(Attestation attestation, int keySize, int purposes,
