@@ -165,7 +165,10 @@ public class FileAccessPermissionTest extends AndroidTestCase {
     public void testNoExternalStorageAccess() {
         // test /sdcard dir.
         File sdcardDir = Environment.getExternalStorageDirectory();
-        assertTrue(sdcardDir.exists());
+
+        // SELinux disallows access for ephemeral apps
+        assertFalse(sdcardDir.exists());
+
         File sdcardFile = new File(sdcardDir, System.currentTimeMillis() + "test.txt");
         try {
             assertTrue(sdcardFile.createNewFile());
