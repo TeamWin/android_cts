@@ -23,6 +23,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.JDiffClassDescription.JDiffField;
+import android.signature.cts.VirtualPath;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -34,12 +35,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
@@ -111,25 +110,20 @@ public class IntentTest {
     }
 
     private Set<String> lookupPlatformIntents() {
-        try {
-            Set<String> intents = new HashSet<>();
-            intents.addAll(parse(CURRENT_API_FILE));
-            intents.addAll(parse(SYSTEM_CURRENT_API_FILE));
-            intents.addAll(parse(SYSTEM_REMOVED_API_FILE));
-            return intents;
-        } catch (XmlPullParserException | IOException e) {
-            throw new RuntimeException("failed to parse", e);
-        }
+        Set<String> intents = new HashSet<>();
+        intents.addAll(parse(CURRENT_API_FILE));
+        intents.addAll(parse(SYSTEM_CURRENT_API_FILE));
+        intents.addAll(parse(SYSTEM_REMOVED_API_FILE));
+        return intents;
     }
 
-    private static Set<String> parse(String apiFileName)
-            throws XmlPullParserException, IOException {
+    private static Set<String> parse(String apiFileName) {
 
         Set<String> androidIntents = new HashSet<>();
 
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-        apiDocumentParser.parseAsStream(new FileInputStream(new File(apiFileName))).forEach(
+        apiDocumentParser.parseAsStream(VirtualPath.get(apiFileName)).forEach(
                 classDescription -> {
                     for (JDiffField diffField : classDescription.getFieldList()) {
                         String fieldValue = diffField.getValueString();
