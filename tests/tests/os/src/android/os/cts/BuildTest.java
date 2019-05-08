@@ -20,6 +20,7 @@ import static android.os.Build.VERSION.ACTIVE_CODENAMES;
 import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import junit.framework.TestCase;
@@ -43,6 +44,7 @@ public class BuildTest extends TestCase {
     /**
      * Verify that the values of the various CPU ABI fields are consistent.
      */
+    @AppModeFull(reason = "Instant apps cannot access APIs")
     public void testCpuAbi() throws Exception {
         runTestCpuAbiCommon();
         if (android.os.Process.is64Bit()) {
@@ -322,6 +324,7 @@ public class BuildTest extends TestCase {
      * on production (user) builds.
      */
     @RestrictedBuildTest
+    @AppModeFull(reason = "Instant apps cannot access APIs")
     public void testIsSecureUserBuild() throws IOException {
         assertEquals("Must be a user build", "user", Build.TYPE);
         assertProperty("Must be a non-debuggable build", RO_DEBUGGABLE, "0");
