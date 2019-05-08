@@ -21,6 +21,7 @@ import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
 
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,6 +38,8 @@ import android.media.AudioPlaybackCaptureConfiguration;
 import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.media.projection.MediaProjection;
+import android.os.Handler;
+import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.rule.ActivityTestRule;
@@ -47,6 +50,8 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test audio playback capture through MediaProjection.
@@ -365,4 +370,60 @@ public class AudioPlaybackCaptureTest {
         mAPCTestConfig.excludeUids = new int[]{ mUid };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
     }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testStoppedMediaProjection() throws Exception {
+        mMediaProjection.stop();
+        mAPCTestConfig.matchingUsages = new int[]{ AudioAttributes.USAGE_MEDIA };
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_MEDIA, EXPECT_DATA);
+    }
+
+    @Test
+    public void testStopMediaProjectionDuringCapture() throws Exception {
+        final int STOP_TIMEOUT_MS = 1000;
+
+        mAPCTestConfig.matchingUsages = new int[]{ AudioAttributes.USAGE_MEDIA };
+
+        MediaPlayer mediaPlayer = createMediaPlayer(ALLOW_CAPTURE_BY_ALL,
+                                                    R.raw.testwav_16bit_44100hz,
+                                                    AudioAttributes.USAGE_MEDIA);
+        mediaPlayer.start();
+
+        AudioRecord audioRecord = createDefaultPlaybackCaptureRecord();
+        audioRecord.startRecording();
+        ByteBuffer rawBuffer = readToBuffer(audioRecord, BUFFER_SIZE);
+        assertFalse("Expected data, but only silence was recorded",
+                    onlySilence(rawBuffer.asShortBuffer()));
+
+        // Stop the media projection
+        CountDownLatch stopCDL = new CountDownLatch(1);
+        mMediaProjection.registerCallback(new MediaProjection.Callback() {
+                public void onStop() {
+                    stopCDL.countDown();
+                }
+            }, new Handler(Looper.getMainLooper()));
+        mMediaProjection.stop();
+        assertTrue("Could not stop the MediaProjection in " + STOP_TIMEOUT_MS + "ms",
+                   stopCDL.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        int retry = 10;
+        ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+        while (audioRecord.read(buffer, BUFFER_SIZE) > 0) {
+            assertTrue("audioRecord never stopped, current state is " + audioRecord.getState(),
+                       retry > 0);
+            retry--;
+        }
+        audioRecord.stop();
+        audioRecord.startRecording();
+
+        // Check that the audioRecord can no longer receive audio
+        assertThat("Can still record after policy unregistration",
+                   audioRecord.read(buffer, BUFFER_SIZE), lessThan(0));
+
+        audioRecord.release();
+        mediaPlayer.stop();
+        mediaPlayer.release();
+    }
+
+
 }
