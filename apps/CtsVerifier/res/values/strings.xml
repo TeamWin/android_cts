@@ -776,7 +776,7 @@
            as failed.
 
     </string>
-    <string name="multinetwork_connectivity_test_pre_requisites">Prerequisite - Setup a Wi-Fi access point with WPA PSK in which we can turn on or off internet access. </string>
+    <string name="multinetwork_connectivity_test_pre_requisites">Prerequisite - Setup a Wi-Fi access point with WPA PSK in which we can turn on or off internet access. Delete that access point from this device if it exists already. </string>
     <string name="multinetwork_connectivity_test_start">Start</string>
     <string name="multinetwork_connectivity_test_ap_name">Wi-Fi SSID</string>
     <string name="multinetwork_connectivity_test_ap_passphrase">WPA 2 passphrase</string>
@@ -789,8 +789,9 @@
     <string name="multinetwork_connectivity_test_progress_1">Waiting for Wi-Fi to lose connectivity.</string>
     <string name="multinetwork_connectivity_test_progress_2">Waiting to check connectivity.</string>
     <string name="multinetwork_connectivity_test_progress_3">Waiting to make sure Wi-Fi has connectivity.</string>
-    <string name="multinetwork_connectivity_test_1_desc">Test 1 - Connect to Wi-Fi with no internet doesnt disable current connectivity</string>
-    <string name="multinetwork_connectivity_test_2_desc">Test 2 - When connected to Wi-Fi, on losing connectivity, restores mobile connectivity</string>
+    <string name="multinetwork_connectivity_test_1_desc">Test 1 - Connect to Wi-Fi with no internet doesnt disable current connectivity (new API)</string>
+    <string name="multinetwork_connectivity_test_2_desc">Test 2 - Connect to Wi-Fi with no internet doesnt disable current connectivity (legacy API)</string>
+    <string name="multinetwork_connectivity_test_3_desc">Test 3 - When connected to Wi-Fi, on losing connectivity, restores mobile connectivity (legacy API)</string>
     <string name="multinetwork_status_wifi_connect_success">Wi-Fi connect success.</string>
     <string name="multinetwork_status_mobile_connect_success">Mobile net connect success.</string>
     <string name="multinetwork_status_wifi_connect_timed_out">Wi-Fi connect timed out.</string>
