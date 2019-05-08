@@ -139,7 +139,8 @@ public class BatteryUtils {
         }
 
         final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
-        return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        return !(pm.hasSystemFeature(PackageManager.FEATURE_WATCH) ||
+            pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
     }
 
     /** "Assume" the current device supports battery saver. */
