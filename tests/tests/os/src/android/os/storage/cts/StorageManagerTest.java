@@ -29,6 +29,7 @@ import android.os.cts.R;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -75,6 +76,7 @@ public class StorageManagerTest extends AndroidTestCase {
         mStorageManager = (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
     }
 
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testMountAndUnmountObbNormal() throws IOException {
         for (File target : getTargetFiles()) {
             target = new File(target, "test1_new.obb");
@@ -101,6 +103,7 @@ public class StorageManagerTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testAttemptMountNonObb() {
         for (File target : getTargetFiles()) {
             target = new File(target, "test1_nosig.obb");
@@ -124,6 +127,7 @@ public class StorageManagerTest extends AndroidTestCase {
                 mStorageManager.getMountedObbPath(outFile.getPath()));
     }
 
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testAttemptMountObbWrongPackage() {
         for (File target : getTargetFiles()) {
             target = new File(target, "test1_wrongpackage.obb");
@@ -143,6 +147,7 @@ public class StorageManagerTest extends AndroidTestCase {
                 mStorageManager.getMountedObbPath(outFile.getPath()));
     }
 
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testMountAndUnmountTwoObbs() throws IOException {
         for (File target : getTargetFiles()) {
             Log.d(TAG, "Testing target " + target);
@@ -276,6 +281,12 @@ public class StorageManagerTest extends AndroidTestCase {
         assertEquals(StorageManager.UUID_DEFAULT,
                 mStorageManager.getUuidForPath(mContext.getDataDir()));
 
+        assertNoUuid(new File("/"));
+        assertNoUuid(new File("/proc/"));
+    }
+
+    @AppModeFull(reason = "Instant apps cannot access external storage")
+    public void testGetExternalUuidForPath() throws Exception {
         final UUID extUuid = mStorageManager
                 .getUuidForPath(Environment.getExternalStorageDirectory());
         if (Environment.isExternalStorageEmulated()) {
@@ -284,9 +295,6 @@ public class StorageManagerTest extends AndroidTestCase {
 
         assertEquals(extUuid, mStorageManager.getUuidForPath(mContext.getExternalCacheDir()));
         assertEquals(extUuid, mStorageManager.getUuidForPath(new File("/sdcard/")));
-
-        assertNoUuid(new File("/"));
-        assertNoUuid(new File("/proc/"));
     }
 
     private static class TestProxyFileDescriptorCallback extends ProxyFileDescriptorCallback {
