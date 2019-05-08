@@ -72,11 +72,9 @@ public class TestUtils {
         int xToCut = isOnWatchUiMode() ? bt.getWidth() / 5 : bt.getWidth() / 20;
         int yToCut = statusBarHeight;
 
-        if (isLandscape()) {
-            xToCut += navigationBarHeight;
-        } else {
-            yToCut += navigationBarHeight;
-        }
+        // Crop-out the nav bar in both width and height to meet both the phone and the tablet
+        xToCut += navigationBarHeight;
+        yToCut += navigationBarHeight;
 
         bt = Bitmap.createBitmap(
                 bt, 0, statusBarHeight, bt.getWidth() - xToCut, bt.getHeight() - yToCut);
@@ -246,10 +244,5 @@ public class TestUtils {
         } catch (IOException e) {
             throw new RuntimeException("Failed to run command: " + cmd, e);
         }
-    }
-
-    private boolean isLandscape() {
-        return mInstrumentation.getTargetContext().getResources().getConfiguration().orientation ==
-                Configuration.ORIENTATION_LANDSCAPE;
     }
 }
