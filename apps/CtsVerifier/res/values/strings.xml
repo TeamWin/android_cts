@@ -4944,23 +4944,25 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="telecom_incoming_call_confirm_button">Confirm</string>
     <string name="telecom_incoming_self_mgd_test"> Incoming Self-Managed Connection Test</string>
     <string name="telecom_incoming_self_mgd_info">
-        This test verifies that incoming calls from a Self-Managed Connection Service will trigger
-        a Telecom-managed incoming call UI when there is already an ongoing call on the device.
+        This test verifies that an incoming call from a Self-Managed Connection Service will trigger
+        a Telecom-managed incoming call UI when it is not possible to hold an ongoing call on the
+        device.
     </string>
     <string name="telecom_incoming_self_mgd_step_1">
         Click the button below to register a test self-managed ConnectionService.
     </string>
     <string name="telecom_incoming_self_mgd_register_button">Register Self-Managed ConnectionService</string>
     <string name="telecom_incoming_self_mgd_step_2">
-        Click the button below to test that the system incoming call notification shows.  When the
-        notification shows, "answer" the call.
+        Start two phone calls on the device under test; this generates a scenario where calls cannot
+        be held when the incoming self-managed call is received.  Click "verify calls" to confirm
+        that the calls were started.
     </string>
-    <string name="telecom_incoming_self_mgd_show_ui_button">Show System Incoming UI</string>
+    <string name="telecom_incoming_self_mgd_verify_call_button">Verify Calls</string>
     <string name="telecom_incoming_self_mgd_step_3">
-        Click the button below to confirm that the incoming call was answered.
+        Click the button below to start a test incoming self-managed call.  Answer the call in the
+        UI when prompted.
     </string>
-    <string name="telecom_incoming_self_mgd_confirm_answer_button">Confirm Answer</string>
-
+    <string name="telecom_incoming_self_mgd_place_call_button">Start Self-Managed Call</string>
     <!-- Strings for SetNewPasswordComplexityTest -->
     <string name="set_complexity_test_title">Set New Password Complexity Test</string>
     <string name="set_complexity_test_message">
