@@ -19,6 +19,8 @@ package android.hardware.camera2.cts;
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -42,15 +44,18 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.BatteryManager;
 import android.util.ArraySet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
+import android.util.SizeF;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
-
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.Stat;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
@@ -81,6 +86,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
     private static final double FOV_THRESHOLD = 0.03;
     private static final double ASPECT_RATIO_THRESHOLD = 0.03;
+
+    private final int[] sTemplates = new int[] {
+        CameraDevice.TEMPLATE_PREVIEW,
+        CameraDevice.TEMPLATE_RECORD,
+        CameraDevice.TEMPLATE_STILL_CAPTURE,
+        CameraDevice.TEMPLATE_VIDEO_SNAPSHOT,
+        CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG,
+        CameraDevice.TEMPLATE_MANUAL,
+    };
 
     @Override
     public void setUp() throws Exception {
@@ -693,15 +707,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testActivePhysicalId() throws Exception {
-        int[] sTemplates = new int[] {
-            CameraDevice.TEMPLATE_PREVIEW,
-            CameraDevice.TEMPLATE_RECORD,
-            CameraDevice.TEMPLATE_STILL_CAPTURE,
-            CameraDevice.TEMPLATE_VIDEO_SNAPSHOT,
-            CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG,
-            CameraDevice.TEMPLATE_MANUAL,
-        };
-
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
@@ -754,6 +759,74 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                                   " for different capture templates",
                                   storedActiveId.equals(activePhysicalId));
                         }
+                    } catch (IllegalArgumentException e) {
+                        if (template == CameraDevice.TEMPLATE_MANUAL &&
+                                !staticInfo.isCapabilitySupported(CameraCharacteristics.
+                                REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                            // OK
+                        } else if (template == CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG &&
+                                !staticInfo.isCapabilitySupported(CameraCharacteristics.
+                                REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING)) {
+                            // OK.
+                        } else {
+                            throw e; // rethrow
+                        }
+                    }
+                }
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test that for logical multi-camera of a Handheld device, the default FOV is
+     * between 50 and 90 degrees for all capture templates.
+     */
+    @Test
+    @CddTest(requirement="7.5.4/C-1-1")
+    public void testDefaultFov() throws Exception {
+        final double MIN_FOV = 50;
+        final double MAX_FOV = 90;
+        if (!isHandheldDevice()) {
+            return;
+        }
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+
+                if (!staticInfo.isLogicalMultiCamera()) {
+                    Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
+                    continue;
+                }
+
+                SizeF physicalSize = staticInfo.getCharacteristics().get(
+                        CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+                double physicalDiag = Math.sqrt(Math.pow(physicalSize.getWidth(), 2)
+                        + Math.pow(physicalSize.getHeight(), 2));
+
+                openDevice(id);
+                for (int template : sTemplates) {
+                    try {
+                        CaptureRequest.Builder requestBuilder =
+                                mCamera.createCaptureRequest(template);
+                        Float requestFocalLength = requestBuilder.get(
+                                CaptureRequest.LENS_FOCAL_LENGTH);
+                        assertNotNull("LENS_FOCAL_LENGTH must not be null", requestFocalLength);
+
+                        double fov = 2 *
+                                Math.toDegrees(Math.atan2(physicalDiag/2, requestFocalLength));
+                        Log.v(TAG, "Camera " +  id + " template " + template +
+                                "'s default FOV is " + fov);
+                        mCollector.expectInRange("Camera " +  id + " template " + template +
+                                "'s default FOV must fall between [50, 90] degrees",
+                                fov, MIN_FOV, MAX_FOV);
                     } catch (IllegalArgumentException e) {
                         if (template == CameraDevice.TEMPLATE_MANUAL &&
                                 !staticInfo.isCapabilitySupported(CameraCharacteristics.
@@ -1095,5 +1168,28 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         if (mSession != null) {
             mSession.close();
         }
+    }
+
+    /**
+     * The CDD defines a handheld device as one that has a battery and a screen size between
+     * 2.5 and 8 inches.
+     */
+    private boolean isHandheldDevice() throws Exception {
+        double screenInches = getScreenSizeInInches();
+        return deviceHasBattery() && screenInches >= 2.5 && screenInches <= 8.0;
+    }
+
+    private boolean deviceHasBattery() {
+        final Intent batteryInfo = mContext.registerReceiver(null,
+                new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
+    }
+
+    private double getScreenSizeInInches() {
+        DisplayMetrics dm = new DisplayMetrics();
+        mWindowManager.getDefaultDisplay().getMetrics(dm);
+        double widthInInchesSquared = Math.pow(dm.widthPixels/dm.xdpi,2);
+        double heightInInchesSquared = Math.pow(dm.heightPixels/dm.ydpi,2);
+        return Math.sqrt(widthInInchesSquared + heightInInchesSquared);
     }
 }
