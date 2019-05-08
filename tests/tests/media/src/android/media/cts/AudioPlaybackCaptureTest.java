@@ -16,17 +16,16 @@
 
 package android.media.cts;
 
-
-import static com.google.common.truth.Truth.assertThat;
-
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_ALL;
-import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
+import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import android.media.AudioAttributes;
@@ -137,6 +136,15 @@ public class AudioPlaybackCaptureTest {
         mMediaProjection = mActivity.waitForMediaProjection();
     }
 
+    private AudioRecord createDefaultPlaybackCaptureRecord() throws Exception {
+        return createPlaybackCaptureRecord(
+            new AudioFormat.Builder()
+                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                 .setSampleRate(SAMPLE_RATE)
+                 .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                 .build());
+    }
+
     private AudioRecord createPlaybackCaptureRecord(AudioFormat audioFormat) throws Exception {
         AudioPlaybackCaptureConfiguration apcConfig = mAPCTestConfig.build(mMediaProjection);
 
@@ -144,6 +152,8 @@ public class AudioPlaybackCaptureTest {
                 .setAudioPlaybackCaptureConfig(apcConfig)
                 .setAudioFormat(audioFormat)
                 .build();
+        assertEquals("AudioRecord failed to initialized", AudioRecord.STATE_INITIALIZED,
+                     audioRecord.getState());
         return audioRecord;
     }
 
@@ -164,14 +174,15 @@ public class AudioPlaybackCaptureTest {
 
     private static ByteBuffer readToBuffer(AudioRecord audioRecord, int bufferSize)
             throws Exception {
-        assertEquals(AudioRecord.RECORDSTATE_RECORDING, audioRecord.getRecordingState());
+        assertEquals("AudioRecord is not recording", AudioRecord.RECORDSTATE_RECORDING,
+                     audioRecord.getRecordingState());
         ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
         int retry = 100;
         boolean silence = true;
         while (silence && buffer.hasRemaining()) {
             assertNotSame(buffer.remaining() + "/" + bufferSize + "remaining", 0, retry--);
             int written = audioRecord.read(buffer, buffer.remaining());
-            assertThat(written).isGreaterThan(0);
+            assertThat("audioRecord did not read frames", written, greaterThan(0));
             for (int i = 0; i < written; i++) {
                 silence &= buffer.get() == 0;
             }
@@ -199,12 +210,7 @@ public class AudioPlaybackCaptureTest {
             Thread.sleep(100); // Make sure the player is actually playing, thus forcing a rerouting
         }
 
-        AudioRecord audioRecord = createPlaybackCaptureRecord(
-                new AudioFormat.Builder()
-                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                     .setSampleRate(SAMPLE_RATE)
-                     .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                     .build());
+        AudioRecord audioRecord = createDefaultPlaybackCaptureRecord();
 
         audioRecord.startRecording();
         mediaPlayer.start();
