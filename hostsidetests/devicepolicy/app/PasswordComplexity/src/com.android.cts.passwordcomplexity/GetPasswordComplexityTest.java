@@ -11,6 +11,7 @@ import static junit.framework.Assert.fail;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.support.test.uiautomator.UiDevice;
+import android.text.TextUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -153,6 +154,9 @@ public class GetPasswordComplexityTest {
     }
 
     private void clearScreenLock() throws Exception {
+        if (TextUtils.isEmpty(mScreenLock)) {
+            return;
+        }
         String out =
                 mDevice.executeShellCommand("cmd lock_settings clear --old " + mScreenLock);
         if (!out.startsWith("Lock credential cleared")) {
