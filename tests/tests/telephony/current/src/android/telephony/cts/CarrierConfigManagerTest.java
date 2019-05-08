@@ -19,10 +19,17 @@ package android.telephony.cts;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
+import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_OVERRIDE_BOOL;
+import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_STRING;
+import static android.telephony.CarrierConfigManager.KEY_FORCE_HOME_NETWORK_BOOL;
+import static android.telephony.ServiceState.STATE_IN_SERVICE;
 
 import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
+import static com.android.internal.telephony.TelephonyIntents.EXTRA_SPN;
+import static com.android.internal.telephony.TelephonyIntents.SPN_STRINGS_UPDATED_ACTION;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,23 +37,34 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.os.Looper;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.SecurityTest;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
-import java.io.IOException;
+import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class CarrierConfigManagerTest {
+
+    private static final String CARRIER_NAME_OVERRIDE = "carrier_a";
     private CarrierConfigManager mConfigManager;
     private TelephonyManager mTelephonyManager;
+    private static final int TOLERANCE = 2000;
+    private final Object mLock = new Object();
 
     @Before
     public void setUp() throws Exception {
@@ -168,4 +186,60 @@ public class CarrierConfigManagerTest {
         }
     }
 
+    /**
+     * This checks that {@link CarrierConfigManager#overrideConfig(int, PersistableBundle)}
+     * correctly overrides the Carrier Name (SPN) string.
+     */
+    @Test
+    public void testCarrierConfigNameOverride() throws Exception {
+        if (mTelephonyManager.getServiceState().getState() != STATE_IN_SERVICE) return;
+
+        // Adopt shell permission so the required permission (android.permission.MODIFY_PHONE_STATE)
+        // is granted.
+        UiAutomation ui = getInstrumentation().getUiAutomation();
+        ui.adoptShellPermissionIdentity();
+
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
+        TestThread t = new TestThread(new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                PersistableBundle carrierNameOverride = new PersistableBundle(3);
+                carrierNameOverride.putBoolean(KEY_CARRIER_NAME_OVERRIDE_BOOL, true);
+                carrierNameOverride.putBoolean(KEY_FORCE_HOME_NETWORK_BOOL, true);
+                carrierNameOverride.putString(KEY_CARRIER_NAME_STRING, CARRIER_NAME_OVERRIDE);
+                mConfigManager.overrideConfig(subId, carrierNameOverride);
+
+                Looper.loop();
+            }
+        });
+
+        try {
+            BroadcastReceiver spnBroadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (CARRIER_NAME_OVERRIDE.equals(intent.getStringExtra(EXTRA_SPN))) {
+                        synchronized (mLock) {
+                            mLock.notify();
+                        }
+                    }
+                }
+            };
+
+            getContext().registerReceiver(
+                    spnBroadcastReceiver,
+                    new IntentFilter(SPN_STRINGS_UPDATED_ACTION));
+
+            synchronized (mLock) {
+                t.start();
+                mLock.wait(TOLERANCE); // wait for SPN broadcast
+            }
+
+            assertEquals(CARRIER_NAME_OVERRIDE, mTelephonyManager.getSimOperatorName());
+        } finally {
+            mConfigManager.overrideConfig(subId, null);
+            ui.dropShellPermissionIdentity();
+        }
+    }
 }

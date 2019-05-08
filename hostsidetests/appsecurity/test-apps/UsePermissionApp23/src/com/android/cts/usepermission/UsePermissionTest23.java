@@ -26,10 +26,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.CalendarContract;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ExceptionUtils;
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.UiDumpUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -111,12 +114,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class,
                 () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickAllowButton();
+                    getUiDevice().waitForIdle();
                 });
 
         assertEquals(REQUEST_CODE_PERMISSIONS, result.requestCode);
@@ -151,12 +150,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class,
                 () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickAllowButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is granted
@@ -185,12 +180,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class,
                 () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickAllowButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is granted
@@ -215,12 +206,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class,
                 () -> {
-                    try {
-                        clickDenyButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickDenyButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is not granted
@@ -240,12 +227,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         BasePermissionActivity.Result firstResult = requestPermissions(permissions,
                 REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class, () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickAllowButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is granted
@@ -274,12 +257,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         BasePermissionActivity.Result firstResult = requestPermissions(
                 permissions, REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class, () -> {
-                    try {
-                        clickDenyButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickDenyButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is not granted
@@ -290,12 +269,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         BasePermissionActivity.Result secondResult = requestPermissions(new String[] {
                         Manifest.permission.WRITE_CONTACTS}, REQUEST_CODE_PERMISSIONS + 1,
                 BasePermissionActivity.class, () -> {
-                    try {
-                        denyWithPrejudice();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    denyWithPrejudice();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is not granted
@@ -350,12 +325,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         BasePermissionActivity.Result firstResult = requestPermissions(
                 permissions, REQUEST_CODE_PERMISSIONS,
                 BasePermissionActivity.class, () -> {
-                    try {
-                        clickDenyButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickDenyButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is not granted
@@ -366,12 +337,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         BasePermissionActivity.Result secondResult = requestPermissions(new String[] {
                         Manifest.permission.READ_CALENDAR}, REQUEST_CODE_PERMISSIONS + 1,
                 BasePermissionActivity.class, () -> {
-                    try {
-                        denyWithPrejudice();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    denyWithPrejudice();
+                    getUiDevice().waitForIdle();
                 });
 
         // Expect the permission is not granted
@@ -395,12 +362,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         BasePermissionActivity.Result thirdResult = requestPermissions(new String[] {
                         Manifest.permission.READ_CALENDAR}, REQUEST_CODE_PERMISSIONS + 2,
                 BasePermissionActivity.class, () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    clickAllowButton();
+                    getUiDevice().waitForIdle();
                 });
 
         // Make sure the permission is granted

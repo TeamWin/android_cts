@@ -23,7 +23,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.rules \
     compatibility-device-util-axt \
     ctstestrunner-axt \
-    ub-uiautomator
+    ub-uiautomator \
+    compatibility-device-util \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionActivity.java \

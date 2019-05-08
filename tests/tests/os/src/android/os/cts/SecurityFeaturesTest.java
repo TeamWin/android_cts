@@ -72,7 +72,7 @@ public class SecurityFeaturesTest extends TestCase {
     public void testPrctlDumpable() throws Exception {
         boolean userBuild = "user".equals(Build.TYPE);
         int prctl_dumpable = Os.prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
-        int expected  = userBuild ? 0 : 1;
+        int expected = userBuild ? 0 : 1;
         assertEquals(expected, prctl_dumpable);
     }
 }
