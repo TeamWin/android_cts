@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -53,6 +54,7 @@ import android.transition.TransitionPropagation;
 import android.transition.TransitionValues;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -63,6 +65,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
@@ -549,6 +552,74 @@ public class TransitionTest extends BaseTransitionTest {
         TransitionPropagation propagation = new CircularPropagation();
         transition.setPropagation(propagation);
         assertSame(propagation, transition.getPropagation());
+    }
+
+    @Test
+    public void testForceToEndTransitionsDependedEachOther() throws Throwable {
+        final Transition.TransitionListener listener1 = mock(Transition.TransitionListener.class);
+        final Transition.TransitionListener listener2 = mock(Transition.TransitionListener.class);
+
+        Scene scene1 = loadScene(R.layout.scene1);
+        Scene scene2 = loadScene(R.layout.scene2);
+
+        final ViewGroup scene1Root = scene1.getSceneRoot();
+        final ViewTreeObserver.OnPreDrawListener transition1OnPreDrawListener =
+                new ViewTreeObserver.OnPreDrawListener() {
+                    public boolean onPreDraw() {
+                        // Start the 2nd transition after the 1st transiton starts and does predraw.
+                        Transition transition2 = new TestTransition();
+                        transition2.setDuration(1000);
+                        transition2.addListener(listener2);
+                        TransitionManager.go(scene2, transition2);
+                        scene1Root.getViewTreeObserver().removeOnPreDrawListener(this);
+                        return true;
+                    }
+                };
+
+        // Start the 1st transition.
+        mActivityRule.runOnUiThread(
+                () -> {
+                    Transition transition1 = new TestTransition();
+                    transition1.setDuration(1000);
+
+                    transition1.addListener(listener1);
+                    TransitionManager.go(scene1, transition1);
+                    scene1Root
+                            .getViewTreeObserver()
+                            .addOnPreDrawListener(transition1OnPreDrawListener);
+                });
+
+        // When the 1st transition ends, end the other (2nd) transition if it is still alive.
+        doAnswer(
+                (InvocationOnMock invocation) -> {
+                    TransitionManager.endTransitions(
+                            mActivity.findViewById(R.id.container));
+                    return null;
+                })
+                .when(listener1)
+                .onTransitionEnd(any());
+
+        // When the 2st transition ends, end the other (1nd) transition if it is still alive.
+        doAnswer(
+                (InvocationOnMock invocation) -> {
+                    TransitionManager.endTransitions(
+                            mActivity.findViewById(R.id.container));
+                    return null;
+                })
+                .when(listener2)
+                .onTransitionEnd(any());
+
+        verify(listener1, within(4000)).onTransitionStart(any());
+        verify(listener2, within(4000)).onTransitionStart(any());
+
+        // End both transitions forcibly.
+        mActivityRule.runOnUiThread(
+                () -> {
+                    TransitionManager.endTransitions(mActivity.findViewById(R.id.container));
+                });
+
+        verify(listener1, within(4000)).onTransitionEnd(any());
+        verify(listener2, within(4000)).onTransitionEnd(any());
     }
 
     @Test
