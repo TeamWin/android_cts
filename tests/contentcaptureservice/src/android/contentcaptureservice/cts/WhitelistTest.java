@@ -17,6 +17,8 @@
 package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
+import static android.contentcaptureservice.cts.Helper.NO_ACTIVITIES;
+import static android.contentcaptureservice.cts.Helper.NO_PACKAGES;
 import static android.contentcaptureservice.cts.Helper.read;
 import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.Helper.toSet;
@@ -44,9 +46,6 @@ import java.util.Set;
  */
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLessTest {
-
-    private static final Set<String> NO_PACKAGES = null;
-    private static final Set<ComponentName> NO_ACTIVITIES = null;
 
     @Ignore("will be whitelisted 'lite'")
     @Test
