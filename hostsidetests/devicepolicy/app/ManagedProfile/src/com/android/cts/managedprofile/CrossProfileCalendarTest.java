@@ -154,12 +154,9 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
     public void testPrimaryProfile_cannotAccessWorkCalendarsWhenDisabled() {
         requireRunningOnPrimaryProfile();
 
-        final Cursor cursor = mResolver.query(
+        assertThrows(UnsupportedOperationException.class, () -> mResolver.query(
                 CalendarContract.Calendars.ENTERPRISE_CONTENT_URI,
-                null, null, null, null);
-
-        assertThat(cursor).isNotNull();
-        assertThat(cursor.getCount()).isEqualTo(0);
+                null, null, null, null));
     }
 
     // This test should be run when the test package is not whitelised or cross-profile calendar
@@ -167,12 +164,9 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
     public void testPrimaryProfile_cannotAccessWorkEventsWhenDisabled() {
         requireRunningOnPrimaryProfile();
 
-        final Cursor cursor = mResolver.query(
+        assertThrows(UnsupportedOperationException.class, () -> mResolver.query(
                 CalendarContract.Events.ENTERPRISE_CONTENT_URI,
-                null, SELECTION_ACCOUNT_TYPE, new String[]{TEST_ACCOUNT_TYPE}, null);
-
-        assertThat(cursor).isNotNull();
-        assertThat(cursor.getCount()).isEqualTo(0);
+                null, SELECTION_ACCOUNT_TYPE, new String[]{TEST_ACCOUNT_TYPE}, null));
     }
 
     // This test should be run when the test package is not whitelised or cross-profile calendar
@@ -180,14 +174,11 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
     public void testPrimaryProfile_cannotAccessWorkInstancesWhenDisabled() {
         requireRunningOnPrimaryProfile();
 
-        final Cursor cursor = mResolver.query(
+        assertThrows(UnsupportedOperationException.class, () -> mResolver.query(
                 buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_URI,
                         WORK_EVENT_DTSTART - DateUtils.YEAR_IN_MILLIS,
                         WORK_EVENT_DTEND + DateUtils.YEAR_IN_MILLIS, null),
-                null, null, null, null);
-
-        assertThat(cursor).isNotNull();
-        assertThat(cursor.getCount()).isEqualTo(0);
+                null, null, null, null));
     }
 
     // This test should be run when the test package is whitelisted and cross-profile calendar
