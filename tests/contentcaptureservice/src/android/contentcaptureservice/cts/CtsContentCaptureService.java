@@ -31,7 +31,7 @@ import android.util.Pair;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSessionId;
-import android.view.contentcapture.UserDataRemovalRequest;
+import android.view.contentcapture.DataRemovalRequest;
 import android.view.contentcapture.ViewNode;
 
 import androidx.annotation.NonNull;
@@ -106,7 +106,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     /**
      * Used for testing onUserDataRemovalRequest.
      */
-    private UserDataRemovalRequest mRemovalRequest;
+    private DataRemovalRequest mRemovalRequest;
 
     /**
      * List of activity lifecycle events received.
@@ -281,7 +281,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     @Override
-    public void onUserDataRemovalRequest(UserDataRemovalRequest request) {
+    public void onDataRemovalRequest(DataRemovalRequest request) {
         Log.i(TAG, "onUserDataRemovalRequest(id=" + mId + ",req=" + request + ")");
         mRemovalRequest = request;
     }
@@ -295,7 +295,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     /**
      * Gets the cached UserDataRemovalRequest for testing.
      */
-    public UserDataRemovalRequest getRemovalRequest() {
+    public DataRemovalRequest getRemovalRequest() {
         return mRemovalRequest;
     }
 

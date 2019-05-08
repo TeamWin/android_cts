@@ -32,7 +32,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
-import static android.view.contentcapture.UserDataRemovalRequest.FLAG_IS_PREFIX;
+import static android.view.contentcapture.DataRemovalRequest.FLAG_IS_PREFIX;
 
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -54,8 +54,8 @@ import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSession;
 import android.view.contentcapture.ContentCaptureSessionId;
-import android.view.contentcapture.UserDataRemovalRequest;
-import android.view.contentcapture.UserDataRemovalRequest.LocusIdRequest;
+import android.view.contentcapture.DataRemovalRequest;
+import android.view.contentcapture.DataRemovalRequest.LocusIdRequest;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -508,7 +508,7 @@ public class LoginActivityTest
         final ActivityWatcher watcher = startWatcher();
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
-                .removeUserData(new UserDataRemovalRequest.Builder().forEverything()
+                .removeData(new DataRemovalRequest.Builder().forEverything()
                         .build()));
 
         final LoginActivity activity = launchActivity();
@@ -517,7 +517,7 @@ public class LoginActivityTest
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        UserDataRemovalRequest request = service.getRemovalRequest();
+        DataRemovalRequest request = service.getRemovalRequest();
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isTrue();
         assertThat(request.getLocusIdRequests()).isNull();
@@ -532,7 +532,7 @@ public class LoginActivityTest
         final LocusId locusId = new LocusId("com.example");
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
-                .removeUserData(new UserDataRemovalRequest.Builder()
+                .removeData(new DataRemovalRequest.Builder()
                         .addLocusId(locusId, NO_FLAGS)
                         .build()));
 
@@ -542,7 +542,7 @@ public class LoginActivityTest
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        UserDataRemovalRequest request = service.getRemovalRequest();
+        DataRemovalRequest request = service.getRemovalRequest();
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isFalse();
         assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
@@ -564,7 +564,7 @@ public class LoginActivityTest
         final LocusId locusId2 = new LocusId("com.example2");
 
         LoginActivity.onRootView((activity, rootView) -> activity.getContentCaptureManager()
-                .removeUserData(new UserDataRemovalRequest.Builder()
+                .removeData(new DataRemovalRequest.Builder()
                         .addLocusId(locusId1, NO_FLAGS)
                         .addLocusId(locusId2, FLAG_IS_PREFIX)
                         .build()));
@@ -575,7 +575,7 @@ public class LoginActivityTest
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final UserDataRemovalRequest request = service.getRemovalRequest();
+        final DataRemovalRequest request = service.getRemovalRequest();
         assertThat(request).isNotNull();
         assertThat(request.isForEverything()).isFalse();
         assertThat(request.getPackageName()).isEqualTo(MY_PACKAGE);
