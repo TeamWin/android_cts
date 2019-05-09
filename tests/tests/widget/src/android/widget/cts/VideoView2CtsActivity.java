@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2017 The Android Open Source Project
+/*
+ * Copyright 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+package android.widget.cts;
 
-@SecurityTest
-public class Poc16_09 extends SecurityTestCase {
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.VideoView2;
+
+/**
+ * A minimal application for {@link VideoView2} test.
+ */
+public class VideoView2CtsActivity extends Activity {
     /**
-     * b/27773913
+     * Called with the activity is first created.
      */
-    @SecurityTest(minPatchLevel = "2016-09")
-    public void testPocCVE_2016_2471() throws Exception {
-        AdbUtils.runPoc("CVE-2016-2471", getDevice(), 60);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.videoview2_layout);
     }
 }

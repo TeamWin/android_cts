@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
 
+import static org.junit.Assert.*;
+
 @SecurityTest
-public class Poc16_07 extends SecurityTestCase {
-    /**
-     *  b/28740702
-     */
-    @SecurityTest(minPatchLevel = "2016-07")
-    public void testPocCVE_2016_3818() throws Exception {
-        AdbUtils.runPoc("CVE-2016-3818", getDevice(), 60);
-    }
+public class Poc18_11 extends SecurityTestCase {
 
     /**
-     *  b/27890802
+     *  b/111330641
      */
-    @SecurityTest(minPatchLevel = "2016-07")
-    public void testPocCVE_2016_3746() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2016-3746", getDevice(), 60);
-        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<",
-                logcat);
+    @SecurityTest(minPatchLevel = "2018-11")
+    public void testPocCVE_2018_9525() throws Exception {
+        assertTrue(AdbUtils.runCommandGetExitCode(
+                "pm dump com.android.settings | grep SliceBroadcastReceiver", getDevice()) != 0);
     }
 }
