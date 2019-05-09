@@ -44,6 +44,8 @@ public class CtsCallRedirectionService extends CallRedirectionService {
         CtsCallRedirectionServiceController controller =
                 CtsCallRedirectionServiceController.getInstance();
         if (controller != null) {
+            controller.setDestinationUri(handle);
+            controller.setOriginalPhoneAccount(initialPhoneAccount);
             int decision = controller.getCallRedirectionDecision();
             if (decision == CtsCallRedirectionServiceController.PLACE_CALL_UNMODIFIED) {
                 placeCallUnmodified();
