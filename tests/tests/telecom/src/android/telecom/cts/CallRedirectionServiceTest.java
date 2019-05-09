@@ -33,6 +33,7 @@ import android.os.Looper;
 import android.os.Process;
 import android.os.UserHandle;
 
+import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.cts.redirectiontestapp.CtsCallRedirectionService;
@@ -57,16 +58,14 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
     private static final Uri SAMPLE_HANDLE = Uri.fromParts(PhoneAccount.SCHEME_TEL, "0001112222",
             null);
 
-    private static final PhoneAccountHandle SAMPLE_PHONE_ACCOUNT = new PhoneAccountHandle(
-            new ComponentName("android.telecom.cts",
-                    "android.telecom.cts.CallRedirectionServiceTest"),
-            "CTS_PHONE_ACCOUNT_ID");
-
     private static final int ASYNC_TIMEOUT = 10000;
     private RoleManager mRoleManager;
     private Handler mHandler;
+    private Call mCall;
     private String mPreviousCallRedirectionPackage;
     private ICtsCallRedirectionServiceController mCallRedirectionServiceController;
+
+    private MockInCallService mInCallService;
 
     @Override
     protected void setUp() throws Exception {
@@ -74,6 +73,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         if (!mShouldTestTelecom) {
             return;
         }
+        NewOutgoingCallBroadcastReceiver.reset();
         mHandler = new Handler(Looper.getMainLooper());
         mRoleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
         setupControlBinder();
@@ -102,14 +102,38 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         }
     }
 
-    public void testRedirectedCall() throws Exception {
+    public void testRedirectedCallWithRedirectedGateway()
+            throws Exception {
         if (!shouldTestTelecom(mContext)) {
             return;
         }
         mCallRedirectionServiceController.setRedirectCall(
-                SAMPLE_HANDLE, SAMPLE_PHONE_ACCOUNT, false);
-        // TODO write the test placeAndVerifyCall();
-        // TODO verify redirection information
+                SAMPLE_HANDLE, null, false);
+        placeAndVerifyCall(true /* viaCallRedirection */, false /* cancelledByCallRedirection */);
+        mInCallService = mInCallCallbacks.getService();
+        assertCallGatewayConstructed(mInCallService.getLastCall(), true);
+        mCall = mInCallService.getLastCall();
+        assertEquals(SAMPLE_HANDLE, mCall.getDetails().getGatewayInfo().getGatewayAddress());
+        assertEquals(getTestNumber(), mCall.getDetails().getGatewayInfo().getOriginalAddress());
+        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, mCall.getDetails().getAccountHandle());
+        assertTrue(Call.STATE_DISCONNECTED != mCall.getState());
+    }
+
+    public void testRedirectedCallWithRedirectedPhoneAccount()
+            throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        mCallRedirectionServiceController.setRedirectCall(
+                SAMPLE_HANDLE, TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2, false);
+        placeAndVerifyCall(true /* viaCallRedirection */, false /* cancelledByCallRedirection */);
+        mInCallService = mInCallCallbacks.getService();
+        assertCallGatewayConstructed(mInCallService.getLastCall(), true);
+        mCall = mInCallService.getLastCall();
+        assertEquals(SAMPLE_HANDLE, mCall.getDetails().getGatewayInfo().getGatewayAddress());
+        assertEquals(getTestNumber(), mCall.getDetails().getGatewayInfo().getOriginalAddress());
+        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2, mCall.getDetails().getAccountHandle());
+        assertTrue(Call.STATE_DISCONNECTED != mCall.getState());
     }
 
     public void testCancelCall() throws Exception {
@@ -117,8 +141,10 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
             return;
         }
         mCallRedirectionServiceController.setCancelCall();
-        // TODO write the test placeAndVerifyCall();
-        // TODO verify redirection information
+        placeAndVerifyCall(true /* viaCallRedirection */, true /* cancelledByCallRedirection */);
+        mInCallService = mInCallCallbacks.getService();
+        mCall = mInCallService.getLastCall();
+        assertCallNotNull(mCall, false);
     }
 
     public void testPlaceCallUnmodified() throws Exception {
@@ -126,9 +152,15 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
             return;
         }
         mCallRedirectionServiceController.setPlaceCallUnmodified();
-        // TODO write the test placeAndVerifyCall();
-        // TODO verify redirection information
+        placeAndVerifyCall(true /* viaCallRedirection */, false /* cancelledByCallRedirection */);
+        mInCallService = mInCallCallbacks.getService();
+        assertCallDetailsConstructed(mInCallService.getLastCall(), true);
+        mCall = mInCallService.getLastCall();
+        assertEquals(getTestNumber(), mCall.getDetails().getHandle());
+        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, mCall.getDetails().getAccountHandle());
+        assertTrue(Call.STATE_DISCONNECTED != mCall.getState());
     }
+
     /**
      * Sets up a binder used to control the CallRedirectionServiceCtsTestApp.
      * This app is a standalone APK so that it can reside in a package name outside of the one the

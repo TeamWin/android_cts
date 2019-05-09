@@ -45,7 +45,9 @@ public class CtsCallRedirectionServiceController extends Service {
 
     // Redirection information, only valid if decision is PLACE_REDIRECTED_CALL.
     private Uri mTargetHandle = null;
-    private PhoneAccountHandle mTargetPhoneAccount = null;
+    private Uri mDestinationUri = null;
+    private PhoneAccountHandle mRedirectedPhoneAccount = null;
+    private PhoneAccountHandle mOriginalPhoneAccount = null;
     private boolean mConfirmFirst = false;
 
     private static CtsCallRedirectionServiceController sCallRedirectionServiceController = null;
@@ -57,12 +59,13 @@ public class CtsCallRedirectionServiceController extends Service {
                 }
 
                 @Override
-                public void setRedirectCall(Uri targetHandle, PhoneAccountHandle targetPhoneAccount,
-                                         boolean confirmFirst) {
+                public void setRedirectCall(Uri targetHandle,
+                                            PhoneAccountHandle redirectedPhoneAccount,
+                                            boolean confirmFirst) {
                     Log.i(TAG, "redirectCall");
                     mDecision = PLACE_REDIRECTED_CALL;
                     mTargetHandle = targetHandle;
-                    mTargetPhoneAccount = targetPhoneAccount;
+                    mRedirectedPhoneAccount = redirectedPhoneAccount;
                     mConfirmFirst = confirmFirst;
                 }
 
@@ -109,7 +112,15 @@ public class CtsCallRedirectionServiceController extends Service {
     }
 
     public PhoneAccountHandle getTargetPhoneAccount() {
-        return mTargetPhoneAccount;
+        return mRedirectedPhoneAccount != null ? mRedirectedPhoneAccount : mOriginalPhoneAccount;
+    }
+
+    public void setOriginalPhoneAccount(PhoneAccountHandle originalPhoneAccount) {
+        mOriginalPhoneAccount = originalPhoneAccount;
+    }
+
+    public void setDestinationUri(Uri destinationUri) {
+        mDestinationUri = destinationUri;
     }
 
     public boolean isConfirmFirst() {
