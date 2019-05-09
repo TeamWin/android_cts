@@ -80,7 +80,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         String[] permissions = {ACCESS_FINE_LOCATION};
 
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                this::clickAllowButton);
+                this::clickAllowForegroundButton);
         assertPermissionRequestResult(result, permissions, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -116,7 +116,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         String[] permissions = {ACCESS_FINE_LOCATION};
 
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                this::clickAllowButton);
+                this::clickAllowForegroundButton);
         assertPermissionRequestResult(result, permissions, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
