@@ -315,9 +315,9 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
     }
 
     @Test
-    public void testSetDestinationUri() throws Exception {
+    public void testSetDestinationUri_invalidRequests() throws Exception {
         final File documentsFile = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+                Environment.getExternalStoragePublicDirectory("TestDir"),
                 "uriFile.bin");
         if (documentsFile.exists()) {
             assertTrue(documentsFile.delete());
@@ -352,80 +352,81 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
         } catch (Exception e) {
             // Expected
         }
+    }
 
-        File downloadsFile = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "uriFile.bin");
-        if (downloadsFile.exists()) {
-            assertTrue(downloadsFile.delete());
-        }
+    @Test
+    public void testSetDestinationUri() throws Exception {
+        final File[] destinationFiles = {
+                new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), System.nanoTime() + "_uriFile.bin"),
+                new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), System.nanoTime() + "_file.jpg"),
+        };
 
-        final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
-        try {
-            IntentFilter intentFilter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-            mContext.registerReceiver(receiver, intentFilter);
+        for (File downloadsFile : destinationFiles) {
+            final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
+            try {
+                IntentFilter intentFilter = new IntentFilter(
+                        DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+                mContext.registerReceiver(receiver, intentFilter);
 
-            DownloadManager.Request request = new DownloadManager.Request(getGoodUrl());
-            request.setDestinationUri(Uri.fromFile(downloadsFile));
-            long id = mDownloadManager.enqueue(request);
+                DownloadManager.Request request = new DownloadManager.Request(getGoodUrl());
+                request.setDestinationUri(Uri.fromFile(downloadsFile));
+                long id = mDownloadManager.enqueue(request);
 
-            int allDownloads = getTotalNumberDownloads();
-            assertEquals(1, allDownloads);
+                int allDownloads = getTotalNumberDownloads();
+                assertEquals(1, allDownloads);
 
-            receiver.waitForDownloadComplete(SHORT_TIMEOUT, id);
-            assertSuccessfulDownload(id, downloadsFile);
+                receiver.waitForDownloadComplete(SHORT_TIMEOUT, id);
+                assertSuccessfulDownload(id, downloadsFile);
 
-            assertRemoveDownload(id, 0);
-        } finally {
-            mContext.unregisterReceiver(receiver);
+                assertRemoveDownload(id, 0);
+            } finally {
+                mContext.unregisterReceiver(receiver);
+            }
         }
     }
 
     @Test
-    public void testSetDestinationInExternalPublicDir() throws Exception {
-        File publicLocation = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "testing/publicFile.bin");
-        if (publicLocation.exists()) {
-            assertTrue(publicLocation.delete());
-        }
+    public void testSetDestinationInExternalPublicDownloadDir() throws Exception {
+        final String[] destinations = {
+                Environment.DIRECTORY_DOWNLOADS,
+                Environment.DIRECTORY_DCIM,
+        };
+        final String[] subPaths = {
+                "testing/" + System.nanoTime() + "_publicFile.bin",
+                System.nanoTime() + "_file.jpg",
+        };
 
-        final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
-        try {
-            IntentFilter intentFilter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-            mContext.registerReceiver(receiver, intentFilter);
+        for (int i = 0; i < destinations.length; ++i) {
+            final String destination = destinations[i];
+            final String subPath = subPaths[i];
 
-            DownloadManager.Request requestPublic = new DownloadManager.Request(getGoodUrl());
-            requestPublic.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
-                    "testing/publicFile.bin");
-            long id = mDownloadManager.enqueue(requestPublic);
+            final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
+            try {
+                IntentFilter intentFilter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+                mContext.registerReceiver(receiver, intentFilter);
 
-            int allDownloads = getTotalNumberDownloads();
-            assertEquals(1, allDownloads);
+                DownloadManager.Request requestPublic = new DownloadManager.Request(getGoodUrl());
+                requestPublic.setDestinationInExternalPublicDir(destination, subPath);
+                long id = mDownloadManager.enqueue(requestPublic);
 
-            receiver.waitForDownloadComplete(SHORT_TIMEOUT, id);
-            assertSuccessfulDownload(id, publicLocation);
+                int allDownloads = getTotalNumberDownloads();
+                assertEquals(1, allDownloads);
 
-            assertRemoveDownload(id, 0);
-        } finally {
-            mContext.unregisterReceiver(receiver);
+                receiver.waitForDownloadComplete(SHORT_TIMEOUT, id);
+                assertSuccessfulDownload(id, new File(
+                        Environment.getExternalStoragePublicDirectory(destination), subPath));
+
+                assertRemoveDownload(id, 0);
+            } finally {
+                mContext.unregisterReceiver(receiver);
+            }
         }
     }
 
     @Test
     public void testSetDestinationInExternalPublicDir_invalidRequests() {
-        final Request badRequest = new Request(getGoodUrl());
-        try {
-            badRequest.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOCUMENTS,
-                    "uriFile.bin");
-            mDownloadManager.enqueue(badRequest);
-            fail(new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOCUMENTS), "uriFile.bin")
-                    + " is not valid for setDestinationInExternalPublicDir()");
-        } catch (Exception e) {
-            // Expected
-        }
-
         final Request badRequest2 = new Request(getGoodUrl());
         try {
             badRequest2.setDestinationInExternalPublicDir("TestDir", "uriFile.bin");
