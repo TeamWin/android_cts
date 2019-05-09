@@ -56,7 +56,6 @@ public class DialogFrameTestActivity extends Activity {
     static final String TEST_WITH_MARGINS = "WithMargins";
 
     private AlertDialog mDialog;
-    private int mSize;
 
     @Override
     protected void onStop() {
@@ -72,7 +71,6 @@ public class DialogFrameTestActivity extends Activity {
 
     private void setupTest(Intent intent) {
         final String testCase = intent.getStringExtra(EXTRA_TEST_CASE);
-        mSize = getSize();
         switch (testCase) {
             case TEST_MATCH_PARENT:
                 testMatchParent();
@@ -145,23 +143,23 @@ public class DialogFrameTestActivity extends Activity {
 
     private void testExplicitSize() {
         doLayoutParamTest(params -> {
-            params.width = mSize;
-            params.height = mSize;
+            params.width = 200;
+            params.height = 200;
         });
     }
 
     private void testExplicitSizeTopLeftGravity() {
         doLayoutParamTest(params -> {
-            params.width = mSize;
-            params.height = mSize;
+            params.width = 200;
+            params.height = 200;
             params.gravity = Gravity.TOP | Gravity.LEFT;
         });
     }
 
     private void testExplicitSizeBottomRightGravity() {
         doLayoutParamTest(params -> {
-            params.width = mSize;
-            params.height = mSize;
+            params.width = 200;
+            params.height = 200;
             params.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         });
     }
@@ -211,15 +209,10 @@ public class DialogFrameTestActivity extends Activity {
             params.gravity = Gravity.LEFT | Gravity.TOP;
             params.horizontalMargin = .25f;
             params.verticalMargin = .35f;
-            params.width = mSize;
-            params.height = mSize;
+            params.width = 200;
+            params.height = 200;
             params.x = 0;
             params.y = 0;
         });
-    }
-
-    private int getSize() {
-        float density = getResources().getDisplayMetrics().density;
-        return (int)(200 * density);
     }
 }

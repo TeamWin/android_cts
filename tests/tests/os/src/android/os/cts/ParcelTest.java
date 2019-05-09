@@ -19,7 +19,11 @@ package android.os.cts;
 import java.io.FileDescriptor;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import android.content.pm.Signature;
 import android.os.BadParcelableException;
@@ -3248,6 +3252,60 @@ public class ParcelTest extends AndroidTestCase {
             parcel.readByteArray(new byte[2]);
             fail();
         } catch (RuntimeException expected) {
+        }
+    }
+
+    public void testMaliciousMapWrite() {
+        class MaliciousMap<K, V> extends HashMap<K, V> {
+            public int fakeSize = 0;
+            public boolean armed = false;
+
+            class FakeEntrySet extends HashSet<Entry<K, V>> {
+                public FakeEntrySet(Collection<? extends Entry<K, V>> c) {
+                    super(c);
+                }
+
+                @Override
+                public int size() {
+                    if (armed) {
+                        // Only return fake size on next call, to mitigate unexpected behavior.
+                        armed = false;
+                        return fakeSize;
+                    } else {
+                        return super.size();
+                    }
+                }
+            }
+
+            @Override
+            public Set<Map.Entry<K, V>> entrySet() {
+                return new FakeEntrySet(super.entrySet());
+            }
+        }
+
+        Parcel parcel = Parcel.obtain();
+
+        // Fake having more Map entries than there really are
+        MaliciousMap map = new MaliciousMap<String, String>();
+        map.fakeSize = 1;
+        map.armed = true;
+        try {
+            parcel.writeMap(map);
+            fail("Should have thrown a BadParcelableException");
+        } catch (BadParcelableException bpe) {
+            // good
+        }
+
+        // Fake having fewer Map entries than there really are
+        map = new MaliciousMap<String, String>();
+        map.put("key", "value");
+        map.fakeSize = 0;
+        map.armed = true;
+        try {
+            parcel.writeMap(map);
+            fail("Should have thrown a BadParcelableException");
+        } catch (BadParcelableException bpe) {
+            // good
         }
     }
 }

@@ -17,19 +17,16 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import org.junit.runner.RunWith;
 
-@SecurityTest
-public class Poc17_05 extends SecurityTestCase {
-
+public class Poc18_04 extends SecurityTestCase {
     /**
-     *  b/34277115
+     * b/69683251
+     * Does not require root but must be a hostside test to avoid
+     * a race condition
      */
-    @SecurityTest(minPatchLevel = "2017-05")
-    public void testPocCVE_2017_0630() throws Exception {
-        if (containsDriver(getDevice(), "/sys/kernel/debug/tracing/printk_formats")) {
-          String commandOutput = AdbUtils.runCommandLine("cat /sys/kernel/debug/tracing" +
-                                                         "/printk_formats", getDevice());
-          assertNotMatchesMultiLine(".*0x(?!0){8,16}[0-9a-fA-F]{8,16} : .*", commandOutput);
-        }
+    @SecurityTest(minPatchLevel = "2018-04")
+    public void testPocCVE_2017_13286() throws Exception {
+        LaunchSomeWhere.launchSomeWhere("CVE_2017_13286", getDevice());
     }
 }

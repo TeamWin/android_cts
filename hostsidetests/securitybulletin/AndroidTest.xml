@@ -27,7 +27,6 @@
         <option name="push" value="CVE-2016-6734->/data/local/tmp/CVE-2016-6734" />
         <option name="push" value="CVE-2016-6735->/data/local/tmp/CVE-2016-6735" />
         <option name="push" value="CVE-2016-6736->/data/local/tmp/CVE-2016-6736" />
-        <option name="push" value="CVE-2016-8424->/data/local/tmp/CVE-2016-8424" />
         <option name="push" value="CVE-2016-8425->/data/local/tmp/CVE-2016-8425" />
         <option name="push" value="CVE-2016-8426->/data/local/tmp/CVE-2016-8426" />
         <option name="push" value="CVE-2016-8427->/data/local/tmp/CVE-2016-8427" />
@@ -55,18 +54,12 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
 
         <!--__________________-->
-        <!-- Bulletin 2016-06 -->
-        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2016-2062->/data/local/tmp/CVE-2016-2062" />
-
-        <!--__________________-->
         <!-- Bulletin 2016-07 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2016-3818->/data/local/tmp/CVE-2016-3818" />
 
         <!-- Bulletin 2016-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2015-8839->/data/local/tmp/CVE-2015-8839" />
         <option name="push" value="CVE-2016-2471->/data/local/tmp/CVE-2016-2471" />
 
         <!--__________________-->
