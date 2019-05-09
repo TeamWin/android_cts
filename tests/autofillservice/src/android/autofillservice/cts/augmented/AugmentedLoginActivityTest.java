@@ -17,20 +17,34 @@
 package android.autofillservice.cts.augmented;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.assertHasFlags;
+import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
 import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_FILL_TIMEOUT;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.DO_NOT_REPLY_AUGMENTED_RESPONSE;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
+import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
+import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.AutofillActivityTestRule;
+import android.autofillservice.cts.CannedFillResponse;
+import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.Helper;
+import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.LoginActivity;
 import android.autofillservice.cts.MyAutofillCallback;
 import android.autofillservice.cts.OneTimeCancellationSignalListener;
@@ -85,6 +99,64 @@ public class AugmentedLoginActivityTest
         // Set expectations
         final EditText username = mActivity.getUsername();
         final AutofillValue expectedFocusedValue = username.getAutofillValue();
+        final AutofillId usernameId = username.getAutofillId();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest augmentedRequest = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(augmentedRequest, mActivity, usernameId, expectedFocusedValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is not shown.
+        mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAutoFill_neitherServiceCanAutofill_manualRequest() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillValue expectedFocusedValue = username.getAutofillValue();
+        final AutofillId usernameId = username.getAutofillId();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+
+        // Trigger autofill
+        mActivity.forceAutofillOnUsername();
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest augmentedRequest = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(augmentedRequest, mActivity, usernameId, expectedFocusedValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is not shown.
+        mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAutoFill_neitherServiceCanAutofill_thenManualRequest() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillValue expectedFocusedValue = username.getAutofillValue();
         final AutofillId expectedFocusedId = username.getAutofillId();
         sReplier.addResponse(NO_RESPONSE);
         sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
@@ -102,6 +174,43 @@ public class AugmentedLoginActivityTest
 
         // Make sure Augmented Autofill UI is not shown.
         mAugmentedUiBot.assertUiNeverShown();
+
+        // Try again, forcing it
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+        mActivity.forceAutofillOnUsername();
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
+        mAugmentedUiBot.assertUiNeverShown();
+
+        mUiBot.selectDataset("The Dude");
+        mActivity.assertAutoFilled();
+
+        // Now force save to make sure the values changes are notified
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        sReplier.assertNoUnhandledSaveRequests();
+        assertThat(saveRequest.datasetIds).isNull();
+
+        // Assert value of expected fields - should not be sanitized.
+        final ViewNode usernameNode = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        assertTextAndValue(usernameNode, "malkovich");
+        final ViewNode passwordNode = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+        assertTextAndValue(passwordNode, "malkovich");
     }
 
     @Test
@@ -509,6 +618,89 @@ public class AugmentedLoginActivityTest
 
         // Assert request
         assertBasicRequestInfo(request, mActivity, usernameId, usernameValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+
+        // Autofill
+        ui.click();
+        mActivity.assertAutoFilled();
+        mAugmentedUiBot.assertUiGone();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAugmentedAutoFill_mainServiceDisabled_manualRequest() throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .build());
+        mActivity.expectAutoFill("dude");
+
+        // Trigger autofill
+        mActivity.forceAutofillOnUsername();
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request, mActivity, usernameId, usernameValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+
+        // Autofill
+        ui.click();
+        mActivity.assertAutoFilled();
+        mAugmentedUiBot.assertUiGone();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAugmentedAutoFill_mainServiceDisabled_autoThenManualRequest() throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
+
+        // Make sure standard no UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+        mAugmentedUiBot.assertUiNeverShown();
+
+
+        // Trigger 2nd request, manually
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .build());
+        mActivity.expectAutoFill("dude");
+        mActivity.forceAutofillOnUsername();
+        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+        assertBasicRequestInfo(request2, mActivity, usernameId, usernameValue);
 
         // Make sure standard Autofill UI is not shown.
         mUiBot.assertNoDatasetsEver();
