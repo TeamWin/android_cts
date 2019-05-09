@@ -69,14 +69,14 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     /** Verifies if the count of configuration changes is expected. */
     private static final int TEST_MODE_CONFIGURATION_CHANGE = 1;
     /** Verifies if the count of relaunch is expected. */
-    private static final int TEST_MODE_RELAUNCH = 2;
+    private static final int TEST_MODE_RELAUNCH_OR_CONFIG_CHANGE = 2;
     /** Verifies if sizes match. */
     private static final int TEST_MODE_RESIZE = 3;
 
     /** Test mode that defines which lifecycle callback is verified in a particular test */
     @IntDef(flag = true, value = {
             TEST_MODE_CONFIGURATION_CHANGE,
-            TEST_MODE_RELAUNCH,
+            TEST_MODE_RELAUNCH_OR_CONFIG_CHANGE,
             TEST_MODE_RESIZE
     })
     @Retention(RetentionPolicy.SOURCE)
@@ -124,7 +124,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
 
-        testRotation180WithCutout(TEST_ACTIVITY, TEST_MODE_RELAUNCH);
+        testRotation180WithCutout(TEST_ACTIVITY, TEST_MODE_RELAUNCH_OR_CONFIG_CHANGE);
     }
 
     @Test
@@ -172,11 +172,12 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
                     assertEquals("There must be no relaunch during test", 0, relaunch);
                     break;
                 }
-                case TEST_MODE_RELAUNCH: {
-                    assertEquals("There must be no configuration change during test",
-                            0, configChange);
+                case TEST_MODE_RELAUNCH_OR_CONFIG_CHANGE: {
+                    // If the size change does not cross the threshold, the activity will receive
+                    // onConfigurationChanged instead of relaunching.
                     assertTrue("There must be at most one 180 degree rotation that results in"
-                            + " relaunch on device with cutout", relaunch <= 1);
+                            + " relaunch or a configuration change on device with cutout",
+                            relaunch + configChange <= 1);
                     break;
                 }
                 case TEST_MODE_RESIZE: {
