@@ -29,6 +29,7 @@ import static com.android.cts.verifier.net.MultiNetworkConnectivityTestActivity.
 import static com.android.cts.verifier.net.MultiNetworkConnectivityTestActivity.ValidatorState
         .WAITING_FOR_USER_INPUT;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -48,6 +49,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -228,6 +230,29 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         }
     }
 
+    private boolean requestSystemAlertWindowPerimissionIfRequired() {
+        boolean hadPermission = false;
+        if (!Settings.canDrawOverlays(this)) {
+            AlertDialog alertDialog = new AlertDialog.Builder(this)
+                .setMessage(R.string.multinetwork_connectivity_overlay_permission_message)
+                .setPositiveButton(
+                  R.string.multinetwork_connectivity_overlay_permission_positive,
+                  (a, b) -> {
+                      Intent myIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                      startActivity(myIntent);
+                  })
+                .setNegativeButton(
+                  R.string.multinetwork_connectivity_overlay_permission_negative,
+                  (a, b) -> {})
+                .create();
+            alertDialog.show();
+        } else {
+          hadPermission = true;
+        }
+
+        return hadPermission;
+    }
+
     private void setupUserInterface() {
         setContentView(R.layout.multinetwork_connectivity);
         setInfoResources(
@@ -382,6 +407,11 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
     }
 
     private void processStartClicked() {
+        if (!requestSystemAlertWindowPerimissionIfRequired()) {
+          Log.e(TAG, "System alert dialog permission not granted to CTSVerifier");
+          return;
+        }
+
         if (mCurrentValidator == null) {
             rerunMultinetworkTests();
             setupCurrentTestStateOnResume();
