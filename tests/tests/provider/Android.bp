@@ -19,6 +19,8 @@ android_test {
     ],
 
     static_libs: [
+        "androidx.slice_slice-core",
+        "androidx.slice_slice-view",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "junit",
