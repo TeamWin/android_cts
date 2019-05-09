@@ -799,13 +799,10 @@ public class CarrierApiTest extends AndroidTestCase {
                 0, // p3: not required for STATUS
                 ""); // filePath: not required for STATUS
         String resultString = bytesToHexString(result);
-        assertTrue("TelephonyManager#iccExchangeSimIO should not give an empty response",
-                !resultString.isEmpty());
-        // TODO(b/131353609): uncomment logic to fully check TelMan#iccExchangeSimIO response
-        // FcpTemplate fcpTemplate = FcpTemplate.parseFcpTemplate(resultString);
-        // assertTrue(containsFileId(fcpTemplate, MF_FILE_ID));
-        // assertEquals("iccExchangeSimIO returned non-normal Status byte: " + resultString,
-        //         STATUS_NORMAL_STRING, fcpTemplate.getStatus());
+        FcpTemplate fcpTemplate = FcpTemplate.parseFcpTemplate(resultString);
+        assertTrue(containsFileId(fcpTemplate, MF_FILE_ID));
+        assertEquals("iccExchangeSimIO returned non-normal Status byte: " + resultString,
+                STATUS_NORMAL_STRING, fcpTemplate.getStatus());
     }
 
     /**
@@ -827,10 +824,8 @@ public class CarrierApiTest extends AndroidTestCase {
                 + "00" // p2: value required for Envelope command
                 + lc
                 + envelope);
-        assertNotNull("sendEnvelopeWithStatus returned: " + response, response);
-        // TODO(b/131422420): uncomment logic to fully check TelMan#sendEnvelopeWithStatus response
-        // assertEquals("sendEnvelopeWithStatus returned: " + response,
-        //         STATUS_NORMAL_STRING, response);
+        assertEquals("sendEnvelopeWithStatus returned: " + response,
+                STATUS_NORMAL_STRING, response);
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
