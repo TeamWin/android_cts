@@ -41,10 +41,12 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.net.NetworkSpecifier;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiNetworkSpecifier;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -160,8 +162,10 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
     private final MultiNetworkValidator[] mMultiNetworkValidators = {
             new ConnectToWifiWithNoInternetValidator(
                     R.string.multinetwork_connectivity_test_1_desc),
-            new ConnectToWifiWithIntermittentInternetValidator(
-                    R.string.multinetwork_connectivity_test_2_desc)
+            new LegacyConnectToWifiWithNoInternetValidator(
+                    R.string.multinetwork_connectivity_test_2_desc),
+            new LegacyConnectToWifiWithIntermittentInternetValidator(
+                    R.string.multinetwork_connectivity_test_3_desc)
     };
     private final Runnable mTimeToCompletionRunnable = new Runnable() {
         @Override
@@ -439,7 +443,7 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         return wifiConfiguration;
     }
 
-    private int addOrUpdateNetwork() {
+    private int getOrAddLegacyNetwork() {
         List<WifiConfiguration> availableConfigurations = mWifiManager.getConfiguredNetworks();
         for (WifiConfiguration configuration : availableConfigurations) {
             if (mAccessPointSsid.equals(configuration.SSID)) {
@@ -531,11 +535,11 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
             }
         }
 
-        private void connectToWifiNetwork(boolean requireInternet) {
+        private void legacyConnectToWifiNetwork(boolean requireInternet) {
             // If device is not connected to the expected WifiNetwork, connect to the wifi Network.
             // Timeout with failure if it can't connect.
             if (!isConnectedToExpectedWifiNetwork()) {
-                int network = addOrUpdateNetwork();
+                int network = getOrAddLegacyNetwork();
                 WifiManager wifiManager = (WifiManager) getApplicationContext()
                         .getSystemService(Context.WIFI_SERVICE);
                 wifiManager.enableNetwork(network, true);
@@ -550,6 +554,24 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
             mWifiNetworkRequested = true;
             mConnectivityManager.requestNetwork(networkRequest, mWifiNetworkCallback,
                     mMainHandler, WIFI_NETWORK_CONNECT_TIMEOUT_MS);
+        }
+
+        private void connectToWifiNetworkWithNoInternet() {
+            NetworkSpecifier specifier =
+                new WifiNetworkSpecifier.Builder()
+                  .setSsid(mAccessPointSsid)
+                  .setWpa2Passphrase(mPskValue)
+                  .build();
+
+            NetworkRequest networkRequest = new NetworkRequest.Builder()
+                    .addTransportType(TRANSPORT_WIFI)
+                    .setNetworkSpecifier(specifier)
+                    .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
+
+            mWifiNetworkRequested = true;
+            mConnectivityManager.requestNetwork(networkRequest, mWifiNetworkCallback,
+                    mMainHandler);
         }
 
         private void connectToCellularNetwork() {
@@ -635,12 +657,6 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
             mValidatorState = STARTED;
         }
 
-
-        void connectToWifi() {
-            mTestCallback.testProgress(R.string.multinetwork_connectivity_test_connect_wifi);
-            mConnectivityState.connectToWifiNetwork(false);
-        }
-
         void onCellularNetworkUnavailable() {
             endTest(false, R.string.multinetwork_status_mobile_connect_timed_out);
         }
@@ -705,12 +721,12 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
 
     /**
      * Test that device does not lose cellular connectivity when it's connected to an access
-     * point with no connectivity.
+     * point with no connectivity using legacy API's.
      */
-    private class ConnectToWifiWithNoInternetValidator extends MultiNetworkValidator {
+    private class LegacyConnectToWifiWithNoInternetValidator extends MultiNetworkValidator {
 
-        ConnectToWifiWithNoInternetValidator(int description) {
-            super(mMultinetworkTestCallback, "no_internet_test", description);
+        LegacyConnectToWifiWithNoInternetValidator(int description) {
+            super(mMultinetworkTestCallback, "legacy_no_internet_test", description);
         }
 
 
@@ -754,19 +770,25 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
                 endTest(false, R.string.multinetwork_status_wifi_connect_wrong_ap);
             }
         }
+
+        void connectToWifi() {
+            mTestCallback.testProgress(R.string.multinetwork_connectivity_test_connect_wifi);
+            mConnectivityState.legacyConnectToWifiNetwork(false);
+        }
     }
 
     /**
      * Test that device restores lost cellular connectivity when it's connected to an access
-     * point which loses internet connectivity.
+     * point which loses internet connectivity using legacy API's.
      */
-    private class ConnectToWifiWithIntermittentInternetValidator extends MultiNetworkValidator {
+    private class LegacyConnectToWifiWithIntermittentInternetValidator
+        extends MultiNetworkValidator {
         boolean mWaitingForWifiConnect = false;
         boolean mWaitingForCelluarToConnectBack = false;
         Network mWifiNetwork;
 
-        ConnectToWifiWithIntermittentInternetValidator(int description) {
-            super(mMultinetworkTestCallback, "no_internet_test", description);
+        LegacyConnectToWifiWithIntermittentInternetValidator(int description) {
+            super(mMultinetworkTestCallback, "legcay_no_internet_test", description);
         }
 
         @Override
@@ -789,10 +811,9 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
             requestUserConfirmation();
         }
 
-        @Override
         void connectToWifi() {
             mTestCallback.testProgress(R.string.multinetwork_connectivity_test_connect_wifi);
-            mConnectivityState.connectToWifiNetwork(true);
+            mConnectivityState.legacyConnectToWifiNetwork(true);
         }
 
         @Override
@@ -869,6 +890,64 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
                     endTest(false, R.string.multinetwork_status_mobile_restore_failed);
                 }
             }, CELLULAR_NETWORK_RESTORE_AFTER_WIFI_INTERNET_LOST_TIMEOUT_MS);
+        }
+    }
+
+    /**
+     * Test that device does not lose cellular connectivity when it's connected to an access
+     * point with no connectivity using the new API's.
+     */
+    private class ConnectToWifiWithNoInternetValidator extends MultiNetworkValidator {
+
+        ConnectToWifiWithNoInternetValidator(int description) {
+            super(mMultinetworkTestCallback, "no_internet_test", description);
+        }
+
+
+        @Override
+        void continueWithTest() {
+            super.continueWithTest();
+            connectToWifi();
+        }
+
+        @Override
+        void onContinuePreWifiConnect() {
+            mTestProgressMessage = R.string.multinetwork_connectivity_test_1_prereq;
+            mTestCallback.testProgress(mTestProgressMessage);
+            mValidatorState = WAITING_FOR_USER_INPUT;
+            requestUserConfirmation();
+        }
+
+        void connectToWifi() {
+            mTestCallback.testProgress(R.string.multinetwork_connectivity_test_connect_wifi);
+            mConnectivityState.connectToWifiNetworkWithNoInternet();
+        }
+
+        @Override
+        void onWifiNetworkConnected(Network wifiNetwork) {
+            super.onWifiNetworkConnected(wifiNetwork);
+            if (isConnectedToExpectedWifiNetwork()) {
+                startTimerCountdownDisplay(CELLULAR_NETWORK_RESTORE_TIMEOUT_MS / 1000);
+                mTestCallback.testProgress(R.string.multinetwork_connectivity_test_progress_2);
+
+                // Wait for CELLULAR_NETWORK_RESTORE_TIMEOUT_MS, before checking if there is still
+                // the active network as the cell network.
+                mMainHandler.postDelayed(() -> {
+                    stopTimerCountdownDisplay();
+                    mMainHandler.post(() -> {
+                        if (isExpectedTransportForActiveNetwork(TRANSPORT_CELLULAR)
+                                && isNetworkConnected(wifiNetwork)) {
+                            Log.d(TAG, "PASS test as device has connectivity");
+                            endTest(true, R.string.multinetwork_status_mobile_restore_success);
+                        } else {
+                            Log.d(TAG, "Fail test as device didn't have connectivity");
+                            endTest(false, R.string.multinetwork_status_mobile_restore_failed);
+                        }
+                    });
+                }, CELLULAR_NETWORK_RESTORE_TIMEOUT_MS);
+            } else {
+                endTest(false, R.string.multinetwork_status_wifi_connect_wrong_ap);
+            }
         }
     }
 }
