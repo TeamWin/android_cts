@@ -291,7 +291,7 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
     protected void onResume() {
         super.onResume();
 
-        mCameraInstrumentation.addMetricListener(new MetricListener());
+        mCameraInstrumentation.initialize(this, new MetricListener());
 
         try {
             mCachedInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -316,5 +316,6 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
             InstrumentationRegistry.registerInstance(mCachedInstrumentation,
                     mCachedInstrumentationArgs);
         }
+        mCameraInstrumentation.release();
     }
 }

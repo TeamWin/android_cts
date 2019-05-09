@@ -85,6 +85,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final int DEFAULT_SENSITIVITY_STEP_SIZE = 100;
     private static final int NUM_RESULTS_WAIT_TIMEOUT = 100;
     private static final int NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY = 8;
+    private static final int NUM_FRAMES_WAITED_FOR_TORCH = 100;
     private static final int NUM_TEST_FOCUS_DISTANCES = 10;
     private static final int NUM_FOCUS_DISTANCES_REPEAT = 3;
     // 5 percent error margin for calibrated device
@@ -497,6 +498,49 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 closeDevice();
             }
         }
+    }
+
+    /**
+     * Test that the flash can be successfully turned off given various initial and final
+     * AE_CONTROL modes for repeating CaptureRequests.
+     */
+    @Test
+    public void testFlashTurnOff() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                openDevice(mCameraIds[i]);
+                SimpleCaptureCallback listener = new SimpleCaptureCallback();
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+                Size maxPreviewSz = mOrderedPreviewSizes.get(0); // Max preview size.
+
+                startPreview(requestBuilder, maxPreviewSz, listener);
+                flashTurnOffTest(listener,
+                        /* initiaAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH,
+                        /* offAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
+
+                flashTurnOffTest(listener,
+                        /* initiaAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH,
+                        /* offAeControl */CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+
+                flashTurnOffTest(listener,
+                        /* initiaAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH,
+                        /* offAeControl */CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
+
+
+                stopPreview();
+            } finally {
+                closeDevice();
+            }
+        }
+
     }
 
     /**
@@ -1388,6 +1432,64 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
         mCollector.expectEquals("color correction mode result/request mismatch",
                 colorCorrectionMode, result.get(CaptureResult.COLOR_CORRECTION_MODE));
+    }
+
+    /**
+     * Test that flash can be turned off successfully with a given initial and final AE_CONTROL
+     * states.
+     *
+     * This function expects that initialAeControl and flashOffAeControl will not be either
+     * CaptureRequest.CONTROL_AE_MODE_ON or CaptureRequest.CONTROL_AE_MODE_OFF
+     *
+     * @param listener The Capture listener that is used to wait for capture result
+     * @param initialAeControl The initial AE_CONTROL mode to start repeating requests with.
+     * @param flashOffAeControl The final AE_CONTROL mode which is expected to turn flash off for
+     *        TEMPLATE_PREVIEW repeating requests.
+     */
+    private void flashTurnOffTest(SimpleCaptureCallback listener, int initialAeControl,
+            int flashOffAeControl) throws Exception {
+        CaptureResult result;
+        final int NUM_FLASH_REQUESTS_TESTED = 10;
+        CaptureRequest.Builder requestBuilder = createRequestForPreview();
+        requestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+        requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, initialAeControl);
+
+        mSession.setRepeatingRequest(requestBuilder.build(), listener, mHandler);
+        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+
+        // For camera that doesn't have flash unit, flash state should always be UNAVAILABLE.
+        if (mStaticInfo.getFlashInfoChecked() == false) {
+            for (int i = 0; i < NUM_FLASH_REQUESTS_TESTED; i++) {
+                result = listener.getCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
+                mCollector.expectEquals("No flash unit available, flash state must be UNAVAILABLE"
+                        + "for AE mode " + initialAeControl,
+                        CaptureResult.FLASH_STATE_UNAVAILABLE,
+                        result.get(CaptureResult.FLASH_STATE));
+            }
+            return;
+        }
+
+        // Turn on torch using FLASH_MODE_TORCH
+        requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+        requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+        CaptureRequest torchOnRequest = requestBuilder.build();
+        mSession.setRepeatingRequest(torchOnRequest, listener, mHandler);
+        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_TORCH);
+        result = listener.getCaptureResultForRequest(torchOnRequest, NUM_RESULTS_WAIT_TIMEOUT);
+        // Test that the flash actually turned on continuously.
+        mCollector.expectEquals("Flash state result must be FIRED", CaptureResult.FLASH_STATE_FIRED,
+                result.get(CaptureResult.FLASH_STATE));
+
+        // Turn off the torch
+        requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, flashOffAeControl);
+        // TODO: jchowdhary@, b/130323585, this line can be removed.
+        requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+        CaptureRequest flashOffRequest = requestBuilder.build();
+        mSession.setRepeatingRequest(flashOffRequest, listener, mHandler);
+        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_TORCH);
+        result = listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
+        mCollector.expectEquals("Flash state result must be READY", CaptureResult.FLASH_STATE_READY,
+                result.get(CaptureResult.FLASH_STATE));
     }
 
     /**
