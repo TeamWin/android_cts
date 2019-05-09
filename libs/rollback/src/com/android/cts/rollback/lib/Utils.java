@@ -68,7 +68,7 @@ public class Utils {
     }
 
     /**
-     * Returns an rollback for the given package name in the list of
+     * Returns a rollback for the given package name in the list of
      * rollbacks. Returns null if there are no available rollbacks, and throws
      * an assertion if there is more than one.
      */
@@ -89,6 +89,18 @@ public class Utils {
     }
 
     /**
+     * Returns a rollback for the given rollback Id, if found. Otherwise, returns null.
+     */
+    private static RollbackInfo getRollbackById(List<RollbackInfo> rollbacks, int rollbackId) {
+        for (RollbackInfo rollback :rollbacks) {
+            if (rollback.getRollbackId() == rollbackId) {
+                return rollback;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns an available rollback for the given package name. Returns null
      * if there are no available rollbacks, and throws an assertion if there
      * is more than one.
@@ -106,6 +118,15 @@ public class Utils {
     public static RollbackInfo getCommittedRollback(String packageName) {
         RollbackManager rm = getRollbackManager();
         return getRollback(rm.getRecentlyCommittedRollbacks(), packageName);
+    }
+
+    /**
+     * Returns a recently committed rollback for the given rollback Id.
+     * Returns null if no committed rollback with a matching Id was found.
+     */
+    public static RollbackInfo getCommittedRollbackById(int rollbackId) {
+        RollbackManager rm = getRollbackManager();
+        return getRollbackById(rm.getRecentlyCommittedRollbacks(), rollbackId);
     }
 
     /**
