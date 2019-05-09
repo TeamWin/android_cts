@@ -28,9 +28,11 @@ import static android.contentcaptureservice.cts.Assertions.assertVirtualViewAppe
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewDisappeared;
 import static android.contentcaptureservice.cts.Assertions.assertVirtualViewsDisappeared;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
+import static android.contentcaptureservice.cts.Helper.NO_ACTIVITIES;
 import static android.contentcaptureservice.cts.Helper.OTHER_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
 import static android.contentcaptureservice.cts.Helper.eventually;
+import static android.contentcaptureservice.cts.Helper.toSet;
 import static android.view.contentcapture.ContentCaptureCondition.FLAG_IS_REGEX;
 
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
@@ -522,6 +524,28 @@ public class CustomViewActivityTest extends
 
         final List<ContentCaptureEvent> events = session.getEvents();
         assertThat(events).isEmpty();
+    }
+
+    @Test
+    public void testDisabledAfterLaunched() throws Exception {
+        // Explicitly enable package so it doesn't havea a "lite" ContentCaptureOptions
+        final CtsContentCaptureService service = enableService(toSet(MY_PACKAGE), NO_ACTIVITIES);
+        final ActivityWatcher watcher = startWatcher();
+
+        final CustomViewActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        final ContentCaptureManager mgr = activity.getContentCaptureManager();
+        eventually("isContentCaptureEnabled() is not true yet",
+                () -> mgr.isContentCaptureEnabled() ? "not_used" : null);
+
+        service.setContentCaptureWhitelist(/* packages= */ null, /* activities= */ null);
+
+        eventually("isContentCaptureEnabled() is still true",
+                () -> mgr.isContentCaptureEnabled() ? null : "not_used");
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
     }
 
     /**

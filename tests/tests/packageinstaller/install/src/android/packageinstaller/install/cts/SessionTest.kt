@@ -30,6 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.TimeUnit
 
 private const val INSTALL_BUTTON_ID = "button1"
 private const val CANCEL_BUTTON_ID = "button2"
@@ -50,7 +51,7 @@ class SessionTest : PackageInstallerTestBase() {
      */
     @Test
     fun confirmInstallation() {
-        startInstallationViaSession()
+        val installation = startInstallationViaSession()
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
@@ -58,9 +59,7 @@ class SessionTest : PackageInstallerTestBase() {
         assertInstalled()
 
         // Even when the install succeeds the install confirm dialog returns 'canceled'
-        assertEquals(RESULT_CANCELED, getInstallDialogResult())
-
-        assertNoMoreInstallResults()
+        assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
 
         assertTrue(AppOpsUtils.allowedOperationLogged(context.packageName, APP_OP_STR))
     }
@@ -70,7 +69,7 @@ class SessionTest : PackageInstallerTestBase() {
      */
     @Test
     fun setAppCategory() {
-        startInstallationViaSession()
+        val installation = startInstallationViaSession()
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Wait for installation to finish
@@ -90,14 +89,12 @@ class SessionTest : PackageInstallerTestBase() {
      */
     @Test
     fun cancelInstallation() {
-        startInstallationViaSession()
+        val installation = startInstallationViaSession()
         clickInstallerUIButton(CANCEL_BUTTON_ID)
 
         // Install should have been aborted
         assertEquals(STATUS_FAILURE_ABORTED, getInstallSessionResult())
-        assertEquals(RESULT_CANCELED, getInstallDialogResult())
+        assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertNotInstalled()
-
-        assertNoMoreInstallResults()
     }
 }

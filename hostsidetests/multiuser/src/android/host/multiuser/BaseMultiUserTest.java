@@ -29,6 +29,16 @@ import java.util.ArrayList;
  * Base class for multi user tests.
  */
 public class BaseMultiUserTest implements IDeviceTest {
+
+    /** Guest flag value from android/content/pm/UserInfo.java */
+    private static final int FLAG_GUEST = 0x00000004;
+
+    /**
+     * Feature flag for automotive devices
+     * https://source.android.com/compatibility/android-cdd#2_5_automotive_requirements
+     */
+    private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive";
+
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
     protected boolean mIsSplitSystemUser;
@@ -113,6 +123,26 @@ public class BaseMultiUserTest implements IDeviceTest {
             CLog.e("Failed to create user: %s", output);
         }
         throw new IllegalStateException();
+    }
+
+    protected int createGuestUser() throws Exception {
+        return mDevice.createUser(
+                "TestUser_" + System.currentTimeMillis() /* name */,
+                true /* guest */,
+                false /* ephemeral */);
+    }
+
+    protected int getGuestUser() throws Exception {
+        for (int userId : mDevice.listUsers()) {
+            if ((mDevice.getUserFlags(userId) & FLAG_GUEST) != 0) {
+                return userId;
+            }
+        }
+        return -1;
+    }
+
+    protected boolean isAutomotiveDevice() throws Exception {
+        return getDevice().hasFeature(FEATURE_AUTOMOTIVE);
     }
 
     private void removeTestUsers() throws Exception {

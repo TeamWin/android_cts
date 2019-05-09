@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,15 +11,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-java_library_static {
-  name: "cts-signature-common",
-  visibility: [
-      "//cts/tests/signature:__subpackages__",
-  ],
-  host_supported: false,
-  installable: false,
-  srcs: ["src/**/*.java"],
-  static_libs: ["signature-common-javalib"],
-  sdk_version: "current",
+cc_library_shared {
+    name: "libctsvrextensions_jni",
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+    ],
+    srcs: ["VrExtensionsJni.cpp"],
+    include_dirs: [
+        "system/core/include",
+        "frameworks/native/opengl/include",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libnativehelper_compat_libc++",
+        "liblog",
+        "libEGL",
+        "libGLESv2",
+    ],
+    sdk_version: "current",
+    stl: "c++_static",
 }

@@ -30,7 +30,6 @@ import static android.signature.cts.CurrentApi.TAG_ROOT;
 
 import android.util.Log;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,16 +68,24 @@ public class ApiDocumentParser {
 
     private final XmlPullParserFactory factory;
 
-    public ApiDocumentParser(String tag) throws XmlPullParserException {
+    public ApiDocumentParser(String tag) {
         this.tag = tag;
-        factory = XmlPullParserFactory.newInstance();
+        try {
+            factory = XmlPullParserFactory.newInstance();
+        } catch (XmlPullParserException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public Stream<JDiffClassDescription> parseAsStream(InputStream inputStream)
-            throws XmlPullParserException, IOException {
-        XmlPullParser parser = factory.newPullParser();
-        parser.setInput(inputStream, null);
-        return StreamSupport.stream(new ClassDescriptionSpliterator(parser), false);
+    public Stream<JDiffClassDescription> parseAsStream(VirtualPath path) {
+        XmlPullParser parser;
+        try {
+            parser = factory.newPullParser();
+            parser.setInput(path.newInputStream(), null);
+            return StreamSupport.stream(new ClassDescriptionSpliterator(parser), false);
+        } catch (XmlPullParserException | IOException e) {
+            throw new RuntimeException("Could not parse " + path, e);
+        }
     }
 
     private class ClassDescriptionSpliterator implements Spliterator<JDiffClassDescription> {

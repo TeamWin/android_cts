@@ -17,7 +17,12 @@
 package android.os.cts;
 
 import android.os.FileObserver;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.test.AndroidTestCase;
+import android.util.Pair;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,8 +51,14 @@ public class FileObserverTest extends AndroidTestCase {
         File dir = getContext().getFilesDir();
         helpSetUp(dir);
 
-        dir = getContext().getExternalFilesDir(null);
+        dir = getContext().getCacheDir();
         helpSetUp(dir);
+
+        // Instant apps cannot access external storage
+        if (!InstrumentationRegistry.getTargetContext().getPackageManager().isInstantApp()) {
+            dir = getContext().getExternalFilesDir(null);
+            helpSetUp(dir);
+        }
     }
 
     private void helpTearDown(File dir) throws Exception {
@@ -73,6 +84,9 @@ public class FileObserverTest extends AndroidTestCase {
         super.tearDown();
 
         File dir = getContext().getFilesDir();
+        helpTearDown(dir);
+
+        dir = getContext().getCacheDir();
         helpTearDown(dir);
 
         dir = getContext().getExternalFilesDir(null);
@@ -227,41 +241,58 @@ public class FileObserverTest extends AndroidTestCase {
         helpTestFileObserver(getContext().getFilesDir(), false);
     }
 
-    /*
-     * Same as testFileObserver, except on emulated storage
-     */
-    public void testFileObserverEmulated() throws Exception {
+    @AppModeFull(reason = "Instant apps cannot access external storage")
+    public void testFileObserverExternal() throws Exception {
         helpTestFileObserver(getContext().getExternalFilesDir(null), true);
     }
 
-    public void testFileObserver_multipleFiles() throws Exception {
-        final File filesDir = getContext().getFilesDir();
-        final File externalFilesDir = getContext().getExternalFilesDir(null);
+    @AppModeFull(reason = "Instant apps cannot access external storage")
+    public void testFileObserver_multipleFilesFull() throws Exception {
+        verifyMultipleFiles(
+                Pair.create(getContext().getCacheDir(), false),
+                Pair.create(getContext().getFilesDir(), false),
+                Pair.create(getContext().getExternalFilesDir(null), true)
+        );
+    }
 
-        final MockFileObserver fileObserver1 = new MockFileObserver(Arrays.asList(
-                filesDir,
-                externalFilesDir
-        ));
+    @AppModeInstant(reason = "Instant specific variant excluding disallowed external storage")
+    public void testFileObserver_multipleFilesInstant() throws Exception {
+        verifyMultipleFiles(
+                Pair.create(getContext().getCacheDir(), false),
+                Pair.create(getContext().getFilesDir(), false)
+        );
+    }
+
+    @SafeVarargs
+    private final void verifyMultipleFiles(Pair<File, Boolean>... dirsAndIsEmulated) throws Exception {
+        List<File> directories = new ArrayList<>(dirsAndIsEmulated.length);
+        for (Pair<File, Boolean> pair : dirsAndIsEmulated) {
+            directories.add(pair.first);
+        }
+
+        final MockFileObserver fileObserver1 = new MockFileObserver(directories);
         try {
             fileObserver1.startWatching();
-            verifyTriggeredEventsOnFile(fileObserver1,
-                    new File(filesDir, TEST_FILE), false);
-            verifyTriggeredEventsOnFile(fileObserver1,
-                    new File(externalFilesDir, TEST_FILE), true);
+            for (Pair<File, Boolean> pair : dirsAndIsEmulated) {
+                verifyTriggeredEventsOnFile(fileObserver1,
+                        new File(pair.first, TEST_FILE), pair.second);
+            }
         } finally {
             fileObserver1.stopWatching();
         }
 
-        final MockFileObserver fileObserver2 = new MockFileObserver(Arrays.asList(
-                new File(filesDir, TEST_DIR),
-                new File(externalFilesDir, TEST_DIR)
-        ));
+        directories = new ArrayList<>(dirsAndIsEmulated.length);
+        for (Pair<File, Boolean> pair : dirsAndIsEmulated) {
+            directories.add(new File(pair.first, TEST_DIR));
+        }
+
+        final MockFileObserver fileObserver2 = new MockFileObserver(directories);
         try {
             fileObserver2.startWatching();
-            verifyTriggeredEventsOnDir(fileObserver2,
-                    new File(filesDir, TEST_DIR), false);
-            verifyTriggeredEventsOnDir(fileObserver2,
-                    new File(externalFilesDir, TEST_DIR), true);
+            for (Pair<File, Boolean> pair : dirsAndIsEmulated) {
+                verifyTriggeredEventsOnDir(fileObserver2,
+                        new File(pair.first, TEST_DIR), pair.second);
+            }
         } finally {
             fileObserver2.stopWatching();
         }

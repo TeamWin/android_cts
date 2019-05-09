@@ -18,19 +18,35 @@ package android.packageinstaller.install.cts
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Bundle
-import java.util.concurrent.LinkedBlockingQueue
+import com.android.compatibility.common.util.PollingCheck
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
-val installDialogResults = LinkedBlockingQueue<Int>()
+/** requestCode -> Future<resultCode> */
+private val requests = ConcurrentHashMap<Int, CompletableFuture<Int>>()
+private val nextRequestCode = AtomicInteger(0)
+
+internal fun doAndAwaitInstallConfirmDialog(act: () -> Unit): CompletableFuture<Int> {
+    val requestCode = nextRequestCode.get()
+    act()
+    PollingCheck.waitFor(TIMEOUT) {
+        nextRequestCode.get() >= requestCode + 1
+    }
+    return requests[requestCode]!!
+}
 
 class InstallConfirmDialogStarter : Activity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        savedInstanceState ?: installDialogResults.clear()
-    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        installDialogResults.offer(resultCode)
+        requests[requestCode]!!.complete(resultCode)
+    }
+
+    fun startActivityForResult(intent: Intent): CompletableFuture<Int> {
+        val requestCode = nextRequestCode.getAndIncrement()
+        val future = CompletableFuture<Int>()
+        requests[requestCode] = future
+        startActivityForResult(intent, requestCode)
+        return future
     }
 }

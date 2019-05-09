@@ -355,8 +355,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                 for (int index = mSimulateSystemDecors.size() - 1; index >= 0; index--) {
                     final int displayId = mSimulateSystemDecors.keyAt(index);
                     final boolean shouldShow = mSimulateSystemDecors.valueAt(index);
-                    SystemUtil.runWithShellPermissionIdentity(() ->
-                        wm.setShouldShowSystemDecors(displayId, shouldShow));
+                    SystemUtil.runWithShellPermissionIdentity(() -> {
+                        wm.setShouldShowSystemDecors(displayId, shouldShow);
+                        TestUtils.waitUntil("Waiting for the system decoration flag to be set",
+                                5 /* timeoutSecond */,
+                                () -> wm.shouldShowSystemDecors(displayId) == shouldShow);
+                    });
                 }
             }
             mOverlayDisplayDeviceSession.close();
@@ -573,13 +577,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     mWm.setShouldShowSystemDecors(display.mId, requestShowSysDecors);
                     TestUtils.waitUntil("Waiting for display show system decors",
                             5 /* timeoutSecond */,
-                            () -> mWm.shouldShowSystemDecors(display.mId));
+                            () -> mWm.shouldShowSystemDecors(display.mId) == requestShowSysDecors);
                 }
                 if (requestShowIme != showIme) {
                     mWm.setShouldShowIme(display.mId, requestShowIme);
                     TestUtils.waitUntil("Waiting for display show Ime",
                             5 /* timeoutSecond */,
-                            () -> mWm.shouldShowIme(display.mId));
+                            () -> mWm.shouldShowIme(display.mId) == requestShowIme);
                 }
             });
         }
@@ -588,6 +592,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             mDisplayStates.forEach(state -> SystemUtil.runWithShellPermissionIdentity(() -> {
                 mWm.setShouldShowSystemDecors(state.mId, state.mShouldShowSystemDecors);
                 mWm.setShouldShowIme(state.mId, state.mShouldShowIme);
+
+                // Only need to wait the last flag to be set.
+                TestUtils.waitUntil("Waiting for the show IME flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> mWm.shouldShowIme(state.mId) == state.mShouldShowIme);
             }));
         }
 
