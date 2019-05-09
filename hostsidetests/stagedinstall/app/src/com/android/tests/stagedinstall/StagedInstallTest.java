@@ -169,6 +169,16 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testInstallStagedApk_AbandonSessionIsNoop() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        // Session is in a final state. Test that abandoning the session doesn't remove it from the
+        // session database.
+        getPackageInstaller().abandonSession(sessionId);
+        assertSessionApplied(sessionId);
+    }
+
+    @Test
     public void testInstallMultipleStagedApks_Commit() throws Exception {
         int sessionId = stageMultipleApks(
                 "StagedInstallTestAppAv1.apk",
@@ -177,12 +187,16 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
         assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
-        // TODO: test that the staged Session is in place and is ready
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
     }
 
     @Test
     public void testInstallMultipleStagedApks_VerifyPostReboot() throws Exception {
-        // TODO: test that the staged session is applied.
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
         assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
     }
@@ -245,7 +259,7 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         PackageInstaller.SessionInfo session = getStagedSessionInfo(sessionId);
-        assertThat(session.isStagedSessionReady()).isTrue();
+        assertSessionReady(sessionId);
         abandonSession(sessionId);
         assertThat(getStagedSessionInfo(sessionId)).isNull();
         // Allow the session to be removed from PackageInstaller
@@ -480,9 +494,8 @@ public class StagedInstallTest {
     @Test
     public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_VerifyPostReboot()
             throws Exception {
-        // TODO: uncomment after we start to persist finalized staged sessions.
-        // int sessionId = retrieveLastSessionId();
-        // assertSessionFailed(sessionId);
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
         // INSTALL_REQUEST_DOWNGRADE wasn't set, so apex shouldn't be downgraded.
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
@@ -523,9 +536,8 @@ public class StagedInstallTest {
     @Test
     public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails_VerifyPostReboot()
             throws Exception {
-        // TODO: uncomment after we start to persist finalized staged sessions.
-        // int sessionId = retrieveLastSessionId();
-        // assertSessionFailed(sessionId);
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
         // Apex shouldn't be downgraded.
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
@@ -539,6 +551,27 @@ public class StagedInstallTest {
             assertThat(expected.getMessage()).contains(
                     "This device doesn't support the installation of APEX files");
         }
+    }
+
+    @Test
+    public void testFailsInvalidApexInstall_Commit() throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        int sessionId = stageSingleApk(
+                "com.android.apex.cts.shim.v2_wrong_sha.apex").assertSuccessful()
+                .getSessionId();
+        waitForIsFailedBroadcast(sessionId);
+        assertSessionFailed(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testFailsInvalidApexInstall_AbandonSessionIsNoop() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+        // Session is in a final state. Test that abandoning the session doesn't remove it from the
+        // session database.
+        getPackageInstaller().abandonSession(sessionId);
+        assertSessionFailed(sessionId);
     }
 
     private static PackageInstaller getPackageInstaller() {
@@ -777,6 +810,19 @@ public class StagedInstallTest {
         } else if (status > 0) {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
+        }
+    }
+
+    private void waitForIsFailedBroadcast(int sessionId) {
+        Log.i(TAG, "Waiting for session " + sessionId + " to be marked as failed");
+        try {
+
+            PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+            assertThat(info.isStagedSessionFailed()).isTrue();
+            assertThat(info.isStagedSessionReady()).isFalse();
+            assertThat(info.isStagedSessionApplied()).isFalse();
+        } catch (Exception e) {
+            throw new AssertionError(e);
         }
     }
 
