@@ -247,7 +247,7 @@ public class SensorIntegrationTests extends SensorTestCase {
 
         // Request for the sensor rate to be set to the slowest rate.
         ParallelSensorOperation operation = new ParallelSensorOperation();
-        TestSensorEnvironment environment = new TestSensorEnvironment(
+        TestSensorEnvironment environmentSlow = new TestSensorEnvironment(
                 context,
                 sensor,
                 shouldEmulateSensorUnderLoad(),
@@ -255,7 +255,7 @@ public class SensorIntegrationTests extends SensorTestCase {
                 sensor.getMaxDelay(),
                 (int)TimeUnit.SECONDS.toMicros(20));
         TestSensorOperation sensorOperationSlow = TestSensorOperation.createOperation(
-                environment, 2 * DELAY_BEFORE_CHANGING_RATE_SEC, TimeUnit.SECONDS);
+                environmentSlow, 2 * DELAY_BEFORE_CHANGING_RATE_SEC, TimeUnit.SECONDS);
         operation.add(sensorOperationSlow);
 
         // Create a second operation that will run in parallel and request the fastest rate after
@@ -264,7 +264,7 @@ public class SensorIntegrationTests extends SensorTestCase {
         // the reconfiguration to ensure that the lower frequency events are not received after the
         // reconfiguration of the sensor.
         SequentialSensorOperation sequentialSensorOperation = new SequentialSensorOperation();
-        environment = new TestSensorEnvironment(
+        TestSensorEnvironment environmentFast = new TestSensorEnvironment(
                 context,
                 sensor,
                 shouldEmulateSensorUnderLoad(),
@@ -273,15 +273,16 @@ public class SensorIntegrationTests extends SensorTestCase {
                 0 /* max reporting latency */);
 
         // Create the flush operation with a delay to ensure the low frequency configuration was
-        // handled and executed.
+        // handled and executed. Use the original environment since the flush operation will
+        // register a new listener and reconfigure the sensor.
         TestSensorOperation flushOperation = TestSensorOperation.createFlushOperation(
-                environment, DELAY_BEFORE_CHANGING_RATE_SEC, TimeUnit.SECONDS);
+                environmentSlow, DELAY_BEFORE_CHANGING_RATE_SEC, TimeUnit.SECONDS);
         sequentialSensorOperation.add(flushOperation);
 
         // Create the reconfiguration request and add it after the flush
         TestSensorOperation sensorOperationFast = TestSensorOperation.createOperation(
-                environment, EVENTS_FOR_VERIFICATION);
-        sensorOperationFast.addVerification(FrequencyVerification.getDefault(environment));
+                environmentFast, EVENTS_FOR_VERIFICATION);
+        sensorOperationFast.addVerification(FrequencyVerification.getDefault(environmentFast));
         sequentialSensorOperation.add(sensorOperationFast);
 
         // Add the sequential operation containing the flush and high frequency request to the
