@@ -56,7 +56,6 @@ import java.util.function.Supplier;
  * Tests for Window's setEnsureStatusBarContrastWhenTransparent and
  * setEnsureNavigationBarContrastWhenTransparent.
  */
-@FlakyTest(bugId = 130843045)
 @Presubmit
 public class EnsureBarContrastTest {
 
@@ -101,7 +100,6 @@ public class EnsureBarContrastTest {
     }
 
     @Test
-    @FlakyTest(bugId = 130470676)
     public void test_dontEnsureContrast_darkBars() {
         final boolean lightBars = false;
         runTestDontEnsureContrast(lightBars);
