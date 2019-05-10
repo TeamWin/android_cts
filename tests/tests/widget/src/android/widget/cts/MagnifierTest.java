@@ -27,6 +27,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Point;
@@ -36,6 +37,8 @@ import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -341,6 +344,22 @@ public class MagnifierTest {
         assertEquals(
                 viewLocationInWindow[1] + yMagnifier - mMagnifier.getHeight() / 2,
                 magnifierPosition.y, PIXEL_COMPARISON_DELTA);
+    }
+
+    @Test
+    public void testShow_whenPixelCopyFails() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_surfaceview_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+
+        runOnUiThreadAndWaitForCompletion(() -> mMagnifier = new Magnifier.Builder(view).build());
+        // The PixelCopy will fail as no draw has been done so far to the SurfaceView.
+        showMagnifier(0f, 0f);
+
+        assertNull(mMagnifier.getPosition());
+        assertNull(mMagnifier.getSourcePosition());
+        assertNull(mMagnifier.getContent());
     }
 
     //***** Tests for #dismiss() *****//
@@ -708,7 +727,15 @@ public class MagnifierTest {
     public void testSourcePosition_respectsMaxInSurfaceBounds_forSurfaceView() throws Throwable {
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
             mActivity.setContentView(R.layout.magnifier_activity_centered_surfaceview_layout);
-        }, false /*forceLayout*/);
+        }, false /* forceLayout */);
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            // Draw something in the SurfaceView for the Magnifier to copy.
+            final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+            final SurfaceHolder surfaceHolder = ((SurfaceView) view).getHolder();
+            final Canvas canvas = surfaceHolder.lockHardwareCanvas();
+            canvas.drawColor(Color.BLUE);
+            surfaceHolder.unlockCanvasAndPost(canvas);
+        }, false /* forceLayout */);
         final View view = mActivity.findViewById(R.id.magnifier_centered_view);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
