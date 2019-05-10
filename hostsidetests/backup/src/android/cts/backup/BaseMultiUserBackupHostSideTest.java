@@ -122,11 +122,13 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
 
     /** Start the user and set necessary conditions for backup to be enabled in the user. */
     void startUserAndInitializeForBackup(int userId)
-            throws IOException, DeviceNotAvailableException {
+            throws IOException, DeviceNotAvailableException, InterruptedException {
         // Turn on multi-user feature for this user.
         mBackupUtils.activateBackupForUser(true, userId);
 
         startUser(userId);
+
+        mBackupUtils.waitUntilBackupServiceIsRunning(userId);
 
         mBackupUtils.enableBackupForUser(true, userId);
         assertThat(mBackupUtils.isBackupEnabledForUser(userId)).isTrue();
