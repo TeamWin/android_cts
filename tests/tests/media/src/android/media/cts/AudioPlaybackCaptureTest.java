@@ -213,25 +213,34 @@ public class AudioPlaybackCaptureTest {
                                     boolean dataPresent) throws Exception {
         MediaPlayer mediaPlayer = createMediaPlayer(capturePolicy, R.raw.testwav_16bit_44100hz,
                                                     playbackUsage);
-        if (mPlaybackBeforeCapture) {
-            mediaPlayer.start();
-            Thread.sleep(100); // Make sure the player is actually playing, thus forcing a rerouting
-        }
+        try {
+            if (mPlaybackBeforeCapture) {
+                mediaPlayer.start();
+                // Make sure the player is actually playing, thus forcing a rerouting
+                Thread.sleep(100);
+            }
 
-        AudioRecord audioRecord = createDefaultPlaybackCaptureRecord();
+            AudioRecord audioRecord = createDefaultPlaybackCaptureRecord();
 
-        audioRecord.startRecording();
-        mediaPlayer.start();
-        ByteBuffer rawBuffer = readToBuffer(audioRecord, BUFFER_SIZE);
-        audioRecord.stop(); // Force an reroute
-        mediaPlayer.stop();
-        assertEquals(AudioRecord.RECORDSTATE_STOPPED, audioRecord.getRecordingState());
-        if (dataPresent) {
-            assertFalse("Expected data, but only silence was recorded",
-                        onlySilence(rawBuffer.asShortBuffer()));
-        } else {
-            assertTrue("Expected silence, but some data was recorded",
-                       onlySilence(rawBuffer.asShortBuffer()));
+            try {
+                audioRecord.startRecording();
+                mediaPlayer.start();
+                ByteBuffer rawBuffer = readToBuffer(audioRecord, BUFFER_SIZE);
+                audioRecord.stop(); // Force an reroute
+                mediaPlayer.stop();
+                assertEquals(AudioRecord.RECORDSTATE_STOPPED, audioRecord.getRecordingState());
+                if (dataPresent) {
+                    assertFalse("Expected data, but only silence was recorded",
+                                onlySilence(rawBuffer.asShortBuffer()));
+                } else {
+                    assertTrue("Expected silence, but some data was recorded",
+                               onlySilence(rawBuffer.asShortBuffer()));
+                }
+            } finally {
+                audioRecord.release();
+            }
+        } finally {
+            mediaPlayer.release();
         }
     }
 
