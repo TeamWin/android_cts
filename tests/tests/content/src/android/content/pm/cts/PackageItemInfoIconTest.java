@@ -58,9 +58,22 @@ public class PackageItemInfoIconTest {
     }
 
     @Test
-    public void testSystemDefault() throws PackageManager.NameNotFoundException {
+    public void testSystemDefault() {
         Drawable expectedIcon = mContext.getDrawable(
                 com.android.internal.R.drawable.sym_def_app_icon);
+
+        PackageItemInfo itemInfo = new PackageItemInfo();
+        itemInfo.icon = 0;
+
+        Drawable icon = mPackageManager.loadUnbadgedItemIcon(itemInfo, null);
+
+        assertTrue(comparePixelData(expectedIcon, icon));
+    }
+
+    @Test
+    public void testFromAppInfo() throws PackageManager.NameNotFoundException {
+        // size_48x48 is defined as the application icon in this test's AndroidManifest.xml
+        Drawable expectedIcon = mContext.getDrawable(R.drawable.size_48x48);
 
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(PACKAGE_NAME, 0);
         PackageItemInfo itemInfo = new PackageItemInfo();
@@ -73,6 +86,7 @@ public class PackageItemInfoIconTest {
 
     @Test
     public void testFromActivity() throws PackageManager.NameNotFoundException {
+        // start is defined as the Activity icon in this test's AndroidManifest.xml
         Drawable expectedIcon = mContext.getDrawable(R.drawable.start);
 
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(PACKAGE_NAME, 0);
@@ -99,7 +113,20 @@ public class PackageItemInfoIconTest {
     }
 
     @Test
+    public void testDelegatedFromAppInfo() throws PackageManager.NameNotFoundException {
+        // size_48x48 is defined as the app icon in this test's AndroidManifest.xml
+        Drawable expectedIcon = mContext.getDrawable(R.drawable.size_48x48);
+
+        ApplicationInfo appInfo = mPackageManager.getApplicationInfo(PACKAGE_NAME, 0);
+
+        Drawable icon = appInfo.loadUnbadgedIcon(mPackageManager);
+
+        assertTrue(comparePixelData(expectedIcon, icon));
+    }
+
+    @Test
     public void testDelegatedFromActivity() throws PackageManager.NameNotFoundException {
+        // start is defined as the Activity icon in this test's AndroidManifest.xml
         Drawable expectedIcon = mContext.getDrawable(R.drawable.start);
 
         PackageItemInfo itemInfo = getTestItemInfo();
