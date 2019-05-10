@@ -302,7 +302,7 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickAllowButton() throws Exception {
-        scrollToBottomIfWatch();
+        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_allow_button");
     }
 
@@ -315,16 +315,17 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickDenyButton() throws Exception {
-        scrollToBottomIfWatch();
+        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_button");
     }
 
     protected void clickDenyAndDontAskAgainButton() throws Exception {
+        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button");
     }
 
     protected void clickDontAskAgainButton() throws Exception {
-        scrollToBottomIfWatch();
+        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button");
     }
 
@@ -353,14 +354,12 @@ public abstract class BasePermissionsTest {
         setPermissionGrantState(permissions, false, legacyApp);
     }
 
-    private void scrollToBottomIfWatch() throws Exception {
-        if (mWatch) {
-            getUiDevice().wait(Until.findObject(By.clazz(ScrollView.class)), GLOBAL_TIMEOUT_MILLIS);
-            UiScrollable scrollable =
-                    new UiScrollable(new UiSelector().className(ScrollView.class));
-            if (scrollable.exists()) {
-                scrollable.flingToEnd(10);
-            }
+    private void scrollToBottom() throws Exception {
+        getUiDevice().wait(Until.findObject(By.clazz(ScrollView.class)), GLOBAL_TIMEOUT_MILLIS);
+        UiScrollable scrollable =
+                new UiScrollable(new UiSelector().className(ScrollView.class));
+        if (scrollable.exists()) {
+            scrollable.flingToEnd(10);
         }
     }
 
@@ -435,7 +434,7 @@ public abstract class BasePermissionsTest {
                     waitForIdle();
 
                     if (wasGranted && legacyApp) {
-                        scrollToBottomIfWatch();
+                        scrollToBottom();
                         Context context = getInstrumentation().getContext();
                         String packageName = context.getPackageManager()
                                 .getPermissionControllerPackageName();
