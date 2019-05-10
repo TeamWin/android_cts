@@ -265,8 +265,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mPresentationDisplay = false;
         private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
-        // Used to restore the supportSystemDecors state of the simulate displays.
-        private final SparseBooleanArray mSimulateSystemDecors = new SparseBooleanArray();
         private boolean mMustBeCreated = true;
         private Size mSimulationDisplaySize = new Size(1024 /* width */, 768 /* height */);
 
@@ -350,19 +348,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         @Override
         public void close() throws Exception {
-            if (mSimulateSystemDecors.size() > 0) {
-                final WindowManager wm = mContext.getSystemService(WindowManager.class);
-                for (int index = mSimulateSystemDecors.size() - 1; index >= 0; index--) {
-                    final int displayId = mSimulateSystemDecors.keyAt(index);
-                    final boolean shouldShow = mSimulateSystemDecors.valueAt(index);
-                    SystemUtil.runWithShellPermissionIdentity(() -> {
-                        wm.setShouldShowSystemDecors(displayId, shouldShow);
-                        TestUtils.waitUntil("Waiting for the system decoration flag to be set",
-                                5 /* timeoutSecond */,
-                                () -> wm.shouldShowSystemDecors(displayId) == shouldShow);
-                    });
-                }
-            }
             mOverlayDisplayDeviceSession.close();
             if (mVirtualDisplayCreated) {
                 destroyVirtualDisplays();
@@ -602,8 +587,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         @Override
         public void close() throws Exception {
-            super.close();
+            // Need to restore display state before display is destroyed.
             restoreDisplayStates();
+            super.close();
         }
 
         private class OverlayDisplayState {
