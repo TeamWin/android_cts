@@ -105,6 +105,18 @@ public class TileServiceTest extends AndroidTestCase {
         assertEquals(TestTileService.ICON_ID, tile.getIcon().getResId());
     }
 
+    public void testTile_hasCorrectSubtitle() throws Exception {
+        if (!TileService.isQuickSettingsSupported()) return;
+        startTileService();
+        expandSettings(true);
+        waitForListening(true);
+
+        Tile tile = mTileService.getQsTile();
+        tile.setSubtitle("test_subtitle");
+        tile.updateTile();
+        assertEquals("test_subtitle", tile.getSubtitle());
+    }
+
     public void testShowDialog() throws Exception {
         if (!TileService.isQuickSettingsSupported()) return;
         Looper.prepare();
