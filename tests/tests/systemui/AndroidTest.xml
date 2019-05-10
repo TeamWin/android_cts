@@ -32,6 +32,7 @@
     <!-- Collect the files in the dump directory for debugging -->
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
         <option name="directory-keys" value="/sdcard/LightBarTestBase/" />
+        <option name="directory-keys" value="/sdcard/WindowInsetsBehaviorTests" />
         <option name="collect-on-run-ended-only" value="true" />
     </metrics_collector>
 
