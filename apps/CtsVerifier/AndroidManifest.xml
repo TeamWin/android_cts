@@ -1951,6 +1951,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
         <activity android:name=".security.CANotifyOnBootActivity"
                 android:label="@string/caboot_test">
@@ -1961,6 +1962,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
 
         <activity android:name=".security.KeyChainTest"
