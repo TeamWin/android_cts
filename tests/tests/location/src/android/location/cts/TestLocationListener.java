@@ -23,7 +23,6 @@ import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Used for receiving notifications from the LocationManager when the location has changed.
