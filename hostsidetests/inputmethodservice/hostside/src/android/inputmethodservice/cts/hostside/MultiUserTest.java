@@ -55,6 +55,13 @@ public class MultiUserTest extends BaseHostJUnit4Test {
     private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
 
     /**
+     * Because of Bug 132082599, processes can be asynchronously killed due to delayed tasks in
+     * ActivityManagerService after APK installation. To work around this, we check if a no-op test
+     * can stay alive for 3 seconds.  This is the retry count of this precondition check.
+     */
+    private static final int NO_OP_TEST_RETRY_COUNT_AFTER_APK_INSTALL = 3;
+
+    /**
      * A sleep time after calling {@link com.android.tradefed.device.ITestDevice#switchUser(int)}
      * to see if the flakiness comes from race condition in UserManagerService#removeUser() or not.
      *
@@ -150,7 +157,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         installPossibleInstantPackage(DeviceTestConstants.APK, primaryUserId, instant);
         installPossibleInstantPackage(DeviceTestConstants.APK, secondaryUserId, instant);
 
-        assertIme1NotExistInApiResult(primaryUserId);
+        // Work around b/31009094.
+        assertTestApkIsReadyAfterInstallation(primaryUserId);
+
         assertIme1NotExistInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
@@ -207,6 +216,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
         installPossibleInstantPackage(DeviceTestConstants.APK, primaryUserId, instant);
         installPossibleInstantPackage(DeviceTestConstants.APK, profileUserId, instant);
+
+        // Work around b/31009094.
+        assertTestApkIsReadyAfterInstallation(profileUserId);
 
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1NotExistInApiResult(profileUserId);
@@ -333,6 +345,21 @@ public class MultiUserTest extends BaseHostJUnit4Test {
                 IME_COMMAND_TIMEOUT, imeId + " is not found for user #" + userId
                         + " within timeout.");
     }
+
+    private void assertTestApkIsReadyAfterInstallation(int userId) throws Exception {
+        for (int i = 0; i < NO_OP_TEST_RETRY_COUNT_AFTER_APK_INSTALL; ++i) {
+            try {
+                // This test should never fail.  If this fails, it means that the system was not yet
+                // ready to run tests in this APK.
+                runTestAsUser(DeviceTestConstants.TEST_WAIT_3SEC, userId);
+                return;
+            } catch (AssertionError e) {
+                // Ignoring because it can be because of Bug 132082599.
+            }
+        }
+        runTestAsUser(DeviceTestConstants.TEST_WAIT_3SEC, userId);
+    }
+
 
     private void assertIme1ExistsInApiResult(int userId) throws Exception  {
         runTestAsUser(DeviceTestConstants.TEST_IME1_IN_INPUT_METHOD_LIST, userId);
