@@ -309,6 +309,44 @@ public class AccessibilityViewTreeReportingTest {
         assertTrue(awaitedEvent.getSource().isImportantForAccessibility());
     }
 
+
+    @Test
+    public void testHideView_receiveSubtreeEvent() throws Throwable {
+        final View view = mActivity.findViewById(R.id.secondButton);
+        AccessibilityEvent awaitedEvent =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> mActivity.runOnUiThread(() -> view.setVisibility(View.GONE)),
+                        (event) -> {
+                            boolean isContentChanged = event.getEventType()
+                                    == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
+                            int isSubTree = (event.getContentChangeTypes()
+                                    & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
+                            boolean isFromThisPackage = TextUtils.equals(event.getPackageName(),
+                                    mActivity.getPackageName());
+                            return isContentChanged && (isSubTree != 0) && isFromThisPackage;
+                        }, TIMEOUT_ASYNC_PROCESSING);
+        awaitedEvent.recycle();
+    }
+
+    @Test
+    public void testUnhideView_receiveSubtreeEvent() throws Throwable {
+        final View view = mActivity.findViewById(R.id.hiddenButton);
+        AccessibilityEvent awaitedEvent =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> mActivity.runOnUiThread(() -> view.setVisibility(View.VISIBLE)),
+                        (event) -> {
+                            boolean isContentChanged = event.getEventType()
+                                    == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
+                            int isSubTree = (event.getContentChangeTypes()
+                                    & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
+                            boolean isFromThisPackage = TextUtils.equals(event.getPackageName(),
+                                    mActivity.getPackageName());
+                            return isContentChanged && (isSubTree != 0) && isFromThisPackage;
+                        }, TIMEOUT_ASYNC_PROCESSING);
+        awaitedEvent.recycle();
+    }
+
+
     private void setGetNonImportantViews(boolean getNonImportantViews) {
         AccessibilityServiceInfo serviceInfo = sUiAutomation.getServiceInfo();
         serviceInfo.flags &= ~AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
