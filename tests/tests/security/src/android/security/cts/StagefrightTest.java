@@ -790,6 +790,13 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_25928803);
     }
 
+    @SecurityTest(minPatchLevel = "2016-04")
+    public void testBug_26399350() throws Exception {
+        int[] frameSizes = {657, 54930};
+        doStagefrightTestRawBlob(R.raw.bug_26399350_avc, "video/avc", 640, 480,
+                frameSizes);
+    }
+
     @SecurityTest(minPatchLevel = "2018-12")
     public void testBug_113260892() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_113260892_hevc, "video/hevc", 320, 240);
