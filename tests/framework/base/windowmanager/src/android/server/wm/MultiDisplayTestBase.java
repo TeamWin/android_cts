@@ -38,6 +38,7 @@ import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_RESIZE
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
 import static android.server.wm.app.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Display.INVALID_DISPLAY;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -652,6 +653,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mPublicDisplay = false;
         private boolean mShowSystemDecorations = false;
 
+        private int mDisplayId = INVALID_DISPLAY;
+
         @Nullable
         private VirtualDisplayHelper mExternalDisplayHelper;
 
@@ -690,8 +693,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     ds.size());
 
             // Find the newly added display.
-            final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
-            return newDisplays.get(0);
+            final ActivityDisplay newDisplay = findNewDisplayStates(originalDS, ds).get(0);
+            mDisplayId = newDisplay.mId;
+            return newDisplay;
         }
 
         void turnDisplayOff() {
@@ -713,7 +717,27 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             if (mExternalDisplayHelper != null) {
                 mExternalDisplayHelper.releaseDisplay();
                 mExternalDisplayHelper = null;
+
+                waitForHostedDisplayDestroyed();
+                mDisplayId = INVALID_DISPLAY;
             }
+        }
+
+        private void waitForHostedDisplayDestroyed() {
+            for (int retry = 1; retry <= 5; retry++) {
+                if (!isHostedVirtualDisplayPresent()) {
+                    return;
+                }
+                logAlways("Waiting for hosted displays destruction... retry=" + retry);
+                SystemClock.sleep(500);
+            }
+            fail("Waiting for hosted displays destruction failed.");
+        }
+
+        private boolean isHostedVirtualDisplayPresent() {
+            mAmWmState.computeState(true);
+            return mAmWmState.getWmState().getDisplays().stream().anyMatch(
+                    d -> d.getDisplayId() == mDisplayId);
         }
     }
 
