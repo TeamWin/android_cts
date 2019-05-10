@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import android.net.http.SslError;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebSettings;
@@ -41,6 +42,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  *  Test WebView zooming behaviour
  */
+@AppModeFull
 public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private WebView mWebView;
     private WebViewOnUiThread mOnUiThread;

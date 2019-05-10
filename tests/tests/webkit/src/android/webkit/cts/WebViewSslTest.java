@@ -21,6 +21,7 @@ import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.webkit.ClientCertRequest;
@@ -48,6 +49,7 @@ import java.util.concurrent.Callable;
 
 import javax.net.ssl.X509TrustManager;
 
+@AppModeFull(reason = "Instant apps cannot bind sockets")
 public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final String LOGTAG = "WebViewSslTest";
 
