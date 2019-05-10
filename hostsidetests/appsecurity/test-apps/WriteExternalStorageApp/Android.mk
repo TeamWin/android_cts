@@ -17,7 +17,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_SDK_VERSION := 28
+LOCAL_SDK_VERSION := test_current
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	androidx.test.rules \
 	compatibility-device-util-axt
