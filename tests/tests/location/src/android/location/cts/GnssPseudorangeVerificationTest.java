@@ -97,8 +97,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     // Checks if Gnss hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
     // From android O, CTS tests should run in the lab with GPS signal.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, true)) {
       return;
     }
 
@@ -111,7 +110,8 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
 
     boolean success = mLocationListener.await();
     success &= mMeasurementListener.await();
-    SoftAssert.failOrWarning(isMeasurementTestStrict(),
+    SoftAssert softAssert = new SoftAssert(TAG);
+    softAssert.assertTrue(
         "Time elapsed without getting enough location fixes."
             + " Possibly, the test has been run deep indoors."
             + " Consider retrying test outdoors.",
@@ -119,20 +119,17 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
 
     Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
 
-    if (!mMeasurementListener.verifyStatus(isMeasurementTestStrict())) {
-      // If test is strict and verifyStatus reutrns false, an assert exception happens and
-      // test fails.   If test is not strict, we arrive here, and:
+    if (!mMeasurementListener.verifyStatus()) {
+      // If verifyStatus returns false, an assert exception happens and test fails.
       return; // exit (with pass)
     }
 
     List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
     int eventCount = events.size();
     Log.i(TAG, "Number of GNSS measurement events received = " + eventCount);
-    SoftAssert.failOrWarning(isMeasurementTestStrict(),
+    softAssert.assertTrue(
         "GnssMeasurementEvent count: expected > 0, received = " + eventCount,
         eventCount > 0);
-
-    SoftAssert softAssert = new SoftAssert(TAG);
 
     boolean hasEventWithEnoughMeasurements = false;
     // we received events, so perform a quick sanity check on mandatory fields
@@ -156,7 +153,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
       }
     }
 
-    SoftAssert.failOrWarning(isMeasurementTestStrict(),
+    softAssert.assertTrue(
         "Should have at least one GnssMeasurementEvent with at least 4"
             + "GnssMeasurement. If failed, retry near window or outdoors?",
         hasEventWithEnoughMeasurements);
@@ -241,8 +238,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
         // Checks if Gnss hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
         // From android O, CTS tests should run in the lab with GPS signal.
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, true)) {
             return;
         }
 
@@ -269,12 +265,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         int eventCount = events.size();
         Log.i(TAG, "Number of Gps Event received = " + eventCount);
-        int gnssYearOfHardware = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
-        if (eventCount == 0 && gnssYearOfHardware < MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) {
-            return;
-        }
 
-        Log.i(TAG, "This is a device from 2016 or later.");
         assertTrue("GnssMeasurementEvent count: expected > 0, received = " + eventCount,
                 eventCount > 0);
 
