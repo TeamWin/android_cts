@@ -217,6 +217,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * Test that navigation bar should not show on display without system decoration.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Wait navigation bar show on default display and record the states.
