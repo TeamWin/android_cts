@@ -38,6 +38,9 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsContentTestCases.apk" />
+        <option name="test-file-name" value="CtsContentDirectBootUnawareTestApp.apk" />
+        <option name="test-file-name" value="CtsContentPartiallyDirectBootAwareTestApp.apk" />
+        <option name="test-file-name" value="CtsContentDirectBootAwareTestApp.apk" />
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
         <option name="test-file-name" value="CtsBinderPermissionTestService.apk" />
     </target_preparer>
