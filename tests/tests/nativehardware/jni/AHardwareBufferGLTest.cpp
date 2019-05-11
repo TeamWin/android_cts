@@ -1556,7 +1556,10 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             }
         }
     } else {
-        if (HasGLExtension("GL_EXT_EGL_image_storage")) {
+        // TODO(b/123042748): The fact that glEGLImageTargetTexStorageEXT does not work for YUV
+        //                    textures is a bug. The condition for the target should be removed
+        //                    once the bug is fixed.
+        if (HasGLExtension("GL_EXT_EGL_image_storage") && mTexTarget != GL_TEXTURE_EXTERNAL_OES) {
             glEGLImageTargetTexStorageEXT(mTexTarget, static_cast<GLeglImageOES>(mEGLImage),
                                           nullptr);
         } else {

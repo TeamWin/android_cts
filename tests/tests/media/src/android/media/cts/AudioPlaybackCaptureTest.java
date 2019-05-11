@@ -28,6 +28,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 
 import android.media.AudioAttributes;
 import android.media.AudioAttributes.AttributeUsage;
@@ -50,6 +52,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.util.Stack;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -210,29 +213,35 @@ public class AudioPlaybackCaptureTest {
                                     boolean dataPresent) throws Exception {
         MediaPlayer mediaPlayer = createMediaPlayer(capturePolicy, R.raw.testwav_16bit_44100hz,
                                                     playbackUsage);
-        if (mPlaybackBeforeCapture) {
-            mediaPlayer.start();
-            Thread.sleep(100); // Make sure the player is actually playing, thus forcing a rerouting
+        try {
+            if (mPlaybackBeforeCapture) {
+                mediaPlayer.start();
+                // Make sure the player is actually playing, thus forcing a rerouting
+                Thread.sleep(100);
+            }
+
+            AudioRecord audioRecord = createDefaultPlaybackCaptureRecord();
+
+            try {
+                audioRecord.startRecording();
+                mediaPlayer.start();
+                ByteBuffer rawBuffer = readToBuffer(audioRecord, BUFFER_SIZE);
+                audioRecord.stop(); // Force an reroute
+                mediaPlayer.stop();
+                assertEquals(AudioRecord.RECORDSTATE_STOPPED, audioRecord.getRecordingState());
+                if (dataPresent) {
+                    assertFalse("Expected data, but only silence was recorded",
+                                onlySilence(rawBuffer.asShortBuffer()));
+                } else {
+                    assertTrue("Expected silence, but some data was recorded",
+                               onlySilence(rawBuffer.asShortBuffer()));
+                }
+            } finally {
+                audioRecord.release();
+            }
+        } finally {
+            mediaPlayer.release();
         }
-
-        AudioRecord audioRecord = createDefaultPlaybackCaptureRecord();
-
-        audioRecord.startRecording();
-        mediaPlayer.start();
-        ByteBuffer rawBuffer = readToBuffer(audioRecord, BUFFER_SIZE);
-        audioRecord.stop(); // Force an reroute
-        mediaPlayer.stop();
-        assertEquals(AudioRecord.RECORDSTATE_STOPPED, audioRecord.getRecordingState());
-        if (dataPresent) {
-            assertFalse("Expected data, but only silence was recorded",
-                        onlySilence(rawBuffer.asShortBuffer()));
-        } else {
-            assertTrue("Expected silence, but some data was recorded",
-                       onlySilence(rawBuffer.asShortBuffer()));
-        }
-
-        mediaPlayer.release();
-        audioRecord.release();
     }
 
     public void testPlaybackCapture(boolean allowCapture,
@@ -425,5 +434,73 @@ public class AudioPlaybackCaptureTest {
         mediaPlayer.release();
     }
 
+
+    @Test
+    public void testPlaybackCaptureDoS() throws Exception {
+        final int UPPER_BOUND_TO_CONCURENT_PLAYBACK_CAPTURE = 1000;
+        final int MIN_NB_OF_CONCURENT_PLAYBACK_CAPTURE = 5;
+
+        mAPCTestConfig.matchingUsages = new int[]{ AudioAttributes.USAGE_MEDIA };
+
+        Stack<AudioRecord> audioRecords = new Stack<>();
+        MediaPlayer mediaPlayer = createMediaPlayer(ALLOW_CAPTURE_BY_ALL,
+                                                    R.raw.testwav_16bit_44100hz,
+                                                    AudioAttributes.USAGE_MEDIA);
+        try {
+            mediaPlayer.start();
+
+            // Lets create as many audio playback capture as we can
+            try {
+                for (int i = 0; i < UPPER_BOUND_TO_CONCURENT_PLAYBACK_CAPTURE; i++) {
+                    audioRecords.push(createDefaultPlaybackCaptureRecord());
+                }
+                fail("Playback capture never failed even with " + audioRecords.size()
+                        + " concurrent ones. Are errors silently dropped ?");
+            } catch (Exception e) {
+                assertThat("Number of supported concurrent playback capture", audioRecords.size(),
+                           greaterThan(MIN_NB_OF_CONCURENT_PLAYBACK_CAPTURE));
+            }
+
+            // Should not be able to create a new audio playback capture record",
+            assertThrows(Exception.class, this::createDefaultPlaybackCaptureRecord);
+
+            // Check that all record can all be started
+            for (AudioRecord audioRecord : audioRecords) {
+                audioRecord.startRecording();
+            }
+
+            // Check that they all record audio
+            for (AudioRecord audioRecord : audioRecords) {
+                ByteBuffer rawBuffer = readToBuffer(audioRecord, BUFFER_SIZE);
+                assertFalse("Expected data, but only silence was recorded",
+                            onlySilence(rawBuffer.asShortBuffer()));
+            }
+
+            // Stopping one AR must allow creating a new one
+            audioRecords.peek().stop();
+            audioRecords.pop().release();
+            audioRecords.push(createDefaultPlaybackCaptureRecord());
+
+            // That new one must still be able to capture
+            audioRecords.peek().startRecording();
+            ByteBuffer rawBuffer = readToBuffer(audioRecords.peek(), BUFFER_SIZE);
+            assertFalse("Expected data, but only silence was recorded",
+                        onlySilence(rawBuffer.asShortBuffer()));
+
+            // cleanup
+            mediaPlayer.stop();
+        } finally {
+            mediaPlayer.release();
+            try {
+                for (AudioRecord audioRecord : audioRecords) {
+                    audioRecord.stop();
+                }
+            } finally {
+                for (AudioRecord audioRecord : audioRecords) {
+                    audioRecord.release();
+                }
+            }
+        }
+    }
 
 }

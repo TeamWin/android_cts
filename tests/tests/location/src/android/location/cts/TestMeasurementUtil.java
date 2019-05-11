@@ -58,9 +58,6 @@ public final class TestMeasurementUtil {
             " listener has failed, this indicates a platform bug. Please report the issue with" +
             " a full bugreport.";
 
-    private static final int YEAR_2016 = 2016;
-    private static final int YEAR_2017 = 2017;
-
     private enum GnssBand {
         GNSS_L1,
         GNSS_L2,
@@ -92,9 +89,7 @@ public final class TestMeasurementUtil {
      *         device.
      */
     public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager,
-                                                    String testTag,
-                                                    int minHardwareYear,
-                                                    boolean isCtsVerifier) {
+            boolean isCtsVerifier) {
        if (ApiLevelUtil.isBefore(Build.VERSION_CODES.N)) {
             Log.i(TAG, "This test is designed to work on N or newer. " +
                     "Test is being skipped because the platform version is being run in " +
@@ -119,13 +114,6 @@ public final class TestMeasurementUtil {
         if (!isCtsVerifier && !gpsProviderEnabled) {
             return false;
         }
-
-        // TODO - add this to the test info page
-        int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
-        Log.i(testTag, "This device is reporting GNSS hardware from year "
-                + (gnssYearOfHardware == 0 ? "2015 or earlier" : gnssYearOfHardware) + ". "
-                + "Devices " + (gnssYearOfHardware >= minHardwareYear ? "like this one " : "")
-                + "from year " + minHardwareYear + " or newer provide GnssMeasurement support." );
 
         return true;
     }
@@ -170,7 +158,6 @@ public final class TestMeasurementUtil {
                     String.valueOf(gpsTimeInNs),
                     gpsTimeInNs >= GPS_TIME_YEAR_2016_IN_NSEC);
         }
-
     }
 
     /**
@@ -230,7 +217,6 @@ public final class TestMeasurementUtil {
         verifyReceivedSatelliteVehicleTimeInNs(measurement, softAssert, timeInNs);
         verifyAccumulatedDeltaRanges(measurement, softAssert, timeInNs);
 
-        int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
         int state = measurement.getState();
         softAssert.assertTrue("state: Satellite code sync state",
                 timeInNs,
@@ -310,15 +296,6 @@ public final class TestMeasurementUtil {
                     measurement.getSnrInDb() >= 0.0 && measurement.getSnrInDb() <= 63);
         }
 
-        // Check Automatic Gain Control level in dB.
-        // As per CDD 7.3.3 / C-3-3 Year 2107+ should have AGC level present
-        if (gnssYearOfHardware >= YEAR_2017) {
-            softAssert.assertTrue("AGC level in measurement",
-                    timeInNs,
-                    "X == true",
-                    String.valueOf(measurement.hasAutomaticGainControlLevelDb()),
-                    measurement.hasAutomaticGainControlLevelDb());
-        }
         if (measurement.hasAutomaticGainControlLevelDb()) {
             softAssert.assertTrue("Automatic Gain Control level in dB",
                 timeInNs,
@@ -814,18 +791,14 @@ public final class TestMeasurementUtil {
                 getGnssNavMessageTypes() + "] actual = " + type,
                     GNSS_NAVIGATION_MESSAGE_TYPE.contains(type));
 
-            int gnssYearOfHardware =
-                testLocationManager.getLocationManager().getGnssYearOfHardware();
             int messageType = message.getType();
-            if (gnssYearOfHardware >= YEAR_2016) {
-                softAssert.assertTrue("Message ID cannot be 0", message.getMessageId() != 0);
-                if (messageType == GnssNavigationMessage.TYPE_GAL_I) {
-                    softAssert.assertTrue("Sub Message ID can not be negative.",
-                        message.getSubmessageId() >= 0);
-                } else {
-                    softAssert.assertTrue("Sub Message ID has to be greater than 0.",
-                        message.getSubmessageId() > 0);
-                }
+            softAssert.assertTrue("Message ID cannot be 0", message.getMessageId() != 0);
+            if (messageType == GnssNavigationMessage.TYPE_GAL_I) {
+                softAssert.assertTrue("Sub Message ID can not be negative.",
+                    message.getSubmessageId() >= 0);
+            } else {
+                softAssert.assertTrue("Sub Message ID has to be greater than 0.",
+                    message.getSubmessageId() > 0);
             }
 
             // if message type == TYPE_L1CA, verify PRN & Data Size.

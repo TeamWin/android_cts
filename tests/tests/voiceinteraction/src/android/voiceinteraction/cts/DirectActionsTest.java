@@ -44,7 +44,7 @@ import java.util.concurrent.TimeoutException;
  */
 @RunWith(AndroidJUnit4.class)
 public class DirectActionsTest {
-    private static final long OPERATION_TIMEOUT_MS = 10000000;//5000;
+    private static final long OPERATION_TIMEOUT_MS = 5000;
 
     private final @NonNull SessionControl mSessionControl = new SessionControl();
     private final @NonNull ActivityControl mActivityControl = new ActivityControl();

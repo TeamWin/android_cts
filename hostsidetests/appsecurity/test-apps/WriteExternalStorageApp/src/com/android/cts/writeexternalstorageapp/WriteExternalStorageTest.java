@@ -35,6 +35,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.write
 
 import android.os.Environment;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.system.Os;
 import android.test.AndroidTestCase;
 import android.text.format.DateUtils;
@@ -259,6 +260,10 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         }
         final List<File> paths = getAllPackageSpecificPathsExceptMedia(getContext());
 
+        for (File path : paths) {
+            MediaStore.scanFile(getContext(), path);
+        }
+
         // Require that .nomedia was created somewhere above each dir
         for (File path : paths) {
             assertNotNull("Valid media must be inserted during CTS", path);
@@ -358,7 +363,6 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                 getContext().getExternalFilesDir(null),
                 getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
                 getContext().getExternalMediaDirs()[0],
-                getContext().getObbDir(),
         }) {
             next.mkdirs();
 

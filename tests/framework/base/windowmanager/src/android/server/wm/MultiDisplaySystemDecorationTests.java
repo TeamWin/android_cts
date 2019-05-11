@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_HOME_ACTIVITY;
@@ -217,6 +216,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * Test that navigation bar should not show on display without system decoration.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Wait navigation bar show on default display and record the states.

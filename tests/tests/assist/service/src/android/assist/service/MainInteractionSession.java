@@ -130,6 +130,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onHandleAssist(/*@Nullable */Bundle data, /*@Nullable*/ AssistStructure structure,
         /*@Nullable*/ AssistContent content) {
         Log.i(TAG, "onHandleAssist");
@@ -143,6 +144,18 @@ public class MainInteractionSession extends VoiceInteractionSession {
         mAssistData.putBundle(Utils.ASSIST_BUNDLE_KEY, data);
         hasReceivedAssistData = true;
         maybeBroadcastResults();
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onHandleAssistSecondary(Bundle data, AssistStructure structure,
+            AssistContent content, int index, int count) {
+        Log.e(TAG, "onHandleAssistSecondary() called instead of onHandleAssist()");
+    }
+
+    @Override
+    public void onAssistStructureFailure(Throwable failure) {
+        Log.e(TAG, "onAssistStructureFailure(): D'OH!!!", failure);
     }
 
     @Override

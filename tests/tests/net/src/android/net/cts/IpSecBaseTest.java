@@ -25,14 +25,15 @@ import android.net.IpSecManager;
 import android.net.IpSecTransform;
 import android.system.Os;
 import android.system.OsConstants;
-import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -42,7 +43,12 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class IpSecBaseTest extends AndroidTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class IpSecBaseTest {
 
     private static final String TAG = IpSecBaseTest.class.getSimpleName();
 
@@ -69,11 +75,19 @@ public class IpSecBaseTest extends AndroidTestCase {
 
     protected ConnectivityManager mCM;
     protected IpSecManager mISM;
+    protected Context mContext;
 
-    protected void setUp() throws Exception {
-        super.setUp();
-        mISM = (IpSecManager) getContext().getSystemService(Context.IPSEC_SERVICE);
-        mCM = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getContext();
+        mISM =
+                (IpSecManager)
+                        InstrumentationRegistry.getContext()
+                                .getSystemService(Context.IPSEC_SERVICE);
+        mCM =
+                (ConnectivityManager)
+                        InstrumentationRegistry.getContext()
+                                .getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
     protected static byte[] getKey(int bitLength) {
@@ -194,6 +208,17 @@ public class IpSecBaseTest extends AndroidTestCase {
 
     public static class JavaUdpSocket implements GenericUdpSocket {
         public final DatagramSocket mSocket;
+
+        public JavaUdpSocket(InetAddress localAddr, int port) {
+            try {
+                mSocket = new DatagramSocket(port, localAddr);
+                mSocket.setSoTimeout(SOCK_TIMEOUT);
+            } catch (SocketException e) {
+                // Fail loudly if we can't set up sockets properly. And without the timeout, we
+                // could easily end up in an endless wait.
+                throw new RuntimeException(e);
+            }
+        }
 
         public JavaUdpSocket(InetAddress localAddr) {
             try {
@@ -425,26 +450,25 @@ public class IpSecBaseTest extends AndroidTestCase {
     }
 
     protected static IpSecTransform buildIpSecTransform(
-            Context mContext,
+            Context context,
             IpSecManager.SecurityParameterIndex spi,
             IpSecManager.UdpEncapsulationSocket encapSocket,
             InetAddress remoteAddr)
             throws Exception {
-        String localAddr = (remoteAddr instanceof Inet4Address) ? IPV4_LOOPBACK : IPV6_LOOPBACK;
         IpSecTransform.Builder builder =
-                new IpSecTransform.Builder(mContext)
-                .setEncryption(new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY))
-                .setAuthentication(
-                        new IpSecAlgorithm(
-                                IpSecAlgorithm.AUTH_HMAC_SHA256,
-                                AUTH_KEY,
-                                AUTH_KEY.length * 4));
+                new IpSecTransform.Builder(context)
+                        .setEncryption(new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY))
+                        .setAuthentication(
+                                new IpSecAlgorithm(
+                                        IpSecAlgorithm.AUTH_HMAC_SHA256,
+                                        AUTH_KEY,
+                                        AUTH_KEY.length * 4));
 
         if (encapSocket != null) {
             builder.setIpv4Encapsulation(encapSocket, encapSocket.getPort());
         }
 
-        return builder.buildTransportModeTransform(InetAddress.getByName(localAddr), spi);
+        return builder.buildTransportModeTransform(remoteAddr, spi);
     }
 
     private IpSecTransform buildDefaultTransform(InetAddress localAddr) throws Exception {
@@ -454,6 +478,7 @@ public class IpSecBaseTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testJavaTcpSocketPair() throws Exception {
         for (String addr : LOOPBACK_ADDRS) {
             InetAddress local = InetAddress.getByName(addr);
@@ -464,6 +489,7 @@ public class IpSecBaseTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testJavaUdpSocketPair() throws Exception {
         for (String addr : LOOPBACK_ADDRS) {
             InetAddress local = InetAddress.getByName(addr);
@@ -475,6 +501,7 @@ public class IpSecBaseTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testJavaUdpSocketPairUnconnected() throws Exception {
         for (String addr : LOOPBACK_ADDRS) {
             InetAddress local = InetAddress.getByName(addr);
@@ -486,6 +513,7 @@ public class IpSecBaseTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testNativeTcpSocketPair() throws Exception {
         for (String addr : LOOPBACK_ADDRS) {
             InetAddress local = InetAddress.getByName(addr);
@@ -497,6 +525,7 @@ public class IpSecBaseTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testNativeUdpSocketPair() throws Exception {
         for (String addr : LOOPBACK_ADDRS) {
             InetAddress local = InetAddress.getByName(addr);
@@ -508,6 +537,7 @@ public class IpSecBaseTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testNativeUdpSocketPairUnconnected() throws Exception {
         for (String addr : LOOPBACK_ADDRS) {
             InetAddress local = InetAddress.getByName(addr);

@@ -776,7 +776,7 @@
            as failed.
 
     </string>
-    <string name="multinetwork_connectivity_test_pre_requisites">Prerequisite - Setup a Wi-Fi access point with WPA PSK in which we can turn on or off internet access. </string>
+    <string name="multinetwork_connectivity_test_pre_requisites">Prerequisite - Setup a Wi-Fi access point with WPA PSK in which we can turn on or off internet access. Delete that access point from this device if it exists already. </string>
     <string name="multinetwork_connectivity_test_start">Start</string>
     <string name="multinetwork_connectivity_test_ap_name">Wi-Fi SSID</string>
     <string name="multinetwork_connectivity_test_ap_passphrase">WPA 2 passphrase</string>
@@ -789,8 +789,9 @@
     <string name="multinetwork_connectivity_test_progress_1">Waiting for Wi-Fi to lose connectivity.</string>
     <string name="multinetwork_connectivity_test_progress_2">Waiting to check connectivity.</string>
     <string name="multinetwork_connectivity_test_progress_3">Waiting to make sure Wi-Fi has connectivity.</string>
-    <string name="multinetwork_connectivity_test_1_desc">Test 1 - Connect to Wi-Fi with no internet doesnt disable current connectivity</string>
-    <string name="multinetwork_connectivity_test_2_desc">Test 2 - When connected to Wi-Fi, on losing connectivity, restores mobile connectivity</string>
+    <string name="multinetwork_connectivity_test_1_desc">Test 1 - Connect to Wi-Fi with no internet doesnt disable current connectivity (new API)</string>
+    <string name="multinetwork_connectivity_test_2_desc">Test 2 - Connect to Wi-Fi with no internet doesnt disable current connectivity (legacy API)</string>
+    <string name="multinetwork_connectivity_test_3_desc">Test 3 - When connected to Wi-Fi, on losing connectivity, restores mobile connectivity (legacy API)</string>
     <string name="multinetwork_status_wifi_connect_success">Wi-Fi connect success.</string>
     <string name="multinetwork_status_mobile_connect_success">Mobile net connect success.</string>
     <string name="multinetwork_status_wifi_connect_timed_out">Wi-Fi connect timed out.</string>
@@ -804,7 +805,9 @@
     <string name="multinetwork_connectivity_test_all_prereq_1">Looks like your device does not support telephony or mobile data. If yes, you can mark test passed and proceed.</string>
     <string name="multinetwork_connectivity_test_all_prereq_2">Need mobile data to proceed. Please insert a mobile data capable sim and repeat the test. By marking test as passed, you acknowledge that the device cannot do mobile data.</string>
     <string name="multinetwork_status_wifi_connectivity_failed">Wi-Fi connectivity failed.</string>
-
+    <string name="multinetwork_connectivity_overlay_permission_message">This test requires the CTS verifier to have the system overlay permission, please enable it in the next screen.</string>
+    <string name="multinetwork_connectivity_overlay_permission_positive">Settings</string>
+    <string name="multinetwork_connectivity_overlay_permission_negative">Cancel</string>
     <!-- Strings for NfcTestActivity -->
     <string name="nfc_test">NFC Test</string>
     <string name="nfc_test_info">The Peer-to-Peer Data Exchange tests require two devices with

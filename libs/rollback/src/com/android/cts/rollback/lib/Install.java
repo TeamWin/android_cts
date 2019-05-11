@@ -78,11 +78,15 @@ public class Install {
      *
      * @return the session id of the newly created session
      */
-    private int createEmptyInstallSession(boolean multiPackage) throws IOException {
+    private int createEmptyInstallSession(boolean multiPackage, boolean isApex)
+            throws IOException {
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
                 PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         if (multiPackage) {
             params.setMultiPackage();
+        }
+        if (isApex) {
+            params.setInstallAsApex();
         }
         if (mIsStaged) {
             params.setStaged();
@@ -97,7 +101,7 @@ public class Install {
      * @return the session id of the newly created session.
      */
     private int createInstallSession(TestApp app) throws IOException {
-        int sessionId = createEmptyInstallSession(/* multiPackage */false);
+        int sessionId = createEmptyInstallSession(/*multiPackage*/false, app.isApex());
         PackageInstaller.Session session = getPackageInstaller().openSession(sessionId);
 
         ClassLoader loader = TestApp.class.getClassLoader();
@@ -122,7 +126,7 @@ public class Install {
         final int sessionId;
         final PackageInstaller.Session session;
         if (mIsMultiPackage) {
-            sessionId = createEmptyInstallSession(/* multiPackage*/ true);
+            sessionId = createEmptyInstallSession(/*multiPackage*/ true, /*isApex*/false);
             session = getPackageInstaller().openSession(sessionId);
             for (TestApp app : mTestApps) {
                 session.addChildSessionId(createInstallSession(app));

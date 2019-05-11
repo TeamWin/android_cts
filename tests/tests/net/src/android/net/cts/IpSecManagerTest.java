@@ -16,10 +16,20 @@
 
 package android.net.cts;
 
+import static android.net.cts.PacketUtils.AES_CBC_BLK_SIZE;
+import static android.net.cts.PacketUtils.AES_CBC_IV_LEN;
+import static android.net.cts.PacketUtils.AES_GCM_BLK_SIZE;
+import static android.net.cts.PacketUtils.AES_GCM_IV_LEN;
+import static android.net.cts.PacketUtils.IP4_HDRLEN;
+import static android.net.cts.PacketUtils.IP6_HDRLEN;
+import static android.net.cts.PacketUtils.TCP_HDRLEN_WITH_TIMESTAMP_OPT;
+import static android.net.cts.PacketUtils.UDP_HDRLEN;
 import static android.system.OsConstants.IPPROTO_TCP;
 import static android.system.OsConstants.IPPROTO_UDP;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.net.IpSecAlgorithm;
 import android.net.IpSecManager;
@@ -29,6 +39,8 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -37,6 +49,11 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.util.Arrays;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class IpSecManagerTest extends IpSecBaseTest {
 
     private static final String TAG = IpSecManagerTest.class.getSimpleName();
@@ -53,18 +70,9 @@ public class IpSecManagerTest extends IpSecBaseTest {
 
     private static final byte[] AEAD_KEY = getKey(288);
 
-    private static final int TCP_HDRLEN_WITH_OPTIONS = 32;
-    private static final int UDP_HDRLEN = 8;
-    private static final int IP4_HDRLEN = 20;
-    private static final int IP6_HDRLEN = 40;
-
-    // Encryption parameters
-    private static final int AES_GCM_IV_LEN = 8;
-    private static final int AES_CBC_IV_LEN = 16;
-    private static final int AES_GCM_BLK_SIZE = 4;
-    private static final int AES_CBC_BLK_SIZE = 16;
-
-    protected void setUp() throws Exception {
+    @Before
+    @Override
+    public void setUp() throws Exception {
         super.setUp();
     }
 
@@ -74,6 +82,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
      * Realloc the same SPI that was specifically created (expect SpiUnavailable)
      * Close SPIs
      */
+    @Test
     public void testAllocSpi() throws Exception {
         for (InetAddress addr : GOOGLE_DNS_LIST) {
             IpSecManager.SecurityParameterIndex randomSpi = null, droidSpi = null;
@@ -225,6 +234,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
      * release transform
      * send data (expect exception)
      */
+    @Test
     public void testCreateTransform() throws Exception {
         InetAddress localAddr = InetAddress.getByName(IPV4_LOOPBACK);
         IpSecManager.SecurityParameterIndex spi =
@@ -432,19 +442,6 @@ public class IpSecManagerTest extends IpSecBaseTest {
         }
     }
 
-    /** Helper function to calculate expected ESP packet size. */
-    private int calculateEspPacketSize(
-            int payloadLen, int cryptIvLength, int cryptBlockSize, int authTruncLen) {
-        final int ESP_HDRLEN = 4 + 4; // SPI + Seq#
-        final int ICV_LEN = authTruncLen / 8; // Auth trailer; based on truncation length
-        payloadLen += cryptIvLength; // Initialization Vector
-        payloadLen += 2; // ESP trailer
-
-        // Align to block size of encryption algorithm
-        payloadLen += (cryptBlockSize - (payloadLen % cryptBlockSize)) % cryptBlockSize;
-        return payloadLen + ESP_HDRLEN + ICV_LEN;
-    }
-
     public void checkTransform(
             int protocol,
             String localAddress,
@@ -485,7 +482,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
             try (IpSecTransform transform =
                         transformBuilder.buildTransportModeTransform(local, spi)) {
                 if (protocol == IPPROTO_TCP) {
-                    transportHdrLen = TCP_HDRLEN_WITH_OPTIONS;
+                    transportHdrLen = TCP_HDRLEN_WITH_TIMESTAMP_OPT;
                     checkTcp(transform, local, sendCount, useJavaSockets);
                 } else if (protocol == IPPROTO_UDP) {
                     transportHdrLen = UDP_HDRLEN;
@@ -522,7 +519,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
 
         int innerPacketSize = TEST_DATA.length + transportHdrLen + ipHdrLen;
         int outerPacketSize =
-                calculateEspPacketSize(
+                PacketUtils.calculateEspPacketSize(
                                 TEST_DATA.length + transportHdrLen, ivLen, blkSize, truncLenBits)
                         + udpEncapLen
                         + ipHdrLen;
@@ -540,13 +537,13 @@ public class IpSecManagerTest extends IpSecBaseTest {
         // Add TCP ACKs for data packets
         if (protocol == IPPROTO_TCP) {
             int encryptedTcpPktSize =
-                    calculateEspPacketSize(TCP_HDRLEN_WITH_OPTIONS, ivLen, blkSize, truncLenBits);
+                    PacketUtils.calculateEspPacketSize(
+                            TCP_HDRLEN_WITH_TIMESTAMP_OPT, ivLen, blkSize, truncLenBits);
 
-
-                // Add data packet ACKs
-                expectedOuterBytes += (encryptedTcpPktSize + udpEncapLen + ipHdrLen) * (sendCount);
-                expectedInnerBytes += (TCP_HDRLEN_WITH_OPTIONS + ipHdrLen) * (sendCount);
-                expectedPackets += sendCount;
+            // Add data packet ACKs
+            expectedOuterBytes += (encryptedTcpPktSize + udpEncapLen + ipHdrLen) * (sendCount);
+            expectedInnerBytes += (TCP_HDRLEN_WITH_TIMESTAMP_OPT + ipHdrLen) * (sendCount);
+            expectedPackets += sendCount;
         }
 
         StatsChecker.waitForNumPackets(expectedPackets);
@@ -607,6 +604,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         }
     }
 
+    @Test
     public void testIkeOverUdpEncapSocket() throws Exception {
         // IPv6 not supported for UDP-encap-ESP
         InetAddress local = InetAddress.getByName(IPV4_LOOPBACK);
@@ -665,24 +663,28 @@ public class IpSecManagerTest extends IpSecBaseTest {
     //     checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, true, 1000);
     // }
 
+    @Test
     public void testInterfaceCountersUdp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, false, 1000, false);
     }
 
+    @Test
     public void testInterfaceCountersUdp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, auth, null, false, 1000, false);
     }
 
+    @Test
     public void testInterfaceCountersUdp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, true, 1000, false);
     }
 
+    @Test
     public void testAesCbcHmacMd5Tcp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
@@ -690,6 +692,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacMd5Tcp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
@@ -697,6 +700,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacMd5Udp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
@@ -704,6 +708,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacMd5Udp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
@@ -711,6 +716,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha1Tcp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA1, getKey(160), 96);
@@ -718,6 +724,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha1Tcp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA1, getKey(160), 96);
@@ -725,6 +732,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha1Udp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA1, getKey(160), 96);
@@ -732,6 +740,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha1Udp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA1, getKey(160), 96);
@@ -739,6 +748,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha256Tcp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
@@ -746,6 +756,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha256Tcp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
@@ -753,6 +764,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha256Udp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
@@ -760,6 +772,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha256Udp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
@@ -767,6 +780,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha384Tcp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA384, getKey(384), 192);
@@ -774,6 +788,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha384Tcp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA384, getKey(384), 192);
@@ -781,6 +796,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha384Udp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA384, getKey(384), 192);
@@ -788,6 +804,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha384Udp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA384, getKey(384), 192);
@@ -795,6 +812,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha512Tcp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA512, getKey(512), 256);
@@ -802,6 +820,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha512Tcp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA512, getKey(512), 256);
@@ -809,6 +828,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha512Udp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA512, getKey(512), 256);
@@ -816,6 +836,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha512Udp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA512, getKey(512), 256);
@@ -823,6 +844,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, auth, null, false, 1, true);
     }
 
+    @Test
     public void testAesGcm64Tcp4() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 64);
@@ -830,6 +852,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm64Tcp6() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 64);
@@ -837,6 +860,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm64Udp4() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 64);
@@ -844,6 +868,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm64Udp6() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 64);
@@ -851,6 +876,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm96Tcp4() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 96);
@@ -858,6 +884,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm96Tcp6() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 96);
@@ -865,6 +892,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm96Udp4() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 96);
@@ -872,6 +900,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm96Udp6() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 96);
@@ -879,6 +908,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm128Tcp4() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 128);
@@ -886,6 +916,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm128Tcp6() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 128);
@@ -893,6 +924,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm128Udp4() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 128);
@@ -900,6 +932,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesGcm128Udp6() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 128);
@@ -907,6 +940,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, null, null, authCrypt, false, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacMd5Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
@@ -914,6 +948,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacMd5Udp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_MD5, getKey(128), 96);
@@ -921,6 +956,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha1Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA1, getKey(160), 96);
@@ -928,6 +964,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha1Udp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA1, getKey(160), 96);
@@ -935,6 +972,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha256Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
@@ -942,6 +980,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha256Udp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
@@ -949,6 +988,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha384Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA384, getKey(384), 192);
@@ -956,6 +996,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha384Udp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA384, getKey(384), 192);
@@ -963,6 +1004,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha512Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA512, getKey(512), 256);
@@ -970,6 +1012,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesCbcHmacSha512Udp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA512, getKey(512), 256);
@@ -977,6 +1020,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, auth, null, true, 1, true);
     }
 
+    @Test
     public void testAesGcm64Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 64);
@@ -984,6 +1028,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, null, authCrypt, true, 1, true);
     }
 
+    @Test
     public void testAesGcm64Udp4UdpEncap() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 64);
@@ -991,6 +1036,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, null, authCrypt, true, 1, true);
     }
 
+    @Test
     public void testAesGcm96Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 96);
@@ -998,6 +1044,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, null, authCrypt, true, 1, true);
     }
 
+    @Test
     public void testAesGcm96Udp4UdpEncap() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 96);
@@ -1005,6 +1052,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, null, authCrypt, true, 1, true);
     }
 
+    @Test
     public void testAesGcm128Tcp4UdpEncap() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 128);
@@ -1012,6 +1060,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, null, authCrypt, true, 1, true);
     }
 
+    @Test
     public void testAesGcm128Udp4UdpEncap() throws Exception {
         IpSecAlgorithm authCrypt =
                 new IpSecAlgorithm(IpSecAlgorithm.AUTH_CRYPT_AES_GCM, AEAD_KEY, 128);
@@ -1019,78 +1068,91 @@ public class IpSecManagerTest extends IpSecBaseTest {
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, null, authCrypt, true, 1, true);
     }
 
+    @Test
     public void testCryptUdp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, null, null, false, 1, false);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, null, null, false, 1, true);
     }
 
+    @Test
     public void testAuthUdp4() throws Exception {
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, auth, null, false, 1, false);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, auth, null, false, 1, true);
     }
 
+    @Test
     public void testCryptUdp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, null, null, false, 1, false);
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, crypt, null, null, false, 1, true);
     }
 
+    @Test
     public void testAuthUdp6() throws Exception {
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, null, auth, null, false, 1, false);
         checkTransform(IPPROTO_UDP, IPV6_LOOPBACK, null, auth, null, false, 1, true);
     }
 
+    @Test
     public void testCryptTcp4() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, null, null, false, 1, false);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, null, null, false, 1, true);
     }
 
+    @Test
     public void testAuthTcp4() throws Exception {
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, auth, null, false, 1, false);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, auth, null, false, 1, true);
     }
 
+    @Test
     public void testCryptTcp6() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, null, null, false, 1, false);
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, crypt, null, null, false, 1, true);
     }
 
+    @Test
     public void testAuthTcp6() throws Exception {
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, null, auth, null, false, 1, false);
         checkTransform(IPPROTO_TCP, IPV6_LOOPBACK, null, auth, null, false, 1, true);
     }
 
+    @Test
     public void testCryptUdp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, null, null, true, 1, false);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, crypt, null, null, true, 1, true);
     }
 
+    @Test
     public void testAuthUdp4UdpEncap() throws Exception {
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, auth, null, true, 1, false);
         checkTransform(IPPROTO_UDP, IPV4_LOOPBACK, null, auth, null, true, 1, true);
     }
 
+    @Test
     public void testCryptTcp4UdpEncap() throws Exception {
         IpSecAlgorithm crypt = new IpSecAlgorithm(IpSecAlgorithm.CRYPT_AES_CBC, CRYPT_KEY);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, null, null, true, 1, false);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, crypt, null, null, true, 1, true);
     }
 
+    @Test
     public void testAuthTcp4UdpEncap() throws Exception {
         IpSecAlgorithm auth = new IpSecAlgorithm(IpSecAlgorithm.AUTH_HMAC_SHA256, getKey(256), 128);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, auth, null, true, 1, false);
         checkTransform(IPPROTO_TCP, IPV4_LOOPBACK, null, auth, null, true, 1, true);
     }
 
+    @Test
     public void testOpenUdpEncapSocketSpecificPort() throws Exception {
         IpSecManager.UdpEncapsulationSocket encapSocket = null;
         int port = -1;
@@ -1119,6 +1181,7 @@ public class IpSecManagerTest extends IpSecBaseTest {
         assertTrue("Returned invalid port", encapSocket.getPort() == port);
     }
 
+    @Test
     public void testOpenUdpEncapSocketRandomPort() throws Exception {
         try (IpSecManager.UdpEncapsulationSocket encapSocket = mISM.openUdpEncapsulationSocket()) {
             assertTrue("Returned invalid port", encapSocket.getPort() != 0);

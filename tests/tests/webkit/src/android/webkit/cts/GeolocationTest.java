@@ -23,6 +23,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.platform.test.annotations.AppModeFull;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -56,6 +57,7 @@ import java.util.TreeSet;
 
 import junit.framework.Assert;
 
+@AppModeFull(reason = "Instant apps do not have access to location information")
 public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
     // TODO Write additional tests to cover:
