@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_HOME_ACTIVITY;
