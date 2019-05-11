@@ -60,7 +60,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     private static final long TIME_SPENT_IN_TOP = 2000;
     private static final long TIME_SPENT_IN_FOREGROUND = 2000;
     private static final long TIME_SPENT_IN_BACKGROUND = 2000;
-    private static final long TIME_SPENT_IN_CACHED = 2000;
+    private static final long TIME_SPENT_IN_CACHED = 4000;
     private static final long SCREEN_STATE_CHANGE_TIMEOUT = 4000;
     private static final long SCREEN_STATE_POLLING_INTERVAL = 500;
 
