@@ -77,7 +77,6 @@ public class PowerTestHostLink {
      */
     public final static String SOCKET_NAME = "/android/cts/powertest";
 
-    private Context mContext;
     private volatile boolean mStopThread;
     private final SensorManager mSensorManager;
     private final HostToDeviceInterface mHostToDeviceExecutor;
@@ -87,7 +86,6 @@ public class PowerTestHostLink {
         Log.d(TAG, " +++ Begin of localSocketServer() +++ ");
         mHostToDeviceExecutor = listener;
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        mContext = context;
     }
 
     /**
@@ -219,8 +217,7 @@ public class PowerTestHostLink {
                 response = RESPONSE_OK;
             }
         } else if (request.startsWith(REQUEST_EXTERNAL_STORAGE)){
-            response = SensorCtsHelper.getSensorTestDataDirectory(mContext, "power/")
-                    .getAbsolutePath();
+            response = SensorCtsHelper.getSensorTestDataDirectory("power/").getAbsolutePath();
             Log.d(TAG,"External storage is " + response);
         } else if (request.startsWith(REQUEST_SCREEN_OFF)) {
             try {
