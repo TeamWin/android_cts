@@ -22,10 +22,6 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsRollbackManagerHostTestHelperApp.apk" />
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="pm uninstall com.android.cts.rollback.lib.testapp.A" />
-        <option name="teardown-command" value="pm uninstall com.android.cts.rollback.lib.testapp.A" />
-    </target_preparer>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="com.android.cts.rollback.host.RollbackManagerHostTest" />
     </test>

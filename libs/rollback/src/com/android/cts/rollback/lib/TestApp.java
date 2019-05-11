@@ -23,20 +23,30 @@ import android.content.pm.VersionedPackage;
  */
 public class TestApp {
     public static final String A = "com.android.cts.rollback.lib.testapp.A";
+    public static final String Apex = "com.android.apex.cts.shim";
 
-    public static final TestApp A1 = new TestApp("A1", A, 1, "RollbackManagerTestAppA1.apk");
-    public static final TestApp A2 = new TestApp("A2", A, 2, "RollbackManagerTestAppA2.apk");
+    public static final TestApp A1 = new TestApp("A1", A, 1, /*isApex*/false,
+            "RollbackManagerTestAppA1.apk");
+    public static final TestApp A2 = new TestApp("A2", A, 2, /*isApex*/false,
+            "RollbackManagerTestAppA2.apk");
+    public static final TestApp Apex2 = new TestApp("Apex2", Apex, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2.apex");
+    public static final TestApp Apex3 = new TestApp("Apex3", Apex, 3, /*isApex*/true,
+            "com.android.apex.cts.shim.v3.apex");
 
     private final String mName;
     private final String mPackageName;
     private final long mVersionCode;
     private final String[] mResourceNames;
+    private final boolean mIsApex;
 
-    private TestApp(String name, String packageName, long versionCode, String... resourceNames) {
+    private TestApp(String name, String packageName, long versionCode, boolean isApex,
+            String... resourceNames) {
         mName = name;
         mPackageName = packageName;
         mVersionCode = versionCode;
         mResourceNames = resourceNames;
+        mIsApex = isApex;
     }
 
     String getPackageName() {
@@ -53,6 +63,10 @@ public class TestApp {
 
     VersionedPackage getVersionedPackage() {
         return new VersionedPackage(mPackageName, mVersionCode);
+    }
+
+    boolean isApex() {
+        return mIsApex;
     }
 
     @Override
