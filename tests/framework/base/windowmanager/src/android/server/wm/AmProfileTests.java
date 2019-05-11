@@ -61,6 +61,7 @@ public class AmProfileTests extends ActivityManagerTestBase {
      * only different in the three configuration options.
      */
     @Test
+    @FlakyTest(bugId = 131005232)
     public void testAmProfileStartNoSamplingStreaming() throws Exception {
         testProfile(true, false, true);
     }

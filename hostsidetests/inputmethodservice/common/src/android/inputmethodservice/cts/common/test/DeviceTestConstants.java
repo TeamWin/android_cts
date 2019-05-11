@@ -106,4 +106,13 @@ public final class DeviceTestConstants {
 
     public static final TestInfo TEST_CONNECTING_TO_THE_SAME_USER_IME =
             new TestInfo(PACKAGE, MULTI_USER_TEST, "testConnectingToTheSameUserIme");
+
+    /**
+     * Device test class: NoOpTest.
+     */
+    private static final String NO_OP_TEST =
+            "android.inputmethodservice.cts.devicetest.NoOpDeviceTest";
+
+    public static final TestInfo TEST_WAIT_3SEC =
+            new TestInfo(PACKAGE, NO_OP_TEST, "testWait3Sec");
 }

@@ -412,6 +412,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     /**
      *  Puts Telecom in a state where there is an active call provided by the
      *  {@link CtsConnectionService} which can be tested.
+     */
+    void placeAndVerifyCall(boolean viaCallRedirection, boolean cancelledByCallRedirection) {
+        placeAndVerifyCall(null, VideoProfile.STATE_AUDIO_ONLY, viaCallRedirection,
+                cancelledByCallRedirection);
+    }
+
+    /**
+     *  Puts Telecom in a state where there is an active call provided by the
+     *  {@link CtsConnectionService} which can be tested.
      *
      *  @param videoState the video state of the call.
      */
@@ -432,6 +441,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
      *  {@link CtsConnectionService} which can be tested.
      */
     void placeAndVerifyCall(Bundle extras, int videoState) {
+        placeAndVerifyCall(extras, videoState, false, false);
+    }
+
+    /**
+     *  Puts Telecom in a state where there is an active call provided by the
+     *  {@link CtsConnectionService} which can be tested.
+     */
+    void placeAndVerifyCall(Bundle extras, int videoState,
+                            boolean viaCallRedirectionService, boolean cancelledByCallRedirection) {
         assertEquals("Lock should have no permits!", 0, mInCallCallbacks.lock.availablePermits());
         int currentCallCount = 0;
         if (mInCallCallbacks.getService() != null) {
@@ -460,11 +478,20 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // be seen by calls to ConnectionService#getAllConnections().
         // We will wait here until the list of connections includes one more connection to ensure
         // that placing the call has fully completed.
-        final int expectedConnectionCount = currentConnectionCount + 1;
+        // If the call is canceled by call redirection service, do not expect the count increment.
+        final int expectedConnectionCount = cancelledByCallRedirection ?
+                currentConnectionCount : currentConnectionCount + 1;
         assertCSConnections(expectedConnectionCount);
 
-        // Ensure the new outgoing call broadcast fired for the outgoing call.
-        assertTrue(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
+        // If the call redirection service is being used, allow some waiting before the new
+        // outgoing call broadcast is received.
+        if (viaCallRedirectionService) {
+            // Ensure the new outgoing call broadcast fired for the outgoing call.
+            assertOutgoingCallBroadcastReceived(true);
+        } else {
+            assertTrue(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
+        }
+
         // CTS test does not have read call log permission so should not get the phone number.
         assertNull(NewOutgoingCallBroadcastReceiver.getReceivedNumber());
     }
@@ -1027,6 +1054,84 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Conference should be in state " + state
+        );
+    }
+
+
+    void assertOutgoingCallBroadcastReceived(boolean received) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return received;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return NewOutgoingCallBroadcastReceiver
+                                .isNewOutgoingCallBroadcastReceived();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                received ? "Outgoing Call Broadcast should be received"
+                        : "Outgoing Call Broadcast should not be received"
+        );
+    }
+
+    void assertCallDetailsConstructed(Call mCall, boolean constructed) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return constructed;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mCall != null && mCall.getDetails() != null;
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                constructed ? "Call Details should be constructed"
+                        : "Call Details should not be constructed"
+        );
+    }
+
+    void assertCallGatewayConstructed(Call mCall, boolean constructed) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return constructed;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mCall != null && mCall.getDetails() != null
+                                && mCall.getDetails().getGatewayInfo() != null;
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                constructed ? "Call Gateway should be constructed"
+                        : "Call Gateway should not be constructed"
+        );
+    }
+
+    void assertCallNotNull(Call mCall, boolean notNull) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return notNull;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mCall != null;
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                notNull ? "Call should not be null" : "Call should be null"
         );
     }
 

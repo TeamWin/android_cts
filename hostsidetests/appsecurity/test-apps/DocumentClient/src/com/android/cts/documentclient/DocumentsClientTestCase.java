@@ -55,8 +55,9 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
     protected UiDevice mDevice;
     protected MyActivity mActivity;
 
-    private String[] mDisabledImes;
     private String mDocumentsUiPackageId;
+
+    private static final String COMPONENT_NAME_DUMMY_IME = "com.android.cts.dummyime/.CtsDummyIme";
 
     @Override
     public void setUp() throws Exception {
@@ -80,7 +81,7 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         // Disable IME's to avoid virtual keyboards from showing up. Occasionally IME draws some UI
         // controls out of its boundary for some first time setup that obscures the text edit and/or
         // save/select button. This will constantly fail some of our tests.
-        disableImes();
+        enableDummyIme();
 
         mDevice = UiDevice.getInstance(getInstrumentation());
         mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
@@ -93,7 +94,7 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         super.tearDown();
         mActivity.finish();
 
-        enableImes();
+        executeShellCommand("ime reset");
     }
 
     protected String getDocumentsUiPackageId() {
@@ -206,16 +207,11 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         executeShellCommand("pm clear " + getDocumentsUiPackageId());
     }
 
-    private void disableImes() throws Exception {
-        mDisabledImes = executeShellCommand("ime list -s").split("\n");
-        for (String ime : mDisabledImes) {
-            executeShellCommand("ime disable " + ime);
-        }
-    }
+    private void enableDummyIme() throws Exception {
+        String enableDummyCommand = "ime enable " + COMPONENT_NAME_DUMMY_IME;
+        executeShellCommand(enableDummyCommand);
 
-    private void enableImes() throws Exception {
-        for (String ime : mDisabledImes) {
-            executeShellCommand("ime enable " + ime);
-        }
+        String setDummyCommand = "ime set " + COMPONENT_NAME_DUMMY_IME;
+        executeShellCommand(setDummyCommand);
     }
 }

@@ -80,6 +80,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallStagedApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApk_VerifyPostReboot");
+        runPhase("testInstallStagedApk_AbandonSessionIsNoop");
     }
 
     @Test
@@ -270,6 +271,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallV3Apex_Commit");
         getDevice().reboot();
         runPhase("testInstallV3Apex_VerifyPostReboot");
+    }
+
+    @Test
+    public void testFailsInvalidApexInstall() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testFailsInvalidApexInstall_Commit");
+        runPhase("testFailsInvalidApexInstall_AbandonSessionIsNoop");
     }
 
     private boolean isUpdatingApexSupported() throws Exception {
