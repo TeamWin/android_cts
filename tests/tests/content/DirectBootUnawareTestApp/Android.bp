@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,39 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsSelinuxEphemeralTestCases",
+android_test_helper_app {
+    name: "CtsContentDirectBootUnawareTestApp",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    static_libs: [
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-    ],
-    libs: [
-        "android.test.base.stubs",
-        "android.test.runner.stubs",
-    ],
-    jni_libs: [
-        "libbase",
-        "libc++",
-        "libcrypto",
-        "libcts_jni",
-        "libctsselinux_jni",
-        "libnativehelper",
-        "libnativehelper_compat_libc++",
-        "libpackagelistparser",
-        "libpcre2",
-        "libselinux",
-    ],
-    srcs: [
-        "src/**/*.java",
-        "common/**/*.java",
-    ],
-    platform_apis: true,
+    sdk_version: "current",
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-    min_sdk_version: "21",
 }

@@ -48,7 +48,7 @@ public class DirectActionsSession extends VoiceInteractionSession {
     // GuardedBy("mLock")
     private boolean mActionsInvalidated;
 
-    private static final int OPERATION_TIMEOUT_MS = 1000000;//5000;
+    private static final int OPERATION_TIMEOUT_MS = 5000;
 
     public DirectActionsSession(@NonNull Context context) {
         super(context);

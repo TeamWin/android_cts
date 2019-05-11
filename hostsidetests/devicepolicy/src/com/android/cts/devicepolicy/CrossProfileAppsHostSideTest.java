@@ -95,6 +95,9 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testStartMainActivity_logged() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
         assertMetricsLogged(
                 getDevice(),
                 () -> {
@@ -111,6 +114,9 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testGetTargetUserProfiles_logged() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
         assertMetricsLogged(
                 getDevice(),
                 () -> {
