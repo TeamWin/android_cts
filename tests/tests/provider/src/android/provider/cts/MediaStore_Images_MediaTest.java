@@ -447,8 +447,9 @@ public class MediaStore_Images_MediaTest {
             assertEquals("3F9DD7A46B26513A7C35272F0D623A06",
                     c.getString(c.getColumnIndex(ImageColumns.ORIGINAL_DOCUMENT_ID)));
 
-            // Confirm that timestamp was parsed
-            assertEquals(1447346778000L, c.getLong(c.getColumnIndex(ImageColumns.DATE_TAKEN)));
+            // Confirm that timestamp was parsed with offset information
+            assertEquals(1447346778000L + 25200000L,
+                    c.getLong(c.getColumnIndex(ImageColumns.DATE_TAKEN)));
 
             // We just added and modified the file, so should be recent
             final long added = c.getLong(c.getColumnIndex(ImageColumns.DATE_ADDED));
@@ -460,7 +461,7 @@ public class MediaStore_Images_MediaTest {
             // Confirm that we trusted value from XMP metadata
             assertEquals("image/dng", c.getString(c.getColumnIndex(ImageColumns.MIME_TYPE)));
 
-            assertEquals(107684, c.getLong(c.getColumnIndex(ImageColumns.SIZE)));
+            assertEquals(107704, c.getLong(c.getColumnIndex(ImageColumns.SIZE)));
 
             final String displayName = c.getString(c.getColumnIndex(ImageColumns.DISPLAY_NAME));
             assertTrue("Invalid display name " + displayName, displayName.startsWith("cts"));
