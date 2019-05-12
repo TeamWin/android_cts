@@ -22,6 +22,7 @@ import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,17 +30,23 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
 import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.VideoColumns;
+import android.provider.cts.MediaStoreUtils.PendingParams;
+import android.provider.cts.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FileUtils;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +56,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @Presubmit
 @RunWith(Parameterized.class)
@@ -187,5 +196,175 @@ public class MediaStore_Video_MediaTest {
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());
         return context.getContentResolver().insert(mExternalVideo, values);
+    }
+
+    /**
+     * This test doesn't hold
+     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION}, so Exif
+     * location information should be redacted.
+     */
+    @Test
+    public void testLocationRedaction() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
+
+        final String displayName = "cts" + System.nanoTime();
+        final PendingParams params = new PendingParams(
+                mExternalVideo, displayName, "video/mp4");
+
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
+        final Uri publishUri;
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
+            try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo_meta);
+                 OutputStream out = session.openOutputStream()) {
+                android.os.FileUtils.copy(in, out);
+            }
+            publishUri = session.publish();
+        }
+
+        final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
+
+        // Since we own the video, we should be able to see the location
+        // we ourselves contributed
+        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+            mmr.setDataSource(pfd.getFileDescriptor());
+            assertEquals("+37.4217-122.0834/",
+                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+        }
+        // As owner, we should be able to request the original bytes
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+        }
+
+        // Now remove ownership, which means that location should be redacted
+        ProviderTestUtils.executeShellCommand(
+                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+            mmr.setDataSource(pfd.getFileDescriptor());
+            assertEquals(null,
+                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+        }
+        // We can't request original bytes unless we have permission
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+            fail("Able to read original content without ACCESS_MEDIA_LOCATION");
+        } catch (UnsupportedOperationException expected) {
+        }
+    }
+
+    @Test
+    public void testLocationDeprecated() throws Exception {
+        final String displayName = "cts" + System.nanoTime();
+        final PendingParams params = new PendingParams(
+                mExternalVideo, displayName, "video/mp4");
+
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
+        final Uri publishUri;
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
+            try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo_meta);
+                    OutputStream out = session.openOutputStream()) {
+                android.os.FileUtils.copy(in, out);
+            }
+            publishUri = session.publish();
+        }
+
+        // Verify that location wasn't indexed
+        try (Cursor c = mContentResolver.query(publishUri,
+                new String[] { VideoColumns.LATITUDE, VideoColumns.LONGITUDE }, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+            assertTrue(c.isNull(1));
+        }
+
+        // Verify that location values aren't recorded
+        final ContentValues values = new ContentValues();
+        values.put(VideoColumns.LATITUDE, 32f);
+        values.put(VideoColumns.LONGITUDE, 64f);
+        mContentResolver.update(publishUri, values, null, null);
+
+        try (Cursor c = mContentResolver.query(publishUri,
+                new String[] { VideoColumns.LATITUDE, VideoColumns.LONGITUDE }, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+            assertTrue(c.isNull(1));
+        }
+    }
+
+    @Test
+    public void testCanonicalize() throws Exception {
+        // Remove all audio left over from other tests
+        ProviderTestUtils.executeShellCommand(
+                "content delete --uri " + mExternalVideo,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+
+        // Publish some content
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final Uri a = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testvideo, new File(dir, "a.mp4")));
+        final Uri b = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testvideo_meta, new File(dir, "b.mp4")));
+        final Uri c = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testvideo, new File(dir, "c.mp4")));
+
+        // Confirm we can canonicalize and recover it
+        final Uri canonicalized = mContentResolver.canonicalize(b);
+        assertNotNull(canonicalized);
+        assertEquals(b, mContentResolver.uncanonicalize(canonicalized));
+
+        // Delete all items above
+        mContentResolver.delete(a, null, null);
+        mContentResolver.delete(b, null, null);
+        mContentResolver.delete(c, null, null);
+
+        // Confirm canonical item isn't found
+        assertNull(mContentResolver.uncanonicalize(canonicalized));
+
+        // Publish data again and confirm we can recover it
+        final Uri d = ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.testvideo_meta, new File(dir, "d.mp4")));
+        assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
+    }
+
+    @Test
+    public void testMetadata() throws Exception {
+        final Uri uri = ProviderTestUtils.stageMedia(R.raw.testvideo_meta, mExternalVideo,
+                "video/mp4");
+
+        try (Cursor c = mContentResolver.query(uri, null, null, null)) {
+            assertTrue(c.moveToFirst());
+
+            // Confirm that we parsed Exif metadata
+            assertEquals(9296, c.getLong(c.getColumnIndex(VideoColumns.DURATION)));
+            assertEquals(1920, c.getLong(c.getColumnIndex(VideoColumns.WIDTH)));
+            assertEquals(1080, c.getLong(c.getColumnIndex(VideoColumns.HEIGHT)));
+
+            // Confirm that we parsed XMP metadata
+            assertEquals("xmp.did:051dfd42-0b46-4302-918a-836fba5016ed",
+                    c.getString(c.getColumnIndex(VideoColumns.DOCUMENT_ID)));
+            assertEquals("xmp.iid:051dfd42-0b46-4302-918a-836fba5016ed",
+                    c.getString(c.getColumnIndex(VideoColumns.INSTANCE_ID)));
+            assertEquals("4F9DD7A46B26513A7C35272F0D623A06",
+                    c.getString(c.getColumnIndex(VideoColumns.ORIGINAL_DOCUMENT_ID)));
+
+            // Confirm that timestamp was parsed
+            assertEquals(1539711603000L, c.getLong(c.getColumnIndex(VideoColumns.DATE_TAKEN)));
+
+            // We just added and modified the file, so should be recent
+            final long added = c.getLong(c.getColumnIndex(VideoColumns.DATE_ADDED));
+            final long modified = c.getLong(c.getColumnIndex(VideoColumns.DATE_MODIFIED));
+            final long now = System.currentTimeMillis() / 1000;
+            assertTrue("Invalid added time " + added, Math.abs(added - now) < 5);
+            assertTrue("Invalid modified time " + modified, Math.abs(modified - now) < 5);
+
+            // Confirm that we trusted value from XMP metadata
+            assertEquals("video/dng", c.getString(c.getColumnIndex(VideoColumns.MIME_TYPE)));
+
+            assertEquals(20716, c.getLong(c.getColumnIndex(VideoColumns.SIZE)));
+
+            final String displayName = c.getString(c.getColumnIndex(VideoColumns.DISPLAY_NAME));
+            assertTrue("Invalid display name " + displayName, displayName.startsWith("cts"));
+            assertTrue("Invalid display name " + displayName, displayName.endsWith(".mp4"));
+        }
     }
 }
