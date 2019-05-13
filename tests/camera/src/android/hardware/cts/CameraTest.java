@@ -150,6 +150,7 @@ public class CameraTest extends Assert {
      */
     private void initializeMessageLooper(final int cameraId) throws IOException {
         final ConditionVariable startDone = new ConditionVariable();
+        final CameraCtsActivity activity = mActivityRule.getActivity();
         new Thread() {
             @Override
             public void run() {
@@ -161,7 +162,7 @@ public class CameraTest extends Assert {
                 mLooper = Looper.myLooper();
                 try {
                     mIsExternalCamera = CameraUtils.isExternal(
-                            mActivityRule.getActivity().getApplicationContext(), cameraId);
+                            activity.getApplicationContext(), cameraId);
                 } catch (Exception e) {
                     Log.e(TAG, "Unable to query external camera!" + e);
                 }
@@ -185,8 +186,13 @@ public class CameraTest extends Assert {
             fail("initializeMessageLooper: start timeout");
         }
         assertNotNull("Fail to open camera.", mCamera);
-        mCamera.setPreviewDisplay(mActivityRule.getActivity().getSurfaceView().getHolder());
-        mJpegPath = mActivityRule.getActivity().getExternalFilesDir(null).getPath() + "/test.jpg";
+        mCamera.setPreviewDisplay(activity.getSurfaceView().getHolder());
+
+        File parent = activity.getPackageManager().isInstantApp()
+                ? activity.getFilesDir()
+                : activity.getExternalFilesDir(null);
+
+        mJpegPath = parent.getPath() + "/test.jpg";
     }
 
     /*

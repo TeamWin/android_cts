@@ -66,7 +66,12 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mFilePath = mContext.getExternalFilesDir(null).getPath();
+
+        File filesDir = mContext.getPackageManager().isInstantApp()
+                ? mContext.getFilesDir()
+                : mContext.getExternalFilesDir(null);
+
+        mFilePath = filesDir.getPath();
     }
 
     @Override

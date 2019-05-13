@@ -58,7 +58,12 @@ public class MediaRecorderCameraActivity extends Activity implements SurfaceHold
         mErrorServiceConnection.start();
 
         mMediaRecorder = new MediaRecorder();
-        mOutputPath = new File(getExternalFilesDir(null), "record.out").getAbsolutePath();
+
+        File filesDir = getPackageManager().isInstantApp()
+                ? getFilesDir()
+                : getExternalFilesDir(null);
+
+        mOutputPath = new File(filesDir, "record.out").getAbsolutePath();
     }
 
     @Override
