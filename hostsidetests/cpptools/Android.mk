@@ -13,23 +13,4 @@
 # limitations under the License.
 
 LOCAL_PATH := $(call my-dir)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE_TAGS := optional
-
-# Must match the package name in CtsTestCaseList.mk
-LOCAL_MODULE := CtsCppToolsTestCases
-
-LOCAL_JAVA_LIBRARIES := ddmlib-prebuilt tradefed
-
-LOCAL_CTS_TEST_PACKAGE := android.tests.cpptools
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
-
 include $(call all-makefiles-under,$(LOCAL_PATH))
