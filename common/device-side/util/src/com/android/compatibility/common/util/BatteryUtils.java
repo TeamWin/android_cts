@@ -42,7 +42,7 @@ public class BatteryUtils {
     }
 
     /** Make the target device think it's off charger. */
-    public static void runDumpsysBatteryUnplug() throws Exception {
+    public static void runDumpsysBatteryUnplug() {
         SystemUtil.runShellCommandForNoOutput("cmd battery unplug");
 
         Log.d(TAG, "Battery UNPLUGGED");
@@ -67,7 +67,7 @@ public class BatteryUtils {
     }
 
     /** Reset the effect of all the previous {@code runDumpsysBattery*} call  */
-    public static void runDumpsysBatteryReset() throws Exception {
+    public static void runDumpsysBatteryReset() {
         SystemUtil.runShellCommandForNoOutput(("cmd battery reset"));
 
         Log.d(TAG, "Battery RESET");
