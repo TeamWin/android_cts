@@ -18,11 +18,14 @@ package android.app.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.Manifest;
 import android.app.StatusBarManager;
 import android.app.StatusBarManager.DisableInfo;
 import android.content.Context;
-import android.test.AndroidTestCase;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +37,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class StatusBarManagerTest extends AndroidTestCase {
+public class StatusBarManagerTest {
 
     private StatusBarManager mStatusBarManager;
     private Context mContext;
