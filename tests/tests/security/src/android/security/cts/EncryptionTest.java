@@ -45,8 +45,25 @@ public class EncryptionTest extends AndroidTestCase {
     private static native boolean aesIsFast();
 
     private boolean isRequired() {
+        // Optional for device without secure lock screen
+        if (!hasSecureLockScreen()) {
+            return false;
+        }
+
         // Optional before MIN_API_LEVEL
         return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL;
+    }
+
+    /*
+     * Device that don't report android.software.device_admin doesn't have secure lock screen
+     * because device with secure lock screen MUST report android.software.device_admin .
+     *
+     * https://source.android.com/compatibility/7.0/android-7.0-cdd.html#3_9_device_administration
+     *
+     */
+    private boolean hasSecureLockScreen() {
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
     }
 
     public void testEncryption() throws Exception {
