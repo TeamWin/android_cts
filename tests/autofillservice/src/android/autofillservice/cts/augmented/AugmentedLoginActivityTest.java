@@ -21,6 +21,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertHasFlags;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.assertViewAutofillState;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
@@ -415,6 +416,50 @@ public class AugmentedLoginActivityTest
         ui.click();
         mActivity.assertAutoFilled();
         mAugmentedUiBot.assertUiGone();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAugmentedAutoFill_thenEditField() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue expectedFocusedValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .build());
+        mActivity.expectAutoFill("dude");
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request, mActivity, usernameId, expectedFocusedValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+
+        // Autofill
+        ui.click();
+        mActivity.assertAutoFilled();
+        mAugmentedUiBot.assertUiGone();
+        assertViewAutofillState(mActivity.getUsername(), true);
+
+        // Now change value and make sure autofill status is changed
+        mActivity.onUsername((v) -> v.setText("I AM GROOT"));
+        assertViewAutofillState(mActivity.getUsername(), false);
     }
 
     @Test

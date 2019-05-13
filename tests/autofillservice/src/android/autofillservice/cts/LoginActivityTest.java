@@ -32,6 +32,7 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
+import static android.autofillservice.cts.Helper.assertViewAutofillState;
 import static android.autofillservice.cts.Helper.disallowOverlays;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
@@ -985,6 +986,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+        assertViewAutofillState(mActivity.getPassword(), true);
 
         // Try to login, it will fail.
         final String loginMessage = mActivity.tapLogin();
@@ -993,6 +995,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Set right password...
         mActivity.onPassword((v) -> v.setText("dude"));
+        assertViewAutofillState(mActivity.getPassword(), false);
 
         // ... and try again
         final String expectedMessage = getWelcomeMessage("dude");
