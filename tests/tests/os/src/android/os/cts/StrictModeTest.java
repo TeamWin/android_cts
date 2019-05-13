@@ -245,6 +245,28 @@ public class StrictModeTest {
     }
 
     @Test
+    public void testFileUriExposure_Chooser() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder().detectFileUriExposure().penaltyLog().build());
+
+        final Uri badUri = Uri.fromFile(new File("/sdcard/meow.jpg"));
+        inspectViolation(
+                () -> {
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setType("image/jpeg");
+                    intent.putExtra(Intent.EXTRA_STREAM, badUri);
+
+                    Intent chooser = Intent.createChooser(intent, "CTS");
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getContext().startActivity(chooser);
+                },
+                info -> {
+                    assertThat(info.getStackTrace()).contains(badUri + " exposed beyond app");
+                });
+    }
+
+    @Test
     public void testContentUriWithoutPermission() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
