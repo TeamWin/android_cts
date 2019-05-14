@@ -57,6 +57,7 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.UiccCardInfo;
+import android.telephony.UiccSlotInfo;
 import android.telephony.cts.locationaccessingapp.CtsLocationAccessService;
 import android.telephony.cts.locationaccessingapp.ICtsLocationAccessControl;
 import android.telephony.emergency.EmergencyNumber;
@@ -78,10 +79,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Build, install and run the tests by running the commands below:
@@ -1573,12 +1577,31 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+        int slotIndex = getValidSlotIndex();
+        String result = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.iccTransmitApduLogicalChannelBySlot(
+                        slotIndex,
+                        0 /* channel */,
+                        0 /* cla */,
+                        0 /* instruction */,
+                        0 /* p1 */,
+                        0 /* p2 */,
+                        0 /* p3 */,
+                        null /* data */));
+        assertTrue(TextUtils.isEmpty(result));
+    }
+
+    @Test
+    public void testIccTransmitApduBasicChannelBySlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
         // just verify no crash
+        int slotIndex = getValidSlotIndex();
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    mTelephonyManager, (tm) -> tm.iccTransmitApduLogicalChannelBySlot(
-                            0 /* slotIndex */,
-                            0 /* channel */,
+                    mTelephonyManager, (tm) -> tm.iccTransmitApduBasicChannelBySlot(
+                            slotIndex,
                             0 /* cla */,
                             0 /* instruction */,
                             0 /* p1 */,
@@ -1590,25 +1613,31 @@ public class TelephonyManagerTest {
         }
     }
 
-    @Test
-    public void testIccTransmitApduBasicChannelBySlot() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-        // just verify no crash
-        try {
-            ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    mTelephonyManager, (tm) -> tm.iccTransmitApduBasicChannelBySlot(
-                            0 /* slotIndex */,
-                            0 /* cla */,
-                            0 /* instruction */,
-                            0 /* p1 */,
-                            0 /* p2 */,
-                            0 /* p3 */,
-                            null /* data */));
-        } catch (IllegalArgumentException e ) {
-            // IllegalArgumentException is okay, just not SecurityException
-        }
+    private int getValidSlotIndex() {
+        return ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    List<UiccCardInfo> cardInfos = mTelephonyManager.getUiccCardsInfo();
+                    Set<String> presentCards = Arrays.stream(mTelephonyManager.getUiccSlotsInfo())
+                            .filter(UiccSlotInfo::getIsActive)
+                            .map(UiccSlotInfo::getCardId)
+                            .filter(Objects::nonNull)
+                            // hack around getUiccSlotsInfo not stripping trailing F
+                            .map(s -> s.endsWith("F") ? s.substring(0, s.length() - 1) : s)
+                            .collect(Collectors.toSet());
+                    int slotIndex = -1;
+                    for (UiccCardInfo cardInfo : cardInfos) {
+                        if (presentCards.contains(cardInfo.getIccId())
+                                || presentCards.contains(cardInfo.getEid())) {
+                            slotIndex = cardInfo.getSlotIndex();
+                            break;
+                        }
+                    }
+                    if (slotIndex < 0) {
+                        fail("Test must be run with SIM card inserted, presentCards = "
+                                + presentCards + "cardinfos = " + cardInfos);
+                    }
+                    return slotIndex;
+                });
     }
 
     public static void waitForMs(long ms) {
