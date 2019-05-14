@@ -16,17 +16,12 @@
 
 package android.voiceinteraction.cts;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-
-import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,25 +35,18 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
 
 @RunWith(AndroidJUnit4.class)
-public class LocalVoiceInteractionTest {
+public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase {
 
     private static final int TIMEOUT_MS = 20 * 1000;
 
-    // TODO: use PackageManager's / make it @TestApi
-    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
     private TestLocalInteractionActivity mTestActivity;
-    private final Context mContext = getInstrumentation().getTargetContext();
     private final CountDownLatch mLatchStart = new CountDownLatch(1);
     private final CountDownLatch mLatchStop = new CountDownLatch(1);
 
     @Rule
     public final ActivityTestRule<TestLocalInteractionActivity> mActivityTestRule =
             new ActivityTestRule<>(TestLocalInteractionActivity.class, false, false);
-
-    @Rule
-    public final RequiredFeatureRule mRequiredFeatureRule = new RequiredFeatureRule(
-            FEATURE_VOICE_RECOGNIZERS);
 
     @Before
     public void setUp() throws Exception {
