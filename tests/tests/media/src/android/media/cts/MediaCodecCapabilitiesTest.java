@@ -826,4 +826,38 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
         codec.release();
     }
+
+    // API test coverage for MediaCodecInfo.EncoderCapabilities.getComplexityRange()
+    public void testGetComplexityRange() throws IOException {
+        boolean skipTest = true;
+        if (MediaUtils.hasEncoder(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+            // Chose AAC Encoder/MediaFormat.MIMETYPE_AUDIO_AAC randomly
+            MediaCodec codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
+            Range<Integer> complexityRange =
+                    codec.getCodecInfo()
+                            .getCapabilitiesForType(MediaFormat.MIMETYPE_AUDIO_AAC)
+                            .getEncoderCapabilities()
+                            .getComplexityRange();
+            Log.d(TAG, "AAC ComplexityRange : " + complexityRange.toString());
+            assertTrue("AAC ComplexityRange invalid low value", complexityRange.getLower() >= 0);
+            codec.release();
+            skipTest = false;
+        }
+        if (MediaUtils.hasEncoder(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
+            // Repeat test with FLAC Encoder
+            MediaCodec codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_FLAC);
+            Range<Integer> complexityRange =
+                    codec.getCodecInfo()
+                            .getCapabilitiesForType(MediaFormat.MIMETYPE_AUDIO_FLAC)
+                            .getEncoderCapabilities()
+                            .getComplexityRange();
+            Log.d(TAG, "FLAC ComplexityRange : " + complexityRange.toString());
+            assertTrue("FLAC ComplexityRange invalid low value", complexityRange.getLower() >= 0);
+            codec.release();
+            skipTest = false;
+        }
+        if (skipTest) {
+            MediaUtils.skipTest(TAG, "AAC and FLAC encoders not present");
+        }
+    }
 }
