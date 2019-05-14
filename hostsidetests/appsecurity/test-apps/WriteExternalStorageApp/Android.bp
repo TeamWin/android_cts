@@ -13,31 +13,34 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsExternalStorageApp",
+    name: "CtsWriteExternalStorageApp",
     defaults: ["cts_support_defaults"],
-    sdk_version: "current",
+    sdk_version: "test_current",
     static_libs: [
+        "CtsWriteExternalStorageWriteGiftLib",
         "androidx.test.rules",
-        "CtsExternalStorageTestLib",
+        "compatibility-device-util-axt",
     ],
-    libs: ["android.test.base.stubs"],
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
     srcs: ["src/**/*.java"],
-    exclude_srcs: ["src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java"],
+    exclude_srcs: ["src/com/android/cts/writeexternalstorageapp/WriteGiftTest.java"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-    dex_preopt: {
-        enabled: false,
-    },
 }
 
 java_library {
-    name: "CtsExternalStorageTestLib",
-    srcs: ["src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java"],
-    defaults: ["cts_support_defaults"],
-    sdk_version: "current",
-    libs: ["android.test.base.stubs"],
+    name: "CtsWriteExternalStorageWriteGiftLib",
+    srcs: ["src/com/android/cts/writeexternalstorageapp/WriteGiftTest.java"],
+    static_libs: ["CtsExternalStorageTestLib"],
+    libs: [
+        "android.test.base.stubs",
+        "android.test.runner.stubs",
+    ],
 }
