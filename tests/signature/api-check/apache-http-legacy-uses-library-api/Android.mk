@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsApacheHttpLegacyUsesLibraryApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
-    current.api \
-    apache-http-legacy-current.api \
+    current.txt \
+    apache-http-legacy-current.txt \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
