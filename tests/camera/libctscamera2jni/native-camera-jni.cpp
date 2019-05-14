@@ -3177,10 +3177,16 @@ bool nativeImageReaderTestBase(
             case AIMAGE_FORMAT_HEIC:
             case AIMAGE_FORMAT_DEPTH_JPEG:
                 if (!staticInfo.getMaxSizeForFormat(format, &testWidth, &testHeight)) {
-                    // This isn't an error condition: device does't support this
-                    // format.
-                    pass = true;
-                    goto cleanup;
+                    // No corresponding format support, skip this device.
+                    ACameraMetadata_free(chars);
+                    chars = nullptr;
+                    ret = testCase.closeCamera();
+                    if (ret != ACAMERA_OK) {
+                        LOG_ERROR(errorString, "Camera %s failed to close. ret %d ", cameraId, ret);
+                        goto cleanup;
+                    }
+
+                    continue;
                 }
                 break;
             default:
