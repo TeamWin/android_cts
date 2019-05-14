@@ -22,15 +22,20 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.ContentObserver;
+import android.database.Cursor;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
+import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Conference;
@@ -98,6 +103,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     HandlerThread mPhoneStateListenerThread;
     Handler mPhoneStateListenerHandler;
     TestPhoneStateListener mPhoneStateListener;
+    Handler mHandler;
 
     static class TestPhoneStateListener extends PhoneStateListener {
         /** Semaphore released for every callback invocation. */
@@ -119,7 +125,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
-
+        mHandler = new Handler(Looper.getMainLooper());
         mShouldTestTelecom = TestUtils.shouldTestTelecom(mContext);
         if (!mShouldTestTelecom) {
             return;
@@ -733,6 +739,70 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     public static Uri getTestNumber() {
         return Uri.fromParts("tel", String.valueOf(sCounter), null);
+    }
+
+    public boolean isLoggedCall(PhoneAccountHandle handle) {
+        PhoneAccount phoneAccount = mTelecomManager.getPhoneAccount(handle);
+        Bundle extras = phoneAccount.getExtras();
+        if (extras == null) {
+            extras = new Bundle();
+        }
+        boolean isSelfManaged = (phoneAccount.getCapabilities()
+                & PhoneAccount.CAPABILITY_SELF_MANAGED) == PhoneAccount.CAPABILITY_SELF_MANAGED;
+        // Calls are logged if:
+        // 1. They're not self-managed
+        // 2. They're self-managed and are configured to request logging.
+        return (!isSelfManaged
+                || (isSelfManaged
+                && extras.getBoolean(PhoneAccount.EXTRA_LOG_SELF_MANAGED_CALLS)
+                && (phoneAccount.getSupportedUriSchemes().contains(PhoneAccount.SCHEME_TEL)
+                || phoneAccount.getSupportedUriSchemes().contains(PhoneAccount.SCHEME_SIP))));
+    }
+
+    public CountDownLatch getCallLogEntryLatch() {
+        CountDownLatch changeLatch = new CountDownLatch(1);
+        mContext.getContentResolver().registerContentObserver(
+                CallLog.Calls.CONTENT_URI, true,
+                new ContentObserver(mHandler) {
+                    @Override
+                    public void onChange(boolean selfChange, Uri uri) {
+                        mContext.getContentResolver().unregisterContentObserver(this);
+                        changeLatch.countDown();
+                        super.onChange(selfChange);
+                    }
+                });
+        return changeLatch;
+    }
+
+
+    public void verifyCallLogging(CountDownLatch logLatch, boolean isCallLogged, Uri testNumber) {
+        if (isCallLogged) {
+            // Wait for the content observer to report that we have gotten a new call log entry.
+            try {
+                logLatch.await(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ie) {
+                fail("Expected log latch");
+            }
+        }
+
+        // Query the latest entry into the call log.
+        Cursor callsCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
+                null, null, CallLog.Calls._ID + " DESC limit 1;");
+        int numberIndex = callsCursor.getColumnIndex(CallLog.Calls.NUMBER);
+        if (callsCursor.moveToNext()) {
+            String number = callsCursor.getString(numberIndex);
+            if (isCallLogged) {
+                assertEquals(testNumber.getSchemeSpecificPart(), number);
+            } else {
+                assertNotEquals(testNumber.getSchemeSpecificPart(), number);
+            }
+        } else {
+            if (isCallLogged) {
+                fail("Blocked call was not logged.");
+            } else {
+                // Horray! No calls and we didn't expect it to be logged.
+            }
+        }
     }
 
     void assertNumCalls(final MockInCallService inCallService, final int numCalls) {
