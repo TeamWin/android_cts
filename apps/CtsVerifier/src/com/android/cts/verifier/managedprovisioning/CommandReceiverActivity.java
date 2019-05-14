@@ -359,12 +359,7 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_ADD_PERSISTENT_PREFERRED_ACTIVITIES: {
                     final ComponentName componentName =
                             EnterprisePrivacyTestDefaultAppActivity.COMPONENT_NAME;
-                    // Browser
-                    IntentFilter filter = new IntentFilter();
-                    filter.addAction(Intent.ACTION_VIEW);
-                    filter.addCategory(Intent.CATEGORY_BROWSABLE);
-                    filter.addDataScheme("http");
-                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    IntentFilter filter;
                     // Camera
                     filter = new IntentFilter();
                     filter.addAction(MediaStore.ACTION_IMAGE_CAPTURE);
