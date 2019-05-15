@@ -25,4 +25,5 @@ LOCAL_SIGNATURE_API_FILES := \
     car-system-current.api \
     car-system-removed.api \
 
+LOCAL_MIN_SDK_VERSION := 27
 include $(LOCAL_PATH)/../build_signature_apk.mk
