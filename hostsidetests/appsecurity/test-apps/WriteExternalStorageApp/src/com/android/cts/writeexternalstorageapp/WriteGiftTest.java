@@ -24,6 +24,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.asser
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
@@ -103,6 +104,20 @@ public class WriteGiftTest extends AndroidTestCase {
         for (File none : noneList) {
             assertFileNoAccess(none);
             assertDirNoAccess(none.getParentFile());
+        }
+    }
+
+    public void testClearingWrite() throws Exception {
+        for (File dir : getAllPackageSpecificPaths(getContext())) {
+            dir.mkdirs();
+            new File(dir, "probe").createNewFile();
+            assertTrue(new File(dir, "probe").exists());
+        }
+    }
+
+    public void testClearingRead() throws Exception {
+        for (File dir : getAllPackageSpecificPaths(getContext())) {
+            assertFalse(new File(dir, "probe").exists());
         }
     }
 }

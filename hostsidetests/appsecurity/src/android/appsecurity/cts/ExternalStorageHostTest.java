@@ -617,6 +617,28 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testExternalStorageClearing() throws Exception {
+        String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
+
+        try {
+            getDevice().uninstallPackage(WRITE_PKG);
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            for (int user : mUsers) {
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testClearingWrite", user);
+            }
+
+            // Uninstall and reinstall means all storage should be cleared
+            getDevice().uninstallPackage(WRITE_PKG);
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            for (int user : mUsers) {
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testClearingRead", user);
+            }
+        } finally {
+            getDevice().uninstallPackage(WRITE_PKG);
+        }
+    }
+
     private boolean access(String path) throws DeviceNotAvailableException {
         final long nonce = System.nanoTime();
         return getDevice().executeShellCommand("ls -la " + path + " && echo " + nonce)
