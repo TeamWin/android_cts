@@ -351,8 +351,9 @@ public class TriggerContentTest extends ConstraintTest {
         assertTrue("Timed out waiting for trigger content.", executed);
         JobParameters params = kTriggerTestEnvironment.getLastJobParameters();
         Uri[] uris = params.getTriggeredContentUris();
-        assertUriArrayLength(1, uris);
-        assertUriDecendant(MEDIA_URI, uris[0]);
+        for (Uri uri : uris) {
+            assertUriDecendant(MEDIA_URI, uri);
+        }
         String[] auths = params.getTriggeredContentAuthorities();
         assertEquals(1, auths.length);
         assertEquals(MediaStore.AUTHORITY, auths[0]);
@@ -369,8 +370,9 @@ public class TriggerContentTest extends ConstraintTest {
         assertTrue("Timed out waiting for trigger content.", executed);
         params = kTriggerTestEnvironment.getLastJobParameters();
         uris = params.getTriggeredContentUris();
-        assertUriArrayLength(1, uris);
-        assertUriDecendant(MEDIA_URI, uris[0]);
+        for (Uri uri : uris) {
+            assertUriDecendant(MEDIA_URI, uri);
+        }
         auths = params.getTriggeredContentAuthorities();
         assertEquals(1, auths.length);
         assertEquals(MediaStore.AUTHORITY, auths[0]);
