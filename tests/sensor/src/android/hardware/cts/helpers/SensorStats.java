@@ -16,6 +16,7 @@
 
 package android.hardware.cts.helpers;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.cts.helpers.sensoroperations.SensorOperation;
 import android.os.Environment;
@@ -148,11 +149,10 @@ public class SensorStats {
     /**
      * Utility method to log the stats to a file. Will overwrite the file if it already exists.
      */
-    public void logToFile(String fileName) throws IOException {
-        // Check that external storage is mounted before attempting to write the recorded sensor
-        // data to file. This is necessary since Instant Apps do not have access to external
-        // storage.
-        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+    public void logToFile(Context context, String fileName) throws IOException {
+        // Only log to file if currently not an Instant App since Instant Apps do not have access to
+        // external storage.
+        if (!context.getPackageManager().isInstantApp()) {
             File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
             File logFile = new File(statsDirectory, fileName);
             final Map<String, Object> flattened = flatten();

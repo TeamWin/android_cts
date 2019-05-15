@@ -26,14 +26,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 
@@ -45,7 +41,6 @@ import android.telecom.cts.screeningtestapp.CallScreeningServiceControl;
 import android.telecom.cts.screeningtestapp.CtsCallScreeningService;
 import android.telecom.cts.screeningtestapp.ICallScreeningControl;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -66,7 +61,6 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
     private ICallScreeningControl mCallScreeningControl;
     private RoleManager mRoleManager;
     private String mPreviousCallScreeningPackage;
-    private Handler mHandler;
 
     @Override
     protected void setUp() throws Exception {
@@ -74,7 +68,6 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         if (!mShouldTestTelecom) {
             return;
         }
-        mHandler = new Handler(Looper.getMainLooper());
         mRoleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
         setupControlBinder();
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
@@ -273,21 +266,6 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
                         "Call extra - verification failed, expected the extra " +
                         "EXTRA_SILENT_RINGING_REQUESTED to be set:" +
                         expectedIsSilentRingingExtraSet);
-    }
-
-    private CountDownLatch getCallLogEntryLatch() {
-        CountDownLatch changeLatch = new CountDownLatch(1);
-        mContext.getContentResolver().registerContentObserver(
-                CallLog.Calls.CONTENT_URI, true,
-                new ContentObserver(mHandler) {
-                    @Override
-                    public void onChange(boolean selfChange, Uri uri) {
-                        mContext.getContentResolver().unregisterContentObserver(this);
-                        changeLatch.countDown();
-                        super.onChange(selfChange);
-                    }
-                });
-        return changeLatch;
     }
 
     /**
