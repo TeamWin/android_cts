@@ -323,19 +323,16 @@ public class NetworkScanApiTest {
     private NetworkScanRequest buildNetworkScanRequest(boolean includeBandsAndChannels) {
         // Make sure that there should be at least one entry.
         List<CellInfo> allCellInfo = mTelephonyManager.getAllCellInfo();
-        if (allCellInfo == null) {
-            fail("TelephonyManager.getAllCellInfo() returned NULL!");
-        }
-        if (allCellInfo.size() == 0) {
-            fail("TelephonyManager.getAllCellInfo() returned zero-length list!");
-        }
+        List<RadioAccessSpecifier> radioAccessSpecifier = new ArrayList<>();
 
-        // Construct a NetworkScanRequest
-        List<RadioAccessSpecifier> radioAccessSpecifier = getRadioAccessSpecifier(allCellInfo);
-        if (!includeBandsAndChannels) {
-            radioAccessSpecifier = radioAccessSpecifier.stream().map(spec ->
+        if (allCellInfo != null && allCellInfo.size() != 0) {
+            // Construct a NetworkScanRequest
+            radioAccessSpecifier = getRadioAccessSpecifier(allCellInfo);
+            if (!includeBandsAndChannels) {
+                radioAccessSpecifier = radioAccessSpecifier.stream().map(spec ->
                     new RadioAccessSpecifier(spec.getRadioAccessNetwork(), null, null))
                     .collect(Collectors.toList());
+            }
         }
 
         Log.d(TAG, "number of radioAccessSpecifier: " + radioAccessSpecifier.size());
