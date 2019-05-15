@@ -16,6 +16,8 @@
 
 package android.voiceinteraction.cts;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.DirectAction;
@@ -30,6 +32,7 @@ import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +51,16 @@ public class DirectActionsTest {
 
     private final @NonNull SessionControl mSessionControl = new SessionControl();
     private final @NonNull ActivityControl mActivityControl = new ActivityControl();
+
+    // TODO: move to super class
+    @Before
+    public void prepareDevice() throws Exception {
+        // Unlock screen.
+        runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        runShellCommand("wm dismiss-keyguard");
+    }
 
     @Test
     public void testPerformDirectAction() throws Exception {
