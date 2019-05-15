@@ -67,6 +67,11 @@ public class ActivityLauncher {
      */
     public static final String KEY_REORDER_TO_FRONT = "reorder_to_front";
     /**
+     * Key for boolean extra, indicates if launch task without presented to user.
+     * {@link ActivityOptions#makeTaskLaunchBehind()}.
+     */
+    public static final String KEY_LAUNCH_TASK_BEHIND = "launch_task_behind";
+    /**
      * Key for string extra with string representation of target component.
      */
     public static final String KEY_TARGET_COMPONENT = "target_component";
@@ -167,10 +172,13 @@ public class ActivityLauncher {
             newIntent.putExtras(intentExtras);
         }
 
-        ActivityOptions options = null;
+        ActivityOptions options = extras.getBoolean(KEY_LAUNCH_TASK_BEHIND)
+                ? ActivityOptions.makeTaskLaunchBehind() : null;
         final int displayId = extras.getInt(KEY_DISPLAY_ID, -1);
         if (displayId != -1) {
-            options = ActivityOptions.makeBasic();
+            if (options == null) {
+                options = ActivityOptions.makeBasic();
+            }
             options.setLaunchDisplayId(displayId);
             if (extras.getBoolean(KEY_MULTIPLE_INSTANCES, true)) {
                 newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
