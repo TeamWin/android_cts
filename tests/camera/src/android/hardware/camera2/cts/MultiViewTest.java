@@ -242,6 +242,11 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             // TODO: check the framerate is correct
             SystemClock.sleep(PREVIEW_TIME_MS);
             for (int i = 0; i < NUM_CAMERAS_TESTED; i++) {
+                if (!getStaticInfo(mCameraIds[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
                 stopPreview(mCameraIds[i]);
             }
         } catch (BlockingOpenException e) {
