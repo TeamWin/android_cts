@@ -38,6 +38,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.ParcelUuid;
 import android.os.PersistableBundle;
 import android.provider.Telephony;
 import android.provider.VoicemailContract;
@@ -52,10 +53,12 @@ import android.util.Log;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
@@ -118,6 +121,8 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ALPHA_TAG_B = "tagB";
     private static final String NUMBER_A = "1234567890";
     private static final String NUMBER_B = "0987654321";
+
+    private static final int DSDS_PHONE_COUNT = 2;
 
     @Override
     protected void setUp() throws Exception {
@@ -771,6 +776,134 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     /**
+     * This test verifies that {@link SubscriptionManager#createSubscriptionGroup(List)} correctly
+     * create a group with the given subscription id.
+     *
+     * This also verifies that
+     * {@link SubscriptionManager#removeSubscriptionsFromGroup(List, ParcelUuid)} correctly remove
+     * the given subscription group.
+     */
+    public void testCreateAndRemoveSubscriptionGroup() {
+        if (!hasCellular) return;
+        // Set subscription group with current sub Id.
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
+        List<Integer> subGroup = Arrays.asList(subId);
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(subGroup);
+
+        // Getting subscriptions in group.
+        List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+
+        try {
+            assertEquals(1, infoList.size());
+            assertEquals(uuid, infoList.get(0).getGroupUuid());
+            assertEquals(subId, infoList.get(0).getSubscriptionId());
+        } finally {
+            // Verify that the given subGroup has been removed.
+            mSubscriptionManager.removeSubscriptionsFromGroup(subGroup, uuid);
+            infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+            assertTrue(infoList.isEmpty());
+        }
+    }
+
+    public void testAddSubscriptionToExistingGroupForMultipleSims() {
+        if (!hasCellular || mTelephonyManager.getPhoneCount() < DSDS_PHONE_COUNT) return;
+
+        // Set subscription group with current sub Id.
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        List<Integer> subGroup = Arrays.asList(subId);
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(subGroup);
+
+        try {
+            // Get all active subscriptions.
+            List<SubscriptionInfo> activeSubInfos =
+                    mSubscriptionManager.getActiveSubscriptionInfoList();
+
+            // Verify that the device has at least two active subscriptions.
+            assertTrue(activeSubInfos.size() >= DSDS_PHONE_COUNT);
+
+            List<Integer> activeSubGroup = activeSubInfos.stream()
+                    .map(info -> info.getSubscriptionId())
+                    .filter(id -> id != subId)
+                    .collect(Collectors.toList());
+
+            mSubscriptionManager.addSubscriptionsIntoGroup(activeSubGroup, uuid);
+
+            List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+            activeSubGroup.add(subId);
+            assertEquals(activeSubGroup.size(), infoList.size());
+            assertTrue(infoList.containsAll(activeSubGroup));
+        } finally {
+            removeSubscriptionsFromGroup(uuid);
+        }
+    }
+
+    /**
+     * This test verifies that
+     * {@link SubscriptionManager#addSubscriptionsIntoGroup(List, ParcelUuid)}} correctly add some
+     * additional subscriptions to the existing group.
+     *
+     * This test required the device has more than one subscription.
+     */
+    public void testAddSubscriptionToExistingGroupForEsim() {
+        if (!hasCellular) return;
+
+        // Set subscription group with current sub Id.
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        List<Integer> subGroup = Arrays.asList(subId);
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(subGroup);
+
+        try {
+            // Get all accessible eSim subscription.
+            List<SubscriptionInfo> accessibleSubInfos =
+                    mSubscriptionManager.getAccessibleSubscriptionInfoList();
+            if (accessibleSubInfos != null && accessibleSubInfos.size() > 1) {
+                List<Integer> accessibleSubGroup = accessibleSubInfos.stream()
+                        .map(info -> info.getSubscriptionId())
+                        .filter(id -> id != subId)
+                        .collect(Collectors.toList());
+
+                mSubscriptionManager.addSubscriptionsIntoGroup(accessibleSubGroup, uuid);
+
+                List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(
+                        uuid);
+                accessibleSubGroup.add(subId);
+                assertEquals(accessibleSubGroup.size(), infoList.size());
+                assertTrue(infoList.containsAll(accessibleSubGroup));
+            }
+        } finally {
+            removeSubscriptionsFromGroup(uuid);
+        }
+    }
+
+    /**
+     * This test verifies that {@link SubscriptionManager#setOpportunistic(boolean, int)} correctly
+     * set the opportunistic property of the given subscription.
+     */
+    public void testOpportunistic() {
+        if (!hasCellular) return;
+
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        SubscriptionInfo info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
+        boolean oldOpportunistic = info.isOpportunistic();
+        boolean newOpportunistic = !oldOpportunistic;
+
+        try {
+            // Mark the given subscription as opportunistic subscription.
+            boolean successed = mSubscriptionManager.setOpportunistic(newOpportunistic, subId);
+            assertTrue(successed);
+
+            // Verify that the given subscription is opportunistic subscription.
+            info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
+            assertEquals(newOpportunistic, info.isOpportunistic());
+        } finally {
+            // Set back to original opportunistic property.
+            mSubscriptionManager.setOpportunistic(oldOpportunistic, subId);
+            info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
+            assertEquals(oldOpportunistic, info.isOpportunistic());
+        }
+    }
+
+    /**
      * This test verifies that {@link TelephonyManager#iccExchangeSimIO(int, int, int, int, int,
      * String)} correctly transmits iccIO commands to the UICC card. First, the MF is selected via a
      * SELECT apdu via the basic channel, then a STATUS AT-command is sent.
@@ -834,6 +967,19 @@ public class CarrierApiTest extends AndroidTestCase {
         assertTrue(MIN_LOGICAL_CHANNEL <= channel && channel <= MAX_LOGICAL_CHANNEL);
         assertEquals(STATUS_NO_ERROR, response.getStatus());
         assertArrayEquals(STATUS_NORMAL, response.getSelectResponse());
+    }
+
+    private void removeSubscriptionsFromGroup(ParcelUuid uuid) {
+        List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+        if (!infoList.isEmpty()) {
+            mSubscriptionManager.removeSubscriptionsFromGroup(
+                    infoList.stream()
+                            .map(info -> info.getSubscriptionId())
+                            .collect(Collectors.toList()),
+                    uuid);
+        }
+        infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+        assertTrue(infoList.isEmpty());
     }
 
     /**
