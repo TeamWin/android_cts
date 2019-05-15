@@ -49,6 +49,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.intent" />
+        <option name="class" value="android.signature.cts.intent.IntentTest" />
         <option name="runtime-hint" value="10s" />
         <!-- disable isolated storage so tests can access dynamic config stored in /sdcard. -->
         <option name="isolated-storage" value="false" />

@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
-    <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="27"/>
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27"/>
 
     <application android:extractNativeLibs="true" android:largeHeap="true"/>
 
