@@ -18,8 +18,8 @@ package android.preference.cts;
 
 import android.content.Intent;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -144,7 +144,7 @@ public class PreferenceActivityFlowLandscapeTest extends PreferenceActivityFlowT
     @Override
     protected PreferenceWithHeaders launchActivity(Intent intent) {
         if (intent != null) {
-            intent.setClass(InstrumentationRegistry.getTargetContext(),
+            intent.setClass(InstrumentationRegistry.getInstrumentation().getTargetContext(),
                     PreferenceWithHeadersLandscape.class);
         }
         return mActivityRule.launchActivity(intent);

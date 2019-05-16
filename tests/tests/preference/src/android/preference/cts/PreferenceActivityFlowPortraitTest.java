@@ -20,11 +20,12 @@ import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 
 import static org.junit.Assume.assumeFalse;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -40,13 +41,16 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTest {
 
+    private Context mContext;
+
     @Rule
     public ActivityTestRule<PreferenceWithHeadersPortrait> mActivityRule =
             new ActivityTestRule<>(PreferenceWithHeadersPortrait.class, true, false);
 
     @Before
     public void setup() {
-        PackageManager pm = InstrumentationRegistry.getTargetContext().getPackageManager();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        PackageManager pm = mContext.getPackageManager();
         // Ignore this test on Leanback since Leanback doesn't support portrait orientation
         assumeFalse(pm.hasSystemFeature(FEATURE_LEANBACK));
         mTestUtils = new TestUtils();
@@ -152,8 +156,7 @@ public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTe
     @Override
     protected PreferenceWithHeaders launchActivity(Intent intent) {
         if (intent != null) {
-            intent.setClass(InstrumentationRegistry.getTargetContext(),
-                    PreferenceWithHeadersPortrait.class);
+            intent.setClass(mContext, PreferenceWithHeadersPortrait.class);
         }
         return mActivityRule.launchActivity(intent);
     }
