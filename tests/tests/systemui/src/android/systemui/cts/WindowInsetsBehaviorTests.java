@@ -73,6 +73,7 @@ public class WindowInsetsBehaviorTests {
     private String mEdgeToEdgeNavigationTitle;
     private String mSystemNavigationTitle;
     private String mGesturePreferenceTitle;
+    private boolean mConfiguredInSettings;
 
     private static String getSettingsString(Resources res, String strResName) {
         int resIdString = res.getIdentifier(strResName, "string", SETTINGS_PACKAGE_NAME);
@@ -117,6 +118,8 @@ public class WindowInsetsBehaviorTests {
         if (text != null) {
             mSystemGestureOptionsMap.put(text, false);
         }
+
+        mConfiguredInSettings = false;
     }
 
     @Rule
@@ -171,7 +174,7 @@ public class WindowInsetsBehaviorTests {
     }
 
 
-    private void launchToSettingsSystemGesture() {
+    private boolean launchToSettingsSystemGesture() {
         /* launch to the close to the system gesture fragment */
         Intent intent = new Intent();
         intent.setClassName("com.android.settings",
@@ -185,10 +188,18 @@ public class WindowInsetsBehaviorTests {
         mDevice.wait(Until.hasObject(By.pkg("com.android.settings").depth(0)),
                 5000);
         mDevice.wait(Until.hasObject(By.text(mGesturePreferenceTitle)), 5000);
+        if (mDevice.findObject(By.text(mGesturePreferenceTitle)) == null) {
+            return false;
+        }
         mDevice.findObject(By.text(mGesturePreferenceTitle)).click();
         mDevice.wait(Until.hasObject(By.text(mSystemNavigationTitle)), 5000);
+        if (mDevice.findObject(By.text(mSystemNavigationTitle)) == null) {
+            return false;
+        }
         mDevice.findObject(By.text(mSystemNavigationTitle)).click();
         mDevice.wait(Until.hasObject(By.text(mEdgeToEdgeNavigationTitle)), 5000);
+
+        return mDevice.hasObject(By.text(mEdgeToEdgeNavigationTitle));
     }
 
     private void leaveSettings() {
@@ -231,12 +242,18 @@ public class WindowInsetsBehaviorTests {
         mPixelsPerDp = metrics.density;
 
         // To setup the Edge to Edge environment by do the operation on Settings
-        launchToSettingsSystemGesture();
-        for (Map.Entry<String, Boolean> entry : mSystemGestureOptionsMap.entrySet()) {
-            UiObject2 uiObject2 = findSystemNavigationObject(entry.getKey(), true);
-            entry.setValue(uiObject2 != null);
+        boolean isOperatedSettingsToExpectedOption = launchToSettingsSystemGesture();
+        if (isOperatedSettingsToExpectedOption) {
+            for (Map.Entry<String, Boolean> entry : mSystemGestureOptionsMap.entrySet()) {
+                UiObject2 uiObject2 = findSystemNavigationObject(entry.getKey(), true);
+                entry.setValue(uiObject2 != null);
+            }
+            UiObject2 edgeToEdgeObj = mDevice.findObject(By.text(mEdgeToEdgeNavigationTitle));
+            if (edgeToEdgeObj != null) {
+                edgeToEdgeObj.click();
+                mConfiguredInSettings = true;
+            }
         }
-        mDevice.findObject(By.text(mEdgeToEdgeNavigationTitle)).click();
         mDevice.waitForIdle();
         leaveSettings();
 
@@ -262,16 +279,18 @@ public class WindowInsetsBehaviorTests {
             return;
         }
 
-        launchToSettingsSystemGesture();
-        for (Map.Entry<String, Boolean> entry : mSystemGestureOptionsMap.entrySet()) {
-            if (entry.getValue()) {
-                UiObject2 uiObject2 = findSystemNavigationObject(entry.getKey(), false);
-                if (uiObject2 != null) {
-                    uiObject2.click();
+        if (mConfiguredInSettings) {
+            launchToSettingsSystemGesture();
+            for (Map.Entry<String, Boolean> entry : mSystemGestureOptionsMap.entrySet()) {
+                if (entry.getValue()) {
+                    UiObject2 uiObject2 = findSystemNavigationObject(entry.getKey(), false);
+                    if (uiObject2 != null) {
+                        uiObject2.click();
+                    }
                 }
             }
+            leaveSettings();
         }
-        leaveSettings();
     }
 
 
