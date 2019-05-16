@@ -16,8 +16,6 @@
 
 package android.voiceinteraction.cts;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -31,30 +29,21 @@ import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
-import com.android.compatibility.common.util.RequiredFeatureRule;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
 
-@RunWith(AndroidJUnit4.class)
-public class VoiceInteractionTest {
+public class VoiceInteractionTest extends AbstractVoiceInteractionTestCase {
     static final String TAG = "VoiceInteractionTest";
     private static final int TIMEOUT_MS = 20 * 1000;
 
-    // TODO: use PackageManager's / make it @TestApi
-    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
-
     private TestStartActivity mTestActivity;
-    private final Context mContext = getInstrumentation().getTargetContext();
     private TestResultsReceiver mReceiver;
     private Bundle mResults;
     private final CountDownLatch mLatch = new CountDownLatch(1);
@@ -62,10 +51,6 @@ public class VoiceInteractionTest {
     @Rule
     public final ActivityTestRule<TestStartActivity> mActivityTestRule =
             new ActivityTestRule<>(TestStartActivity.class, false, false);
-
-    @Rule
-    public final RequiredFeatureRule mRequiredFeatureRule = new RequiredFeatureRule(
-            FEATURE_VOICE_RECOGNIZERS);
 
     @Before
     public void setUp() throws Exception {

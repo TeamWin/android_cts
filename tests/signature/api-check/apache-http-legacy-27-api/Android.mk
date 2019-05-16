@@ -22,6 +22,6 @@ LOCAL_SIGNATURE_API_FILES := \
     current.api \
     apache-http-legacy-current.api \
 
-LOCAL_MIN_SDK_VERSION := 22
+LOCAL_MIN_SDK_VERSION := 27
 
 include $(LOCAL_PATH)/../build_signature_apk.mk

@@ -12,11 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Compat.
-java_library_host {
-    name: "signature-hostside",
-    visibility: [
-        "//cts/tests/signature/tests",
+android_test_helper_app {
+    name: "CallRedirectionServiceTestApp",
+    srcs: [
+        "src/**/*.java",
+        "aidl/**/I*.aidl",
     ],
-    static_libs: ["signature-common-javalib"],
+    aidl: {
+        local_include_dirs: ["aidl/"],
+    },
+    sdk_version: "test_current",
+    test_suites: [
+        "cts",
+        "vts",
+    ],
+    optimize: {
+        enabled: false,
+    },
 }

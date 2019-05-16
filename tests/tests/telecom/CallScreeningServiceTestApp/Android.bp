@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Compat.
-java_library_host {
-    name: "signature-hostside",
-    visibility: [
-        "//cts/tests/signature/tests",
+// Build the Call Screening test app.
+// This is intentionally packaged separately so that the app can use its own
+// package name which does not conflict with the CallScreeningService
+// associated with the CTS InCallService.
+
+android_test_helper_app {
+    name: "CallScreeningServiceTestApp",
+    srcs: [
+        "src/**/*.java",
+        "aidl/**/I*.aidl",
     ],
-    static_libs: ["signature-common-javalib"],
+    sdk_version: "test_current",
+    test_suites: [
+        "cts",
+        "vts",
+    ],
+    optimize: {
+        enabled: false,
+    },
 }

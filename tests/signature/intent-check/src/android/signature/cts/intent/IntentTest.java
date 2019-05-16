@@ -15,13 +15,10 @@
  */
 package android.signature.cts.intent;
 
-import static android.signature.cts.CurrentApi.CURRENT_API_FILE;
-import static android.signature.cts.CurrentApi.SYSTEM_CURRENT_API_FILE;
-import static android.signature.cts.CurrentApi.SYSTEM_REMOVED_API_FILE;
-
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.signature.cts.ApiDocumentParser;
+import android.signature.cts.CurrentApi;
 import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.VirtualPath;
 import android.util.Log;
@@ -50,6 +47,16 @@ import java.util.Set;
  */
 @RunWith(AndroidJUnit4.class)
 public class IntentTest {
+
+    private static final String CURRENT_API_FILE =
+            CurrentApi.API_FILE_DIRECTORY + "/current.api";
+
+    private static final String SYSTEM_CURRENT_API_FILE =
+            CurrentApi.API_FILE_DIRECTORY + "/system-current.api";
+
+    private static final String SYSTEM_REMOVED_API_FILE =
+            CurrentApi.API_FILE_DIRECTORY + "/system-removed.api";
+
     private static final String TAG = IntentTest.class.getSimpleName();
 
     private static final File SIGNATURE_TEST_PACKGES =

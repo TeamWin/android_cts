@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Compat.
-java_library_host {
-    name: "signature-hostside",
-    visibility: [
-        "//cts/tests/signature/tests",
+android_test_helper_app {
+    name: "ThirdPtyInCallServiceTestApp",
+    defaults: ["cts_defaults"],
+    srcs: [
+        "src/**/*.java",
+        "aidl/**/I*.aidl",
     ],
-    static_libs: ["signature-common-javalib"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "CtsTelecomMockLib",
+    ],
+    sdk_version: "test_current",
+    test_suites: [
+        "cts",
+        "vts",
+    ],
 }

@@ -17,21 +17,21 @@
 package android.voiceinteraction.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.DirectAction;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteCallback;
+import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +42,8 @@ import java.util.concurrent.TimeoutException;
 /**
  * Tests for the direction action related functions.
  */
-@RunWith(AndroidJUnit4.class)
-public class DirectActionsTest {
+public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
+    private static final String TAG = DirectActionsTest.class.getSimpleName();
     private static final long OPERATION_TIMEOUT_MS = 5000;
 
     private final @NonNull SessionControl mSessionControl = new SessionControl();
@@ -56,6 +56,7 @@ public class DirectActionsTest {
         try {
             // Get the actions.
             final List<DirectAction> actions = mSessionControl.getDirectActions();
+            Log.v(TAG, "actions: " + actions);
 
             // Only the expected action should be reported
             final DirectAction action = getExpectedDirectActionAssertively(actions);
@@ -79,6 +80,7 @@ public class DirectActionsTest {
         try {
             // Get the actions.
             final List<DirectAction> actions = mSessionControl.getDirectActions();
+            Log.v(TAG, "actions: " + actions);
 
             // Only the expected action should be reported
             final DirectAction action = getExpectedDirectActionAssertively(actions);
@@ -103,13 +105,9 @@ public class DirectActionsTest {
             // Get the actions to set up the VoiceInteractor
             mSessionControl.getDirectActions();
 
-            assertThat(mActivityControl.detectInteractorDestroyed(() -> {
-                try {
-                    mSessionControl.stopVoiceInteractionSession();
-                } catch (TimeoutException e) {
-                    /* ignore */
-                }
-            })).isTrue();
+            assertThat(mActivityControl
+                    .detectInteractorDestroyed(() -> mSessionControl.stopVoiceInteractionSession()))
+                            .isTrue();
         } finally {
             mSessionControl.stopVoiceInteractionSession();
             mActivityControl.finishActivity();
@@ -124,23 +122,17 @@ public class DirectActionsTest {
             // Get the actions to set up the VoiceInteractor
             mSessionControl.getDirectActions();
 
-            assertThat(mSessionControl.detectDirectActionsInvalidated(() -> {
-                try {
-                    mActivityControl.invalidateDirectActions();
-                } catch (TimeoutException e) {
-                    /* ignore */
-                }
-            })).isTrue();
+            assertThat(mSessionControl.detectDirectActionsInvalidated(
+                    () -> mActivityControl.invalidateDirectActions())).isTrue();
         } finally {
             mSessionControl.stopVoiceInteractionSession();
             mActivityControl.finishActivity();
         }
     }
-    
-    private class SessionControl {
+    private final class SessionControl {
         private @Nullable RemoteCallback mControl;
 
-        private void startVoiceInteractionSession() throws TimeoutException {
+        private void startVoiceInteractionSession() throws Exception {
             final CountDownLatch latch = new CountDownLatch(1);
 
             final RemoteCallback callback = new RemoteCallback((result) -> {
@@ -156,23 +148,21 @@ public class DirectActionsTest {
             intent.putExtra(Utils.DIRECT_ACTIONS_KEY_CALLBACK, callback);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-            getContext().startActivity(intent);
+            Log.v(TAG, "startVoiceInteractionSession(): " + intent);
+            mContext.startActivity(intent);
 
-            try {
-                if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    throw new TimeoutException();
-                }
-            } catch (InterruptedException e) {
-                /* cannot happen */
+            if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                throw new TimeoutException("actitvity not started in " + OPERATION_TIMEOUT_MS
+                        + "ms");
             }
         }
 
-        private void stopVoiceInteractionSession() throws TimeoutException {
+        private void stopVoiceInteractionSession() throws Exception {
             executeCommand(Utils.DIRECT_ACTIONS_SESSION_CMD_FINISH,
                     null /*directAction*/, null /*arguments*/, null /*postActionCommand*/);
         }
 
-        @Nullable List<DirectAction> getDirectActions() throws TimeoutException {
+        @Nullable List<DirectAction> getDirectActions() throws Exception {
             final ArrayList<DirectAction> actions = new ArrayList<>();
             final Bundle result = executeCommand(Utils.DIRECT_ACTIONS_SESSION_CMD_GET_ACTIONS,
                     null /*directAction*/, null /*arguments*/, null /*postActionCommand*/);
@@ -181,19 +171,20 @@ public class DirectActionsTest {
         }
 
         @Nullable Bundle performDirectAction(@NonNull DirectAction directAction,
-                @NonNull Bundle arguments) throws TimeoutException {
+                @NonNull Bundle arguments) throws Exception {
             return executeCommand(Utils.DIRECT_ACTIONS_SESSION_CMD_PERFORM_ACTION,
                     directAction, arguments, null /*postActionCommand*/);
         }
 
         @Nullable Bundle performDirectActionAndCancel(@NonNull DirectAction directAction,
-                @NonNull Bundle arguments) throws TimeoutException {
+                @NonNull Bundle arguments) throws Exception {
             return executeCommand(Utils.DIRECT_ACTIONS_SESSION_CMD_PERFORM_ACTION_CANCEL,
                     directAction, arguments, null /*postActionCommand*/);
         }
 
-        @Nullable boolean detectDirectActionsInvalidated(@NonNull Runnable postActionCommand)
-                throws TimeoutException {
+        @Nullable
+        boolean detectDirectActionsInvalidated(@NonNull ThrowingRunnable postActionCommand)
+                throws Exception {
             final Bundle result = executeCommand(
                     Utils.DIRECT_ACTIONS_SESSION_CMD_DETECT_ACTIONS_CHANGED,
                     null /*directAction*/, null /*arguments*/, postActionCommand);
@@ -201,8 +192,8 @@ public class DirectActionsTest {
         }
 
         @Nullable Bundle executeCommand(@NonNull String action, @Nullable DirectAction directAction,
-                @Nullable Bundle arguments, @Nullable Runnable postActionCommand)
-                throws TimeoutException {
+                @Nullable Bundle arguments, @Nullable ThrowingRunnable postActionCommand)
+                throws Exception {
             final CountDownLatch latch = new CountDownLatch(1);
 
             final Bundle result = new Bundle();
@@ -218,19 +209,20 @@ public class DirectActionsTest {
             command.putBundle(Utils.DIRECT_ACTIONS_KEY_ARGUMENTS, arguments);
             command.putParcelable(Utils.DIRECT_ACTIONS_KEY_CALLBACK, callback);
 
+            Log.v(TAG, "executeCommand(): action=" + action + " command="
+                    + Utils.toBundleString(command));
             mControl.sendResult(command);
 
             if (postActionCommand != null) {
+                Log.v(TAG, "Executing post-action command for " + action);
                 postActionCommand.run();
             }
 
-            try {
-                if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    throw new TimeoutException();
-                }
-            } catch (InterruptedException e) {
-                /* cannot happen */
+            if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                throw new TimeoutException("result not received in " + OPERATION_TIMEOUT_MS + "ms");
             }
+
+            Log.v(TAG, "returning " + Utils.toBundleString(result));
 
             return result;
         }
@@ -239,10 +231,12 @@ public class DirectActionsTest {
     private final class ActivityControl {
         private @Nullable RemoteCallback mControl;
 
-        void startActivity() throws TimeoutException {
+        void startActivity() throws Exception {
             final CountDownLatch latch = new CountDownLatch(1);
 
             final RemoteCallback callback = new RemoteCallback((result) -> {
+                Log.v(TAG, "ActivityControl: testapp called the callback: "
+                        + Utils.toBundleString(result));
                 mControl = result.getParcelable(Utils.DIRECT_ACTIONS_KEY_CONTROL);
                 latch.countDown();
             });
@@ -252,42 +246,45 @@ public class DirectActionsTest {
                     "android.voiceinteraction.testapp.DirectActionsActivity");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.putExtra(Utils.DIRECT_ACTIONS_KEY_CALLBACK, callback);
+            Log.v(TAG, "startActivity: " + intent);
 
-            getContext().startActivity(intent);
+            mContext.startActivity(intent);
 
-            try {
-                if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    throw new TimeoutException();
-                }
-            } catch (InterruptedException e) {
-                /* cannot happen */
+            if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                throw new TimeoutException("actitvity not started in " + OPERATION_TIMEOUT_MS
+                        + "ms");
             }
         }
 
-        private boolean detectInteractorDestroyed(Runnable destroyTrigger) throws TimeoutException {
+        private boolean detectInteractorDestroyed(ThrowingRunnable destroyTrigger)
+                throws Exception {
             final Bundle result = executeRemoteCommand(
                     Utils.DIRECT_ACTIONS_ACTIVITY_CMD_DESTROYED_INTERACTOR,
                     destroyTrigger);
             return result.getBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT);
         }
 
-        void finishActivity() throws TimeoutException {
-            executeRemoteCommand(Utils.DIRECT_ACTIONS_ACTIVITY_CMD_FINISH,
-                    null /*postActionCommand*/);
+        void finishActivity() throws Exception {
+            executeRemoteCommand(Utils.DIRECT_ACTIONS_ACTIVITY_CMD_FINISH);
         }
 
-        void invalidateDirectActions() throws TimeoutException {
-            executeRemoteCommand(Utils.DIRECT_ACTIONS_ACTIVITY_CMD_INVALIDATE_ACTIONS,
-                    null /*postActionCommand*/);
+        void invalidateDirectActions() throws Exception {
+            executeRemoteCommand(Utils.DIRECT_ACTIONS_ACTIVITY_CMD_INVALIDATE_ACTIONS);
         }
 
-        Bundle executeRemoteCommand(@NonNull String action,
-                @Nullable Runnable postActionCommand) throws TimeoutException {
+        @NonNull Bundle executeRemoteCommand(@NonNull String action) throws Exception {
+            return executeRemoteCommand(action, /* postActionCommand= */ null);
+        }
+
+        @NonNull Bundle executeRemoteCommand(@NonNull String action,
+                @Nullable ThrowingRunnable postActionCommand) throws Exception {
             final Bundle result = new Bundle();
 
             final CountDownLatch latch = new CountDownLatch(1);
 
             final RemoteCallback callback = new RemoteCallback((b) -> {
+                Log.v(TAG, "executeRemoteCommand(): received result from '" + action + "': "
+                        + Utils.toBundleString(b));
                 if (b != null) {
                     result.putAll(b);
                 }
@@ -298,18 +295,21 @@ public class DirectActionsTest {
             command.putString(Utils.DIRECT_ACTIONS_KEY_COMMAND, action);
             command.putParcelable(Utils.DIRECT_ACTIONS_KEY_CALLBACK, callback);
 
+            Log.v(TAG, "executeRemoteCommand(): sending command for '" + action + "'");
             mControl.sendResult(command);
 
             if (postActionCommand != null) {
-                postActionCommand.run();
+                try {
+                    postActionCommand.run();
+                } catch (TimeoutException e) {
+                    Log.e(TAG, "action '" + action + "' timed out" );
+                } catch (Exception e) {
+                    throw e;
+                }
             }
 
-            try {
-                if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    throw new TimeoutException();
-                }
-            } catch (InterruptedException e) {
-                /* cannot happen */
+            if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                throw new TimeoutException("result not received in " + OPERATION_TIMEOUT_MS + "ms");
             }
             return result;
         }
@@ -317,6 +317,7 @@ public class DirectActionsTest {
 
     private @NonNull DirectAction getExpectedDirectActionAssertively(
             @Nullable List<DirectAction> actions) {
+        assertWithMessage("no actions").that(actions).isNotEmpty();
         final DirectAction action = actions.get(0);
         assertThat(action.getId()).isEqualTo(Utils.DIRECT_ACTIONS_ACTION_ID);
         assertThat(action.getExtras().getString(Utils.DIRECT_ACTION_EXTRA_KEY))
@@ -328,22 +329,21 @@ public class DirectActionsTest {
     private @NonNull Bundle createActionArguments() {
         final Bundle args = new Bundle();
         args.putString(Utils.DIRECT_ACTIONS_KEY_ARGUMENTS, Utils.DIRECT_ACTIONS_KEY_ARGUMENTS);
+        Log.v(TAG, "createActionArguments(): " + Utils.toBundleString(args));
         return args;
     }
 
     private void assertActionSucceeded(@NonNull Bundle result) {
         final Bundle bundle = result.getBundle(Utils.DIRECT_ACTIONS_KEY_RESULT);
         final String status = bundle.getString(Utils.DIRECT_ACTIONS_KEY_RESULT);
-        assertThat(Utils.DIRECT_ACTIONS_RESULT_PERFORMED).isEqualTo(status);
+        assertWithMessage("assertActionSucceeded(%s)", Utils.toBundleString(result))
+                .that(Utils.DIRECT_ACTIONS_RESULT_PERFORMED).isEqualTo(status);
     }
 
     private void assertActionCancelled(@NonNull Bundle result) {
         final Bundle bundle = result.getBundle(Utils.DIRECT_ACTIONS_KEY_RESULT);
         final String status = bundle.getString(Utils.DIRECT_ACTIONS_KEY_RESULT);
-        assertThat(Utils.DIRECT_ACTIONS_RESULT_CANCELLED).isEqualTo(status);
-    }
-
-    private static @NonNull Context getContext() {
-        return InstrumentationRegistry.getInstrumentation().getContext();
+        assertWithMessage("assertActionCancelled(%s)", Utils.toBundleString(result))
+                .that(Utils.DIRECT_ACTIONS_RESULT_CANCELLED).isEqualTo(status);
     }
 }
