@@ -1071,6 +1071,13 @@ public class NotificationManagerTest extends AndroidTestCase {
             return;
         }
 
+        // turn on bubbles globally
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                Settings.Secure.putInt(mContext.getContentResolver(),
+                        Settings.Secure.NOTIFICATION_BUBBLES, 1));
+
+        Thread.sleep(500); // wait for ranking update
+
         assertEquals(1, Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BUBBLES));
 
@@ -1113,7 +1120,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         } finally {
             SystemUtil.runWithShellPermissionIdentity(() ->
                     Settings.Secure.putInt(mContext.getContentResolver(),
-                            Settings.Secure.NOTIFICATION_BUBBLES, 1));
+                            Settings.Secure.NOTIFICATION_BUBBLES, 0));
         }
     }
 
