@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.SystemClock;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BitmapUtils;
@@ -52,7 +51,7 @@ public abstract class PreferenceActivityFlowTest {
     private static final String INNER_FRAGMENT_PREF_BUTTON = "Fragment preference";
     private static final String INNER_FRAGMENT_PREF_TITLE = "Inner fragment";
     private static final String LIST_PREF_TITLE = "List preference";
-    private static final String LIST_PREF_OPTION = "alpha";
+    private static final String LIST_PREF_OPTION = "Alpha Option 01";
 
     private static final int INITIAL_TITLE_RES_ID = R.string.test_title;
     private static final int EXPECTED_HEADERS_COUNT = 3;
@@ -147,7 +146,7 @@ public abstract class PreferenceActivityFlowTest {
         // Verify that the title was properly restored.
         assertEquals(title, mActivity.getTitle());
 
-        // Verify that everthing restores back to initial state again.
+        // Verify that everything restores back to initial state again.
         assertInitialState();
     }
 
@@ -371,7 +370,7 @@ public abstract class PreferenceActivityFlowTest {
 
         mTestUtils.tapOnViewWithText(LIST_PREF_TITLE);
 
-        mTestUtils.isTextShown(LIST_PREF_OPTION);
+        assertTextShown(LIST_PREF_OPTION);
 
         pressBack();
 
@@ -493,7 +492,7 @@ public abstract class PreferenceActivityFlowTest {
         }
     }
 
-    public boolean shouldRunLargeDeviceTest() {
+    private boolean shouldRunLargeDeviceTest() {
         if (mActivity.onIsMultiPane()) {
             return true;
         }
@@ -502,7 +501,7 @@ public abstract class PreferenceActivityFlowTest {
         return false;
     }
 
-    public boolean shouldRunSmallDeviceTest() {
+    private boolean shouldRunSmallDeviceTest() {
         if (!mActivity.onIsMultiPane()) {
             return true;
         }
@@ -537,10 +536,11 @@ public abstract class PreferenceActivityFlowTest {
     }
 
     private void assertHeadersHidden() {
-        // We check '&' instead of each individual separately because these headers are also part
-        // of individual preference panels breadcrumbs so it would fail for one.
-        assertFalse(mTestUtils.isTextShown(PREFS1_HEADER_TITLE)
-                && mTestUtils.isTextShown(PREFS2_HEADER_TITLE));
+        // We check that at least one is hidden instead of each individual one separately because
+        // these headers are also part of individual preference panels breadcrumbs so it would fail
+        // if we only checked for one.
+        assertTrue(mTestUtils.isTextHidden(PREFS1_HEADER_TITLE)
+                || mTestUtils.isTextHidden(PREFS2_HEADER_TITLE));
     }
 
     private void assertPanelPrefs1Shown() {
@@ -585,22 +585,17 @@ public abstract class PreferenceActivityFlowTest {
 
     private void recreate() {
         runOnUiThread(() -> mActivity.recreate());
-        SystemClock.sleep(1000);
-        waitForIdle();
-    }
-
-    private void waitForIdle() {
-        mTestUtils.device.waitForIdle();
+        mTestUtils.waitForIdle();
     }
 
     private void pressBack() {
-        mTestUtils.device.pressBack();
-        waitForIdle();
+        mTestUtils.mDevice.pressBack();
+        mTestUtils.waitForIdle();
     }
 
     private void launchActivity() {
         mActivity = launchActivity(null);
-        mTestUtils.device.waitForIdle();
+        mTestUtils.waitForIdle();
         runOnUiThread(() -> mIsMultiPane = mActivity.isMultiPane());
     }
 
@@ -619,7 +614,7 @@ public abstract class PreferenceActivityFlowTest {
         }
 
         mActivity = launchActivity(intent);
-        mTestUtils.device.waitForIdle();
+        mTestUtils.waitForIdle();
         runOnUiThread(() -> mIsMultiPane = mActivity.isMultiPane());
     }
 
