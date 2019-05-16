@@ -1,5 +1,5 @@
 /**
-0;256;0c * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,15 @@ public class Poc16_12 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2016-12")
     public void testPocCVE_2016_8406() throws Exception {
-        String cmd ="ls -l /sys/kernel/slab 2>/dev/null | grep nf_conn";
-        String result =  AdbUtils.runCommandLine(cmd ,getDevice());
-        assertNotMatchesMultiLine("nf_conntrack_(?!0{8})[A-Fa-f0-9]{8}", result);
+        assertNotKernelPointer(() -> {
+            String cmd = "ls /sys/kernel/slab 2>/dev/null | grep nf_conntrack";
+            String result =  AdbUtils.runCommandLine(cmd, getDevice());
+            String pattern = "nf_conntrack_";
+            int index = result.indexOf(pattern);
+            if (index == -1) {
+                return null;
+            }
+            return result.substring(index + pattern.length());
+        }, getDevice());
     }
 }
