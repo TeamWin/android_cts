@@ -1060,7 +1060,8 @@ public abstract class ActivityManagerTestBase {
             // puts the device to sleep, but kept around for clarity.
             getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
-            if (mAmbientDisplayConfiguration.alwaysOnEnabled(UserHandle.SYSTEM.getIdentifier())) {
+            if (mAmbientDisplayConfiguration.alwaysOnEnabled(
+                    android.os.Process.myUserHandle().getIdentifier())) {
                 mAmWmState.waitForAodShowing();
             } else {
                 for (int retry = 1; isDisplayOn(DEFAULT_DISPLAY) && retry <= 5; retry++) {
