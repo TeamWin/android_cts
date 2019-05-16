@@ -259,7 +259,7 @@ public class ApiComplianceCheckerTest extends AbstractApiCheckerTest<ApiComplian
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
         JDiffClassDescription.JDiffField field = new JDiffClassDescription.JDiffField(
                 "VALUE_FIELD", "java.lang.String",
-                Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC, "\"\\u2708\"");
+                Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC, "\u2708");
         clz.addField(field);
         checkSignatureCompliance(clz);
         assertEquals(field.toSignatureString(), "public static final java.lang.String VALUE_FIELD");

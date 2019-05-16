@@ -23,13 +23,11 @@ import android.signature.cts.ClassProvider;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ReflectionHelper;
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Performs the signature check via a JUnit test.
@@ -97,9 +95,7 @@ public class SignatureTest extends AbstractApiTest {
         }
     }
 
-    private Set<JDiffClassDescription> loadUnexpectedClasses()
-            throws IOException, XmlPullParserException {
-
+    private Set<JDiffClassDescription> loadUnexpectedClasses() {
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
         return parseApiFilesAsStream(apiDocumentParser, unexpectedApiFiles)
                 .collect(Collectors.toCollection(SignatureTest::newSetOfClassDescriptions));
@@ -109,11 +105,8 @@ public class SignatureTest extends AbstractApiTest {
         return new TreeSet<>(Comparator.comparing(JDiffClassDescription::getAbsoluteClassName));
     }
 
-    private void loadBaseClasses(ApiComplianceChecker complianceChecker)
-            throws IOException, XmlPullParserException {
-
-        ApiDocumentParser apiDocumentParser =
-                new ApiDocumentParser(TAG);
+    private void loadBaseClasses(ApiComplianceChecker complianceChecker) {
+        ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
         parseApiFilesAsStream(apiDocumentParser, baseApiFiles)
                 .forEach(complianceChecker::addBaseClass);
     }
