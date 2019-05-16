@@ -178,6 +178,22 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
+    public void testCanGrantSoftRestrictedNotWhitelistedPermissions() throws Exception {
+        try {
+            final Set<String> grantedPermissions = new ArraySet<>();
+            grantedPermissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            grantedPermissions.add(permission.WRITE_EXTERNAL_STORAGE);
+
+            installApp(APK_USES_STORAGE_DEFAULT_29, Collections.emptySet(), grantedPermissions);
+
+            assertRestrictedPermissionGranted(grantedPermissions);
+        } finally {
+            uninstallApp();
+        }
+    }
+
+    @Test
+    @AppModeFull
     public void testAllRestrictedPermissionsGrantedAtInstall() throws Exception {
         try {
             // Install with whitelisted permissions attempting to grant.
@@ -661,7 +677,8 @@ public class RestrictedPermissionsTest {
                 final String permission = packageInfo.requestedPermissions[i];
                 final PermissionInfo permissionInfo = packageManager.getPermissionInfo(
                         permission, 0);
-                if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0) {
+                if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0
+                        || (permissionInfo.flags & PermissionInfo.FLAG_SOFT_RESTRICTED) != 0) {
                     if (expectedGrantedPermissions != null
                             && expectedGrantedPermissions.contains(permission)) {
                         assertThat((packageInfo.requestedPermissionsFlags[i]
