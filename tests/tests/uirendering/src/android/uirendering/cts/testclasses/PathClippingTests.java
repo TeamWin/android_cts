@@ -97,7 +97,7 @@ public class PathClippingTests extends ActivityTestBase {
                 .addCanvasClient("TorusClip", sTorusClipCanvasClient)
                 .addCanvasClient("TorusClipOut", sTorusClipOutCanvasClient)
                 .runWithVerifier(new GoldenImageVerifier(getActivity(),
-                        R.drawable.pathclippingtest_torus, new MSSIMComparer(0.95)));
+                        R.drawable.pathclippingtest_torus, new MSSIMComparer(0.65)));
     }
 
     @Test
