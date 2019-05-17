@@ -54,6 +54,8 @@ import java.util.UUID;
 public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private static final String TAG = MediaCodecClearKeyPlayer.class.getSimpleName();
 
+    private static final String FILE_SCHEME = "file://";
+
     private static final int STATE_IDLE = 1;
     private static final int STATE_PREPARING = 2;
     private static final int STATE_PLAYING = 3;
@@ -299,6 +301,8 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         String scheme = uri.getScheme();
         if (scheme.startsWith("http")) {
             extractor.setDataSource(uri.toString(), headers);
+        } else if (scheme.startsWith(FILE_SCHEME)) {
+            extractor.setDataSource(uri.toString().substring(FILE_SCHEME.length()), headers);
         } else if (scheme.equals("android.resource")) {
             int res = Integer.parseInt(uri.getLastPathSegment());
             AssetFileDescriptor fd = mResources.openRawResourceFd(res);
