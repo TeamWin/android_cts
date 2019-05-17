@@ -35,6 +35,7 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
+import android.util.Range;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
@@ -787,5 +788,19 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                     "codecs' concurrent instances limit in /etc/media_codecs.xml: \n";
            fail(failMessage + xmlOverrides.toString());
         }
+    }
+
+    public void testGetSupportedFrameRates() throws IOException {
+        // Chose MediaFormat.MIMETYPE_VIDEO_H263 randomly
+        CodecCapabilities codecCap = CodecCapabilities.createFromProfileLevel(
+                MediaFormat.MIMETYPE_VIDEO_H263, H263ProfileBaseline, H263Level45);
+        Range<Integer> supportedFrameRates =
+                codecCap.getVideoCapabilities().getSupportedFrameRates();
+        Log.d(TAG, "Supported Frame Rates : " + supportedFrameRates.toString());
+        /*
+            ITU-T Rec. H.263/Annex X (03/2004) says that for H263ProfileBaseline and H263Level45,
+            the device has to support 15 fps.
+        */
+        assertTrue("Invalid framerate range", Range.create(1, 15).equals(supportedFrameRates));
     }
 }
