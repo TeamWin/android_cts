@@ -20,6 +20,8 @@ import android.service.GraphicsStatsJankSummaryProto;
 import android.service.GraphicsStatsProto;
 import android.service.GraphicsStatsServiceDumpProto;
 
+import com.android.tradefed.log.LogUtil.CLog;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -55,12 +57,18 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testBasicDrawFrame() throws Exception {
+        System.out.println("--------------------------------- testBasicDrawFrame BEGIN");
         GraphicsStatsProto[] results = runDrawTest("testDrawTenFrames");
         GraphicsStatsProto statsBefore = results[0];
         GraphicsStatsProto statsAfter = results[1];
         GraphicsStatsJankSummaryProto summaryBefore = statsBefore.getSummary();
         GraphicsStatsJankSummaryProto summaryAfter = statsAfter.getSummary();
         assertTrue(summaryAfter.getTotalFrames() > summaryBefore.getTotalFrames());
+
+        System.out.println("summaryBefore: {\n" + summaryBefore + "}");
+        System.out.println("summaryAfter: {\n" + summaryAfter + "}");
+        System.out.println("statsBefore: {\n" + statsBefore + "}");
+        System.out.println("statsAfter: {\n" + statsAfter + "}");
 
         int frameDelta = summaryAfter.getTotalFrames() - summaryBefore.getTotalFrames();
         int jankyDelta = summaryAfter.getJankyFrames() - summaryBefore.getJankyFrames();
@@ -70,6 +78,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int veryJankyDelta = countFramesAbove(statsAfter, 40) - countFramesAbove(statsBefore, 40);
         // The 1st frame could be >40ms, but nothing after that should be
         assertTrue(veryJankyDelta <= 1);
+        System.out.println("--------------------------------- testBasicDrawFrame END");
     }
 
     public void testJankyDrawFrame() throws Exception {
