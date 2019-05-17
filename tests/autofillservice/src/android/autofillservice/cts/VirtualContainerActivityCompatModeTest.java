@@ -284,7 +284,9 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
+        sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
         focusToPasswordExpectNoWindowEvent();
+        sReplier.getNextFillRequest();
         mActivity.mPassword.setText("bar");
 
         // Change URL bar before views become invisible
