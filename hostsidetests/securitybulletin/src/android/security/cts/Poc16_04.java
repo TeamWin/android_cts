@@ -28,7 +28,7 @@ public class Poc16_04 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2016-2419", getDevice(), 60);
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*IOMX_InfoLeak b26323455[\\s\\n\\S]*", logcat);
+        assertNotMatchesMultiLine("IOMX_InfoLeak b26323455", logcat);
     }
 
     /**

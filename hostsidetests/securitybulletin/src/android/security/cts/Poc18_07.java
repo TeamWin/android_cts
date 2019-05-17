@@ -30,6 +30,6 @@ public class Poc18_07 extends SecurityTestCase {
        AdbUtils.runCommandLine("logcat -c" , getDevice());
        AdbUtils.runPoc("CVE-2018-9424", getDevice(), 60);
        String result = AdbUtils.runCommandLine("logcat -d", getDevice());
-       assertNotMatches("[\\s\\n\\S]*Fatal signal [\\s\\n\\S]*", result);
+       assertNotMatchesMultiLine("Fatal signal", result);
      }
 }

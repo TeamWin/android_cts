@@ -29,7 +29,7 @@ public class Poc16_05 extends SecurityTestCase {
         AdbUtils.runPoc("CVE-2016-2460", getDevice(), 60);
 
         String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*IGraphicBufferProducer_Info is Leaked[\\s\\n\\S]*", logcat);
+        assertNotMatchesMultiLine("IGraphicBufferProducer_Info is Leaked", logcat);
     }
 
     /**

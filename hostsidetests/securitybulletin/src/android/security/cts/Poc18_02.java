@@ -46,7 +46,7 @@ public class Poc18_02 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2017-13273", getDevice(), 60);
             String dmesgOut = AdbUtils.runCommandLine("cat /sys/fs/pstore/console-ramoops",
                               getDevice());
-            assertNotMatches("[\\s\\n\\S]*CVE-2017-132736 Tainted:" + "[\\s\\n\\S]*" +
+            assertNotMatchesMultiLine("CVE-2017-132736 Tainted:" + "[\\s\\n\\S]*" +
                  "Kernel panic - not syncing: Fatal exception in interrupt", dmesgOut);
         }
         AdbUtils.runCommandLine("setenforce 1",getDevice());

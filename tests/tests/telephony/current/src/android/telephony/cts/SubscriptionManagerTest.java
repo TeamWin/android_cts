@@ -22,8 +22,6 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -32,7 +30,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.annotation.Nullable;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.ConnectivityManager.NetworkCallback;
@@ -43,9 +40,6 @@ import android.os.ParcelUuid;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
-import android.telephony.TelephonyManager;
-
-import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -63,6 +57,8 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import androidx.test.InstrumentationRegistry;
 
 public class SubscriptionManagerTest {
     private SubscriptionManager mSm;
@@ -90,14 +86,6 @@ public class SubscriptionManagerTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        TelephonyManager mTelephonyManager;
-        mTelephonyManager = (TelephonyManager)
-                getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        final boolean isSimCardPresent =
-                mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE
-                && mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_UNKNOWN
-                && mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
-
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("svc wifi disable");
 
@@ -108,15 +96,13 @@ public class SubscriptionManagerTest {
                 .addTransportType(TRANSPORT_CELLULAR)
                 .addCapability(NET_CAPABILITY_INTERNET)
                 .build(), callback);
-        if (isSimCardPresent) {
-            try {
-                // Wait to get callback for availability of internet
-                callback.waitForAvailable();
-            } catch (InterruptedException e) {
-                fail("NetworkCallback wait was interrupted.");
-            } finally {
-                cm.unregisterNetworkCallback(callback);
-            }
+        try {
+            // Wait to get callback for availability of internet
+            callback.waitForAvailable();
+        } catch (InterruptedException e) {
+            fail("NetworkCallback wait was interrupted.");
+        } finally {
+            cm.unregisterNetworkCallback(callback);
         }
     }
 
