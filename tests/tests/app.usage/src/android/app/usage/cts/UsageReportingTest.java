@@ -29,6 +29,8 @@ import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.TestUtils;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,6 +50,8 @@ public class UsageReportingTest extends ActivityManagerTestBase {
 
     private static final String TOKEN_0 = "SuperSecretToken";
     private static final String TOKEN_1 = "AnotherSecretToken";
+
+    private static final int ASSERT_TIMEOUT_SECONDS = 5; // 5 seconds
 
     @Before
     @Override
@@ -347,23 +351,26 @@ public class UsageReportingTest extends ActivityManagerTestBase {
     }
 
     private void assertAppOrTokenUsed(String entity, boolean expected) throws Exception {
-        final String activeUsages =
-                mUiDevice.executeShellCommand("dumpsys usagestats apptimelimit actives");
-        final String[] actives = activeUsages.split("\n");
-        boolean found = false;
-
-        for (String active: actives) {
-            if (active.equals(entity)) {
-                found = true;
-                break;
-            }
-        }
+        final String failMessage;
         if (expected) {
-            assertTrue(entity +" not found in list of active activities and tokens\n"
-                    + activeUsages, found);
+            failMessage = entity + " not found in list of active activities and tokens";
         } else {
-            assertFalse(entity + " found in list of active activities and tokens\n"
-                    + activeUsages, found);
+            failMessage = entity + " found in list of active activities and tokens";
         }
+
+        TestUtils.waitUntil(failMessage, ASSERT_TIMEOUT_SECONDS, () -> {
+            final String activeUsages =
+                    mUiDevice.executeShellCommand("dumpsys usagestats apptimelimit actives");
+            final String[] actives = activeUsages.split("\n");
+            boolean found = false;
+
+            for (String active: actives) {
+                if (active.equals(entity)) {
+                    found = true;
+                    break;
+                }
+            }
+            return found == expected;
+        });
     }
 }

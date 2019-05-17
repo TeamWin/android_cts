@@ -16,7 +16,7 @@ android_test_helper_app {
     name: "CtsCompilationApp",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    sdk_version: "29",
     // tag this module as a cts test artifact
     test_suites: [
         "cts",

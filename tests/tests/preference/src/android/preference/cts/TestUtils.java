@@ -24,21 +24,20 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 /**
  * Collection of helper utils for testing preferences.
  */
 public class TestUtils {
 
-    public final UiDevice device;
+    public final UiDevice mDevice;
 
     private final Context mContext;
     private final Instrumentation mInstrumentation;
@@ -51,13 +50,17 @@ public class TestUtils {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
         mPackageName = mContext.getPackageName();
-        device = UiDevice.getInstance(mInstrumentation);
+        mDevice = UiDevice.getInstance(mInstrumentation);
         mAutomation = mInstrumentation.getUiAutomation();
+    }
+
+    void waitForIdle() {
+        mDevice.waitForIdle(1000);
     }
 
     Bitmap takeScreenshot() {
         // Only take a screenshot once the screen is stable enough.
-        device.waitForIdle();
+        waitForIdle();
 
         Bitmap bt = mAutomation.takeScreenshot();
 
@@ -88,19 +91,11 @@ public class TestUtils {
         UiObject2 object2 = getTextObject(text);
         if (object2 != null) {
             object2.click();
-            return;
+        } else {
+            scrollToAndGetTextObject(text);
+            getTextObject(text).click();
         }
-
-        // If the view is a part of a scrollable, it might be offscreen
-        try {
-            UiScrollable textScroll = new UiScrollable(new UiSelector().scrollable(true));
-
-            textScroll.scrollIntoView(new UiSelector().text(text));
-            UiObject object = new UiObject(new UiSelector().text(text));
-            object.click();
-        } catch (UiObjectNotFoundException e) {
-            throw new AssertionError("View with text '" + text + "' was not found!", e);
-        }
+        waitForIdle();
     }
 
     boolean isTextShown(String text) {
@@ -108,12 +103,7 @@ public class TestUtils {
             return true;
         }
 
-        UiScrollable textScroll = new UiScrollable(new UiSelector().scrollable(true));
-        try {
-            return textScroll.scrollIntoView(new UiSelector().text(text));
-        } catch (UiObjectNotFoundException e) {
-            return false;
-        }
+        return scrollToAndGetTextObject(text);
     }
 
     boolean isTextHidden(String text) {
@@ -171,6 +161,17 @@ public class TestUtils {
 
     private UiObject2 getTextObject(String text) {
         // Wait for up to 1 second to find the object. Returns null if the object cannot be found.
-        return device.wait(Until.findObject(By.text(text).pkg(mPackageName)), 1000);
+        return mDevice.wait(Until.findObject(By.text(text).pkg(mPackageName)), 1000);
+    }
+
+    private boolean scrollToAndGetTextObject(String text) {
+        UiScrollable scroller = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            // Swipe far away from the edges to avoid triggering navigation gestures
+            scroller.setSwipeDeadZonePercentage(0.25);
+            return scroller.scrollTextIntoView(text);
+        } catch (UiObjectNotFoundException e) {
+            throw new AssertionError("View with text '" + text + "' was not found!", e);
+        }
     }
 }
