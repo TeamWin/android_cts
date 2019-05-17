@@ -16,6 +16,8 @@
 
 package android.assist.cts;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import android.app.ActivityManager;
 import android.app.assist.AssistContent;
 import android.app.assist.AssistStructure;
@@ -91,6 +93,8 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
         mReceiver = new TestResultsReceiver();
         mContext.registerReceiver(mReceiver,
             new IntentFilter(Utils.BROADCAST_ASSIST_DATA_INTENT));
+
+        prepareDevice();
     }
 
     @Override
@@ -102,6 +106,16 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
             mReceiver = null;
         }
         super.tearDown();
+    }
+
+    private void prepareDevice() throws Exception {
+        Log.d(TAG, "prepareDevice()");
+
+        // Unlock screen.
+        runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        runShellCommand("wm dismiss-keyguard");
     }
 
     /**
