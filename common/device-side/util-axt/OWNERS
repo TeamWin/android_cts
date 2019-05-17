@@ -10,4 +10,7 @@ aaronholden@google.com
 yuji@google.com
 nickrose@google.com
 
+# Android Framework Eng Approvers
+felipeal@google.com
+
 per-file *Android.bp=*
