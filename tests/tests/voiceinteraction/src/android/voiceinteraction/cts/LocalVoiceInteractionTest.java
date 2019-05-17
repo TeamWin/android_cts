@@ -20,8 +20,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
-import android.content.ComponentName;
 import android.content.Intent;
+import android.net.Uri;
+import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,6 +38,7 @@ import androidx.test.rule.ActivityTestRule;
 @RunWith(AndroidJUnit4.class)
 public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase {
 
+    private static final String TAG = LocalVoiceInteractionTest.class.getSimpleName();
     private static final int TIMEOUT_MS = 20 * 1000;
 
 
@@ -54,9 +56,12 @@ public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase 
     }
 
     private void startTestActivity() throws Exception {
-        Intent intent = new Intent();
-        intent.setAction("android.intent.action.TEST_LOCAL_INTERACTION_ACTIVITY");
-        intent.setComponent(new ComponentName(mContext, TestLocalInteractionActivity.class));
+        Intent intent = new Intent()
+                .setAction(Intent.ACTION_VIEW)
+                .addCategory(Intent.CATEGORY_BROWSABLE)
+                .setData(Uri.parse("https://android.voiceinteraction.cts"
+                        + "TestLocalInteractionActivity"));
+        Log.i(TAG, "startTestActivity: " + intent);
         mTestActivity = mActivityTestRule.launchActivity(intent);
     }
 
