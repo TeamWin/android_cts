@@ -50,7 +50,9 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.ExceptionUtils;
 import com.android.compatibility.common.util.ThrowingRunnable;
+import com.android.compatibility.common.util.UiDumpUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -324,14 +326,15 @@ public class RoleManagerTest {
     @NonNull
     private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
             InterruptedException {
-        String buttonId = positive ? "android:id/button1" : "android:id/button2";
-        UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
-        if (button == null) {
-            dumpWindowHierarchy();
-            fail("Cannot find button to click");
-        }
-        button.click();
-        return waitForResult();
+        return ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
+            String buttonId = positive ? "android:id/button1" : "android:id/button2";
+            UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
+            if (button == null) {
+                fail("Cannot find button to click");
+            }
+            button.click();
+            return waitForResult();
+        });
     }
 
     private void dumpWindowHierarchy() throws InterruptedException, IOException {
