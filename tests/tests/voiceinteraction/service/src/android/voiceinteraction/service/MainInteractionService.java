@@ -24,6 +24,9 @@ import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class MainInteractionService extends VoiceInteractionService {
     static final String TAG = "MainInteractionService";
     private Intent mIntent;
@@ -54,6 +57,8 @@ public class MainInteractionService extends VoiceInteractionService {
             if (className == null) {
                 Log.i(TAG, "Yay! about to start session with TestApp");
                 if (isActiveService(this, new ComponentName(this, getClass()))) {
+                    // Call to verify onGetSupportedVoiceActions is available.
+                    onGetSupportedVoiceActions(Collections.emptySet());
                     args = new Bundle();
                     Intent intent = new Intent();
                     intent.setComponent(new ComponentName("android.voiceinteraction.testapp",
@@ -68,5 +73,11 @@ public class MainInteractionService extends VoiceInteractionService {
                 showSession(args, VoiceInteractionSession.SHOW_WITH_ASSIST);
             }
         }
+    }
+
+    @Override
+    public Set<String> onGetSupportedVoiceActions(Set<String> voiceActions) {
+        Log.v(TAG, "onGetSupportedVoiceActions " + voiceActions);
+        return super.onGetSupportedVoiceActions(voiceActions);
     }
 }
