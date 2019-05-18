@@ -17,8 +17,12 @@
 package android.assist.cts;
 
 import android.assist.common.Utils;
+import android.assist.cts.AssistTestBase.ScreenshotEnabled;
+import android.assist.cts.AssistTestBase.StructureEnabled;
+import android.content.Context;
 import android.util.Log;
 
+import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 /** Test we receive proper assist data when context is disabled or enabled */
@@ -28,10 +32,6 @@ public class DisableContextTest extends AssistTestBase {
 
     private static final String TEST_CASE_TYPE = Utils.DISABLE_CONTEXT;
 
-    public DisableContextTest() {
-        super();
-    }
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -40,10 +40,7 @@ public class DisableContextTest extends AssistTestBase {
 
     @Override
     public void tearDown() throws Exception {
-        SystemUtil.runShellCommand(getInstrumentation(),
-                "settings put secure assist_structure_enabled 1");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_screenshot_enabled 1");
+        setFeaturesEnabled(StructureEnabled.TRUE, ScreenshotEnabled.TRUE);
         logContextAndScreenshotSetting();
         super.tearDown();
     }
@@ -55,10 +52,7 @@ public class DisableContextTest extends AssistTestBase {
         }
         // Both settings off
         Log.i(TAG, "DisableContext: Screenshot OFF, Context OFF");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_structure_enabled 0");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_screenshot_enabled 0");
+        setFeaturesEnabled(StructureEnabled.FALSE, ScreenshotEnabled.FALSE);
         waitForBroadcast();
 
         logContextAndScreenshotSetting();
@@ -67,10 +61,7 @@ public class DisableContextTest extends AssistTestBase {
 
         // Screenshot off, context on
         Log.i(TAG, "DisableContext: Screenshot OFF, Context ON");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_structure_enabled 1");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_screenshot_enabled 0");
+        setFeaturesEnabled(StructureEnabled.TRUE, ScreenshotEnabled.FALSE);
         waitForBroadcast();
 
         logContextAndScreenshotSetting();
@@ -79,10 +70,7 @@ public class DisableContextTest extends AssistTestBase {
 
         // Context off, screenshot on
         Log.i(TAG, "DisableContext: Screenshot ON, Context OFF");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_structure_enabled 0");
-        SystemUtil.runShellCommand(getInstrumentation(),
-            "settings put secure assist_screenshot_enabled 1");
+        setFeaturesEnabled(StructureEnabled.FALSE, ScreenshotEnabled.TRUE);
         waitForBroadcast();
 
         logContextAndScreenshotSetting();

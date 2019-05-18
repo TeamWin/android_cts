@@ -1183,7 +1183,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* Zygote is always running */
     @CddTest(requirement="9.7")
     public void testZygoteDomain() throws DeviceNotAvailableException {
-        assertDomainN("u:r:zygote:s0", "zygote", "zygote64");
+        assertDomainN("u:r:zygote:s0", "zygote", "zygote64", "usap32", "usap64");
     }
 
     /* Checks drmserver for devices that require it */

@@ -858,6 +858,11 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
+                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
                 openDevice(mCameraIds[i], mCameraMockListener);
                 waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
 

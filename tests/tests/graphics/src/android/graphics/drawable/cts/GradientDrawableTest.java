@@ -743,6 +743,12 @@ public class GradientDrawableTest {
     }
 
     @Test
+    public void testGradientDrawableOrientationConstructor() {
+        GradientDrawable drawable = new GradientDrawable(Orientation.TOP_BOTTOM, null);
+        assertEquals(Orientation.TOP_BOTTOM, drawable.getOrientation());
+    }
+
+    @Test
     public void testInflatedGradientOrientationUpdated() {
         final Context context = new ContextThemeWrapper(InstrumentationRegistry.getTargetContext(),
                 R.style.Theme_MixedGradientTheme);

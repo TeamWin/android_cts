@@ -19,7 +19,6 @@ package android.preference.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Bitmap;
-import android.os.SystemClock;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -62,8 +61,6 @@ public class PreferenceActivityLegacyFlowTest {
      */
     @Test
     public void legacyActivityTest() {
-        waitForIdle();
-
         // Prefs list should be shown.
         assertTextShown(LEGACY_SCREEN_TEXT);
     }
@@ -74,8 +71,6 @@ public class PreferenceActivityLegacyFlowTest {
      */
     @Test
     public void legacyActivityRecreateTest() {
-        waitForIdle();
-
         Bitmap before = mTestUtils.takeScreenshot();
 
         recreate();
@@ -87,13 +82,12 @@ public class PreferenceActivityLegacyFlowTest {
 
     private void recreate() {
         runOnUiThread(() -> mActivity.recreate());
-        SystemClock.sleep(1000);
-        waitForIdle();
+        mTestUtils.waitForIdle();
     }
 
     private void runOnUiThread(final Runnable runnable) {
         try {
-            mActivityRule.runOnUiThread(() -> runnable.run());
+            mActivityRule.runOnUiThread(runnable);
         } catch (Throwable ex) {
             throw new RuntimeException("Failure on the UI thread", ex);
         }
@@ -105,10 +99,6 @@ public class PreferenceActivityLegacyFlowTest {
 
     private void assertTextShown(String text) {
         assertTrue(mTestUtils.isTextShown(text));
-    }
-
-    private void waitForIdle() {
-        mTestUtils.device.waitForIdle();
     }
 
 }
