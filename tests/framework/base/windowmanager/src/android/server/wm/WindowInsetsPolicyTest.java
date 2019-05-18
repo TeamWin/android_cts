@@ -16,20 +16,35 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_90;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.graphics.Insets;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -38,6 +53,8 @@ import com.android.compatibility.common.util.PollingCheck;
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -45,7 +62,9 @@ import org.junit.rules.ErrorCollector;
 import java.util.function.Supplier;
 
 @Presubmit
-public class WindowInsetsPolicyTest {
+public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
+
+    private ComponentName mTestActivityComponentName;
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
@@ -54,6 +73,23 @@ public class WindowInsetsPolicyTest {
     public final ActivityTestRule<TestActivity> mTestActivity =
             new ActivityTestRule<>(TestActivity.class, false /* initialTouchMode */,
                     false /* launchActivity */);
+
+    @Rule
+    public final ActivityTestRule<FullscreenTestActivity> mFullscreenTestActivity =
+            new ActivityTestRule<>(FullscreenTestActivity.class, false /* initialTouchMode */,
+                    false /* launchActivity */);
+
+    @Rule
+    public final ActivityTestRule<FullscreenWmFlagsTestActivity> mFullscreenWmFlagsTestActivity =
+            new ActivityTestRule<>(FullscreenWmFlagsTestActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
+
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mTestActivityComponentName = new ComponentName(mContext, TestActivity.class);
+    }
 
     @Test
     public void testWindowInsets_dispatched() {
@@ -73,6 +109,56 @@ public class WindowInsetsPolicyTest {
         Assert.assertThat("test setup failed, no insets at root", insets, notNullValue());
 
         commonAsserts(insets);
+    }
+
+    /**
+     * Tests whether an activity in split screen gets the top insets force consumed if
+     * {@link View#SYSTEM_UI_FLAG_FULLSCREEN} is set, and doesn't otherwise.
+     */
+    @Test
+    public void testForcedConsumedTopInsets() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
+        mAmWmState.computeState(new ComponentName[] {});
+        boolean naturalOrientationPortrait =
+                mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY)
+                        .mFullConfiguration.orientation == ORIENTATION_PORTRAIT;
+
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(naturalOrientationPortrait ? ROTATION_90 : ROTATION_0);
+
+            launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
+            final TestActivity activity = launchAndWait(mTestActivity);
+            mAmWmState.computeState(mTestActivityComponentName);
+
+            mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+                    WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+            mAmWmState.assertContainsStack("Must contain docked stack.",
+                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+
+            mAmWmState.computeState(LAUNCHING_ACTIVITY, mTestActivityComponentName);
+
+            // Ensure that top insets are not consumed for LAYOUT_FULLSCREEN
+            WindowInsets insets = getOnMainSync(activity::getDispatchedInsets);
+            WindowInsets rootInsets = getOnMainSync(activity::getRootInsets);
+            assertEquals("top inset must be dispatched in split screen",
+                    rootInsets.getSystemWindowInsetTop(), insets.getSystemWindowInsetTop());
+
+            // Ensure that top insets are fully consumed for FULLSCREEN
+            final TestActivity fullscreenActivity = launchAndWait(mFullscreenTestActivity);
+            insets = getOnMainSync(fullscreenActivity::getDispatchedInsets);
+            assertEquals("top insets must be consumed if FULLSCREEN is set",
+                    0, insets.getSystemWindowInsetTop());
+
+            // Ensure that top insets are fully consumed for FULLSCREEN when setting it over wm
+            // layout params
+            final TestActivity fullscreenWmFlagsActivity =
+                    launchAndWait(mFullscreenWmFlagsTestActivity);
+            insets = getOnMainSync(fullscreenWmFlagsActivity::getDispatchedInsets);
+            assertEquals("top insets must be consumed if FULLSCREEN is set",
+                    0, insets.getSystemWindowInsetTop());
+        }
     }
 
     private void commonAsserts(WindowInsets insets) {
@@ -175,6 +261,25 @@ public class WindowInsetsPolicyTest {
 
         WindowInsets getDispatchedInsets() {
             return mDispatchedInsets;
+        }
+    }
+
+    public static class FullscreenTestActivity extends TestActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            getDecorView().setSystemUiVisibility(
+                    getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        }
+    }
+
+    public static class FullscreenWmFlagsTestActivity extends TestActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
         }
     }
 

@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,14 +32,26 @@ import androidx.annotation.Nullable;
  */
 public final class SettingsUtils {
 
+    private static final String TAG = SettingsUtils.class.getSimpleName();
+
     public static final String NAMESPACE_SECURE = "secure";
     public static final String NAMESPACE_GLOBAL = "global";
+
+    // TODO(b/123885378): we cannot pass an empty value when using 'cmd settings', so we need
+    // to remove the property instead. Once we use the Settings API directly, we can remove this
+    // constant and all if() statements that ues it
+    static final boolean TMP_HACK_REMOVE_EMPTY_PROPERTIES = true;
 
     /**
      * Uses a Shell command to set the given preference.
      */
     public static void set(@NonNull String namespace, @NonNull String key, @Nullable String value) {
         if (value == null) {
+            delete(namespace, key);
+            return;
+        }
+        if (TMP_HACK_REMOVE_EMPTY_PROPERTIES && TextUtils.isEmpty(value)) {
+            Log.w(TAG, "Value of " + namespace + ":" + key + " is empty; deleting it instead");
             delete(namespace, key);
             return;
         }
@@ -73,7 +87,13 @@ public final class SettingsUtils {
         observer.assertCalled();
 
         final String newValue = get(namespace, key);
-        assertWithMessage("invalid value for '%s' settings", key).that(newValue).isEqualTo(value);
+        if (TMP_HACK_REMOVE_EMPTY_PROPERTIES && TextUtils.isEmpty(value)) {
+            assertWithMessage("invalid value for '%s' settings", key).that(newValue)
+                .isNull();
+        } else {
+            assertWithMessage("invalid value for '%s' settings", key).that(newValue)
+                    .isEqualTo(value);
+        }
     }
 
     /**

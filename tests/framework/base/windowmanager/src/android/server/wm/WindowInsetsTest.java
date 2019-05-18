@@ -417,6 +417,18 @@ public class WindowInsetsTest {
         assertNull(insetInsets.getDisplayCutout());
     }
 
+    @Test
+    public void testConsumed_copy() {
+        final WindowInsets insets = new WindowInsets.Builder()
+                .setSystemWindowInsets(Insets.of(10, 20, 30, 40))
+                .setStableInsets(Insets.of(50, 60, 70, 80))
+                .build();
+
+        final WindowInsets consumed = insets.consumeSystemWindowInsets().consumeStableInsets();
+        final WindowInsets copy = new WindowInsets(consumed);
+        assertTrue(copy.isConsumed());
+    }
+
     private static Insets applyInset(Insets res) {
         return Insets.of(Math.max(0, res.left - INSET_LEFT),
                 Math.max(0, res.top - INSET_TOP),
