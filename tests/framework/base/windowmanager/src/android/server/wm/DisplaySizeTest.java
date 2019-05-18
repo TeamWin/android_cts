@@ -23,10 +23,17 @@ import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
 import static android.server.wm.displaysize.Components.SmallestWidthActivity.EXTRA_LAUNCH_ANOTHER_ACTIVITY;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.graphics.Point;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
+import android.view.Display;
 
 import org.junit.After;
 import org.junit.Test;
@@ -104,6 +111,58 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
 
             mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
             mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        }
+    }
+
+    @Test
+    public void testSizeRangesAfterSettingDisplaySize() throws InterruptedException {
+        VirtualDisplay virtualDisplay = null;
+        try {
+            final int initialLength = 500;
+            final int newLength = 1000;
+            final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+            virtualDisplay = displayManager.createVirtualDisplay("CtsDisplay", initialLength,
+                    initialLength, 160 /* densityDpi */, null /* surface */, 0 /* flags */);
+            final Display targetDisplay = virtualDisplay.getDisplay();
+            final int targetDisplayId = targetDisplay.getDisplayId();
+            final boolean[] displayChanged = { false };
+            displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+                @Override
+                public void onDisplayAdded(int displayId) {}
+
+                @Override
+                public void onDisplayRemoved(int displayId) {}
+
+                @Override
+                public void onDisplayChanged(int displayId) {
+                    if (displayId == targetDisplayId) {
+                        synchronized (displayManager) {
+                            displayChanged[0] = true;
+                            displayManager.notify();
+                        }
+                        displayManager.unregisterDisplayListener(this);
+                    }
+                }
+            }, new Handler(Looper.getMainLooper()));
+
+            executeShellCommand(String.format("wm size %sx%s -d %s",
+                    newLength, newLength, targetDisplayId));
+            synchronized (displayManager) {
+                if (!displayChanged[0]) {
+                    displayManager.wait(1000 /* milliseconds */);
+                }
+            }
+
+            final Point expectedSize = new Point(newLength, newLength);
+            final Point smallestSize = new Point();
+            final Point largestSize = new Point();
+            targetDisplay.getCurrentSizeRange(smallestSize, largestSize);
+            assertEquals("Smallest size must be changed.", expectedSize, smallestSize);
+            assertEquals("Largest size must be changed.", expectedSize, largestSize);
+        } finally {
+            if (virtualDisplay != null) {
+                virtualDisplay.release();
+            }
         }
     }
 
