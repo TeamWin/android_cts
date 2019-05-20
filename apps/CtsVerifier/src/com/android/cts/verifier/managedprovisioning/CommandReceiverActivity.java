@@ -25,12 +25,16 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.util.Log;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.managedprovisioning.Utils;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class CommandReceiverActivity extends Activity {
     private static final String TAG = "CommandReceiverActivity";
@@ -131,7 +135,7 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_ALLOW_ONLY_SYSTEM_INPUT_METHODS: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
-                    mDpm.setPermittedInputMethods(mAdmin, enforced ? new ArrayList() : null);
+                    mDpm.setPermittedInputMethods(mAdmin, enforced ? getEnabledNonSystemImes() : null);
                 } break;
                 case COMMAND_ALLOW_ONLY_SYSTEM_ACCESSIBILITY_SERVICES: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
@@ -226,5 +230,20 @@ public class CommandReceiverActivity extends Activity {
         mDpm.setMaximumTimeToLock(mAdmin, 0);
         mDpm.setPermittedAccessibilityServices(mAdmin, null);
         mDpm.setPermittedInputMethods(mAdmin, null);
+    }
+
+    private List<String> getEnabledNonSystemImes() {
+        InputMethodManager inputMethodManager = getSystemService(InputMethodManager.class);
+        final List<InputMethodInfo> inputMethods = inputMethodManager.getEnabledInputMethodList();
+        return inputMethods.stream()
+                .filter(inputMethodInfo -> !isSystemInputMethodInfo(inputMethodInfo))
+                .map(inputMethodInfo -> inputMethodInfo.getPackageName())
+                .filter(packageName -> !packageName.equals(getPackageName()))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private boolean isSystemInputMethodInfo(InputMethodInfo inputMethodInfo) {
+        return inputMethodInfo.getServiceInfo().applicationInfo.isSystemApp();
     }
 }
