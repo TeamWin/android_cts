@@ -211,6 +211,18 @@ public class MediaStorageTest {
             fail("Expected write access to be blocked");
         } catch (SecurityException | FileNotFoundException expected) {
         }
+
+        // Verify that we can't grant ourselves access
+        for (int flag : new int[] {
+                Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        }) {
+            try {
+                mContext.grantUriPermission(mContext.getPackageName(), blue, flag);
+                fail("Expected granting to be blocked for flag 0x" + Integer.toHexString(flag));
+            } catch (SecurityException expected) {
+            }
+        }
     }
 
     @Test
