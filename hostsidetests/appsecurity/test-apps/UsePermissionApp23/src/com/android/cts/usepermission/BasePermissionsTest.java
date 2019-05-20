@@ -330,12 +330,8 @@ public abstract class BasePermissionsTest {
     }
 
     private void click(String resourceName) throws TimeoutException {
-        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
-            waitForIdle();
-            getUiDevice().wait(Until.findObject(By.res(
-                    resourceName)),
-                    GLOBAL_TIMEOUT_MILLIS).click();
-        });
+        waitForIdle();
+        waitFindObject(By.res(resourceName)).click();
     }
 
     protected void grantPermission(String permission) throws Exception {
@@ -355,7 +351,7 @@ public abstract class BasePermissionsTest {
     }
 
     private void scrollToBottom() throws Exception {
-        getUiDevice().wait(Until.findObject(By.clazz(ScrollView.class)), GLOBAL_TIMEOUT_MILLIS);
+        waitFindObject(By.clazz(ScrollView.class));
         UiScrollable scrollable =
                 new UiScrollable(new UiSelector().className(ScrollView.class));
         if (scrollable.exists()) {
@@ -402,34 +398,17 @@ public abstract class BasePermissionsTest {
                 // Find the permission screen
                 String permissionLabel = getPermissionLabel(permission);
 
-                UiObject2 permissionView = null;
-                long start = System.currentTimeMillis();
-                while (permissionView == null
-                        && start + RETRY_TIMEOUT > System.currentTimeMillis()) {
-                    permissionView = getUiDevice().wait(Until.findObject(By.text(permissionLabel)),
-                            GLOBAL_TIMEOUT_MILLIS);
-
-                    if (permissionView == null) {
-                        getUiDevice().findObject(By.res("android:id/list_container"))
-                                .scroll(Direction.DOWN, 1);
-                    }
-                }
-
-                permissionView.click();
+                waitFindObject(By.text(permissionLabel)).click();
                 waitForIdle();
 
-                String denyLabel = mContext.getResources().getString(R.string.Deny);
-
-                final boolean wasGranted = !getUiDevice().wait(Until.findObject(By.text(denyLabel)),
-                        GLOBAL_TIMEOUT_MILLIS).isChecked();
+                final boolean wasGranted = !waitFindObject(byText(R.string.Deny)).isChecked();
                 if (granted != wasGranted) {
                     // Toggle the permission
 
                     if (granted) {
-                        String allowLabel = mContext.getResources().getString(R.string.Allow);
-                        getUiDevice().findObject(By.text(allowLabel)).click();
+                        waitFindObject(byText(R.string.Allow)).click();
                     } else {
-                        getUiDevice().findObject(By.text(denyLabel)).click();
+                        waitFindObject(byText(R.string.Deny)).click();
                     }
                     waitForIdle();
 
@@ -443,13 +422,10 @@ public abstract class BasePermissionsTest {
                         Resources resources = context
                                 .createPackageContext(packageName, 0).getResources();
                         final int confirmResId = resources.getIdentifier(resIdName, null, null);
-                        String confirmTitle = CaseMap.toUpper().apply(
-                                resources.getConfiguration().getLocales().get(0),
-                                resources.getString(confirmResId));
-                        getUiDevice().wait(Until.findObject(
-                                byTextStartsWithCaseInsensitive(confirmTitle)),
-                                GLOBAL_TIMEOUT_MILLIS).click();
+                        String confirmTitle = resources.getString(confirmResId);
 
+                        waitFindObject(byTextStartsWithCaseInsensitive(confirmTitle))
+                                .click();
                         waitForIdle();
                     }
                 }
@@ -463,6 +439,32 @@ public abstract class BasePermissionsTest {
             getUiDevice().pressBack();
             waitForIdle();
         });
+    }
+
+    private BySelector byText(int stringId) {
+        return By.text(mContext.getResources().getString(stringId));
+    }
+
+    private UiObject2 waitFindObject(BySelector selector) {
+        UiObject2 view = null;
+        long start = System.currentTimeMillis();
+        while (view == null && start + RETRY_TIMEOUT > System.currentTimeMillis()) {
+            view = getUiDevice().wait(Until.findObject(selector), GLOBAL_TIMEOUT_MILLIS);
+
+            if (view == null) {
+                UiObject2 scrollable = getUiDevice().findObject(By.scrollable(true));
+                if (scrollable != null) {
+                    scrollable.scroll(Direction.DOWN, 1);
+                }
+            }
+        }
+        final UiObject2 finalView = view;
+        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
+            assertNotNull("View not found after waiting for "
+                    + (System.currentTimeMillis() - start) + "ms: " + selector,
+                    finalView);
+        });
+        return view;
     }
 
     private BySelector byTextStartsWithCaseInsensitive(String prefix) {
