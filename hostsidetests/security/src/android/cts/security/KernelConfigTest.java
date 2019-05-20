@@ -214,10 +214,6 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigHardwareMitigations() throws Exception {
-        if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
-            return;
-        }
-
         if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
             for (String mitigation : lookupMitigations()) {
                 assertTrue("Linux kernel must have " + mitigation + " enabled.",
