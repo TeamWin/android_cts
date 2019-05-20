@@ -230,7 +230,7 @@ public class HeifWriterTest extends AndroidTestCase {
 
         boolean fallbackFound = false;
         for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (!info.isEncoder() || !info.isVendor()) {
+            if (!info.isEncoder() || !info.isHardwareAccelerated()) {
                 continue;
             }
             MediaCodecInfo.CodecCapabilities caps = null;
