@@ -16,6 +16,8 @@
 
 package android.permission2.cts;
 
+import static android.permission2.cts.Utils.eventually;
+
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -70,19 +72,6 @@ public class RestrictedPermissionsTest {
 
     private static @NonNull BroadcastReceiver sCommandReceiver;
 
-    public interface ThrowingRunnable extends Runnable {
-        void runOrThrow() throws Exception;
-
-        @Override
-        default void run() {
-            try {
-                runOrThrow();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-    }
-
     @BeforeClass
     public static void setUpOnce() {
         sCommandReceiver = new CommandBroadcastReceiver();
@@ -123,7 +112,7 @@ public class RestrictedPermissionsTest {
         installRestrictedPermissionUserApp(whitelistedPermissions, null /*grantedPermissions*/);
 
         // Some restricted permission should be whitelisted.
-        assertRestrictedPermissionWhitelisted(whitelistedPermissions);
+        eventually(() -> assertRestrictedPermissionWhitelisted(whitelistedPermissions));
 
         // No restricted permission should be granted.
         assertNoRestrictedPermissionGranted();
@@ -294,7 +283,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -303,7 +292,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -312,7 +301,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -321,7 +310,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -330,7 +319,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -339,7 +328,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -348,7 +337,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -357,7 +346,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
 
-        assertHasFullStorageAccess();
+        eventually(this::assertHasFullStorageAccess);
     }
 
     @Test
@@ -592,17 +581,17 @@ public class RestrictedPermissionsTest {
                     PackageManager.GET_PERMISSIONS);
 
             for (String permission : packageInfo.requestedPermissions) {
+                String op = AppOpsManager.permissionToOp(permission);
+
                 if (expectedWhitelistedPermissions != null
                         && expectedWhitelistedPermissions.contains(permission)) {
-                    assertThat(appOpsManager.unsafeCheckOpNoThrow(
-                            AppOpsManager.permissionToOp(permission),
-                            packageInfo.applicationInfo.uid, PKG))
-                            .isEqualTo(AppOpsManager.MODE_ALLOWED);
+                    assertThat(
+                            appOpsManager.unsafeCheckOpNoThrow(op, packageInfo.applicationInfo.uid,
+                                    PKG)).named(op).isEqualTo(AppOpsManager.MODE_ALLOWED);
                 } else {
-                    assertThat(appOpsManager.unsafeCheckOpNoThrow(
-                            AppOpsManager.permissionToOp(permission),
-                            packageInfo.applicationInfo.uid, PKG))
-                            .isEqualTo(AppOpsManager.MODE_DEFAULT);
+                    assertThat(
+                            appOpsManager.unsafeCheckOpNoThrow(op, packageInfo.applicationInfo.uid,
+                                    PKG)).named(op).isEqualTo(AppOpsManager.MODE_DEFAULT);
                 }
             }
         });
@@ -731,7 +720,7 @@ public class RestrictedPermissionsTest {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    private static void runWithShellPermissionIdentity(@NonNull ThrowingRunnable command)
+    private static void runWithShellPermissionIdentity(@NonNull Utils.ThrowingRunnable command)
             throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity();
