@@ -39,7 +39,7 @@ $(LOCAL_BUILT_MODULE): $(all_shared_libs_files)
 	@echo "Zip API files $^ -> $@"
 	@mkdir -p $(dir $@)
 	$(hide) rm -f $@
-	$(hide) $(SOONG_ZIP) -o $@ -C . $(addprefix -f ,$(PRIVATE_SHARED_LIBS_FILES))
+	$(hide) $(SOONG_ZIP) -o $@ -P out -C $(OUT_DIR) $(addprefix -f ,$(PRIVATE_SHARED_LIBS_FILES))
 
 include $(CLEAR_VARS)
 
