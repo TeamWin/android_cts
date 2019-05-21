@@ -32,12 +32,13 @@ public class TestLocalInteractionActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG, " in onCreate");
+        Log.i(TAG, " in onCreate: " + getIntent());
     }
 
     void startLocalInteraction(CountDownLatch counter) {
         Bundle privateOptions = new Bundle();
         privateOptions.putString(Utils.PRIVATE_OPTIONS_KEY, Utils.PRIVATE_OPTIONS_VALUE);
+        Log.i(TAG, "startLocalInteraction(): " + Utils.toBundleString(privateOptions));
         mStarted = counter;
         startLocalVoiceInteraction(privateOptions);
     }
@@ -57,7 +58,7 @@ public class TestLocalInteractionActivity extends Activity {
 
     @Override
     public void onLocalVoiceInteractionStopped() {
-        Log.i(TAG, " in onLocalVoiceInteractionStarted");
+        Log.i(TAG, " in onLocalVoiceInteractionStopped");
         if (mStopped != null) {
             mStopped.countDown();
         }

@@ -17,8 +17,9 @@
 package android.voiceinteraction.cts;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.ComponentName;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -34,11 +35,11 @@ public class TestStartActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG, " in onResume");
         Intent intent = new Intent();
         intent.setAction("android.intent.action.START_TEST");
         intent.setComponent(new ComponentName("android.voiceinteraction.service",
                 "android.voiceinteraction.service.VoiceInteractionMain"));
+        Log.i(TAG, " in onResume: " + intent);
         startActivity(intent);
     }
 
