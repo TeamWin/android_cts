@@ -139,6 +139,7 @@ public class SecurityTestCase extends DeviceTestCase {
             if (deviceToReboot != null) {
                 deviceToReboot.nonBlockingReboot();
                 deviceToReboot.waitForDeviceAvailable();
+                updateKernelStartTime();
             }
         }
         fail("\"" + ptr + "\" is an exposed kernel pointer.");
