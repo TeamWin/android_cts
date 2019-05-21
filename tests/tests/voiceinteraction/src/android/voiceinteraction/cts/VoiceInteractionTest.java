@@ -77,6 +77,7 @@ public class VoiceInteractionTest extends AbstractVoiceInteractionTestCase {
         Intent intent = new Intent();
         intent.setAction("android.intent.action.TEST_START_ACTIVITY");
         intent.setComponent(new ComponentName(mContext, TestStartActivity.class));
+        Log.v(TAG, "startTestActivity:" + intent);
         mTestActivity = mActivityTestRule.launchActivity(intent);
     }
 
