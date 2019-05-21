@@ -178,13 +178,17 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         }
     }
 
-    private static final String QUALCOMM_SOC_FILE = "/sys/devices/soc0/chip_name";
-
     private String getHardware() throws Exception {
         String hardware = "DEFAULT";
-        /* lookup for Qualcomm devices */
-        if (doesFileExist(QUALCOMM_SOC_FILE)) {
-            hardware = mDevice.pullFileContents(QUALCOMM_SOC_FILE).trim();
+        String cpuInfo = mDevice.pullFileContents("/proc/cpuinfo");
+
+        for (String line : cpuInfo.split("\n")) {
+            /* Qualcomm SoCs */
+            if (line.startsWith("Hardware")) {
+                String[] hardwareLine = line.split(" ");
+                hardware = hardwareLine[hardwareLine.length - 1];
+                break;
+            }
         }
         /* TODO lookup other hardware as we get exemption requests. */
         return hardwareMitigations.containsKey(hardware) ? hardware : "DEFAULT";
