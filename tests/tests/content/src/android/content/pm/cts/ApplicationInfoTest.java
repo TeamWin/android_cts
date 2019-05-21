@@ -57,8 +57,6 @@ public class ApplicationInfoTest {
             "android.content.cts.directbootunaware";
     private static final String PARTIALLY_DIRECT_BOOT_AWARE_PACKAGE_NAME =
             "android.content.cts.partiallydirectbootaware";
-    private static final String DIRECT_BOOT_AWARE_PACKAGE_NAME =
-            "android.content.cts.directbootaware";
 
     private ApplicationInfo mApplicationInfo;
     private String mPackageName;
@@ -215,13 +213,6 @@ public class ApplicationInfoTest {
     public void testPartiallyDirectBootAwareAppIsEncryptionAware() throws Exception {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
                 PARTIALLY_DIRECT_BOOT_AWARE_PACKAGE_NAME, 0);
-        assertTrue(applicationInfo.isEncryptionAware());
-    }
-
-    @Test
-    public void testDirectBootAwareAppIsEncryptionAware() throws Exception {
-        ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                DIRECT_BOOT_AWARE_PACKAGE_NAME, 0);
         assertTrue(applicationInfo.isEncryptionAware());
     }
 }
