@@ -208,6 +208,6 @@ public class DialogTestActivity extends Activity {
 
     private int getSize() {
         float density = getResources().getDisplayMetrics().density;
-        return (int)(200 * density);
+        return density > 1.0 ? 200 : (int)(200 * density);
     }
 }

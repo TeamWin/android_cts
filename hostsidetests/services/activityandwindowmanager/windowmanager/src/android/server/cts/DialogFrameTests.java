@@ -216,7 +216,7 @@ public class DialogFrameTests extends ParentChildTestBase {
         int size = explicitDimension;
         try {
             float density = getDensity();
-            size = (int)(explicitDimension * density);
+            size = density > 1.0 ? explicitDimension : (int)(explicitDimension * density);
         } catch (DeviceNotAvailableException e) {
         }
         return size;
