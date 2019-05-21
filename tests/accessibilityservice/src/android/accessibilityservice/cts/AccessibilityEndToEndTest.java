@@ -422,6 +422,11 @@ public class AccessibilityEndToEndTest {
                     " - Watches have different notification system.");
             return;
         }
+        if (pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE)) {
+            Log.i(LOG_TAG, "Skipping: testTypeNotificationStateChangedAccessibilityEvent" +
+                    " - Automotive handle notifications differently.");
+            return;
+        }
 
         String message = mActivity.getString(R.string.notification_message);
 
