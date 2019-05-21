@@ -30,6 +30,7 @@ import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
@@ -40,6 +41,7 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.concurrent.CountDownLatch;
@@ -49,6 +51,15 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     private static final String TAG = "AssistTestBase";
 
     protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
+
+    // TODO: use constants from Settings (should be @TestApi)
+    private static final String ASSIST_STRUCTURE_ENABLED = "assist_structure_enabled";
+    private static final String ASSIST_SCREENSHOT_ENABLED = "assist_screenshot_enabled";
+
+    // TODO: once tests are migrated to JUnit 4, use a @BeforeClass method or StateChangerRule
+    // to avoid this hack
+    private static boolean mFirstTest = true;
+
     protected ActivityManager mActivityManager;
     protected TestStartActivity mTestActivity;
     protected AssistContent mAssistContent;
@@ -72,11 +83,12 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getTargetContext();
-        SystemUtil.runShellCommand(getInstrumentation(),
-                "settings put secure assist_structure_enabled 1");
-        SystemUtil.runShellCommand(getInstrumentation(),
-                "settings put secure assist_screenshot_enabled 1");
-        logContextAndScreenshotSetting();
+
+        if (mFirstTest) {
+            setFeaturesEnabled(StructureEnabled.TRUE, ScreenshotEnabled.TRUE);
+            logContextAndScreenshotSetting();
+            mFirstTest = false;
+        }
 
         // reset old values
         mScreenshotMatches = false;
@@ -416,6 +428,16 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
         return false;
     }
 
+    protected void setFeaturesEnabled(StructureEnabled structure, ScreenshotEnabled screenshot) {
+        Log.i(TAG, "setFeaturesEnabled(" + structure + ", " + screenshot + ")");
+        SettingsUtils.syncSet(mContext, ASSIST_STRUCTURE_ENABLED, structure.value);
+        SettingsUtils.syncSet(mContext, ASSIST_SCREENSHOT_ENABLED, screenshot.value);
+        // TODO: figure out a better way to wait until it's done
+        Log.v(TAG, "sleeping 2s");
+        SystemClock.sleep(2_000);
+        Log.v(TAG, "woke up");
+    }
+
     /**
      * Compare view properties of the view hierarchy with that reported in the assist structure.
      */
@@ -512,6 +534,37 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
                     mHasResumedLatch.countDown();
                 }
             }
+        }
+    }
+
+    protected enum StructureEnabled {
+        TRUE("1"), FALSE("0");
+
+        private final String value;
+
+        private StructureEnabled(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "structure_" + (value.equals("1") ? "enabled" : "disabled");
+        }
+
+    }
+
+    protected enum ScreenshotEnabled {
+        TRUE("1"), FALSE("0");
+
+        private final String value;
+
+        private ScreenshotEnabled(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "screenshot_" + (value.equals("1") ? "enabled" : "disabled");
         }
     }
 }
