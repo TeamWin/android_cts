@@ -131,6 +131,7 @@ def test_tonemap_curve(cam, props):
         # YUV image
         req_yuv = its.objects.manual_capture_request(int(sens_min), exp)
         req_yuv['android.sensor.testPatternMode'] = PATTERN
+        req_yuv['android.distortionCorrection.mode'] = 0
         req_yuv['android.tonemap.mode'] = 0
         req_yuv['android.tonemap.curve'] = {
                 'red': tmap, 'green': tmap, 'blue': tmap}
