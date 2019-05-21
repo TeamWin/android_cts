@@ -19,10 +19,12 @@ package android.voiceinteraction.testapp;
 import android.app.Activity;
 import android.app.DirectAction;
 import android.app.VoiceInteractor;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.RemoteCallback;
+import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.NonNull;
@@ -31,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -39,14 +40,19 @@ import java.util.function.Consumer;
  */
 public final class DirectActionsActivity extends Activity {
 
+    private static final String TAG = DirectActionsActivity.class.getSimpleName();
+
     @Override
     protected void onResume() {
         super.onResume();
-        final Bundle args = getIntent().getExtras();
-        final RemoteCallback callback = args.getParcelable(Utils.DIRECT_ACTIONS_KEY_CALLBACK);
+        final Intent intent = getIntent();
+        Log.v(TAG, "onResume: " + intent);
+        final Bundle args = intent.getExtras();
+        final RemoteCallback callBack = args.getParcelable(Utils.DIRECT_ACTIONS_KEY_CALLBACK);
 
         final RemoteCallback control = new RemoteCallback((cmdArgs) -> {
             final String command = cmdArgs.getString(Utils.DIRECT_ACTIONS_KEY_COMMAND);
+            Log.v(TAG, "on remote callback: command=" + command);
             switch (command) {
                 case Utils.DIRECT_ACTIONS_ACTIVITY_CMD_DESTROYED_INTERACTOR: {
                     final RemoteCallback commandCallback = cmdArgs.getParcelable(
@@ -68,13 +74,15 @@ public final class DirectActionsActivity extends Activity {
 
         final Bundle result = new Bundle();
         result.putParcelable(Utils.DIRECT_ACTIONS_KEY_CONTROL, control);
-        callback.sendResult(result);
+        Log.v(TAG, "onResume(): result=" + Utils.toBundleString(result));
+        callBack.sendResult(result);
     }
 
     @Override
     public void onGetDirectActions(@NonNull CancellationSignal cancellationSignal,
             @NonNull Consumer<List<DirectAction>> callback) {
         if (getVoiceInteractor() == null) {
+            Log.e(TAG, "onGetDirectActions(): no voice interactor");
             callback.accept(Collections.emptyList());
             return;
         }
@@ -119,11 +127,7 @@ public final class DirectActionsActivity extends Activity {
             latch.countDown();
         });
 
-        try {
-            latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
+        Utils.await(latch);
 
         callback.sendResult(result);
     }
@@ -132,6 +136,7 @@ public final class DirectActionsActivity extends Activity {
         getVoiceInteractor().notifyDirectActionsChanged();
         final Bundle result = new Bundle();
         result.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, true);
+        Log.v(TAG, "invalidateDirectActions(): " + Utils.toBundleString(result));
         callback.sendResult(result);
     }
 
@@ -139,6 +144,7 @@ public final class DirectActionsActivity extends Activity {
         finish();
         final Bundle result = new Bundle();
         result.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, true);
+        Log.v(TAG, "doFinish(): " + Utils.toBundleString(result));
         callback.sendResult(result);
     }
 
@@ -146,6 +152,7 @@ public final class DirectActionsActivity extends Activity {
         final Bundle result = new Bundle();
         result.putString(Utils.DIRECT_ACTIONS_KEY_RESULT,
                 Utils.DIRECT_ACTIONS_RESULT_PERFORMED);
+        Log.v(TAG, "reportActionPerformed(): " + Utils.toBundleString(result));
         callback.accept(result);
     }
 
@@ -153,6 +160,7 @@ public final class DirectActionsActivity extends Activity {
         final Bundle result = new Bundle();
         result.putString(Utils.DIRECT_ACTIONS_KEY_RESULT,
                 Utils.DIRECT_ACTIONS_RESULT_CANCELLED);
+        Log.v(TAG, "reportActionCancelled(): " + Utils.toBundleString(result));
         callback.accept(result);
     }
 
@@ -160,10 +168,12 @@ public final class DirectActionsActivity extends Activity {
         final Bundle result = new Bundle();
         result.putString(Utils.DIRECT_ACTIONS_KEY_RESULT,
                 Utils.DIRECT_ACTIONS_RESULT_EXECUTING);
+        Log.v(TAG, "reportActionExecuting(): " + Utils.toBundleString(result));
         callback.accept(result);
     }
 
     private static void reportActionFailed(Consumer<Bundle> callback) {
+        Log.v(TAG, "reportActionFailed()");
         callback.accept( new Bundle());
     }
 }
