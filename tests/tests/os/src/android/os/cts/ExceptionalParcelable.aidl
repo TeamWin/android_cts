@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
- * Copyright (C) 2018 The Android Open Source Project
+/*
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission.cts.appthatrequestpermission"
-    android:versionCode="1">
+package android.os.cts;
 
-    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29" />
-
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <application />
-</manifest>
-
+parcelable ExceptionalParcelable;

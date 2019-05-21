@@ -30,6 +30,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -225,18 +226,28 @@ public class HeifWriterTest extends AndroidTestCase {
             return;
         }
 
-        MediaCodec encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_HEVC);
-        assertNotNull("HEIC full-frame image encoder without HEVC fallback");
+        final MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
 
-        MediaCodecInfo.CodecCapabilities caps =
-                encoder.getCodecInfo().getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_HEVC);
-        assertTrue("HEVC fallback doesn't support tile size " + GRID_WIDTH + "x" + GRID_HEIGHT,
-                caps.getVideoCapabilities().isSizeSupported(GRID_WIDTH, GRID_HEIGHT));
-
-        MediaCodecInfo.EncoderCapabilities encoderCaps = caps.getEncoderCapabilities();
-        assertTrue("HEVC fallback doesn't support CQ mode",
-                encoderCaps.isBitrateModeSupported(
-                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ));
+        boolean fallbackFound = false;
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (!info.isEncoder() || !info.isHardwareAccelerated()) {
+                continue;
+            }
+            MediaCodecInfo.CodecCapabilities caps = null;
+            try {
+                caps = info.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_HEVC);
+            } catch (IllegalArgumentException e) { // mime is not supported
+                continue;
+            }
+            if (caps.getVideoCapabilities().isSizeSupported(GRID_WIDTH, GRID_HEIGHT) &&
+                    caps.getEncoderCapabilities().isBitrateModeSupported(
+                            MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ)) {
+                fallbackFound = true;
+                Log.d(TAG, "found fallback on " + info.getName());
+                // not breaking here so that we can log what's available by running this test
+            }
+        }
+        assertTrue("HEIC full-frame image encoder without HEVC fallback", fallbackFound);
     }
 
     private static boolean canEncodeHeic() {
