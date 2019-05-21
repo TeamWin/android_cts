@@ -117,11 +117,7 @@ public class DirectActionsSession extends VoiceInteractionSession {
         mLock.lock();
         try {
             if (mActivityId == null) {
-                try {
-                    mCondition.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    /* ignore */
-                }
+                Utils.await(mCondition);
             }
             final Bundle result = new Bundle();
             if (mActivityId != null) {
@@ -142,18 +138,14 @@ public class DirectActionsSession extends VoiceInteractionSession {
 
         mLock.lock();
         try {
-            requestDirectActions(mActivityId,null, AsyncTask.THREAD_POOL_EXECUTOR, (b) -> {
+            requestDirectActions(mActivityId, null, AsyncTask.THREAD_POOL_EXECUTOR, (b) -> {
                 actions.addAll(b);
                 latch.countDown();
             });
         } finally {
             mLock.unlock();
         }
-        try {
-            latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
+        Utils.await(latch);
 
         outResult.putParcelableArrayList(Utils.DIRECT_ACTIONS_KEY_RESULT, actions);
     }
@@ -168,11 +160,7 @@ public class DirectActionsSession extends VoiceInteractionSession {
             result.putAll(b);
             latch.countDown();
         });
-        try {
-            latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
+        Utils.await(latch);
 
         outResult.putBundle(Utils.DIRECT_ACTIONS_KEY_RESULT, result);
     }
@@ -199,19 +187,11 @@ public class DirectActionsSession extends VoiceInteractionSession {
             resultLatch.countDown()
         );
 
-        try {
-            resultLatch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
+        Utils.await(resultLatch);
 
         cancellationSignal.cancel();
 
-        try {
-            cancelLatch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
+        Utils.await(cancelLatch);
 
         outResult.putBundle(Utils.DIRECT_ACTIONS_KEY_RESULT, result);
     }
@@ -220,11 +200,7 @@ public class DirectActionsSession extends VoiceInteractionSession {
         mLock.lock();
         try {
             if (!mActionsInvalidated) {
-                try {
-                    mCondition.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    /* ignore */
-                }
+                Utils.await(mCondition);
             }
             outResult.putBoolean(Utils.DIRECT_ACTIONS_KEY_RESULT, mActionsInvalidated);
             mActionsInvalidated = false;
