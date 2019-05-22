@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 public class VoiceInteractionTestReceiver extends BroadcastReceiver {
 
+    private static final String TAG = VoiceInteractionTestReceiver.class.getSimpleName();
+
     private static CountDownLatch sServiceStartedLatch = new CountDownLatch(1);
     private static Intent sReceivedIntent;
 
@@ -43,7 +45,7 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i("VoiceInteractionTestReceiver", "Got broadcast that MainInteractionService started");
+        Log.i(TAG, "Got broadcast that MainInteractionService started");
         sReceivedIntent = intent;
         sServiceStartedLatch.countDown();
     }
