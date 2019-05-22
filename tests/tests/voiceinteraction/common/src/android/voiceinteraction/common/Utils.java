@@ -18,8 +18,13 @@ package android.voiceinteraction.common;
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.content.LocusId;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 
 public class Utils {
     public enum TestCaseType {
@@ -35,6 +40,8 @@ public class Utils {
         COMMANDREQUEST_CANCEL_TEST,
         SUPPORTS_COMMANDS_TEST
     }
+
+    private static final String TAG = Utils.class.getSimpleName();
 
     public static final long OPERATION_TIMEOUT_MS = 5000;
 
@@ -99,7 +106,6 @@ public class Utils {
     public static final String DIRECT_ACTIONS_RESULT_CANCELLED = "cancelled";
     public static final String DIRECT_ACTIONS_RESULT_EXECUTING = "executing";
 
-
     public static final String DIRECT_ACTIONS_ACTION_ID = "actionId";
     public static final Bundle DIRECT_ACTIONS_ACTION_EXTRAS = new Bundle();
     static {
@@ -108,22 +114,37 @@ public class Utils {
     }
     public static final LocusId DIRECT_ACTIONS_LOCUS_ID = new LocusId("locusId");
 
+    public static final String SERVICE_NAME =
+            "android.voiceinteraction.service/.MainInteractionService";
+
     public static final String toBundleString(Bundle bundle) {
         if (bundle == null) {
-            return "*** Bundle is null ****";
+            return "null_bundle";
         }
-        StringBuffer buf = new StringBuffer("Bundle is: ");
+        StringBuffer buf = new StringBuffer("Bundle[ ");
         String testType = bundle.getString(TESTCASE_TYPE);
+        boolean empty = true;
         if (testType != null) {
+            empty = false;
             buf.append("testcase type = " + testType);
         }
         ArrayList<String> info = bundle.getStringArrayList(TESTINFO);
         if (info != null) {
             for (String s : info) {
+                empty = false;
                 buf.append(s + "\n\t\t");
             }
+        } else {
+            for (String key : bundle.keySet()) {
+                empty = false;
+                Object value = bundle.get(key);
+                if (value instanceof Bundle) {
+                    value = toBundleString((Bundle) value);
+                }
+                buf.append(key).append('=').append(value).append(' ');
+            }
         }
-        return buf.toString();
+        return empty ? "empty_bundle" : buf.append(']').toString();
     }
 
     public static final String toOptionsString(Option[] options) {
@@ -142,5 +163,27 @@ public class Utils {
     public static final void addErrorResult(final Bundle testinfo, final String msg) {
         testinfo.getStringArrayList(testinfo.getString(Utils.TESTCASE_TYPE))
             .add(TEST_ERROR + " " + msg);
+    }
+
+    public static boolean await(CountDownLatch latch) {
+        try {
+            if (latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return true;
+            Log.e(TAG, "latch timed out");
+        } catch (InterruptedException e) {
+            /* ignore */
+            Log.e(TAG, "Interrupted", e);
+        }
+        return false;
+    }
+
+    public static boolean await(Condition condition) {
+        try {
+            if (condition.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return true;
+            Log.e(TAG, "condition timed out");
+        } catch (InterruptedException e) {
+            /* ignore */
+            Log.e(TAG, "Interrupted", e);
+        }
+        return false;
     }
 }

@@ -21,6 +21,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private static final String TEST_PACKAGE = "com.android.cts.crossprofileappstest";
     private static final String NON_TARGET_USER_TEST_CLASS = ".CrossProfileAppsNonTargetUserTest";
     private static final String TARGET_USER_TEST_CLASS = ".CrossProfileAppsTargetUserTest";
+    private static final String START_ACTIVITY_TEST_CLASS = ".CrossProfileAppsStartActivityTest";
     private static final String PARAM_TARGET_USER = "TARGET_USER";
     private static final String EXTRA_TEST_APK = "CtsCrossProfileAppsTests.apk";
     private static final String SIMPLE_APP_APK ="CtsSimpleApp.apk";
@@ -70,6 +71,13 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
             return;
         }
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, TARGET_USER_TEST_CLASS);
+    }
+
+    public void testStartActivity() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS);
     }
 
     public void testPrimaryUserToSecondaryUser() throws Exception {
