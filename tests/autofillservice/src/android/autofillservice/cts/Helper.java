@@ -1414,6 +1414,21 @@ public final class Helper {
     }
 
     /**
+     * Asserts {@link View#isAutofilled()} state of the given view, waiting if necessarity to avoid
+     * race conditions.
+     */
+    public static void assertViewAutofillState(@NonNull View view, boolean expected)
+            throws Exception {
+        Timeouts.FILL_TIMEOUT.run("assertViewAutofillState(" + view + ", " + expected + ")",
+                () -> {
+                    final boolean actual = view.isAutofilled();
+                    Log.v(TAG, "assertViewAutofillState(): expected=" + expected + ", actual="
+                            + actual);
+                    return actual == expected ? "not_used" : null;
+                });
+    }
+
+    /**
      * Allows the test to draw overlaid windows.
      *
      * <p>Should call {@link #disallowOverlays()} afterwards.
