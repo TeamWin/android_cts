@@ -360,6 +360,7 @@ public class MediaStore_Images_ThumbnailsTest {
         try{
             for (int i = 0; i < url.length; i++) {
                 url[i] = Uri.parse(Media.insertImage(mContentResolver, src, null, null));
+                mRowsAdded.add(url[i]);
                 long origId = Long.parseLong(url[i].getLastPathSegment());
                 Bitmap foo = MediaStore.Images.Thumbnails.getThumbnail(mContentResolver,
                         origId, Thumbnails.MICRO_KIND, null);
@@ -367,7 +368,10 @@ public class MediaStore_Images_ThumbnailsTest {
             }
 
             // Remove one of the images, which will also delete any thumbnails
-            mContentResolver.delete(url[1], null, null);
+            // If the image was deleted, we don't want to delete it again
+            if (mContentResolver.delete(url[1], null, null) > 0) {
+                mRowsAdded.remove(url[1]);
+            }
 
             long removedId = Long.parseLong(url[1].getLastPathSegment());
             long remainingId1 = Long.parseLong(url[0].getLastPathSegment());

@@ -29,7 +29,6 @@ import android.voiceinteraction.common.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class MainInteractionSession extends VoiceInteractionSession {
     static final String TAG = "MainInteractionSession";
 
@@ -50,6 +49,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
         }
         sessionStarted.setClassName("android.voiceinteraction.cts",
                 "android.voiceinteraction.cts.VoiceInteractionTestReceiver");
+        Log.i(TAG, "onCreate(): broadcast intent=" + sessionStarted);
         getContext().sendBroadcast(sessionStarted);
     }
 

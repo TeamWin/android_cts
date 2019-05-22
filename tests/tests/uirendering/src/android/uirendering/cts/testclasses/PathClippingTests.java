@@ -165,7 +165,7 @@ public class PathClippingTests extends ActivityTestBase {
                     view.setScaleX(2);
                     view.setScaleY(2);
                 })
-                .runWithComparer(new MSSIMComparer(0.90));
+                .runWithComparer(new MSSIMComparer(0.87));
     }
 
     @Test
@@ -220,6 +220,6 @@ public class PathClippingTests extends ActivityTestBase {
                         initBlueWebView(hwFence), true, hwFence)
                 .addLayout(R.layout.circle_clipped_webview,
                         initBlueWebView(swFence), false, swFence)
-                .runWithComparer(new MSSIMComparer(0.95));
+                .runWithComparer(new MSSIMComparer(0.94));
     }
 }
