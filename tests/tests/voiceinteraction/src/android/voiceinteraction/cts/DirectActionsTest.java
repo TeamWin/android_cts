@@ -16,6 +16,8 @@
 
 package android.voiceinteraction.cts;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -31,6 +33,7 @@ import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.ThrowingRunnable;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -48,6 +51,16 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
 
     private final @NonNull SessionControl mSessionControl = new SessionControl();
     private final @NonNull ActivityControl mActivityControl = new ActivityControl();
+
+    // TODO: move to super class
+    @Before
+    public void prepareDevice() throws Exception {
+        // Unlock screen.
+        runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        runShellCommand("wm dismiss-keyguard");
+    }
 
     @Test
     public void testPerformDirectAction() throws Exception {
