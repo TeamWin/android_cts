@@ -191,7 +191,7 @@ public class MediaStore_Images_ThumbnailsTest {
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery,opts);
         String stringUrl = null;
         try{
-            stringUrl = Media.insertImage(mContentResolver, src, null, null);
+            stringUrl = Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(), null);
         } catch (UnsupportedOperationException e) {
             // the tests will be aborted because the image will be put in sdcard
             fail("There is no sdcard attached! " + e.getMessage());
@@ -223,7 +223,7 @@ public class MediaStore_Images_ThumbnailsTest {
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // insert image, then delete it via the files table
-        stringUrl = Media.insertImage(mContentResolver, src, null, null);
+        stringUrl = Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(), null);
         c = mContentResolver.query(Uri.parse(stringUrl),
                 new String[]{ Media._ID, Media.DATA}, null, null, null);
         c.moveToFirst();
@@ -300,7 +300,8 @@ public class MediaStore_Images_ThumbnailsTest {
 
         // insert an image
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
-        Uri uri = Uri.parse(Media.insertImage(mContentResolver, src, "test", "test description"));
+        Uri uri = Uri.parse(Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(),
+                "test description"));
         long imageId = ContentUris.parseId(uri);
 
         assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
@@ -313,7 +314,8 @@ public class MediaStore_Images_ThumbnailsTest {
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // insert again
-        uri = Uri.parse(Media.insertImage(mContentResolver, src, "test", "test description"));
+        uri = Uri.parse(Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(),
+                "test description"));
         imageId = ContentUris.parseId(uri);
 
         // query its thumbnail again
@@ -325,6 +327,8 @@ public class MediaStore_Images_ThumbnailsTest {
         values.put("media_type", 0);
         assertEquals("unexpected number of updated rows",
                 1, mContentResolver.update(uri, values, null /* where */, null /* where args */));
+
+        SystemClock.sleep(1000);
 
         // image was marked as regular file in the database, which should have deleted its thumbnail
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
@@ -359,7 +363,8 @@ public class MediaStore_Images_ThumbnailsTest {
         Uri url[] = new Uri[3];
         try{
             for (int i = 0; i < url.length; i++) {
-                url[i] = Uri.parse(Media.insertImage(mContentResolver, src, null, null));
+                url[i] = Uri.parse(
+                        Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(), null));
                 mRowsAdded.add(url[i]);
                 long origId = Long.parseLong(url[i].getLastPathSegment());
                 Bitmap foo = MediaStore.Images.Thumbnails.getThumbnail(mContentResolver,
