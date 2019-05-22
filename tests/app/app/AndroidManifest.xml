@@ -401,6 +401,18 @@
                   android:resizeableActivity="true"
                   android:turnScreenOn="true"/>
 
+        <activity android:name="android.app.stubs.BubblesTestNotEmbeddableActivity"
+                  android:resizeableActivity="true"
+                  android:documentLaunchMode="always"
+                  android:exported="true"
+        />
+
+        <activity android:name="android.app.stubs.BubblesTestNotDocumentLaunchModeActivity"
+                  android:resizeableActivity="true"
+                  android:allowEmbedded="true"
+                  android:exported="true"
+        />
+
         <service android:name="android.app.stubs.BubblesTestService"
                  android:label="BubblesTestsService"
                  android:exported="true">
