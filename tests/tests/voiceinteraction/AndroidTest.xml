@@ -27,8 +27,9 @@
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="settings put secure voice_interaction_service android.voiceinteraction.service/.MainInteractionService" />
-    </target_preparer>
+        <option name="run-command" value="cmd voiceinteraction set bind-instant-service-allowed true" />
+        <option name="teardown-command" value="cmd voiceinteraction set bind-instant-service-allowed false" />
+     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.voiceinteraction.cts" />
