@@ -59,8 +59,9 @@ public class BubblesTestService extends Service {
     }
 
     private Notification getNotificationForTest(final int testCase, final Context context) {
+        final Intent intent = new Intent(context, BubblesTestActivity.class);
         final PendingIntent pendingIntent =
-                PendingIntent.getActivity(getApplicationContext(), 0, new Intent(), 0);
+                PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
         Notification.Builder nb = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("foofoo")
                 .setContentIntent(pendingIntent)
