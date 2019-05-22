@@ -4990,6 +4990,10 @@ Follow the instructions on the screen to measure the frequency response for the 
         BubbleMetadata is configured on the notification and user actions. Bubbles are special
         notifications that appear as a floating button on the screen, in addition to the notification
         in the notification shade.</string>
+    <string name="bubbles_notification_test_enable_bubbles_title">Enable Bubbles for CTS Verifier</string>
+    <string name="bubbles_notification_test_enable_bubbles_verify">Click the button below and enable
+        bubbles for the verifier app on the resulting screen, if they aren\'t enabled already.</string>
+    <string name="bubbles_notification_enable_bubbles_button">Enable bubbles for CTS Verifier</string>
     <string name="bubbles_notification_test_title_1">Step 1: send a bubble with notification</string>
     <string name="bubbles_notification_test_verify_1">Click the button below and verify that there is a
         bubble on the screen and a notification in the notification shade.
