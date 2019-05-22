@@ -23,6 +23,7 @@ import static junit.framework.TestCase.fail;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,6 +31,7 @@ import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
+import android.os.Bundle;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -63,9 +65,11 @@ public class WindowInsetsBehaviorTests {
     private static final String DEF_SCREENSHOT_BASE_PATH =
             "/sdcard/WindowInsetsBehaviorTests";
     private static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
-    public static final int STEPS = 10;
-    public static final int DIP_INTERVAL = 40;
+    private static final String ARGUMENT_KEY_FORCE_ENABLE = "force_enable_gesture_navigation";
+    private static final int STEPS = 10;
+    private static final int DIP_INTERVAL = 40;
 
+    private final boolean mForceEnableGestureNavigation;
     private final Map<String, Boolean> mSystemGestureOptionsMap;
     private float mPixelsPerDp;
     private UiDevice mDevice;
@@ -73,6 +77,7 @@ public class WindowInsetsBehaviorTests {
     private String mEdgeToEdgeNavigationTitle;
     private String mSystemNavigationTitle;
     private String mGesturePreferenceTitle;
+    private TouchHelper mTouchHelper;
     private boolean mConfiguredInSettings;
 
     private static String getSettingsString(Resources res, String strResName) {
@@ -88,7 +93,15 @@ public class WindowInsetsBehaviorTests {
      * To initial all of options in System Gesture.
      */
     public WindowInsetsBehaviorTests() {
+        Bundle bundle = InstrumentationRegistry.getArguments();
+        mForceEnableGestureNavigation = (bundle != null)
+                && "true".equalsIgnoreCase(bundle.getString(ARGUMENT_KEY_FORCE_ENABLE));
+
         mSystemGestureOptionsMap = new ArrayMap();
+
+        if (!mForceEnableGestureNavigation) {
+            return;
+        }
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         PackageManager packageManager = context.getPackageManager();
@@ -173,14 +186,17 @@ public class WindowInsetsBehaviorTests {
         return mDevice.findObject(targetSelector);
     }
 
-
     private boolean launchToSettingsSystemGesture() {
+        if (!mForceEnableGestureNavigation) {
+            return false;
+        }
+
         /* launch to the close to the system gesture fragment */
-        Intent intent = new Intent();
-        intent.setClassName("com.android.settings",
-                "com.android.settings.Settings$SystemDashboardActivity");
-        intent.putExtra(":settings:show_fragment",
-                "com.android.settings.gestures.GestureSettings");
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        ComponentName settingComponent = new ComponentName(SETTINGS_PACKAGE_NAME,
+                String.format("%s.%s$%s", SETTINGS_PACKAGE_NAME, "Settings",
+                        "SystemDashboardActivity"));
+        intent.setComponent(settingComponent);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         mTargetContext.startActivity(intent);
 
@@ -230,6 +246,7 @@ public class WindowInsetsBehaviorTests {
     @Before
     public void setUp() throws Exception {
         mDevice = UiDevice.getInstance(getInstrumentation());
+        mTouchHelper = new TouchHelper(getInstrumentation());
         mTargetContext = getInstrumentation().getTargetContext();
         if (!hasSystemGestureFeature()) {
             return;
@@ -303,7 +320,10 @@ public class WindowInsetsBehaviorTests {
         mActivity.setOnClickConsumer((view) -> {
             latch.countDown();
         });
-        mDevice.click(p.x, p.y);
+        // mDevice.click(p.x, p.y) has the limitation without consideration of the cutout
+        if (!mTouchHelper.click(p.x, p.y)) {
+            fail("Can't inject event at" + p);
+        }
 
         /* wait until the OnClickListener triggered, and then click the next point */
         try {
@@ -313,7 +333,7 @@ public class WindowInsetsBehaviorTests {
         }
 
         if (latch.getCount() > 0) {
-            fail("Doesn't receive onClickEvent");
+            fail("Doesn't receive onClickEvent at " + p);
         }
     }
 
@@ -514,8 +534,9 @@ public class WindowInsetsBehaviorTests {
 
         mainThreadRun(() -> mActivity.setSystemGestureExclusion(true));
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
-        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(true,
-                    false, mContentViewWindowInsets));
+        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(
+                mContentViewWindowInsets.getMandatorySystemGestureInsets(),
+                mContentViewWindowInsets));
 
         int dragCount = dragInViewBoundary(mDragBound);
 
@@ -529,28 +550,6 @@ public class WindowInsetsBehaviorTests {
         assertEquals(0, mActionCancelPoints.size());
         assertEquals(dragCount, mActionUpPoints.size());
         assertEquals(dragCount, mActionDownPoints.size());
-    }
-
-    @Test
-    public void mandatorySystemGesture_tapSamplePoints_excludeViewRects_withoutAnyCancel() {
-        assumeTrue(hasSystemGestureFeature());
-
-        mainThreadRun(() -> mActivity.setSystemGestureExclusion(true));
-        mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
-        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(false,
-                true, mContentViewWindowInsets));
-
-        int count = clickAllOfSamplePoints(mDragBound, this::clickAndWaitByUiDevice);
-
-        mainThreadRun(() -> {
-            mClickCount = mActivity.getClickCount();
-            mActionCancelPoints = mActivity.getActionCancelPoints();
-        });
-        mScreenshotTestRule.capture();
-
-        assertEquals("The number of click not match", count, mClickCount);
-        assertEquals("The Number of the canceled points not match", 0,
-                mActionCancelPoints.size());
     }
 
     @Test
@@ -559,8 +558,8 @@ public class WindowInsetsBehaviorTests {
 
         mainThreadRun(() -> mActivity.setSystemGestureExclusion(false));
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
-        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(false,
-                false, mContentViewWindowInsets));
+        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(
+                mContentViewWindowInsets.getSystemGestureInsets(), mContentViewWindowInsets));
 
         int dragCount = dragInViewBoundary(mDragBound);
 
@@ -577,13 +576,13 @@ public class WindowInsetsBehaviorTests {
     }
 
     @Test
-    public void systemGesture_tapSamplePoints_notExcludeViewRects_withoutAnyCancel() {
+    public void tappableElements_tapSamplePoints_excludeViewRects_withoutAnyCancel() {
         assumeTrue(hasSystemGestureFeature());
 
-        mainThreadRun(() -> mActivity.setSystemGestureExclusion(false));
+        mainThreadRun(() -> mActivity.setSystemGestureExclusion(true));
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
-        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(false,
-                true, mContentViewWindowInsets));
+        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(
+                mContentViewWindowInsets.getTappableElementInsets(), mContentViewWindowInsets));
 
         int count = clickAllOfSamplePoints(mDragBound, this::clickAndWaitByUiDevice);
 
@@ -598,19 +597,14 @@ public class WindowInsetsBehaviorTests {
                 mActionCancelPoints.size());
     }
 
-    /**
-     * To tap all possible points except the system gesture area and tappable elements area.
-     * Caution: don't touch system gesture area because it still exists and will trigger cancel
-     * event.
-     */
     @Test
     public void tappableElements_tapSamplePoints_notExcludeViewRects_withoutAnyCancel() {
         assumeTrue(hasSystemGestureFeature());
 
         mainThreadRun(() -> mActivity.setSystemGestureExclusion(false));
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
-        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(false,
-                true, mContentViewWindowInsets));
+        mainThreadRun(() -> mDragBound = mActivity.getOperationArea(
+                mContentViewWindowInsets.getTappableElementInsets(), mContentViewWindowInsets));
 
         int count = clickAllOfSamplePoints(mDragBound, this::clickAndWaitByUiDevice);
 
