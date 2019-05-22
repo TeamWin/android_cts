@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -42,7 +41,6 @@ import android.telephony.NetworkScanRequest;
 import android.telephony.RadioAccessSpecifier;
 import android.telephony.TelephonyManager;
 import android.telephony.TelephonyScanManager;
-import android.util.ArraySet;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -56,7 +54,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -82,6 +79,7 @@ public class NetworkScanApiTest {
     private NetworkScan mNetworkScan;
     private NetworkScanRequest mNetworkScanRequest;
     private NetworkScanCallbackImpl mNetworkScanCallback;
+    private static final int MAX_CELLINFO_WAIT_MILLIS = 5000; // 5 seconds
     private static final int MAX_INIT_WAIT_MS = 60000; // 60 seconds
     private Object mLock = new Object();
     private boolean mReady;
@@ -211,6 +209,22 @@ public class NetworkScanApiTest {
         }
     }
 
+    private class CellInfoResultsCallback extends TelephonyManager.CellInfoCallback {
+        public List<CellInfo> cellInfo;
+
+        @Override
+        public synchronized void onCellInfo(List<CellInfo> cellInfo) {
+            this.cellInfo = cellInfo;
+            notifyAll();
+        }
+
+        public synchronized void wait(int millis) throws InterruptedException {
+            if (cellInfo == null) {
+                super.wait(millis);
+            }
+        }
+    }
+
     private List<RadioAccessSpecifier> getRadioAccessSpecifier(List<CellInfo> allCellInfo) {
         List<RadioAccessSpecifier> radioAccessSpecifier = new ArrayList<>();
         List<Integer> lteChannels = new ArrayList<>();
@@ -275,6 +289,7 @@ public class NetworkScanApiTest {
                         + "code ERROR_MODEM_UNAVAILABLE or ERROR_UNSUPPORTED",
                 isScanStatusValid());
     }
+
     @Test
     public void testRequestNetworkScanLocationOffPass() {
         requestNetworkScanLocationOffHelper(false);
@@ -322,7 +337,7 @@ public class NetworkScanApiTest {
 
     private NetworkScanRequest buildNetworkScanRequest(boolean includeBandsAndChannels) {
         // Make sure that there should be at least one entry.
-        List<CellInfo> allCellInfo = mTelephonyManager.getAllCellInfo();
+        List<CellInfo> allCellInfo = getCellInfo();
         List<RadioAccessSpecifier> radioAccessSpecifier = new ArrayList<>();
 
         if (allCellInfo != null && allCellInfo.size() != 0) {
@@ -364,6 +379,17 @@ public class NetworkScanApiTest {
                 5 /* incremental results periodicity */,
                 null /* List of PLMN ids (MCC-MNC) */);
 
+    }
+
+    private List<CellInfo> getCellInfo() {
+        CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
+        mTelephonyManager.requestCellInfoUpdate(r -> r.run(), resultsCallback);
+        try {
+            resultsCallback.wait(MAX_CELLINFO_WAIT_MILLIS);
+        } catch (InterruptedException ex) {
+            fail("CellInfoCallback was interrupted: " + ex);
+        }
+        return resultsCallback.cellInfo;
     }
 
     @Test
@@ -561,6 +587,5 @@ public class NetworkScanApiTest {
         p.setDataPosition(0);
         NetworkScanRequest newnsr = NetworkScanRequest.CREATOR.createFromParcel(p);
         assertTrue(networkScanRequest.equals(newnsr));
-
     }
 }

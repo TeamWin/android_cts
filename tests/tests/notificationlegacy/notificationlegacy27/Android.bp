@@ -1,4 +1,4 @@
-// Copyright (C) 2009 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test_helper_app {
-    name: "CtsPermissionDeclareApp",
-    defaults: ["cts_support_defaults"],
+android_test {
+    name: "CtsLegacyNotification27TestCases",
+    defaults: ["cts_defaults"],
+    platform_apis: true,
+    static_libs: [
+        "androidx.test.rules",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "junit",
+    ],
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
-    static_libs: ["androidx.test.rules"],
-    // tag this module as a cts test artifact
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-    // sign this app with a different cert than CtsUsePermissionDiffCert
-    certificate: ":cts-testkey1",
-}
-
-java_library {
-    name: "CtsPermissionDeclareUtilLib",
-    srcs: ["src/com/android/cts/permissiondeclareapp/UtilsProvider.java"],
-    sdk_version: "current",
+    min_sdk_version: "27",
 }
