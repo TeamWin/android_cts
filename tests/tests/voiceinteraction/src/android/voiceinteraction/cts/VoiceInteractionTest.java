@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
@@ -39,6 +40,9 @@ import java.util.concurrent.TimeUnit;
 
 import androidx.test.rule.ActivityTestRule;
 
+// TODO: ideally we should split testAll() into multiple tests, and run at least one of them
+// on instant
+@AppModeFull(reason = "DirectActionsTest is enough")
 public class VoiceInteractionTest extends AbstractVoiceInteractionTestCase {
     static final String TAG = "VoiceInteractionTest";
     private static final int TIMEOUT_MS = 20 * 1000;
