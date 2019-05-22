@@ -48,6 +48,7 @@ import android.view.WindowManager;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -115,7 +116,12 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         mHandler = new Handler(mHandlerThread.getLooper());
         mCameraListener = new BlockingStateCallback();
         mCollector = new CameraErrorCollector();
-        mDebugFileNameBase = getContext().getExternalFilesDir(null).getPath();
+
+        File filesDir = mContext.getPackageManager().isInstantApp()
+                ? mContext.getFilesDir()
+                : mContext.getExternalFilesDir(null);
+
+        mDebugFileNameBase = filesDir.getPath();
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
         List<String> hiddenPhysicalIds = new ArrayList<>();
