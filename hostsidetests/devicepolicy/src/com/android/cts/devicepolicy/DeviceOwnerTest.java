@@ -1028,7 +1028,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        pushUpdateFileToDevice("wrongVersion.zip");
         pushUpdateFileToDevice("notZip.zi");
         pushUpdateFileToDevice("empty.zip");
         pushUpdateFileToDevice("wrongPayload.zip");
