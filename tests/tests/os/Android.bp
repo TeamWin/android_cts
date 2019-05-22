@@ -37,6 +37,7 @@ android_test {
         "src/android/os/cts/ISeccompIsolatedService.aidl",
         "src/android/os/cts/ISecondary.aidl",
         "src/android/os/cts/ISharedMemoryService.aidl",
+        "src/android/os/cts/IParcelExceptionService.aidl",
     ],
     // Set its own test config to prevent sharing with cts-platform-version-check
     test_config: "CtsOsTestCases.xml",
