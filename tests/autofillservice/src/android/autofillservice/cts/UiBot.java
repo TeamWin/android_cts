@@ -1024,6 +1024,7 @@ public final class UiBot {
         try {
             file = Helper.createTestFile("screenshot.png");
             if (file != null) {
+                Log.i(TAG, "Taking screenshot on " + file);
                 final Bitmap screenshot = takeScreenshot();
                 Helper.dumpBitmap(screenshot, file);
             }
