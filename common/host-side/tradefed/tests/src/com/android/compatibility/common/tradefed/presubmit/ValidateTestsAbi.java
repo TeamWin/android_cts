@@ -109,6 +109,11 @@ public class ValidateTestsAbi {
          * This binary only exists in 32-bit.
          */
         BINARY_EXCEPTIONS.add("testmpeg2_mem232");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("CVE-2018-934932");
     }
 
     /**
