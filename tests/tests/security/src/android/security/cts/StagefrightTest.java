@@ -845,7 +845,8 @@ public class StagefrightTest extends InstrumentationTestCase {
                 mp.setOnErrorListener(mpcl);
                 mp.setOnPreparedListener(mpcl);
                 mp.setOnCompletionListener(mpcl);
-                Surface surface = getDummySurface();
+                RenderTarget renderTarget = RenderTarget.create();
+                Surface surface = renderTarget.getSurface();
                 mp.setSurface(surface);
                 AssetFileDescriptor fd = null;
                 try {
@@ -858,6 +859,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 }
                 Looper.loop();
                 mp.release();
+                renderTarget.destroy();
             }
         });
         t.start();
@@ -1109,32 +1111,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestMediaPlayerANR(rid, null);
     }
 
-    private Surface getDummySurface() {
-        int[] textures = new int[1];
-        GLES20.glGenTextures(1, textures, 0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_MIN_FILTER,
-                GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_MAG_FILTER,
-                GLES20.GL_LINEAR);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_WRAP_S,
-                GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_WRAP_T,
-                GLES20.GL_CLAMP_TO_EDGE);
-        SurfaceTexture surfaceTex = new SurfaceTexture(textures[0]);
-        surfaceTex.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-            @Override
-            public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                Log.i(TAG, "new frame available");
-            }
-        });
-        return new Surface(surfaceTex);
-    }
-
     public JSONArray getCrashReport(String testname, long timeout)
         throws InterruptedException {
         Log.i(TAG, CrashUtils.UPLOAD_REQUEST);
@@ -1297,7 +1273,8 @@ public class StagefrightTest extends InstrumentationTestCase {
                 mp.setOnErrorListener(mpcl);
                 mp.setOnPreparedListener(mpcl);
                 mp.setOnCompletionListener(mpcl);
-                Surface surface = getDummySurface();
+                RenderTarget renderTarget = RenderTarget.create();
+                Surface surface = renderTarget.getSurface();
                 mp.setSurface(surface);
                 AssetFileDescriptor fd = null;
                 try {
@@ -1320,6 +1297,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
                 Looper.loop();
                 mp.release();
+                renderTarget.destroy();
             }
         });
 
@@ -1440,9 +1418,10 @@ public class StagefrightTest extends InstrumentationTestCase {
                 Log.i(TAG, "Decoding track " + t + " using codec " + codecName);
                 ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 MediaCodec codec = MediaCodec.createByCodecName(codecName);
+                RenderTarget renderTarget = RenderTarget.create();
                 Surface surface = null;
                 if (mime.startsWith("video/")) {
-                    surface = getDummySurface();
+                    surface = renderTarget.getSurface();
                 }
                 try {
                     codec.configure(format, surface, null, 0);
@@ -1484,6 +1463,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     // local exceptions ignored, not security issues
                 } finally {
                     codec.release();
+                    renderTarget.destroy();
                 }
             }
             ex.unselectTrack(t);
@@ -1921,7 +1901,8 @@ public class StagefrightTest extends InstrumentationTestCase {
                 mp.setOnErrorListener(mpl);
                 mp.setOnPreparedListener(mpl);
                 mp.setOnCompletionListener(mpl);
-                Surface surface = getDummySurface();
+                RenderTarget renderTarget = RenderTarget.create();
+                Surface surface = renderTarget.getSurface();
                 mp.setSurface(surface);
                 AssetFileDescriptor fd = null;
                 try {
@@ -1943,6 +1924,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
                 Looper.loop();
                 mp.release();
+                renderTarget.destroy();
             }
         });
 
