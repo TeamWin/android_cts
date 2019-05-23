@@ -292,4 +292,42 @@ public class HostTestHelper {
 
         // At this point, the host test driver will reboot the device to complete the uninstall.
     }
+
+    /**
+     * Tests that apex update expires existing rollbacks for that apex.
+     * Enable rollback phase.
+     */
+    @Test
+    public void testApexRollbackExpirationEnableRollback() throws Exception {
+        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+
+        Install.single(TestApp.Apex2).setStaged().setEnableRollback().commit();
+
+        // At this point, the host test driver will reboot the device and run
+        // testApexRollbackExpirationUpdateApex().
+    }
+
+    /**
+     * Tests that apex update expires existing rollbacks for that apex.
+     * Update apex phase.
+     */
+    @Test
+    public void testApexRollbackExpirationUpdateApex() throws Exception {
+        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(Utils.getAvailableRollback(TestApp.Apex)).isNotNull();
+        Install.single(TestApp.Apex3).setStaged().commit();
+
+        // At this point, the host test driver will reboot the device and run
+        // testApexRollbackExpirationConfirmExpiration().
+    }
+
+    /**
+     * Tests that apex update expires existing rollbacks for that apex.
+     * Confirm expiration phase.
+     */
+    @Test
+    public void testApexRollbackExpirationConfirmExpiration() throws Exception {
+        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        assertThat(Utils.getAvailableRollback(TestApp.Apex)).isNull();
+    }
 }
