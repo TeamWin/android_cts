@@ -85,6 +85,8 @@ public class SubscriptionManagerTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
+        if (!isSupported()) return;
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("svc wifi disable");
 
@@ -107,12 +109,16 @@ public class SubscriptionManagerTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
+        if (!isSupported()) return;
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("svc wifi enable");
     }
 
     @Before
     public void setUp() throws Exception {
+        if (!isSupported()) return;
+
         mSm = InstrumentationRegistry.getContext().getSystemService(SubscriptionManager.class);
         mSubId = SubscriptionManager.getDefaultDataSubscriptionId();
         mPackageName = InstrumentationRegistry.getContext().getPackageName();
