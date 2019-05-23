@@ -410,7 +410,9 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testPowerUsageSummarySettings() {
-        assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
+        if (isHandheld()) {
+            assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
+        }
     }
 
     public void testEasyConnectIntent() {
@@ -443,5 +445,15 @@ public class AvailableIntentsTest extends AndroidTestCase {
     public void testVoiceInputSettingsIntent() {
         Intent intent = new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS);
         assertCanBeHandled(intent);
+    }
+
+    private boolean isHandheld() {
+        // handheld nature is not exposed to package manager, for now
+        // we check for touchscreen and NOT watch, NOT tv and NOT car
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(pm.FEATURE_TOUCHSCREEN)
+                && !pm.hasSystemFeature(pm.FEATURE_WATCH)
+                && !pm.hasSystemFeature(pm.FEATURE_TELEVISION)
+                && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
     }
 }
