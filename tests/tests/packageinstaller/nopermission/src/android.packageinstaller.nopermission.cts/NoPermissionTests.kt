@@ -183,9 +183,4 @@ class NoPermissionTests {
     fun uninstallTestPackage() {
         uiDevice.executeShellCommand("pm uninstall $TEST_APK_PACKAGE_NAME")
     }
-
-    @After
-    fun resetAppOps() {
-        AppOpsUtils.reset(packageName)
-    }
 }
