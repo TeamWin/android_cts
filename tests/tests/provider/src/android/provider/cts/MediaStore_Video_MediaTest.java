@@ -21,6 +21,7 @@ import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -54,10 +55,12 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 @Presubmit
 @RunWith(Parameterized.class)
@@ -200,7 +203,7 @@ public class MediaStore_Video_MediaTest {
 
     /**
      * This test doesn't hold
-     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION}, so Exif
+     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION}, so Exif and XMP
      * location information should be redacted.
      */
     @Test
@@ -232,6 +235,14 @@ public class MediaStore_Video_MediaTest {
             assertEquals("+37.4217-122.0834/",
                     mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
         }
+        try (InputStream in = mContentResolver.openInputStream(publishUri)) {
+            byte[] bytes = FileUtils.readInputStreamFully(in);
+            byte[] xmpBytes = Arrays.copyOfRange(bytes, 3269, 3269 + 13197);
+            String xmp = new String(xmpBytes);
+            assertTrue("Failed to read XMP longitude", xmp.contains("10,41.751000E"));
+            assertTrue("Failed to read XMP latitude", xmp.contains("53,50.070500N"));
+            assertTrue("Failed to read non-location XMP", xmp.contains("13166/7763"));
+        }
         // As owner, we should be able to request the original bytes
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
         }
@@ -245,6 +256,14 @@ public class MediaStore_Video_MediaTest {
             mmr.setDataSource(pfd.getFileDescriptor());
             assertEquals(null,
                     mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+        }
+        try (InputStream in = mContentResolver.openInputStream(publishUri)) {
+            byte[] bytes = FileUtils.readInputStreamFully(in);
+            byte[] xmpBytes = Arrays.copyOfRange(bytes, 3269, 3269 + 13197);
+            String xmp = new String(xmpBytes);
+            assertFalse("Failed to redact XMP longitude", xmp.contains("10,41.751000E"));
+            assertFalse("Failed to redact XMP latitude", xmp.contains("53,50.070500N"));
+            assertTrue("Redacted non-location XMP", xmp.contains("13166/7763"));
         }
         // We can't request original bytes unless we have permission
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {

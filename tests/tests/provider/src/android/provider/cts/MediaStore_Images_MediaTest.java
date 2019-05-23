@@ -19,6 +19,7 @@ package android.provider.cts;
 import static android.provider.cts.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -313,7 +314,7 @@ public class MediaStore_Images_MediaTest {
         final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
         final Uri publishUri;
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
-            try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
+            try (InputStream in = mContext.getResources().openRawResource(R.raw.lg_g4_iso_800_jpg);
                  OutputStream out = session.openOutputStream()) {
                 android.os.FileUtils.copy(in, out);
             }
@@ -328,14 +329,19 @@ public class MediaStore_Images_MediaTest {
             final ExifInterface exif = new ExifInterface(is);
             final float[] latLong = new float[2];
             exif.getLatLong(latLong);
-            assertEquals(37.42303, latLong[0], 0.001);
-            assertEquals(-122.162025, latLong[1], 0.001);
+            assertEquals(53.83451, latLong[0], 0.001);
+            assertEquals(10.69585, latLong[1], 0.001);
+
+            String xmp = exif.getAttribute(ExifInterface.TAG_XMP);
+            assertTrue("Failed to read XMP longitude", xmp.contains("53,50.070500N"));
+            assertTrue("Failed to read XMP latitude", xmp.contains("10,41.751000E"));
+            assertTrue("Failed to read non-location XMP", xmp.contains("LensDefaults"));
         }
         // As owner, we should be able to request the original bytes
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
         }
 
-        // Now remove ownership, which means that Exif should be redacted
+        // Now remove ownership, which means that Exif/XMP location data should be redacted
         ProviderTestUtils.executeShellCommand(
                 "content update --uri " + publishUri + " --bind owner_package_name:n:",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
@@ -345,6 +351,11 @@ public class MediaStore_Images_MediaTest {
             exif.getLatLong(latLong);
             assertEquals(0, latLong[0], 0.001);
             assertEquals(0, latLong[1], 0.001);
+
+            String xmp = exif.getAttribute(ExifInterface.TAG_XMP);
+            assertFalse("Failed to redact XMP longitude", xmp.contains("53,50.070500N"));
+            assertFalse("Failed to redact XMP latitude", xmp.contains("10,41.751000E"));
+            assertTrue("Redacted non-location XMP", xmp.contains("LensDefaults"));
         }
         // We can't request original bytes unless we have permission
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
