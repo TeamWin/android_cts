@@ -59,8 +59,6 @@ public final class Helper {
 
     public static final long MY_EPOCH = SystemClock.uptimeMillis();
 
-    public static final String SYSTEM_SERVICE_NAME = "content_capture";
-
     public static final String RESOURCE_STRING_SERVICE_NAME = "config_defaultContentCaptureService";
 
     public static final Context sContext = getInstrumentation().getTargetContext();
