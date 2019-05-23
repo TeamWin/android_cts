@@ -1182,7 +1182,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private boolean deviceHasBattery() {
         final Intent batteryInfo = mContext.registerReceiver(null,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
+        return batteryInfo != null && batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
     }
 
     private double getScreenSizeInInches() {
