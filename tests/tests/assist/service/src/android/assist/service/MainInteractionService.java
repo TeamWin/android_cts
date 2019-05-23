@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.RemoteCallback;
 import android.service.voice.VoiceInteractionService;
 import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
@@ -102,14 +103,17 @@ public class MainInteractionService extends VoiceInteractionService {
     private class MainInteractionServiceBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(MainInteractionService.TAG, "Recieved broadcast to start session now.");
+            Log.i(TAG, "Received broadcast to start session now: " + intent);
             if (intent.getAction().equals(Utils.BROADCAST_INTENT_START_ASSIST)) {
                 String testCaseName = intent.getStringExtra(Utils.TESTCASE_TYPE);
-                Log.i(MainInteractionService.TAG, "trying to start 3p activity: " + testCaseName);
+                Log.i(TAG, "trying to start 3p activity: " + testCaseName);
                 Bundle extras = intent.getExtras();
                 if (extras == null) {
                     extras = new Bundle();
                 }
+                RemoteCallback contextReadycallback = intent
+                        .getParcelableExtra(Utils.EXTRA_CALLBACK_CONTEXT_READY);
+                extras.putParcelable(Utils.EXTRA_CALLBACK_CONTEXT_READY, contextReadycallback);
                 if (testCaseName.equals(Utils.SCREENSHOT)) {
                     try {
                         // extra info to pass along to 3p activity.

@@ -35,14 +35,7 @@ public class AssistStructureTest extends AssistTestBase {
     private static final String TAG = "AssistStructureTest";
     private static final String TEST_CASE_TYPE = Utils.ASSIST_STRUCTURE;
 
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasResumedLatch = new CountDownLatch(1);
-    private CountDownLatch mHasDrawedLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
-
-    public AssistStructureTest() {
-        super();
-    }
+    private final CountDownLatch mHasDrawedLatch = new CountDownLatch(1);
 
     @Override
     protected void setUp() throws Exception {
@@ -93,13 +86,13 @@ public class AssistStructureTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
         }
-        mTestActivity.start3pApp(TEST_CASE_TYPE);
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        start3pApp(TEST_CASE_TYPE, mHasDrawedLatch);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
         waitForOnResume();
         waitForOnDraw();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         getInstrumentation().waitForIdleSync();
         runTestOnUiThread(new Runnable() {
             @Override
