@@ -51,6 +51,8 @@ import android.app.RemoteInput;
 import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubblesTestActivity;
+import android.app.stubs.BubblesTestNotDocumentLaunchModeActivity;
+import android.app.stubs.BubblesTestNotEmbeddableActivity;
 import android.app.stubs.BubblesTestService;
 import android.app.stubs.R;
 import android.app.stubs.TestNotificationListener;
@@ -375,7 +377,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void sendAndVerifyBubble(final int id, Notification.Builder builder,
             Notification.BubbleMetadata data, boolean shouldBeBubble) {
-        final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
+        final Intent intent = new Intent(mContext, BubblesTestActivity.class);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -2656,5 +2658,77 @@ public class NotificationManagerTest extends AndroidTestCase {
             // turn off bubbles globally
             toggleBubbleSetting(false);
         }
+    }
+
+    public void testNotificationManagerBubblePolicy_noFlag_notEmbeddable() throws Exception {
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+
+        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
+        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                inputIntent).addRemoteInput(remoteInput)
+                .build();
+
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setActions(replyAction)
+                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
+        final Intent intent = new Intent(mContext, BubblesTestNotEmbeddableActivity.class);
+        final PendingIntent pendingIntent =
+                PendingIntent.getActivity(mContext, 0, intent, 0);
+
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                        .setIntent(pendingIntent)
+                        .setIcon(Icon.createWithResource(mContext, R.drawable.black));
+
+        sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
+    }
+
+    public void testNotificationManagerBubblePolicy_noFlag_notDocumentLaunchModeAlways() throws Exception {
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+
+        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
+        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                inputIntent).addRemoteInput(remoteInput)
+                .build();
+
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setActions(replyAction)
+                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
+        final Intent intent = new Intent(mContext, BubblesTestNotDocumentLaunchModeActivity.class);
+        final PendingIntent pendingIntent =
+                PendingIntent.getActivity(mContext, 0, intent, 0);
+
+        Notification.BubbleMetadata.Builder metadataBuilder =
+                new Notification.BubbleMetadata.Builder()
+                        .setIntent(pendingIntent)
+                        .setIcon(Icon.createWithResource(mContext, R.drawable.black));
+
+        sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
     }
 }

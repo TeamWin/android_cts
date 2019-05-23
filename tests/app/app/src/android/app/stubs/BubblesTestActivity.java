@@ -56,7 +56,7 @@ public class BubblesTestActivity extends Activity {
     public void sendBubble(int i) {
         Context context = getApplicationContext();
 
-        final Intent intent = new Intent();
+        final Intent intent = new Intent(context, BubblesTestActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
