@@ -30,22 +30,20 @@ import java.util.concurrent.TimeUnit;
 
 public class LifecycleTest extends AssistTestBase {
     private static final String TAG = "LifecycleTest";
-    private static final String action_hasResumed = Utils.LIFECYCLE_HASRESUMED;
-    private static final String action_hasFocus = Utils.LIFECYCLE_HASFOCUS;
-    private static final String action_lostFocus = Utils.LIFECYCLE_LOSTFOCUS;
-    private static final String action_onPause = Utils.LIFECYCLE_ONPAUSE;
-    private static final String action_onStop = Utils.LIFECYCLE_ONSTOP;
-    private static final String action_onDestroy = Utils.LIFECYCLE_ONDESTROY;
+    private static final String ACTION_HAS_RESUMED = Utils.LIFECYCLE_HASRESUMED;
+    private static final String ACTION_HAS_FOCUS = Utils.LIFECYCLE_HASFOCUS;
+    private static final String ACTION_LOST_FOCUS = Utils.LIFECYCLE_LOSTFOCUS;
+    private static final String ACTION_ON_PAUSE = Utils.LIFECYCLE_ONPAUSE;
+    private static final String ACTION_ON_STOP = Utils.LIFECYCLE_ONSTOP;
+    private static final String ACTION_ON_DESTROY = Utils.LIFECYCLE_ONDESTROY;
 
     private static final String TEST_CASE_TYPE = Utils.LIFECYCLE;
 
     private BroadcastReceiver mLifecycleTestBroadcastReceiver;
-    private CountDownLatch mHasResumedLatch;
-    private CountDownLatch mHasFocusLatch;
-    private CountDownLatch mLostFocusLatch;
-    private CountDownLatch mActivityLifecycleLatch;
-    private CountDownLatch mDestroyLatch;
-    private CountDownLatch mReadyLatch;
+    private final CountDownLatch mHasFocusLatch = new CountDownLatch(1);
+    private final CountDownLatch mLostFocusLatch = new CountDownLatch(1);
+    private final CountDownLatch mActivityLifecycleLatch = new CountDownLatch(1);
+    private final CountDownLatch mDestroyLatch = new CountDownLatch(1);
     private boolean mLostFocusIsLifecycle;
 
     @Override
@@ -53,20 +51,14 @@ public class LifecycleTest extends AssistTestBase {
         super.setUp();
         mLifecycleTestBroadcastReceiver = new LifecycleTestReceiver();
         IntentFilter filter = new IntentFilter();
-        filter.addAction(action_hasResumed);
-        filter.addAction(action_hasFocus);
-        filter.addAction(action_lostFocus);
-        filter.addAction(action_onPause);
-        filter.addAction(action_onStop);
-        filter.addAction(action_onDestroy);
+        filter.addAction(ACTION_HAS_RESUMED);
+        filter.addAction(ACTION_HAS_FOCUS);
+        filter.addAction(ACTION_LOST_FOCUS);
+        filter.addAction(ACTION_ON_PAUSE);
+        filter.addAction(ACTION_ON_STOP);
+        filter.addAction(ACTION_ON_DESTROY);
         filter.addAction(Utils.ASSIST_RECEIVER_REGISTERED);
         mContext.registerReceiver(mLifecycleTestBroadcastReceiver, filter);
-        mHasResumedLatch = new CountDownLatch(1);
-        mHasFocusLatch = new CountDownLatch(1);
-        mLostFocusLatch = new CountDownLatch(1);
-        mActivityLifecycleLatch = new CountDownLatch(1);
-        mDestroyLatch = new CountDownLatch(1);
-        mReadyLatch = new CountDownLatch(1);
         mLostFocusIsLifecycle = false;
         startTestActivity(TEST_CASE_TYPE);
     }
@@ -78,12 +70,6 @@ public class LifecycleTest extends AssistTestBase {
             mContext.unregisterReceiver(mLifecycleTestBroadcastReceiver);
             mLifecycleTestBroadcastReceiver = null;
         }
-        mHasResumedLatch = null;
-        mHasFocusLatch = null;
-        mLostFocusLatch = null;
-        mActivityLifecycleLatch = null;
-        mDestroyLatch = null;
-        mReadyLatch = null;
     }
 
     private void waitForOnResume() throws Exception {
@@ -125,13 +111,13 @@ public class LifecycleTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
         }
-        mTestActivity.startTest(Utils.LIFECYCLE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
-        mTestActivity.start3pApp(Utils.LIFECYCLE);
+        start3pApp(TEST_CASE_TYPE);
         waitForOnResume();
         waitForHasFocus();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         // Since there is no UI, focus should not be lost.  We are counting focus lost as
         // a lifecycle event in this case.
         // Do this after waitForContext(), since we don't start looking for context until
@@ -148,13 +134,13 @@ public class LifecycleTest extends AssistTestBase {
             return;
         }
         mLostFocusIsLifecycle = true;
-        mTestActivity.startTest(Utils.LIFECYCLE_NOUI);
+        startTest(Utils.LIFECYCLE_NOUI);
         waitForAssistantToBeReady(mReadyLatch);
-        mTestActivity.start3pApp(Utils.LIFECYCLE_NOUI);
+        start3pApp(Utils.LIFECYCLE_NOUI);
         waitForOnResume();
         waitForHasFocus();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         // Do this after waitForContext(), since we don't start looking for context until
         // calling the above (RACY!!!).
         waitAndSeeIfLifecycleMethodsAreTriggered();
@@ -166,21 +152,21 @@ public class LifecycleTest extends AssistTestBase {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(action_hasResumed) && mHasResumedLatch != null) {
+            if (action.equals(ACTION_HAS_RESUMED) && mHasResumedLatch != null) {
                 mHasResumedLatch.countDown();
-            } else if (action.equals(action_hasFocus) && mHasFocusLatch != null) {
+            } else if (action.equals(ACTION_HAS_FOCUS) && mHasFocusLatch != null) {
                 mHasFocusLatch.countDown();
-            } else if (action.equals(action_lostFocus) && mLostFocusLatch != null) {
+            } else if (action.equals(ACTION_LOST_FOCUS) && mLostFocusLatch != null) {
                 if (mLostFocusIsLifecycle) {
                     mActivityLifecycleLatch.countDown();
                 } else {
                     mLostFocusLatch.countDown();
                 }
-            } else if (action.equals(action_onPause) && mActivityLifecycleLatch != null) {
+            } else if (action.equals(ACTION_ON_PAUSE) && mActivityLifecycleLatch != null) {
                 mActivityLifecycleLatch.countDown();
-            } else if (action.equals(action_onStop) && mActivityLifecycleLatch != null) {
+            } else if (action.equals(ACTION_ON_STOP) && mActivityLifecycleLatch != null) {
                 mActivityLifecycleLatch.countDown();
-            } else if (action.equals(action_onDestroy) && mActivityLifecycleLatch != null) {
+            } else if (action.equals(ACTION_ON_DESTROY) && mActivityLifecycleLatch != null) {
                 mActivityLifecycleLatch.countDown();
                 mDestroyLatch.countDown();
             } else if (action.equals(Utils.ASSIST_RECEIVER_REGISTERED)) {

@@ -86,6 +86,14 @@ public class Utils {
     public static final String EXTRA_CONTENT_VIEW_WIDTH = "extra_content_view_width";
     public static final String EXTRA_DISPLAY_POINT = "extra_display_point";
 
+    /*
+     * Extras used to pass RemoteCallback objects responsible for IPC between test, app, and
+     * service.
+     */
+    public static final String EXTRA_CALLBACK_CONTEXT_READY = "extra_callback_context_ready";
+    public static final String EXTRA_CALLBACK_ACTIVITY_RESUMED = "extra_callback_activity_resumed";
+    public static final String EXTRA_CALLBACK_ACTIVITY_DRAWED = "extra_callback_activity_drawed";
+
     /** Test name suffixes */
     public static final String ASSIST_STRUCTURE = "ASSIST_STRUCTURE";
     public static final String DISABLE_CONTEXT = "DISABLE_CONTEXT";

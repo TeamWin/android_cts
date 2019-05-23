@@ -37,14 +37,7 @@ public class WebViewTest extends AssistTestBase {
     private static final String TEST_CASE_TYPE = Utils.WEBVIEW;
 
     private boolean mWebViewSupported;
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasResumedLatch = new CountDownLatch(1);
-    private CountDownLatch mTestWebViewLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
-
-    public WebViewTest() {
-        super();
-    }
+    private final CountDownLatch mTestWebViewLatch = new CountDownLatch(1);
 
     @Override
     protected void setUp() throws Exception {
@@ -96,13 +89,13 @@ public class WebViewTest extends AssistTestBase {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return;
         }
-        mTestActivity.start3pApp(TEST_CASE_TYPE);
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        start3pApp(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
         waitForOnResume();
         waitForTestActivity();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
                 false /*FLAG_SECURE set*/);
