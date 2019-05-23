@@ -183,6 +183,14 @@ public class ProviderTestUtils {
                 "android.provider.cts");
     }
 
+    static File stageDownloadDir(String volumeName) throws IOException {
+        if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
+            volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
+        }
+        return Environment.buildPath(MediaStore.getVolumePath(volumeName),
+                Environment.DIRECTORY_DOWNLOADS, "android.provider.cts");
+    }
+
     static File stageFile(int resId, File file) throws IOException {
         // The caller may be trying to stage into a location only available to
         // the shell user, so we need to perform the entire copy as the shell
