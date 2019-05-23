@@ -300,6 +300,30 @@ public class MediaStore_FilesTest {
         assertTrue(queryLong(uri, MediaColumns.DATE_ADDED) >= startTime);
     }
 
+    @Test
+    public void testInPlaceUpdate_mediaFileWithInvalidRelativePath() throws Exception {
+        final File file = new File(ProviderTestUtils.stageDownloadDir(mVolumeName),
+                "test" + System.nanoTime() + ".jpg");
+        ProviderTestUtils.stageFile(R.raw.scenery, file);
+        Log.d(TAG, "Staged image file at " + file.getAbsolutePath());
+
+        final ContentValues insertValues = new ContentValues();
+        insertValues.put(MediaColumns.DATA, file.getAbsolutePath());
+        insertValues.put(MediaStore.Images.ImageColumns.DESCRIPTION, "Not a cat photo");
+        final Uri uri = mResolver.insert(mExternalImages, insertValues);
+        assertEquals(0, queryLong(uri, MediaStore.Images.ImageColumns.IS_PRIVATE));
+        assertStringColumn(uri, MediaStore.Images.ImageColumns.DESCRIPTION, "Not a cat photo");
+
+        final ContentValues updateValues = new ContentValues();
+        updateValues.put(FileColumns.MEDIA_TYPE, FileColumns.MEDIA_TYPE_IMAGE);
+        updateValues.put(FileColumns.MIME_TYPE, "image/jpeg");
+        updateValues.put(MediaStore.Images.ImageColumns.IS_PRIVATE, 1);
+        int updateRows = mResolver.update(uri, updateValues, null, null);
+        assertEquals(1, updateRows);
+        // Only interested in update not throwing exception. No need in checking whenever values
+        // were actually updates, as it is not in the scope of this test.
+    }
+
     private long queryLong(Uri uri, String columnName) {
         try (Cursor c = mResolver.query(uri, new String[] { columnName }, null, null, null)) {
             assertTrue(c.moveToFirst());
