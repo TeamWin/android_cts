@@ -373,7 +373,7 @@ public abstract class BasePermissionsTest {
         AccessibilityNodeInfo permItemView = findCollectionItem(permLabelView);
         Assert.assertNotNull("Permissions item should be present", permItemView);
 
-        click(permItemView);
+        click(permItemView, true);
 
         waitForIdle();
 
@@ -395,9 +395,9 @@ public abstract class BasePermissionsTest {
                 // Toggle the permission
 
                 if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
-                    click(toggleView);
+                    click(toggleView, false);
                 } else {
-                    click(itemView);
+                    click(itemView, false);
                 }
 
                 waitForIdle();
@@ -544,13 +544,14 @@ public abstract class BasePermissionsTest {
         waitForIdle();
     }
 
-    private static void click(AccessibilityNodeInfo node) throws Exception {
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
-                () -> node.performAction(AccessibilityNodeInfo.ACTION_CLICK),
-                (AccessibilityEvent event) -> event.getEventType()
-                        == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-                        || event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED,
-                GLOBAL_TIMEOUT_MILLIS);
+    private static void click(AccessibilityNodeInfo node, boolean awaitWindowsChanged) throws Exception {
+            getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                    () -> node.performAction(AccessibilityNodeInfo.ACTION_CLICK),
+                    (AccessibilityEvent event) ->
+                        event.getEventType() ==
+                            (awaitWindowsChanged ? AccessibilityEvent.TYPE_WINDOWS_CHANGED
+                            : AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+                    , GLOBAL_TIMEOUT_MILLIS);
     }
 
     private static AccessibilityNodeInfo findCollectionItem(AccessibilityNodeInfo current)
