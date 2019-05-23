@@ -495,6 +495,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(1)));
         // Reboot the device, so the security event IDs are re-set.
         rebootAndWaitUntilReady();
+        // Make sure BOOT_COMPLETED is completed before proceeding.
+        waitForBroadcastIdle();
         // First batch after reboot: retrieve and verify the events.
         executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval",
                 Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(1)));
