@@ -34,14 +34,6 @@ public class LargeViewHierarchyTest extends AssistTestBase {
     private static final String TAG = "LargeViewHierarchyTest";
     private static final String TEST_CASE_TYPE = Utils.LARGE_VIEW_HIERARCHY;
 
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasResumedLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
-
-    public LargeViewHierarchyTest() {
-        super();
-    }
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -81,12 +73,12 @@ public class LargeViewHierarchyTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        mTestActivity.start3pApp(TEST_CASE_TYPE);
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        start3pApp(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
 
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
