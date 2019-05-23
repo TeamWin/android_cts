@@ -183,6 +183,12 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         playVideoWithRetries(uri, headers, cookies, null /* width */, null /* height */, playTime);
     }
 
+    protected void playLiveAudioOnlyTest(
+            Uri uri, Map<String, String> headers, List<HttpCookie> cookies,
+            int playTime) throws Exception {
+        playVideoWithRetries(uri, headers, cookies, -1 /* width */, -1 /* height */, playTime);
+    }
+
     protected void playVideoWithRetries(
             Uri uri, Map<String, String> headers, List<HttpCookie> cookies,
             Integer width, Integer height, int playTime) throws Exception {

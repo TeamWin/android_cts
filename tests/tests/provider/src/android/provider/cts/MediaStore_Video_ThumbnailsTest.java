@@ -164,6 +164,8 @@ public class MediaStore_Video_ThumbnailsTest {
         assertEquals("unexpected number of updated rows",
                 1, mResolver.update(uri, values, null /* where */, null /* where args */));
 
+        SystemClock.sleep(1000);
+
         // video was marked as regular file in the database, which should have deleted its thumbnail
         assertNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
                 Thumbnails.MINI_KIND, null /* options */));
