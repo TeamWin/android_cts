@@ -168,6 +168,9 @@ public class LegacyNotificationManagerTest {
 
     @Test
     public void testSuspendPackage() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleListenerAccess(MockNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
