@@ -114,7 +114,7 @@ public abstract class AbstractContentCaptureIntegrationTest {
                 mServiceWatcher.waitOnDestroy();
             }
         } catch (Throwable t) {
-            Log.e(TAG, "error disablign service", t);
+            Log.e(TAG, "error disabling service", t);
         }
     }
 

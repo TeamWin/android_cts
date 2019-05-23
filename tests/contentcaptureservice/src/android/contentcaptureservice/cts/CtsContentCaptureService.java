@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.service.contentcapture.ActivityEvent;
 import android.service.contentcapture.ContentCaptureService;
 import android.util.ArrayMap;
+import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 import android.view.contentcapture.ContentCaptureContext;
@@ -103,7 +104,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     // but that would make the tests flaker.
 
     /**
-     * Used for testing onDataRemovalRequest.
+     * Used for testing onUserDataRemovalRequest.
      */
     private DataRemovalRequest mRemovalRequest;
 
@@ -281,7 +282,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onDataRemovalRequest(DataRemovalRequest request) {
-        Log.i(TAG, "onDataRemovalRequest(id=" + mId + ",req=" + request + ")");
+        Log.i(TAG, "onUserDataRemovalRequest(id=" + mId + ",req=" + request + ")");
         mRemovalRequest = request;
     }
 
@@ -292,7 +293,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     /**
-     * Gets the cached DataRemovalRequest for testing.
+     * Gets the cached UserDataRemovalRequest for testing.
      */
     public DataRemovalRequest getRemovalRequest() {
         return mRemovalRequest;
@@ -503,10 +504,19 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
 
         /**
-         * Whitelist stuff when the service connects.
+         * Whitelists stuff when the service connects.
          */
         public void whitelist(@Nullable Pair<Set<String>, Set<ComponentName>> whitelist) {
             mWhitelist = whitelist;
+        }
+
+       /**
+        * Whitelists just this package.
+        */
+        public void whitelistSelf() {
+            final ArraySet<String> pkgs = new ArraySet<>(1);
+            pkgs.add(MY_PACKAGE);
+            whitelist(new Pair<>(pkgs, null));
         }
 
         @Override
