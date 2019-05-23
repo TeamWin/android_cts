@@ -16,11 +16,16 @@
 
 package android.systemui.cts;
 
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+
 import android.annotation.MainThread;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.DisplayCutout;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +40,7 @@ import java.util.function.Consumer;
 
 public class WindowInsetsActivity extends LightBarBaseActivity implements View.OnClickListener,
         View.OnApplyWindowInsetsListener {
+    private static final int DISPLAY_CUTOUT_SLACK_DP = 20;
 
     private TextView mContent;
     private boolean mIsSetViewBound;
@@ -46,6 +52,7 @@ public class WindowInsetsActivity extends LightBarBaseActivity implements View.O
     private Consumer<Boolean> mInitialFinishCallBack;
     private int mClickCount;
     private Consumer<View> mClickConsumer;
+    private final DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
 
     /**
@@ -71,12 +78,21 @@ public class WindowInsetsActivity extends LightBarBaseActivity implements View.O
         mContent.setOnApplyWindowInsetsListener(this::onApplyWindowInsets);
         mContent.getRootView().setOnApplyWindowInsetsListener(this::onApplyWindowInsets);
         getWindow().getDecorView().setOnApplyWindowInsetsListener(this::onApplyWindowInsets);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        getWindow().getAttributes().layoutInDisplayCutoutMode
+                = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        getWindow().setStatusBarColor(0x22ff0000);
+        getWindow().setNavigationBarColor(0x22ff0000);
         mContent.setOnClickListener(this);
         mContent.requestApplyInsets();
         setContentView(mContent);
 
         mContentWindowInsets = getWindow().getDecorView().getRootWindowInsets();
         mInitialFinishCallBack = null;
+
+        getDisplay().getRealMetrics(mDisplayMetrics);
     }
 
     @Override
@@ -198,6 +214,21 @@ public class WindowInsetsActivity extends LightBarBaseActivity implements View.O
             sb.append("content boundary = ").append(mContentBound).append("\n");
         }
 
+        Display display = getDisplay();
+        if (display != null) {
+            sb.append("------------------------").append("\n");
+            DisplayCutout displayCutout = display.getCutout();
+            if (displayCutout != null) {
+                sb.append("displayCutout = ").append(displayCutout.toString()).append("\n");
+            } else {
+                sb.append("Display cut out = null\n");
+            }
+
+            sb.append("real size = (").append(mDisplayMetrics.widthPixels).append(",")
+                    .append(mDisplayMetrics.heightPixels).append(")\n");
+        }
+
+
         mContent.setText(sb.toString());
     }
 
@@ -217,29 +248,29 @@ public class WindowInsetsActivity extends LightBarBaseActivity implements View.O
     /**
      * To count the draggable boundary that has consume the related insets.
      **/
-
     @MainThread
-    public Rect getOperationArea(boolean insetMandatorySystemGesture,
-            boolean insetTappableElements, WindowInsets windowInsets) {
-
-        Insets insets;
-        if (insetMandatorySystemGesture) {
-            insets = windowInsets.getMandatorySystemGestureInsets();
-        } else if (insetTappableElements) {
-            insets = windowInsets.getTappableElementInsets();
-        } else {
-            insets = windowInsets.getSystemGestureInsets();
-        }
-
+    public Rect getOperationArea(Insets insets, WindowInsets windowInsets) {
         int left = insets.left;
-        int top = 0;
-        if (windowInsets.getStableInsetTop() >= insets.top) {
-            top = windowInsets.getStableInsetTop() - insets.top;
-        } else {
-            top = insets.top;
-        }
+        int top = insets.top;
         int right = insets.right;
         int bottom = insets.bottom;
+
+        final DisplayCutout cutout = windowInsets.getDisplayCutout();
+        if (cutout != null) {
+            int slack = (int) (DISPLAY_CUTOUT_SLACK_DP * mDisplayMetrics.density);
+            if (cutout.getSafeInsetLeft() > 0) {
+                left = Math.max(left, cutout.getSafeInsetLeft() + slack);
+            }
+            if (cutout.getSafeInsetTop() > 0) {
+                top = Math.max(top, cutout.getSafeInsetTop() + slack);
+            }
+            if (cutout.getSafeInsetRight() > 0) {
+                right = Math.max(right, cutout.getSafeInsetRight() + slack);
+            }
+            if (cutout.getSafeInsetBottom() > 0) {
+                bottom = Math.max(bottom, cutout.getSafeInsetBottom() + slack);
+            }
+        }
 
         Rect windowBoundary = getViewBound(getContentView());
         Rect rect = new Rect(windowBoundary);

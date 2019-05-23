@@ -59,6 +59,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -135,7 +136,12 @@ public class Camera2SurfaceViewTestCase {
         mHandler = new Handler(mHandlerThread.getLooper());
         mCameraListener = new BlockingStateCallback();
         mCollector = new CameraErrorCollector();
-        mDebugFileNameBase = mContext.getExternalFilesDir(null).getPath();
+
+        File filesDir = mContext.getPackageManager().isInstantApp()
+                ? mContext.getFilesDir()
+                : mContext.getExternalFilesDir(null);
+
+        mDebugFileNameBase = filesDir.getPath();
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
         List<String> hiddenPhysicalIds = new ArrayList<>();
