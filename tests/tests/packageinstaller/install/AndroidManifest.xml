@@ -22,7 +22,7 @@
     <application android:label="Cts Package Installer Tests">
         <uses-library android:name="android.test.runner" />
 
-        <activity android:name=".InstallConfirmDialogStarter" />
+        <activity android:name="com.android.compatibility.common.util.FutureResultActivity" />
 
         <provider android:authorities="android.packageinstaller.install.cts.fileprovider"
                   android:name="androidx.core.content.FileProvider"

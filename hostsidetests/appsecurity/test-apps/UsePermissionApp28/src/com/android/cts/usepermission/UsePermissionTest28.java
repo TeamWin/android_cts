@@ -23,9 +23,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static junit.framework.Assert.assertEquals;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 
 import org.junit.Test;
 
@@ -46,19 +44,15 @@ public class UsePermissionTest28 extends BasePermissionsTest {
 
         // request only foreground permission. This should automatically also add the background
         // permission
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    try {
-                        clickAllowAlwaysButton();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
+            try {
+                clickAllowAlwaysButton();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS, permissions,
-                new boolean[]{true});
+        assertPermissionRequestResult(result, permissions, new boolean[]{true});
 
         assertEquals(PERMISSION_GRANTED, context.checkSelfPermission(ACCESS_FINE_LOCATION));
         assertEquals(PERMISSION_GRANTED, context.checkSelfPermission(ACCESS_BACKGROUND_LOCATION));

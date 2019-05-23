@@ -48,25 +48,21 @@ public class UsePermissionTest29 extends BasePermissionsTest {
 
     private BasePermissionActivity.Result requestPermissions(String[] permissions,
             UiInteraction... uiInteractions) throws Exception {
-        return super.requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    try {
-                        for (UiInteraction uiInteraction : uiInteractions) {
-                            uiInteraction.run();
-                            getUiDevice().waitForIdle();
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        return requestPermissions(permissions, () -> {
+            try {
+                for (UiInteraction uiInteraction : uiInteractions) {
+                    uiInteraction.run();
+                    getUiDevice().waitForIdle();
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    private static void assertPermissionRequestResult(BasePermissionActivity.Result result,
+    protected static void assertPermissionRequestResult(BasePermissionActivity.Result result,
             String[] permissions, boolean... granted) {
-        BasePermissionsTest.assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, granted);
+        BasePermissionsTest.assertPermissionRequestResult(result, permissions, granted);
     }
 
     @Before
