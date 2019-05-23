@@ -53,14 +53,6 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
                 InstallSystemUpdateCallback.UPDATE_ERROR_FILE_NOT_FOUND);
     }
 
-    public void testInstallUpdate_failWrongVersion() throws InterruptedException {
-        assertUpdateError(
-                "wrongVersion.zip",
-                isDeviceAB()
-                        ? InstallSystemUpdateCallback.UPDATE_ERROR_INCORRECT_OS_VERSION
-                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
-    }
-
     public void testInstallUpdate_failNoZipOtaFile() throws InterruptedException {
         assertUpdateError("notZip.zi",
                 isDeviceAB()
