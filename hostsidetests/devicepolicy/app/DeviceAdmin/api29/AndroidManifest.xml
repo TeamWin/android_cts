@@ -17,8 +17,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.deviceadmin29" >
 
-    <!-- STOPSHIP(b/114173216): Uncomment this once Q's API level is finalized -->
-    <!--<uses-sdk android:minSdkVersion="23" android:targetSdkVersion="29"/>-->
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="29"/>
 
     <application
         android:testOnly="true">
