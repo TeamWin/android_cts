@@ -1633,7 +1633,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
-    public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
+    // b/133502627.
+    public void disabledTestNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
         throws Exception {
         String newGroup = "new!";
         sendNotification(10, R.drawable.black);
@@ -2179,7 +2180,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         listener.onListenerDisconnected();
     }
 
-    public void testNotificationListener_setNotificationsShown() throws Exception {
+    // b/133502627
+    public void disabledTestNotificationListener_setNotificationsShown() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
@@ -2275,7 +2277,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotificationListener_getActiveNotifications() throws Exception {
+    // b/133502627
+    public void disabledTestNotificationListener_getActiveNotifications() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
@@ -2325,7 +2328,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
     }
 
-    public void testNotificationListener_cancelNotifications() throws Exception {
+    // b/133502627
+    public void disabledTestNotificationListener_cancelNotifications() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
@@ -2589,7 +2593,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
+    // b/133502627
+    public void disabledTestNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
