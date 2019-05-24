@@ -29,6 +29,8 @@ import java.io.FileReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.content.pm.PackageManager;
+
 @SecurityTest
 public class EncryptionTest extends AndroidTestCase {
 
@@ -44,9 +46,14 @@ public class EncryptionTest extends AndroidTestCase {
 
     private static native boolean aesIsFast();
 
+    private boolean isTelevision() {
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION) || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
     private boolean isRequired() {
         // Optional before MIN_API_LEVEL
-        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL;
+        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !isTelevision();
     }
 
     public void testEncryption() throws Exception {
