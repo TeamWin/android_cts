@@ -193,6 +193,12 @@ public class SecurityTestCase extends DeviceTestCase {
         return Long.parseLong(uptime.substring(0, uptime.indexOf('.')));
     }
 
+    public void safeReboot() throws DeviceNotAvailableException {
+        getDevice().nonBlockingReboot();
+        getDevice().waitForDeviceAvailable();
+        updateKernelStartTime();
+    }
+
     /**
      * Allows a test to pass if called after a planned reboot.
      */
