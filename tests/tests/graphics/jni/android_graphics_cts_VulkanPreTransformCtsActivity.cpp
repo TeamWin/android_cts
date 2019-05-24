@@ -63,7 +63,12 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
            "Failed to initialize Vulkan renderer");
 
     for (uint32_t i = 0; i < 120; ++i) {
-        ASSERT(renderer.drawFrame() == VK_TEST_SUCCESS, "Failed to draw frame");
+        ret = renderer.drawFrame();
+        if (setPreTransform || preTransformHint == 0x1 /*VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR*/) {
+            ASSERT(ret == VK_TEST_SUCCESS, "Failed to draw frame");
+        } else {
+            ASSERT(ret == VK_TEST_SUCCESS_SUBOPTIMAL, "Failed to draw suboptimal frame");
+        }
     }
 
     ASSERT(validatePixelValues(env, setPreTransform, preTransformHint), "Not properly rotated");
