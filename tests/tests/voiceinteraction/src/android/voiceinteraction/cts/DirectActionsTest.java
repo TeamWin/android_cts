@@ -16,24 +16,20 @@
 
 package android.voiceinteraction.cts;
 
-import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.DirectAction;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteCallback;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.android.compatibility.common.util.ThrowingRunnable;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -41,6 +37,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Tests for the direction action related functions.
@@ -51,16 +50,6 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
 
     private final @NonNull SessionControl mSessionControl = new SessionControl();
     private final @NonNull ActivityControl mActivityControl = new ActivityControl();
-
-    // TODO: move to super class
-    @Before
-    public void prepareDevice() throws Exception {
-        // Unlock screen.
-        runShellCommand("input keyevent KEYCODE_WAKEUP");
-
-        // Dismiss keyguard, in case it's set as "Swipe to unlock".
-        runShellCommand("wm dismiss-keyguard");
-    }
 
     @Test
     public void testPerformDirectAction() throws Exception {
@@ -86,6 +75,7 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
         }
     }
 
+    @AppModeFull(reason = "testPerformDirectAction() is enough")
     @Test
     public void testCancelPerformedDirectAction() throws Exception {
         mActivityControl.startActivity();
@@ -110,6 +100,7 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
         }
     }
 
+    @AppModeFull(reason = "testPerformDirectAction() is enough")
     @Test
     public void testVoiceInteractorDestroy() throws Exception {
         mActivityControl.startActivity();
@@ -127,6 +118,7 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
         }
     }
 
+    @AppModeFull(reason = "testPerformDirectAction() is enough")
     @Test
     public void testNotifyDirectActionsChanged() throws Exception {
         mActivityControl.startActivity();
@@ -254,11 +246,18 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
                 latch.countDown();
             });
 
-            final Intent intent = new Intent();
-            intent.setClassName("android.voiceinteraction.testapp",
-                    "android.voiceinteraction.testapp.DirectActionsActivity");
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(Utils.DIRECT_ACTIONS_KEY_CALLBACK, callback);
+            final Intent intent = new Intent()
+                    .setAction(Intent.ACTION_VIEW)
+                    .addCategory(Intent.CATEGORY_BROWSABLE)
+                    .setData(Uri.parse("https://android.voiceinteraction.testapp"
+                            + "/DirectActionsActivity"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra(Utils.DIRECT_ACTIONS_KEY_CALLBACK, callback);
+
+            if (!mContext.getPackageManager().isInstantApp()) {
+                intent.setPackage("android.voiceinteraction.testapp");
+            }
+
             Log.v(TAG, "startActivity: " + intent);
 
             mContext.startActivity(intent);

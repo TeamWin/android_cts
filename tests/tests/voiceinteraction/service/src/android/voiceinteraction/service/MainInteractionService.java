@@ -18,6 +18,7 @@ package android.voiceinteraction.service;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.service.voice.VoiceInteractionService;
 import android.service.voice.VoiceInteractionSession;
@@ -60,10 +61,14 @@ public class MainInteractionService extends VoiceInteractionService {
                     // Call to verify onGetSupportedVoiceActions is available.
                     onGetSupportedVoiceActions(Collections.emptySet());
                     args = new Bundle();
-                    Intent intent = new Intent();
-                    intent.setComponent(new ComponentName("android.voiceinteraction.testapp",
-                            "android.voiceinteraction.testapp.TestApp"));
+                    Intent intent = new Intent()
+                            .setAction(Intent.ACTION_VIEW)
+                            .addCategory(Intent.CATEGORY_VOICE)
+                            .addCategory(Intent.CATEGORY_BROWSABLE)
+                            .setData(Uri.parse("https://android.voiceinteraction.testapp"
+                                    + "/TestApp"));
                     args.putParcelable("intent", intent);
+                    Log.v(TAG, "showSession(): " + args);
                     showSession(args, 0);
                 } else {
                     Log.wtf(TAG, "**** Not starting MainInteractionService because" +

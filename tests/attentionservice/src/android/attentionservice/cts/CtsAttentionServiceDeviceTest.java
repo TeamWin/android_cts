@@ -21,9 +21,12 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.attention.AttentionService;
+import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -45,6 +48,8 @@ public class CtsAttentionServiceDeviceTest {
     private static final String SERVICE_ENABLED = "service_enabled";
     private static final String FAKE_SERVICE_PACKAGE =
             CtsTestAttentionService.class.getPackage().getName();
+    private final boolean isTestable =
+            !TextUtils.isEmpty(getAttentionServiceComponent());
 
     @Rule
     public final DeviceConfigStateChangerRule mLookAllTheseRules =
@@ -55,6 +60,7 @@ public class CtsAttentionServiceDeviceTest {
 
     @Before
     public void setUp() {
+        assumeTrue("Feature not available on this device. Skipping test.", isTestable);
         clearTestableAttentionService();
         CtsTestAttentionService.reset();
         bindToTestService();
