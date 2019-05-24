@@ -16,6 +16,8 @@
 
 package android.content.cts;
 
+import static com.android.compatibility.common.util.RequiredServiceRule.hasService;
+
 import android.app.DownloadManager;
 import android.app.SearchManager;
 import android.content.ContentUris;
@@ -438,6 +440,8 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testRequestEnableContentCaptureIntent() {
+        if (!hasService("content_capture")) return;
+
         Intent intent = new Intent(Settings.ACTION_REQUEST_ENABLE_CONTENT_CAPTURE);
         assertCanBeHandled(intent);
     }
