@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
@@ -100,6 +101,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             runNextTestOrShowSummary();
         });
 
+        mTests.add(new EnableBubbleTest());
         mTests.add(new SendBubbleTest());
         mTests.add(new SuppressNotifTest());
         mTests.add(new AddNotifTest());
@@ -175,6 +177,38 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
 
         if (didEverythingSucceed) {
             getPassButton().setEnabled(true);
+        }
+    }
+
+    private class EnableBubbleTest extends BubblesTestStep {
+
+        @Override
+        public int getButtonText() {
+            return R.string.bubbles_notification_enable_bubbles_button;
+        }
+
+
+        @Override
+        public int getTestTitle() {
+            return R.string.bubbles_notification_test_enable_bubbles_title;
+        }
+
+        @Override
+        public int getTestDescription() {
+            return R.string.bubbles_notification_test_enable_bubbles_verify;
+        }
+
+        @Override
+        public void performTestAction() {
+            final String packageName = getApplicationContext().getPackageName();
+            final int appUid = getApplicationInfo().uid;
+            final Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_BUBBLE_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName);
+            intent.putExtra(Settings.EXTRA_APP_UID, appUid);
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
     }
 
