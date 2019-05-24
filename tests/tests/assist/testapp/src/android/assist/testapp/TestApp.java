@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.assist.common.Utils;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.RemoteCallback;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -29,11 +30,15 @@ public class TestApp extends Activity {
     static final String TAG = "TestApp";
 
     private String mTestCaseName;
+    private RemoteCallback mResumedCallback;
+    private RemoteCallback mDrawedCallback;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG, "TestApp created");
+        Log.i(TAG, "TestApp created: " + getIntent());
+        mResumedCallback = getIntent().getParcelableExtra(Utils.EXTRA_CALLBACK_ACTIVITY_RESUMED);
+        mDrawedCallback = getIntent().getParcelableExtra(Utils.EXTRA_CALLBACK_ACTIVITY_DRAWED);
         mTestCaseName = getIntent().getStringExtra(Utils.TESTCASE_TYPE);
         switch (mTestCaseName) {
             case Utils.LARGE_VIEW_HIERARCHY:
@@ -54,14 +59,29 @@ public class TestApp extends Activity {
             @Override
             public void onGlobalLayout() {
                 layout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                sendBroadcast(new Intent(Utils.APP_3P_HASRESUMED));
+                if (mResumedCallback != null) {
+                    Log.i(TAG, "onGlobalLayout(): notifying callback");
+                    mResumedCallback.sendResult(/* result= */ null);
+                } else {
+                    // TODO(b/133431034): should only use callbacks
+                    Log.w(TAG, "No resume callback onGlobalLayout(); broadcasting instead");
+                    sendBroadcast(new Intent(Utils.APP_3P_HASRESUMED));
+                }
             }
         });
     }
 
+    @Override
     public void onEnterAnimationComplete() {
         Log.i(TAG, "TestApp onEnterAnimationComplete ");
-        sendBroadcast(new Intent(Utils.APP_3P_HASDRAWED));
+        if (mDrawedCallback != null) {
+            Log.i(TAG, "onEnterAnimationComplete(): notifying callback");
+            mDrawedCallback.sendResult(/* result= */ null);
+        } else {
+            // TODO(b/133431034): should only use callbacks
+            Log.w(TAG, "No resume callback onEnterAnimationComplete(); broadcasting instead");
+            sendBroadcast(new Intent(Utils.APP_3P_HASDRAWED));
+        }
     }
 
 }

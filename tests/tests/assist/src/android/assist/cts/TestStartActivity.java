@@ -22,12 +22,15 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.RemoteCallback;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import java.util.concurrent.CountDownLatch;
 
 public class TestStartActivity extends Activity {
     static final String TAG = "TestStartActivity";
@@ -90,19 +93,22 @@ public class TestStartActivity extends Activity {
         startActivity(intent);
     }
 
-    public void start3pApp(String testCaseName) {
+    public void start3pApp(String testCaseName, CountDownLatch resumedLatch,
+            CountDownLatch drawedLatch) {
+        final RemoteCallback resumedCallback = new RemoteCallback((result) -> {
+            Log.v(TAG, "Testapp called resumed callback for " + testCaseName);
+            resumedLatch.countDown();
+        });
+        final RemoteCallback drawedCallback = new RemoteCallback((result) -> {
+            Log.v(TAG, "Testapp called drawed callback for " + testCaseName);
+            drawedLatch.countDown();
+        });
         Intent intent = new Intent();
         intent.putExtra(Utils.TESTCASE_TYPE, testCaseName);
         intent.setAction("android.intent.action.TEST_APP_" + testCaseName);
         intent.setComponent(Utils.getTestAppComponent(testCaseName));
-        startActivity(intent);
-    }
-
-    public void start3pAppWithColor(String testCaseName, int color) {
-        Intent intent = new Intent();
-        intent.setAction("android.intent.action.TEST_APP_" + testCaseName);
-        intent.putExtra(Utils.SCREENSHOT_COLOR_KEY, color);
-        intent.setComponent(Utils.getTestAppComponent(testCaseName));
+        intent.putExtra(Utils.EXTRA_CALLBACK_ACTIVITY_RESUMED, resumedCallback);
+        intent.putExtra(Utils.EXTRA_CALLBACK_ACTIVITY_DRAWED, drawedCallback);
         startActivity(intent);
     }
 
