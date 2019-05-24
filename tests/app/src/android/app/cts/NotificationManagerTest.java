@@ -1571,6 +1571,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    @FlakyTest(bugId = 133501804)
     public void testAutogrouping() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
@@ -1581,6 +1582,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertAllPostedNotificationsAutogrouped();
     }
 
+    @FlakyTest(bugId = 133501804)
     public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
@@ -1600,6 +1602,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertNotificationCount(0);
     }
 
+    @FlakyTest(bugId = 133501804)
     public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup()
             throws Exception {
         String newGroup = "new!";
