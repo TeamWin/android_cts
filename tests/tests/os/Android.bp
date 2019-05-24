@@ -47,7 +47,7 @@ android_test {
         "vts",
         "general-tests",
     ],
-    platform_apis: true,
+    sdk_version: "test_current",
     libs: [
         "android.test.runner.stubs",
         "android.test.base.stubs",
