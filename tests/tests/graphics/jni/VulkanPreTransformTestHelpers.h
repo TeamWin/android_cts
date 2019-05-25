@@ -28,6 +28,7 @@ typedef enum VkTestResult {
     VK_TEST_SUCCESS = 0,
     VK_TEST_PHYSICAL_DEVICE_NOT_EXISTED = 1,
     VK_TEST_SURFACE_FORMAT_NOT_SUPPORTED = 2,
+    VK_TEST_SUCCESS_SUBOPTIMAL = 3,
 } VkTestResult;
 
 class DeviceInfo {

@@ -16,6 +16,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
@@ -275,8 +276,8 @@ public class AccessibilityWindowReportingTest {
                         autoCompleteTextView.setAdapter(adapter);
                         autoCompleteTextView.showDropDown();
                     }),
-                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_CHILDREN),
-                    TIMEOUT_ASYNC_PROCESSING);
+                    filterWindowsChangeTypesAndWindowTitle(sUiAutomation, WINDOWS_CHANGE_CHILDREN,
+                            mActivityTitle.toString()), TIMEOUT_ASYNC_PROCESSING);
         } catch (TimeoutException exception) {
             throw new RuntimeException(
                     "Failed to get window changed event when showing dropdown", exception);

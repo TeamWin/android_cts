@@ -147,4 +147,20 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         getDevice().reboot();
         run("testApexAndApkConfirmRollback");
     }
+
+    /**
+     * Tests that apex update expires existing rollbacks for that apex.
+     */
+    @Test
+    public void testApexRollbackExpiration() throws Exception {
+        assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
+
+        uninstallShimApexIfNecessary();
+        run("testApexRollbackExpirationEnableRollback");
+        getDevice().reboot();
+        run("testApexRollbackExpirationUpdateApex");
+        getDevice().reboot();
+        run("testApexRollbackExpirationConfirmExpiration");
+    }
+
 }

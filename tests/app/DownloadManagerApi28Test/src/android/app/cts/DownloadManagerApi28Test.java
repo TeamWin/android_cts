@@ -43,9 +43,7 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
         File publicLocation = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
                 "publicFile.bin");
-        if (publicLocation.exists()) {
-            assertTrue(publicLocation.delete());
-        }
+        deleteFromShell(publicLocation);
 
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -70,10 +68,8 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
 
     @Test
     public void testSetDestinationUri_sdcardPath() throws Exception {
-        File path = new File("/sdcard/publicFile.bin");
-        if (path.exists()) {
-            assertTrue(path.delete());
-        }
+        final File path = new File("/sdcard/publicFile.bin");
+        deleteFromShell(path);
 
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -101,9 +97,7 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
         File publicLocation = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
                 "publicFile.bin");
-        if (publicLocation.exists()) {
-            assertTrue(publicLocation.delete());
-        }
+        deleteFromShell(publicLocation);
 
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -137,11 +131,12 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
         };
 
         for (String path : filePaths) {
-            final String fileContents = path + "_" + System.nanoTime();
+            final String fileContents = "Test content:" + path + "_" + System.nanoTime();
 
+            final File file = new File(path);
             writeToFile(new File(path), fileContents);
 
-            final long id = mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
+            final long id = mDownloadManager.addCompletedDownload(file.getName(), "Test desc", true,
                     "text/plain", path, fileContents.getBytes().length, true);
             final String actualContents = readFromFile(mDownloadManager.openDownloadedFile(id));
             assertEquals(fileContents, actualContents);
@@ -212,12 +207,13 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
                 "/sdcard/file3.mp3",
         };
         for (String downloadLocation : downloadPath) {
-            final String fileContents = downloadLocation + "_" + System.nanoTime();
+            final String fileContents = "Test content:" + downloadLocation + "_" + System.nanoTime();
             final File file = new File(Uri.parse(downloadLocation).getPath());
             writeToFile(file, fileContents);
 
-            final long downloadId = mDownloadManager.addCompletedDownload("Test title", "Test desc",
-                    true, "text/plain", downloadLocation, fileContents.getBytes().length, true);
+            final long downloadId = mDownloadManager.addCompletedDownload(file.getName(),
+                    "Test desc", true,
+                    "text/plain", downloadLocation, fileContents.getBytes().length, true);
             assertTrue(downloadId >= 0);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
             mContext.grantUriPermission("com.android.shell", downloadUri,
