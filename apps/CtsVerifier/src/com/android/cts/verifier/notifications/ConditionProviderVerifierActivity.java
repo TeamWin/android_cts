@@ -304,7 +304,14 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
             if (!TextUtils.isEmpty(id)) {
                 AutomaticZenRule rule = mNm.getAutomaticZenRule(id);
-                if (Objects.equals(ruleToCreate, rule)) {
+                if (rule != null && ruleToCreate.getName().equals(rule.getName())
+                        && ruleToCreate.getOwner().equals(rule.getOwner())
+                        && ruleToCreate.getConditionId().equals(rule.getConditionId())
+                        && ruleToCreate.isEnabled() == rule.isEnabled()
+                        && ruleToCreate.getInterruptionFilter() == rule.getInterruptionFilter()
+                        && Objects.equals(ruleToCreate.getConfigurationActivity(),
+                        rule.getConfigurationActivity())
+                        && Objects.equals(ruleToCreate.getZenPolicy(), rule.getZenPolicy())) {
                     status = PASS;
                 } else {
                     logFail("created rule doesn't equal actual rule");

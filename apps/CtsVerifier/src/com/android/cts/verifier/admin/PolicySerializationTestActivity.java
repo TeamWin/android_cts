@@ -94,9 +94,6 @@ public class PolicySerializationTestActivity extends PassFailButtons.ListActivit
             }
         });
 
-        mPolicyItems.add(new PasswordQualityPolicy(this));
-        mPolicyItems.add(new PasswordMinimumLengthPolicy(this));
-
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN)) {
             mPolicyItems.add(new MaximumFailedPasswordsForWipePolicy(this));
         }

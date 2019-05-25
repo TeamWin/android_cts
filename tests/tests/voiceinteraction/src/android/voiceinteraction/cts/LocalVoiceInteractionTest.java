@@ -57,10 +57,7 @@ public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase 
 
     private void startTestActivity() throws Exception {
         Intent intent = new Intent()
-                .setAction(Intent.ACTION_VIEW)
-                .addCategory(Intent.CATEGORY_BROWSABLE)
-                .setData(Uri.parse("https://android.voiceinteraction.cts"
-                        + "TestLocalInteractionActivity"));
+                .setAction("android.intent.action.TEST_LOCAL_INTERACTION_ACTIVITY");
         Log.i(TAG, "startTestActivity: " + intent);
         mTestActivity = mActivityTestRule.launchActivity(intent);
     }

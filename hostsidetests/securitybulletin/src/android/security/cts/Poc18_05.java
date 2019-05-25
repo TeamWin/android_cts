@@ -27,6 +27,7 @@ public class Poc18_05 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2018-05")
     public void testPocCVE_2017_13315() throws Exception {
+        getOomCatcher().setHighMemoryTest();
         LaunchSomeWhere.launchSomeWhere("CVE_2017_13315", getDevice());
     }
 
@@ -36,6 +37,7 @@ public class Poc18_05 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2018-05")
     public void testPocCVE_2017_13312() throws Exception {
+        getOomCatcher().setHighMemoryTest();
         LaunchSomeWhere.launchSomeWhere("CVE_2017_13312", getDevice());
     }
 }
