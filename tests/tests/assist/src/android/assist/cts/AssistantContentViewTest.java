@@ -30,15 +30,12 @@ import java.util.concurrent.TimeUnit;
 /** Test verifying the Content View of the Assistant */
 public class AssistantContentViewTest extends AssistTestBase {
     private static final String TAG = "ContentViewTest";
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mContentViewLatch, mReadyLatch;
+    private final CountDownLatch mContentViewLatch = new CountDownLatch(1);
     private Intent mIntent;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mContentViewLatch = new CountDownLatch(1);
-        mReadyLatch = new CountDownLatch(1);
         setUpAndRegisterReceiver();
         startTestActivity(Utils.VERIFY_CONTENT_VIEW);
     }
@@ -76,7 +73,7 @@ public class AssistantContentViewTest extends AssistTestBase {
           Log.d(TAG, "Not running assist tests on low-RAM device.");
           return;
         }
-        mTestActivity.startTest(Utils.VERIFY_CONTENT_VIEW);
+        startTest(Utils.VERIFY_CONTENT_VIEW);
         waitForAssistantToBeReady(mReadyLatch);
         startSession();
         waitForContentView();

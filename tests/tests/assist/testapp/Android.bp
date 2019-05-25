@@ -23,5 +23,5 @@ android_test_helper_app {
         "vts",
         "general-tests",
     ],
-    sdk_version: "current",
+    sdk_version: "test_current",
 }
