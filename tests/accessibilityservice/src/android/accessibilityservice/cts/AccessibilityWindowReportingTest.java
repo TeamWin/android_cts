@@ -39,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
 import android.app.Activity;
@@ -62,6 +63,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -82,9 +84,16 @@ public class AccessibilityWindowReportingTest {
     private Activity mActivity;
     private CharSequence mActivityTitle;
 
-    @Rule
-    public ActivityTestRule<AccessibilityWindowReportingActivity> mActivityRule =
+    private ActivityTestRule<AccessibilityWindowReportingActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityWindowReportingActivity.class, false, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {

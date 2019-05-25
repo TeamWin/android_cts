@@ -1,4 +1,4 @@
-// Copyright (C) 2014 The Android Open Source Project
+// Copyright (C) 2013 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsUiAutomationTestCases",
-    defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-        "cts_instant",
+// Test effect library
+cc_test_library {
+    name: "libctstesteffect",
+    srcs: ["CTSTestEffect.cpp"],
+    cflags: [
+        "-O2",
+        "-fvisibility=hidden",
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-Wno-gnu-designator",
     ],
-    static_libs: [
-        "CtsAccessibilityCommon",
-        "ctstestrunner-axt",
-        "ub-uiautomator",
-    ],
-    libs: ["android.test.base.stubs"],
-    srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
+    relative_install_path: "soundfx",
+    include_dirs: ["system/media/audio_effects/include"],
 }

@@ -47,6 +47,7 @@ import static org.junit.Assert.fail;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
@@ -69,6 +70,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
@@ -97,9 +99,16 @@ public class MagnificationGestureHandlerTest {
 
     private final Object mZoomLock = new Object();
 
-    @Rule
-    public ActivityTestRule<GestureDispatchActivity> mActivityRule =
+    private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @Before
     public void setUp() throws Exception {

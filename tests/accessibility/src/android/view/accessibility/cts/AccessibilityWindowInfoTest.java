@@ -16,21 +16,41 @@
 
 package android.view.accessibility.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityWindowInfo;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Class for testing {@link AccessibilityWindowInfo}.
  */
 @Presubmit
-public class AccessibilityWindowInfoTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityWindowInfoTest {
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @SmallTest
+    @Test
     public void testObtain() {
         AccessibilityWindowInfo w1 = AccessibilityWindowInfo.obtain();
         assertNotNull(w1);
@@ -41,6 +61,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testParceling() {
         Parcel parcel = Parcel.obtain();
         AccessibilityWindowInfo w1 = AccessibilityWindowInfo.obtain();
@@ -53,6 +74,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testDefaultValues() {
         AccessibilityWindowInfo w = AccessibilityWindowInfo.obtain();
         assertEquals(0, w.getChildCount());
@@ -80,6 +102,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testRecycle() {
         AccessibilityWindowInfo w = AccessibilityWindowInfo.obtain();
         w.recycle();

@@ -218,21 +218,15 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
     @Test
     public void testDownloadManagerDestination() throws Exception {
         File uriLocation = new File(mContext.getExternalFilesDir(null), "uriFile.bin");
-        if (uriLocation.exists()) {
-            assertTrue(uriLocation.delete());
-        }
+        deleteFromShell(uriLocation);
 
         File extFileLocation = new File(mContext.getExternalFilesDir(null), "extFile.bin");
-        if (extFileLocation.exists()) {
-            assertTrue(extFileLocation.delete());
-        }
+        deleteFromShell(extFileLocation);
 
         File publicLocation = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "publicFile.bin");
-        if (publicLocation.exists()) {
-            assertTrue(publicLocation.delete());
-        }
+        deleteFromShell(publicLocation);
 
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -276,15 +270,11 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
     public void testDownloadManagerDestinationExtension() throws Exception {
         String noExt = "noiseandchirps";
         File noExtLocation = new File(mContext.getExternalFilesDir(null), noExt);
-        if (noExtLocation.exists()) {
-            assertTrue(noExtLocation.delete());
-        }
+        deleteFromShell(noExtLocation);
 
         String wrongExt = "noiseandchirps.wrong";
         File wrongExtLocation = new File(mContext.getExternalFilesDir(null), wrongExt);
-        if (wrongExtLocation.exists()) {
-            assertTrue(wrongExtLocation.delete());
-        }
+        deleteFromShell(wrongExtLocation);
 
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -319,9 +309,7 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
         final File documentsFile = new File(
                 Environment.getExternalStoragePublicDirectory("TestDir"),
                 "uriFile.bin");
-        if (documentsFile.exists()) {
-            assertTrue(documentsFile.delete());
-        }
+        deleteFromShell(documentsFile);
 
         final Request badRequest = new Request(getGoodUrl());
         badRequest.setDestinationUri(Uri.fromFile(documentsFile));
@@ -480,9 +468,7 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
     @Test
     public void testDownloadNotVisibleInUi() throws Exception {
         File uriLocation = new File(mContext.getExternalFilesDir(null), "uriFile.bin");
-        if (uriLocation.exists()) {
-            assertTrue(uriLocation.delete());
-        }
+        deleteFromShell(uriLocation);
 
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -516,7 +502,7 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
 
         writeToFile(file, fileContents);
 
-        final long id = mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
+        final long id = mDownloadManager.addCompletedDownload(file.getName(), "Test desc", true,
                 "text/plain", file.getPath(), fileContents.getBytes().length, true);
         final String actualContents = readFromFile(mDownloadManager.openDownloadedFile(id));
         assertEquals(fileContents, actualContents);

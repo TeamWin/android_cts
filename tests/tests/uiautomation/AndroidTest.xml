@@ -29,4 +29,8 @@
         <option name="package" value="android.app.uiautomation.cts" />
         <option name="runtime-hint" value="6m42s" />
     </test>
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/android.app.uiautomation.cts" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
 </configuration>
