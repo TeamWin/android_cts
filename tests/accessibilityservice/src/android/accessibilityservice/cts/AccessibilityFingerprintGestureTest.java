@@ -23,6 +23,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.FingerprintGestureController;
 import android.accessibilityservice.FingerprintGestureController.FingerprintGestureCallback;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
@@ -39,6 +40,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -57,10 +59,16 @@ public class AccessibilityFingerprintGestureTest {
     FingerprintGestureController mFingerprintGestureController;
     CancellationSignal mCancellationSignal = new CancellationSignal();
 
-    @Rule
-    public ActivityTestRule<AccessibilityEndToEndActivity> mActivityRule =
+    private ActivityTestRule<AccessibilityEndToEndActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityEndToEndActivity.class, false, false);
 
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @Mock FingerprintManager.AuthenticationCallback mMockAuthenticationCallback;
     @Mock FingerprintGestureCallback mMockFingerprintGestureCallback;

@@ -16,12 +16,22 @@
 
 package android.accessibilityservice.cts;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertTrue;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityService;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.test.InstrumentationTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeoutException;
 
@@ -30,7 +40,8 @@ import java.util.concurrent.TimeoutException;
  */
 @Presubmit
 @AppModeFull
-public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityGlobalActionsTest {
     /**
      * Timeout required for pending Binder calls or event processing to
      * complete.
@@ -42,7 +53,12 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
      */
     private static final long TIMEOUT_ACCESSIBILITY_STATE_IDLE = 500;
 
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
     @MediumTest
+    @Test
     public void testPerformGlobalActionBack() throws Exception {
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_BACK));
@@ -52,6 +68,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @Test
     public void testPerformGlobalActionHome() throws Exception {
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_HOME));
@@ -61,6 +78,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @Test
     public void testPerformGlobalActionRecents() throws Exception {
         // Perform the action.
         boolean actionWasPerformed =
@@ -85,6 +103,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @Test
     public void testPerformGlobalActionNotifications() throws Exception {
         // Perform the action under test
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
@@ -102,6 +121,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @Test
     public void testPerformGlobalActionQuickSettings() throws Exception {
         // Check whether the action succeeded.
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
@@ -122,6 +142,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @Test
     public void testPerformGlobalActionPowerDialog() throws Exception {
         // Check whether the action succeeded.
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
@@ -139,6 +160,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @Test
     public void testPerformActionScreenshot() throws Exception {
         // Action should succeed
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(

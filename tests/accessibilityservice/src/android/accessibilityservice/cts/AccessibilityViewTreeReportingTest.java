@@ -14,8 +14,7 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.ActivityLaunchUtils
-        .launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,15 +22,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.accessibilityservice.cts.R;
 import android.accessibilityservice.cts.activities.AccessibilityViewTreeReportingActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
-import androidx.test.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,11 +36,16 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
@@ -61,9 +62,16 @@ public class AccessibilityViewTreeReportingTest {
 
     private AccessibilityViewTreeReportingActivity mActivity;
 
-    @Rule
-    public ActivityTestRule<AccessibilityViewTreeReportingActivity> mActivityRule =
+    private ActivityTestRule<AccessibilityViewTreeReportingActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityViewTreeReportingActivity.class, false, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {

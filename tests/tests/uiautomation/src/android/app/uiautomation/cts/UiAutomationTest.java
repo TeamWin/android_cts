@@ -17,13 +17,13 @@
 package android.app.uiautomation.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -71,8 +71,8 @@ public class UiAutomationTest {
     private static final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
 
     @Rule
-    public final UiAutomationLogRule mLogRule = new UiAutomationLogRule(
-            UiAutomationTest.class.getSimpleName());
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @Before
     public void setUp() throws Exception {

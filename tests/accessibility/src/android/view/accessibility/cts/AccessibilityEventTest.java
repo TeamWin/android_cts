@@ -16,27 +16,45 @@
 
 package android.view.accessibility.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.os.Message;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityRecord;
 
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import junit.framework.TestCase;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Class for testing {@link AccessibilityEvent}.
  */
 @Presubmit
-public class AccessibilityEventTest extends TestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityEventTest {
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
     /**
      * Tests whether accessibility events are correctly written and
      * read from a parcel (version 1).
      */
     @SmallTest
+    @Test
     public void testMarshaling() throws Exception {
         // fully populate the event to marshal
         AccessibilityEvent sentEvent = AccessibilityEvent.obtain();
@@ -58,6 +76,7 @@ public class AccessibilityEventTest extends TestCase {
      * Tests if {@link AccessibilityEvent} are properly reused.
      */
     @SmallTest
+    @Test
     public void testReuse() {
         AccessibilityEvent firstEvent = AccessibilityEvent.obtain();
         firstEvent.recycle();
@@ -69,6 +88,7 @@ public class AccessibilityEventTest extends TestCase {
      * Tests if {@link AccessibilityEvent} are properly recycled.
      */
     @SmallTest
+    @Test
     public void testRecycle() {
         // obtain and populate an event
         AccessibilityEvent populatedEvent = AccessibilityEvent.obtain();
@@ -86,6 +106,7 @@ public class AccessibilityEventTest extends TestCase {
      * Tests whether the event types are correctly converted to strings.
      */
     @SmallTest
+    @Test
     public void testEventTypeToString() {
         assertEquals("TYPE_NOTIFICATION_STATE_CHANGED", AccessibilityEvent.eventTypeToString(
                 AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED));
@@ -123,6 +144,7 @@ public class AccessibilityEventTest extends TestCase {
      * Tests whether the event describes its contents consistently.
      */
     @SmallTest
+    @Test
     public void testDescribeContents() {
         AccessibilityEvent event = AccessibilityEvent.obtain();
         assertSame("Accessibility events always return 0 for this method.", 0,
@@ -137,6 +159,7 @@ public class AccessibilityEventTest extends TestCase {
      * read from a parcel (version 2).
      */
     @SmallTest
+    @Test
     public void testMarshaling2() {
         AccessibilityEvent marshaledEvent = AccessibilityEvent.obtain();
         fullyPopulateAccessibilityEvent(marshaledEvent);
@@ -155,6 +178,7 @@ public class AccessibilityEventTest extends TestCase {
      * can't change the object by changing the objects backing CharSequence
      */
     @SmallTest
+    @Test
     public void testChangeTextAfterSetting_shouldNotAffectEvent() {
         final String originalText = "Cassowary";
         final String newText = "Hornbill";

@@ -16,13 +16,20 @@
 
 package android.view.accessibility.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.ArrayMap;
@@ -35,6 +42,13 @@ import android.view.accessibility.AccessibilityNodeInfo.CollectionItemInfo;
 import android.view.accessibility.AccessibilityNodeInfo.RangeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
 
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,9 +57,15 @@ import java.util.List;
  * Class for testing {@link AccessibilityNodeInfo}.
  */
 @Presubmit
-public class AccessibilityNodeInfoTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityNodeInfoTest {
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @SmallTest
+    @Test
     public void testMarshaling() throws Exception {
         // fully populate the node info to marshal
         AccessibilityNodeInfo sentInfo = AccessibilityNodeInfo.obtain(new View(getContext()));
@@ -67,6 +87,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * Tests if {@link AccessibilityNodeInfo}s are properly reused.
      */
     @SmallTest
+    @Test
     public void testReuse() {
         AccessibilityEvent firstInfo = AccessibilityEvent.obtain();
         firstInfo.recycle();
@@ -78,6 +99,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * Tests if {@link AccessibilityNodeInfo} are properly recycled.
      */
     @SmallTest
+    @Test
     public void testRecycle() {
         // obtain and populate an node info
         AccessibilityNodeInfo populatedInfo = AccessibilityNodeInfo.obtain();
@@ -95,6 +117,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * Tests whether the event describes its contents consistently.
      */
     @SmallTest
+    @Test
     public void testDescribeContents() {
         AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
         assertSame("Accessibility node infos always return 0 for this method.", 0,
@@ -108,6 +131,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * Tests whether accessibility actions are properly added.
      */
     @SmallTest
+    @Test
     public void testAddActions() {
         List<AccessibilityAction> customActions = new ArrayList<AccessibilityAction>();
         customActions.add(new AccessibilityAction(AccessibilityNodeInfo.ACTION_FOCUS, "Foo"));
@@ -133,6 +157,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * Tests whether we catch addition of an action with invalid id.
      */
     @SmallTest
+    @Test
     public void testCreateInvalidActionId() {
         try {
             new AccessibilityAction(3, null);
@@ -145,6 +170,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * Tests whether accessibility actions are properly removed.
      */
     @SmallTest
+    @Test
     public void testRemoveActions() {
         AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
 
@@ -173,6 +199,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
      * can't change the object by changing the objects backing CharSequence
      */
     @SmallTest
+    @Test
     public void testChangeTextAfterSetting_shouldNotAffectInfo() {
         final String originalText = "Cassowaries";
         final String newText = "Hornbill";
@@ -191,6 +218,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testIsHeadingTakesOldApiIntoAccount() {
         final AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
         assertFalse(info.isHeading());
@@ -399,11 +427,11 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 (receivedRange != null));
         if (expectedRange != null) {
             assertEquals("RangeInfo#getCurrent has incorrect value", expectedRange.getCurrent(),
-                    receivedRange.getCurrent());
+                    receivedRange.getCurrent(), 0.0);
             assertEquals("RangeInfo#getMin has incorrect value", expectedRange.getMin(),
-                    receivedRange.getMin());
+                    receivedRange.getMin(), 0.0);
             assertEquals("RangeInfo#getMax has incorrect value", expectedRange.getMax(),
-                    receivedRange.getMax());
+                    receivedRange.getMax(), 0.0);
             assertEquals("RangeInfo#getType has incorrect value", expectedRange.getType(),
                     receivedRange.getType());
         }

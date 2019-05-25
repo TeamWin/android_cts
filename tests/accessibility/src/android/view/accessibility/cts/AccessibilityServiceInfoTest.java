@@ -16,13 +16,28 @@
 
 package android.view.accessibility.cts;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
-import android.test.InstrumentationTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
@@ -33,15 +48,20 @@ import java.util.List;
  * accessibility service and the fake service used for implementing the UI
  * automation is not reported through the APIs.
  */
-public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityServiceInfoTest {
 
-    @Override
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Before
     public void setUp() throws Exception {
         SpeakingAccessibilityService.enableSelf(getInstrumentation());
         VibratingAccessibilityService.enableSelf(getInstrumentation());
     }
 
-    @Override
+    @After
     public void tearDown() {
         InstrumentedAccessibilityService.disableAllServices(getInstrumentation());
     }
@@ -52,6 +72,7 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
      */
     @MediumTest
     @SuppressWarnings("deprecation")
+    @Test
     public void testAccessibilityServiceInfoForEnabledService() {
         AccessibilityManager accessibilityManager = (AccessibilityManager)
                 getInstrumentation().getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);

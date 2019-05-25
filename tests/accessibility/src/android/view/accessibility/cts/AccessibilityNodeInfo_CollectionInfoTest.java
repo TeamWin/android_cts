@@ -16,18 +16,34 @@
 
 package android.view.accessibility.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.platform.test.annotations.Presubmit;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Class for testing {@link CollectionInfo}.
  */
 @Presubmit
-public class AccessibilityNodeInfo_CollectionInfoTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityNodeInfo_CollectionInfoTest  {
+
+    @Rule
+    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
 
     @SmallTest
+    @Test
     public void testObtain() {
         CollectionInfo c;
 

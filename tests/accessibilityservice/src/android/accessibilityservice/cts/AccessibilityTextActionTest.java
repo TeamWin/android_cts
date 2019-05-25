@@ -30,7 +30,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import android.accessibilityservice.cts.R;
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -60,6 +60,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
@@ -80,9 +81,16 @@ public class AccessibilityTextActionTest {
 
     private AccessibilityTextTraversalActivity mActivity;
 
-    @Rule
-    public ActivityTestRule<AccessibilityTextTraversalActivity> mActivityRule =
+    private ActivityTestRule<AccessibilityTextTraversalActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityTextTraversalActivity.class, false, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {
