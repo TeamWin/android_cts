@@ -97,6 +97,8 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
     private DiscoverySession mWifiAwareDiscoverySession;
     private byte[] mDiscoveryMac;
 
+    private static int sSDKLevel = android.os.Build.VERSION.SDK_INT;
+
     public DataPathOutOfBandTestCase(Context context, boolean isSecurityOpen,
             boolean isResponder) {
         super(context);
@@ -292,10 +294,12 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
             Log.e(TAG, "executeTestResponder: network request rejected - ON_UNAVAILABLE");
             return false;
         }
-        if (info.second.getNetworkSpecifier() != null) {
-            setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
-            Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
-            return false;
+        if (sSDKLevel <= android.os.Build.VERSION_CODES.P){
+            if (info.second.getNetworkSpecifier() != null) {
+                setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
+                Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
+                return false;
+            }
         }
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));
         if (DBG) Log.d(TAG, "executeTestResponder: network request granted - AVAILABLE");
@@ -431,10 +435,12 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
             Log.e(TAG, "executeTestInitiator: network request rejected - ON_UNAVAILABLE");
             return false;
         }
-        if (info.second.getNetworkSpecifier() != null) {
-            setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
-            Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
-            return false;
+        if (sSDKLevel <= android.os.Build.VERSION_CODES.P){
+            if(info.second.getNetworkSpecifier() != null) {
+                setFailureReason(mContext.getString(R.string.aware_status_network_failed_leak));
+                Log.e(TAG, "executeTestSubscriber: network request accepted - but leaks NS!");
+                return false;
+            }
         }
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));
         if (DBG) Log.d(TAG, "executeTestInitiator: network request granted - AVAILABLE");
