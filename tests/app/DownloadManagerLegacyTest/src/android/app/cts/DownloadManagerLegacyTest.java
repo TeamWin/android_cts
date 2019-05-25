@@ -15,7 +15,6 @@
  */
 package android.app.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.FileInputStream;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
@@ -44,11 +42,12 @@ public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
         };
 
         for (String path : filePaths) {
-            final String fileContents = path + "_" + System.nanoTime();
+            final String fileContents = "Test content:" + path + "_" + System.nanoTime();
 
-            writeToFile(new File(path), fileContents);
+            final File file = new File(path);
+            writeToFile(file, fileContents);
 
-            final long id = mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
+            final long id = mDownloadManager.addCompletedDownload(file.getName(), "Test desc", true,
                     "text/plain", path, fileContents.getBytes().length, true);
             final String actualContents = readFromFile(mDownloadManager.openDownloadedFile(id));
             assertEquals(fileContents, actualContents);
@@ -69,9 +68,9 @@ public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
                 "colors.txt");
         final String fileContents = "RED;GREEN;BLUE";
-        writeToFileFromShell(file, fileContents);
+        writeToFile(file, fileContents);
         try {
-            mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
+            mDownloadManager.addCompletedDownload(file.getName(), "Test desc", true,
                     "text/plain", file.getPath(), fileContents.getBytes().length, true);
             fail(file + " is not valid for addCompletedDownload()");
         } catch (Exception e) {
@@ -85,25 +84,27 @@ public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
      */
     @Test
     public void testAddCompletedDownload_mediaStoreEntry() throws Exception {
-        final String[] downloadPath = new String[] {
+        final String[] downloadPaths = {
                 new File(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS), "file1.mp3").getPath(),
-                "/sdcard/Download/file2.mp3",
+                        Environment.DIRECTORY_DOWNLOADS), "file1.txt").getPath(),
+                "/sdcard/Download/file2.txt",
         };
-        for (String downloadLocation : downloadPath) {
-            final String fileContents = downloadLocation + "_" + System.nanoTime();
+        for (String downloadLocation : downloadPaths) {
+            final String fileContents =
+                    "Test content:" + downloadLocation + "_" + System.nanoTime();
             final File file = new File(downloadLocation);
             writeToFile(file, fileContents);
 
-            final long downloadId = mDownloadManager.addCompletedDownload("Test title", "Test desc",
+            final long downloadId = mDownloadManager.addCompletedDownload(
+                    file.getName(), "Test desc",
                     true, "text/plain", downloadLocation, fileContents.getBytes().length, true);
             assertTrue(downloadId >= 0);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
             mContext.grantUriPermission("com.android.shell", downloadUri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION);
             final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
-            assertArrayEquals(hash(new FileInputStream(file)),
-                    hash(mContext.getContentResolver().openInputStream(mediaStoreUri)));
+
+            assertEquals(fileContents, readContentsFromUri(mediaStoreUri));
 
             // Delete entry in DownloadProvider and verify it's deleted from MediaProvider as well.
             assertRemoveDownload(downloadId, 0);

@@ -49,6 +49,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -614,6 +615,7 @@ public class StagedInstallTest {
     }
 
     private static StageSessionResult stageDowngradeSingleApk(String apkFileName) throws Exception {
+        Log.i(TAG, "Staging a downgrade of " + apkFileName);
         PackageInstaller packageInstaller = getPackageInstaller();
 
         Pair<Integer, PackageInstaller.Session> sessionPair =
@@ -625,6 +627,7 @@ public class StagedInstallTest {
     }
 
     private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
+        Log.i(TAG, "Staging an install of " + apkFileName);
         PackageInstaller packageInstaller = getPackageInstaller();
 
         Pair<Integer, PackageInstaller.Session> sessionPair =
@@ -647,6 +650,7 @@ public class StagedInstallTest {
     }
 
     private static StageSessionResult stageMultipleApks(String... apkFileNames) throws Exception {
+        Log.i(TAG, "Staging an install of " + Arrays.toString(apkFileNames));
         PackageInstaller packageInstaller = getPackageInstaller();
         int multiPackageSessionId = createStagedSession(packageInstaller, true, false, false);
         PackageInstaller.Session multiPackageSession = packageInstaller.openSession(
@@ -818,9 +822,7 @@ public class StagedInstallTest {
         try {
 
             PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
-            assertThat(info.isStagedSessionFailed()).isTrue();
-            assertThat(info.isStagedSessionReady()).isFalse();
-            assertThat(info.isStagedSessionApplied()).isFalse();
+            assertThat(info).isStagedSessionFailed();
         } catch (Exception e) {
             throw new AssertionError(e);
         }
@@ -830,10 +832,7 @@ public class StagedInstallTest {
         Log.i(TAG, "Waiting for session " + sessionId + " to be ready");
         try {
             PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
-            assertThat(info.isStagedSessionReady()).isTrue();
-            assertThat(info.isStagedSessionApplied()).isFalse();
-            assertWithMessage(info.getStagedSessionErrorMessage())
-                    .that(info.isStagedSessionFailed()).isFalse();
+            assertThat(info).isStagedSessionReady();
         } catch (Exception e) {
             throw new AssertionError(e);
         }

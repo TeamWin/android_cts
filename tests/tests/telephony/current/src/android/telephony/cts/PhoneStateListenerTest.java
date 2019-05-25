@@ -807,14 +807,20 @@ public class PhoneStateListenerTest {
                     public void onDataConnectionStateChanged(int state) {
                         synchronized(mLock) {
                             mOnDataConnectionStateChangedCalled = true;
-                            mLock.notify();
+                            if (mOnDataConnectionStateChangedCalled
+                                    && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
+                                mLock.notify();
+                            }
                         }
                     }
                     @Override
                     public void onDataConnectionStateChanged(int state, int networkType) {
                         synchronized(mLock) {
                             mOnDataConnectionStateChangedWithNetworkTypeCalled = true;
-                            mLock.notify();
+                            if (mOnDataConnectionStateChangedCalled
+                                    && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
+                                mLock.notify();
+                            }
                         }
                     }
                 };

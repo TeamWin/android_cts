@@ -311,7 +311,7 @@ VkTestResult SwapchainInfo::init(bool setPreTransform, int* outPreTransformHint)
     }
 
     if (outPreTransformHint) {
-        *outPreTransformHint = preTransform;
+        *outPreTransformHint = surfaceCapabilities.currentTransform;
     }
 
     const uint32_t queueFamilyIndex = mDeviceInfo->queueFamilyIndex();
@@ -875,7 +875,10 @@ VkTestResult Renderer::drawFrame() {
             .pImageIndices = &nextIndex,
             .pResults = nullptr,
     };
-    VK_CALL(vkQueuePresentKHR(mDeviceInfo->queue(), &presentInfo));
+    VkResult ret = vkQueuePresentKHR(mDeviceInfo->queue(), &presentInfo);
+    if (ret == VK_SUBOPTIMAL_KHR) {
+        return VK_TEST_SUCCESS_SUBOPTIMAL;
+    }
 
-    return VK_TEST_SUCCESS;
+    return ret == VK_SUCCESS ? VK_TEST_SUCCESS : VK_TEST_ERROR;
 }

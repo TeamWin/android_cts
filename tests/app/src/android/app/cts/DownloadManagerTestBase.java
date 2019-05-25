@@ -131,6 +131,13 @@ public class DownloadManagerTestBase {
         }
     }
 
+    protected static String readContentsFromUri(Uri uri) throws Exception {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        try (InputStream inputStream = context.getContentResolver().openInputStream(uri)) {
+            return readFromInputStream(inputStream);
+        }
+    }
+
     protected static String readFromRawFile(String filePath) throws Exception {
         Log.d(TAG, "Reading form file: " + filePath);
         return runShellCommand("cat " + filePath);
@@ -160,16 +167,62 @@ public class DownloadManagerTestBase {
         return new File(baseDir, fileName);
     }
 
+    protected static void deleteFromShell(File file) {
+        runShellCommand("rm " + file);
+    }
+
     protected static void writeToFile(File file, String contents) throws Exception {
+        file.getParentFile().mkdirs();
+        file.delete();
+
         try (final PrintWriter out = new PrintWriter(file)) {
             out.print(contents);
         }
+
+        final String actual;
+        try (FileInputStream fis = new FileInputStream(file)) {
+            actual = readFromInputStream(fis);
+        }
+        assertEquals(contents, actual);
     }
 
     protected static void writeToFileFromShell(File file, String contents) throws Exception {
-        final String cmd = "echo \"" + contents + "\" > " + file;
-        final String res = runShellCommand(cmd);
+        runShellCommand("mkdir -p " + file.getParentFile());
+        runShellCommand("rm " + file);
+
+        final String cmd = "dd of=" + file.getAbsolutePath();
+        final ParcelFileDescriptor[] pfds = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().executeShellCommandRw(cmd);
+        try (final PrintWriter out =
+                     new PrintWriter(new ParcelFileDescriptor.AutoCloseOutputStream(pfds[1]))) {
+            out.print(contents);
+        }
+
+        final String res;
+        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfds[0])) {
+            res = readFromInputStream(fis);
+        }
         Log.d(TAG, "Output of '" + cmd + "': '" + res + "'");
+        runShellCommand("sync");
+
+        assertFileContents(file, contents);
+    }
+
+    private static String readFromInputStream(InputStream inputStream) throws Exception {
+        final StringBuffer res = new StringBuffer();
+        final byte[] buf = new byte[512];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buf)) != -1) {
+            res.append(new String(buf, 0, bytesRead));
+        }
+        return res.toString();
+    }
+
+    protected static void assertFileContents(File file, String contents) {
+        final String cmd = "cat " + file.getAbsolutePath();
+        final String output = runShellCommand(cmd);
+        Log.d(TAG, "Output of '" + cmd + "': '" + output + "'");
+        assertEquals(contents, output);
     }
 
     protected void clearDownloads() {
