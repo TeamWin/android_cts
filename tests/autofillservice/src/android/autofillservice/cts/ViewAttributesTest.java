@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
+
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -182,15 +183,14 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
                     // check size of outerView
                     AssistStructure.ViewNode outerView = findNodeByResourceId(structure,
                             "outerView");
-
                     // The size of the view should include all paddings and size of all children
                     assertThat(outerView.getHeight()).isEqualTo(
                             2             // outerView.top
                                     + 11  // nestedView.top
                                     + 23  // doubleNestedView.top
-                                    + 41  // tripleNestedView.height
-                                    + 47  // secondDoubleNestedView.height
-                                    + 31  // doubleNestedView.bottom
+                                    + 11  // tripleNestedView.height
+                                    + 17  // secondDoubleNestedView.height
+                                    + 11  // doubleNestedView.bottom
                                     + 17  // nestedView.bottom
                                     + 5); // outerView.bottom
                     assertThat(outerView.getWidth()).isEqualTo(
