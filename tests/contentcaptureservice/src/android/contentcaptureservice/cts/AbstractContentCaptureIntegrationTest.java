@@ -15,8 +15,8 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.content.Context.CONTENT_CAPTURE_MANAGER_SERVICE;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
-import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
 import static android.contentcaptureservice.cts.Helper.sContext;
 import static android.contentcaptureservice.cts.Helper.setService;
@@ -70,7 +70,7 @@ public abstract class AbstractContentCaptureIntegrationTest {
     protected final String mTag = getClass().getSimpleName();
 
     private final RequiredServiceRule mRequiredServiceRule =
-            new RequiredServiceRule(SYSTEM_SERVICE_NAME);
+            new RequiredServiceRule(CONTENT_CAPTURE_MANAGER_SERVICE);
 
     private final DeviceConfigStateChangerRule mVerboseLoggingRule =
             new DeviceConfigStateChangerRule(

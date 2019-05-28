@@ -15,8 +15,8 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.content.Context.CONTENT_CAPTURE_MANAGER_SERVICE;
 import static android.contentcaptureservice.cts.Helper.RESOURCE_STRING_SERVICE_NAME;
-import static android.contentcaptureservice.cts.Helper.SYSTEM_SERVICE_NAME;
 import static android.contentcaptureservice.cts.Helper.getInternalString;
 import static android.contentcaptureservice.cts.Helper.sContext;
 
@@ -43,9 +43,9 @@ public class CanaryTest {
 
     @Test
     public void logHasService() {
-        final boolean hasService = RequiredServiceRule.hasService(SYSTEM_SERVICE_NAME);
-        Log.d(TAG, "has " + SYSTEM_SERVICE_NAME + ": " + hasService);
-        assumeTrue("device doesn't have service " + SYSTEM_SERVICE_NAME, hasService);
+        final boolean hasService = RequiredServiceRule.hasService(CONTENT_CAPTURE_MANAGER_SERVICE);
+        Log.d(TAG, "has " + CONTENT_CAPTURE_MANAGER_SERVICE + ": " + hasService);
+        assumeTrue("device doesn't have service " + CONTENT_CAPTURE_MANAGER_SERVICE, hasService);
     }
 
     @Test
@@ -54,9 +54,9 @@ public class CanaryTest {
         final String enableSettings = new DeviceConfigStateManager(sContext,
                 DeviceConfig.NAMESPACE_CONTENT_CAPTURE,
                 ContentCaptureManager.DEVICE_CONFIG_PROPERTY_SERVICE_EXPLICITLY_ENABLED).get();
-        final boolean hasService = RequiredServiceRule.hasService(SYSTEM_SERVICE_NAME);
+        final boolean hasService = RequiredServiceRule.hasService(CONTENT_CAPTURE_MANAGER_SERVICE);
         Log.d(TAG, "Service resource: '" + serviceName + "' Settings: '" + enableSettings
-                + "' Has '" + SYSTEM_SERVICE_NAME + "': " + hasService);
+                + "' Has '" + CONTENT_CAPTURE_MANAGER_SERVICE + "': " + hasService);
 
         // We're only asserting when the OEM defines a service
         assumeTrue("service resource (" + serviceName + ") is not defined",
