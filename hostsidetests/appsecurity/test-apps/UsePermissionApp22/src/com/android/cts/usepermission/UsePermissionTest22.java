@@ -36,7 +36,6 @@ import java.util.Arrays;
  * Runtime permission behavior tests for apps targeting API 22
  */
 public class UsePermissionTest22 extends BasePermissionsTest {
-    private static final int REQUEST_CODE_PERMISSIONS = 42;
 
     private final Context mContext = getInstrumentation().getContext();
 
@@ -137,11 +136,9 @@ public class UsePermissionTest22 extends BasePermissionsTest {
     public void testNoRuntimePrompt() throws Exception {
         // Request the permission and do nothing
         BasePermissionActivity.Result result = requestPermissions(
-                new String[] {Manifest.permission.SEND_SMS}, REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class, null);
+                new String[]{Manifest.permission.SEND_SMS}, null);
 
         // Expect the permission is not granted
-        assertEquals(REQUEST_CODE_PERMISSIONS, result.requestCode);
         assertTrue(Arrays.equals(result.permissions, new String[0]));
         assertTrue(Arrays.equals(result.grantResults, new int[0]));
     }

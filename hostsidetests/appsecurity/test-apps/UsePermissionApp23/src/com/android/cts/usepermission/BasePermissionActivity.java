@@ -20,23 +20,33 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.WindowManager;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BasePermissionActivity extends Activity {
     private static final long OPERATION_TIMEOUT_MILLIS = 5000;
 
-    private final SynchronousQueue<Result> mResult = new SynchronousQueue<>();
+    /**
+     * Static to ensure correct behavior if {@link Activity} instance was recreated before
+     * result delivery.
+     *
+     * requestCode -> Future<Result>
+     */
+    private static Map<Integer, CompletableFuture<Result>> sPendingResults =
+            new ConcurrentHashMap<>();
+    private static AtomicInteger sNextRequestCode = new AtomicInteger(0);
+
     private final CountDownLatch mOnCreateSync = new CountDownLatch(1);
 
     public static class Result {
-        public final int requestCode;
         public final String[] permissions;
         public final int[] grantResults;
 
-        public Result(int requestCode, String[] permissions, int[] grantResults) {
-            this.requestCode = requestCode;
+        public Result(String[] permissions, int[] grantResults) {
             this.permissions = permissions;
             this.grantResults = grantResults;
         }
@@ -53,27 +63,23 @@ public class BasePermissionActivity extends Activity {
         mOnCreateSync.countDown();
     }
 
+    public CompletableFuture<Result> requestPermissions(String[] permissions) {
+        int requestCode = sNextRequestCode.getAndIncrement();
+        CompletableFuture<Result> future = new CompletableFuture<>();
+        sPendingResults.put(requestCode, future);
+        requestPermissions(permissions, requestCode);
+        return future;
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
             int[] grantResults) {
-        try {
-            mResult.offer(new Result(requestCode, permissions, grantResults), 5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        sPendingResults.get(requestCode).complete(new Result(permissions, grantResults));
     }
 
     public void waitForOnCreate() {
         try {
             mOnCreateSync.await(OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Result getResult() {
-        try {
-            return mResult.poll(OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

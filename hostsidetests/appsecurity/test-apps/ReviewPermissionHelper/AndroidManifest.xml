@@ -19,7 +19,7 @@
         package="com.android.cts.reviewpermissionhelper">
 
     <application>
-        <activity android:name=".ActivityStarter" />
+        <activity android:name="com.android.compatibility.common.util.FutureResultActivity" />
         <uses-library android:name="android.test.runner" />
     </application>
 

@@ -30,10 +30,6 @@ import android.provider.CalendarContract;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.ExceptionUtils;
-import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.UiDumpUtils;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,7 +40,6 @@ import java.util.Arrays;
  * Runtime permission behavior tests for apps targeting API 23
  */
 public class UsePermissionTest23 extends BasePermissionsTest {
-    private static final int REQUEST_CODE_PERMISSIONS = 42;
 
     private final Context mContext = getInstrumentation().getContext();
 
@@ -108,17 +103,13 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         }
 
         // Go through normal grant flow
-        BasePermissionActivity.Result result = requestPermissions(new String[] {
+        BasePermissionActivity.Result result = requestPermissions(new String[]{
                 Manifest.permission.READ_CALENDAR,
-                Manifest.permission.WRITE_CALENDAR},
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    clickAllowButton();
-                    getUiDevice().waitForIdle();
-                });
+                Manifest.permission.WRITE_CALENDAR}, () -> {
+            clickAllowButton();
+            getUiDevice().waitForIdle();
+        });
 
-        assertEquals(REQUEST_CODE_PERMISSIONS, result.requestCode);
         assertEquals(Manifest.permission.READ_CALENDAR, result.permissions[0]);
         assertEquals(Manifest.permission.WRITE_CALENDAR, result.permissions[1]);
         assertEquals(PackageManager.PERMISSION_GRANTED, result.grantResults[0]);
@@ -146,17 +137,13 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {Manifest.permission.WRITE_CONTACTS};
 
         // request only one permission from the 'contacts' permission group
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    clickAllowButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
+            clickAllowButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {true});
+        assertPermissionRequestResult(result, permissions, new boolean[] {true});
 
         // Make sure no undeclared as used permissions are granted
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
@@ -176,17 +163,13 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         // request only one permission from the 'SMS' permission group at runtime,
         // but two from this group are <uses-permission> in the manifest
         // request only one permission from the 'contacts' permission group
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    clickAllowButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
+            clickAllowButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {true});
+        assertPermissionRequestResult(result, permissions, new boolean[] {true});
 
         // We should now have been granted both of the permissions from this group.
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
@@ -202,17 +185,13 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {Manifest.permission.WRITE_CONTACTS};
 
         // Request the permission and cancel the request
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    clickDenyButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
+            clickDenyButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(result, permissions, new boolean[] {false});
     }
 
     @Test
@@ -224,25 +203,20 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {Manifest.permission.WRITE_CONTACTS};
 
         // Request the permission and allow it
-        BasePermissionActivity.Result firstResult = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class, () -> {
-                    clickAllowButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result firstResult = requestPermissions(permissions, () -> {
+            clickAllowButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is granted
-        assertPermissionRequestResult(firstResult, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {true});
+        assertPermissionRequestResult(firstResult, permissions, new boolean[] {true});
 
         // Request the permission and do nothing
-        BasePermissionActivity.Result secondResult = requestPermissions(new String[] {
-                Manifest.permission.WRITE_CONTACTS}, REQUEST_CODE_PERMISSIONS + 1,
-                BasePermissionActivity.class, null);
+        BasePermissionActivity.Result secondResult = requestPermissions(new String[]{
+                Manifest.permission.WRITE_CONTACTS}, null);
 
         // Expect the permission is granted
-        assertPermissionRequestResult(secondResult, REQUEST_CODE_PERMISSIONS + 1,
-                permissions, new boolean[] {true});
+        assertPermissionRequestResult(secondResult, permissions, new boolean[] {true});
     }
 
     @Test
@@ -254,37 +228,30 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {Manifest.permission.WRITE_CONTACTS};
 
         // Request the permission and deny it
-        BasePermissionActivity.Result firstResult = requestPermissions(
-                permissions, REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class, () -> {
-                    clickDenyButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result firstResult = requestPermissions(permissions, () -> {
+            clickDenyButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(firstResult, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(firstResult, permissions, new boolean[] {false});
 
         // Request the permission and choose don't ask again
-        BasePermissionActivity.Result secondResult = requestPermissions(new String[] {
-                        Manifest.permission.WRITE_CONTACTS}, REQUEST_CODE_PERMISSIONS + 1,
-                BasePermissionActivity.class, () -> {
-                    denyWithPrejudice();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result secondResult = requestPermissions(new String[]{
+                Manifest.permission.WRITE_CONTACTS}, () -> {
+            denyWithPrejudice();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(secondResult, REQUEST_CODE_PERMISSIONS + 1,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(secondResult, permissions, new boolean[] {false});
 
         // Request the permission and do nothing
-        BasePermissionActivity.Result thirdResult = requestPermissions(new String[] {
-                        Manifest.permission.WRITE_CONTACTS}, REQUEST_CODE_PERMISSIONS + 2,
-                BasePermissionActivity.class, null);
+        BasePermissionActivity.Result thirdResult = requestPermissions(new String[]{
+                Manifest.permission.WRITE_CONTACTS}, null);
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(thirdResult, REQUEST_CODE_PERMISSIONS + 2,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(thirdResult, permissions, new boolean[] {false});
     }
 
     @Test
@@ -322,28 +289,23 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {Manifest.permission.READ_CALENDAR};
 
         // Request the permission and deny it
-        BasePermissionActivity.Result firstResult = requestPermissions(
-                permissions, REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class, () -> {
-                    clickDenyButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result firstResult = requestPermissions(permissions, () -> {
+            clickDenyButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(firstResult, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(firstResult, permissions, new boolean[] {false});
 
         // Request the permission and choose don't ask again
-        BasePermissionActivity.Result secondResult = requestPermissions(new String[] {
-                        Manifest.permission.READ_CALENDAR}, REQUEST_CODE_PERMISSIONS + 1,
-                BasePermissionActivity.class, () -> {
-                    denyWithPrejudice();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result secondResult = requestPermissions(new String[]{
+                Manifest.permission.READ_CALENDAR}, () -> {
+            denyWithPrejudice();
+            getUiDevice().waitForIdle();
+        });
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(secondResult, REQUEST_CODE_PERMISSIONS + 1,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(secondResult, permissions, new boolean[] {false});
 
         // Clear the denial with prejudice
         grantPermission(Manifest.permission.READ_CALENDAR);
@@ -359,16 +321,15 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 .checkSelfPermission(Manifest.permission.READ_CALENDAR));
 
         // Request the permission and allow it
-        BasePermissionActivity.Result thirdResult = requestPermissions(new String[] {
-                        Manifest.permission.READ_CALENDAR}, REQUEST_CODE_PERMISSIONS + 2,
-                BasePermissionActivity.class, () -> {
-                    clickAllowButton();
-                    getUiDevice().waitForIdle();
-                });
+        BasePermissionActivity.Result thirdResult = requestPermissions(new String[]{
+                Manifest.permission.READ_CALENDAR}, () -> {
+            clickAllowButton();
+            getUiDevice().waitForIdle();
+        });
 
         // Make sure the permission is granted
-        assertPermissionRequestResult(thirdResult, REQUEST_CODE_PERMISSIONS + 2,
-                new String[] {Manifest.permission.READ_CALENDAR}, new boolean[] {true});
+        assertPermissionRequestResult(thirdResult, new String[] {Manifest.permission.READ_CALENDAR},
+                new boolean[] {true});
     }
 
     @Test
@@ -380,12 +341,10 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {Manifest.permission.BIND_PRINT_SERVICE};
 
         // Request the permission and do nothing
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS, BasePermissionActivity.class, null);
+        BasePermissionActivity.Result result = requestPermissions(permissions, null);
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(result, permissions, new boolean[] {false});
     }
 
     @Test
@@ -397,12 +356,10 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         String[] permissions = new String[] {"permission.does.not.exist"};
 
         // Request the permission and do nothing
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS, BasePermissionActivity.class, null);
+        BasePermissionActivity.Result result = requestPermissions(permissions, null);
 
         // Expect the permission is not granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(result, permissions, new boolean[] {false});
     }
 
     @Test
@@ -419,8 +376,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         };
 
         // Request the permission and allow it
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS, BasePermissionActivity.class, () -> {
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
             try {
                 clickAllowButton();
                 getUiDevice().waitForIdle();
@@ -432,8 +388,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         });
 
         // Expect the permission are reported as granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {true, true});
+        assertPermissionRequestResult(result, permissions, new boolean[] {true, true});
 
         // The permissions are granted
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
@@ -497,20 +452,19 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 .checkSelfPermission(Manifest.permission.READ_CALENDAR));
 
         // Request the permission and allow it
-        BasePermissionActivity.Result thirdResult = requestPermissions(new String[] {
-                        Manifest.permission.READ_CALENDAR}, REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class, () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        BasePermissionActivity.Result thirdResult = requestPermissions(new String[]{
+                Manifest.permission.READ_CALENDAR}, () -> {
+            try {
+                clickAllowButton();
+                getUiDevice().waitForIdle();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         // Make sure the permission is granted
-        assertPermissionRequestResult(thirdResult, REQUEST_CODE_PERMISSIONS,
-                new String[] {Manifest.permission.READ_CALENDAR}, new boolean[] {true});
+        assertPermissionRequestResult(thirdResult, new String[] {Manifest.permission.READ_CALENDAR},
+                new boolean[] {true});
     }
 
     @Test
@@ -534,12 +488,9 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
         // Go through normal grant flow
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
                 () -> { /* empty */ });
 
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(result, permissions, new boolean[] {false});
     }
 
     @Test
@@ -558,21 +509,19 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         };
 
         // Request the permission and allow it
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS, BasePermissionActivity.class, () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
+            try {
+                clickAllowButton();
+                getUiDevice().waitForIdle();
+                clickAllowButton();
+                getUiDevice().waitForIdle();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         // Expect the permission are reported as granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false, true, false, true});
+        assertPermissionRequestResult(result, permissions, new boolean[] {false, true, false, true});
 
         // The permissions are granted
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
@@ -589,13 +538,10 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
         // Request the permission and allow it
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
                 () -> { /* empty */ });
 
         // Expect the permissions is not granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[] {false});
+        assertPermissionRequestResult(result, permissions, new boolean[] {false});
     }
 
     private void assertAllPermissionsRevoked() {
