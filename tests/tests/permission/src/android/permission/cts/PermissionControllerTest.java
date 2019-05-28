@@ -19,7 +19,9 @@ package android.permission.cts;
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.BODY_SENSORS;
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.WRITE_CALENDAR;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.permissionToOp;
@@ -27,13 +29,18 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.permission.PermissionControllerManager.REASON_INSTALLER_POLICY_VIOLATION;
 import static android.permission.PermissionControllerManager.REASON_MALWARE;
 
+import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.pm.PermissionGroupInfo;
 import android.permission.PermissionControllerManager;
+import android.permission.RuntimePermissionPresentationInfo;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.annotation.NonNull;
@@ -47,9 +54,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,6 +72,12 @@ public class PermissionControllerTest {
     private static final String APK =
             "/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk";
     private static final String APP = "android.permission.cts.appthataccesseslocation";
+    private static final String APK2 =
+            "/data/local/tmp/cts/permissions/"
+                    + "CtsAppThatRequestsCalendarContactsBodySensorCustomPermission.apk";
+    private static final String APP2 = "android.permission.cts.appthatrequestcustompermission";
+    private static final String CUSTOM_PERMISSION =
+            "android.permission.cts.appthatrequestcustompermission.TEST_PERMISSION";
 
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -79,17 +94,18 @@ public class PermissionControllerTest {
     @BeforeClass
     public static void installApp() {
         runShellCommand("pm install -r -g " + APK);
+        runShellCommand("pm install -r " + APK2);
     }
 
     @AfterClass
     public static void uninstallApp() {
         runShellCommand("pm uninstall " + APP);
+        runShellCommand("pm uninstall " + APP2);
     }
 
     @Before
     public void setup() throws Exception {
-        sUiAutomation.adoptShellPermissionIdentity();
-        resetAppState();
+        runWithShellPermissionIdentity(() -> resetAppState());
     }
 
     private @NonNull Map<String, List<String>> revoke(@NonNull Map<String, List<String>> request,
@@ -118,8 +134,19 @@ public class PermissionControllerTest {
     }
 
     private @NonNull Map<String, List<String>> revoke(@NonNull Map<String, List<String>> request,
-            boolean doDryRun) throws Exception {
+            boolean doDryRun, boolean adoptShell) throws Exception {
+        if (adoptShell) {
+            Map<String, List<String>> revokeRet =
+                    callWithShellPermissionIdentity(() -> revoke(
+                            request, doDryRun, REASON_MALWARE, sContext.getMainExecutor()));
+            return revokeRet;
+        }
         return revoke(request, doDryRun, REASON_MALWARE, sContext.getMainExecutor());
+    }
+
+    private @NonNull Map<String, List<String>> revoke(@NonNull Map<String, List<String>> request,
+            boolean doDryRun) throws Exception {
+        return revoke(request, doDryRun, true);
     }
 
     private void setAppOp(@NonNull String pkg, @NonNull String perm, int mode) throws Exception {
@@ -156,11 +183,12 @@ public class PermissionControllerTest {
     @Test
     public void doNotRevokeAlreadyRevokedPermission() throws Exception {
         // Properly revoke the permission
-        sUiAutomation.revokeRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
-        setAppOp(APP, ACCESS_FINE_LOCATION, MODE_FOREGROUND);
+        runWithShellPermissionIdentity(() -> {
+            sUiAutomation.revokeRuntimePermission(APP, ACCESS_BACKGROUND_LOCATION);
+            setAppOp(APP, ACCESS_FINE_LOCATION, MODE_FOREGROUND);
+        });
 
         Map<String, List<String>> request = buildRequest(APP, ACCESS_BACKGROUND_LOCATION);
-
         Map<String, List<String>> result = revoke(request, false);
 
         assertThat(result).isEmpty();
@@ -208,10 +236,8 @@ public class PermissionControllerTest {
     @Test
     public void revokePolicyViolationFromWrongPackage() throws Exception {
         Map<String, List<String>> request = buildRequest(APP, ACCESS_FINE_LOCATION);
-
-        Map<String, List<String>> result = revoke(request, false,
-                REASON_INSTALLER_POLICY_VIOLATION, sContext.getMainExecutor());
-
+        Map<String, List<String>> result = callWithShellPermissionIdentity(() -> revoke(request,
+                false, REASON_INSTALLER_POLICY_VIOLATION, sContext.getMainExecutor()));
         assertThat(result).isEmpty();
     }
 
@@ -220,10 +246,11 @@ public class PermissionControllerTest {
         Map<String, List<String>> request = buildRequest(APP, ACCESS_BACKGROUND_LOCATION);
 
         AtomicBoolean wasRunOnExecutor = new AtomicBoolean();
-        revoke(request, true, REASON_MALWARE, command -> {
-            wasRunOnExecutor.set(true);
-            command.run();
-        });
+        runWithShellPermissionIdentity(() ->
+                revoke(request, true, REASON_MALWARE, command -> {
+                    wasRunOnExecutor.set(true);
+                    command.run();
+                }));
 
         assertThat(wasRunOnExecutor.get()).isTrue();
     }
@@ -285,20 +312,140 @@ public class PermissionControllerTest {
 
     @Test(expected = SecurityException.class)
     public void tryToRevokeWithoutPermission() throws Exception {
-        sUiAutomation.dropShellPermissionIdentity();
-        try {
-            Map<String, List<String>> request = buildRequest(APP, ACCESS_BACKGROUND_LOCATION);
+        Map<String, List<String>> request = buildRequest(APP, ACCESS_BACKGROUND_LOCATION);
 
-            // This will fail as the test-app does not have the required permission
-            revoke(request, true);
+        // This will fail as the test-app does not have the required permission
+        revoke(request, true, false);
+    }
+
+    @Test
+    public void runtimePermissionPresentationInfoLocationApp() throws java.lang.Exception {
+        CompletableFuture<List<RuntimePermissionPresentationInfo>> futurePermissionInfos =
+                new CompletableFuture<>();
+
+        List<String> runtimePermissions;
+        List<RuntimePermissionPresentationInfo> permissionInfos;
+
+        sUiAutomation.adoptShellPermissionIdentity();
+        try {
+            sController.getAppPermissions(APP, futurePermissionInfos::complete, null);
+            runtimePermissions = PermissionUtils.getRuntimePermissions(APP);
+            assertThat(runtimePermissions).isNotEmpty();
+            permissionInfos = futurePermissionInfos.get();
         } finally {
-            sUiAutomation.adoptShellPermissionIdentity();
+            sUiAutomation.dropShellPermissionIdentity();
         }
+
+        assertRuntimePermissionLabelsAreValid(runtimePermissions, permissionInfos, 3, APP);
+    }
+
+    private void assertRuntimePermissionLabelsAreValid(List<String> runtimePermissions,
+            List<RuntimePermissionPresentationInfo> permissionInfos, int expectedRuntimeGranted,
+            String app) throws Exception {
+        int numRuntimeGranted = 0;
+        for (String permission : runtimePermissions) {
+            if (PermissionUtils.isPermissionGranted(app, permission)) {
+                numRuntimeGranted++;
+            }
+        }
+        assertThat(numRuntimeGranted).isEqualTo(expectedRuntimeGranted);
+
+        ArrayList<CharSequence> maybeStandardPermissionLabels = new ArrayList<>();
+        ArrayList<CharSequence> nonStandardPermissionLabels = new ArrayList<>();
+        for (PermissionGroupInfo permGroup : sContext.getPackageManager().getAllPermissionGroups(
+                0)) {
+            CharSequence permissionGroupLabel = permGroup.loadLabel(sContext.getPackageManager());
+            if (permGroup.packageName.equals("android")) {
+                maybeStandardPermissionLabels.add(permissionGroupLabel);
+            } else {
+                nonStandardPermissionLabels.add(permissionGroupLabel);
+            }
+        }
+
+        int numInfosGranted = 0;
+
+        for (RuntimePermissionPresentationInfo permissionInfo : permissionInfos) {
+            CharSequence permissionGroupLabel = permissionInfo.getLabel();
+
+            // PermissionInfo should be included in exactly one of existing (possibly) standard
+            // or nonstandard permission groups
+            if (permissionInfo.isStandard()) {
+                assertThat(maybeStandardPermissionLabels).contains(permissionGroupLabel);
+            } else {
+                assertThat(nonStandardPermissionLabels).contains(permissionGroupLabel);
+            }
+            if (permissionInfo.isGranted()) {
+                numInfosGranted++;
+            }
+        }
+
+        // Each permissionInfo represents one or more runtime permissions, but we don't have a
+        // mapping, so we check that we have at least as many runtimePermissions as permissionInfos
+        assertThat(numRuntimeGranted).isAtLeast(numInfosGranted);
+    }
+
+    @Test
+    public void runtimePermissionPresentationInfoCustomApp() throws java.lang.Exception {
+        CompletableFuture<List<RuntimePermissionPresentationInfo>> futurePermissionInfos =
+                new CompletableFuture<>();
+
+        // Grant all requested permissions except READ_CALENDAR
+        sUiAutomation.grantRuntimePermission(APP2, CUSTOM_PERMISSION);
+        PermissionUtils.grantPermission(APP2, BODY_SENSORS);
+        PermissionUtils.grantPermission(APP2, READ_CONTACTS);
+        PermissionUtils.grantPermission(APP2, WRITE_CALENDAR);
+
+        List<String> runtimePermissions;
+        List<RuntimePermissionPresentationInfo> permissionInfos;
+        sUiAutomation.adoptShellPermissionIdentity();
+        try {
+            sController.getAppPermissions(APP2, futurePermissionInfos::complete, null);
+            runtimePermissions = PermissionUtils.getRuntimePermissions(APP2);
+
+            permissionInfos = futurePermissionInfos.get();
+        } finally {
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+
+        assertThat(permissionInfos).isNotEmpty();
+        assertThat(runtimePermissions.size()).isEqualTo(5);
+        assertRuntimePermissionLabelsAreValid(runtimePermissions, permissionInfos, 4, APP2);
+    }
+
+    @Test
+    public void runtimePermissionLabelSet() {
+        assertThat(new RuntimePermissionPresentationInfo("test", true,
+                true).getLabel()).isEqualTo("test");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void runtimePermissionLabelSetNull() {
+        RuntimePermissionPresentationInfo info = new RuntimePermissionPresentationInfo(null, true,
+                true);
+    }
+
+    @Test
+    public void runtimePermissionGrantedCanBeTrue() {
+        assertThat(new RuntimePermissionPresentationInfo("", true, true).isGranted()).isTrue();
+    }
+
+    @Test
+    public void runtimePermissionGrantedCanBeFalse() {
+        assertThat(new RuntimePermissionPresentationInfo("", false, true).isGranted()).isFalse();
+    }
+
+    @Test
+    public void runtimePermissionStandardCanBeTrue() {
+        assertThat(new RuntimePermissionPresentationInfo("", true, true).isStandard()).isTrue();
+    }
+
+    @Test
+    public void runtimePermissionStandardCanBeFalse() {
+        assertThat(new RuntimePermissionPresentationInfo("", true, false).isStandard()).isFalse();
     }
 
     @After
     public void dropShellPermissions() throws Exception {
-        resetAppState();
-        sUiAutomation.dropShellPermissionIdentity();
+        runWithShellPermissionIdentity(() -> resetAppState());
     }
 }
