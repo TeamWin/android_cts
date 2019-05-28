@@ -1439,42 +1439,6 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
         </activity>
 
-        <activity android:name=".location.EmergencyCallWifiTestsActivity"
-            android:label="@string/location_emergency_call_wifi_test"
-            android:screenOrientation="locked">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features"
-                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
-        </activity>
-
-        <activity android:name=".location.EmergencyCallMessageTestsActivity"
-            android:label="@string/location_emergency_call_message_test"
-            android:screenOrientation="locked">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features"
-                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
-        </activity>
-
-        <activity android:name=".location.EmergencyCallGNSSTestsActivity"
-            android:label="@string/location_emergency_call_gps_test"
-            android:screenOrientation="locked">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features"
-                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
-        </activity>
-
         <activity android:name=".location.GnssMeasurementWhenNoLocationTestsActivity"
             android:label="@string/location_gnss_measure_no_location_test"
             android:screenOrientation="locked">
