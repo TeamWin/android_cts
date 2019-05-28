@@ -34,14 +34,6 @@ public class TextViewTest extends AssistTestBase {
     private static final String TAG = "TextViewTest";
     private static final String TEST_CASE_TYPE = Utils.TEXTVIEW;
 
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasResumedLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
-
-    public TextViewTest() {
-        super();
-    }
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -81,15 +73,15 @@ public class TextViewTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        mTestActivity.start3pApp(TEST_CASE_TYPE);
+        start3pApp(TEST_CASE_TYPE);
         scrollTestApp(0, 0, true, false);
 
         // Verify that the text view contains the right text
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch1 = startSession();
+        waitForContext(latch1);
         verifyAssistDataNullness(false, false, false, false);
 
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
@@ -98,26 +90,26 @@ public class TextViewTest extends AssistTestBase {
         // Verify that the scroll position of the text view is accurate after scrolling.
         scrollTestApp(10, 50, true /* scrollTextView */, false /* scrollScrollView */);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch2 = startSession();
+        waitForContext(latch2);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), false);
 
         scrollTestApp(-1, -1, true, false);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch3 = startSession();
+        waitForContext(latch3);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), false);
 
         scrollTestApp(0, 0, true, true);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch4 = startSession();
+        waitForContext(latch4);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), false);
 
         scrollTestApp(10, 50, false, true);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch5 = startSession();
+        waitForContext(latch5);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), false);
     }
 

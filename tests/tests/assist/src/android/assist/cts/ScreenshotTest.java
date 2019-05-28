@@ -34,16 +34,10 @@ public class ScreenshotTest extends AssistTestBase {
     private static final String TEST_CASE_TYPE = Utils.SCREENSHOT;
 
     private BroadcastReceiver mScreenshotActivityReceiver;
-    private CountDownLatch mHasResumedLatch, mReadyLatch;
-
-    public ScreenshotTest() {
-        super();
-    }
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mReadyLatch = new CountDownLatch(1);
         // set up receiver
         mScreenshotActivityReceiver = new ScreenshotTestReceiver();
         IntentFilter filter = new IntentFilter();
@@ -69,7 +63,7 @@ public class ScreenshotTest extends AssistTestBase {
             return;
         }
         Log.i(TAG, "Starting screenshot test");
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         Log.i(TAG, "start waitForAssistantToBeReady()");
         waitForAssistantToBeReady(mReadyLatch);
 
@@ -84,7 +78,7 @@ public class ScreenshotTest extends AssistTestBase {
             return;
         }
         Log.i(TAG, "Starting screenshot test");
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         Log.i(TAG, "start waitForAssistantToBeReady()");
         waitForAssistantToBeReady(mReadyLatch);
 
@@ -99,7 +93,7 @@ public class ScreenshotTest extends AssistTestBase {
             return;
         }
         Log.i(TAG, "Starting screenshot test");
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         Log.i(TAG, "start waitForAssistantToBeReady()");
         waitForAssistantToBeReady(mReadyLatch);
 
@@ -109,15 +103,14 @@ public class ScreenshotTest extends AssistTestBase {
     }
 
     private void waitForActivityResumeAndAssist(int color) throws Exception {
-        mHasResumedLatch = new CountDownLatch(1);
         Bundle extras = new Bundle();
         extras.putInt(Utils.SCREENSHOT_COLOR_KEY, color);
-        startSession(TEST_CASE_TYPE, extras);
+        final CountDownLatch latch = startSession(TEST_CASE_TYPE, extras);
         Log.i(TAG, "waiting for onResume() before continuing.");
         if (!mHasResumedLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             fail("activity failed to resume in " + Utils.ACTIVITY_ONRESUME_TIMEOUT_MS + "msec");
         }
-        waitForContext();
+        waitForContext(latch);
     }
 
     private class ScreenshotTestReceiver extends BroadcastReceiver {
