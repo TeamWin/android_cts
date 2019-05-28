@@ -30,6 +30,7 @@ import android.view.KeyEvent;
 import android.widget.Button;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -174,6 +175,7 @@ public class AlertDialogTest {
         assertTrue(mActivity.getDialog().isShowing());
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testCallback() {
         startDialogActivity(DialogStubActivity.TEST_ALERTDIALOG_CALLBACK);
@@ -201,6 +203,7 @@ public class AlertDialogTest {
         assertTrue(mActivity.onCancelCalled);
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testAlertDialogNotCancelable() throws Exception {
         startDialogActivity(DialogStubActivity.TEST_ALERTDIALOG_NOT_CANCELABLE);
