@@ -143,6 +143,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testLockScreenInfo() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         executeDeviceOwnerTest("LockScreenInfoTest");
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
@@ -152,7 +155,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testWifi() throws Exception {
-        if (!hasDeviceFeature("android.hardware.wifi")) {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
             return;
         }
         executeDeviceOwnerTest("WifiTest");
@@ -827,7 +830,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         // TODO(b/130210665): replace this with use of NotificationListenerService to dismiss the
         // bug report request
         rebootAndWaitUntilReady();
-
     }
 
     public void testBluetoothRestriction() throws Exception {
