@@ -96,8 +96,9 @@ public class PackageSignatureTest extends AndroidTestCase {
             // APK for an activity that collects information printed in the CTS report header
             "android.tests.devicesetup",
 
-            // Wifi test utility used by Tradefed...
+            // Test utilities used by Tradefed harness
             "com.android.tradefed.utils.wifi",
+            "android.tradefed.contentprovider",
 
             // Game used for CTS testing...
             "com.replica.replicaisland",
