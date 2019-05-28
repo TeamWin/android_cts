@@ -31,14 +31,6 @@ public class ExtraAssistDataTest extends AssistTestBase {
     private static final String TAG = "ExtraAssistDataTest";
     private static final String TEST_CASE_TYPE = Utils.EXTRA_ASSIST;
 
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasResumedLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
-
-    public ExtraAssistDataTest() {
-        super();
-    }
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -71,12 +63,12 @@ public class ExtraAssistDataTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
-        mTestActivity.start3pApp(TEST_CASE_TYPE);
+        start3pApp(TEST_CASE_TYPE);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
 
         Log.i(TAG, "assist bundle is: " + Utils.toBundleString(mAssistBundle));
