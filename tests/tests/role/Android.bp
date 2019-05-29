@@ -25,7 +25,6 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "truth-prebuilt",
-        "compatibility-device-util",
     ],
 
     test_suites: [
