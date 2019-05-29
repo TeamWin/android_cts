@@ -14,29 +14,35 @@
  * limitations under the License.
  */
 
-package android.packageinstaller.install.cts
+package com.android.compatibility.common.util
 
 import android.app.Activity
 import android.content.Intent
-import com.android.compatibility.common.util.PollingCheck
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-/** requestCode -> Future<resultCode> */
-private val requests = ConcurrentHashMap<Int, CompletableFuture<Int>>()
-private val nextRequestCode = AtomicInteger(0)
+/**
+ * An [Activity] that exposes a special [startActivityForResult],
+ * returning future resultCode as a [CompletableFuture]
+ */
+class FutureResultActivity : Activity() {
 
-internal fun doAndAwaitInstallConfirmDialog(act: () -> Unit): CompletableFuture<Int> {
-    val requestCode = nextRequestCode.get()
-    act()
-    PollingCheck.waitFor(TIMEOUT) {
-        nextRequestCode.get() >= requestCode + 1
+    companion object {
+
+        /** requestCode -> Future<resultCode> */
+        private val requests = ConcurrentHashMap<Int, CompletableFuture<Int>>()
+        private val nextRequestCode = AtomicInteger(0)
+
+        fun doAndAwaitStart(act: () -> Unit): CompletableFuture<Int> {
+            val requestCode = nextRequestCode.get()
+            act()
+            PollingCheck.waitFor(60_000) {
+                nextRequestCode.get() >= requestCode + 1
+            }
+            return requests[requestCode]!!
+        }
     }
-    return requests[requestCode]!!
-}
-
-class InstallConfirmDialogStarter : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         requests[requestCode]!!.complete(resultCode)

@@ -42,21 +42,17 @@ public class UsePermissionTest26 extends BasePermissionsTest {
         // request only one permission from the 'SMS' permission group at runtime,
         // but two from this group are <uses-permission> in the manifest
         // request only one permission from the 'contacts' permission group
-        BasePermissionActivity.Result result = requestPermissions(permissions,
-                REQUEST_CODE_PERMISSIONS,
-                BasePermissionActivity.class,
-                () -> {
-                    try {
-                        clickAllowButton();
-                        getUiDevice().waitForIdle();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
+            try {
+                clickAllowButton();
+                getUiDevice().waitForIdle();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         // Expect the permission is granted
-        assertPermissionRequestResult(result, REQUEST_CODE_PERMISSIONS,
-                permissions, new boolean[]{true});
+        assertPermissionRequestResult(result, permissions, new boolean[]{true});
 
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getTargetContext()
                 .checkSelfPermission(Manifest.permission.SEND_SMS));

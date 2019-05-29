@@ -21,6 +21,9 @@ import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -63,6 +66,8 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
@@ -87,11 +92,11 @@ public abstract class BasePermissionsTest {
     }
 
     protected static void assertPermissionRequestResult(BasePermissionActivity.Result result,
-            int requestCode, String[] permissions, boolean[] granted) {
-        assertEquals(requestCode, result.requestCode);
+            String[] permissions, boolean[] granted) {
         for (int i = 0; i < permissions.length; i++) {
             assertEquals(permissions[i], result.permissions[i]);
-            assertEquals(granted[i] ? PackageManager.PERMISSION_GRANTED
+            assertEquals(granted[i]
+                    ? PackageManager.PERMISSION_GRANTED
                     : PackageManager.PERMISSION_DENIED, result.grantResults[i]);
 
         }
@@ -273,18 +278,19 @@ public abstract class BasePermissionsTest {
     }
 
     protected BasePermissionActivity.Result requestPermissions(
-            String[] permissions, int requestCode, Class<?> clazz,
-            ThrowingRunnable postRequestAction)
+            String[] permissions, ThrowingRunnable postRequestAction)
             throws Exception {
         return ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
             // Start an activity
             BasePermissionActivity activity = (BasePermissionActivity) launchActivity(
-                    getInstrumentation().getTargetContext().getPackageName(), clazz, null);
+                    getInstrumentation().getTargetContext().getPackageName(),
+                    BasePermissionActivity.class, null);
 
             activity.waitForOnCreate();
 
             // Request the permissions
-            activity.requestPermissions(permissions, requestCode);
+            CompletableFuture<BasePermissionActivity.Result> futureResult =
+                    activity.requestPermissions(permissions);
 
             // Define a more conservative idle criteria
             getInstrumentation().getUiAutomation().waitForIdle(
@@ -295,7 +301,8 @@ public abstract class BasePermissionsTest {
                 postRequestAction.run();
             }
 
-            BasePermissionActivity.Result result = activity.getResult();
+            BasePermissionActivity.Result result =
+                    futureResult.get(GLOBAL_TIMEOUT_MILLIS, MILLISECONDS);
             activity.finish();
             return result;
         });

@@ -16,6 +16,7 @@
 package com.android.cts.managedprofile;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
@@ -72,39 +73,66 @@ public class DeviceIdentifiersTest extends BaseManagedProfileTest {
         // SecurityException when querying for device identifiers.
         TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
                 Context.TELEPHONY_SERVICE);
+        // Allow the APIs to also return null if the telephony feature is not supported.
+        boolean hasTelephonyFeature =
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
         try {
-            telephonyManager.getDeviceId();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
+            String deviceId = telephonyManager.getDeviceId();
+            if (hasTelephonyFeature) {
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
+            } else {
+                assertEquals(null, deviceId);
+            }
         } catch (SecurityException expected) {
         }
 
         try {
-            telephonyManager.getImei();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
+            String imei = telephonyManager.getImei();
+            if (hasTelephonyFeature) {
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
+            } else {
+                assertEquals(null, imei);
+            }
         } catch (SecurityException expected) {
         }
 
         try {
-            telephonyManager.getMeid();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
+            String meid = telephonyManager.getMeid();
+            if (hasTelephonyFeature) {
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
+            } else {
+                assertEquals(null, meid);
+            }
         } catch (SecurityException expected) {
         }
 
         try {
-            telephonyManager.getSubscriberId();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
+            String subscriberId = telephonyManager.getSubscriberId();
+            if (hasTelephonyFeature) {
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
+            } else {
+                assertEquals(null, subscriberId);
+            }
         } catch (SecurityException expected) {
         }
 
         try {
-            telephonyManager.getSimSerialNumber();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
+            String simSerialNumber = telephonyManager.getSimSerialNumber();
+            if (hasTelephonyFeature) {
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
+            } else {
+                assertEquals(null, simSerialNumber);
+            }
         } catch (SecurityException expected) {
         }
 
         try {
-            Build.getSerial();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "Build#getSerial"));
+            String serial = Build.getSerial();
+            if (hasTelephonyFeature) {
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "Build#getSerial"));
+            } else {
+              assertEquals(null, serial);
+            }
         } catch (SecurityException expected) {
         }
     }

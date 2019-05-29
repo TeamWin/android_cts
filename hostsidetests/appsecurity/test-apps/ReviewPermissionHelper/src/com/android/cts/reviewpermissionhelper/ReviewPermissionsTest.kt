@@ -32,11 +32,13 @@ import androidx.test.runner.AndroidJUnit4
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
+import com.android.compatibility.common.util.FutureResultActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
@@ -47,16 +49,22 @@ private const val USE_PERMISSION_PKG = "com.android.cts.usepermission"
 @RunWith(AndroidJUnit4::class)
 class ReviewPermissionsTest {
     @get:Rule
-    val activityStarter = ActivityTestRule(ActivityStarter::class.java)
+    val activityStarter = ActivityTestRule(FutureResultActivity::class.java)
 
     val instrumentation = InstrumentationRegistry.getInstrumentation()
     val uiDevice = UiDevice.getInstance(instrumentation)
 
-    fun startActivityInReviewedAp() {
+    fun startActivityInReviewedAp(): CompletableFuture<Int> {
         val startAutoClosingActivity = Intent()
         startAutoClosingActivity.component = ComponentName(USE_PERMISSION_PKG,
                 USE_PERMISSION_PKG + ".AutoClosingActivity")
-        activityStarter.activity.startActivityForResult(startAutoClosingActivity, 42)
+        return activityStarter.activity.startActivityForResult(startAutoClosingActivity)
+    }
+
+    private inline fun startActivityInReviewedAp(expectedResult: Int, runAfterStart: () -> Unit) {
+        val activityResult = startActivityInReviewedAp()
+        runAfterStart()
+        assertEquals(expectedResult, activityResult.get(UI_TIMEOUT, TimeUnit.MILLISECONDS))
     }
 
     fun clickContinue() {
@@ -66,24 +74,23 @@ class ReviewPermissionsTest {
 
     @Test
     fun approveReviewPermissions() {
-        startActivityInReviewedAp()
-        clickContinue()
-        assertEquals(RESULT_OK, installDialogResults.poll(UI_TIMEOUT, TimeUnit.MILLISECONDS))
+        startActivityInReviewedAp(expectedResult = RESULT_OK) {
+            clickContinue()
+        }
     }
 
     @Test
     fun cancelReviewPermissions() {
-        startActivityInReviewedAp()
-
-        uiDevice.wait(Until.findObject(
-                By.res("com.android.permissioncontroller:id/cancel_button")), UI_TIMEOUT).click()
-        assertEquals(RESULT_CANCELED, installDialogResults.poll(UI_TIMEOUT, TimeUnit.MILLISECONDS))
+        startActivityInReviewedAp(expectedResult = RESULT_CANCELED) {
+            uiDevice.wait(Until.findObject(
+                    By.res("com.android.permissioncontroller:id/cancel_button")), UI_TIMEOUT)
+                    .click()
+        }
     }
 
     @Test
     fun assertNoReviewPermissionsNeeded() {
-        startActivityInReviewedAp()
-        assertEquals(RESULT_OK, installDialogResults.poll(UI_TIMEOUT, TimeUnit.MILLISECONDS))
+        startActivityInReviewedAp(expectedResult = RESULT_OK) {}
     }
 
     @Test

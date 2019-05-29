@@ -38,6 +38,7 @@ import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
 import com.android.compatibility.common.util.AppOpsUtils
+import com.android.compatibility.common.util.FutureResultActivity
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -63,7 +64,7 @@ const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
 open class PackageInstallerTestBase {
     @get:Rule
-    val installDialogStarter = ActivityTestRule(InstallConfirmDialogStarter::class.java)
+    val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
 
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
@@ -144,7 +145,7 @@ open class PackageInstallerTestBase {
         }
 
         // Commit session
-        val dialog = doAndAwaitInstallConfirmDialog {
+        val dialog = FutureResultActivity.doAndAwaitStart {
             val pendingIntent = PendingIntent.getBroadcast(context, 0, Intent(INSTALL_ACTION_CB),
                     FLAG_UPDATE_CURRENT)
             session.commit(pendingIntent.intentSender)
