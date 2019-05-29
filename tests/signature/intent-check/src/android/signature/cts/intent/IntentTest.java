@@ -49,13 +49,13 @@ import java.util.Set;
 public class IntentTest {
 
     private static final String CURRENT_API_FILE =
-            CurrentApi.API_FILE_DIRECTORY + "/current.api";
+            CurrentApi.API_FILE_DIRECTORY + "/current.txt";
 
     private static final String SYSTEM_CURRENT_API_FILE =
-            CurrentApi.API_FILE_DIRECTORY + "/system-current.api";
+            CurrentApi.API_FILE_DIRECTORY + "/system-current.txt";
 
     private static final String SYSTEM_REMOVED_API_FILE =
-            CurrentApi.API_FILE_DIRECTORY + "/system-removed.api";
+            CurrentApi.API_FILE_DIRECTORY + "/system-removed.txt";
 
     private static final String TAG = IntentTest.class.getSimpleName();
 

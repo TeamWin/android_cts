@@ -19,8 +19,8 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsApacheHttpLegacy27ApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
-    current.api \
-    apache-http-legacy-current.api \
+    current.txt \
+    apache-http-legacy-current.txt \
 
 LOCAL_MIN_SDK_VERSION := 27
 
