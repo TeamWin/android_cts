@@ -20,6 +20,7 @@ android_test {
     java_resources:  [
         ":AtomicInstallTestAppAv1",
         ":AtomicInstallTestAppBv1",
+        ":AtomicInstallCorrupt"
     ],
     static_libs: [
         "androidx.test.runner",
@@ -31,6 +32,12 @@ android_test {
         "vts",
         "general-tests",
     ],
+}
+
+filegroup {
+    name: "AtomicInstallCorrupt",
+    srcs: ["testdata/apk/prebuilt/corrupt.apk"],
+    path: "testdata/apk/prebuilt"
 }
 
 android_test_helper_app {
