@@ -47,6 +47,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
             installRequiredApps(mSecondaryUserId);
             mCanTestMultiUser = true;
         }
+        waitForBroadcastIdle();
     }
 
     private void installRequiredApps(int userId)
