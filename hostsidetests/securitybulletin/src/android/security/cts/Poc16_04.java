@@ -50,4 +50,16 @@ public class Poc16_04 extends SecurityTestCase {
         assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> system_server <<<",
             logcatOut);
     }
+
+    /*
+     * b/26403627
+     */
+    @SecurityTest(minPatchLevel = "Poc16_04")
+    public void testPocCVE_2016_2413() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPoc("CVE-2016-2413", getDevice(), 60);
+        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(">>> /system/bin/mediaserver <<<" +
+                ".*?signal 11 \\(SIGSEGV\\)", logcat);
+    }
 }
