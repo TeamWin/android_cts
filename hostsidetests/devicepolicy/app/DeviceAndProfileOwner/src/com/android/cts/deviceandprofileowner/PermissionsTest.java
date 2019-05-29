@@ -48,6 +48,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     private static final String SIMPLE_PRE_M_APP_PACKAGE_NAME =
             "com.android.cts.launcherapps.simplepremapp";
     private static final String PERMISSION_NAME = "android.permission.READ_CONTACTS";
+    private static final String CUSTOM_PERM_A_NAME = "com.android.cts.permissionapp.permA";
+    private static final String CUSTOM_PERM_B_NAME = "com.android.cts.permissionapp.permB";
     private static final String DEVELOPMENT_PERMISSION = "android.permission.INTERACT_ACROSS_USERS";
 
     private static final String PERMISSIONS_ACTIVITY_NAME
@@ -159,6 +161,22 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         assertPermissionRequest(PackageManager.PERMISSION_GRANTED);
     }
 
+    public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted() throws Exception {
+        assertSetPermissionGrantState(DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED,
+                CUSTOM_PERM_A_NAME);
+        assertSetPermissionGrantState(DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED,
+                CUSTOM_PERM_B_NAME);
+
+        /*
+         * CUSTOM_PERM_A_NAME and CUSTOM_PERM_B_NAME are in the same permission group and one is
+         * granted the other one is not.
+         *
+         * It should not be possible to get the permission that was denied via policy granted by
+         * requesting it.
+         */
+        assertPermissionRequest(PackageManager.PERMISSION_DENIED, null, CUSTOM_PERM_B_NAME);
+    }
+
     @Suppress // Flakey.
     public void testPermissionPrompts() throws Exception {
         // register a crash watcher
@@ -252,16 +270,21 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void assertPermissionRequest(int expected, String buttonResource) throws Exception {
+        assertPermissionRequest(expected, buttonResource, PERMISSION_NAME);
+    }
+
+    private void assertPermissionRequest(int expected, String buttonResource, String permission)
+            throws Exception {
         Intent launchIntent = new Intent();
         launchIntent.setComponent(new ComponentName(PERMISSION_APP_PACKAGE_NAME,
                 PERMISSIONS_ACTIVITY_NAME));
-        launchIntent.putExtra(EXTRA_PERMISSION, PERMISSION_NAME);
+        launchIntent.putExtra(EXTRA_PERMISSION, permission);
         launchIntent.setAction(ACTION_REQUEST_PERMISSION);
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         mContext.startActivity(launchIntent);
         pressPermissionPromptButton(buttonResource);
         assertEquals(expected, mReceiver.waitForBroadcast());
-        assertEquals(expected, mPackageManager.checkPermission(PERMISSION_NAME,
+        assertEquals(expected, mPackageManager.checkPermission(permission,
                 PERMISSION_APP_PACKAGE_NAME));
     }
 
@@ -286,11 +309,14 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void assertSetPermissionGrantState(int value) throws Exception {
+        assertSetPermissionGrantState(value, PERMISSION_NAME);
+    }
+    private void assertSetPermissionGrantState(int value, String permission) throws Exception {
         mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, PERMISSION_NAME,
+                PERMISSION_APP_PACKAGE_NAME, permission,
                 value);
         assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, PERMISSION_NAME),
+                PERMISSION_APP_PACKAGE_NAME, permission),
                 value);
     }
 
