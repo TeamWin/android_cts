@@ -23,7 +23,7 @@
         <option name="teardown-command" value="rm -rf /data/local/tmp/signature-test" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="shared-libs-all.api.zip->/data/local/tmp/signature-test/shared-libs-all.api.zip" />
+        <option name="push" value="shared-libs-all.txt.zip->/data/local/tmp/signature-test/shared-libs-all.txt.zip" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
@@ -33,7 +33,7 @@
         <option name="package" value="android.signature.cts.api.shared_libs" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.SignatureMultiLibsTest" />
-        <option name="instrumentation-arg" key="expected-api-files" value="shared-libs-all.api.zip" />
+        <option name="instrumentation-arg" key="expected-api-files" value="shared-libs-all.txt.zip" />
         <option name="runtime-hint" value="30s" />
     </test>
 </configuration>
