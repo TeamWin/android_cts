@@ -32,10 +32,8 @@ public class FocusChangeTest extends AssistTestBase {
     private static final String TAG = "FocusChangeTest";
     private static final String TEST_CASE_TYPE = Utils.FOCUS_CHANGE;
 
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasGainedFocusLatch = new CountDownLatch(1);
-    private CountDownLatch mHasLostFocusLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
+    private final CountDownLatch mHasGainedFocusLatch = new CountDownLatch(1);
+    private final CountDownLatch mHasLostFocusLatch = new CountDownLatch(1);
 
     @Override
     public void setUp() throws Exception {
@@ -85,9 +83,9 @@ public class FocusChangeTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        mTestActivity.startTest(Utils.FOCUS_CHANGE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
-        mTestActivity.start3pApp(Utils.FOCUS_CHANGE);
+        start3pApp(TEST_CASE_TYPE);
         waitToGainFocus();
         startSession();
         waitToLoseFocus();

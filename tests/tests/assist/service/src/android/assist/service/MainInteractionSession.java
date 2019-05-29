@@ -28,13 +28,13 @@ import android.graphics.Color;
 
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.RemoteCallback;
 import android.service.voice.VoiceInteractionSession;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Display;
 import android.view.ViewTreeObserver;
 
 import java.io.ByteArrayOutputStream;
@@ -55,10 +55,10 @@ public class MainInteractionSession extends VoiceInteractionSession {
     private int mCurColor;
     private int mDisplayHeight;
     private int mDisplayWidth;
-    private Bitmap mScreenshot;
     private BroadcastReceiver mReceiver;
     private String mTestName;
     private View mContentView;
+    private RemoteCallback mContextReadyCallback;
 
     MainInteractionSession(Context context) {
         super(context);
@@ -109,6 +109,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
         mCurColor = args.getInt(Utils.SCREENSHOT_COLOR_KEY);
         mDisplayHeight = args.getInt(Utils.DISPLAY_HEIGHT_KEY);
         mDisplayWidth = args.getInt(Utils.DISPLAY_WIDTH_KEY);
+        mContextReadyCallback = args.getParcelable(Utils.EXTRA_CALLBACK_CONTEXT_READY);
         super.onShow(args, showFlags);
         if (mContentView == null) return; // Happens when ui is not enabled.
         mContentView.getViewTreeObserver().addOnPreDrawListener(
@@ -214,11 +215,17 @@ public class MainInteractionSession extends VoiceInteractionSession {
         } else if (!hasReceivedScreenshot) {
             Log.i(TAG, "waiting for screenshot before broadcasting results");
         } else {
-            Intent intent = new Intent(Utils.BROADCAST_ASSIST_DATA_INTENT);
-            intent.putExtras(mAssistData);
-            Log.i(TAG,
-                    "broadcasting: " + intent.toString() + ", Bundle = " + mAssistData.toString());
-            mContext.sendBroadcast(intent);
+            if (mContextReadyCallback != null) {
+                Log.i(TAG, "maybeBroadcastResults(): calling callback " + mContextReadyCallback);
+                mContextReadyCallback.sendResult(mAssistData);
+            } else {
+                // TODO(b/133431034): should only use callbacks
+                Log.w(TAG, "maybeBroadcastResults(): no callback; broadcasting instead");
+                Intent intent = new Intent(Utils.BROADCAST_ASSIST_DATA_INTENT);
+                intent.putExtras(mAssistData);
+                Log.i(TAG, "broadcasting: " + intent+ ", Bundle = " + mAssistData);
+                mContext.sendBroadcast(intent);
+            }
 
             hasReceivedAssistData = false;
             hasReceivedScreenshot = false;
