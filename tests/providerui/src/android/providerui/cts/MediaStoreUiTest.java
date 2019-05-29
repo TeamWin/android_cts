@@ -25,13 +25,17 @@ import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
-import static android.media.MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO;
-import static android.media.MediaMetadataRetriever.METADATA_KEY_LOCATION;
-import static android.media.MediaMetadataRetriever.METADATA_KEY_DURATION;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.UriPermission;
@@ -40,11 +44,11 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
+import android.content.res.AssetFileDescriptor;
 import android.media.ExifInterface;
-import android.media.MediaMetadataRetriever;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.os.storage.StorageManager;
@@ -57,7 +61,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
-import android.test.InstrumentationTestCase;
+import android.system.Os;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -65,26 +69,39 @@ import android.view.KeyEvent;
 import androidx.core.content.FileProvider;
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
-public class MediaStoreUiTest extends InstrumentationTestCase {
+@RunWith(Parameterized.class)
+public class MediaStoreUiTest {
     private static final String TAG = "MediaStoreUiTest";
 
     private static final int REQUEST_CODE = 42;
-    private static final String CONTENT = "Test";
 
+    private Instrumentation mInstrumentation;
+    private Context mContext;
     private UiDevice mDevice;
     private GetResultActivity mActivity;
 
@@ -92,16 +109,28 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
     private Uri mMediaStoreUri;
     private String mTargetPackageName;
 
-    @Override
-    public void setUp() throws Exception {
-        mDevice = UiDevice.getInstance(getInstrumentation());
+    @Parameter(0)
+    public String mVolumeName;
 
-        final Context context = getInstrumentation().getContext();
-        mActivity = launchActivity(context.getPackageName(), GetResultActivity.class, null);
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return MediaStore.getExternalVolumeNames(InstrumentationRegistry.getTargetContext());
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = InstrumentationRegistry.getTargetContext();
+        mDevice = UiDevice.getInstance(mInstrumentation);
+
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mActivity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
         mActivity.clearResult();
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         if (mFile != null) {
             mFile.delete();
@@ -118,6 +147,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         mActivity.finish();
     }
 
+    @Test
     public void testGetDocumentUri() throws Exception {
         if (!supportsHardware()) return;
 
@@ -130,20 +160,22 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         assertNotNull(docUri);
 
         final ContentResolver resolver = mActivity.getContentResolver();
-        try (ParcelFileDescriptor fd = resolver.openFileDescriptor(docUri, "rw")) {
-            // Test reading
-            try (final BufferedReader reader =
-                         new BufferedReader(new FileReader(fd.getFileDescriptor()))) {
-                assertEquals(CONTENT, reader.readLine());
-            }
 
-            // Test writing
-            try (final OutputStream out = new FileOutputStream(fd.getFileDescriptor())) {
-                out.write(CONTENT.getBytes());
-            }
+        // Test reading
+        final byte[] expected = "TEST".getBytes();
+        final byte[] actual = new byte[4];
+        try (ParcelFileDescriptor fd = resolver.openFileDescriptor(docUri, "r")) {
+            Os.read(fd.getFileDescriptor(), actual, 0, actual.length);
+            assertArrayEquals(expected, actual);
+        }
+
+        // Test writing
+        try (ParcelFileDescriptor fd = resolver.openFileDescriptor(docUri, "wt")) {
+            Os.write(fd.getFileDescriptor(), expected, 0, expected.length);
         }
     }
 
+    @Test
     public void testGetDocumentUri_ThrowsWithoutPermission() throws Exception {
         if (!supportsHardware()) return;
 
@@ -157,18 +189,22 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetDocumentUri_Symmetry() throws Exception {
         if (!supportsHardware()) return;
 
         prepareFile();
 
         final Uri treeUri = acquireAccess(mFile, Environment.DIRECTORY_DOCUMENTS);
+        Log.v(TAG, "Tree " + treeUri);
         assertNotNull(treeUri);
 
         final Uri docUri = MediaStore.getDocumentUri(mActivity, mMediaStoreUri);
+        Log.v(TAG, "Document " + docUri);
         assertNotNull(docUri);
 
         final Uri mediaUri = MediaStore.getMediaUri(mActivity, docUri);
+        Log.v(TAG, "Media " + mediaUri);
         assertNotNull(mediaUri);
 
         assertEquals(mMediaStoreUri, mediaUri);
@@ -185,8 +221,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
     private void maybeGrantRuntimePermission(String pkg, Set<String> requested, String permission)
             throws NameNotFoundException {
         // We only need to grant dangerous permissions
-        final Context context = getInstrumentation().getContext();
-        if ((context.getPackageManager().getPermissionInfo(permission, 0).getProtection()
+        if ((mContext.getPackageManager().getPermissionInfo(permission, 0).getProtection()
                 & PermissionInfo.PROTECTION_DANGEROUS) == 0) {
             return;
         }
@@ -209,6 +244,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
      * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri.
      */
+    @Test
     public void testImageCaptureWithInadequeteLocationPermissions() throws Exception {
         Set<String> perms = new HashSet<>();
         perms.add(ACCESS_COARSE_LOCATION);
@@ -225,15 +261,14 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
             throws Exception {
         assertFalse("testImageCaptureWithoutLocation should not be passed ACCESS_FINE_LOCATION",
                 locationPermissions.contains(ACCESS_FINE_LOCATION));
-        final Context context = getInstrumentation().getContext();
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             Log.d(TAG, "Skipping due to lack of camera");
             return;
         }
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
-        final File targetDir = new File(context.getFilesDir(), "debug");
+        final File targetDir = new File(mContext.getFilesDir(), "debug");
         final File target = new File(targetDir, timeStamp  + "capture.jpg");
 
         targetDir.mkdirs();
@@ -241,14 +276,14 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
         final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                FileProvider.getUriForFile(context, "android.providerui.cts.fileprovider", target));
+                FileProvider.getUriForFile(mContext, "android.providerui.cts.fileprovider", target));
 
         // Figure out who is going to answer the phone
-        final ResolveInfo ri = context.getPackageManager().resolveActivity(intent, 0);
+        final ResolveInfo ri = mContext.getPackageManager().resolveActivity(intent, 0);
         final String pkg = ri.activityInfo.packageName;
         Log.d(TAG, "We're probably launching " + ri);
 
-        final PackageInfo pi = context.getPackageManager().getPackageInfo(pkg,
+        final PackageInfo pi = mContext.getPackageManager().getPackageInfo(pkg,
                 PackageManager.GET_PERMISSIONS);
         final Set<String> req = new HashSet<>();
         req.addAll(Arrays.asList(pi.requestedPermissions));
@@ -356,40 +391,20 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
     }
 
     private boolean supportsHardware() {
-        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        final PackageManager pm = mContext.getPackageManager();
         return !pm.hasSystemFeature("android.hardware.type.television")
                 && !pm.hasSystemFeature("android.hardware.type.watch");
     }
 
     private void prepareFile() throws Exception {
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
+        final File dir = new File(MediaStore.getVolumePath(mVolumeName),
+                Environment.DIRECTORY_DOCUMENTS);
+        final File file = new File(dir, "cts" + System.nanoTime() + ".txt");
 
-        final File documents =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        documents.mkdirs();
-        assertTrue(documents.isDirectory());
+        mFile = stageFile(R.raw.text, file);
+        mMediaStoreUri = MediaStore.scanFile(mContext, mFile);
 
-        mFile = new File(documents, "test.jpg");
-        try (OutputStream os = new FileOutputStream(mFile)) {
-            os.write(CONTENT.getBytes());
-        }
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        MediaScannerConnection.scanFile(
-                mActivity,
-                new String[]{ mFile.getAbsolutePath() },
-                new String[]{ "image/jpeg" },
-                (String path, Uri uri) -> onScanCompleted(uri, latch)
-        );
-        assertTrue(
-                "MediaScanner didn't finish scanning in 30s.", latch.await(30, TimeUnit.SECONDS));
-    }
-
-    private void onScanCompleted(Uri uri, CountDownLatch latch) {
-        final String volumeName = MediaStore.getVolumeName(uri);
-        mMediaStoreUri = ContentUris.withAppendedId(MediaStore.Files.getContentUri(volumeName),
-                ContentUris.parseId(uri));
-        latch.countDown();
+        Log.v(TAG, "Staged " + mFile + " as " + mMediaStoreUri);
     }
 
     private Uri acquireAccess(File file, String directoryName) {
@@ -444,5 +459,67 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         intent.setType("*/*");
         final ResolveInfo ri = pm.resolveActivity(intent, 0);
         return ri.activityInfo.packageName;
+    }
+
+    // TODO: replace with ProviderTestUtils
+    static String executeShellCommand(String command) throws IOException {
+        return executeShellCommand(command,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+    }
+
+    // TODO: replace with ProviderTestUtils
+    static String executeShellCommand(String command, UiAutomation uiAutomation)
+            throws IOException {
+        Log.v(TAG, "$ " + command);
+        ParcelFileDescriptor pfd = uiAutomation.executeShellCommand(command.toString());
+        BufferedReader br = null;
+        try (InputStream in = new FileInputStream(pfd.getFileDescriptor());) {
+            br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            String str = null;
+            StringBuilder out = new StringBuilder();
+            while ((str = br.readLine()) != null) {
+                Log.v(TAG, "> " + str);
+                out.append(str);
+            }
+            return out.toString();
+        } finally {
+            if (br != null) {
+                br.close();
+            }
+        }
+    }
+
+    // TODO: replace with ProviderTestUtils
+    static File stageFile(int resId, File file) throws IOException {
+        // The caller may be trying to stage into a location only available to
+        // the shell user, so we need to perform the entire copy as the shell
+        if (FileUtils.contains(Environment.getStorageDirectory(), file)) {
+            executeShellCommand("mkdir -p " + file.getParent());
+
+            final Context context = InstrumentationRegistry.getTargetContext();
+            try (AssetFileDescriptor afd = context.getResources().openRawResourceFd(resId)) {
+                final File source = ParcelFileDescriptor.getFile(afd.getFileDescriptor());
+                final long skip = afd.getStartOffset();
+                final long count = afd.getLength();
+
+                executeShellCommand(String.format("dd bs=1 if=%s skip=%d count=%d of=%s",
+                        source.getAbsolutePath(), skip, count, file.getAbsolutePath()));
+
+                // Force sync to try updating other views
+                executeShellCommand("sync");
+            }
+        } else {
+            final File dir = file.getParentFile();
+            dir.mkdirs();
+            if (!dir.exists()) {
+                throw new FileNotFoundException("Failed to create parent for " + file);
+            }
+            final Context context = InstrumentationRegistry.getTargetContext();
+            try (InputStream source = context.getResources().openRawResource(resId);
+                    OutputStream target = new FileOutputStream(file)) {
+                FileUtils.copy(source, target);
+            }
+        }
+        return file;
     }
 }
