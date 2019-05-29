@@ -25,6 +25,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 import static org.junit.Assert.*;
 
 public class RegexUtils {
+    private static final int TIMEOUT_DURATION = 20 * 60_000; // 20 minutes
+    private static final int WARNING_THRESHOLD = 1000; // 1 second
     private static final int CONTEXT_RANGE = 100; // chars before/after matched input string
 
     public static void assertContains(String pattern, String input) throws Exception {
@@ -46,7 +48,7 @@ public class RegexUtils {
     private static void assertFind(
             String pattern, String input, boolean shouldFind, boolean multiline) {
         // The input string throws an error when used after the timeout
-        TimeoutCharSequence timedInput = new TimeoutCharSequence(input, 60_000); // 1 minute
+        TimeoutCharSequence timedInput = new TimeoutCharSequence(input, TIMEOUT_DURATION);
         Matcher matcher = null;
         if (multiline) {
             // DOTALL lets .* match line separators
@@ -62,7 +64,7 @@ public class RegexUtils {
             boolean found = matcher.find();
             long duration = System.currentTimeMillis() - start;
 
-            if (duration > 1000) { // one second
+            if (duration > WARNING_THRESHOLD) {
                 // Provide a warning to the test developer that their regex should be optimized.
                 CLog.logAndDisplay(LogLevel.WARN, "regex match took " + duration + "ms.");
             }
