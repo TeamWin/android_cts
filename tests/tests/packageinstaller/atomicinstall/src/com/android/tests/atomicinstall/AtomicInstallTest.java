@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
-import android.os.RemoteException;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -50,6 +49,7 @@ public class AtomicInstallTest {
     private static final String TEST_APP_B = "com.android.tests.atomicinstall.testapp.B";
     public static final String TEST_APP_A_FILENAME = "AtomicInstallTestAppAv1.apk";
     public static final String TEST_APP_B_FILENAME = "AtomicInstallTestAppBv1.apk";
+    public static final String TEST_APP_CORRUPT_FILENAME = "corrupt.apk";
 
     private void adoptShellPermissions() {
         InstrumentationRegistry
@@ -151,6 +151,30 @@ public class AtomicInstallTest {
         final Intent intent = LocalIntentSender.getIntentSenderResult();
         assertStatusFailure(intent, "Missing existing base package");
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+    }
+
+    @Test
+    public void testEarlyFailureFailsAll() throws Exception {
+        final PackageInstaller.SessionParams parentSessionParams =
+                createSessionParams(/*staged*/false, /*multipackage*/true,
+                        /*enableRollback*/ false, /*inherit*/false);
+        final int parentSessionId = createSessionId(/*apkFileName*/null, parentSessionParams);
+        final PackageInstaller.Session parentSession = getSessionOrFail(parentSessionId);
+        for (String apkFile : new String[]{
+                TEST_APP_A_FILENAME, TEST_APP_B_FILENAME, TEST_APP_CORRUPT_FILENAME}) {
+            final PackageInstaller.SessionParams childSessionParams =
+                    createSessionParams(/*staged*/false, /*multipackage*/false,
+                            /*enableRollback*/ false, /*inherit*/false);
+            final int childSessionId =
+                    createSessionId(apkFile, childSessionParams);
+            parentSession.addChildSessionId(childSessionId);
+        }
+        parentSession.commit(LocalIntentSender.getIntentSender());
+
+        final Intent intent = LocalIntentSender.getIntentSenderResult();
+        assertStatusFailure(intent, "Failed to parse");
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
     }
 
     @Test
