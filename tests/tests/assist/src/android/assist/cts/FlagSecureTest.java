@@ -35,13 +35,6 @@ public class FlagSecureTest extends AssistTestBase {
 
     private static final String TEST_CASE_TYPE = Utils.FLAG_SECURE;
 
-    private BroadcastReceiver mReceiver;
-    private CountDownLatch mHasResumedLatch = new CountDownLatch(1);
-    private CountDownLatch mReadyLatch = new CountDownLatch(1);
-    public FlagSecureTest() {
-        super();
-    }
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -81,12 +74,12 @@ public class FlagSecureTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
         }
-        mTestActivity.startTest(TEST_CASE_TYPE);
+        startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady(mReadyLatch);
-        mTestActivity.start3pApp(TEST_CASE_TYPE);
+        start3pApp(TEST_CASE_TYPE);
         waitForOnResume();
-        startSession();
-        waitForContext();
+        final CountDownLatch latch = startSession();
+        waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
         // verify that we have only the root window and not its children.
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), true);
