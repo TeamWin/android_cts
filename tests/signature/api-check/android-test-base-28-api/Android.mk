@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsAndroidTestBase28ApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
-    android-test-base-current.api \
+    android-test-base-current.txt \
 
 LOCAL_MIN_SDK_VERSION := 27
 LOCAL_SDK_VERSION := 28

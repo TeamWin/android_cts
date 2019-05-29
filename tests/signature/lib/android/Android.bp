@@ -18,9 +18,13 @@ java_library {
         "//cts/tests/signature:__subpackages__",
     ],
     installable: false,
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     static_libs: [
         "signature-common-javalib",
+        "metalava",
     ],
     sdk_version: "current",
 }
