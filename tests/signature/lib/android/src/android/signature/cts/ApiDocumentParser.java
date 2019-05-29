@@ -33,7 +33,9 @@ public class ApiDocumentParser {
     }
 
     private ApiParser getApiParser(VirtualPath path) {
-        if (path.toString().endsWith(".api")) {
+        if (path.toString().endsWith(".txt")) {
+            return new TextApiParser();
+        } else if (path.toString().endsWith(".api")) {
             return new XmlApiParser(tag);
         } else {
             throw new IllegalStateException("Unrecognized file type: " + path);
