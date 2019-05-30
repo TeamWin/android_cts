@@ -433,6 +433,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testNotificationPolicyDetailIntent() {
+        if (!isHandheld()) {
+            return;
+        }
+
         Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_DETAIL_SETTINGS)
                 .setData(Uri.parse("package:android.content.cts"));
         assertCanBeHandled(intent);
