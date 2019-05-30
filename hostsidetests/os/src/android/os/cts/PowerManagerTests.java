@@ -66,6 +66,8 @@ public class PowerManagerTests extends BaseHostJUnit4Test {
      */
     @Test
     public void testCachedProcessReleasesWakeLock() throws Exception {
+        // Turn screen on and unlock keyguard
+        mDevice.executeShellCommand("input keyevent 26; input keyevent 82");
         makeCachedProcess(PACKAGE_NAME);
         // Short wait before checking cached process
         Thread.sleep(1000);
@@ -73,9 +75,9 @@ public class PowerManagerTests extends BaseHostJUnit4Test {
         assertTrue(CACHED_PATTERN.matcher(processes).find());
 
         String wakelocks = mDevice.executeShellCommand(GET_WAKE_LOCKS_CMD);
-        assertTrue("Wake lock not acquired", WAKE_LOCK_ACQUIRED_PATTERN.matcher(wakelocks).find());
         assertFalse("Wake lock disabled early",
                 WAKE_LOCK_DISABLED_PATTERN.matcher(wakelocks).find());
+        assertTrue("Wake lock not acquired", WAKE_LOCK_ACQUIRED_PATTERN.matcher(wakelocks).find());
 
         // ActivityManager will inform PowerManager of processes with idle uids.
         // PowerManager will disable wakelocks held by such processes.
