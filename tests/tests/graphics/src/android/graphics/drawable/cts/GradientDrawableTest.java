@@ -743,6 +743,14 @@ public class GradientDrawableTest {
     }
 
     @Test
+    public void testGradientNegativeAngle() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        GradientDrawable drawable = (GradientDrawable)
+                context.getDrawable(R.drawable.gradientdrawable_negative_angle);
+        assertEquals(Orientation.TOP_BOTTOM, drawable.getOrientation());
+    }
+
+    @Test
     public void testGradientDrawableOrientationConstructor() {
         GradientDrawable drawable = new GradientDrawable(Orientation.TOP_BOTTOM, null);
         assertEquals(Orientation.TOP_BOTTOM, drawable.getOrientation());
