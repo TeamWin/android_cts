@@ -40,7 +40,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -73,6 +72,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -130,6 +130,30 @@ public class TelephonyManagerTest {
             TelephonyManager.NETWORK_TYPE_IWLAN,
             TelephonyManager.NETWORK_TYPE_LTE_CA,
             TelephonyManager.NETWORK_TYPE_NR);
+
+    private static final int EMERGENCY_NUMBER_SOURCE_RIL_ECCLIST = 0;
+    private static final Set<Integer> EMERGENCY_NUMBER_SOURCE_SET;
+    static {
+        EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
+        EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_NETWORK_SIGNALING);
+        EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_SIM);
+        EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_DATABASE);
+        EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_MODEM_CONFIG);
+        EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_DEFAULT);
+    }
+
+    private static final Set<Integer> EMERGENCY_SERVICE_CATEGORY_SET;
+    static {
+        EMERGENCY_SERVICE_CATEGORY_SET = new HashSet<Integer>();
+        EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_POLICE);
+        EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_AMBULANCE);
+        EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_FIRE_BRIGADE);
+        EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MARINE_GUARD);
+        EMERGENCY_SERVICE_CATEGORY_SET.add(
+                EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MOUNTAIN_RESCUE);
+        EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MIEC);
+        EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_AIEC);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -1245,8 +1269,10 @@ public class TelephonyManagerTest {
 
         assertFalse(emergencyNumberList == null);
 
+        checkEmergencyNumberFormat(emergencyNumberList);
+
         int defaultSubId = mSubscriptionManager.getDefaultSubscriptionId();
-      
+
         // 112 and 911 should always be available
         // Reference: 3gpp 22.101, Section 10 - Emergency Calls
         assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
@@ -1422,6 +1448,48 @@ public class TelephonyManagerTest {
         return false;
     }
 
+    private static void checkEmergencyNumberFormat(
+            Map<Integer, List<EmergencyNumber>> emergencyNumberLists) {
+        for (List<EmergencyNumber> emergencyNumberList : emergencyNumberLists.values()) {
+            for (EmergencyNumber emergencyNumber : emergencyNumberList) {
+
+                // Validate Emergency number address
+                assertTrue(validateEmergencyNumberAddress(emergencyNumber.getNumber()));
+
+                // Validate Emergency number country Iso
+                assertTrue(validateEmergencyNumberCountryIso(emergencyNumber.getCountryIso()));
+
+                // Validate Emergency number mnc
+                assertTrue(validateEmergencyNumberMnc(emergencyNumber.getMnc()));
+
+                // Validate Emergency service category list
+                assertTrue(validateEmergencyServiceCategoryList(
+                        emergencyNumber.getEmergencyServiceCategories()));
+
+                // Validate Emergency number source list
+                assertTrue(validateEmergencyNumberSourceList(
+                        emergencyNumber.getEmergencyNumberSources()));
+
+                // Validate Emergency URN list
+                // (just verify it is not null, because the support of this field is optional)
+                assertTrue(emergencyNumber.getEmergencyUrns() != null);
+
+                // Validat Emergency call routing
+                assertTrue(validateEmergencyCallRouting(
+                        emergencyNumber.getEmergencyCallRouting()));
+
+                // Valid the emergency number should be at least in a valid source.
+                assertTrue(validateEmergencyNumberFromAnySource(emergencyNumber));
+
+                // Valid the emergency number should be at least in a valid category.
+                assertTrue(validateEmergencyNumberInAnyCategory(emergencyNumber));
+            }
+
+            // Validate compareTo
+            assertTrue(validateEmergencyNumberCompareTo(emergencyNumberList));
+        }
+    }
+
     /**
      * Tests {@link TelephonyManager#updateAvailableNetworks}
      */
@@ -1555,6 +1623,169 @@ public class TelephonyManagerTest {
         } catch (IllegalArgumentException e ) {
             // IllegalArgumentException is okay, just not SecurityException
         }
+    }
+
+    /**
+     * Validate Emergency Number address that only contains the dialable character.
+     *
+     * @param address Emergency number address to validate
+     * @return {@code true} if the address is valid; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyNumberAddress(String address) {
+        if (address == null) {
+            return false;
+        }
+        for (char c : address.toCharArray()) {
+            if (!isDialable(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Validate Emergency Number country Iso
+     *
+     * @param countryIso Emergency number country iso to validate
+     * @return {@code true} if the country iso is valid; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyNumberCountryIso(String countryIso) {
+        if (countryIso == null) {
+            return false;
+        }
+        int length = countryIso.length();
+        return length >= 0 && length <= 2;
+    }
+
+    /**
+     * Validate Emergency Number MNC
+     *
+     * @param mnc Emergency number MNC to validate
+     * @return {@code true} if the MNC is valid; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyNumberMnc(String mnc) {
+        if (mnc == null) {
+            return false;
+        }
+        int length = mnc.length();
+        return length >= 0 && length <= 3;
+    }
+
+    /**
+     * Validate Emergency service category list
+     *
+     * @param categories Emergency service category list to validate
+     * @return {@code true} if the category list is valid; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyServiceCategoryList(List<Integer> categories) {
+        if (categories == null) {
+            return false;
+        }
+        if (categories.contains(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_UNSPECIFIED)) {
+            return categories.size() == 1;
+        }
+        for (int category : categories) {
+            if (!EMERGENCY_SERVICE_CATEGORY_SET.contains(category)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Validate Emergency number source list
+     *
+     * @param categories Emergency number source list to validate
+     * @return {@code true} if the source list is valid; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyNumberSourceList(List<Integer> sources) {
+        if (sources == null) {
+            return false;
+        }
+        for (int source : sources) {
+            if (!EMERGENCY_NUMBER_SOURCE_SET.contains(source)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Validate Emergency call routing.
+     *
+     * @param routing Emergency call routing to validate
+     * @return {@code true} if the emergency call routing is valid; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyCallRouting(int routing) {
+        return routing >= EmergencyNumber.EMERGENCY_CALL_ROUTING_UNKNOWN
+                && routing <= (EmergencyNumber.EMERGENCY_CALL_ROUTING_EMERGENCY
+                | EmergencyNumber.EMERGENCY_CALL_ROUTING_NORMAL);
+    }
+
+    /**
+     * Valid the emergency number should be at least from a valid source.
+     *
+     * @param emergencyNumber Emergency number to verify
+     * @return {@code true} if the emergency number is from any source; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyNumberFromAnySource(EmergencyNumber emergencyNumber) {
+        boolean isFromAnySource = false;
+        for (int possibleSourceValue = EMERGENCY_NUMBER_SOURCE_RIL_ECCLIST;
+                possibleSourceValue <= (EmergencyNumber.EMERGENCY_NUMBER_SOURCE_NETWORK_SIGNALING
+                        | EmergencyNumber.EMERGENCY_NUMBER_SOURCE_SIM
+                        | EmergencyNumber.EMERGENCY_NUMBER_SOURCE_DATABASE
+                        | EmergencyNumber.EMERGENCY_NUMBER_SOURCE_MODEM_CONFIG
+                        | EmergencyNumber.EMERGENCY_NUMBER_SOURCE_DEFAULT);
+                possibleSourceValue++) {
+            if (emergencyNumber.isFromSources(possibleSourceValue)) {
+                isFromAnySource = true;
+                break;
+            }
+        }
+        return isFromAnySource;
+    }
+
+    /**
+     * Valid the emergency number should be at least in a valid category.
+     *
+     * @param emergencyNumber Emergency number to verify
+     * @return {@code true} if it is in any category; {@code false} otherwise.
+     */
+    private static boolean validateEmergencyNumberInAnyCategory(EmergencyNumber emergencyNumber) {
+        boolean isInAnyCategory = false;
+        for (int possibleCategoryValue = EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_UNSPECIFIED;
+                possibleCategoryValue <= (EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_POLICE
+                         | EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_AMBULANCE
+                         | EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_FIRE_BRIGADE
+                        | EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MARINE_GUARD
+                        | EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MOUNTAIN_RESCUE
+                        | EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MIEC
+                        | EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_AIEC);
+                possibleCategoryValue++) {
+            if (emergencyNumber.isInEmergencyServiceCategories(possibleCategoryValue)) {
+                isInAnyCategory = true;
+                break;
+            }
+        }
+        return isInAnyCategory;
+    }
+
+    private static boolean validateEmergencyNumberCompareTo(
+            List<EmergencyNumber> emergencyNumberList) {
+        if (emergencyNumberList == null) {
+            return false;
+        }
+        if (emergencyNumberList.size() > 0) {
+            EmergencyNumber emergencyNumber = emergencyNumberList.get(0);
+            if (emergencyNumber.compareTo(emergencyNumber) != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isDialable(char c) {
+        return (c >= '0' && c <= '9') || c == '*' || c == '#' || c == '+' || c == 'N';
     }
 
     private int getValidSlotIndex() {
