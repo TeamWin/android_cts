@@ -172,4 +172,12 @@
     <!-- Description of the accessibility service -->
     <string name="soft_keyboard_modes_accessibility_service_description">This Accessibility Service was installed for testing purposes. It can be uninstalled by going to Settings > Apps > android.view.accessibilityservice.services and selecting \"Uninstall\".</string>
 
+    <!-- AccessibilityEmbeddedDisplayTest -->
+
+    <!-- String title of accessibility embedded display test parent window activity -->
+    <string name="accessibility_embedded_display_test_parent_activity">Embedded display test parent</string>
+
+    <!-- String title of accessibility embedded display test activity -->
+    <string name="accessibility_embedded_display_test_activity">Embedded display test</string>
+
 </resources>
