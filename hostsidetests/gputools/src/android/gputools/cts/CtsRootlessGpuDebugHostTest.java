@@ -578,10 +578,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_B_LIB, GLES_LAYERS_APP);
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", GLES_LAYER_B_LIB, ";", "chmod", "700", GLES_LAYER_B_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+            "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+            "sh", "-c", "\'cat", ">", GLES_LAYER_B_LIB, ";", "chmod", "700", GLES_LAYER_B_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
@@ -760,10 +762,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_B_LIB, GLES_LAYERS_APP);
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
-                                 "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|", "run-as", DEBUG_APP,
-                                 "sh", "-c", "\'cat", ">", GLES_LAYER_B_LIB, ";", "chmod", "700", GLES_LAYER_B_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+            "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
+        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+            "sh", "-c", "\'cat", ">", GLES_LAYER_B_LIB, ";", "chmod", "700", GLES_LAYER_B_LIB + "\'");
 
         // Enable layerB with system properties
         mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + GLES_LAYER_B_LIB);
