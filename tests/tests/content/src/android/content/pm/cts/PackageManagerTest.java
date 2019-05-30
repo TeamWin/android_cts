@@ -55,6 +55,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
 import android.os.SystemProperties;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.util.Log;
@@ -608,7 +609,10 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageUid() throws NameNotFoundException {
-        assertEquals(1000, mPackageManager.getPackageUid("android", 0));
+        int userId = InstrumentationRegistry.getContext().getUserId();
+        int expectedUid = UserHandle.getUid(userId, 1000);
+
+        assertEquals(expectedUid, mPackageManager.getPackageUid("android", 0));
 
         int uid = mPackageManager.getApplicationInfo("com.android.cts.ctsshim", 0 /*flags*/).uid;
         assertEquals(uid, mPackageManager.getPackageUid("com.android.cts.ctsshim", 0));
