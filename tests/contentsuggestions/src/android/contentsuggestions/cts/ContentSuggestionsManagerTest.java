@@ -150,12 +150,14 @@ public class ContentSuggestionsManagerTest {
      */
     private static void setService(@NonNull String service) {
         Log.d(TAG, "Setting service to " + service);
+        int userId = android.os.Process.myUserHandle().getIdentifier();
         runShellCommand(
-                "cmd content_suggestions set temporary-service 0 %s 120000", service);
+                "cmd content_suggestions set temporary-service %d %s 120000", userId, service);
     }
 
     private static void resetService() {
         Log.d(TAG, "Resetting service");
-        runShellCommand("cmd content_suggestions set temporary-service 0");
+        int userId = android.os.Process.myUserHandle().getIdentifier();
+        runShellCommand("cmd content_suggestions set temporary-service %d", userId);
     }
 }
