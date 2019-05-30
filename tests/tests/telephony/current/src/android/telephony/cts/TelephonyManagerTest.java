@@ -26,6 +26,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.Manifest.permission;
+import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
@@ -176,6 +178,14 @@ public class TelephonyManagerTest {
         }
     }
 
+    public static void grantLocationPermissions() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        String packageName = getContext().getPackageName();
+        uiAutomation.grantRuntimePermission(packageName, permission.ACCESS_COARSE_LOCATION);
+        uiAutomation.grantRuntimePermission(packageName, permission.ACCESS_FINE_LOCATION);
+        uiAutomation.grantRuntimePermission(packageName, permission.ACCESS_BACKGROUND_LOCATION);
+    }
+
     @Test
     public void testListen() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -187,6 +197,8 @@ public class TelephonyManagerTest {
             // TODO: temp workaround, need to adjust test to for CDMA
             return;
         }
+
+        grantLocationPermissions();
 
         TestThread t = new TestThread(new Runnable() {
             public void run() {
