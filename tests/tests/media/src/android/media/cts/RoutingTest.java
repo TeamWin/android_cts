@@ -72,6 +72,7 @@ public class RoutingTest extends AndroidTestCase {
         Arrays.asList(AudioDeviceInfo.TYPE_BUILTIN_MIC));
 
     private boolean mRoutingChanged;
+    private boolean mRoutingChangedDetected;
     private AudioManager mAudioManager;
     private CountDownLatch mRoutingChangedLatch;
     private File mOutFile;
@@ -674,6 +675,7 @@ public class RoutingTest extends AndroidTestCase {
 
         mRoutingChanged = false;
         mRoutingChangedLooper = null;
+        mRoutingChangedDetected = false;
         // Create MediaPlayer in another thread to make sure there is a looper active for events.
         Thread t = new Thread() {
             @Override
@@ -700,7 +702,16 @@ public class RoutingTest extends AndroidTestCase {
                         for (AudioDeviceInfo device : devices) {
                             if (routedDevice.getId() != device.getId()) {
                                 mediaPlayer.setPreferredDevice(device);
-                                break;
+                                try {
+                                    Thread.sleep(WAIT_ROUTING_CHANGE_TIME_MS);
+                                } catch (Exception e) {
+                                }
+                                AudioDeviceInfo currentRoutedDevice = mediaPlayer.getRoutedDevice();
+                                if (currentRoutedDevice != null
+                                        && currentRoutedDevice.getId() != routedDevice.getId()) {
+                                    mRoutingChangedDetected = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -721,7 +732,8 @@ public class RoutingTest extends AndroidTestCase {
             mRoutingChangedLooper = null;
         }
         t.join();
-        assertTrue("Routing changed callback has not been called", mRoutingChanged);
+        assertTrue("Routing changed callback has not been called",
+                (mRoutingChanged || !mRoutingChangedDetected));
     }
 
     public void test_mediaPlayer_incallMusicRoutingPermissions() {
