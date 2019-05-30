@@ -382,7 +382,7 @@ public class MediaStorageTest {
                 42, null, 0, 0, 0);
 
         device.waitForIdle();
-        device.findObject(new UiSelector().text("Allow")).click();
+        device.findObject(new UiSelector().textMatches("(?i:Allow)")).click();
 
         // Verify that we now have access
         final GetResultActivity.Result res = activity.getResult();

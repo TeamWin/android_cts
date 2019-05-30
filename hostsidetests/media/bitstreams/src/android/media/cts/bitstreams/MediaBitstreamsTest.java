@@ -482,7 +482,7 @@ public abstract class MediaBitstreamsTest implements IDeviceTest, IBuildReceiver
             }
             List<ConformanceEntry> entries = mResults.get(mPath);
             for (ConformanceEntry ce : entries) {
-                if (!"true".equals(ce.mStatus)) {
+                if (!"true".equals(ce.mStatus) && !"unsupported".equals(ce.mStatus)) {
                     Assert.fail(ce.toString());
                 }
             }
