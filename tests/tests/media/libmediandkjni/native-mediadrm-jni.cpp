@@ -570,8 +570,8 @@ static void onKeysChangeListener(
     const AMediaDrmKeyStatus* keysStatus, size_t numKeys, bool hasNewUsableKey) {
 
     gOnKeyChangeListenerOK = false;
-    if (numKeys != 2) {
-        ALOGE("Expects 2 keys, received %zd keys", numKeys);
+    if (numKeys != 3) {
+        ALOGE("Expects 3 keys, received %zd keys", numKeys);
         return;
     }
 
