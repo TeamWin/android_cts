@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,21 +11,20 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
+package com.android.compatibility.common.util;
 
-package com.android.cts.verifier.location;
-
-import com.android.cts.verifier.location.base.GnssCtsTestActivity;
-import android.location.cts.GnssTtffTests;
+import java.util.function.Supplier;
 
 /**
- * Activity to execute CTS GnssStatusTest.
- * It is a wrapper for {@link GnssTtffTests} running with AndroidJUnitRunner.
+ * Similar to {@link Supplier} but has {@code throws Exception}.
+ *
+ * @param <T> type of the value produced
  */
-
-public class GnssTtffTestsActivity extends GnssCtsTestActivity {
-  public GnssTtffTestsActivity() {
-    super(GnssTtffTests.class);
-  }
+public interface ThrowingSupplier<T> {
+    /**
+     * Similar to {@link Supplier#get} but has {@code throws Exception}.
+     */
+    T get() throws Exception;
 }

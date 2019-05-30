@@ -97,7 +97,7 @@ public class UidCapTests {
                 mAlarmsSet.add(lastPi);
                 fail("Able to set an alarm of type " + type + " after reaching the limit of "
                         + limit);
-            } catch (UnsupportedOperationException e) {
+            } catch (IllegalStateException e) {
             }
         }
     }

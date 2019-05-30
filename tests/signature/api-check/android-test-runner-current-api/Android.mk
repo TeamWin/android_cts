@@ -19,8 +19,8 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsAndroidTestRunnerCurrentApiSignatureTestCases
 
 LOCAL_SIGNATURE_API_FILES := \
-    android-test-base-current.api \
-    android-test-mock-current.api \
-    android-test-runner-current.api \
+    android-test-base-current.txt \
+    android-test-mock-current.txt \
+    android-test-runner-current.txt \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk

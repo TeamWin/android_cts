@@ -736,9 +736,21 @@ public class PopupWindowTest {
     @Test
     public void testGetMaxAvailableHeight() {
         mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+
         Rect displayFrame = new Rect();
         View anchorView = mActivity.findViewById(R.id.anchor_upper);
-        anchorView.getWindowVisibleDisplayFrame(displayFrame);
+
+        // Move the top of the displayFrame to the anchor position.
+        int[] anchorPos = new int[2];
+        anchorView.getLocationOnScreen(anchorPos);
+        displayFrame.top = anchorPos[1];
+
+        // Move the bottom of the displayFrame to the bottom of the window.
+        Rect window = new Rect();
+        anchorView.getWindowDisplayFrame(window);
+        displayFrame.bottom = window.bottom;
+
+        // Display height is from the bottom of the action bar to the bottom of the screen.
         int displayHeight = displayFrame.height();
         int available = displayHeight - anchorView.getHeight();
         int maxAvailableHeight = mPopupWindow.getMaxAvailableHeight(anchorView);
