@@ -100,6 +100,26 @@ public class TestHarnessModeDeviceTest extends BaseHostJUnit4Test {
                         .executeShellCommand("settings get global transition_animation_scale"));
     }
 
+    @Test
+    public void testHarnessModeRemovesInstalledAppsAndData() throws Exception {
+        installPackage("CtsTestHarnessModeDeviceApp.apk");
+        runTest("dirtyDevice");
+
+        enableTestHarnessModeAndWait();
+
+        installPackage("CtsTestHarnessModeDeviceApp.apk");
+        Assert.assertTrue(runTest("testDeviceInTestHarnessMode"));
+        Assert.assertTrue(runTest("ensureActivityNotObscuredByKeyboardSetUpScreen"));
+        Assert.assertTrue(runTest("testDeviceIsClean"));
+    }
+
+    private boolean runTest(String methodName) throws Exception {
+        return runDeviceTests(
+                "android.testharness.app",
+                "android.testharness.app.TestHarnessModeDeviceTest",
+                methodName);
+    }
+
     private void enableTestHarnessModeAndWait()
             throws InterruptedException, DeviceNotAvailableException {
         if (getDevice().executeShellV2Command("cmd testharness enable").getExitCode() != 0) {
@@ -109,6 +129,8 @@ public class TestHarnessModeDeviceTest extends BaseHostJUnit4Test {
         try {
             getDevice().waitForDeviceOnline(5 * ONE_MINUTE);
             getDevice().waitForBootComplete(ONE_MINUTE);
+
+            Thread.sleep(20 * 1000); // Wait 20 more seconds to ensure that the device has booted
         } catch (DeviceNotAvailableException e) {
             Assert.fail("Device did not come back online after 5 minutes. "
                     + "Did the ADB keys not get stored?");
