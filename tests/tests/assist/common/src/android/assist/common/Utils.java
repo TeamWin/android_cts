@@ -74,10 +74,13 @@ public class Utils {
     public static final String APP_3P_HASDRAWED = ACTION_PREFIX + "app_3p_hasDrawed";
     public static final String TEST_ACTIVITY_LOADED = ACTION_PREFIX + "test_activity_hasResumed";
 
-    /** Two second timeout for getting back assist context */
-    public static final int TIMEOUT_MS = 2 * 1000;
-    /** Four second timeout for an activity to resume */
-    public static final int ACTIVITY_ONRESUME_TIMEOUT_MS = 4000;
+    // Notice: timeout belows have to be long because some devices / form factors (like car) are
+    // slower.
+
+    /** Timeout for getting back assist context */
+    public static final int TIMEOUT_MS = 4 * 1_000;
+    /** Timeout for an activity to resume */
+    public static final int ACTIVITY_ONRESUME_TIMEOUT_MS = 8 * 1_000;
 
     public static final String EXTRA_REGISTER_RECEIVER = "register_receiver";
 
