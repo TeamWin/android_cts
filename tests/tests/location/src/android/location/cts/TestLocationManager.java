@@ -141,6 +141,22 @@ public class TestLocationManager {
     }
 
     /**
+     * See {@code LocationManager#requestLocationUpdates}.
+     *
+     * @param locationListener location listener for request
+     */
+    public void requestPassiveLocationUpdates(LocationListener locationListener, int minTimeMsec) {
+        if (mLocationManager.getProvider(LocationManager.PASSIVE_PROVIDER) != null) {
+            Log.i(TAG, "Request Passive Location updates.");
+            mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+                    minTimeMsec,
+                    0 /* minDistance */,
+                    locationListener,
+                    Looper.getMainLooper());
+        }
+    }
+
+    /**
      * See {@link android.location.LocationManager#sendExtraCommand}.
      *
      * @param command name of the command to send to the provider.
