@@ -95,21 +95,4 @@ public class CreateUsersPermissionTest extends BaseMultiUserTest {
         Assert.assertTrue("User count should be greater than max users due to added guest user",
                 userCount > maxUsers);
     }
-
-    @Test
-    public void testCantAddMoreThanOneGuestUser() throws Exception {
-        if (!isAutomotiveDevice()) {
-            return;
-        }
-        boolean failedToCreateGuestUser = false;
-        if (getGuestUser() == -1) {
-            createGuestUser();
-        }
-        try {
-            createGuestUser();
-        } catch (IllegalStateException e) {
-            failedToCreateGuestUser = true;
-        }
-        Assert.assertTrue("Should failed creating second guest user", failedToCreateGuestUser);
-    }
 }
