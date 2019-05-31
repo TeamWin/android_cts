@@ -24,7 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
     ctstestrunner-axt \
     ub-uiautomator \
-    compatibility-device-util \
+    compatibility-device-util-axt \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../UsePermissionApp26/src)  \
     $(call all-java-files-under, ../UsePermissionApp29/src)  \

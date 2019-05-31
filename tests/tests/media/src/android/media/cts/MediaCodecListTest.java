@@ -315,7 +315,8 @@ public class MediaCodecListTest extends AndroidTestCase {
         PackageManager pm = getContext().getPackageManager();
         return pm.hasSystemFeature(pm.FEATURE_TOUCHSCREEN)
                 && !pm.hasSystemFeature(pm.FEATURE_WATCH)
-                && !pm.hasSystemFeature(pm.FEATURE_TELEVISION);
+                && !pm.hasSystemFeature(pm.FEATURE_TELEVISION)
+                && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
     }
 
     // Find whether the given codec can be found using MediaCodecList.find methods.

@@ -69,6 +69,15 @@
             android:label="@string/accessibility_soft_keyboard_modes_activity"
             android:name=".AccessibilitySoftKeyboardModesTest$SoftKeyboardModesActivity" />
 
+        <activity
+            android:label="@string/accessibility_embedded_display_test_parent_activity"
+            android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayParentActivity"
+            android:theme="@android:style/Theme.Dialog" />
+
+        <activity
+            android:label="@string/accessibility_embedded_display_test_activity"
+            android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayActivity" />
+
         <service
                 android:name=".StubGestureAccessibilityService"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">

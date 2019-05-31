@@ -232,14 +232,6 @@ public class MediaStoreUiTest {
         }
     }
 
-    private void maybeRevokeRuntimePermission(String pkg, Set<String> requested, String permission)
-            throws NameNotFoundException {
-        if (requested.contains(permission)) {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .revokeRuntimePermission(pkg, permission);
-        }
-    }
-
     /**
      * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri.
@@ -280,17 +272,26 @@ public class MediaStoreUiTest {
 
         // Figure out who is going to answer the phone
         final ResolveInfo ri = mContext.getPackageManager().resolveActivity(intent, 0);
-        final String pkg = ri.activityInfo.packageName;
+        final String answeringPkg = ri.activityInfo.packageName;
         Log.d(TAG, "We're probably launching " + ri);
 
-        final PackageInfo pi = mContext.getPackageManager().getPackageInfo(pkg,
+        final PackageInfo pi = mContext.getPackageManager().getPackageInfo(answeringPkg,
                 PackageManager.GET_PERMISSIONS);
-        final Set<String> req = new HashSet<>();
-        req.addAll(Arrays.asList(pi.requestedPermissions));
+        final Set<String> answeringReq = new HashSet<>();
+        answeringReq.addAll(Arrays.asList(pi.requestedPermissions));
+        // Grant the 'answering' app all the permissions they might want.
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, CAMERA);
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, ACCESS_FINE_LOCATION);
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, ACCESS_COARSE_LOCATION);
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, ACCESS_BACKGROUND_LOCATION);
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, RECORD_AUDIO);
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, READ_EXTERNAL_STORAGE);
+        maybeGrantRuntimePermission(answeringPkg, answeringReq, WRITE_EXTERNAL_STORAGE);
+        SystemClock.sleep(DateUtils.SECOND_IN_MILLIS);
 
-        grantRequisitePermissions(pkg, req, locationPermissions);
+        grantSelfRequisitePermissions(locationPermissions);
 
-        Result result = getImageCaptureIntentResult(intent, pkg);
+        Result result = getImageCaptureIntentResult(intent, answeringPkg);
 
         assertTrue("exists", target.exists());
         assertTrue("has data", target.length() > 65536);
@@ -305,31 +306,20 @@ public class MediaStoreUiTest {
         Boolean hasLocation = exif.getLatLong(latLong);
         assertTrue("Should not contain location information latitude: " + latLong[0] +
                 " longitude: " + latLong[1], !hasLocation);
-        revokeRequisitePermissions(pkg, req, locationPermissions);
     }
 
-    private void grantRequisitePermissions(String pkg, Set<String> req,
-            Set<String> locationPermissions) throws Exception {
-        // Grant them all the permissions they might want.
-        maybeGrantRuntimePermission(pkg, req, CAMERA);
-        maybeGrantRuntimePermission(pkg, req, RECORD_AUDIO);
-        maybeGrantRuntimePermission(pkg, req, READ_EXTERNAL_STORAGE);
-        maybeGrantRuntimePermission(pkg, req, WRITE_EXTERNAL_STORAGE);
-        SystemClock.sleep(DateUtils.SECOND_IN_MILLIS);
-        for (String perm : locationPermissions) {
-            maybeGrantRuntimePermission(pkg, req, perm);
-        }
-    }
-
-    private void revokeRequisitePermissions(String pkg, Set<String> req, Set<String> perms)
+    private void grantSelfRequisitePermissions(Set<String> locationPermissions)
             throws Exception {
-        // So that the other tests don't start with this permission granted.
-        for (String perm : perms) {
-            maybeRevokeRuntimePermission(pkg, req, perm);
+        String selfPkg = mContext.getPackageName();
+        for (String perm : locationPermissions) {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .grantRuntimePermission(selfPkg, perm);
+            assertTrue("Permission " + perm + "could not be granted",
+                    mContext.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED);
         }
     }
 
-    private Result getImageCaptureIntentResult(Intent intent, String pkg)
+    private Result getImageCaptureIntentResult(Intent intent, String answeringPkg)
             throws Exception {
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
@@ -354,12 +344,12 @@ public class MediaStoreUiTest {
         // Hrm, that didn't work; let's try an alternative approach of digging
         // around for a shutter button
         if (result == null) {
-            maybeClick(new UiSelector().resourceId(pkg + ":id/shutter_button"));
+            maybeClick(new UiSelector().resourceId(answeringPkg + ":id/shutter_button"));
             mDevice.waitForIdle();
             SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-            maybeClick(new UiSelector().resourceId(pkg + ":id/shutter_button"));
+            maybeClick(new UiSelector().resourceId(answeringPkg + ":id/shutter_button"));
             mDevice.waitForIdle();
-            maybeClick(new UiSelector().resourceId(pkg + ":id/done_button"));
+            maybeClick(new UiSelector().resourceId(answeringPkg + ":id/done_button"));
             mDevice.waitForIdle();
 
             result = mActivity.getResult(15, TimeUnit.SECONDS);
@@ -368,10 +358,10 @@ public class MediaStoreUiTest {
 
         // Grr, let's try hunting around even more
         if (result == null) {
-            maybeClick(By.pkg(pkg).descContains("Capture"));
+            maybeClick(By.pkg(answeringPkg).descContains("Capture"));
             mDevice.waitForIdle();
             SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-            maybeClick(By.pkg(pkg).descContains("Done"));
+            maybeClick(By.pkg(answeringPkg).descContains("Done"));
             mDevice.waitForIdle();
 
             result = mActivity.getResult(15, TimeUnit.SECONDS);

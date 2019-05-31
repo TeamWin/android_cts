@@ -34,6 +34,9 @@
     <uses-permission android:name="android.content.cts.permission.TEST_GRANTED" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- Used for ContextTest#testCreatePackageContextAsUser -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
+
     <!-- Used for PackageManager test, don't delete this INTERNET permission -->
     <uses-permission android:name="android.permission.INTERNET" />
 
