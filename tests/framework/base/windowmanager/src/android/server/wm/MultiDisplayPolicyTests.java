@@ -45,6 +45,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -595,6 +596,10 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      */
     @Test
     public void testStackFocusSwitchOnTouchEvent() throws Exception {
+        // If config_perDisplayFocusEnabled, the focus will not move even if touching on
+        // the Activity in the different display.
+        assumeFalse(perDisplayFocusEnabled());
+
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
@@ -630,6 +635,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      */
     @Test
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
+        assumeFalse(perDisplayFocusEnabled());
+
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY);
         waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
@@ -712,6 +719,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSecondaryDisplayFocus() throws Exception {
+        assumeFalse(perDisplayFocusEnabled());
+
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             launchActivity(TEST_ACTIVITY);
             mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
