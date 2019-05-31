@@ -20,10 +20,15 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.UiAutomation;
 import android.app.stubs.TestTileService;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 
 import androidx.test.filters.FlakyTest;
@@ -43,12 +48,26 @@ public class TileServiceTest extends AndroidTestCase {
     // Number of times to check before failing. This is set so the maximum wait time is about 4s,
     // as some tests were observed to take around 3s.
     private static final long CHECK_RETRIES = 15;
+    // Timeout to wait for launcher
+    private static final long TIMEOUT = 8000;
 
     private TileService mTileService;
+    private Intent homeIntent;
+    private String mLauncherPackage;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        homeIntent = new Intent(Intent.ACTION_MAIN);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+
+        mLauncherPackage = mContext.getPackageManager().resolveActivity(homeIntent,
+                PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+
+        // Wait for home
+        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        device.pressHome();
+        device.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
     }
 
     @Override
