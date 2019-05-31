@@ -366,6 +366,9 @@
                  android:enabled="true">
         </service>
 
+        <activity android:name="android.server.wm.StartActivityAsUserActivity"
+                  android:directBootAware="true"/>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
