@@ -722,6 +722,8 @@ public class PhoneStateListenerTest {
             return;
         }
 
+        TelephonyManagerTest.grantLocationPermissions();
+
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();
@@ -890,6 +892,8 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
+
+        TelephonyManagerTest.grantLocationPermissions();
 
         TestThread t = new TestThread(new Runnable() {
             public void run() {
