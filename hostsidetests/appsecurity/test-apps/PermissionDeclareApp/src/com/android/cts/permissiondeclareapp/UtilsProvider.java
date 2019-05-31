@@ -34,6 +34,7 @@ public class UtilsProvider extends ContentProvider {
 
     public static final String ACTION_GRANT_URI = "grantUri";
     public static final String ACTION_REVOKE_URI = "revokeUri";
+    public static final String ACTION_START_ACTIVITY = "startActivity";
     public static final String ACTION_START_SERVICE = "startService";
     public static final String ACTION_VERIFY_OUTGOING_PERSISTED = "verifyOutgoingPersisted";
     public static final String ACTION_SET_PRIMARY_CLIP = "setPrimaryClip";
@@ -62,6 +63,11 @@ public class UtilsProvider extends ContentProvider {
             } else if (ACTION_REVOKE_URI.equals(action)) {
                 final Uri uri = intent.getParcelableExtra(EXTRA_URI);
                 context.revokeUriPermission(uri, intent.getIntExtra(EXTRA_MODE, 0));
+
+            } else if (ACTION_START_ACTIVITY.equals(action)) {
+                final Intent newIntent = intent.getParcelableExtra(EXTRA_INTENT);
+                newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(newIntent);
 
             } else if (ACTION_START_SERVICE.equals(action)) {
                 final Intent newIntent = intent.getParcelableExtra(EXTRA_INTENT);
