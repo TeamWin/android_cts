@@ -23,8 +23,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.rules \
     compatibility-device-util-axt \
     ctstestrunner-axt \
-    ub-uiautomator \
-    compatibility-device-util \
+    ub-uiautomator
 
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
