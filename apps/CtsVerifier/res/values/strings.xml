@@ -2921,9 +2921,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_primary_location_when_work_disabled_instruction">
         This test verifies that location updates are still received by primary profile when location updates are disabled for managed profile apps through work profile location switch.\n
         1. Press the go button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
-        2. Move your position a little bit, verify that location updates toast comes up.\n
+        2. Press home to go to the launcher.\n
+        3. Move your position a little bit, verify that location updates toast comes up.\n
         Please wait until the location updates or timeout toast message shows up before going back to the cts-verifier tests.\n
-        3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
     </string>
 
     <string name="provisioning_byod_personal_ringtones">Personal ringtones</string>
