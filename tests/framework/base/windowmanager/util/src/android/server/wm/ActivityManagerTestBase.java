@@ -912,6 +912,11 @@ public abstract class ActivityManagerTestBase {
         return display != null && display.getState() == Display.STATE_ON;
     }
 
+    protected static boolean perDisplayFocusEnabled() {
+        return getInstrumentation().getTargetContext().getResources()
+                .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
+    }
+
     /**
      * Test @Rule class that disables screen doze settings before each test method running and
      * restoring to initial values after test method finished.
