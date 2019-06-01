@@ -275,10 +275,12 @@ public class AppPredictionServiceTest {
 
     private void setService(String service) {
         Log.d(TAG, "Setting app prediction service to " + service);
+        int userId = android.os.Process.myUserHandle().getIdentifier();
         if (service != null) {
-            runShellCommand("cmd app_prediction set temporary-service 0 " + service + " 12000");
+            runShellCommand("cmd app_prediction set temporary-service "
+                    + userId + " " + service + " 12000");
         } else {
-            runShellCommand("cmd app_prediction set temporary-service 0");
+            runShellCommand("cmd app_prediction set temporary-service " + userId);
         }
     }
 

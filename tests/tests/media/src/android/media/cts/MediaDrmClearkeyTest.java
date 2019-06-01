@@ -17,6 +17,7 @@ package android.media.cts;
 
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaDrm;
+import android.media.MediaDrm.KeyStatus;
 import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaDrmException;
 import android.media.MediaFormat;
@@ -288,6 +289,28 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                                 } else {
                                     mLostStateReceived = true;
                                 }
+                            }
+                        }, null);
+                    mDrm.setOnKeyStatusChangeListener(new MediaDrm.OnKeyStatusChangeListener() {
+                            @Override
+                            public void onKeyStatusChange(MediaDrm md, byte[] sessionId,
+                                    List<KeyStatus> keyInformation, boolean hasNewUsableKey) {
+                                Log.d(TAG, "onKeyStatusChange");
+                                assertTrue(md == mDrm);
+                                assertTrue(Arrays.equals(sessionId, mSessionId));
+                                assertTrue(hasNewUsableKey);
+
+                                assertEquals(3, keyInformation.size());
+                                KeyStatus keyStatus = keyInformation.get(0);
+                                assertTrue(Arrays.equals(keyStatus.getKeyId(), new byte[] {0xa, 0xb, 0xc}));
+                                assertTrue(keyStatus.getStatusCode() == MediaDrm.KeyStatus.STATUS_USABLE);
+                                keyStatus = keyInformation.get(1);
+                                assertTrue(Arrays.equals(keyStatus.getKeyId(), new byte[] {0xd, 0xe, 0xf}));
+                                assertTrue(keyStatus.getStatusCode() == MediaDrm.KeyStatus.STATUS_EXPIRED);
+                                keyStatus = keyInformation.get(2);
+                                assertTrue(Arrays.equals(keyStatus.getKeyId(), new byte[] {0x0, 0x1, 0x2}));
+                                assertTrue(keyStatus.getStatusCode() == MediaDrm.KeyStatus.STATUS_USABLE_IN_FUTURE);
+
                             }
                         }, null);
 

@@ -57,6 +57,7 @@ public class StatusBarManagerTest {
 
     @After
     public void tearDown() {
+        mStatusBarManager.setDisabledForSetup(false);
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
