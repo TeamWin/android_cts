@@ -36,6 +36,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -477,6 +478,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     @FlakyTest(bugId = 131005232)
     public void testImeWindowCanSwitchWhenTopFocusedDisplayChange() throws Exception {
+        // If config_perDisplayFocusEnabled, the focus will not move even if touching on
+        // the Activity in the different display.
+        assumeFalse(perDisplayFocusEnabled());
+
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
                      TestActivitySession<>();
