@@ -53,7 +53,9 @@ import android.util.Log;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -810,8 +812,7 @@ public class CarrierApiTest extends AndroidTestCase {
 
         // Set subscription group with current sub Id.
         int subId = SubscriptionManager.getDefaultDataSubscriptionId();
-        List<Integer> subGroup = Arrays.asList(subId);
-        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(subGroup);
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
 
         try {
             // Get all active subscriptions.
@@ -821,17 +822,16 @@ public class CarrierApiTest extends AndroidTestCase {
             // Verify that the device has at least two active subscriptions.
             assertTrue(activeSubInfos.size() >= DSDS_PHONE_COUNT);
 
-            List<Integer> activeSubGroup = activeSubInfos.stream()
-                    .map(info -> info.getSubscriptionId())
-                    .filter(id -> id != subId)
-                    .collect(Collectors.toList());
+            List<Integer> activeSubGroup = getSubscriptionIdList(activeSubInfos);
+            activeSubGroup.removeIf(id -> id == subId);
 
             mSubscriptionManager.addSubscriptionsIntoGroup(activeSubGroup, uuid);
 
-            List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+            List<Integer> infoList =
+                    getSubscriptionIdList(mSubscriptionManager.getSubscriptionsInGroup(uuid));
             activeSubGroup.add(subId);
             assertEquals(activeSubGroup.size(), infoList.size());
-            assertTrue(infoList.containsAll(activeSubGroup));
+            assertTrue(activeSubGroup.containsAll(infoList));
         } finally {
             removeSubscriptionsFromGroup(uuid);
         }
@@ -849,26 +849,23 @@ public class CarrierApiTest extends AndroidTestCase {
 
         // Set subscription group with current sub Id.
         int subId = SubscriptionManager.getDefaultDataSubscriptionId();
-        List<Integer> subGroup = Arrays.asList(subId);
-        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(subGroup);
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
 
         try {
             // Get all accessible eSim subscription.
             List<SubscriptionInfo> accessibleSubInfos =
                     mSubscriptionManager.getAccessibleSubscriptionInfoList();
             if (accessibleSubInfos != null && accessibleSubInfos.size() > 1) {
-                List<Integer> accessibleSubGroup = accessibleSubInfos.stream()
-                        .map(info -> info.getSubscriptionId())
-                        .filter(id -> id != subId)
-                        .collect(Collectors.toList());
+                List<Integer> accessibleSubGroup = getSubscriptionIdList(accessibleSubInfos);
+                accessibleSubGroup.removeIf(id -> id == subId);
 
                 mSubscriptionManager.addSubscriptionsIntoGroup(accessibleSubGroup, uuid);
 
-                List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(
-                        uuid);
+                List<Integer> infoList =
+                        getSubscriptionIdList(mSubscriptionManager.getSubscriptionsInGroup(uuid));
                 accessibleSubGroup.add(subId);
                 assertEquals(accessibleSubGroup.size(), infoList.size());
-                assertTrue(infoList.containsAll(accessibleSubGroup));
+                assertTrue(accessibleSubGroup.containsAll(infoList));
             }
         } finally {
             removeSubscriptionsFromGroup(uuid);
@@ -973,13 +970,18 @@ public class CarrierApiTest extends AndroidTestCase {
         List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
         if (!infoList.isEmpty()) {
             mSubscriptionManager.removeSubscriptionsFromGroup(
-                    infoList.stream()
-                            .map(info -> info.getSubscriptionId())
-                            .collect(Collectors.toList()),
+                    getSubscriptionIdList(infoList),
                     uuid);
         }
         infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
         assertTrue(infoList.isEmpty());
+    }
+
+    private List<Integer> getSubscriptionIdList(List<SubscriptionInfo> subInfoList) {
+        if (subInfoList == null || subInfoList.isEmpty()) return Collections.EMPTY_LIST;
+        return subInfoList.stream()
+                .map(info -> info.getSubscriptionId())
+                .collect(Collectors.toList());
     }
 
     /**
