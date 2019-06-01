@@ -73,6 +73,10 @@ public class StaticMetadata {
     private final CheckLevel mLevel;
     private final CameraErrorCollector mCollector;
 
+    // Last defined capability enum, for iterating over all of them
+    public static final int LAST_CAPABILITY_ENUM =
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA;
+
     // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {
         "AE_MODE_OFF",
@@ -1958,7 +1962,7 @@ public class StaticMetadata {
 
         checkArrayValuesInRange(key, availableCaps,
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME);
+                LAST_CAPABILITY_ENUM);
         capList = Arrays.asList(CameraTestUtils.toObject(availableCaps));
         return capList;
     }

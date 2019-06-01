@@ -82,6 +82,7 @@
             android:icon="@drawable/icon"
             android:debuggable="true"
             android:largeHeap="true"
+            android:requestLegacyExternalStorage="true"
             android:theme="@android:style/Theme.DeviceDefault">
 
         <provider android:name="android.location.cts.MmsPduProvider"
