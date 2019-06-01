@@ -351,7 +351,7 @@ public class RVCVRecordActivity extends Activity {
      *
      */
     private void initStoragePath() {
-        File rxcvRecDataDir = new File(Environment.getExternalStorageDirectory(),"RVCVRecData");
+        File rxcvRecDataDir = new File(getExternalFilesDir(null),"RVCVRecData");
 
         // Create the storage directory if it does not exist
         if (! rxcvRecDataDir.exists()) {
