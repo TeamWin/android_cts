@@ -82,6 +82,7 @@
             android:icon="@drawable/icon"
             android:debuggable="true"
             android:largeHeap="true"
+            android:requestLegacyExternalStorage="true"
             android:theme="@android:style/Theme.DeviceDefault">
 
         <provider android:name="android.location.cts.MmsPduProvider"
@@ -1372,17 +1373,6 @@
             <meta-data android:name="test_category" android:value="@string/test_category_features" />
         </activity>
         -->
-
-        <activity android:name=".location.GpsTestActivity"
-                android:label="@string/location_gps_test"
-                android:configChanges="keyboardHidden|orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_hardware" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
-        </activity>
 
         <activity android:name=".location.LocationListenerActivity"
                 android:label="@string/location_listener_activity"

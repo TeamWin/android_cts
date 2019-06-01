@@ -40,6 +40,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -124,6 +125,12 @@ public class WindowFocusTests extends WindowManagerTestBase {
                 .hasSystemFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
+    /** Checks if per-display-focus is enabled in the device. */
+    private static boolean perDisplayFocusEnabled() {
+        return getInstrumentation().getTargetContext().getResources()
+                    .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
+    }
+
     /**
      * Test the following conditions:
      * - Each display can have a focused window at the same time.
@@ -141,6 +148,8 @@ public class WindowFocusTests extends WindowManagerTestBase {
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
 
         assumeTrue(supportsMultiDisplay());
+        // If config_perDisplayFocusEnabled, tapping on a display will not move the focus.
+        assumeFalse(perDisplayFocusEnabled());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int secondaryDisplayId = displaySession.createDisplay(
                     getInstrumentation().getTargetContext()).getDisplayId();
@@ -149,15 +158,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
 
-            final boolean perDisplayFocusEnabled = getInstrumentation()
-                    .getTargetContext().getResources()
-                    .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
-            if (perDisplayFocusEnabled) {
-                primaryActivity.assertWindowFocusState(true /* hasFocus */);
-                sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
-            } else {
-                primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
-            }
+            primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
 
             // Press display-unspecified keys and a display-specified key but not release them.
             sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
@@ -174,9 +175,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
             // key events sent to secondary activity would be cancelled.
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_5, FLAG_CANCELED);
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_7, FLAG_CANCELED);
-            if (!perDisplayFocusEnabled) {
-                secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
-            }
+            secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
             assertEquals(secondaryActivity.getLogTag() + " must only receive expected events.",
                     0 /* expected event count */, secondaryActivity.getKeyEventCount());
 
@@ -192,11 +191,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
     @FlakyTest(bugId = 131005232)
     public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
-
-        if (getInstrumentation().getTargetContext().getResources().getBoolean(
-                android.R.bool.config_perDisplayFocusEnabled)) {
-            return;
-        }
+        assumeFalse(perDisplayFocusEnabled());
 
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
@@ -245,6 +240,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
 
         assumeTrue(supportsMultiDisplay());
+        assumeFalse(perDisplayFocusEnabled());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int secondaryDisplayId = displaySession.createDisplay(
                     getInstrumentation().getTargetContext()).getDisplayId();
@@ -297,11 +293,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
     @Test
     public void testTapFocusableWindow() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
-        // Ensure per display focus is disabled before proceeding with this test
-        if (getInstrumentation().getTargetContext().getResources().getBoolean(
-                android.R.bool.config_perDisplayFocusEnabled)) {
-            return;
-        }
+        assumeFalse(perDisplayFocusEnabled());
 
         PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
 
@@ -326,11 +318,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
     @FlakyTest(bugId = 130467737)
     public void testTapNonFocusableWindow() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
-        // Ensure per display focus is disabled before proceeding with this test
-        if (getInstrumentation().getTargetContext().getResources().getBoolean(
-                android.R.bool.config_perDisplayFocusEnabled)) {
-            return;
-        }
+        assumeFalse(perDisplayFocusEnabled());
 
         PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
 

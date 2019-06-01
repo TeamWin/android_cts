@@ -324,8 +324,9 @@ public class Camera2MultiViewTestCase {
 
     protected StaticMetadata getStaticInfo(String cameraId) {
         CameraHolder camera = getCameraHolder(cameraId);
-        assertTrue("Camera is not openned", camera.isOpened());
-        return camera.getStaticInfo();
+        StaticMetadata staticInfo = camera.getStaticInfo();
+        assertNotNull("Camera " + cameraId + " static info is null", staticInfo);
+        return staticInfo;
     }
 
     protected List<Size> getOrderedPreviewSizes(String cameraId) {
