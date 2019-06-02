@@ -130,7 +130,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        String[] ids = mCameraManager.getCameraIdList();
         mCharacteristics = new ArrayList<>();
         for (int i = 0; i < mAllCameraIds.length; i++) {
             mCharacteristics.add(mAllStaticInfo.get(mAllCameraIds[i]).getCharacteristics());
@@ -148,7 +147,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      */
     public void testAvailableStreamConfigs() throws Exception {
         int counter = 0;
-        for (CameraCharacteristics c : mCharacteristics) {
+        for (String id : mAllCameraIds) {
+            CameraCharacteristics c = mAllStaticInfo.get(id).getCharacteristics();
             StreamConfigurationMap config =
                     c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assertNotNull(String.format("No stream configuration map found for: ID %s",
@@ -168,6 +168,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             boolean isMonochromeWithY8 = arrayContains(actualCapabilities, MONOCHROME)
                     && arrayContains(outputFormats, ImageFormat.Y8);
+            boolean isHiddenPhysicalCamera = !arrayContains(mCameraIds, id);
             boolean supportHeic = arrayContains(outputFormats, ImageFormat.HEIC);
 
             assertArrayContains(
@@ -283,8 +284,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             boolean isExternalCamera = (hwLevel ==
                     CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL);
             Size maxVideoSize = null;
-            if (isExternalCamera) {
-                // TODO: for now, use FULLHD 30 as largest possible video size
+            if (isExternalCamera || isHiddenPhysicalCamera) {
+                // TODO: for now, use FULLHD 30 as largest possible video size for external camera.
+                // For hidden physical camera, since we don't require CamcorderProfile to be
+                // available, use FULLHD 30 as maximum video size as well.
                 List<Size> videoSizes = CameraTestUtils.getSupportedVideoSizes(
                         mAllCameraIds[counter], mCameraManager, FULLHD);
                 for (Size sz : videoSizes) {
