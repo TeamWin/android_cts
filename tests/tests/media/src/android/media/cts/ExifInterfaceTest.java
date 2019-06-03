@@ -397,7 +397,8 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private void testSaveAttributes_withFileName(String fileName, ExpectedValue expectedValue)
             throws IOException {
-        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        File srcFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        File imageFile = clone(srcFile);
         String verboseTag = imageFile.getName();
 
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
@@ -420,7 +421,8 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private void testSaveAttributes_withFileDescriptor(String fileName, ExpectedValue expectedValue)
             throws IOException {
-        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        File srcFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        File imageFile = clone(srcFile);
         String verboseTag = imageFile.getName();
 
         FileDescriptor fd = null;
@@ -556,8 +558,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
         File srcFile = new File(Environment.getExternalStorageDirectory(),
                 EXTERNAL_BASE_DIRECTORY + EXIF_BYTE_ORDER_II_JPEG);
-        File imageFile = new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + EXIF_BYTE_ORDER_II_JPEG + "_copied");
+        File imageFile = clone(srcFile);
 
         FileUtils.copyFileOrThrow(srcFile, imageFile);
         ExifInterface exif = new ExifInterface(imageFile.getAbsolutePath());
@@ -585,5 +586,12 @@ public class ExifInterfaceTest extends AndroidTestCase {
                 OutputStream target = new FileOutputStream(file)) {
             FileUtils.copy(source, target);
         }
+    }
+
+    private static File clone(File original) throws IOException {
+        final File cloned = new File(original.getParentFile(),
+                "cts_" + System.nanoTime() + "_" + original.getName());
+        FileUtils.copyFileOrThrow(original, cloned);
+        return cloned;
     }
 }
