@@ -45,28 +45,19 @@ LOCAL_ADDITIONAL_DEPENDENCIES += \
 # inconsistencies will be resolved by build improvement work mentioned in b/123393637.
 #
 # Converts:
-#     current.api -> $(TARGET_OUT_TESTCASES)/cts-current-api/current.api
 #     hiddenapi_flags.csv -> $(TARGET_OUT_TESTCASES)/cts-hiddenapi_flags-csv/hiddenapi_flags.csv
-#     system-all.api.zip -> $(TARGET_OUT_TESTCASES)/cts-system-all.api/system-all.api.zip
 
 # Construct module name directory from file name, matches behavior in the
 # build_xml_api_file function in ../api/Android.mk plus some extra rules for handling slight
 # inconsistencies with that behavior for the ..all.zip files used by some signature tests.
 #   Replace . with -
 #   Prefix every entry with cts-
-#   Replace -all-api-zip with -all.api to handle ...all.zip files
 #
 cts_signature_module_deps := $(LOCAL_SIGNATURE_API_FILES)
 cts_signature_module_deps := $(subst .,-,$(cts_signature_module_deps))
 cts_signature_module_deps := $(addprefix cts-,$(cts_signature_module_deps))
-cts_signature_module_deps := $(subst -all-txt-zip,-all.txt,$(cts_signature_module_deps))
 
-# Construct path to the generated files and add them as java resources.
-cts_signature_module_resources := $(addprefix $(PRODUCT_OUT)/obj/ETC/,$(cts_signature_module_deps))
-cts_signature_module_resources := $(addsuffix _intermediates/,$(cts_signature_module_resources))
-cts_signature_module_resources := $(join $(cts_signature_module_resources),$(LOCAL_SIGNATURE_API_FILES))
-
-LOCAL_JAVA_RESOURCE_FILES := $(cts_signature_module_resources)
+LOCAL_REQUIRED_MODULES := $(cts_signature_module_deps)
 
 LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
@@ -80,5 +71,4 @@ endif
 include $(BUILD_CTS_PACKAGE)
 
 LOCAL_SIGNATURE_API_FILES :=
-cts_signature_module_resources :=
 cts_signature_module_deps :=

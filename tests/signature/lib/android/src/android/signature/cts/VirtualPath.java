@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -39,6 +40,17 @@ public abstract class VirtualPath {
      */
     public static ZipEntryPath get(ZipFile zip, ZipEntry entry) {
         return new ZipEntryPath(zip, entry);
+    }
+
+    /**
+     * Get a path to a resource in a ClassLoader.
+     *
+     * @param classLoader the ClassLoader containing the resource.
+     * @param resourceName the name of the resource, must not start with a /.
+     */
+    public static ResourcePath get(ClassLoader classLoader, String resourceName)
+            throws IOException {
+        return new ResourcePath(classLoader, resourceName);
     }
 
     public abstract InputStream newInputStream() throws IOException;
@@ -88,6 +100,27 @@ public abstract class VirtualPath {
         @Override
         public String toString() {
             return "zip:file:" + zip.getName() + "!/" + entry.getName();
+        }
+    }
+
+    public static class ResourcePath extends VirtualPath {
+        private final URL url;
+
+        ResourcePath(ClassLoader classLoader, String path) throws IOException {
+            this.url = classLoader.getResource(path);
+            if (url == null) {
+                throw new IOException("Could not find resource '" + path + "' in " + classLoader);
+            }
+        }
+
+        @Override
+        public InputStream newInputStream() throws IOException {
+            return url.openStream();
+        }
+
+        @Override
+        public String toString() {
+            return url.toExternalForm();
         }
     }
 }
