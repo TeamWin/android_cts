@@ -72,7 +72,7 @@ class NoPermissionTests {
 
             if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 val activityIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-                activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                activityIntent!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(activityIntent)
             }
         }
