@@ -236,6 +236,10 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             new InstallMultiple().addApk(DECLARE_PERMISSION_COMPAT_APK).run();
 
             new InstallMultiple().addApk(PERMISSION_DIFF_CERT_APK).run();
+
+            // Enable alert window permission so it can start activity in background
+            enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
+
             runDeviceTests(PERMISSION_DIFF_CERT_PKG, null);
         } finally {
             getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
@@ -252,6 +256,9 @@ public class AppSecurityTests extends BaseAppSecurityTest {
         try {
             new InstallMultiple(false).addApk(DECLARE_PERMISSION_APK).run();
             new InstallMultiple(false).addApk(DUPLICATE_DECLARE_PERMISSION_APK).run();
+
+            // Enable alert window permission so it can start activity in background
+            enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
 
             runDeviceTests(DUPLICATE_DECLARE_PERMISSION_PKG, null);
 
@@ -284,5 +291,15 @@ public class AppSecurityTests extends BaseAppSecurityTest {
                         + (instant ? " --instant" : " --full")
                         + " -S 1024 /data/local/tmp/foo.apk");
         assertTrue("Error text", output.contains("Error"));
+    }
+
+    private void enableAlertWindowAppOp(String pkgName) throws Exception {
+        getDevice().executeShellCommand(
+                "appops set " + pkgName + " android:system_alert_window allow");
+        String result = "No operations.";
+        while (result.contains("No operations")) {
+            result = getDevice().executeShellCommand(
+                    "appops get " + pkgName + " android:system_alert_window");
+        }
     }
 }
