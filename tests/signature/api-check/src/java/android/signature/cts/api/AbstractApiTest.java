@@ -23,13 +23,17 @@ import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.VirtualPath;
 import android.signature.cts.VirtualPath.LocalFilePath;
+import android.signature.cts.VirtualPath.ResourcePath;
+import android.util.Log;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.stream.Stream;
@@ -42,6 +46,8 @@ import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
 /**
  */
 public class AbstractApiTest extends InstrumentationTestCase {
+
+    private static final String TAG = "SignatureTest";
 
     private TestResultObserver mResultObserver;
 
@@ -134,6 +140,32 @@ public class AbstractApiTest extends InstrumentationTestCase {
         }
     }
 
+    private Stream<VirtualPath> readResource(String resourceName) {
+        try {
+            ResourcePath resourcePath =
+                    VirtualPath.get(getClass().getClassLoader(), resourceName);
+            if (resourceName.endsWith(".zip")) {
+                // Extract to a temporary file and read from there.
+                Path file = extractResourceToFile(resourceName, resourcePath.newInputStream());
+                return flattenPaths(VirtualPath.get(file.toString()));
+            } else {
+                return Stream.of(resourcePath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Path extractResourceToFile(String resourceName, InputStream is) throws IOException {
+        Path tempDirectory = Files.createTempDirectory("signature");
+        Path file = tempDirectory.resolve(resourceName);
+        Log.i(TAG, "extractResourceToFile: extracting " + resourceName + " to " + file);
+        Files.copy(is, file);
+        is.close();
+        return file;
+    }
+
+
     /**
      * Given a path in the local file system (possibly of a zip file) flatten it into a stream of
      * virtual paths.
@@ -148,6 +180,13 @@ public class AbstractApiTest extends InstrumentationTestCase {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    Stream<JDiffClassDescription> parseApiResourcesAsStream(
+            ApiDocumentParser apiDocumentParser, String[] apiResources) {
+        return Stream.of(apiResources)
+                .flatMap(this::readResource)
+                .flatMap(stream -> apiDocumentParser.parseAsStream(stream));
     }
 
     /**
