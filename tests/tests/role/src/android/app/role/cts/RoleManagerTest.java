@@ -36,6 +36,7 @@ import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
@@ -145,6 +146,11 @@ public class RoleManagerTest {
     @Before
     public void wakeUpScreen() throws IOException {
         runShellCommand(sInstrumentation, "input keyevent KEYCODE_WAKEUP");
+    }
+
+    @Before
+    public void closeNotificationShade() {
+        sContext.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
     }
 
     @Test
@@ -298,13 +304,7 @@ public class RoleManagerTest {
 
     private void respondToRoleRequest(boolean allow) throws InterruptedException, IOException {
         if (allow) {
-            UiObject2 item = sUiDevice.wait(Until.findObject(By.text(APP_PACKAGE_NAME)),
-                    TIMEOUT_MILLIS);
-            if (item == null) {
-                dumpWindowHierarchy();
-                fail("Cannot find item to click");
-            }
-            item.click();
+            waitAndClick(By.text(APP_PACKAGE_NAME));
         }
         Pair<Integer, Intent> result = clickButtonAndWaitForResult(allow);
         int expectedResult = allow ? Activity.RESULT_OK : Activity.RESULT_CANCELED;
@@ -326,27 +326,18 @@ public class RoleManagerTest {
     @NonNull
     private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
             InterruptedException {
-        return ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
-            String buttonId = positive ? "android:id/button1" : "android:id/button2";
-            UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
-            if (button == null) {
-                fail("Cannot find button to click");
-            }
-            button.click();
-            return waitForResult();
-        });
+        waitAndClick(By.res(positive ? "android:id/button1" : "android:id/button2"));
+        return waitForResult();
     }
 
-    private void dumpWindowHierarchy() throws InterruptedException, IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        sUiDevice.dumpWindowHierarchy(outputStream);
-        String windowHierarchy = outputStream.toString(StandardCharsets.UTF_8.name());
-
-        Log.w(LOG_TAG, "Window hierarchy:");
-        for (String line : windowHierarchy.split("\n")) {
-            Thread.sleep(10);
-            Log.w(LOG_TAG, line);
-        }
+    private void waitAndClick(BySelector bySelector) {
+        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
+            UiObject2 item = sUiDevice.wait(Until.findObject(bySelector), TIMEOUT_MILLIS);
+            if (item == null) {
+                fail("Cannot find item to click");
+            }
+            item.click();
+        });
     }
 
     @NonNull
