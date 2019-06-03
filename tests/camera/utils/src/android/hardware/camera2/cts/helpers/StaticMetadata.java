@@ -389,7 +389,8 @@ public class StaticMetadata {
                     minExposure, SENSOR_INFO_EXPOSURE_TIME_RANGE_MIN_AT_MOST));
             minExposure = SENSOR_INFO_EXPOSURE_TIME_RANGE_MIN_AT_MOST;
         }
-        if (maxExposure < SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST) {
+        if (isHardwareLevelAtLeastFull() &&
+                maxExposure < SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST) {
             failKeyCheck(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE,
                     String.format(
                     "Max value %d is too small, set to minimal legal value %d",
