@@ -148,8 +148,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
 
         assumeTrue(supportsMultiDisplay());
-        // If config_perDisplayFocusEnabled, tapping on a display will not move the focus.
-        assumeFalse(perDisplayFocusEnabled());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int secondaryDisplayId = displaySession.createDisplay(
                     getInstrumentation().getTargetContext()).getDisplayId();
@@ -158,7 +156,13 @@ public class WindowFocusTests extends WindowManagerTestBase {
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
 
-            primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
+            final boolean perDisplayFocusEnabled = perDisplayFocusEnabled();
+            if (perDisplayFocusEnabled) {
+                primaryActivity.assertWindowFocusState(true /* hasFocus */);
+                sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
+            } else {
+                primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
+            }
 
             // Press display-unspecified keys and a display-specified key but not release them.
             sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
@@ -175,7 +179,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
             // key events sent to secondary activity would be cancelled.
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_5, FLAG_CANCELED);
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_7, FLAG_CANCELED);
-            secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
+            if (!perDisplayFocusEnabled) {
+                secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
+            }
             assertEquals(secondaryActivity.getLogTag() + " must only receive expected events.",
                     0 /* expected event count */, secondaryActivity.getKeyEventCount());
 
@@ -240,7 +246,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
         primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
 
         assumeTrue(supportsMultiDisplay());
-        assumeFalse(perDisplayFocusEnabled());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int secondaryDisplayId = displaySession.createDisplay(
                     getInstrumentation().getTargetContext()).getDisplayId();
