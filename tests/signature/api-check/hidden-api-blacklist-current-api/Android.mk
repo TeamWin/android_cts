@@ -19,4 +19,4 @@ LOCAL_PACKAGE_NAME := CtsHiddenApiBlacklistCurrentApiTestCases
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_SIGNATURE_API_FILES := hiddenapi_flags.csv
 LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker
-include $(LOCAL_PATH)/../build_signature_apk.mk
+include $(LOCAL_PATH)/../build_hidden_apk.mk
