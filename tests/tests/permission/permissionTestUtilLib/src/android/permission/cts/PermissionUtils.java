@@ -39,28 +39,35 @@ import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Common utils for permission tests
+ */
 public class PermissionUtils {
-    private static long TIMEOUT_MILLIS = 10000;
+    private static final long TIMEOUT_MILLIS = 10000;
 
-    private static int TESTED_FLAGS = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED
+    private static final int TESTED_FLAGS = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED
             | FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED
             | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
 
-    private static final Context sContext = InstrumentationRegistry.getTargetContext();
+    private static final Context sContext =
+            InstrumentationRegistry.getInstrumentation().getTargetContext();
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+    private PermissionUtils() {
+        // this class should never be instantiated
+    }
 
     /**
      * Get the state of an app-op.
@@ -70,7 +77,8 @@ public class PermissionUtils {
      *
      * @return The mode the op is on
      */
-    static int getAppOp(@NonNull String packageName, @NonNull String permission) throws Exception {
+    public static int getAppOp(@NonNull String packageName, @NonNull String permission)
+            throws Exception {
         return callWithShellPermissionIdentity(
                 () -> sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
                         permissionToOp(permission),
@@ -82,7 +90,7 @@ public class PermissionUtils {
      *
      * @param apkFile The apk to install
      */
-    static void install(@NonNull String apkFile) {
+    public static void install(@NonNull String apkFile) {
         runShellCommand("pm install -r --force-sdk " + apkFile);
     }
 
@@ -91,7 +99,7 @@ public class PermissionUtils {
      *
      * @param packageName Name of package to be uninstalled
      */
-    static void uninstallApp(@NonNull String packageName) {
+    public static void uninstallApp(@NonNull String packageName) {
         runShellCommand("pm uninstall " + packageName);
     }
 
@@ -102,7 +110,7 @@ public class PermissionUtils {
      * @param permission The permission the app-op belongs to
      * @param mode The new mode
      */
-    static void setAppOp(@NonNull String packageName, @NonNull String permission, int mode) {
+    public static void setAppOp(@NonNull String packageName, @NonNull String permission, int mode) {
         setAppOpByName(packageName, permissionToOp(permission), mode);
     }
 
@@ -113,7 +121,7 @@ public class PermissionUtils {
      * @param op The name of the op
      * @param mode The new mode
      */
-    static void setAppOpByName(@NonNull String packageName, @NonNull String op, int mode) {
+    public static void setAppOpByName(@NonNull String packageName, @NonNull String op, int mode) {
         runWithShellPermissionIdentity(
                 () -> sContext.getSystemService(AppOpsManager.class).setUidMode(op,
                         sContext.getPackageManager().getPackageUid(packageName, 0), mode));
@@ -129,8 +137,8 @@ public class PermissionUtils {
      *
      * @return {@code true} iff the permission is granted
      */
-    static boolean isPermissionGranted(@NonNull String packageName, @NonNull String permission)
-            throws Exception {
+    public static boolean isPermissionGranted(@NonNull String packageName,
+            @NonNull String permission) throws Exception {
         return sContext.checkPermission(permission, Process.myPid(),
                 sContext.getPackageManager().getPackageUid(packageName, 0))
                 == PERMISSION_GRANTED;
@@ -148,7 +156,7 @@ public class PermissionUtils {
      *
      * @return {@code true} iff the permission is granted
      */
-    static boolean isGranted(@NonNull String packageName, @NonNull String permission)
+    public static boolean isGranted(@NonNull String packageName, @NonNull String permission)
             throws Exception {
         if (!isPermissionGranted(packageName, permission)) {
             return false;
@@ -173,7 +181,7 @@ public class PermissionUtils {
      * @param packageName The app that should have the permission granted
      * @param permission The permission to grant
      */
-    static void grantPermission(@NonNull String packageName, @NonNull String permission)
+    public static void grantPermission(@NonNull String packageName, @NonNull String permission)
             throws Exception {
         sUiAutomation.grantRuntimePermission(packageName, permission);
 
@@ -207,7 +215,7 @@ public class PermissionUtils {
      * @param packageName The app that should have the permission revoked
      * @param permission The permission to revoke
      */
-    static void revokePermission(@NonNull String packageName, @NonNull String permission)
+    public static void revokePermission(@NonNull String packageName, @NonNull String permission)
             throws Exception {
         sUiAutomation.revokeRuntimePermission(packageName, permission);
 
@@ -227,7 +235,7 @@ public class PermissionUtils {
      *
      * @param packageName Package to clear
      */
-    static void clearAppState(@NonNull String packageName) {
+    public static void clearAppState(@NonNull String packageName) {
         runShellCommand("pm clear " + packageName);
     }
 
@@ -239,7 +247,7 @@ public class PermissionUtils {
      *
      * @return Permission flags
      */
-    static int getPermissionFlags(@NonNull String packageName, @NonNull String permission)  {
+    public static int getPermissionFlags(@NonNull String packageName, @NonNull String permission) {
         try {
             return callWithShellPermissionIdentity(
                     () -> sContext.getPackageManager().getPermissionFlags(permission, packageName,
@@ -257,7 +265,7 @@ public class PermissionUtils {
      * @param mask Mask of permissions to set
      * @param flags Permissions to set
      */
-    static void setPermissionFlags(@NonNull String packageName, @NonNull String permission,
+    public static void setPermissionFlags(@NonNull String packageName, @NonNull String permission,
             int mask, int flags) {
         runWithShellPermissionIdentity(
                 () -> sContext.getPackageManager().updatePermissionFlags(permission, packageName,
@@ -286,7 +294,7 @@ public class PermissionUtils {
      *
      * @return The runtime permissions requested by the app
      */
-    static @NonNull List<String> getRuntimePermissions(@NonNull String packageName)
+    public static @NonNull List<String> getRuntimePermissions(@NonNull String packageName)
             throws Exception {
         ArrayList<String> runtimePermissions = new ArrayList<>();
 
@@ -300,13 +308,26 @@ public class PermissionUtils {
         return runtimePermissions;
     }
 
+    public interface ThrowingRunnable extends Runnable {
+        void runOrThrow() throws Exception;
+
+        @Override
+        default void run() {
+            try {
+                runOrThrow();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
     /**
      * Make sure that a {@link Runnable} eventually finishes without throwing a {@link
      * Exception}.
      *
      * @param r The {@link Runnable} to run.
      */
-    public static void eventually(@NonNull Runnable r) {
+    public static void eventually(@NonNull ThrowingRunnable r) {
         long start = System.currentTimeMillis();
 
         while (true) {
