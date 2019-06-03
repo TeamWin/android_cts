@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2009 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-android_test {
-    name: "CtsPermission2TestCases",
-    defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-        "cts_instant",
-    ],
-    libs: ["android.test.base.stubs"],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "guava",
-        "androidx.test.ext.junit-nodeps",
-        "truth-prebuilt",
-        "permission-test-util-lib"
-    ],
+java_library {
+    name: "permission-test-util-lib",
+
     srcs: ["src/**/*.java"],
+
+    static_libs: [
+        "ub-uiautomator",
+        "compatibility-device-util-axt",
+        "androidx.test.ext.junit-nodeps"
+   ],
+
     sdk_version: "test_current",
 }
