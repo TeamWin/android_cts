@@ -41,7 +41,7 @@ public class SignatureTest extends AbstractApiTest {
     private String[] unexpectedApiFiles;
 
     @Override
-    protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
+    protected void initializeFromArgs(Bundle instrumentationArgs) {
         expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
         baseApiFiles = getCommaSeparatedList(instrumentationArgs, "base-api-files");
         unexpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "unexpected-api-files");
@@ -73,7 +73,7 @@ public class SignatureTest extends AbstractApiTest {
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            parseApiFilesAsStream(apiDocumentParser, expectedApiFiles)
+            parseApiResourcesAsStream(apiDocumentParser, expectedApiFiles)
                     .filter(not(unexpectedClasses::contains))
                     .forEach(complianceChecker::checkSignatureCompliance);
 
@@ -97,7 +97,7 @@ public class SignatureTest extends AbstractApiTest {
 
     private Set<JDiffClassDescription> loadUnexpectedClasses() {
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
-        return parseApiFilesAsStream(apiDocumentParser, unexpectedApiFiles)
+        return parseApiResourcesAsStream(apiDocumentParser, unexpectedApiFiles)
                 .collect(Collectors.toCollection(SignatureTest::newSetOfClassDescriptions));
     }
 
@@ -107,7 +107,7 @@ public class SignatureTest extends AbstractApiTest {
 
     private void loadBaseClasses(ApiComplianceChecker complianceChecker) {
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
-        parseApiFilesAsStream(apiDocumentParser, baseApiFiles)
+        parseApiResourcesAsStream(apiDocumentParser, baseApiFiles)
                 .forEach(complianceChecker::addBaseClass);
     }
 }
