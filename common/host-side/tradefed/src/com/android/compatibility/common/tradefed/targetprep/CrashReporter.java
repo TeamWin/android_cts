@@ -125,15 +125,16 @@ public class CrashReporter implements ITargetCleaner {
 
         private void processLogLine(String line) {
             mLogcatChunk.append(line);
+            mLogcatChunk.append('\n');
             Matcher m;
-            if ((m = CrashUtils.sNewTestPattern.matcher(line)).matches()) {
+            if ((m = CrashUtils.sNewTestPattern.matcher(line)).find()) {
                 mTestName = m.group(1);
                 mCrashes = new ArrayList<Crash>();
                 mLogcatChunk.setLength(0);
-            } else if (CrashUtils.sEndofCrashPattern.matcher(line).matches()) {
+            } else if (CrashUtils.sEndofCrashPattern.matcher(line).find()) {
                 mCrashes = CrashUtils.getAllCrashes(mLogcatChunk.toString());
                 mLogcatChunk.setLength(0);
-            } else if (CrashUtils.sUploadRequestPattern.matcher(line).matches()) {
+            } else if (CrashUtils.sUploadRequestPattern.matcher(line).find()) {
                 upload(mDevice, mTestName, mCrashes);
             }
         }
