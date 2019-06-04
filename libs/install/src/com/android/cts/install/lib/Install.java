@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.rollback.lib;
+package com.android.cts.install.lib;
 
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
@@ -149,7 +149,7 @@ public class Install {
         }
 
         if (mIsStaged) {
-            Utils.waitForSessionReady(sessionId);
+            InstallUtils.waitForSessionReady(sessionId);
         }
     }
 }

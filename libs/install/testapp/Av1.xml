@@ -15,15 +15,15 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.rollback.lib.testapp.A"
+    package="com.android.cts.install.lib.testapp.A"
     android:versionCode="1"
     android:versionName="1.0" >
 
 
     <uses-sdk android:minSdkVersion="19" />
 
-    <application android:label="Rollback Test App A1">
-        <activity android:name="com.android.cts.rollback.lib.testapp.MainActivity">
+    <application android:label="Test App A1">
+        <activity android:name="com.android.cts.install.lib.testapp.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
