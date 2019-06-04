@@ -24,19 +24,19 @@ import org.json.JSONObject;
 
 /** Contains helper functions and shared constants for crash parsing. */
 public class CrashUtils {
-
-    public static final long MIN_CRASH_ADDR = 32768;
+    // used to only detect actual addresses instead of nullptr and other unlikely values
+    public static final long MIN_CRASH_ADDR = 0x8000;
     // Matches the end of a crash
     public static final Pattern sEndofCrashPattern =
-            Pattern.compile(".*DEBUG\\s+:\\s+backtrace:.*");
+            Pattern.compile("DEBUG\\s+?:\\s+?backtrace:");
     public static final String DEVICE_PATH = "/data/local/tmp/CrashParserResults/";
     public static final String LOCK_FILENAME = "lockFile.loc";
     public static final String UPLOAD_REQUEST = "Please upload a result file to stagefright";
     public static final Pattern sUploadRequestPattern =
-            Pattern.compile(".*" + UPLOAD_REQUEST + ".*");
+            Pattern.compile(UPLOAD_REQUEST);
     public static final String NEW_TEST_ALERT = "New test starting with name: ";
     public static final Pattern sNewTestPattern =
-            Pattern.compile(".*" + NEW_TEST_ALERT + "(\\w+)\\(.*\\).*");
+            Pattern.compile(NEW_TEST_ALERT + "(\\w+?)\\(.*?\\)");
     public static final String SIGNAL = "signal",
             NAME = "name",
             PID = "pid",
@@ -44,18 +44,18 @@ public class CrashUtils {
             FAULT_ADDRESS = "faultaddress";
     // Matches the smallest blob that has the appropriate header and footer
     private static final Pattern sCrashBlobPattern =
-            Pattern.compile("DEBUG\\s+:( [*]{3})+.*?DEBUG\\s+:\\s+backtrace:", Pattern.DOTALL);
+            Pattern.compile("DEBUG\\s+?:( [*]{3})+?.*?DEBUG\\s+?:\\s+?backtrace:", Pattern.DOTALL);
     // Matches process id and name line and captures them
     private static final Pattern sPidtidNamePattern =
-            Pattern.compile("pid: (\\d+), tid: (\\d+), name: ([^\\s]+\\s+)*>>> (.*) <<<");
+            Pattern.compile("pid: (\\d+?), tid: (\\d+?), name: ([^\\s]+?\\s+?)*?>>> (.*?) <<<");
     // Matches fault address and signal type line
     private static final Pattern sFaultLinePattern =
             Pattern.compile(
-                    "\\w+ \\d+ \\((.*)\\), code -*\\d+ \\(.*\\), fault addr "
+                    "\\w+? \\d+? \\((.*?)\\), code -*?\\d+? \\(.*?\\), fault addr "
                             + "(?:0x(\\p{XDigit}+)|-+)");
     // Matches the abort message line if it contains CHECK_
     private static Pattern sAbortMessageCheckPattern =
-            Pattern.compile("(?i)Abort message.*CHECK_.*");
+            Pattern.compile("(?i)Abort message.*?CHECK_");
 
     /**
      * Determines if the given input has a {@link com.android.compatibility.common.util.Crash} that
