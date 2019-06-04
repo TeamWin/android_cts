@@ -34,7 +34,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
     truth-prebuilt \
     androidx.annotation_annotation \
-    platformprotosnano
+    platformprotosnano \
+    permission-test-util-lib
 
 LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni libnativehelper_compat_libc++
 

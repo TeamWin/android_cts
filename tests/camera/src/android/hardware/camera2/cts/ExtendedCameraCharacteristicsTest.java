@@ -294,7 +294,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     long minFrameDuration = config.getOutputMinFrameDuration(
                             android.media.MediaRecorder.class, sz);
                     // Give some margin for rounding error
-                    if (minFrameDuration > (1e9 / 30.1)) {
+                    if (minFrameDuration < (1e9 / 29.9)) {
                         maxVideoSize = sz;
                         break;
                     }
