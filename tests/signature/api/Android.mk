@@ -16,21 +16,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# $(1) name of the xml file to be created
-# $(2) path to the api text file
-define build_xml_api_file
-include $(CLEAR_VARS)
-LOCAL_MODULE := cts-$(subst .,-,$(1))
-LOCAL_MODULE_STEM := $(1)
-LOCAL_MODULE_CLASS := ETC
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
-include $(BUILD_SYSTEM)/base_rules.mk
-$$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
-	@echo "Convert API file $$< -> $$@"
-	@mkdir -p $$(dir $$@)
-	$(hide) $(APICHECK_COMMAND) -convert2xmlnostrip $$< $$@
-endef
-
 # $(1) name of the txt file to be created
 # $(2) path to the api text file
 define copy_api_txt_file
@@ -48,11 +33,6 @@ $$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
 	$$(copy-file-to-target)
 endef
 
-# NOTE: the output XML file is also used
-# in //cts/hostsidetests/devicepolicy/AndroidTest.xml
-# by com.android.cts.managedprofile.CurrentApiHelper
-# ============================================================
-$(eval $(call build_xml_api_file,current.api,frameworks/base/api/current.txt))
 $(eval $(call copy_api_txt_file,current.txt,frameworks/base/api/current.txt))
 $(eval $(call copy_api_txt_file,system-current.txt,frameworks/base/api/system-current.txt))
 $(eval $(call copy_api_txt_file,system-removed.txt,frameworks/base/api/system-removed.txt))
