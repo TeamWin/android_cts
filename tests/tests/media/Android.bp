@@ -1,0 +1,19 @@
+android_library_import {
+    name: "cts.media.heifwriter_heifwriter-nodeps",
+    aars: ["androidx/heifwriter/1.1.0-alpha01/heifwriter-1.1.0-alpha01.aar"],
+    sdk_version: "current",
+    static_libs: [
+        "androidx.annotation_annotation",
+    ],
+}
+
+android_library {
+    name: "cts.media.heifwriter_heifwriter",
+    sdk_version: "current",
+    manifest: "androidx/heifwriter/1.1.0-alpha01/AndroidManifest.xml",
+    static_libs: [
+        "cts.media.heifwriter_heifwriter-nodeps",
+        "androidx.annotation_annotation",
+    ],
+    java_version: "1.7",
+}
