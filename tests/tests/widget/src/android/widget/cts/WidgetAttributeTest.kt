@@ -26,6 +26,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toolbar
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -100,6 +101,26 @@ class WidgetAttributeTest {
         assertEquals(R.style.ParentOfExplicitStyle1, stackToobar2titleMarginEnd[2])
         assertEquals(R.style.MyToolbarStyle, stackToobar2titleMarginEnd[3])
         assertEquals(R.style.MyToolbarStyleParent, stackToobar2titleMarginEnd[4])
+
+        val textview1 = rootView.findViewById<TextView>(R.id.textview1)
+        val stackTextView1textColor =
+                textview1.getAttributeResolutionStack(android.R.attr.textColor)
+        assertEquals(0, stackTextView1textColor.size.toLong())
+        val stackTextView1textSize =
+                textview1.getAttributeResolutionStack(android.R.attr.textSize)
+        assertEquals(4, stackTextView1textSize.size.toLong())
+        assertEquals(R.layout.widget_attribute_layout, stackTextView1textSize[0])
+        assertEquals(R.style.ExplicitStyle1, stackTextView1textSize[1])
+        assertEquals(R.style.ParentOfExplicitStyle1, stackTextView1textSize[2])
+        assertEquals(R.style.TextViewWithoutColorAndAppearance, stackTextView1textSize[3])
+        val stackTextView1textColorHighlight =
+                textview1.getAttributeResolutionStack(android.R.attr.textColorHighlight)
+        assertEquals(5, stackTextView1textColorHighlight.size.toLong())
+        assertEquals(R.layout.widget_attribute_layout, stackTextView1textColorHighlight[0])
+        assertEquals(R.style.ExplicitStyle1, stackTextView1textColorHighlight[1])
+        assertEquals(R.style.ParentOfExplicitStyle1, stackTextView1textColorHighlight[2])
+        assertEquals(android.R.style.Widget_Material_TextView, stackTextView1textColorHighlight[3])
+        assertEquals(android.R.style.Widget_TextView, stackTextView1textColorHighlight[4])
     }
 
     @Test
@@ -138,5 +159,12 @@ class WidgetAttributeTest {
                 attributeMapToobar[android.R.attr.titleMarginEnd]!!.toInt())
         assertEquals(R.style.MyToolbarStyleParent,
                 attributeMapToobar[android.R.attr.titleMarginStart]!!.toInt())
+
+        val textview1 = rootView.findViewById<TextView>(R.id.textview1)
+        val attributeMapTextView1 = textview1!!.attributeSourceResourceMap
+        assertEquals(R.style.TextViewWithoutColorAndAppearance,
+                attributeMapTextView1[android.R.attr.textSize]!!.toInt())
+        assertEquals(R.style.ExplicitStyle1,
+                attributeMapTextView1[android.R.attr.textColorHighlight]!!.toInt())
     }
 }
