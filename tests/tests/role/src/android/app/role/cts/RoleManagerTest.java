@@ -19,6 +19,8 @@ package android.app.role.cts;
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -40,7 +42,6 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
-import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -51,9 +52,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
-import com.android.compatibility.common.util.ExceptionUtils;
 import com.android.compatibility.common.util.ThrowingRunnable;
-import com.android.compatibility.common.util.UiDumpUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -61,9 +60,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -306,7 +303,7 @@ public class RoleManagerTest {
 
     private void respondToRoleRequest(boolean allow) throws InterruptedException, IOException {
         if (allow) {
-            waitAndClick(By.text(APP_PACKAGE_NAME));
+            waitFindObject(By.text(APP_PACKAGE_NAME)).click();
         }
         Pair<Integer, Intent> result = clickButtonAndWaitForResult(allow);
         int expectedResult = allow ? Activity.RESULT_OK : Activity.RESULT_CANCELED;
@@ -316,8 +313,9 @@ public class RoleManagerTest {
 
     @Nullable
     private UiObject2 findDontAskAgainCheck(boolean expected) {
-        return sUiDevice.wait(Until.findObject(By.text("Don\u2019t ask again")), expected
-                ? TIMEOUT_MILLIS : UNEXPECTED_TIMEOUT_MILLIS);
+        return waitFindObject(
+                By.text("Don\u2019t ask again"),
+                expected ? TIMEOUT_MILLIS : UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Nullable
@@ -328,18 +326,8 @@ public class RoleManagerTest {
     @NonNull
     private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
             InterruptedException {
-        waitAndClick(By.res(positive ? "android:id/button1" : "android:id/button2"));
+        waitFindObject(By.res(positive ? "android:id/button1" : "android:id/button2")).click();
         return waitForResult();
-    }
-
-    private void waitAndClick(BySelector bySelector) {
-        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
-            UiObject2 item = sUiDevice.wait(Until.findObject(bySelector), TIMEOUT_MILLIS);
-            if (item == null) {
-                fail("Cannot find item to click");
-            }
-            item.click();
-        });
     }
 
     @NonNull
