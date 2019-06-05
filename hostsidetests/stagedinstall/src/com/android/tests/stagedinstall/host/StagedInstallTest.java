@@ -194,11 +194,10 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testInstallStagedNonPreInstalledApex_UserBuild_Fails() throws Exception {
-        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+    public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
-        runPhase("testInstallStagedNonPreInstalledApex_UserBuild_Fails");
+        runPhase("testInstallStagedNonPreInstalledApex_Fails");
     }
 
     @Test

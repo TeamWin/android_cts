@@ -412,7 +412,7 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testInstallStagedNonPreInstalledApex_UserBuild_Fails() throws Exception {
+    public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
         assertThat(getInstalledVersion(NOT_PRE_INSTALLED_SHIM_APEX_PACKAGE_NAME)).isEqualTo(-1);
         int sessionId = stageSingleApk(
                 "com.android.apex.cts.shim_not_pre_installed.apex")
