@@ -221,6 +221,10 @@ public class NativeMidiEchoTest {
 
     @After
     public void tearDown() throws Exception {
+        if (!hasMidiSupport()) {
+            Assert.assertTrue("FEATURE_MIDI Not Supported.", false);
+            return; // Not supported so don't test it.
+        }
         tearDownEchoServer();
 
         Log.i(TAG, "++ tearDown()");
