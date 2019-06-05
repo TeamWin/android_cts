@@ -53,8 +53,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.provider.Settings;
-import android.server.wm.settings.SettingsSession;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
@@ -62,10 +60,7 @@ import androidx.test.filters.FlakyTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.runners.model.Statement;
 
 import java.util.List;
 
@@ -81,25 +76,6 @@ import java.util.List;
 public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
-
-    /** Copied from {@link Settings.Global#BACKGROUND_ACTIVITY_STARTS_ENABLED}. */
-    private static final String BACKGROUND_ACTIVITY_STARTS_ENABLED =
-            "background_activity_starts_enabled";
-
-    @Rule
-    public TestRule mBgActivityStartsEnabledRule = (base, description) -> new Statement() {
-        @Override
-        public void evaluate() throws Throwable {
-            try (SettingsSession<Integer> bgActivityStartsEnabledSession = new SettingsSession<>(
-                    Settings.Global.getUriFor(BACKGROUND_ACTIVITY_STARTS_ENABLED),
-                    Settings.Global::getInt,
-                    Settings.Global::putInt)) {
-                bgActivityStartsEnabledSession.set(0 /* disable */);
-
-                base.evaluate();
-            }
-        }
-    };
 
     @Before
     public void setUp() throws Exception {
