@@ -29,6 +29,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -107,8 +108,10 @@ public class DownloadManagerTestBase {
     }
 
     protected Uri getMediaStoreUri(Uri downloadUri) throws Exception {
-        final String cmd = String.format("content query --uri %s --projection %s",
-                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI);
+        // Need to pass in the user id to support multi-user scenarios.
+        final int userId = getUserId();
+        final String cmd = String.format("content query --uri %s --projection %s --user %s",
+                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI, userId);
         final String res = runShellCommand(cmd).trim();
         final String str = DownloadManager.COLUMN_MEDIASTORE_URI + "=";
         final int i = res.indexOf(str);
@@ -121,8 +124,21 @@ public class DownloadManagerTestBase {
         }
     }
 
+    private static int getUserId() {
+        // Ideally we'd use UserHandle.myUserId() however since it is hidden, we don't have access.
+        //return UserHandle.myUserId();
+
+        // Copying behavior of UserHandle.myUserId()
+        int userRange = 100000;
+        return Process.myUid()/userRange;
+    }
+
     protected static String getRawFilePath(Uri uri) throws Exception {
-        final String res = runShellCommand("content query --uri " + uri + " --projection _data");
+        // Need to pass in the user id to support multi-user scenarios.
+        final int userId = getUserId();
+        final String cmd = String.format("content query --uri %s --projection _data --user %s",
+                uri, userId);
+        final String res = runShellCommand(cmd).trim();
         final int i = res.indexOf("_data=");
         if (i >= 0) {
             return res.substring(i + 6);
