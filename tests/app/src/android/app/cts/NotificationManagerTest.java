@@ -2472,12 +2472,12 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_flagForPhonecall() throws InterruptedException {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
+
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
-
-            Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-            serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
             mContext.startService(serviceIntent);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
@@ -2487,6 +2487,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
 
         } finally {
+            mContext.stopService(serviceIntent);
             // turn off bubbles globally
             toggleBubbleSetting(false);
         }
@@ -2494,12 +2495,12 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoPerson()
             throws InterruptedException {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_PERSON);
+
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
-
-            Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-            serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_PERSON);
             mContext.startService(serviceIntent);
 
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
@@ -2508,6 +2509,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                         + " or it was a bubble when it shouldn't be");
             }
         } finally {
+            mContext.stopService(serviceIntent);
             // turn off bubbles globally
             toggleBubbleSetting(false);
         }
@@ -2537,12 +2539,12 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoCategory()
             throws InterruptedException {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_CATEGORY);
+
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
-
-            Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-            serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_CATEGORY);
             mContext.startService(serviceIntent);
 
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
@@ -2552,6 +2554,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
 
         } finally {
+            mContext.stopService(serviceIntent);
             // turn off bubbles globally
             toggleBubbleSetting(false);
         }
@@ -2560,12 +2563,12 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoMetadata()
             throws InterruptedException {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_BUBBLE_METADATA);
+
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
-
-            Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-            serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_BUBBLE_METADATA);
             mContext.startService(serviceIntent);
 
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
@@ -2574,6 +2577,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                         + " or it was a bubble when it shouldn't be");
             }
         } finally {
+            mContext.stopService(serviceIntent);
             // turn off bubbles globally
             toggleBubbleSetting(false);
         }
