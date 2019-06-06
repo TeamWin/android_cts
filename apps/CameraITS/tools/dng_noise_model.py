@@ -53,7 +53,7 @@ def main():
     # Exposure bracketing range in stops
     bracket_stops = 4
     # How high to allow the mean of the tiles to go.
-    max_signal_level = 0.5
+    max_signal_level = 0.25
     # Colors used for plotting the data for each exposure.
     colors = 'rygcbm'
 
@@ -137,7 +137,7 @@ def main():
                 plot.set_ylabel('Variance')
 
             samples_s = [[], [], [], []]
-            for b in range(0, bracket_stops + 1):
+            for b in range(0, bracket_stops):
                 # Get the exposure for this sensitivity and exposure time.
                 e = int(math.pow(2, b)*auto_e/float(s))
                 print 'exp %.3fms' % round(e*1.0E-6, 3)
@@ -146,11 +146,8 @@ def main():
                 planes = its.image.convert_capture_to_planes(cap, props)
                 e_read = cap['metadata']['android.sensor.exposureTime']
                 s_read = cap['metadata']['android.sensor.sensitivity']
-                e_err = 'e_write: %d, e_read: %d, RTOL: %.2f' % (
-                        e, e_read, RTOL_EXP_GAIN)
                 s_err = 's_write: %d, s_read: %d, RTOL: %.2f' % (
                         s, s_read, RTOL_EXP_GAIN)
-                assert (1.0 >= e_read/float(e) >= RTOL_EXP_GAIN), e_err
                 assert (1.0 >= s_read/float(s_int) >= RTOL_EXP_GAIN), s_err
                 print 'ISO_write: %d, ISO_read: %d' %  (s_int, s_read)
 
@@ -350,6 +347,13 @@ def main():
             }
             """ % (len(A), sens_min, sens_max, A_array, B_array, C_array, D_array, digital_gain_cdef))
         print noise_model_code
+        for i, _ in enumerate(BAYER_LIST):
+            read_noise = C[i] * sens_min * sens_min + D[i]
+            e_msg = '%s model min ISO noise < 0! C: %.4e, D: %.4e, rn: %.4e' % (
+                    BAYER_LIST[i], C[i], D[i], read_noise)
+            assert read_noise > 0, e_msg
+            assert C[i] > 0, '%s model slope is negative. slope=%.4e' % (
+                    BAYER_LIST[i], C[i])
         text_file = open("noise_model.c", "w")
         text_file.write("%s" % noise_model_code)
         text_file.close()
