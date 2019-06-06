@@ -14,7 +14,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
-all_system_api_modules := system-current.txt system-removed.txt
+all_system_api_modules :=
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
     $(eval all_system_api_modules += system-$(ver).txt)\
@@ -37,18 +37,23 @@ $(LOCAL_BUILT_MODULE): $(all_system_api_files)
 	$(hide) rm -f $@
 	$(hide) $(SOONG_ZIP) -o $@ -P out -C $(OUT_DIR) $(addprefix -f ,$(PRIVATE_SYSTEM_API_FILES))
 
+all_system_api_zip_file := $(LOCAL_BUILT_MODULE)
+
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSystemApiSignatureTestCases
+
+LOCAL_JAVA_RESOURCE_FILES := $(all_system_api_zip_file)
 
 LOCAL_SIGNATURE_API_FILES := \
     current.txt \
     android-test-mock-current.txt \
     android-test-runner-current.txt \
-    $(all_sytem_api_modules) \
-    system-all.txt.zip
+    system-current.txt \
+    system-removed.txt \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
 
 all_system_api_files :=
 all_system_api_modules :=
+all_system_api_zip_file :=
