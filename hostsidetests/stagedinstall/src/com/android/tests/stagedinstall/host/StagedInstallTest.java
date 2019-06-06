@@ -283,6 +283,11 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         return updatable != null && updatable.equals("true");
     }
 
+    @Test
+    public void testStagedApkSessionCallbacks() throws Exception {
+        runPhase("testStagedApkSessionCallbacks");
+    }
+
     /**
      * Uninstalls a shim apex only if it's latest version is installed on /data partition (i.e.
      * it has a version higher than {@code 1}).

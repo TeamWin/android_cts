@@ -29,6 +29,8 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Pair;
 
@@ -49,6 +51,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -563,6 +566,63 @@ public class StagedInstallTest {
         // session database.
         getPackageInstaller().abandonSession(sessionId);
         assertSessionFailed(sessionId);
+    }
+
+    @Test
+    public void testStagedApkSessionCallbacks() throws Exception {
+
+        List<Integer> created = new ArrayList<Integer>();
+        List<Integer> finished = new ArrayList<Integer>();
+
+        HandlerThread handlerThread = new HandlerThread(
+                "StagedApkSessionCallbacksTestHandlerThread");
+        handlerThread.start();
+        Handler handler = new Handler(handlerThread.getLooper());
+
+        PackageInstaller.SessionCallback callback = new PackageInstaller.SessionCallback() {
+
+            @Override
+            public void onCreated(int sessionId) {
+                synchronized (created) {
+                    created.add(sessionId);
+                }
+            }
+
+            @Override public void onBadgingChanged(int sessionId) { }
+            @Override public void onActiveChanged(int sessionId, boolean active) { }
+            @Override public void onProgressChanged(int sessionId, float progress) { }
+
+            @Override
+            public void onFinished(int sessionId, boolean success) {
+                synchronized (finished) {
+                    finished.add(sessionId);
+                }
+            }
+        };
+
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        packageInstaller.registerSessionCallback(callback, handler);
+
+        int sessionId = stageSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+
+        packageInstaller.unregisterSessionCallback(callback);
+
+        handlerThread.quitSafely();
+        handlerThread.join();
+
+        synchronized (created) {
+            assertThat(created).containsExactly(sessionId);
+        }
+        synchronized (finished) {
+            assertThat(finished).containsExactly(sessionId);
+        }
+        packageInstaller.abandonSession(sessionId);
     }
 
     private static PackageInstaller getPackageInstaller() {
