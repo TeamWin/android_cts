@@ -31,3 +31,26 @@ java_library {
         "repackaged.android.test.runner",
     ],
 }
+
+// Defaults for signature api checks.
+java_defaults {
+    name: "signature-api-check-defaults",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "cts-api-signature-test",
+    ],
+    jni_libs: [
+        "libclassdescriptors",
+    ],
+    sdk_version: "test_current",
+    compile_multilib: "both",
+    optimize: {
+        enabled: false,
+    },
+    dex_preopt: {
+        enabled: false,
+    },
+}
+
