@@ -1273,6 +1273,7 @@ public final class Helper {
      * @param bitmap1 first bitmap to be compared
      * @param bitmap2 second bitmap to be compared
      */
+    // TODO: move to common code
     public static void assertBitmapsAreSame(@NonNull String filename, @Nullable Bitmap bitmap1,
             @Nullable Bitmap bitmap2) throws IOException {
         assertWithMessage("1st bitmap is null").that(bitmap1).isNotNull();
