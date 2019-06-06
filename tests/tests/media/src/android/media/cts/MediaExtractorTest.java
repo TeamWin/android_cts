@@ -513,6 +513,30 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
+    public void testFlacMovExtraction() throws Exception {
+        AssetFileDescriptor testFd = mResources.openRawResourceFd(R.raw.sinesweepalac);
+
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(testFd.getFileDescriptor(), testFd.getStartOffset(),
+                testFd.getLength());
+        testFd.close();
+        extractor.selectTrack(0);
+        boolean lastAdvanceResult = true;
+        boolean lastReadResult = true;
+        ByteBuffer buf = ByteBuffer.allocate(2*1024*1024);
+        int totalSize = 0;
+        while(true) {
+            int n = extractor.readSampleData(buf, 0);
+            if (n > 0) {
+                totalSize += n;
+            }
+            if (!extractor.advance()) {
+                break;
+            }
+        }
+        assertTrue("could not read alac mov", totalSize > 0);
+    }
+
     private void doTestAdvance(int res) throws Exception {
         AssetFileDescriptor testFd = mResources.openRawResourceFd(res);
 
