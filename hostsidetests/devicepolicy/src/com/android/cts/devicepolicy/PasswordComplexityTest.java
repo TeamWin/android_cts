@@ -13,6 +13,8 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
     private static final String PKG = "com.android.cts.passwordcomplexity";
     private static final String CLS = ".GetPasswordComplexityTest";
 
+    private int mCurrentUserId;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -26,7 +28,8 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
             fail("Please remove the device screen lock before running this test");
         }
 
-        installAppAsUser(APP, mPrimaryUserId);
+        mCurrentUserId = getDevice().getCurrentUser();
+        installAppAsUser(APP, mCurrentUserId);
     }
 
     @Override
@@ -45,7 +48,7 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
 
         assertMetricsLogged(
                 getDevice(),
-                () -> runDeviceTestsAsUser(PKG, CLS, mPrimaryUserId),
+                () -> runDeviceTestsAsUser(PKG, CLS, mCurrentUserId),
                 new DevicePolicyEventWrapper
                         .Builder(EventId.GET_USER_PASSWORD_COMPLEXITY_LEVEL_VALUE)
                         .setStrings(PKG).build());
