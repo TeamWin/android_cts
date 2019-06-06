@@ -18,6 +18,5 @@ package android.os.cts;
 import android.os.cts.ExceptionalParcelable;
 
 interface IParcelExceptionService {
-//parcelable android.os.cts.ExceptionalParcelable;
     ExceptionalParcelable writeBinderThrowException();
 }
