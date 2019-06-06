@@ -16,16 +16,9 @@
 
 package android.preference.cts;
 
-import static android.content.pm.PackageManager.FEATURE_LEANBACK;
-
-import static org.junit.Assume.assumeFalse;
-
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -41,18 +34,13 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTest {
 
-    private Context mContext;
-
     @Rule
     public ActivityTestRule<PreferenceWithHeadersPortrait> mActivityRule =
             new ActivityTestRule<>(PreferenceWithHeadersPortrait.class, true, false);
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = mContext.getPackageManager();
-        // Ignore this test on Leanback since Leanback doesn't support portrait orientation
-        assumeFalse(pm.hasSystemFeature(FEATURE_LEANBACK));
+        requirePortraitModeSupport();
         mTestUtils = new TestUtils();
     }
 
