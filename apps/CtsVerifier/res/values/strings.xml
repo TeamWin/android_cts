@@ -23,6 +23,7 @@
     <string name="fail_button_text">Fail</string>
     <string name="next_button_text">Next</string>
     <string name="go_button_text">Go</string>
+    <string name="tests_completed_successfully">All tests completed successfully.</string>
 
     <!-- Strings for TestListActivity -->
     <string name="test_category_audio">Audio</string>
@@ -69,6 +70,35 @@
     <string name="bu_loading">Loading...</string>
     <string name="bu_generate_error">Error occurred while generating test data...</string>
     <string name="bu_settings">Settings</string>
+
+    <!-- Strings for BatterySaverTestActivity -->
+    <string name="battery_saver_test">Battery Saver Test</string>
+    <string name="battery_saver_test_info">
+        This test verifies that the device provides a user affordance to enable and disable
+        Battery Saver feature.
+    </string>
+    <string name="battery_saver_test_no_battery_detected">
+        No battery detected. This test will only work on devices that contain a battery.
+    </string>
+    <string name="battery_saver_test_unplug">
+        Unplug the device or run \"adb shell dumpsys battery unplug\".
+    </string>
+    <string name="battery_saver_test_device_plugged_in">
+        The device is still plugged in.
+    </string>
+    <string name="battery_saver_test_enable_bs">
+        Look for a button that allows you to turn Battery Saver on and off. The button may be in the
+        Quick Settings section or on the Battery page of device settings. Use the button to turn
+        Battery Saver on.
+    </string>
+    <string name="battery_saver_test_disable_bs">
+        Now use the button to turn Battery Saver off.
+    </string>
+    <string name="battery_saver_test_start_turn_bs_off">
+        Turn Battery Saver off to begin the test.
+    </string>
+    <string name="battery_saver_test_bs_on">Battery Saver is on.</string>
+    <string name="battery_saver_test_bs_off">Battery Saver is off.</string>
 
     <!-- Strings for Device Administration tests -->
     <string name="da_policy_serialization_test">Policy Serialization Test</string>
@@ -4346,7 +4376,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="screen_pin_check_pinned">Press Next to verify the app is pinned.</string>
     <string name="screen_pin_no_exit">Try to leave the app without unpinning the screen. Press next once you have verified you cannot leave.</string>
     <string name="screen_pin_exit">Use interactions defined by your device to unpin such as long pressing the back and overview button, then press next.</string>
-    <string name="screen_pinning_done">All tests completed successfully.</string>
 
     <string name="error_screen_no_longer_pinned">The screen was no longer pinned.</string>
     <string name="error_screen_already_pinned">Cannot start the test with the screen already pinned.</string>
