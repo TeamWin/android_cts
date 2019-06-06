@@ -17,9 +17,21 @@
 package com.android.cts.install.lib.testapp;
 
 import android.app.Activity;
+import android.os.Bundle;
 
 /**
  * A test app for testing apk rollback support.
  */
 public class MainActivity extends Activity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        try {
+            new ProcessUserData().processUserData(this);
+        } catch (ProcessUserData.UserDataException e) {
+            throw new AssertionError("Failed to process app user data", e);
+        }
+    }
 }
