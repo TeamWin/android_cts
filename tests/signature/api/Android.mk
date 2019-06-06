@@ -26,22 +26,15 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
 $$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
-#	@echo "Convert API file $$< -> $$@"
-#	@mkdir -p $$(dir $$@)
-#	$(hide) $(APICHECK_COMMAND) -convert2xmlnostrip $$< $$@
 	@echo "Copying API file $$< -> $$@"
 	$$(copy-file-to-target)
 endef
 
+# Kept for CtsIntentSignatureTestCases
 $(eval $(call copy_api_txt_file,current.txt,frameworks/base/api/current.txt))
 $(eval $(call copy_api_txt_file,system-current.txt,frameworks/base/api/system-current.txt))
 $(eval $(call copy_api_txt_file,system-removed.txt,frameworks/base/api/system-removed.txt))
-$(eval $(call copy_api_txt_file,apache-http-legacy-current.txt,external/apache-http/api/current.txt))
-$(eval $(call copy_api_txt_file,android-test-base-current.txt,frameworks/base/test-base/api/current.txt))
-$(eval $(call copy_api_txt_file,android-test-mock-current.txt,frameworks/base/test-mock/api/current.txt))
-$(eval $(call copy_api_txt_file,android-test-runner-current.txt,frameworks/base/test-runner/api/current.txt))
-$(eval $(call copy_api_txt_file,car-system-current.txt,packages/services/Car/car-lib/api/system-current.txt))
-$(eval $(call copy_api_txt_file,car-system-removed.txt,packages/services/Car/car-lib/api/system-removed.txt))
+
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
     $(eval $(call copy_api_txt_file,system-$(ver).txt,prebuilts/sdk/$(ver)/system/api/android.txt))\

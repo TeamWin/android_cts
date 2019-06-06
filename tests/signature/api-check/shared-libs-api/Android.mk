@@ -41,6 +41,8 @@ $(LOCAL_BUILT_MODULE): $(all_shared_libs_files)
 	$(hide) rm -f $@
 	$(hide) $(SOONG_ZIP) -o $@ -P out -C $(OUT_DIR) $(addprefix -f ,$(PRIVATE_SHARED_LIBS_FILES))
 
+all_shared_libs_zip_file := $(LOCAL_BUILT_MODULE)
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := optional
@@ -62,9 +64,7 @@ include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSharedLibsApiSignatureTestCases
 
-LOCAL_SIGNATURE_API_FILES := \
-    shared-libs-all.txt.zip \
-    $(all_shared_libs_modules)
+LOCAL_JAVA_RESOURCE_FILES := $(all_shared_libs_zip_file)
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-multilib-test
 
@@ -73,4 +73,4 @@ include $(LOCAL_PATH)/../build_signature_apk.mk
 LOCAL_JAVA_SDK_LIBRARIES :=
 all_shared_libs_files :=
 all_shared_libs_modules :=
-
+all_shared_libs_zip_file :=
