@@ -304,11 +304,15 @@ public class MediaStore_Images_ThumbnailsTest {
                 "test description"));
         long imageId = ContentUris.parseId(uri);
 
+        SystemClock.sleep(1000); // TODO: Remove sleep once getThumbnail has been fixed
+
         assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
         assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
         // delete the source image and check that the thumbnail is gone too
         mContentResolver.delete(uri, null /* where clause */, null /* where args */);
+
+        SystemClock.sleep(1000); // TODO: Remove sleep once getThumbnail has been fixed
 
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
@@ -317,6 +321,8 @@ public class MediaStore_Images_ThumbnailsTest {
         uri = Uri.parse(Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(),
                 "test description"));
         imageId = ContentUris.parseId(uri);
+
+        SystemClock.sleep(1000); // TODO: Remove sleep once getThumbnail has been fixed
 
         // query its thumbnail again
         assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
@@ -367,6 +373,7 @@ public class MediaStore_Images_ThumbnailsTest {
                         Media.insertImage(mContentResolver, src, "cts" + System.nanoTime(), null));
                 mRowsAdded.add(url[i]);
                 long origId = Long.parseLong(url[i].getLastPathSegment());
+                SystemClock.sleep(1000); // TODO: Remove sleep once getThumbnail has been fixed
                 Bitmap foo = MediaStore.Images.Thumbnails.getThumbnail(mContentResolver,
                         origId, Thumbnails.MICRO_KIND, null);
                 assertNotNull(foo);
