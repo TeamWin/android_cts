@@ -520,7 +520,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     @Test
     public void testDatasetPickerPosition() throws Exception {
         // TODO(b/75281985): currently disabled because the screenshot contains elements external to
-        // the activity that can change (for exmaple, clock), which causes flakiness to the test.
+        // the activity that can change (for example, clock), which causes flakiness to the test.
         final boolean compareBitmaps = false;
 
         final boolean pickerAndViewBoundsMatches = !isAutofillWindowFullScreen(mContext);
