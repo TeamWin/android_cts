@@ -37,9 +37,11 @@ import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Scanner;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
@@ -85,12 +87,30 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     }
 
     // Performance numbers only make sense on real devices, so skip on non-real devices
-    public static boolean frankenDevice() {
-        if (("Android".equals(Build.BRAND) || "generic".equals(Build.BRAND)) &&
-            (Build.MODEL.startsWith("AOSP on ") || Build.PRODUCT.startsWith("aosp_"))) {
+    public static boolean frankenDevice() throws IOException {
+        String systemBrand = getProperty("ro.product.system.brand");
+        String systemModel = getProperty("ro.product.system.model");
+        String systemProduct = getProperty("ro.product.system.name");
+        if (("Android".equals(systemBrand) || "generic".equals(systemBrand)) &&
+            (systemModel.startsWith("AOSP on ") || systemProduct.startsWith("aosp_"))) {
             return true;
         }
         return false;
+    }
+
+    private static String getProperty(String property) throws IOException {
+        Process process = new ProcessBuilder("getprop", property).start();
+        Scanner scanner = null;
+        String line = "";
+        try {
+            scanner = new Scanner(process.getInputStream());
+            line = scanner.nextLine();
+        } finally {
+            if (scanner != null) {
+                scanner.close();
+            }
+        }
+        return line;
     }
 
     private void decode(String name, int resourceId, MediaFormat format) throws Exception {
