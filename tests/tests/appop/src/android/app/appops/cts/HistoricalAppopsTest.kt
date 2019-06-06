@@ -240,7 +240,7 @@ class HistoricalAppopsTest {
             // Note ops such that we have data at all levels
             for (d in depth downTo 0) {
                 for (i in 0 until noteCount) {
-                    appOpsManager!!.noteOp(AppOpsManager.OPSTR_START_FOREGROUND, uid, packageName)
+                    appOpsManager!!.noteOp(AppOpsManager.OPSTR_START_FOREGROUND, uid, packageName!!)
                 }
 
                 if (d > 0) {
@@ -341,17 +341,17 @@ class HistoricalAppopsTest {
         val chunk = HistoricalOps(SNAPSHOT_INTERVAL_MILLIS / 4,
                 SNAPSHOT_INTERVAL_MILLIS / 2)
         chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+                packageName!!, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
         chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+                packageName!!, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
         chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+                packageName!!, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
         chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+                packageName!!, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
         chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+                packageName!!, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
         chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+                packageName!!, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
         return chunk
     }
 
