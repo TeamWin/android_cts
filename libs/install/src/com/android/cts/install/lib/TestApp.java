@@ -23,12 +23,29 @@ import android.content.pm.VersionedPackage;
  */
 public class TestApp {
     public static final String A = "com.android.cts.install.lib.testapp.A";
+    public static final String B = "com.android.cts.install.lib.testapp.B";
     public static final String Apex = "com.android.apex.cts.shim";
 
+    // Apk collection
     public static final TestApp A1 = new TestApp("Av1", A, 1, /*isApex*/false,
             "TestAppAv1.apk");
     public static final TestApp A2 = new TestApp("Av2", A, 2, /*isApex*/false,
             "TestAppAv2.apk");
+    public static final TestApp A3 = new TestApp("Av3", A, 3, /*isApex*/false,
+            "TestAppAv3.apk");
+    public static final TestApp ACrashing2 = new TestApp("ACrashingV2", A, 2, /*isApex*/false,
+            "TestAppACrashingV2.apk");
+    public static final TestApp ASplit1 = new TestApp("ASplitV1", A, 1, /*isApex*/false,
+            "TestAppASplitV1.apk", "TestAppASplitV1_anydpi.apk");
+    public static final TestApp ASplit2 = new TestApp("ASplitV2", A, 2, /*isApex*/false,
+            "TestAppASplitV2.apk", "TestAppASplitV2_anydpi.apk");
+
+    public static final TestApp B1 = new TestApp("Bv1", B, 1, /*isApex*/false,
+            "TestAppBv1.apk");
+    public static final TestApp B2 = new TestApp("Bv2", B, 2, /*isApex*/false,
+            "TestAppBv2.apk");
+
+    // Apex collection
     public static final TestApp Apex2 = new TestApp("Apex2", Apex, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2.apex");
     public static final TestApp Apex3 = new TestApp("Apex3", Apex, 3, /*isApex*/true,

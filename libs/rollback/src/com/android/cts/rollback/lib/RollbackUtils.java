@@ -16,25 +16,39 @@
 
 package com.android.cts.rollback.lib;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.fail;
+
+import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.VersionedPackage;
 import android.content.rollback.PackageRollbackInfo;
 import android.content.rollback.RollbackInfo;
 import android.content.rollback.RollbackManager;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * Utilities to facilitate testing rollbacks.
  */
 public class RollbackUtils {
+
+    private static final String TAG = "RollbackTest";
 
     /**
      * Gets the RollbackManager for the instrumentation context.
@@ -130,6 +144,86 @@ public class RollbackUtils {
             String message = result.getStringExtra(RollbackManager.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message);
         }
+    }
+
+    /**
+     * Forwards the device clock time by {@code offsetMillis}.
+     */
+    public static void forwardTimeBy(long offsetMillis) {
+        setTime(System.currentTimeMillis() + offsetMillis);
+        Log.i(TAG, "Forwarded time on device by " + offsetMillis + " millis");
+    }
+
+    /**
+     * Returns the RollbackInfo with a given package in the list of rollbacks.
+     * Throws an assertion failure if there is more than one such rollback
+     * info. Returns null if there are no such rollback infos.
+     */
+    public static RollbackInfo getUniqueRollbackInfoForPackage(List<RollbackInfo> rollbacks,
+            String packageName) {
+        RollbackInfo found = null;
+        for (RollbackInfo rollback : rollbacks) {
+            for (PackageRollbackInfo info : rollback.getPackages()) {
+                if (packageName.equals(info.getPackageName())) {
+                    assertThat(found).isNull();
+                    found = rollback;
+                    break;
+                }
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Send broadcast to crash {@code packageName} {@code count} times. If {@code count} is at least
+     * {@link PackageWatchdog#TRIGGER_FAILURE_COUNT}, watchdog crash detection will be triggered.
+     */
+    public static BroadcastReceiver sendCrashBroadcast(Context context, String packageName,
+            int count) throws InterruptedException, IOException {
+        BlockingQueue<Integer> crashQueue = new SynchronousQueue<>();
+        IntentFilter crashCountFilter = new IntentFilter();
+        crashCountFilter.addAction("com.android.tests.rollback.CRASH");
+        crashCountFilter.addCategory(Intent.CATEGORY_DEFAULT);
+
+        BroadcastReceiver crashCountReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                try {
+                    // Sleep long enough for packagewatchdog to be notified of crash
+                    Thread.sleep(1000);
+                    // Kill app and close AppErrorDialog
+                    ActivityManager am = context.getSystemService(ActivityManager.class);
+                    am.killBackgroundProcesses(packageName);
+                    // Allow another package launch
+                    crashQueue.put(intent.getIntExtra("count", 0));
+                } catch (InterruptedException e) {
+                    fail("Failed to communicate with test app");
+                }
+            }
+        };
+        context.registerReceiver(crashCountReceiver, crashCountFilter);
+
+        do {
+            launchPackage(packageName);
+        } while(crashQueue.take() < count);
+        return crashCountReceiver;
+    }
+
+    private static void setTime(long millis) {
+        Context context = InstrumentationRegistry.getContext();
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        am.setTime(millis);
+    }
+
+    /** Launches {@code packageName} with {@link Intent#ACTION_MAIN}. */
+    private static void launchPackage(String packageName)
+            throws InterruptedException, IOException {
+        Context context = InstrumentationRegistry.getContext();
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setPackage(packageName);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        context.startActivity(intent);
     }
 }
 

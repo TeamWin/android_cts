@@ -28,6 +28,7 @@ import androidx.test.InstrumentationRegistry;
 public class Uninstall {
     /**
      * Uninstalls all of the given packages.
+     * Does nothing if the package is not installed or installed on /system
      */
     public static void packages(String... packageNames) throws InterruptedException {
         for (String pkg : packageNames) {
@@ -37,7 +38,8 @@ public class Uninstall {
 
     private static void uninstallSinglePackage(String packageName) throws InterruptedException {
         // No need to uninstall if the package isn't installed.
-        if (InstallUtils.getInstalledVersion(packageName) == -1) {
+        if (InstallUtils.getInstalledVersion(packageName) == -1
+                || InstallUtils.isSystemAppWithoutUpdate(packageName)) {
             return;
         }
 
