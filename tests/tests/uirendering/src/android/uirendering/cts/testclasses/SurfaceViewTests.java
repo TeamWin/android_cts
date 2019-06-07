@@ -35,6 +35,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
@@ -46,6 +47,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 
 @LargeTest
+@RequiresDevice // TODO: Figure out what's going on with this b/134716377
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
 
