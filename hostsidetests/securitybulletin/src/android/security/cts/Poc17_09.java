@@ -21,6 +21,21 @@ import android.platform.test.annotations.SecurityTest;
 @SecurityTest
 public class Poc17_09 extends SecurityTestCase {
 
+    /*
+     * b/38234812
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0770() throws Exception {
+        AdbUtils.pushResource("/cve_2017_0770.mp4", "/sdcard/cve_2017_0770.mp4",
+                getDevice());
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0770", getDevice(), 30);
+        AdbUtils.runCommandLine("rm /sdcard/cve_2017_0770.mp4", getDevice());
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(
+                "Fatal signal 11 \\(SIGSEGV\\).*?>>> /system/bin/mediaserver <<<", logcat);
+    }
+
     /**
      * b/63852675
      */
