@@ -77,8 +77,9 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
 
         // Test warm start
         pressHomeButton();
+        mAmWmState.waitForHomeActivityVisible();
         startActivityAndVerifyResult(entryActivity, actualActivity, false);
-
+        mAmWmState.waitForValidState(actualActivity);
         // Test "hot" start (app already in front)
         startActivityAndVerifyResult(entryActivity, actualActivity, false);
     }
