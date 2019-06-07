@@ -26,6 +26,7 @@ import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
@@ -38,6 +39,8 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.MediumTest;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -76,7 +79,8 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity should be resumed after launch");
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                ON_TOP_POSITION_LOST);
     }
 
     @Test
@@ -111,7 +115,8 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                ON_TOP_POSITION_LOST);
     }
 
     @Test
@@ -146,7 +151,8 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         LifecycleVerifier.assertLaunchAndStopSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                ON_TOP_POSITION_LOST);
 
         // Finish the activity that was occluding the first one
         getLifecycleLog().clear();
@@ -204,7 +210,8 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         LifecycleVerifier.assertLaunchAndPauseSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertLaunchSequence(TranslucentActivity.class, getLifecycleLog());
         LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                ON_TOP_POSITION_LOST);
 
         // Finish the activity that was occluding the first one
         getLifecycleLog().clear();
@@ -236,7 +243,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     public void testPreQTopProcessResumedActivityInFreeform() throws Exception {
         // Resume app switches, so the activities that we are going to launch won't be deferred
         // since Home activity was started in #setUp().
-        ActivityManager.resumeAppSwitches();
+        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
