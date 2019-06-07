@@ -34,15 +34,6 @@
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/signature-test" />
     </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="current.txt->/data/local/tmp/signature-test/current.txt" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="system-current.txt->/data/local/tmp/signature-test/system-current.txt" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="system-removed.txt->/data/local/tmp/signature-test/system-removed.txt" />
-    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsIntentSignatureTestCases.apk" />
