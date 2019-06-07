@@ -19,6 +19,7 @@ android_test {
 
     java_resources:  [
         ":AtomicInstallTestAppAv1",
+        ":AtomicInstallTestAppAv2",
         ":AtomicInstallTestAppBv1",
         ":AtomicInstallCorrupt"
     ],
@@ -46,6 +47,14 @@ android_test_helper_app {
     srcs:   ["testdata/apk/src/**/*java"],
 
     manifest:   "testdata/apk/Av1.xml",
+}
+
+android_test_helper_app {
+    name: "AtomicInstallTestAppAv2",
+
+    srcs:   ["testdata/apk/src/**/*java"],
+
+    manifest:   "testdata/apk/Av2.xml",
 }
 
 android_test_helper_app {
