@@ -18,6 +18,7 @@ package com.android.cts.verifier.wifi;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.util.Log;
 import android.util.Pair;
 
 import java.util.concurrent.CountDownLatch;
@@ -27,6 +28,8 @@ import java.util.concurrent.TimeUnit;
  * Blocking callbacks for Wi-Fi and Connectivity Manager.
  */
 public class CallbackUtils {
+    private static final boolean DBG = true;
+    private static final String TAG = "CallbackUtils";
     public static final int DEFAULT_CALLBACK_TIMEOUT_MS = 15_000;
 
     /**
@@ -36,7 +39,8 @@ public class CallbackUtils {
     public static class NetworkCallback extends ConnectivityManager.NetworkCallback {
         private final int mCallbackTimeoutInMs;
 
-        private CountDownLatch mBlocker = new CountDownLatch(1);
+        private CountDownLatch mOnAvailableBlocker = new CountDownLatch(1);
+        private CountDownLatch mOnUnAvailableBlocker = new CountDownLatch(1);
         private CountDownLatch mOnLostBlocker = new CountDownLatch(1);
         private Network mNetwork;
 
@@ -50,17 +54,20 @@ public class CallbackUtils {
 
         @Override
         public void onAvailable(Network network) {
+            if (DBG) Log.v(TAG, "onAvailable");
             mNetwork = network;
-            mBlocker.countDown();
+            mOnAvailableBlocker.countDown();
         }
 
         @Override
         public void onUnavailable() {
-            mBlocker.countDown();
+            if (DBG) Log.v(TAG, "onUnavailable");
+            mOnUnAvailableBlocker.countDown();
         }
 
         @Override
         public void onLost(Network network) {
+            if (DBG) Log.v(TAG, "onLost");
             mNetwork = network;
             mOnLostBlocker.countDown();
         }
@@ -72,7 +79,7 @@ public class CallbackUtils {
          * created when successful - null otherwise.
          */
         public Pair<Boolean, Network> waitForAvailable() throws InterruptedException {
-            if (mBlocker.await(mCallbackTimeoutInMs, TimeUnit.MILLISECONDS)) {
+            if (mOnAvailableBlocker.await(mCallbackTimeoutInMs, TimeUnit.MILLISECONDS)) {
                 return Pair.create(true, mNetwork);
             }
             return Pair.create(false, null);
@@ -84,7 +91,7 @@ public class CallbackUtils {
          * @return true whether the callback was invoked.
          */
         public boolean waitForUnavailable() throws InterruptedException {
-            if (mBlocker.await(mCallbackTimeoutInMs, TimeUnit.MILLISECONDS)) {
+            if (mOnUnAvailableBlocker.await(mCallbackTimeoutInMs, TimeUnit.MILLISECONDS)) {
                 return true;
             }
             return false;
