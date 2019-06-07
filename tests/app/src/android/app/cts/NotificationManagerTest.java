@@ -91,9 +91,6 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-import androidx.test.filters.FlakyTest;
-import androidx.test.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
@@ -111,6 +108,9 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
+
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
 public class NotificationManagerTest extends AndroidTestCase {
@@ -119,6 +119,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
     private static final String DELEGATOR = "com.android.test.notificationdelegator";
+    private static final String DELEGATE_POST_CLASS = DELEGATOR + ".NotificationDelegateAndPost";
     private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
     private static final int WAIT_TIME = 2000;
 
@@ -257,14 +258,13 @@ public class NotificationManagerTest extends AndroidTestCase {
         return null;
     }
 
-
-    private StatusBarNotification findPostedNotification(int id) {
+    private StatusBarNotification findPostedNotification(int id, boolean all) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
         // we will check for it for up to 300ms before giving up
         StatusBarNotification n = null;
         for (int tries = 3; tries-- > 0; ) {
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            final StatusBarNotification[] sbns = getActiveNotifications(all);
             for (StatusBarNotification sbn : sbns) {
                 Log.d(TAG, "Found " + sbn.getKey());
                 if (sbn.getId() == id) {
@@ -280,6 +280,14 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
         }
         return n;
+    }
+
+    private StatusBarNotification[] getActiveNotifications(boolean all) {
+        if (all) {
+            return mListener.getActiveNotifications();
+        } else {
+            return mNotificationManager.getActiveNotifications();
+        }
     }
 
     private PendingIntent getPendingIntent() {
@@ -1287,7 +1295,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationListenerService.Ranking outRanking =
                 new NotificationListenerService.Ranking();
 
-        StatusBarNotification sbn = findPostedNotification(notificationId);
+        StatusBarNotification sbn = findPostedNotification(notificationId, false);
 
         // check that the key and channel ids are the same in the ranking as the posted notification
         for (String key : rankingMap.getOrderedKeys()) {
@@ -1931,7 +1939,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        StatusBarNotification n = findPostedNotification(id);
+        StatusBarNotification n = findPostedNotification(id, false);
         assertNotNull(n);
         assertEquals(notification.fullScreenIntent, n.getNotification().fullScreenIntent);
     }
@@ -1985,7 +1993,77 @@ public class NotificationManagerTest extends AndroidTestCase {
                 .build();
         mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
 
-        findPostedNotification(0);
+        assertNotNull(findPostedNotification(0, false));
+
+        final Intent revokeIntent = new Intent();
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
+        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(revokeIntent);
+        Thread.sleep(1000);
+    }
+
+    public void testNotificationDelegate_grantAndPostAndCancel() throws Exception {
+        // grant this test permission to post
+        final Intent activityIntent = new Intent();
+        activityIntent.setPackage(DELEGATOR);
+        activityIntent.setAction(Intent.ACTION_MAIN);
+        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        // wait for the activity to launch and finish
+        mContext.startActivity(activityIntent);
+        Thread.sleep(1000);
+
+        // send notification
+        Notification n = new Notification.Builder(mContext, "channel")
+                .setSmallIcon(android.R.id.icon)
+                .build();
+        mNotificationManager.notifyAsPackage(DELEGATOR, "toBeCanceled", 10000, n);
+
+        assertNotNull(findPostedNotification(10000, false));
+
+        mNotificationManager.cancelAsPackage(DELEGATOR, "toBeCanceled", 10000);
+
+        assertNull(findPostedNotification(10000, false));
+
+        final Intent revokeIntent = new Intent();
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
+        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(revokeIntent);
+        Thread.sleep(1000);
+    }
+
+    public void testNotificationDelegate_cannotCancelNotificationsPostedByDelegator()
+            throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        // grant this test permission to post
+        final Intent activityIntent = new Intent();
+        activityIntent.setClassName(DELEGATOR, DELEGATE_POST_CLASS);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        mContext.startActivity(activityIntent);
+
+        assertNotNull(findPostedNotification(9, true));
+
+        try {
+            mNotificationManager.cancelAsPackage(DELEGATOR, null, 9);
+            fail ("Delegate should not be able to cancel notification they did not post");
+        } catch (SecurityException e) {
+            // yay
+        }
+
+        // double check that the notification does still exist
+        assertNotNull(findPostedNotification(9, true));
 
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
@@ -2104,7 +2182,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                         .build();
         mNotificationManager.notify(id, notification);
 
-        StatusBarNotification n = findPostedNotification(id);
+        StatusBarNotification n = findPostedNotification(id, false);
         assertNotNull(n);
     }
 
@@ -2199,8 +2277,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         sendNotification(notificationId2, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn1 = findPostedNotification(notificationId1);
-        StatusBarNotification sbn2 = findPostedNotification(notificationId2);
+        StatusBarNotification sbn1 = findPostedNotification(notificationId1, false);
+        StatusBarNotification sbn2 = findPostedNotification(notificationId2, false);
         mListener.setNotificationsShown(new String[]{ sbn1.getKey() });
 
         toggleListenerAccess(TestNotificationListener.getId(),
@@ -2296,8 +2374,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         sendNotification(notificationId2, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn1 = findPostedNotification(notificationId1);
-        StatusBarNotification sbn2 = findPostedNotification(notificationId2);
+        StatusBarNotification sbn1 = findPostedNotification(notificationId1, false);
+        StatusBarNotification sbn2 = findPostedNotification(notificationId2, false);
         StatusBarNotification[] notifs =
                 mListener.getActiveNotifications(new String[]{ sbn2.getKey(), sbn1.getKey() });
         assertEquals(sbn2.getKey(), notifs[0].getKey());
@@ -2345,7 +2423,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         sendNotification(notificationId, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
 
-        StatusBarNotification sbn = findPostedNotification(notificationId);
+        StatusBarNotification sbn = findPostedNotification(notificationId, false);
 
         mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
         if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP) {
