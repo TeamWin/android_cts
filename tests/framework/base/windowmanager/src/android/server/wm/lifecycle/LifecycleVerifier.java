@@ -49,13 +49,18 @@ class LifecycleVerifier {
     private static final Class CALLBACK_TRACKING_CLASS = CallbackTrackingActivity.class;
 
     static void assertLaunchSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            LifecycleLog lifecycleLog, LifecycleLog.ActivityCallback... expectedSubsequentEvents) {
         final List<LifecycleLog.ActivityCallback> observedTransitions =
                 lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch");
 
-        final List<LifecycleLog.ActivityCallback> expectedTransitions = getLaunchSequence(activityClass);
+        final List<LifecycleLog.ActivityCallback> launchSequence = getLaunchSequence(activityClass);
+        final List<LifecycleLog.ActivityCallback> expectedTransitions;
+        expectedTransitions = new ArrayList<>(launchSequence.size() +
+                expectedSubsequentEvents.length);
+        expectedTransitions.addAll(launchSequence);
+        expectedTransitions.addAll(Arrays.asList(expectedSubsequentEvents));
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
