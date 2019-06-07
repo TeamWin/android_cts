@@ -1390,8 +1390,16 @@ public class TelephonyManagerTest {
     @Test
     public void testPreferredOpportunisticDataSubscription() {
         int randomSubId = 1;
+        int activeSubscriptionInfoCount = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (tm) -> tm.getActiveSubscriptionInfoCount());
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 1) {
+            return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 2 && activeSubscriptionInfoCount != 2) {
+            fail("This test requires two SIM cards.");
         }
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
             (tm) -> tm.setPreferredOpportunisticDataSubscription(
@@ -1508,8 +1516,16 @@ public class TelephonyManagerTest {
     @Test
     public void testUpdateAvailableNetworks() {
         int randomSubId = 1;
+        int activeSubscriptionInfoCount = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (tm) -> tm.getActiveSubscriptionInfoCount());
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 1) {
+            return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 2 && activeSubscriptionInfoCount != 2) {
+            fail("This test requires two SIM cards.");
         }
 
         List<SubscriptionInfo> subscriptionInfoList =
@@ -1531,6 +1547,13 @@ public class TelephonyManagerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
                             AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+            // wait for the data change to take effect
+            waitForMs(500);
+            // clear all the operations at the end of test.
+            availableNetworkInfos.clear();
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
+                            AsyncTask.SERIAL_EXECUTOR, callbackFailure));
         } else {
             AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
                     subscriptionInfoList.get(0).getSubscriptionId(),
@@ -1539,10 +1562,13 @@ public class TelephonyManagerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
                         AsyncTask.SERIAL_EXECUTOR, callbackSuccess));
+            // wait for the data change to take effect
+            waitForMs(500);
+            // clear all the operations at the end of test.
             availableNetworkInfos.clear();
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
-                        AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess));
         }
     }
 
