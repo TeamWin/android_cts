@@ -30,11 +30,6 @@ $$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
 	$$(copy-file-to-target)
 endef
 
-# Kept for CtsIntentSignatureTestCases
-$(eval $(call copy_api_txt_file,current.txt,frameworks/base/api/current.txt))
-$(eval $(call copy_api_txt_file,system-current.txt,frameworks/base/api/system-current.txt))
-$(eval $(call copy_api_txt_file,system-removed.txt,frameworks/base/api/system-removed.txt))
-
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
     $(eval $(call copy_api_txt_file,system-$(ver).txt,prebuilts/sdk/$(ver)/system/api/android.txt))\
