@@ -48,6 +48,7 @@ public class AtomicInstallTest {
     private static final String TEST_APP_A = "com.android.tests.atomicinstall.testapp.A";
     private static final String TEST_APP_B = "com.android.tests.atomicinstall.testapp.B";
     public static final String TEST_APP_A_FILENAME = "AtomicInstallTestAppAv1.apk";
+    public static final String TEST_APP_A_V2_FILENAME = "AtomicInstallTestAppAv2.apk";
     public static final String TEST_APP_B_FILENAME = "AtomicInstallTestAppBv1.apk";
     public static final String TEST_APP_CORRUPT_FILENAME = "corrupt.apk";
 
@@ -79,6 +80,34 @@ public class AtomicInstallTest {
     public void testInstallTwoApks() throws Exception {
         installMultiPackage(TEST_APP_A_FILENAME, TEST_APP_B_FILENAME);
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
+    }
+
+    @Test
+    public void testInstallTwoApksDowngradeFail() throws Exception {
+        installMultiPackage(TEST_APP_A_V2_FILENAME, TEST_APP_B_FILENAME);
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
+
+        final PackageInstaller.SessionParams parentSessionParams =
+                createSessionParams(/*staged*/false, /*multipackage*/true,
+                        /*enableRollback*/ false, /*inherit*/false);
+        final int parentSessionId = createSessionId(/*apkFileName*/null, parentSessionParams);
+        final PackageInstaller.Session parentSession = getSessionOrFail(parentSessionId);
+        for (String apkFile : new String[]{
+                TEST_APP_A_FILENAME, TEST_APP_B_FILENAME}) {
+            final PackageInstaller.SessionParams childSessionParams =
+                    createSessionParams(/*staged*/false, /*multipackage*/false,
+                            /*enableRollback*/ false, /*inherit*/false);
+            final int childSessionId =
+                    createSessionId(apkFile, childSessionParams);
+            parentSession.addChildSessionId(childSessionId);
+        }
+        parentSession.commit(LocalIntentSender.getIntentSender());
+
+        final Intent intent = LocalIntentSender.getIntentSenderResult();
+        assertStatusFailure(intent, "INSTALL_FAILED_VERSION_DOWNGRADE");
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
         assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
     }
 
