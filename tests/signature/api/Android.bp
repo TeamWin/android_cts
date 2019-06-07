@@ -14,6 +14,7 @@
 
 default_visibility = [
     "//cts/tests/signature/api-check:__subpackages__",
+    "//cts/tests/signature/intent-check",
 ]
 
 genrule {
