@@ -639,6 +639,37 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testIsExternalStorageLegacy() throws Exception {
+        String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
+
+        try {
+            getDevice().uninstallPackage(WRITE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG_2);
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK_2), false, options));
+            for (int user : mUsers) {
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest",
+                        "testIsExternalStorageLegacy", user);
+                updatePermissions(WRITE_PKG, user, new String[] {
+                        PERM_READ_EXTERNAL_STORAGE,
+                        PERM_WRITE_EXTERNAL_STORAGE,
+                }, false);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest",
+                        "testIsExternalStorageLegacy", user);
+
+                runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest",
+                        "testNotIsExternalStorageLegacy", user);
+                updateAppOp(WRITE_PKG_2, user, "android:request_install_packages", true);
+                runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest",
+                        "testIsExternalStorageLegacy", user);
+            }
+        } finally {
+            getDevice().uninstallPackage(WRITE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG_2);
+        }
+    }
+
     private boolean access(String path) throws DeviceNotAvailableException {
         final long nonce = System.nanoTime();
         return getDevice().executeShellCommand("ls -la " + path + " && echo " + nonce)

@@ -20,7 +20,12 @@
     android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <application>
+
+    <!-- Needed permission and android:requestLegacyExternalStorage to dump screenshots in case of
+         failure -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.preference.cts.PreferenceCtsActivity">
             <meta-data android:name="android.preference"

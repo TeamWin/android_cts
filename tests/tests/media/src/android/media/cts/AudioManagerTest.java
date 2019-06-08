@@ -59,6 +59,8 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.SoundEffectConstants;
+
+import com.android.compatibility.common.util.CddTest;
 import com.android.internal.annotations.GuardedBy;
 
 import java.util.HashMap;
@@ -1486,6 +1488,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_RAISE, 66747, 0);
     }
 
+    @CddTest(requirement="5.4.4/C-4-1")
     public void testGetMicrophones() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_MICROPHONE)) {

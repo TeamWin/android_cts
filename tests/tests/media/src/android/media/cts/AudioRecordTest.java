@@ -48,6 +48,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -937,6 +938,7 @@ public class AudioRecordTest {
         Log.i(TAG, "******");
     }
 
+    @CddTest(requirement="5.4.4/C-4-1")
     @Test
     public void testGetActiveMicrophones() throws Exception {
         if (!hasMicrophone()) {
