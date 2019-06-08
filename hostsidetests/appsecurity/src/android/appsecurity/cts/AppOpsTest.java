@@ -30,15 +30,28 @@ import org.junit.runner.RunWith;
 public final class AppOpsTest extends BaseHostJUnit4Test {
 
     @Test
-    public void testBadConfigCannotCauseBootLoop() throws Exception {
-        setAppOpHistoryParameters("mode=HISTORICAL_MODE_ENABLED_ACTIVE,baseIntervalMillis=1000"
-                + ",intervalMultiplier=10");
+    public void testBadConfigCannotCauseBootLoopEnabled() throws Exception {
         try {
             createBadHistoricalFile();
+            setAppOpHistoryParameters("mode=HISTORICAL_MODE_ENABLED_ACTIVE,baseIntervalMillis=1000"
+                    + ",intervalMultiplier=10");
             getDevice().reboot();
         } finally {
-            deleteHistoricalFiles();
             setAppOpHistoryParameters(null);
+            deleteHistoricalFiles();
+        }
+    }
+
+    @Test
+    public void testBadConfigCannotCauseBootLoopDisabled() throws Exception {
+        try {
+            createBadHistoricalFile();
+            setAppOpHistoryParameters("mode=HISTORICAL_MODE_DISABLED,baseIntervalMillis=1000"
+                    + ",intervalMultiplier=10");
+            getDevice().reboot();
+        } finally {
+            setAppOpHistoryParameters(null);
+            deleteHistoricalFiles();
         }
     }
 

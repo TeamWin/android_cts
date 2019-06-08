@@ -23,12 +23,25 @@ import static android.preference.PreferenceActivity.EXTRA_SHOW_FRAGMENT_TITLE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Environment;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.BitmapUtils;
+
+import org.junit.Rule;
+import org.junit.rules.TestName;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * This test suite covers {@link android.preference.PreferenceActivity} to ensure its correct
@@ -56,8 +69,16 @@ public abstract class PreferenceActivityFlowTest {
     private static final int INITIAL_TITLE_RES_ID = R.string.test_title;
     private static final int EXPECTED_HEADERS_COUNT = 3;
 
+    private static final String LOCAL_DIRECTORY = Environment.getExternalStorageDirectory()
+            + "/CtsPreferenceTestCases";
+
+    @Rule
+    public final TestName mTestName = new TestName();
+
     TestUtils mTestUtils;
     protected PreferenceWithHeaders mActivity;
+    protected final Context mContext = InstrumentationRegistry.getInstrumentation()
+            .getTargetContext();
     private boolean mIsMultiPane;
 
     void switchHeadersInner() {
@@ -437,7 +458,9 @@ public abstract class PreferenceActivityFlowTest {
         assertInnerFragmentShown();
 
         // Take screenshot
+        Log.v(TAG, "taking screenshot before");
         Bitmap before = mTestUtils.takeScreenshot();
+        Log.v(TAG, "screenshot taken");
 
         recreate();
 
@@ -451,12 +474,100 @@ public abstract class PreferenceActivityFlowTest {
         assertInnerFragmentShown();
 
         // Compare screenshots
+        Log.v(TAG, "taking screenshot after");
         Bitmap after = mTestUtils.takeScreenshot();
+        Log.v(TAG, "screenshot taken");
         assertScreenshotsAreEqual(before, after);
     }
 
     private void assertScreenshotsAreEqual(Bitmap before, Bitmap after) {
-        assertTrue("Screenshots do not match!", BitmapUtils.compareBitmaps(before, after));
+        // TODO(b/134080964): remove the precision=0.99 arg so it does a pixel-by-pixel check
+        if (!BitmapUtils.compareBitmaps(before, after, 0.99)) {
+            String testName = getClass().getSimpleName() + "." + mTestName.getMethodName();
+            File beforeFile = null;
+            File afterFile = null;
+            try {
+                beforeFile = dumpBitmap(before, testName + "-before.png");
+                afterFile = dumpBitmap(after, testName + "-after.png");
+            } catch (IOException e) {
+                Log.e(TAG,  "Error dumping bitmap", e);
+            }
+            fail("Screenshots do not match (check " + beforeFile + " and " + afterFile + ")");
+        }
+    }
+
+    // TODO: copied from Autofill; move to common CTS code
+    private File dumpBitmap(Bitmap bitmap, String filename) throws IOException {
+        File file = createFile(filename);
+        if (file == null) return null;
+        Log.i(TAG, "Dumping bitmap at " + file);
+        BitmapUtils.saveBitmap(bitmap, file.getParent(), file.getName());
+        return file;
+
+    }
+
+    private static File createFile(String filename) throws IOException {
+        File dir = getLocalDirectory();
+        File file = new File(dir, filename);
+        if (file.exists()) {
+            Log.v(TAG, "Deleting file " + file);
+            file.delete();
+        }
+        if (!file.createNewFile()) {
+            Log.e(TAG, "Could not create file " + file);
+            return null;
+        }
+        return file;
+    }
+
+    private static File getLocalDirectory() {
+        File dir = new File(LOCAL_DIRECTORY);
+        dir.mkdirs();
+        if (!dir.exists()) {
+            Log.e(TAG, "Could not create directory " + dir);
+            return null;
+        }
+        return dir;
+    }
+
+    // TODO: move to common code
+    void requirePortraitModeSupport() {
+        String testName = mTestName.getMethodName();
+        PackageManager pm = mContext.getPackageManager();
+
+        boolean hasPortrait = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
+        boolean hasLandscape = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE);
+
+        // From the javadoc: For backwards compatibility, you can assume that if neither
+        // FEATURE_SCREEN_PORTRAIT nor FEATURE_SCREEN_LANDSCAPE is set then the device
+        // supports both portrait and landscape.
+        boolean supportsPortrait = hasPortrait || !hasLandscape;
+
+        Log.v(TAG, "requirePortraitModeSupport(): FEATURE_SCREEN_PORTRAIT=" + hasPortrait
+                + ", FEATURE_SCREEN_LANDSCAPE=" + hasLandscape
+                + ", supportsPortrait=" + supportsPortrait);
+
+        assumeTrue(testName + ": device does not support portrait mode", supportsPortrait);
+    }
+
+    // TODO: move to common code
+    void requireLandscapeModeSupport() {
+        String testName = mTestName.getMethodName();
+        PackageManager pm = mContext.getPackageManager();
+
+        boolean hasPortrait = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
+        boolean hasLandscape = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE);
+
+        // From the javadoc: For backwards compatibility, you can assume that if neither
+        // FEATURE_SCREEN_PORTRAIT nor FEATURE_SCREEN_LANDSCAPE is set then the device
+        // supports both portrait and landscape.
+        boolean supportsLandscape = hasLandscape || !hasPortrait;
+
+        Log.v(TAG, "requireLandscapeModeSupport(): FEATURE_SCREEN_PORTRAIT=" + hasPortrait
+                + ", FEATURE_SCREEN_LANDSCAPE=" + hasLandscape
+                + ", supportsLandscape=" + supportsLandscape);
+
+        assumeTrue(testName + ": device does not support portrait mode", supportsLandscape);
     }
 
     private void assertInitialState() {
