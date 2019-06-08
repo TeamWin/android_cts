@@ -53,6 +53,7 @@ import android.view.Surface;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
@@ -622,6 +623,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.setMaxFileSize(MAX_FILE_SIZE * 10);
     }
 
+    @CddTest(requirement="5.4.4/C-4-1")
     public void testGetActiveMicrophones() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
