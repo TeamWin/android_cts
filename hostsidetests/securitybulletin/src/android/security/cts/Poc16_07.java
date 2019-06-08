@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ public class Poc16_07 extends SecurityTestCase {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2016-3746", getDevice(), 60);
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<",
-                logcat);
+        assertNotMatchesMultiLine("Fatal signal 11.*?>>> /system/bin/mediaserver <<<",
+            logcat);
     }
 
     /**

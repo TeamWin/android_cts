@@ -1,0 +1,126 @@
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+default_visibility = [
+    "//cts/tests/signature/api-check:__subpackages__",
+    "//cts/tests/signature/intent-check",
+]
+
+genrule {
+    name: "cts-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":frameworks-base-api-current.txt",
+    ],
+    out: [
+        "current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-system-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":frameworks-base-api-system-current.txt",
+    ],
+    out: [
+        "system-current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-system-removed-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":frameworks-base-api-system-removed.txt",
+    ],
+    out: [
+        "system-removed.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-android-test-base-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":android-test-base-current.txt",
+    ],
+    out: [
+        "android-test-base-current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-android-test-mock-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":android-test-mock-current.txt",
+    ],
+    out: [
+        "android-test-mock-current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-android-test-runner-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":android-test-runner-current.txt",
+    ],
+    out: [
+        "android-test-runner-current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-apache-http-legacy-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":apache-http-legacy-current.txt",
+    ],
+    out: [
+        "apache-http-legacy-current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-car-system-current-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":car-api-system-current.txt",
+    ],
+    out: [
+        "car-system-current.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}
+
+genrule {
+    name: "cts-car-system-removed-txt",
+    visibility: default_visibility,
+    srcs: [
+        ":car-api-system-removed.txt",
+    ],
+    out: [
+        "car-system-removed.txt",
+    ],
+    cmd: "cp $(in) $(out)",
+}

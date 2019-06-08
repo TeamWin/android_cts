@@ -18,7 +18,6 @@ package android.signature.cts.intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.signature.cts.ApiDocumentParser;
-import android.signature.cts.CurrentApi;
 import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.VirtualPath;
 import android.util.Log;
@@ -28,6 +27,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,18 +48,15 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 public class IntentTest {
 
-    private static final String CURRENT_API_FILE =
-            CurrentApi.API_FILE_DIRECTORY + "/current.txt";
+    private static final String CURRENT_API_RESOURCE = "current.txt";
 
-    private static final String SYSTEM_CURRENT_API_FILE =
-            CurrentApi.API_FILE_DIRECTORY + "/system-current.txt";
+    private static final String SYSTEM_CURRENT_API_RESOURCE = "system-current.txt";
 
-    private static final String SYSTEM_REMOVED_API_FILE =
-            CurrentApi.API_FILE_DIRECTORY + "/system-removed.txt";
+    private static final String SYSTEM_REMOVED_API_RESOURCE = "system-removed.txt";
 
     private static final String TAG = IntentTest.class.getSimpleName();
 
-    private static final File SIGNATURE_TEST_PACKGES =
+    private static final File SIGNATURE_TEST_PACKAGES =
             new File("/data/local/tmp/signature-test-packages");
     private static final String ANDROID_INTENT_PREFIX = "android.intent.action";
     private static final String ACTION_LINE_PREFIX = "          Action: ";
@@ -116,21 +113,23 @@ public class IntentTest {
         Assert.assertTrue(errors.toString(), errors.isEmpty());
     }
 
-    private Set<String> lookupPlatformIntents() {
+    private Set<String> lookupPlatformIntents() throws IOException {
         Set<String> intents = new HashSet<>();
-        intents.addAll(parse(CURRENT_API_FILE));
-        intents.addAll(parse(SYSTEM_CURRENT_API_FILE));
-        intents.addAll(parse(SYSTEM_REMOVED_API_FILE));
+        intents.addAll(parse(CURRENT_API_RESOURCE));
+        intents.addAll(parse(SYSTEM_CURRENT_API_RESOURCE));
+        intents.addAll(parse(SYSTEM_REMOVED_API_RESOURCE));
         return intents;
     }
 
-    private static Set<String> parse(String apiFileName) {
+    private static Set<String> parse(String apiResourceName) throws IOException {
 
         Set<String> androidIntents = new HashSet<>();
 
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-        apiDocumentParser.parseAsStream(VirtualPath.get(apiFileName)).forEach(
+        VirtualPath.ResourcePath virtualPath =
+                VirtualPath.get(IntentTest.class.getClassLoader(), apiResourceName);
+        apiDocumentParser.parseAsStream(virtualPath).forEach(
                 classDescription -> {
                     for (JDiffField diffField : classDescription.getFieldList()) {
                         String fieldValue = diffField.getValueString();
@@ -156,7 +155,7 @@ public class IntentTest {
 
     private static Set<String> lookupActiveIntents(String packageName) {
         HashSet<String> activeIntents = new HashSet<>();
-        File dumpsysPackage = new File(SIGNATURE_TEST_PACKGES, packageName + ".txt");
+        File dumpsysPackage = new File(SIGNATURE_TEST_PACKAGES, packageName + ".txt");
         if (!dumpsysPackage.exists() || dumpsysPackage.length() == 0) {
           throw new RuntimeException("Missing package info: " + dumpsysPackage.getAbsolutePath());
         }

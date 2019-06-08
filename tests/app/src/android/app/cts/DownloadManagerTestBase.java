@@ -29,6 +29,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -107,8 +108,10 @@ public class DownloadManagerTestBase {
     }
 
     protected Uri getMediaStoreUri(Uri downloadUri) throws Exception {
-        final String cmd = String.format("content query --uri %s --projection %s",
-                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI);
+        // Need to pass in the user id to support multi-user scenarios.
+        final int userId = getUserId();
+        final String cmd = String.format("content query --uri %s --projection %s --user %s",
+                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI, userId);
         final String res = runShellCommand(cmd).trim();
         final String str = DownloadManager.COLUMN_MEDIASTORE_URI + "=";
         final int i = res.indexOf(str);
@@ -121,13 +124,24 @@ public class DownloadManagerTestBase {
         }
     }
 
+    private static int getUserId() {
+        return Process.myUserHandle().getIdentifier();
+    }
+
     protected static String getRawFilePath(Uri uri) throws Exception {
-        final String res = runShellCommand("content query --uri " + uri + " --projection _data");
-        final int i = res.indexOf("_data=");
-        if (i >= 0) {
-            return res.substring(i + 6);
+        return getFileData(uri, "_data");
+    }
+
+    private static String getFileData(Uri uri, String projection) throws Exception {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String[] projections =  new String[] { projection };
+        Cursor c = context.getContentResolver().query(uri, projections, null, null, null);
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            return c.getString(0);
         } else {
-            throw new FileNotFoundException("Failed to find _data for " + uri + "; found " + res);
+            String msg = String.format("Failed to find %s for %s", projection, uri);
+            throw new FileNotFoundException(msg);
         }
     }
 

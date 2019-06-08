@@ -23,12 +23,11 @@ import static com.google.common.truth.Truth.assertThat;
 import android.Manifest;
 import android.content.rollback.RollbackInfo;
 
-import androidx.test.InstrumentationRegistry;
-
-import com.android.cts.rollback.lib.Install;
+import com.android.cts.install.lib.Install;
+import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.install.lib.TestApp;
 import com.android.cts.rollback.lib.Rollback;
-import com.android.cts.rollback.lib.TestApp;
-import com.android.cts.rollback.lib.Utils;
+import com.android.cts.rollback.lib.RollbackUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,8 +48,7 @@ public class HostTestHelper {
      */
     @Before
     public void setup() throws InterruptedException, IOException {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(
+        InstallUtils.adoptShellPermissionIdentity(
                     Manifest.permission.INSTALL_PACKAGES,
                     Manifest.permission.DELETE_PACKAGES,
                     Manifest.permission.TEST_MANAGE_ROLLBACKS);
@@ -61,8 +59,7 @@ public class HostTestHelper {
      */
     @After
     public void teardown() throws InterruptedException, IOException {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
+        InstallUtils.dropShellPermissionIdentity();
     }
 
 
@@ -72,7 +69,7 @@ public class HostTestHelper {
      */
     @Test
     public void testApkOnlyEnableRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
 
         Install.single(TestApp.A1).commit();
         Install.single(TestApp.A2).setStaged().setEnableRollback().commit();
@@ -88,15 +85,15 @@ public class HostTestHelper {
      */
     @Test
     public void testApkOnlyCommitRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(2);
-        RollbackInfo available = Utils.getAvailableRollback(TestApp.A);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1));
-        assertThat(Utils.getCommittedRollback(TestApp.A)).isNull();
+        assertThat(RollbackUtils.getCommittedRollback(TestApp.A)).isNull();
 
-        Utils.rollback(available.getRollbackId(), TestApp.A2);
-        RollbackInfo committed = Utils.getCommittedRollback(TestApp.A);
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).hasRollbackId(available.getRollbackId());
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
@@ -106,8 +103,8 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        Utils.waitForSessionReady(committed.getCommittedSessionId());
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
 
         // At this point, the host test driver will reboot the device and run
         // testApkOnlyConfirmRollback().
@@ -119,9 +116,9 @@ public class HostTestHelper {
      */
     @Test
     public void testApkOnlyConfirmRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
 
-        RollbackInfo committed = Utils.getCommittedRollback(TestApp.A);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1));
@@ -138,7 +135,7 @@ public class HostTestHelper {
      */
     @Test
     public void testApexOnlyInstallFirstVersion() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
 
         Install.single(TestApp.Apex2).setStaged().commit();
 
@@ -152,7 +149,7 @@ public class HostTestHelper {
      */
     @Test
     public void testApexOnlyEnableRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         Install.single(TestApp.Apex3).setStaged().setEnableRollback().commit();
 
         // At this point, the host test driver will reboot the device and run
@@ -165,14 +162,14 @@ public class HostTestHelper {
      */
     @Test
     public void testApexOnlyCommitRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
-        RollbackInfo available = Utils.getAvailableRollback(TestApp.Apex);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2));
 
-        Utils.rollback(available.getRollbackId(), TestApp.Apex3);
-        RollbackInfo committed = Utils.getCommittedRollbackById(available.getRollbackId());
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex3);
+        RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
         assertThat(committed).isNotNull();
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
@@ -182,8 +179,8 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        Utils.waitForSessionReady(committed.getCommittedSessionId());
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
 
         // At this point, the host test driver will reboot the device and run
         // testApexOnlyConfirmRollback().
@@ -195,7 +192,7 @@ public class HostTestHelper {
      */
     @Test
     public void testApexOnlyConfirmRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
 
         // Rollback data for shim apex will remain in storage since the apex cannot be completely
         // removed and thus the rollback data won't be expired. Unfortunately, we can't also delete
@@ -213,8 +210,8 @@ public class HostTestHelper {
      */
     @Test
     public void testApexAndApkInstallFirstVersion() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
 
         Install.multi(TestApp.Apex2, TestApp.A1).setStaged().commit();
 
@@ -228,8 +225,8 @@ public class HostTestHelper {
      */
     @Test
     public void testApexAndApkEnableRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
         Install.multi(TestApp.Apex3, TestApp.A2).setStaged().setEnableRollback().commit();
 
         // At this point, the host test driver will reboot the device and run
@@ -242,16 +239,16 @@ public class HostTestHelper {
      */
     @Test
     public void testApexAndApkCommitRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(2);
-        RollbackInfo available = Utils.getAvailableRollback(TestApp.Apex);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
                 Rollback.from(TestApp.A2).to(TestApp.A1));
 
-        Utils.rollback(available.getRollbackId(), TestApp.Apex3, TestApp.A2);
-        RollbackInfo committed = Utils.getCommittedRollback(TestApp.A);
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex3, TestApp.A2);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isNotNull();
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
@@ -262,9 +259,9 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        Utils.waitForSessionReady(committed.getCommittedSessionId());
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
-        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
 
         // At this point, the host test driver will reboot the device and run
         // testApexOnlyConfirmRollback().
@@ -276,9 +273,9 @@ public class HostTestHelper {
      */
     @Test
     public void testApexAndApkConfirmRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
 
-        RollbackInfo committed = Utils.getCommittedRollback(TestApp.A);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
@@ -299,7 +296,7 @@ public class HostTestHelper {
      */
     @Test
     public void testApexRollbackExpirationEnableRollback() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
 
         Install.single(TestApp.Apex2).setStaged().setEnableRollback().commit();
 
@@ -313,8 +310,8 @@ public class HostTestHelper {
      */
     @Test
     public void testApexRollbackExpirationUpdateApex() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
-        assertThat(Utils.getAvailableRollback(TestApp.Apex)).isNotNull();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.Apex)).isNotNull();
         Install.single(TestApp.Apex3).setStaged().commit();
 
         // At this point, the host test driver will reboot the device and run
@@ -327,7 +324,7 @@ public class HostTestHelper {
      */
     @Test
     public void testApexRollbackExpirationConfirmExpiration() throws Exception {
-        assertThat(Utils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
-        assertThat(Utils.getAvailableRollback(TestApp.Apex)).isNull();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.Apex)).isNull();
     }
 }

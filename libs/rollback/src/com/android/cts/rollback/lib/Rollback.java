@@ -19,6 +19,8 @@ package com.android.cts.rollback.lib;
 import android.content.pm.VersionedPackage;
 import android.content.rollback.PackageRollbackInfo;
 
+import com.android.cts.install.lib.TestApp;
+
 /**
  * Helper class for asserting PackageRollbackInfo contents.
  */

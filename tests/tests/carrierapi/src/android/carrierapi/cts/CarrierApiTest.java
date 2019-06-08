@@ -36,12 +36,14 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelUuid;
 import android.os.PersistableBundle;
 import android.provider.Telephony;
 import android.provider.VoicemailContract;
+import android.telephony.AvailableNetworkInfo;
 import android.telephony.CarrierConfigManager;
 import android.telephony.IccOpenLogicalChannelResponse;
 import android.telephony.PhoneStateListener;
@@ -50,6 +52,8 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -60,6 +64,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -226,6 +231,127 @@ public class CarrierApiTest extends AndroidTestCase {
         if (!hasCellular) return;
         if (!mTelephonyManager.hasCarrierPrivileges()) {
             failMessage();
+        }
+    }
+
+    private static void assertUpdateAvailableNetworkSuccess(int value) {
+        assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_SUCCESS, value);
+    }
+
+    private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
+        assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS, value);
+    }
+
+    private static void assertSetOpportunisticSubSuccess(int value) {
+        assertEquals(TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS, value);
+    }
+
+    private int getFirstActivateCarrierPrivilegedSubscriptionId() {
+        int subId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+        List<SubscriptionInfo> subscriptionInfos =
+                mSubscriptionManager.getActiveSubscriptionInfoList();
+        if (subscriptionInfos != null) {
+            for (SubscriptionInfo info : subscriptionInfos) {
+                TelephonyManager telephonyManager = mTelephonyManager.createForSubscriptionId(
+                        info.getSubscriptionId());
+                if (telephonyManager.hasCarrierPrivileges()) {
+                    subId = info.getSubscriptionId();
+                    return subId;
+                }
+            }
+        }
+        return subId;
+    }
+
+    public void testUpdateAvailableNetworksWithCarrierPrivilege() {
+        int subIdWithCarrierPrivilege = getFirstActivateCarrierPrivilegedSubscriptionId();
+        int activeSubscriptionInfoCount = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (tm) -> tm.getActiveSubscriptionInfoCount());
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 1) {
+            return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 2 && activeSubscriptionInfoCount != 2) {
+            fail("This test requires two SIM cards.");
+        }
+        if (subIdWithCarrierPrivilege == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            failMessage();
+        }
+
+        List<SubscriptionInfo> subscriptionInfoList =
+                mSubscriptionManager.getOpportunisticSubscriptions();
+        List<String> mccMncs = new ArrayList<String>();
+        List<Integer> bands = new ArrayList<Integer>();
+        List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
+        Consumer<Integer> callbackSuccess =
+                CarrierApiTest::assertUpdateAvailableNetworkSuccess;
+        Consumer<Integer> callbackFailure =
+                CarrierApiTest::assertUpdateAvailableNetworkInvalidArguments;
+        Consumer<Integer> setOpCallbackSuccess = CarrierApiTest::assertSetOpportunisticSubSuccess;
+        if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
+                || !mSubscriptionManager.isActiveSubscriptionId(
+                        subscriptionInfoList.get(0).getSubscriptionId())) {
+            try {
+                AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
+                        subIdWithCarrierPrivilege, AvailableNetworkInfo.PRIORITY_HIGH, mccMncs,
+                        bands);
+                availableNetworkInfos.add(availableNetworkInfo);
+                // Call updateAvailableNetworks without opportunistic subscription.
+                // callbackFailure is expected to be triggered and the return value will be checked
+                // against UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+            } finally {
+                // clear all the operations at the end of test.
+                availableNetworkInfos.clear();
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+            }
+        } else {
+            // This is case of DSDS phone, one active opportunistic subscription and one
+            // active primary subscription.
+            int resultSubId;
+            try {
+                AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
+                        subscriptionInfoList.get(0).getSubscriptionId(),
+                        AvailableNetworkInfo.PRIORITY_HIGH, mccMncs, bands);
+                availableNetworkInfos.add(availableNetworkInfo);
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess);
+                // wait for the data change to take effect
+                waitForMs(500);
+                // Call setPreferredData and reconfirm with getPreferred data
+                // that the same is updated.
+                int preferSubId = subscriptionInfoList.get(0).getSubscriptionId();
+                mTelephonyManager.setPreferredOpportunisticDataSubscription(
+                        preferSubId, false, AsyncTask.SERIAL_EXECUTOR, setOpCallbackSuccess);
+                // wait for the data change to take effect
+                waitForMs(500);
+                resultSubId = mTelephonyManager.getPreferredOpportunisticDataSubscription();
+                assertEquals(preferSubId, resultSubId);
+            } finally {
+                // clear all the operations at the end of test.
+                availableNetworkInfos.clear();
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess);
+                waitForMs(500);
+                mTelephonyManager.setPreferredOpportunisticDataSubscription(
+                        SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, false,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess);
+                waitForMs(500);
+                resultSubId = mTelephonyManager.getPreferredOpportunisticDataSubscription();
+                assertEquals(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, resultSubId);
+            }
+        }
+    }
+
+    public static void waitForMs(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Log.d(TAG, "InterruptedException while waiting: " + e);
         }
     }
 
