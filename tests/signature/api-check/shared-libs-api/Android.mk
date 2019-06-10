@@ -31,7 +31,6 @@ LOCAL_MODULE := cts-shared-libs-all.txt
 LOCAL_MODULE_STEM := shared-libs-all.txt.zip
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
 $(LOCAL_BUILT_MODULE): $(SOONG_ZIP)
 $(LOCAL_BUILT_MODULE): PRIVATE_SHARED_LIBS_FILES := $(all_shared_libs_files)
