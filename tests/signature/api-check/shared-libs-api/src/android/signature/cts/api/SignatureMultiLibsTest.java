@@ -46,7 +46,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            parseApiFilesAsStream(apiDocumentParser, expectedApiFiles)
+            parseApiResourcesAsStream(apiDocumentParser, expectedApiFiles)
                     .forEach(complianceChecker::checkSignatureCompliance);
 
             // After done parsing all expected API files, perform any deferred checks.
