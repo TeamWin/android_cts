@@ -4620,6 +4620,46 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <string name="unprocessed_test_global_result">Global Results...</string>
 
+    <!-- Audio Frequency Voice_Recognition Test -->
+    <string name="audio_frequency_voice_recognition_test">Audio Frequency Voice Recognition Test</string>
+    <string name="audio_frequency_voice_recognition_info">
+        This test requires an external USB reference microphone, external speakers and a Sound Pressure Level meter.
+        You can play the test signals from the device under test or from a secondary device.
+        Follow the instructions on the screen to measure the frequency response for the built in microphone
+        using VOICE_RECOGNITION audio source.
+    </string>
+    <string name="vr_test_tone_instructions">TEST TONE: Press [PLAY] to play tone at 1 Khz. Measure sound to be 90 dB SPL right next to microphone under test. Press [TEST]</string>
+    <string name="vr_test_noise_instructions">TEST NOISE: Position speakers 40 cms from device under test.
+        Press [PLAY] to play broadband white noise. Press [TEST]</string>
+    <string name="vr_test_usb_background_instructions">TEST USB BACKGROUND: Connect USB microphone and position it right next to microphone under test.
+        No source of noise should be active during this test. Press [TEST]</string>
+    <string name="vr_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
+        Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
+
+
+    <!-- Audio AEC Test -->
+    <string name="audio_aec_test">Audio Acoustic Echo Cancellation (AEC) Test</string>
+    <string name="audio_aec_info">
+        The recording source VOICE_COMMUNICATION will be tested with/without the Acoustic Echo Canceller effect engaged.
+        The Acoustic Coupling Factor (ACF) will be computed for each case. A successful test expects ACF less than 0.4 for AEC ON,
+        and ACF greater than 0.6 for AEC OFF.
+        This test requires a quiet environment, and no headphones or similar connected.
+        This test must pass in devices where AEC functionality is mandatory or any device which implements AEC.
+    </string>
+    <string name="audio_aec_instructions">Press [TEST] to play a voice recording twice with different parameters.</string>
+    <string name="audio_aec_mandatory_test">Is AEC mandatory in this device?</string>
+
+    <!--Audio Frequency Global strings -->
+    <string name="af_button_play">Play</string>
+    <string name="af_button_stop">Stop</string>
+
+    <string name="af_button_test">Test</string>
+    <string name="af_test_results">Results...</string>
+    <string name="af_global_test_results">Global Results...</string>
+    <string name="af_no">No</string>
+    <string name="af_yes">Yes</string>
+
+
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>
     <string name="action_settings">Settings</string>
