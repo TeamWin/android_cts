@@ -18,8 +18,8 @@ LOCAL_PATH := $(call my-dir)
 # ===================================
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-hiddenapi_flags-csv
-LOCAL_MODULE_STEM := hiddenapi_flags.csv
+LOCAL_MODULE := cts-hiddenapi-flags-csv
+LOCAL_MODULE_STEM := hiddenapi-flags.csv
 LOCAL_MODULE_CLASS := ETC
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
