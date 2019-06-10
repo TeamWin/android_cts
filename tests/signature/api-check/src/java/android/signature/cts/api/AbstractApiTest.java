@@ -41,8 +41,6 @@ import java.util.zip.ZipFile;
 import repackaged.android.test.InstrumentationTestCase;
 import repackaged.android.test.InstrumentationTestRunner;
 
-import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
-
 /**
  */
 public class AbstractApiTest extends InstrumentationTestCase {
@@ -186,7 +184,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
             ApiDocumentParser apiDocumentParser, String[] apiResources) {
         return Stream.of(apiResources)
                 .flatMap(this::readResource)
-                .flatMap(stream -> apiDocumentParser.parseAsStream(stream));
+                .flatMap(apiDocumentParser::parseAsStream);
     }
 
     /**
@@ -199,14 +197,5 @@ public class AbstractApiTest extends InstrumentationTestCase {
         @SuppressWarnings("resource")
         ZipFile zip = new ZipFile(path.toFile());
         return zip.stream().map(entry -> VirtualPath.get(zip, entry));
-    }
-
-    Stream<JDiffClassDescription> parseApiFilesAsStream(
-            ApiDocumentParser apiDocumentParser, String[] apiFiles) {
-        LocalFilePath apiFileDirectory = VirtualPath.get(API_FILE_DIRECTORY);
-        return Stream.of(apiFiles)
-                .map(apiFileDirectory::resolve)
-                .flatMap(this::flattenPaths)
-                .flatMap(apiDocumentParser::parseAsStream);
     }
 }
