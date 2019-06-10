@@ -154,10 +154,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_UserBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
-
-        runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
-        getDevice().reboot();
-        runPhase("testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot");
+        runPhase("testStagedInstallDowngrade_DowngradeRequested_Fails_Commit");
     }
 
     @Test
