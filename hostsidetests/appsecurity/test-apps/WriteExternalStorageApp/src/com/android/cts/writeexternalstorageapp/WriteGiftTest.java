@@ -28,6 +28,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAl
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
+import android.os.Environment;
 import android.test.AndroidTestCase;
 
 import java.io.File;
@@ -119,5 +120,13 @@ public class WriteGiftTest extends AndroidTestCase {
         for (File dir : getAllPackageSpecificPaths(getContext())) {
             assertFalse(new File(dir, "probe").exists());
         }
+    }
+
+    public void testIsExternalStorageLegacy() {
+        assertTrue(Environment.isExternalStorageLegacy());
+    }
+
+    public void testNotIsExternalStorageLegacy() {
+        assertFalse(Environment.isExternalStorageLegacy());
     }
 }

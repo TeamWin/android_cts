@@ -125,25 +125,23 @@ public class DownloadManagerTestBase {
     }
 
     private static int getUserId() {
-        // Ideally we'd use UserHandle.myUserId() however since it is hidden, we don't have access.
-        //return UserHandle.myUserId();
-
-        // Copying behavior of UserHandle.myUserId()
-        int userRange = 100000;
-        return Process.myUid()/userRange;
+        return Process.myUserHandle().getIdentifier();
     }
 
     protected static String getRawFilePath(Uri uri) throws Exception {
-        // Need to pass in the user id to support multi-user scenarios.
-        final int userId = getUserId();
-        final String cmd = String.format("content query --uri %s --projection _data --user %s",
-                uri, userId);
-        final String res = runShellCommand(cmd).trim();
-        final int i = res.indexOf("_data=");
-        if (i >= 0) {
-            return res.substring(i + 6);
+        return getFileData(uri, "_data");
+    }
+
+    private static String getFileData(Uri uri, String projection) throws Exception {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String[] projections =  new String[] { projection };
+        Cursor c = context.getContentResolver().query(uri, projections, null, null, null);
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            return c.getString(0);
         } else {
-            throw new FileNotFoundException("Failed to find _data for " + uri + "; found " + res);
+            String msg = String.format("Failed to find %s for %s", projection, uri);
+            throw new FileNotFoundException(msg);
         }
     }
 

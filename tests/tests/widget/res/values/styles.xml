@@ -434,6 +434,8 @@
         <item name="android:padding">1dp</item>
         <item name="android:progress">5</item>
         <item name="android:max">50</item>
+        <item name="android:textColorHighlight">#ff00ff</item>
+        <item name="android:textAppearance">@style/TextViewWithoutColorAndAppearance</item>
     </style>
 
     <style name="ParentOfExplicitStyle1">

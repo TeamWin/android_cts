@@ -59,7 +59,7 @@ public final class DeviceConfigStateManager implements StateManager<String> {
 
     @Override
     public void set(@Nullable String value) {
-        debug("set", value);
+        debug("set", "new value is %s", value);
         runWithShellPermissionIdentity(() -> setWithPermissionsGranted(value),
                 "android.permission.READ_DEVICE_CONFIG", "android.permission.WRITE_DEVICE_CONFIG");
     }
@@ -81,7 +81,7 @@ public final class DeviceConfigStateManager implements StateManager<String> {
         runWithShellPermissionIdentity(()
                 -> reference.set(DeviceConfig.getProperty(mNamespace, mKey)),
                 "android.permission.READ_DEVICE_CONFIG");
-        debug("get", reference.get());
+        debug("get", "returning %s", reference.get());
 
         return reference.get();
     }
