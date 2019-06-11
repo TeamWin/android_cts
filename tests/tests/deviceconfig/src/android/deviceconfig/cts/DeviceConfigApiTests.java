@@ -954,7 +954,9 @@ public final class DeviceConfigApiTests {
     }
 
     private void nullifyProperty(String namespace, String key) {
-        setPropertiesAndAssertSuccessfulChange(namespace, key, null);
+        if (DeviceConfig.getString(namespace, key, null) != null) {
+            setPropertiesAndAssertSuccessfulChange(namespace, key, null);
+        }
     }
 
     private static void deletePropertyThrowShell(String namespace, String key) {
