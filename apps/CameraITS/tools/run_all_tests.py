@@ -44,7 +44,7 @@ CHART_SCALE_STEP = 0.025
 FACING_EXTERNAL = 2
 NUM_TRYS = 2
 PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
-PROC_TIMEOUT_TIME = 300  # timeout in seconds for a process (5 minutes)
+PROC_TIMEOUT_TIME = 900  # timeout in seconds for a process (15 minutes)
 SCENE3_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
                            'test_images', 'ISO12233.png')
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
