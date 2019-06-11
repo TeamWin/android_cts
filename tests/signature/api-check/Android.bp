@@ -54,3 +54,19 @@ java_defaults {
     },
 }
 
+// Defaults for hiddenapi killswitch checks.
+java_defaults {
+    name: "hiddenapi-killswitch-check-defaults",
+    defaults: ["cts_defaults"],
+
+    compile_multilib: "both",
+    jni_libs: [
+        "libcts_dexchecker",
+        "libclassdescriptors",
+    ],
+    stl: "c++_static",
+
+    // Tag this module as a cts test artifact
+    sdk_version: "test_current",
+    static_libs: ["cts-api-signature-test"],
+}
