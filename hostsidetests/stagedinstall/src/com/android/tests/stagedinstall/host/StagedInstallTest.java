@@ -154,10 +154,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_UserBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
-
-        runPhase("testStagedInstallDowngrade_DowngradeRequested_Commit");
-        getDevice().reboot();
-        runPhase("testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot");
+        runPhase("testStagedInstallDowngrade_DowngradeRequested_Fails_Commit");
     }
 
     @Test
@@ -194,11 +191,10 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testInstallStagedNonPreInstalledApex_UserBuild_Fails() throws Exception {
-        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+    public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
-        runPhase("testInstallStagedNonPreInstalledApex_UserBuild_Fails");
+        runPhase("testInstallStagedNonPreInstalledApex_Fails");
     }
 
     @Test

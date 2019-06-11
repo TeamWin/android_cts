@@ -340,21 +340,23 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testStagedInstallDowngrade_DowngradeRequested_Fails_Commit() throws Exception {
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        installNonStaged("StagedInstallTestAppAv2.apk");
+        int sessionId = stageDowngradeSingleApk(
+                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+    }
+
+    @Test
     public void testStagedInstallDowngrade_DowngradeRequested_DebugBuild_VerifyPostReboot()
             throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         // App should be downgraded.
         assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
-    }
-
-    @Test
-    public void testStagedInstallDowngrade_DowngradeRequested_UserBuild_VerifyPostReboot()
-            throws Exception {
-        int sessionId = retrieveLastSessionId();
-        assertSessionFailed(sessionId);
-        // App shouldn't be downgraded.
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
     }
 
     @Test
@@ -415,7 +417,7 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testInstallStagedNonPreInstalledApex_UserBuild_Fails() throws Exception {
+    public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
         assertThat(getInstalledVersion(NOT_PRE_INSTALLED_SHIM_APEX_PACKAGE_NAME)).isEqualTo(-1);
         int sessionId = stageSingleApk(
                 "com.android.apex.cts.shim_not_pre_installed.apex")
