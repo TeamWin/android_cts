@@ -929,7 +929,9 @@ public abstract class ActivityManagerTestBase {
                 "doze_always_on",
                 "doze_pulse_on_pick_up",
                 "doze_pulse_on_long_press",
-                "doze_pulse_on_double_tap"
+                "doze_pulse_on_double_tap",
+                "doze_wake_screen_gesture",
+                "doze_tap_gesture"
         };
 
         private String get(String key) {
