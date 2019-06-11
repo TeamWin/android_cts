@@ -16,6 +16,7 @@
 
 package com.android.cts.usepermission;
 
+import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.fail;

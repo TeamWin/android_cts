@@ -21,6 +21,8 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
+import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
+
 import static junit.framework.Assert.assertEquals;
 
 import org.junit.Before;

@@ -16,6 +16,9 @@
 
 package com.android.cts.usepermission;
 
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
+import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
+
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.assertNotNull;
@@ -100,10 +103,6 @@ public abstract class BasePermissionsTest {
                     : PackageManager.PERMISSION_DENIED, result.grantResults[i]);
 
         }
-    }
-
-    protected static UiDevice getUiDevice() {
-        return UiDevice.getInstance(getInstrumentation());
     }
 
     protected static Activity launchActivity(String packageName,
@@ -452,27 +451,7 @@ public abstract class BasePermissionsTest {
         return By.text(mContext.getResources().getString(stringId));
     }
 
-    private UiObject2 waitFindObject(BySelector selector) {
-        UiObject2 view = null;
-        long start = System.currentTimeMillis();
-        while (view == null && start + RETRY_TIMEOUT > System.currentTimeMillis()) {
-            view = getUiDevice().wait(Until.findObject(selector), GLOBAL_TIMEOUT_MILLIS);
 
-            if (view == null) {
-                UiObject2 scrollable = getUiDevice().findObject(By.scrollable(true));
-                if (scrollable != null) {
-                    scrollable.scroll(Direction.DOWN, 1);
-                }
-            }
-        }
-        final UiObject2 finalView = view;
-        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
-            assertNotNull("View not found after waiting for "
-                    + (System.currentTimeMillis() - start) + "ms: " + selector,
-                    finalView);
-        });
-        return view;
-    }
 
     private BySelector byTextStartsWithCaseInsensitive(String prefix) {
         return By.text(Pattern.compile(String.format("(?i)^%s.*$", Pattern.quote(prefix))));
