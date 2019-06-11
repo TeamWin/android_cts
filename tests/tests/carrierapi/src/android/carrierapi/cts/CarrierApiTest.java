@@ -264,6 +264,8 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     public void testUpdateAvailableNetworksWithCarrierPrivilege() {
+        if (!hasCellular) return;
+
         int subIdWithCarrierPrivilege = getFirstActivateCarrierPrivilegedSubscriptionId();
         int activeSubscriptionInfoCount = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mSubscriptionManager, (tm) -> tm.getActiveSubscriptionInfoCount());
@@ -1066,6 +1068,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * {@link TelephonyManager#sendEnvelopeWithStatus(String)}.
      */
     public void testSendEnvelopeWithStatus() {
+        if (!hasCellular) return;
+
         // STATUS apdu as hex String
         String envelope =
                 CLA_STATUS_STRING
