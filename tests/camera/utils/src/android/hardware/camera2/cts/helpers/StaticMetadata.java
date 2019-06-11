@@ -330,6 +330,15 @@ public class StaticMetadata {
         return cfa;
     }
 
+    public boolean isNIRColorFilter() {
+        Integer cfa = mCharacteristics.get(
+                CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT);
+        if (cfa == null) {
+            return false;
+        }
+        return cfa == CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR;
+    }
+
     /**
      * Whether or not the hardware level reported by android.info.supportedHardwareLevel
      * is {@value CameraMetadata#INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED}.
