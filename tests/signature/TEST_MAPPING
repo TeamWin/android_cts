@@ -46,6 +46,9 @@
       "name": "CtsHiddenApiKillswitchWildcardTestCases"
     },
     {
+      "name": "CtsSystemApiAnnotationTestCases"
+    },
+    {
       "name": "CtsHiddenApiBlacklistApi28TestCases"
     },
     {
