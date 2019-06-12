@@ -1,7 +1,12 @@
 {
   "presubmit": [
     {
-      "name": "CtsUiRenderingTestCases"
+      "name": "CtsUiRenderingTestCases",
+      "options": [
+        {
+          "exclude-annotation": "android.uirendering.cts.runner.SkipPresubmit"
+        }
+      ]
     }
   ]
 }
