@@ -55,7 +55,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     testng \
     truth-prebuilt \
     mockito-target-minus-junit4 \
-    androidx.heifwriter_heifwriter \
+    cts.media.heifwriter_heifwriter \
     androidx.media_media \
 
 LOCAL_JNI_SHARED_LIBRARIES := \
