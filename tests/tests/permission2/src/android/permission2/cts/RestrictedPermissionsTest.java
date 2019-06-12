@@ -28,10 +28,16 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.Manifest.permission;
 import android.app.AppOpsManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.Session;
+import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.permission.cts.PermissionUtils.ThrowingRunnable;
@@ -41,6 +47,13 @@ import android.util.ArraySet;
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -55,8 +68,10 @@ import javax.annotation.Nullable;
  * Tests for restricted permission behaviors.
  */
 public class RestrictedPermissionsTest {
+    private static final String APK_NAME_USES_SMS_CALL_LOG = "CtsRestrictedPermissionsUser.apk";
+
     private static final String APK_USES_SMS_CALL_LOG =
-            "/data/local/tmp/cts/permissions2/CtsRestrictedPermissionsUser.apk";
+            "/data/local/tmp/cts/permissions2/" + APK_NAME_USES_SMS_CALL_LOG;
 
     private static final String APK_USES_STORAGE_DEFAULT_28 =
             "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserDefaultSdk28.apk";
@@ -71,6 +86,8 @@ public class RestrictedPermissionsTest {
             "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk29.apk";
 
     private static final String PKG = "android.permission2.cts.restrictedpermissionuser";
+
+    private static final long UI_TIMEOUT = 5000L;
 
     private static @NonNull BroadcastReceiver sCommandReceiver;
 
@@ -431,6 +448,71 @@ public class RestrictedPermissionsTest {
         assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
     }
 
+    @Test
+    @AppModeFull
+    public void onSideLoadAllRestrictedPermissionsWhitelisted() throws Exception {
+        installRestrictedPermissionUserApp();
+
+        // All restricted permissions whitelisted on side-load.
+        assertAllRestrictedPermissionWhitelisted();
+    }
+
+    private static void installRestrictedPermissionUserApp() throws Exception {
+        final CountDownLatch installLatch = new CountDownLatch(1);
+
+        // Create an install result receiver.
+        final BroadcastReceiver installReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                        PackageInstaller.STATUS_FAILURE_INVALID)
+                            == PackageInstaller.STATUS_SUCCESS) {
+                    installLatch.countDown();
+                }
+            }
+        };
+
+        // Register the result receiver.
+        final String action = "android.permission2.cts.ACTION_INSTALL_COMMIT";
+        final IntentFilter intentFilter = new IntentFilter(action);
+        getContext().registerReceiver(installReceiver, intentFilter);
+
+        try {
+            // Create a session.
+            final PackageInstaller packageInstaller = getContext()
+                    .getPackageManager().getPackageInstaller();
+            final SessionParams params = new SessionParams(
+                    SessionParams.MODE_FULL_INSTALL);
+            final int sessionId = packageInstaller.createSession(params);
+            final Session session = packageInstaller.openSession(sessionId);
+
+            // Write the apk.
+            try (
+                final InputStream in = new BufferedInputStream(new FileInputStream(
+                        new File(APK_USES_SMS_CALL_LOG)));
+                 final OutputStream out = session.openWrite(APK_NAME_USES_SMS_CALL_LOG, 0, -1);
+            ) {
+                final byte[] buf = new byte[8192];
+                int size;
+                while ((size = in.read(buf)) != -1) {
+                    out.write(buf, 0, size);
+                }
+            }
+
+            final Intent intent = new Intent(action);
+            final IntentSender intentSender = PendingIntent.getBroadcast(getContext(),
+                    1, intent, PendingIntent.FLAG_ONE_SHOT).getIntentSender();
+
+            // Commit as shell to avoid confirm UI
+            runWithShellPermissionIdentity(() ->
+                session.commit(intentSender)
+            );
+
+            installLatch.await(UI_TIMEOUT, TimeUnit.MILLISECONDS);
+        } finally {
+            getContext().unregisterReceiver(installReceiver);
+        }
+    }
+
     private void assertHasFullStorageAccess() throws Exception {
         runWithShellPermissionIdentity(() -> {
             AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
@@ -603,7 +685,7 @@ public class RestrictedPermissionsTest {
                             .getPermissionInfo(permission,
                                     0);
                     if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0) {
-                        whitelistedPermissions.remove(permission);
+                        assertThat(whitelistedPermissions.remove(permission)).isTrue();
                     }
                 }
             }
@@ -654,25 +736,6 @@ public class RestrictedPermissionsTest {
                     assertThat(
                             appOpsManager.unsafeCheckOpNoThrow(op, packageInfo.applicationInfo.uid,
                                     PKG)).named(op).isEqualTo(AppOpsManager.MODE_DEFAULT);
-                }
-            }
-        });
-    }
-
-    private void assertAllHardRestrictedPermissionAppOpsAllowed() throws Exception {
-        runWithShellPermissionIdentity(() -> {
-            // Also assert that apps ops are properly set
-            final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
-            final PackageInfo packageInfo = getContext().getPackageManager().getPackageInfo(PKG,
-                    PackageManager.GET_PERMISSIONS);
-            for (String permission : packageInfo.requestedPermissions) {
-                final PermissionInfo permissionInfo = getContext().getPackageManager()
-                        .getPermissionInfo(permission, 0);
-                if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0) {
-                    assertThat(appOpsManager.unsafeCheckOpNoThrow(
-                            AppOpsManager.permissionToOp(permission),
-                            packageInfo.applicationInfo.uid, PKG))
-                            .isEqualTo(AppOpsManager.MODE_ALLOWED);
                 }
             }
         });
