@@ -69,10 +69,14 @@ import javax.annotation.Nullable;
  * Tests for restricted permission behaviors.
  */
 public class RestrictedPermissionsTest {
-    private static final String APK_NAME_USES_SMS_CALL_LOG = "CtsRestrictedPermissionsUser.apk";
+    private static final String APK_USES_SMS_CALL_LOG_22 =
+            "/data/local/tmp/cts/permissions2/CtsSMSCallLogPermissionsUserSdk22.apk";
 
-    private static final String APK_USES_SMS_CALL_LOG =
-            "/data/local/tmp/cts/permissions2/" + APK_NAME_USES_SMS_CALL_LOG;
+    private static final String APK_NAME_USES_SMS_CALL_LOG_29 =
+            "CtsSMSCallLogPermissionsUserSdk29.apk";
+
+    private static final String APK_USES_SMS_CALL_LOG_29 =
+            "/data/local/tmp/cts/permissions2/CtsSMSCallLogPermissionsUserSdk29.apk";
 
     private static final String APK_USES_STORAGE_DEFAULT_22 =
             "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserDefaultSdk22.apk";
@@ -114,7 +118,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testDefaultAllRestrictedPermissionsWhitelistedAtInstall() throws Exception {
+    public void testDefaultAllRestrictedPermissionsWhitelistedAtInstall29() throws Exception {
         // Install with no changes to whitelisted permissions, not attempting to grant.
         installRestrictedPermissionUserApp(null /*whitelistedPermissions*/,
                 null /*grantedPermissions*/);
@@ -128,7 +132,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testSomeRestrictedPermissionsWhitelistedAtInstall() throws Exception {
+    public void testSomeRestrictedPermissionsWhitelistedAtInstall29() throws Exception {
         // Whitelist only these permissions.
         final Set<String> whitelistedPermissions = new ArraySet<>(2);
         whitelistedPermissions.add(Manifest.permission.SEND_SMS);
@@ -146,7 +150,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testNoneRestrictedPermissionWhitelistedAtInstall() throws Exception {
+    public void testNoneRestrictedPermissionWhitelistedAtInstall29() throws Exception {
         // Install with all whitelisted permissions, not attempting to grant.
         installRestrictedPermissionUserApp(Collections.emptySet(),
                 null /*grantedPermissions*/);
@@ -156,6 +160,43 @@ public class RestrictedPermissionsTest {
 
         // No restricted permission should be granted.
         assertNoRestrictedPermissionGranted();
+    }
+
+    @Test
+    @AppModeFull
+    public void testDefaultAllRestrictedPermissionsWhitelistedAtInstall22() throws Exception {
+        // Install with no changes to whitelisted permissions
+        installApp(APK_USES_SMS_CALL_LOG_22, null /*whitelistedPermissions*/,
+                null /*grantedPermissions*/);
+
+        // All restricted permission should be whitelisted.
+        assertAllRestrictedPermissionWhitelisted();
+    }
+
+    @Test
+    @AppModeFull
+    public void testSomeRestrictedPermissionsWhitelistedAtInstall22() throws Exception {
+        // Whitelist only these permissions.
+        final Set<String> whitelistedPermissions = new ArraySet<>(2);
+        whitelistedPermissions.add(Manifest.permission.SEND_SMS);
+        whitelistedPermissions.add(Manifest.permission.READ_CALL_LOG);
+
+        // Install with some whitelisted permissions
+        installApp(APK_USES_SMS_CALL_LOG_22, whitelistedPermissions, null /*grantedPermissions*/);
+
+        // Some restricted permission should be whitelisted.
+        eventually(() -> assertRestrictedPermissionWhitelisted(whitelistedPermissions));
+    }
+
+    @Test
+    @AppModeFull
+    public void testNoneRestrictedPermissionWhitelistedAtInstall22() throws Exception {
+        // Install with all whitelisted permissions
+        installApp(APK_USES_SMS_CALL_LOG_22, Collections.emptySet(),
+                null /*grantedPermissions*/);
+
+        // No restricted permission should be whitelisted.
+        assertNoRestrictedPermissionWhitelisted();
     }
 
     @Test
@@ -560,9 +601,10 @@ public class RestrictedPermissionsTest {
 
             // Write the apk.
             try (
-                final InputStream in = new BufferedInputStream(new FileInputStream(
-                        new File(APK_USES_SMS_CALL_LOG)));
-                 final OutputStream out = session.openWrite(APK_NAME_USES_SMS_CALL_LOG, 0, -1);
+                    InputStream in = new BufferedInputStream(new FileInputStream(
+                        new File(APK_USES_SMS_CALL_LOG_29)));
+                    OutputStream out = session.openWrite(
+                            APK_NAME_USES_SMS_CALL_LOG_29, 0, -1);
             ) {
                 final byte[] buf = new byte[8192];
                 int size;
@@ -735,47 +777,29 @@ public class RestrictedPermissionsTest {
     }
 
     private void assertAllRestrictedPermissionWhitelisted() throws Exception {
-        final PackageManager packageManager = getContext().getPackageManager();
-
-        final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
-                PackageManager.GET_PERMISSIONS);
-        if (packageInfo.requestedPermissions == null) {
-            return;
-        }
-
-        runWithShellPermissionIdentity(() -> {
-            final Set<String> whitelistedPermissions = packageManager
-                    .getWhitelistedRestrictedPermissions(PKG,
-                            PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
-                                    | PackageManager.FLAG_PERMISSION_WHITELIST_INSTALLER
-                                    | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE);
-
-            if (packageInfo.requestedPermissions != null) {
-                final int permissionCount = packageInfo.requestedPermissions.length;
-                for (int i = 0; i < permissionCount; i++) {
-                    final String permission = packageInfo.requestedPermissions[i];
-                    final PermissionInfo permissionInfo = packageManager
-                            .getPermissionInfo(permission,
-                                    0);
-                    if ((permissionInfo.flags & PermissionInfo.FLAG_HARD_RESTRICTED) != 0) {
-                        assertThat(whitelistedPermissions.remove(permission)).isTrue();
-                    }
-                }
-            }
-
-            assertThat(whitelistedPermissions).isNotNull();
-            assertThat(whitelistedPermissions).isEmpty();
-        });
+        assertRestrictedPermissionWhitelisted(null  /*expectedWhitelistedPermissions*/);
     }
 
     private void assertNoRestrictedPermissionWhitelisted() throws Exception {
-        assertRestrictedPermissionWhitelisted(null /*expectedWhitelistedPermissions*/);
+        assertRestrictedPermissionWhitelisted(
+                Collections.EMPTY_SET /*expectedWhitelistedPermissions*/);
     }
 
+    /**
+     * Assert that the passed in restrictions are whitelisted and that their app-op is set
+     * correctly.
+     *
+     * @param expectedWhitelistedPermissions The expected white listed permissions, {@code null} for
+     *                                       all permissions declared by the app.
+     */
     private void assertRestrictedPermissionWhitelisted(
             @Nullable Set<String> expectedWhitelistedPermissions) throws Exception {
         final PackageManager packageManager = getContext().getPackageManager();
         runWithShellPermissionIdentity(() -> {
+            final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+            final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
+                    PackageManager.GET_PERMISSIONS);
+
             final Set<String> whitelistedPermissions = packageManager
                 .getWhitelistedRestrictedPermissions(PKG,
                         PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
@@ -784,24 +808,19 @@ public class RestrictedPermissionsTest {
 
             assertThat(whitelistedPermissions).isNotNull();
             if (expectedWhitelistedPermissions == null) {
-                assertThat(whitelistedPermissions.isEmpty()).isTrue();
+                assertThat(whitelistedPermissions).containsExactlyElementsIn(
+                        packageInfo.requestedPermissions);
             } else {
-                assertThat(whitelistedPermissions.size()).isEqualTo(
-                        expectedWhitelistedPermissions.size());
-                assertThat(whitelistedPermissions.containsAll(
-                        expectedWhitelistedPermissions)).isTrue();
+                assertThat(whitelistedPermissions).containsExactlyElementsIn(
+                        expectedWhitelistedPermissions);
             }
 
             // Also assert that apps ops are properly set
-            final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
-            final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
-                    PackageManager.GET_PERMISSIONS);
-
             for (String permission : packageInfo.requestedPermissions) {
                 String op = AppOpsManager.permissionToOp(permission);
 
-                if (expectedWhitelistedPermissions != null
-                        && expectedWhitelistedPermissions.contains(permission)) {
+                if (expectedWhitelistedPermissions == null
+                        || expectedWhitelistedPermissions.contains(permission)) {
                     assertThat(
                             appOpsManager.unsafeCheckOpNoThrow(op, packageInfo.applicationInfo.uid,
                                     PKG)).named(op).isEqualTo(AppOpsManager.MODE_ALLOWED);
@@ -864,7 +883,7 @@ public class RestrictedPermissionsTest {
 
     private void installRestrictedPermissionUserApp(@Nullable Set<String> whitelistedPermissions,
             @Nullable Set<String> grantedPermissions) throws Exception {
-        installApp(APK_USES_SMS_CALL_LOG, whitelistedPermissions, grantedPermissions);
+        installApp(APK_USES_SMS_CALL_LOG_29, whitelistedPermissions, grantedPermissions);
     }
 
     private void installApp(@NonNull String app, @Nullable Set<String> whitelistedPermissions)
