@@ -30,6 +30,8 @@ import android.server.wm.ActivityManagerState.ActivityDisplay;
 import org.junit.Before;
 import org.junit.Test;
 
+import androidx.test.filters.FlakyTest;
+
 import java.util.List;
 
 /**
