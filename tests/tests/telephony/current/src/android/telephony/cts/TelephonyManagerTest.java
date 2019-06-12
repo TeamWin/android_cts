@@ -672,12 +672,14 @@ public class TelephonyManagerTest {
     }
 
     private void assertSerialNumber() {
+        String serial = ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
+               Build::getSerial);
         assertNotNull("Non-telephony devices must have a Build.getSerial() number.",
-                Build.getSerial());
+                serial);
         assertTrue("Hardware id must be no longer than 20 characters.",
-                Build.getSerial().length() <= 20);
+                serial.length() <= 20);
         assertTrue("Hardware id must be alphanumeric.",
-                Pattern.matches("[0-9A-Za-z]+", Build.getSerial()));
+                Pattern.matches("[0-9A-Za-z]+", serial));
     }
 
     private void assertMacAddress(String macAddress) {
