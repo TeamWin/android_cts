@@ -39,6 +39,7 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:MultiDisplayKeyguardTests
  */
 @Presubmit
+@FlakyTest(bugId = 135104079)
 public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
     @Before
