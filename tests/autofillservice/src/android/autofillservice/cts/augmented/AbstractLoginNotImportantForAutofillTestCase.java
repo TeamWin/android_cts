@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts.augmented;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
 
@@ -199,6 +200,7 @@ abstract class AbstractLoginNotImportantForAutofillTestCase<A extends
         // Make sure Augmented Autofill UI is shown.
         mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
 
+        sReplier.addResponse(NO_RESPONSE);
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
                 .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Fill Me")
                         .setField(usernameId, "dude")
@@ -209,6 +211,7 @@ abstract class AbstractLoginNotImportantForAutofillTestCase<A extends
         // Trigger autofill
         mActivity.clearFocus();
         mActivity.forceAutofillOnUsername();
+        sReplier.getNextFillRequest();
         final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
 
         // Assert request
