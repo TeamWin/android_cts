@@ -332,18 +332,8 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         }
     }
 
-    @AppModeInstant
-    public void testCanReplaceLibraryIfVersionAndVersionCodeSameInstantMode() throws Exception {
-        mInstantMode = true;
-        doTestCanReplaceLibraryIfVersionAndVersionCodeSame();
-    }
-
     @AppModeFull
-    public void testCanReplaceLibraryIfVersionAndVersionCodeSameFullMode() throws Exception {
-        doTestCanReplaceLibraryIfVersionAndVersionCodeSame();
-    }
-
-    private void doTestCanReplaceLibraryIfVersionAndVersionCodeSame() throws Exception {
+    public void testCanReplaceLibraryIfVersionAndVersionCodeSame() throws Exception {
         getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
         getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
         try {
