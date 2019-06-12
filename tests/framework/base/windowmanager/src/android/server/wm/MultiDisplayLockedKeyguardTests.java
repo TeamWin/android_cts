@@ -41,6 +41,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:MultiDisplayLockedKeyguardTests
  */
 @Presubmit
+@FlakyTest(bugId = 135104079)
 public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
 
     @Before
