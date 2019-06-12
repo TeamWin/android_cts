@@ -175,7 +175,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                     logE("Error waiting for valid state: " + e.getMessage());
                     return false;
                 }
-            }, "Wait for the configuration change to happen and for activity to be resumed.");
+            }, "the configuration change to happen and activity to be resumed");
 
             mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                     new WaitForValidActivityState(RESIZEABLE_ACTIVITY),
@@ -282,20 +282,11 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
             // Wait for the fullscreen stack to start sleeping, and then make sure the
             // test activity is still resumed.
-            int retry = 0;
-            int stopCount = 0;
-            do {
-                stopCount = (new ActivityLifecycleCounts(RESIZEABLE_ACTIVITY))
-                        .getCount(ActivityCallback.ON_STOP);
-                if (stopCount == 1) {
-                    break;
-                }
-                logAlways("***testExternalDisplayActivityTurnPrimaryOff... retry=" + retry);
-                SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
-            } while (retry++ < 5);
-
-            if (stopCount != 1) {
-                fail(RESIZEABLE_ACTIVITY + " has received " + stopCount
+            final ActivityLifecycleCounts counts = new ActivityLifecycleCounts(RESIZEABLE_ACTIVITY);
+            if (!Condition.waitFor(counts.countWithRetry(RESIZEABLE_ACTIVITY + " to be stopped",
+                    countSpec(ActivityCallback.ON_STOP, CountSpec.EQUALS, 1)))) {
+                fail(RESIZEABLE_ACTIVITY + " has received "
+                        + counts.getCount(ActivityCallback.ON_STOP)
                         + " onStop() calls, expecting 1");
             }
             // For this test we create this virtual display with flag showContentWhenLocked, so it
@@ -359,7 +350,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                     VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
         }
         mAmWmState.waitFor((amState, wmState) -> amState.getDisplayCount() == displayCount,
-                "Waiting for external displays to be removed");
+                "external displays to be removed");
         assertEquals(displayCount, mAmWmState.getAmState().getDisplayCount());
         assertEquals(displayCount, mAmWmState.getAmState().getKeyguardControllerState().
                 mKeyguardOccludedStates.size());
@@ -764,11 +755,9 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
             launchActivityOnDisplay(TOAST_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(TOAST_ACTIVITY, newDisplay.mId,
                     "Activity launched on external display must be resumed");
-            mAmWmState.waitForWithWmState((state) -> state.containsWindow(TOAST_NAME),
-                    "Waiting for toast window to show");
 
-            assertTrue("Toast window must be shown",
-                    mAmWmState.getWmState().containsWindow(TOAST_NAME));
+            assertTrue("Toast window must be shown", mAmWmState.waitForWithWmState(
+                    state -> state.containsWindow(TOAST_NAME), "toast window to show"));
             assertTrue("Toast window must be visible",
                     mAmWmState.getWmState().isWindowVisible(TOAST_NAME));
         }

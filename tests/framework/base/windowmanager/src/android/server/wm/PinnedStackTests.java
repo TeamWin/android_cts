@@ -62,7 +62,7 @@ import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTAT
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
@@ -105,6 +105,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Build/Install/Run:
@@ -213,12 +214,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
-            mAmWmState.waitForWithWmState((wmState1) -> {
-                Rect db = wmState1.getDefaultPinnedStackBounds();
-                Rect sb = wmState1.getStableBounds();
-                return (db.width() > 0 && db.height() > 0) &&
-                        (sb.contains(db));
-            }, "Waiting for valid bounds..");
+            waitForValidPinnedStackBounds(WindowManagerState::getDefaultPinnedStackBounds);
             WindowManagerState wmState = mAmWmState.getWmState();
             wmState.computeState();
             Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
@@ -227,12 +223,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             assertTrue(stableBounds.contains(defaultPipBounds));
 
             rotationSession.set(ROTATION_90);
-            mAmWmState.waitForWithWmState((wmState1) -> {
-                Rect db = wmState1.getDefaultPinnedStackBounds();
-                Rect sb = wmState1.getStableBounds();
-                return (db.width() > 0 && db.height() > 0) &&
-                        (sb.contains(db));
-            }, "Waiting for valid bounds...");
+            waitForValidPinnedStackBounds(WindowManagerState::getDefaultPinnedStackBounds);
             wmState = mAmWmState.getWmState();
             wmState.computeState();
             defaultPipBounds = wmState.getDefaultPinnedStackBounds();
@@ -251,12 +242,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
-            mAmWmState.waitForWithWmState((wmState1) -> {
-                Rect db = wmState1.getPinnedStackMovementBounds();
-                Rect sb = wmState1.getStableBounds();
-                return (db.width() > 0 && db.height() > 0) &&
-                        (sb.contains(db));
-            }, "Waiting for valid bounds...");
+            waitForValidPinnedStackBounds(WindowManagerState::getPinnedStackMovementBounds);
             WindowManagerState wmState = mAmWmState.getWmState();
             wmState.computeState();
             Rect pipMovementBounds = wmState.getPinnedStackMovementBounds();
@@ -265,12 +251,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             assertTrue(stableBounds.contains(pipMovementBounds));
 
             rotationSession.set(ROTATION_90);
-            mAmWmState.waitForWithWmState((wmState1) -> {
-                Rect db = wmState1.getPinnedStackMovementBounds();
-                Rect sb = wmState1.getStableBounds();
-                return (db.width() > 0 && db.height() > 0) &&
-                        (sb.contains(db));
-            }, "Waiting for valid bounds...");
+            waitForValidPinnedStackBounds(WindowManagerState::getPinnedStackMovementBounds);
             wmState = mAmWmState.getWmState();
             wmState.computeState();
             pipMovementBounds = wmState.getPinnedStackMovementBounds();
@@ -278,6 +259,15 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
             assertTrue(stableBounds.contains(pipMovementBounds));
         }
+    }
+
+    private void waitForValidPinnedStackBounds(Function<WindowManagerState, Rect> boundsFunc) {
+        mAmWmState.waitForWithWmState(wmState -> {
+            final Rect bounds = boundsFunc.apply(wmState);
+            final Rect displayStableBounds = wmState.getStableBounds();
+            return bounds.width() > 0 && bounds.height() > 0
+                    && displayStableBounds.contains(bounds);
+        }, "valid pinned stack bounds");
     }
 
     @Test
@@ -1387,7 +1377,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitFor((amState, wmState) -> {
                 WindowStack stack = wmState.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
                 return stack != null && !stack.mAnimatingBounds;
-            }, "Waiting for pinned stack bounds animation to finish");
+            }, "pinned stack bounds animation to finish");
     }
 
     /**
@@ -1397,7 +1387,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitFor((amState, wmState) -> {
             return !amState.containsStack(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD)
                     && !wmState.containsStack(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        }, "Waiting for pinned stack to be removed...");
+        }, "pinned stack to be removed");
     }
 
     /**
@@ -1419,7 +1409,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             return lifecycles.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED) == 1
                     && lifecycles.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED) == 1
                     && lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED) == 1;
-        }, "Waiting for picture-in-picture activity callbacks...");
+        }, "picture-in-picture activity callbacks...");
     }
 
     private void waitForValidAspectRatio(int num, int denom) {
@@ -1428,7 +1418,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState((state) -> {
             Rect bounds = state.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED).getBounds();
             return floatEquals((float) bounds.width() / bounds.height(), (float) num / denom);
-        }, "waitForValidAspectRatio");
+        }, "valid aspect ratio");
     }
 
     /**

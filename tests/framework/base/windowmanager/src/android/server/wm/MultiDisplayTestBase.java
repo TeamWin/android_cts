@@ -17,10 +17,8 @@
 package android.server.wm;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.StateLogger.log;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
@@ -40,27 +38,24 @@ import static android.server.wm.app.Components.VirtualDisplayActivity.VIRTUAL_DI
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
 import android.util.Size;
-import android.util.SparseBooleanArray;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -74,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -242,6 +238,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     protected void tapOnDisplayCenter(int displayId) {
         final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
         tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId);
+    }
+
+    void waitForDisplayGone(Predicate<WindowManagerState.Display> displayPredicate) {
+        waitForOrFail("displays to be removed", () -> {
+            mAmWmState.computeState(true);
+            return !mAmWmState.getWmState().getDisplays().stream().anyMatch(displayPredicate::test);
+        });
     }
 
     /**
@@ -448,23 +451,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     + " -f 0x20000000"
                     + " --es " + KEY_COMMAND + " " + COMMAND_DESTROY_DISPLAY;
             executeShellCommand(destroyVirtualDisplayCommand);
-            waitForDisplaysDestroyed();
-        }
-
-        private void waitForDisplaysDestroyed() {
-            for (int retry = 1; retry <= 5; retry++) {
-                if (!isHostedVirtualDisplayPresent()) {
-                    return;
-                }
-                logAlways("Waiting for hosted displays destruction... retry=" + retry);
-                SystemClock.sleep(500);
-            }
-            fail("Waiting for hosted displays destruction failed.");
-        }
-
-        private boolean isHostedVirtualDisplayPresent() {
-            mAmWmState.computeState(true);
-            return mAmWmState.getWmState().getDisplays().stream().anyMatch(
+            waitForDisplayGone(
                     d -> d.getName() != null && d.getName().contains(VIRTUAL_DISPLAY_PREFIX));
         }
 
@@ -604,20 +591,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     /** Wait for provided number of displays and report their configurations. */
     List<ActivityDisplay> getDisplayStateAfterChange(int expectedDisplayCount) {
-        List<ActivityDisplay> ds = getDisplaysStates();
-
-        int retriesLeft = 5;
-        while (!areDisplaysValid(ds, expectedDisplayCount) && retriesLeft-- > 0) {
-            log("***Waiting for the correct number of displays...");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                log(e.toString());
-            }
-            ds = getDisplaysStates();
-        }
-
-        return ds;
+        return Condition.waitForResult("the correct number of displays=" + expectedDisplayCount,
+                condition -> condition
+                        .setReturnLastResult(true)
+                        .setResultSupplier(this::getDisplaysStates)
+                        .setResultValidator(
+                                displays -> areDisplaysValid(displays, expectedDisplayCount)));
     }
 
     private boolean areDisplaysValid(List<ActivityDisplay> displays, int expectedDisplayCount) {
@@ -714,26 +693,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                 mExternalDisplayHelper.releaseDisplay();
                 mExternalDisplayHelper = null;
 
-                waitForHostedDisplayDestroyed();
+                waitForDisplayGone(d -> d.getDisplayId() == mDisplayId);
                 mDisplayId = INVALID_DISPLAY;
             }
-        }
-
-        private void waitForHostedDisplayDestroyed() {
-            for (int retry = 1; retry <= 5; retry++) {
-                if (!isHostedVirtualDisplayPresent()) {
-                    return;
-                }
-                logAlways("Waiting for hosted displays destruction... retry=" + retry);
-                SystemClock.sleep(500);
-            }
-            fail("Waiting for hosted displays destruction failed.");
-        }
-
-        private boolean isHostedVirtualDisplayPresent() {
-            mAmWmState.computeState(true);
-            return mAmWmState.getWmState().getDisplays().stream().anyMatch(
-                    d -> d.getDisplayId() == mDisplayId);
         }
     }
 

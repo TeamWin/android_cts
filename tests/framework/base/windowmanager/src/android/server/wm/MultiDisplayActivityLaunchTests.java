@@ -257,12 +257,11 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
             // Try to move the non-resizeable activity to the top of stack on secondary display.
             moveActivityToStack(NON_RESIZEABLE_ACTIVITY, externalFrontStackId);
             // Wait for a while to check that it will move.
-            mAmWmState.waitForWithAmState(state ->
-                    newDisplay.mId == state.getDisplayByActivity(NON_RESIZEABLE_ACTIVITY),
-                    "Waiting to see if activity is moved");
-            assertEquals("Non-resizeable activity should be moved",
-                    newDisplay.mId,
-                    mAmWmState.getAmState().getDisplayByActivity(NON_RESIZEABLE_ACTIVITY));
+            assertTrue("Non-resizeable activity should be moved",
+                    mAmWmState.waitForWithAmState(
+                            state -> newDisplay.mId == state
+                                    .getDisplayByActivity(NON_RESIZEABLE_ACTIVITY),
+                            "seeing if activity won't be moved"));
 
             waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "The moved non-resizeable activity must be focused");

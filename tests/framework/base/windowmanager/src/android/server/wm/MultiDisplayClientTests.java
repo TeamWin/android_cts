@@ -28,6 +28,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -128,17 +129,17 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     }
 
     private void waitAndAssertConfigurationChange(ComponentName activityName) {
-        mAmWmState.waitForWithAmState((state) ->
-                        getCallbackCount(activityName, ON_CONFIGURATION_CHANGED) == 1,
-                "waitForConfigurationChange");
-        assertEquals("Must receive a single configuration change", 1,
-                getCallbackCount(activityName, ON_CONFIGURATION_CHANGED));
+        assertTrue("Must receive a single configuration change",
+                mAmWmState.waitForWithAmState(
+                        state -> getCallbackCount(activityName, ON_CONFIGURATION_CHANGED) == 1,
+                        activityName + " receives configuration change"));
     }
 
     private void waitAndAssertResume(ComponentName activityName) {
-        mAmWmState.waitForWithAmState((state) ->
-                getCallbackCount(activityName, ON_RESUME) == 1, "waitForResume");
-        assertEquals("Must be resumed once", 1, getCallbackCount(activityName, ON_RESUME));
+        assertTrue("Must be resumed once",
+                mAmWmState.waitForWithAmState(
+                        state -> getCallbackCount(activityName, ON_RESUME) == 1,
+                        activityName + " performs resume"));
     }
 
     private int getCallbackCount(ComponentName activityName,

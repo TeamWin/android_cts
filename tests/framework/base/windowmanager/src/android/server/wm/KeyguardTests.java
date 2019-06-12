@@ -553,7 +553,7 @@ public class KeyguardTests extends KeyguardTestBase {
             // The activity may not be destroyed immediately.
             mAmWmState.waitForWithWmState(
                     wmState -> !wmState.containsWindow(getWindowName(SHOW_WHEN_LOCKED_ACTIVITY)),
-                    "Waiting for " + getActivityName(SHOW_WHEN_LOCKED_ACTIVITY) + " to be removed");
+                    getActivityName(SHOW_WHEN_LOCKED_ACTIVITY) + " to be removed");
             // The {@link SHOW_WHEN_LOCKED_ACTIVITY} has gone because of {@link pressBackButton()}.
             mAmWmState.assertNotExist(SHOW_WHEN_LOCKED_ACTIVITY);
         }
