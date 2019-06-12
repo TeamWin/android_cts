@@ -69,6 +69,12 @@ import javax.annotation.Nullable;
  * Tests for restricted permission behaviors.
  */
 public class RestrictedPermissionsTest {
+    private static final String APK_USES_LOCATION_22 =
+            "/data/local/tmp/cts/permissions2/CtsLocationPermissionsUserSdk22.apk";
+
+    private static final String APK_USES_LOCATION_29 =
+            "/data/local/tmp/cts/permissions2/CtsLocationPermissionsUserSdk29.apk";
+
     private static final String APK_USES_SMS_CALL_LOG_22 =
             "/data/local/tmp/cts/permissions2/CtsSMSCallLogPermissionsUserSdk22.apk";
 
@@ -197,6 +203,34 @@ public class RestrictedPermissionsTest {
 
         // No restricted permission should be whitelisted.
         assertNoRestrictedPermissionWhitelisted();
+    }
+
+    @Test
+    @AppModeFull
+    public void testLocationBackgroundPermissionWhitelistedAtInstall29() throws Exception {
+        installApp(APK_USES_LOCATION_29, null, null);
+        eventually(this::assertAllRestrictedPermissionWhitelisted);
+    }
+
+    @Test
+    @AppModeFull
+    public void testLocationBackgroundPermissionNotWhitelistedAtInstall29() throws Exception {
+        installApp(APK_USES_LOCATION_29, Collections.EMPTY_SET, null);
+        eventually(this::assertNoRestrictedPermissionWhitelisted);
+    }
+
+    @Test
+    @AppModeFull
+    public void testLocationBackgroundPermissionWhitelistedAtInstall22() throws Exception {
+        installApp(APK_USES_LOCATION_22, null, null);
+        eventually(this::assertAllRestrictedPermissionWhitelisted);
+    }
+
+    @Test
+    @AppModeFull
+    public void testLocationBackgroundPermissionNotWhitelistedAtInstall22() throws Exception {
+        installApp(APK_USES_LOCATION_22, Collections.EMPTY_SET, null);
+        eventually(this::assertNoRestrictedPermissionWhitelisted);
     }
 
     @Test
@@ -814,7 +848,7 @@ public class RestrictedPermissionsTest {
      * @param expectedWhitelistedPermissions The expected white listed permissions
      */
     private void assertRestrictedPermissionWhitelisted(
-            @Nullable Set<String> expectedWhitelistedPermissions) throws Exception {
+            @NonNull Set<String> expectedWhitelistedPermissions) throws Exception {
         final PackageManager packageManager = getContext().getPackageManager();
         runWithShellPermissionIdentity(() -> {
             final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
@@ -836,20 +870,38 @@ public class RestrictedPermissionsTest {
                 String op = AppOpsManager.permissionToOp(permission);
                 ArraySet<Integer> possibleModes = new ArraySet<>();
 
-                if (expectedWhitelistedPermissions.contains(permission)) {
-                    // If permission is denied app-op might be allowed or ignored. It does not
-                    // matter. If permission is granted, it has to be allowed.
-                    possibleModes.add(AppOpsManager.MODE_ALLOWED);
-                    if (!isPermissionGranted(PKG, permission)) {
+                if (permission.equals(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                    op = AppOpsManager.OPSTR_FINE_LOCATION;
+
+                    // If permission is denied app-op might be allowed/fg or ignored. It does
+                    // not matter. If permission is granted, it has to be allowed/fg.
+                    if (isPermissionGranted(PKG, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        if (expectedWhitelistedPermissions.contains(permission)
+                                && isPermissionGranted(PKG, permission)) {
+                            possibleModes.add(AppOpsManager.MODE_ALLOWED);
+                        } else {
+                            possibleModes.add(AppOpsManager.MODE_FOREGROUND);
+                        }
+                    } else {
                         possibleModes.add(AppOpsManager.MODE_IGNORED);
+                        possibleModes.add(AppOpsManager.MODE_ALLOWED);
+                        possibleModes.add(AppOpsManager.MODE_FOREGROUND);
                     }
                 } else {
-                    possibleModes.add(AppOpsManager.MODE_DEFAULT);
+                    if (expectedWhitelistedPermissions.contains(permission)) {
+                        // If permission is denied app-op might be allowed or ignored. It does not
+                        // matter. If permission is granted, it has to be allowed.
+                        possibleModes.add(AppOpsManager.MODE_ALLOWED);
+                        if (!isPermissionGranted(PKG, permission)) {
+                            possibleModes.add(AppOpsManager.MODE_IGNORED);
+                        }
+                    } else {
+                        possibleModes.add(AppOpsManager.MODE_DEFAULT);
+                    }
                 }
 
-                assertThat(appOpsManager.unsafeCheckOpNoThrow(op, packageInfo.applicationInfo.uid,
-                                PKG)).named(op).isIn(possibleModes);
-
+                assertThat(appOpsManager.unsafeCheckOpRawNoThrow(op,
+                        packageInfo.applicationInfo.uid, PKG)).named(op).isIn(possibleModes);
             }
         });
     }
