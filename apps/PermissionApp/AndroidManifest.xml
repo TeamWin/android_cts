@@ -38,6 +38,7 @@
     <uses-permission android:name="com.android.cts.permissionapp.permA"/>
     <uses-permission android:name="com.android.cts.permissionapp.permB"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
     <application android:label="CtsPermissionApp"

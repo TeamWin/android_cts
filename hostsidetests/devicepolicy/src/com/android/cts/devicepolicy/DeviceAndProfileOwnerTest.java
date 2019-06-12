@@ -562,6 +562,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".PermissionsTest", "testPermissionPolicy");
     }
 
+    public void testAutoGrantMultiplePermissionsInGroup() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppPermissionAppAsUser();
+        executeDeviceTestMethod(".PermissionsTest", "testAutoGrantMultiplePermissionsInGroup");
+    }
+
     public void testPermissionMixedPolicies() throws Exception {
         if (!mHasFeature) {
             return;
