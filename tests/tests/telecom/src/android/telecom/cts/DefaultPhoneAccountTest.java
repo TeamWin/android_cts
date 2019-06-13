@@ -73,17 +73,26 @@ public class DefaultPhoneAccountTest extends BaseTelecomTestWithMockServices {
         // Make sure to set the default outgoing phone account to the new connection service
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
 
-        // Use TelecomManager API to set the outgoing phone account.
-        runWithShellPermissionIdentity(() ->
-                mTelecomManager.setUserSelectedOutgoingPhoneAccount(
-                        TestUtils.TEST_PHONE_ACCOUNT_HANDLE));
+        PhoneAccountHandle previousOutgoingPhoneAccount =
+                mTelecomManager.getUserSelectedOutgoingPhoneAccount();
 
-        PhoneAccountHandle handle = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
-        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, handle);
+        try {
+            // Use TelecomManager API to set the outgoing phone account.
+            runWithShellPermissionIdentity(() ->
+                    mTelecomManager.setUserSelectedOutgoingPhoneAccount(
+                            TestUtils.TEST_PHONE_ACCOUNT_HANDLE));
 
-        PhoneAccountHandle defaultOutgoing = mTelecomManager.getDefaultOutgoingPhoneAccount(
-                PhoneAccount.SCHEME_TEL);
-        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, defaultOutgoing);
+            PhoneAccountHandle handle = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+            assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, handle);
+
+            PhoneAccountHandle defaultOutgoing = mTelecomManager.getDefaultOutgoingPhoneAccount(
+                    PhoneAccount.SCHEME_TEL);
+            assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, defaultOutgoing);
+        } finally {
+            // Restore the default outgoing phone account.
+            TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(),
+                    previousOutgoingPhoneAccount);
+        }
     }
 
     /**
