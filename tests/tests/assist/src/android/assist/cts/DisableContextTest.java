@@ -17,16 +17,9 @@
 package android.assist.cts;
 
 import android.assist.common.Utils;
-import android.assist.cts.AssistTestBase.ScreenshotEnabled;
-import android.assist.cts.AssistTestBase.StructureEnabled;
-import android.content.Context;
 import android.util.Log;
 
-import com.android.compatibility.common.util.SettingsUtils;
-import com.android.compatibility.common.util.SystemUtil;
-
 /** Test we receive proper assist data when context is disabled or enabled */
-
 public class DisableContextTest extends AssistTestBase {
     static final String TAG = "DisableContextTest";
 
@@ -53,15 +46,14 @@ public class DisableContextTest extends AssistTestBase {
         // Both settings off
         Log.i(TAG, "DisableContext: Screenshot OFF, Context OFF");
         setFeaturesEnabled(StructureEnabled.FALSE, ScreenshotEnabled.FALSE);
-        waitForBroadcast();
+        startTest(TEST_CASE_TYPE);
+        waitForContext(mAssistDataReceivedLatch);
 
         logContextAndScreenshotSetting();
         verifyAssistDataNullness(true, true, true, true);
     }
 
-    // TODO(b/133379285) need to figure out a way to finish the activity so this class can run
-    // multiple tests
-    public void disabled_TestContextOff() throws Exception {
+    public void testContextOff() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
@@ -69,15 +61,14 @@ public class DisableContextTest extends AssistTestBase {
         // Screenshot off, context on
         Log.i(TAG, "DisableContext: Screenshot OFF, Context ON");
         setFeaturesEnabled(StructureEnabled.TRUE, ScreenshotEnabled.FALSE);
-        waitForBroadcast();
+        startTest(TEST_CASE_TYPE);
+        waitForContext(mAssistDataReceivedLatch);
 
         logContextAndScreenshotSetting();
         verifyAssistDataNullness(false, false, false, true);
     }
 
-    // TODO(b/133379285) need to figure out a way to finish the activity so this class can run
-    // multiple tests
-    public void disabled_testScreenshotOff() throws Exception {
+    public void testScreenshotOff() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
@@ -85,7 +76,8 @@ public class DisableContextTest extends AssistTestBase {
         // Context off, screenshot on
         Log.i(TAG, "DisableContext: Screenshot ON, Context OFF");
         setFeaturesEnabled(StructureEnabled.FALSE, ScreenshotEnabled.TRUE);
-        waitForBroadcast();
+        startTest(TEST_CASE_TYPE);
+        waitForContext(mAssistDataReceivedLatch);
 
         logContextAndScreenshotSetting();
         verifyAssistDataNullness(true, true, true, true);
