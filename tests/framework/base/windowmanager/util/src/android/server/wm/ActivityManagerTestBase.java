@@ -498,6 +498,13 @@ public abstract class ActivityManagerTestBase {
 
         final long upTime = SystemClock.uptimeMillis();
         injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
+
+        mAmWmState.waitForWithWmState(state -> state.getFocusedDisplayId() == displayId,
+                "***Waiting for top focused displayId: " + displayId);
+        // This is needed after a tap in multi-display to ensure that the display focus has really
+        // changed, if needed. The call to syncInputTransaction will wait until focus change has
+        // propagated from WMS to native input before returning.
+        getInstrumentation().getUiAutomation().syncInputTransactions();
     }
 
     protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
