@@ -14,23 +14,6 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-# $(1) name of the xml file to be created
-# $(2) path to the api text file
-define build_xml_api_file
-include $(CLEAR_VARS)
-LOCAL_MODULE := cts-$(subst .,-,$(1))
-LOCAL_MODULE_STEM := $(1)
-LOCAL_MODULE_CLASS := ETC
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
-include $(BUILD_SYSTEM)/base_rules.mk
-$$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
-	@echo "Convert API file $$< -> $$@"
-	@mkdir -p $$(dir $$@)
-	$(hide) $(APICHECK_COMMAND) -convert2xmlnostrip $$< $$@
-endef
-
-$(eval $(call build_xml_api_file,current.api,frameworks/base/api/current.txt))
-
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := CtsDevicePolicyManagerTestCases
