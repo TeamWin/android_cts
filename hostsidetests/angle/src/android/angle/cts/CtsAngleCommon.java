@@ -33,8 +33,6 @@ class CtsAngleCommon {
 
     // System Properties
     static final String PROPERTY_GFX_ANGLE_SUPPORTED = "ro.gfx.angle.supported";
-    static final String PROPERTY_DISABLE_OPENGL_PRELOADING = "ro.zygote.disable_gl_preload";
-    static final String PROPERTY_GFX_DRIVER = "ro.gfx.driver.0";
     static final String PROPERTY_TEMP_RULES_FILE = "debug.angle.rules";
 
     // Rules File
@@ -102,12 +100,8 @@ class CtsAngleCommon {
 
     static boolean isAngleLoadable(ITestDevice device) throws Exception {
         String angleSupported = device.getProperty(PROPERTY_GFX_ANGLE_SUPPORTED);
-        String propDisablePreloading = device.getProperty(PROPERTY_DISABLE_OPENGL_PRELOADING);
-        String propGfxDriver = device.getProperty(PROPERTY_GFX_DRIVER);
 
-        return (angleSupported != null) && (angleSupported.equals("true")) &&
-                (((propDisablePreloading != null) && propDisablePreloading.equals("true")) ||
-                        ((propGfxDriver != null) && !propGfxDriver.isEmpty()));
+        return (angleSupported != null) && (angleSupported.equals("true"));
     }
 
     static void startActivity(ITestDevice device, String action) throws Exception {
