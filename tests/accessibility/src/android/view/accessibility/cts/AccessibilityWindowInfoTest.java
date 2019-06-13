@@ -29,6 +29,7 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
+import android.view.Display;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.test.filters.SmallTest;
@@ -69,7 +70,7 @@ public class AccessibilityWindowInfoTest {
         parcel.setDataPosition(0);
         AccessibilityWindowInfo w2 = AccessibilityWindowInfo.CREATOR.createFromParcel(parcel);
         assertNotSame(w1, w2);
-        assertTrue(areWindowsEqual(w1, w2));
+        assertTrue(w2.toString(), areWindowsEqual(w1, w2));
         parcel.recycle();
     }
 
@@ -82,6 +83,7 @@ public class AccessibilityWindowInfoTest {
         assertEquals(-1, w.getLayer());
         assertEquals(-1, w.getId());
         assertEquals(0, w.describeContents());
+        assertEquals(Display.INVALID_DISPLAY, w.getDisplayId());
         assertNull(w.getParent());
         assertNull(w.getRoot());
         assertFalse(w.isAccessibilityFocused());
@@ -122,6 +124,7 @@ public class AccessibilityWindowInfoTest {
         equality &= w1.isActive() == w2.isActive();
         equality &= w1.getType() == w2.getType();
         equality &= w1.getLayer() == w2.getLayer();
+        equality &= w1.getDisplayId() == w2.getDisplayId();
         Rect bounds1 = new Rect();
         Rect bounds2 = new Rect();
         w1.getBoundsInScreen(bounds1);
