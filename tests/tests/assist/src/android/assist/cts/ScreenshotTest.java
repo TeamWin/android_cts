@@ -16,45 +16,22 @@
 
 package android.assist.cts;
 
+import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class ScreenshotTest extends AssistTestBase {
     static final String TAG = "ScreenshotTest";
 
     private static final String TEST_CASE_TYPE = Utils.SCREENSHOT;
 
-    private BroadcastReceiver mScreenshotActivityReceiver;
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        // set up receiver
-        mScreenshotActivityReceiver = new ScreenshotTestReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Utils.ASSIST_RECEIVER_REGISTERED);
-        filter.addAction(Utils.APP_3P_HASRESUMED);
-        mContext.registerReceiver(mScreenshotActivityReceiver, filter);
-
         // start test start activity
         startTestActivity(TEST_CASE_TYPE);
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        if (mScreenshotActivityReceiver != null) {
-            mContext.unregisterReceiver(mScreenshotActivityReceiver);
-        }
-        super.tearDown();
     }
 
     public void testRedScreenshot() throws Exception {
@@ -62,12 +39,15 @@ public class ScreenshotTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        Log.i(TAG, "Starting screenshot test");
-        startTest(TEST_CASE_TYPE);
-        Log.i(TAG, "start waitForAssistantToBeReady()");
-        waitForAssistantToBeReady(mReadyLatch);
 
-        waitForActivityResumeAndAssist(Color.RED);
+        startTest(TEST_CASE_TYPE);
+        waitForAssistantToBeReady();
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(Utils.SCREENSHOT_COLOR_KEY, Color.RED);
+        start3pApp(TEST_CASE_TYPE, bundle);
+
+        delayAndStartSession(Color.RED);
         verifyAssistDataNullness(false, false, false, false);
         assertTrue(mScreenshotMatches);
     }
@@ -77,12 +57,15 @@ public class ScreenshotTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        Log.i(TAG, "Starting screenshot test");
-        startTest(TEST_CASE_TYPE);
-        Log.i(TAG, "start waitForAssistantToBeReady()");
-        waitForAssistantToBeReady(mReadyLatch);
 
-        waitForActivityResumeAndAssist(Color.GREEN);
+        startTest(TEST_CASE_TYPE);
+        waitForAssistantToBeReady();
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(Utils.SCREENSHOT_COLOR_KEY, Color.GREEN);
+        start3pApp(TEST_CASE_TYPE, bundle);
+
+        delayAndStartSession(Color.GREEN);
         verifyAssistDataNullness(false, false, false, false);
         assertTrue(mScreenshotMatches);
     }
@@ -92,42 +75,28 @@ public class ScreenshotTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-        Log.i(TAG, "Starting screenshot test");
-        startTest(TEST_CASE_TYPE);
-        Log.i(TAG, "start waitForAssistantToBeReady()");
-        waitForAssistantToBeReady(mReadyLatch);
 
-        waitForActivityResumeAndAssist(Color.BLUE);
+        startTest(TEST_CASE_TYPE);
+        waitForAssistantToBeReady();
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(Utils.SCREENSHOT_COLOR_KEY, Color.BLUE);
+        start3pApp(TEST_CASE_TYPE, bundle);
+
+        delayAndStartSession(Color.BLUE);
         verifyAssistDataNullness(false, false, false, false);
         assertTrue(mScreenshotMatches);
     }
 
-    private void waitForActivityResumeAndAssist(int color) throws Exception {
+    private void delayAndStartSession(int color) throws Exception {
+        // Screenshot testing requires the entire screen to settle, including layout requests
+        // and any animations. The time is arbitrary as there is no good event for knowing when
+        // the Activity has settled.
+        Thread.sleep(350);
+
         Bundle extras = new Bundle();
         extras.putInt(Utils.SCREENSHOT_COLOR_KEY, color);
-        final CountDownLatch latch = startSession(TEST_CASE_TYPE, extras);
-        Log.i(TAG, "waiting for onResume() before continuing.");
-        if (!mHasResumedLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            fail("activity failed to resume in " + Utils.ACTIVITY_ONRESUME_TIMEOUT_MS + "msec");
-        }
+        final AutoResetLatch latch = startSession(TEST_CASE_TYPE, extras);
         waitForContext(latch);
-    }
-
-    private class ScreenshotTestReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            Log.i(ScreenshotTest.TAG, "Got some broadcast: " + action);
-            if (action.equals(Utils.ASSIST_RECEIVER_REGISTERED)) {
-                Log.i(ScreenshotTest.TAG, "Received assist receiver is registered.");
-                if (mReadyLatch != null) {
-                    mReadyLatch.countDown();
-                }
-            } else if (action.equals(Utils.APP_3P_HASRESUMED)) {
-                if (mHasResumedLatch != null) {
-                    mHasResumedLatch.countDown();
-                }
-            }
-        }
     }
 }
