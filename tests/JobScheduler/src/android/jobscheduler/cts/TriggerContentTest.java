@@ -161,6 +161,7 @@ public class TriggerContentTest extends ConstraintTest {
         if (destFile.exists()) {
             destFile.delete();
         }
+        destFile.getParentFile().mkdirs();
         FileOutputStream out = new FileOutputStream(destFile);
         try {
             byte[] buffer = new byte[4096];
