@@ -2938,6 +2938,7 @@ public class CameraTestUtils extends Assert {
         boolean foundConstantMaxYUVRange = false;
         boolean foundYUVStreamingRange = false;
         boolean isExternalCamera = staticInfo.isExternalCamera();
+        boolean isNIR = staticInfo.isNIRColorFilter();
 
         // Find suitable target FPS range - as high as possible that covers the max YUV rate
         // Also verify that there's a good preview rate as well
@@ -2961,9 +2962,12 @@ public class CameraTestUtils extends Assert {
             assertTrue(String.format("Cam %s: Target FPS range of (%d, %d) must be supported",
                     cameraId, minBurstFps, minBurstFps), foundConstantMaxYUVRange);
         }
-        assertTrue(String.format(
-                "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
-                cameraId, minBurstFps), foundYUVStreamingRange);
+
+        if (!isNIR) {
+            assertTrue(String.format(
+                    "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
+                    cameraId, minBurstFps), foundYUVStreamingRange);
+        }
         return targetRange;
     }
 }
