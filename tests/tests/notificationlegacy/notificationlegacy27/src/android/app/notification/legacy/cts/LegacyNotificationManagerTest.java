@@ -187,6 +187,9 @@ public class LegacyNotificationManagerTest {
 
     @Test
     public void testSuspendPackage() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -219,6 +222,9 @@ public class LegacyNotificationManagerTest {
 
     @Test
     public void testSuspendedPackageSendNotification() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -249,6 +255,9 @@ public class LegacyNotificationManagerTest {
 
     @Test
     public void testResetListenerHints_singleListener() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -268,6 +277,9 @@ public class LegacyNotificationManagerTest {
 
     @Test
     public void testResetListenerHints_multiListener() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         toggleListenerAccess(SecondaryNotificationListener.getId(),
