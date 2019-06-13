@@ -49,7 +49,7 @@ import java.util.concurrent.Semaphore;
 public class SQLiteDatabaseTest extends AndroidTestCase {
 
     private static final String TAG = "SQLiteDatabaseTest";
-    private static final String EXPECTED_MAJOR_MINOR_VERSION = "3.22";
+    private static final String EXPECTED_MAJOR_MINOR_VERSION = "3.28";
     private static final int EXPECTED_MIN_PATCH_LEVEL = 0;
 
     private SQLiteDatabase mDatabase;
