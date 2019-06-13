@@ -228,6 +228,8 @@ public class CellInfoTest {
      */
     @Test
     public void testPhoneStateListenerCallback() throws Throwable {
+        if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+
         CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
         // Prime the system by requesting a CellInfoUpdate
         mTm.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);

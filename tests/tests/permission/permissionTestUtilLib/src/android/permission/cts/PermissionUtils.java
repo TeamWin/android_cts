@@ -167,7 +167,8 @@ public class PermissionUtils {
             // location
             return getAppOp(packageName, ACCESS_COARSE_LOCATION) == MODE_ALLOWED;
         } else {
-            return getAppOp(packageName, permission) != MODE_IGNORED;
+            int mode = getAppOp(packageName, permission);
+            return mode == MODE_ALLOWED || mode == MODE_FOREGROUND;
         }
     }
 

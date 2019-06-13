@@ -372,6 +372,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testServiceStateListeningWithoutPermissions() {
+            if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+
             withRevokedPermission(() -> {
                     ServiceState ss = (ServiceState) performLocationAccessCommand(
                             CtsLocationAccessService.COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
@@ -440,7 +442,7 @@ public class TelephonyManagerTest {
         ICtsLocationAccessControl control = getLocationAccessAppControl();
         try {
             List ret = control.performCommand(command);
-            return ret.get(0);
+            if (!ret.isEmpty()) return ret.get(0);
         } catch (RemoteException e) {
             fail("Remote exception");
         }
@@ -481,6 +483,11 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetRadioHalVersion() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG,"skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
         Pair<Integer, Integer> version = mTelephonyManager.getRadioHalVersion();
 
         // The version must be valid, and the versions start with 1.0
@@ -777,7 +784,7 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetSimLocale() throws InterruptedException {
-        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG,"skipping test that requires Telephony");
             return;
         }
