@@ -21,6 +21,7 @@ import android.media.MediaDrm.KeyStatus;
 import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaDrmException;
 import android.media.MediaFormat;
+import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Looper;
 import android.util.Base64;
@@ -98,6 +99,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     private byte[] mDrmInitData;
     private byte[] mKeySetId;
     private byte[] mSessionId;
+    private Monitor mSessionMonitor = new Monitor();
     private Looper mLooper;
     private MediaDrm mDrm = null;
     private final Object mLock = new Object();
@@ -298,6 +300,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                                 Log.d(TAG, "onKeyStatusChange");
                                 assertTrue(md == mDrm);
                                 assertTrue(Arrays.equals(sessionId, mSessionId));
+                                mSessionMonitor.signal();
                                 assertTrue(hasNewUsableKey);
 
                                 assertEquals(3, keyInformation.size());
@@ -392,6 +395,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
         if (hasDrm && keyType == MediaDrm.KEY_TYPE_OFFLINE) {
             closeSession(drm, mSessionId);
+            mSessionMonitor.waitForSignal();
             mSessionId = openSession(drm);
             if (mKeySetId.length > 0) {
                 drm.restoreKeys(mSessionId, mKeySetId);
@@ -452,6 +456,8 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
         // Verify the offline license is valid
         closeSession(drm, mSessionId);
+        mSessionMonitor.waitForSignal();
+        mDrm.clearOnKeyStatusChangeListener();
         mSessionId = openSession(drm);
         drm.restoreKeys(mSessionId, mKeySetId);
         closeSession(drm, mSessionId);
