@@ -16,7 +16,7 @@
 package android.telephony.sdk28.cts;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
+import android.content.pm.PackageManager;
 import android.os.Looper;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
@@ -40,13 +40,21 @@ public class PhoneStateListenerTest {
     private TelephonyManager mTelephonyManager;
     private PhoneStateListener mListener;
     private final Object mLock = new Object();
+    private boolean mHasTelephony = true;
     private static final String TAG = "android.telephony.cts.PhoneStateListenerTest";
-    private static ConnectivityManager mCm;
 
     @Before
     public void setUp() throws Exception {
         mTelephonyManager =
                 (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
+
+        PackageManager packageManager = getContext().getPackageManager();
+        if (packageManager != null) {
+            if (!packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                Log.d(TAG, "Some tests requiring FEATURE_TELEPHONY will be skipped");
+                mHasTelephony = false;
+            }
+        }
     }
 
     @After
@@ -65,6 +73,9 @@ public class PhoneStateListenerTest {
 
     @Test
     public void testOnUnRegisterFollowedByRegister() throws Throwable {
+        if (!mHasTelephony) {
+            return;
+        }
 
         TestThread t = new TestThread(new Runnable() {
             public void run() {
