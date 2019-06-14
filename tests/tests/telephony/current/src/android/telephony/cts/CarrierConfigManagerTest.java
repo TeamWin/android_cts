@@ -193,7 +193,10 @@ public class CarrierConfigManagerTest {
      */
     @Test
     public void testCarrierConfigNameOverride() throws Exception {
-        if (mTelephonyManager.getServiceState().getState() != STATE_IN_SERVICE) return;
+        if (!isSimCardPresent()
+                || mTelephonyManager.getServiceState().getState() != STATE_IN_SERVICE) {
+            return;
+        }
 
         // Adopt shell permission so the required permission (android.permission.MODIFY_PHONE_STATE)
         // is granted.
