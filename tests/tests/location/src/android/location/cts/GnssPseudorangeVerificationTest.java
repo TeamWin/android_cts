@@ -41,20 +41,24 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
   private static final int MIN_SATELLITES_REQUIREMENT = 4;
   private static final double SECONDS_PER_NANO = 1.0e-9;
 
-  // GPS/GLONASS: according to http://cdn.intechopen.com/pdfs-wm/27712.pdf, the pseudorange in time
-  // is 65-83 ms, which is 18 ms range.
-  // GLONASS: orbit is a bit closer than GPS, so we add 0.003ms to the range, hence deltaiSeconds
-  // should be in the range of [0.0, 0.021] seconds.
-  // QZSS and BEIDOU: they have higher orbit, which will result in a small svTime, the deltai can be
-  // calculated as follows:
-  // assume a = QZSS/BEIDOU orbit Semi-Major Axis(42,164km for QZSS);
-  // b = GLONASS orbit Semi-Major Axis (25,508km);
-  // c = Speed of light (299,792km/s);
-  // e = earth radius (6,378km);
-  // in the extremely case of QZSS is on the horizon and GLONASS is on the 90 degree top
-  // max difference should be (sqrt(a^2-e^2) - (b-e))/c,
-  // which is around 0.076s.
-  private static final double PSEUDORANGE_THRESHOLD_IN_SEC = 0.021;
+    // GPS/GLONASS: according to http://cdn.intechopen.com/pdfs-wm/27712.pdf, the pseudorange in
+    // time
+    // is 65-83 ms, which is 18 ms range.
+    // GLONASS: orbit is a bit closer than GPS, so we add 0.003ms to the range, hence deltaiSeconds
+    // should be in the range of [0.0, 0.021] seconds.
+    // QZSS and BEIDOU: they have higher orbit, which will result in a small svTime, the deltai
+    // can be
+    // calculated as follows:
+    // assume a = QZSS/BEIDOU orbit Semi-Major Axis(42,164km for QZSS);
+    // b = GLONASS orbit Semi-Major Axis (25,508km);
+    // c = Speed of light (299,792km/s);
+    // e = earth radius (6,378km);
+    // in the extremely case of QZSS is on the horizon and GLONASS is on the 90 degree top
+    // max difference should be (sqrt(a^2-e^2) - (b-e))/c,
+    // which is around 0.076s.
+    // 2 Galileo satellites (E14 & E18) have elliptical orbits, so Galileo can have up-to 48ms of
+    // spread.
+    private static final double PSEUDORANGE_THRESHOLD_IN_SEC = 0.048;
   // Geosync constellations have a longer range vs typical MEO orbits
   // that are the short end of the range.
   private static final double PSEUDORANGE_THRESHOLD_BEIDOU_QZSS_IN_SEC = 0.076;
@@ -177,23 +181,27 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     return measurementConstellationMap;
   }
 
-  private ArrayList<GnssMeasurement> filterMeasurements(Collection<GnssMeasurement> measurements) {
-    ArrayList<GnssMeasurement> filteredMeasurement = new ArrayList<>();
-    for (GnssMeasurement measurement: measurements){
-      int constellationType = measurement.getConstellationType();
-      if (constellationType == GnssStatus.CONSTELLATION_GLONASS) {
-        if ((measurement.getState()
-            & (measurement.STATE_GLO_TOD_DECODED | measurement.STATE_GLO_TOD_KNOWN)) != 0) {
-          filteredMeasurement.add(measurement);
+    private static ArrayList<GnssMeasurement> filterMeasurements(
+            Collection<GnssMeasurement> measurements) {
+        ArrayList<GnssMeasurement> filteredMeasurement = new ArrayList<>();
+        for (GnssMeasurement measurement : measurements) {
+            int constellationType = measurement.getConstellationType();
+            if ((measurement.getState() & GnssMeasurement.STATE_CODE_LOCK) == 0) {
+                continue;
+            }
+            if (constellationType == GnssStatus.CONSTELLATION_GLONASS) {
+                if ((measurement.getState()
+                        & (GnssMeasurement.STATE_GLO_TOD_DECODED
+                        | GnssMeasurement.STATE_GLO_TOD_KNOWN)) != 0) {
+                    filteredMeasurement.add(measurement);
+                }
+            } else if ((measurement.getState() & (GnssMeasurement.STATE_TOW_DECODED
+                    | GnssMeasurement.STATE_TOW_KNOWN)) != 0) {
+                filteredMeasurement.add(measurement);
+            }
         }
-      }
-      else if ((measurement.getState()
-            & (measurement.STATE_TOW_DECODED | measurement.STATE_TOW_KNOWN)) != 0) {
-          filteredMeasurement.add(measurement);
-        }
+        return filteredMeasurement;
     }
-    return filteredMeasurement;
-  }
 
   /**
    * Uses the common reception time approach to calculate pseudorange time
