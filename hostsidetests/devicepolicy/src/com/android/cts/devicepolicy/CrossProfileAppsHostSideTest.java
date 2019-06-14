@@ -42,6 +42,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
             createAndStartManagedProfile();
             installRequiredApps(mProfileId);
         }
+        waitForBroadcastIdle();
         if (canCreateAdditionalUsers(1)) {
             mSecondaryUserId = createUser();
             installRequiredApps(mSecondaryUserId);
