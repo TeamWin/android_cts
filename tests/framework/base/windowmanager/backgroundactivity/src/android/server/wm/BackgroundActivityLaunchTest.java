@@ -60,7 +60,6 @@ import androidx.test.filters.FlakyTest;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -160,7 +159,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                 APP_A_FOREGROUND_ACTIVITY);
     }
 
-    @Ignore // test temporarily disabled due to bg activity start grace period introduction
     @Test
     public void testActivityNotBlockedwhenForegroundActivityLaunchInSameTask() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
@@ -191,7 +189,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                 APP_A_FOREGROUND_ACTIVITY);
     }
 
-    @Ignore // test temporarily disabled due to bg activity start grace period introduction
     @Test
     public void testActivityNotBlockedWhenForegroundActivityLaunchInDifferentTask()
             throws Exception {
@@ -224,7 +221,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
     }
 
-    @Ignore // test temporarily disabled due to bg activity start grace period introduction
     @Test
     @FlakyTest(bugId = 130800326)
     public void testActivityBlockedWhenForegroundActivityRestartsItself() throws Exception {
