@@ -118,47 +118,45 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
 
     // Assets
 
-    private static final Uri CENC_AUDIO_URL = Uri.parse(
-            "https://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-8c-pssh.mp4");
+    private static final String CENC_AUDIO_PATH = "/cenc/clearkey/car_cenc-20120827-8c-pssh.mp4";
     private static final Uri CENC_AUDIO_URL_DOWNLOADED = getUriFromFile("car_cenc-20120827-8c.mp4");
 
-    private static final Uri CENC_VIDEO_URL = Uri.parse(
-            "https://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-88-pssh.mp4");
+    private static final String CENC_VIDEO_PATH = "/cenc/clearkey/car_cenc-20120827-88-pssh.mp4";
     private static final Uri CENC_VIDEO_URL_DOWNLOADED = getUriFromFile("car_cenc-20120827-88.mp4");
 
 
     // Tests
 
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V0_SYNC() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V0_SYNC_TEST);
     }
 
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V1_ASYNC() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V1_ASYNC_TEST);
     }
 
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V2_SYNC_CONFIG() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V2_SYNC_CONFIG_TEST);
     }
 
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V3_ASYNC_DRMPREPARED() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V3_ASYNC_DRMPREPARED_TEST);
     }
 
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V5_ASYNC_WITH_HANDLER() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V5_ASYNC_DRMPREPARED_TEST_WITH_HANDLER);
