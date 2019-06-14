@@ -26,10 +26,8 @@ public class MediaCodecPlayerTest extends MediaCodecPlayerTestBase<MediaStubActi
 
     private static final String MIME_VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
 
-    private static final Uri CLEAR_AUDIO_URL = Uri.parse(
-            "https://storage.googleapis.com/wvmedia/clear/h264/llama/llama_aac_audio.mp4");
-    private static final Uri CLEAR_VIDEO_URL = Uri.parse(
-            "https://storage.googleapis.com/wvmedia/clear/h264/llama/llama_h264_main_720p_8000.mp4");
+    private static final String CLEAR_AUDIO_PATH = "/clear/h264/llama/llama_aac_audio.mp4";
+    private static final String CLEAR_VIDEO_PATH = "/clear/h264/llama/llama_h264_main_720p_8000.mp4";
 
     private static final int VIDEO_WIDTH_CLEAR = 1280;
     private static final int VIDEO_HEIGHT_CLEAR = 674;
@@ -41,9 +39,9 @@ public class MediaCodecPlayerTest extends MediaCodecPlayerTestBase<MediaStubActi
     private void playOnSurfaces(List<Surface> surfaces) throws Exception {
         testPlayback(
             MIME_VIDEO_AVC, new String[0],
-            CLEAR_AUDIO_URL,
-            CLEAR_VIDEO_URL, VIDEO_WIDTH_CLEAR, VIDEO_HEIGHT_CLEAR,
-            surfaces);
+            Uri.parse(Utils.getMediaPath() + CLEAR_AUDIO_PATH),
+            Uri.parse(Utils.getMediaPath() + CLEAR_VIDEO_PATH),
+            VIDEO_WIDTH_CLEAR, VIDEO_HEIGHT_CLEAR, surfaces);
     }
 
     public void testPlaybackSwitchViews() throws Exception {
