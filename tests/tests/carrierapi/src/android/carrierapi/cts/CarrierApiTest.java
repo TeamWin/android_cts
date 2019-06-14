@@ -671,19 +671,26 @@ public class CarrierApiTest extends AndroidTestCase {
         response = mTelephonyManager
                 .iccTransmitApduLogicalChannel(
                         channel, cla, COMMAND_SELECT, p1, p2, p3, data);
-        // We requested an FCP template in the response for the select. This will be indicated by a
-        // '61xx' response, where 'xx' is the number of bytes remaining.
-        assertTrue(response.startsWith(STATUS_BYTES_REMAINING));
 
-        // Read the FCP template from the ICC. TS 102 221 Section 12.1.1
-        cla = CLA_GET_RESPONSE;
-        p1 = 0;
-        p2 = 0;
-        p3 = 0;
-        data = "";
-        response = mTelephonyManager
-                .iccTransmitApduLogicalChannel(
-                        channel, cla, COMMAND_GET_RESPONSE, p1, p2, p3, data);
+        // Devices launching with Q or later must immediately return the FCP template from the
+        // previous SELECT command. Some devices that launched before Q return TPDUs (instead of
+        // APDUs) - these devices must issue a subsequent GET RESPONSE command to get the FCP
+        // template.
+        if (Build.VERSION.FIRST_SDK_INT < Build.VERSION_CODES.Q) {
+            // Conditionally need to send GET RESPONSE apdu based on response from TelephonyManager
+            if (response.startsWith(STATUS_BYTES_REMAINING)) {
+                // Read the FCP template from the ICC. TS 102 221 Section 12.1.1
+                cla = CLA_GET_RESPONSE;
+                p1 = 0;
+                p2 = 0;
+                p3 = 0;
+                data = "";
+                response = mTelephonyManager
+                       .iccTransmitApduLogicalChannel(
+                                channel, cla, COMMAND_GET_RESPONSE, p1, p2, p3, data);
+            }
+        }
+
         fcpTemplate = FcpTemplate.parseFcpTemplate(response);
         // Check that the FCP Template's file ID matches the selected ARR
         assertTrue(containsFileId(fcpTemplate, MF_ARR_FILE_ID));
