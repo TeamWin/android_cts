@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER" />
     <uses-permission android:name="android.permission.SET_MEDIA_KEY_LISTENER" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
     <application android:networkSecurityConfig="@xml/network_security_config">
         <uses-library android:name="android.test.runner" />
