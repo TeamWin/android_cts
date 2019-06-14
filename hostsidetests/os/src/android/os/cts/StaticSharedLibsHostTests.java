@@ -341,11 +341,8 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
             // Install a library
             assertNull(install(STATIC_LIB_PROVIDER1_APK));
-            // Cannot install the library (need to reinstall)
-            assertNotNull(install(STATIC_LIB_PROVIDER1_APK));
             // Can reinstall the library if version and version code same
-            assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
-                    STATIC_LIB_PROVIDER1_APK), true, false));
+            assertNull(install(STATIC_LIB_PROVIDER1_APK));
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
@@ -465,8 +462,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             // Install a library with same name as package should work.
             assertNull(install(STATIC_LIB_PROVIDER5_APK));
             // Install a library with same name as package should work.
-            assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
-                    STATIC_LIB_PROVIDER6_APK), true, false));
+            assertNull(install(STATIC_LIB_PROVIDER6_APK));
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER5_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER6_PKG);
