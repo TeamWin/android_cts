@@ -1648,6 +1648,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         }
         if (useIntermediateSurface) {
             recordingRequestBuilder.addTarget(mIntermediateSurface);
+            if (mQueuer != null) {
+                mQueuer.resetInvalidSurfaceFlag();
+            }
         } else {
             recordingRequestBuilder.addTarget(mRecordingSurface);
         }
@@ -1742,6 +1745,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             stopCameraStreaming();
             if (useIntermediateSurface) {
                 mIntermediateReader.setOnImageAvailableListener(null, null);
+                mQueuer.expectInvalidSurface();
             }
 
             mMediaRecorder.stop();
@@ -2083,6 +2087,21 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             mWriter = writer;
         }
 
+        public void resetInvalidSurfaceFlag() {
+            synchronized (mLock) {
+                mExpectInvalidSurface = false;
+            }
+        }
+
+        // Indicate that the writer surface is about to get released
+        // and become invalid.
+        public void expectInvalidSurface() {
+            // If we sync on 'mLock', we risk a possible deadlock
+            // during 'mWriter.queueInputImage(image)' which is
+            // called while the lock is held.
+            mExpectInvalidSurface = true;
+        }
+
         @Override
         public void onImageAvailable(ImageReader reader) {
             Image image = null;
@@ -2091,8 +2110,21 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             } finally {
                 synchronized (mLock) {
                     if (image != null && mWriter != null) {
-                        mWriter.queueInputImage(image);
-                        mQueuedCount++;
+                        try {
+                            mWriter.queueInputImage(image);
+                            mQueuedCount++;
+                        } catch (IllegalStateException e) {
+                            // Per API documentation ISE are possible
+                            // in case the writer surface is not valid.
+                            // Re-throw in case we have some other
+                            // unexpected ISE.
+                            if (mExpectInvalidSurface) {
+                                Log.d(TAG, "Invalid writer surface");
+                                image.close();
+                            } else {
+                                throw e;
+                            }
+                        }
                     } else if (image != null) {
                         image.close();
                     }
@@ -2115,5 +2147,6 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         private Object      mLock = new Object();
         private ImageWriter mWriter = null;
         private int         mQueuedCount = 0;
+        private boolean     mExpectInvalidSurface = false;
     }
 }
