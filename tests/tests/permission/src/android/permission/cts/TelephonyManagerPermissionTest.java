@@ -331,8 +331,11 @@ public class TelephonyManagerPermissionTest {
             return;
         }
 
-        if (mTelephonyManager.getNetworkType() != TelephonyManager.NETWORK_TYPE_UNKNOWN) {
-            fail("getNetworkType should return UNKNOWN");
+        try {
+            mTelephonyManager.getNetworkType();
+            fail("getNetworkType did not throw a SecurityException");
+        } catch (SecurityException e) {
+            // expected
         }
 
         try {
