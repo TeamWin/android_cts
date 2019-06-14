@@ -321,6 +321,10 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * @throws Exception
      */
     public void testSelfManagedCallNotLogged() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         // First, complete the call which should not be logged.
         Uri unloggedAddress = getTestNumber();
         placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, unloggedAddress);

@@ -65,6 +65,10 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
     }
 
     public void testSuggestionFlow() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
         CtsPhoneAccountSuggestionService.sSuggestionsToProvide =
                 new ArrayList<PhoneAccountSuggestion>() {{
                     add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE,
@@ -101,6 +105,10 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
     }
 
     public void testSuggestionTimeout() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
         CtsPhoneAccountSuggestionService.sSuggestionsToProvide =
                 new ArrayList<PhoneAccountSuggestion>() {{
                     add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE,
@@ -145,6 +153,10 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
     }
 
     public void testEmptySuggestions() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
         CtsPhoneAccountSuggestionService.sSuggestionsToProvide = Collections.emptyList();
 
         Uri number = createTestNumber();
@@ -173,6 +185,10 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
     }
 
     public void testPartialSuggestions() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
         CtsPhoneAccountSuggestionService.sSuggestionsToProvide =
                 new ArrayList<PhoneAccountSuggestion>() {{
                     add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
