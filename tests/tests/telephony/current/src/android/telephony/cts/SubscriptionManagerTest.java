@@ -387,13 +387,13 @@ public class SubscriptionManagerTest {
         } catch (NullPointerException expected) {
         }
 
-        // Add into subscription group with current sub Id. This should fail
-        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
+        // Add into subscription group that doesn't exist. This should fail
+        // with IllegalArgumentException.
         try {
             ParcelUuid groupUuid = new ParcelUuid(UUID.randomUUID());
             mSm.addSubscriptionsIntoGroup(subGroup, groupUuid);
             fail();
-        } catch (SecurityException expected) {
+        } catch (IllegalArgumentException expected) {
         }
 
         // Remove from subscription group with current sub Id. This should fail
