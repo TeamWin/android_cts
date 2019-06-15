@@ -119,6 +119,7 @@ public class AccessibilityGestureDispatchTest {
     MyTouchListener mMyTouchListener = new MyTouchListener();
     TextView mFullScreenTextView;
     int[] mViewLocation = new int[2];
+    PointF mStartPoint = new PointF();
     boolean mGotUpEvent;
     // Without a touch screen, there's no point in testing this feature
     boolean mHasTouchScreen;
@@ -144,8 +145,11 @@ public class AccessibilityGestureDispatchTest {
 
         mFullScreenTextView = mActivity.findViewById(R.id.full_screen_text_view);
         getInstrumentation().runOnMainSync(() -> {
+            final int midX = mFullScreenTextView.getWidth() / 2;
+            final int midY = mFullScreenTextView.getHeight() / 2;
             mFullScreenTextView.getLocationOnScreen(mViewLocation);
             mFullScreenTextView.setOnTouchListener(mMyTouchListener);
+            mStartPoint.set(mViewLocation[0] + midX, mViewLocation[1] + midY);
         });
 
         mService = StubGestureAccessibilityService.enableSelf(instrumentation);
@@ -486,9 +490,9 @@ public class AccessibilityGestureDispatchTest {
             return;
         }
 
-        PointF startPoint = new PointF(10, 20);
-        PointF midPoint = new PointF(20, 20);
-        PointF endPoint = new PointF(20, 30);
+        PointF startPoint = new PointF(mStartPoint.x, mStartPoint.y);
+        PointF midPoint = new PointF(mStartPoint.x + 10, mStartPoint.y);
+        PointF endPoint = new PointF(mStartPoint.x + 10, mStartPoint.y + 10);
         int gestureTime = 500;
 
         StrokeDescription stroke1 =
