@@ -23,9 +23,11 @@ import android.content.res.Resources;
 import android.icu.util.ULocale;
 import android.media.AudioFormat;
 import android.media.AudioPresentation;
+import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import static android.media.MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION;
 import android.media.cts.R;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
@@ -34,6 +36,8 @@ import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -128,6 +132,169 @@ public class MediaExtractorTest extends AndroidTestCase {
         mExtractor.setDataSource(afd);
         checkExtractorSamplesAndMetrics();
         afd.close();
+    }
+
+    // DolbyVisionMediaExtractor for profile-level (DvheDtr/Fhd30).
+    public void testDolbyVisionMediaExtractorProfileDvheDtr() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_1920x1080_30fps_dvhe_04);
+
+        assertTrue("There should be either 1 or 2 tracks",
+            0 < mExtractor.getTrackCount() && 3 > mExtractor.getTrackCount());
+
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        int trackCountForDolbyVision = 1;
+
+        // Handle the case where there is a Dolby Vision extractor
+        // Note that it may or may not have a Dolby Vision Decoder
+        if (mExtractor.getTrackCount() == 2) {
+            if (trackFormat.getString(MediaFormat.KEY_MIME)
+                    .equalsIgnoreCase(MIMETYPE_VIDEO_DOLBY_VISION)) {
+                trackFormat = mExtractor.getTrackFormat(1);
+                trackCountForDolbyVision = 0;
+            }
+        }
+
+        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+            assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
+
+            MediaFormat trackFormatForDolbyVision =
+                mExtractor.getTrackFormat(trackCountForDolbyVision);
+
+            final String mimeType = trackFormatForDolbyVision.getString(MediaFormat.KEY_MIME);
+            assertEquals("video/dolby-vision", mimeType);
+
+            int profile = trackFormatForDolbyVision.getInteger(MediaFormat.KEY_PROFILE);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheDtr, profile);
+
+            int level = trackFormatForDolbyVision.getInteger(MediaFormat.KEY_LEVEL);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd30, level);
+
+            final int trackIdForDolbyVision =
+                trackFormatForDolbyVision.getInteger(MediaFormat.KEY_TRACK_ID);
+
+            final int trackIdForBackwardCompat = trackFormat.getInteger(MediaFormat.KEY_TRACK_ID);
+            assertEquals(trackIdForDolbyVision, trackIdForBackwardCompat);
+        }
+
+        // The backward-compatible track should have mime video/hevc
+        final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+        assertEquals("video/hevc", mimeType);
+    }
+
+    // DolbyVisionMediaExtractor for profile-level (DvheStn/Fhd60).
+    public void testDolbyVisionMediaExtractorProfileDvheStn() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_1920x1080_60fps_dvhe_05);
+
+        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+            // DvheStn exposes only a single non-backward compatible Dolby Vision HDR track.
+            assertEquals("There must be 1 track", 1, mExtractor.getTrackCount());
+            final MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+
+            final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+            assertEquals("video/dolby-vision", mimeType);
+
+            final int profile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheStn, profile);
+
+            final int level = trackFormat.getInteger(MediaFormat.KEY_LEVEL);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, level);
+        } else {
+            MediaUtils.skipTest("Device does not provide a Dolby Vision decoder");
+        }
+    }
+
+    // DolbyVisionMediaExtractor for profile-level (DvheSt/Fhd60).
+    public void testDolbyVisionMediaExtractorProfileDvheSt() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_1920x1080_60fps_dvhe_08);
+
+        assertTrue("There should be either 1 or 2 tracks",
+            0 < mExtractor.getTrackCount() && 3 > mExtractor.getTrackCount());
+
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        int trackCountForDolbyVision = 1;
+
+        // Handle the case where there is a Dolby Vision extractor
+        // Note that it may or may not have a Dolby Vision Decoder
+        if (mExtractor.getTrackCount() == 2) {
+            if (trackFormat.getString(MediaFormat.KEY_MIME)
+                    .equalsIgnoreCase(MIMETYPE_VIDEO_DOLBY_VISION)) {
+                trackFormat = mExtractor.getTrackFormat(1);
+                trackCountForDolbyVision = 0;
+            }
+        }
+
+        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+            assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
+
+            MediaFormat trackFormatForDolbyVision =
+                mExtractor.getTrackFormat(trackCountForDolbyVision);
+
+            final String mimeType = trackFormatForDolbyVision.getString(MediaFormat.KEY_MIME);
+            assertEquals("video/dolby-vision", mimeType);
+
+            int profile = trackFormatForDolbyVision.getInteger(MediaFormat.KEY_PROFILE);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheSt, profile);
+
+            int level = trackFormatForDolbyVision.getInteger(MediaFormat.KEY_LEVEL);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, level);
+
+            final int trackIdForDolbyVision =
+                trackFormatForDolbyVision.getInteger(MediaFormat.KEY_TRACK_ID);
+
+            final int trackIdForBackwardCompat = trackFormat.getInteger(MediaFormat.KEY_TRACK_ID);
+            assertEquals(trackIdForDolbyVision, trackIdForBackwardCompat);
+        }
+
+        // The backward-compatible track should have mime video/hevc
+        final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+        assertEquals("video/hevc", mimeType);
+    }
+
+    // DolbyVisionMediaExtractor for profile-level (DvavSe/Fhd60).
+    public void testDolbyVisionMediaExtractorProfileDvavSe() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_1920x1080_60fps_dvav_09);
+
+        assertTrue("There should be either 1 or 2 tracks",
+            0 < mExtractor.getTrackCount() && 3 > mExtractor.getTrackCount());
+
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        int trackCountForDolbyVision = 1;
+
+        // Handle the case where there is a Dolby Vision extractor
+        // Note that it may or may not have a Dolby Vision Decoder
+        if (mExtractor.getTrackCount() == 2) {
+            if (trackFormat.getString(MediaFormat.KEY_MIME)
+                    .equalsIgnoreCase(MIMETYPE_VIDEO_DOLBY_VISION)) {
+                trackFormat = mExtractor.getTrackFormat(1);
+                trackCountForDolbyVision = 0;
+            }
+        }
+
+        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+            assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
+
+            MediaFormat trackFormatForDolbyVision =
+                mExtractor.getTrackFormat(trackCountForDolbyVision);
+
+            final String mimeType = trackFormatForDolbyVision.getString(MediaFormat.KEY_MIME);
+            assertEquals("video/dolby-vision", mimeType);
+
+            int profile = trackFormatForDolbyVision.getInteger(MediaFormat.KEY_PROFILE);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvavSe, profile);
+
+            int level = trackFormatForDolbyVision.getInteger(MediaFormat.KEY_LEVEL);
+            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, level);
+
+            final int trackIdForDolbyVision =
+                trackFormatForDolbyVision.getInteger(MediaFormat.KEY_TRACK_ID);
+
+            final int trackIdForBackwardCompat = trackFormat.getInteger(MediaFormat.KEY_TRACK_ID);
+            assertEquals(trackIdForDolbyVision, trackIdForBackwardCompat);
+        }
+
+        // The backward-compatible track should have mime video/avc
+        final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+        assertEquals("video/avc", mimeType);
     }
 
     private void checkExtractorSamplesAndMetrics() {
