@@ -120,7 +120,7 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(mTestPackageName, RUNNER,
                     device.getIDevice());
             // set a max deadline limit to avoid hanging forever
-            runner.setMaxTimeToOutputResponse(2, TimeUnit.MINUTES);
+            runner.setMaxTimeToOutputResponse(5, TimeUnit.MINUTES);
 
             AttachAgent aa = new AttachAgent(device, mTestPackageName, mTestApk);
             aa.prepare();

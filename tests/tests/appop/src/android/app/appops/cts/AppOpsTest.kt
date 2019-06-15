@@ -50,7 +50,6 @@ import androidx.test.runner.AndroidJUnit4
 import androidx.test.InstrumentationRegistry
 
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -401,6 +400,43 @@ class AppOpsTest {
             mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), defaultMode)
             mAppOps.setMode(OPSTR_RECORD_AUDIO, Process.myUid(),
                     mOpPackageName, defaultMode)
+        }
+    }
+
+    @Test
+    fun noteOpForBadUid() {
+        runWithShellPermissionIdentity {
+            val mode = mAppOps.noteOpNoThrow(OPSTR_RECORD_AUDIO, Process.myUid() + 1,
+                    mOpPackageName)
+            assertEquals(mode, MODE_ERRORED)
+        }
+    }
+
+    @Test
+    fun startOpForBadUid() {
+        runWithShellPermissionIdentity {
+            val mode = mAppOps.startOpNoThrow(OPSTR_RECORD_AUDIO, Process.myUid() + 1,
+                    mOpPackageName)
+            assertEquals(mode, MODE_ERRORED)
+        }
+    }
+
+    @Test
+    fun checkOpForBadUid() {
+        val defaultMode = AppOpsManager.opToDefaultMode(OPSTR_RECORD_AUDIO)
+
+        runWithShellPermissionIdentity {
+            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), MODE_ERRORED)
+            try {
+                val mode = mAppOps.unsafeCheckOpNoThrow(OPSTR_RECORD_AUDIO, Process.myUid() + 1,
+                        mOpPackageName)
+
+                // For invalid uids checkOp return the default mode
+                assertEquals(mode, defaultMode)
+            } finally {
+                // Clear the uid state
+                mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), defaultMode)
+            }
         }
     }
 

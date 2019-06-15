@@ -18,14 +18,16 @@ package android.uirendering.cts.util;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.differencevisualizers.DifferenceVisualizer;
 import android.uirendering.cts.differencevisualizers.PassFailVisualizer;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 public class BitmapAsserter {
+    private static final boolean TAKE_SCREENSHOTS_ON_FAILURE = true;
     private DifferenceVisualizer mDifferenceVisualizer;
     private String mClassName;
 
@@ -64,6 +66,7 @@ public class BitmapAsserter {
 
         if (!success) {
             BitmapDumper.dumpBitmaps(bitmap1, bitmap2, testName, mClassName, mDifferenceVisualizer);
+            onFailure(testName);
         }
 
         assertTrue(debugMessage, success);
@@ -83,9 +86,17 @@ public class BitmapAsserter {
             BitmapDumper.dumpBitmap(croppedBitmap, testName, mClassName);
             BitmapDumper.dumpBitmap(bitmapVerifier.getDifferenceBitmap(), testName + "_verifier",
                     mClassName);
+            onFailure(testName);
         }
         assertTrue(debugMessage, success);
     }
 
+    private void onFailure(String testName) {
+        if (TAKE_SCREENSHOTS_ON_FAILURE) {
+            Bitmap screenshot = InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().takeScreenshot();
+            BitmapDumper.dumpBitmap(screenshot, testName + "_fullscreenshot", mClassName);
+        }
 
+    }
 }
