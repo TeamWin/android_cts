@@ -695,7 +695,8 @@ public class MediaScannerTest extends AndroidTestCase {
 
     static File getRawFile(Uri uri) throws Exception {
         final String res = executeShellCommand(
-                "content query --uri " + uri + " --projection _data",
+                "content query --uri " + uri
+                        + " --user " + getCurrentUser() + " --projection _data",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         final int i = res.indexOf("_data=");
         if (i >= 0) {
@@ -727,5 +728,9 @@ public class MediaScannerTest extends AndroidTestCase {
                 br.close();
             }
         }
+    }
+
+    private static int getCurrentUser() {
+        return android.os.Process.myUserHandle().getIdentifier();
     }
 }

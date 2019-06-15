@@ -51,6 +51,7 @@ import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 
@@ -349,6 +350,10 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public void testDeviceOwner() throws Exception {
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN)) {
+            return;
+        }
+
         String cmdResult = runShellCommand("dpm set-device-owner --user cur "
                 + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
         assertThat(cmdResult).contains("Success");
