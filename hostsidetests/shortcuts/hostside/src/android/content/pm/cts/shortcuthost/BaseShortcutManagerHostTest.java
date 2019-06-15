@@ -55,6 +55,7 @@ abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
     protected boolean mIsMultiuserSupported;
     protected boolean mIsManagedUserSupported;
 
+    private int mInitialUserId;
     private ArrayList<Integer> mOriginalUsers;
 
     @Before
@@ -71,6 +72,7 @@ abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
         }
 
         if (mIsMultiuserSupported) {
+            mInitialUserId = getDevice().getCurrentUser();
             mOriginalUsers = new ArrayList<>(getDevice().listUsers());
         }
     }
@@ -144,12 +146,24 @@ abstract public class BaseShortcutManagerHostTest extends BaseHostJUnit4Test {
         if (!mIsMultiuserSupported) {
             return;
         }
-        getDevice().switchUser(getPrimaryUserId());
+        getDevice().switchUser(mInitialUserId);
         for (int userId : getDevice().listUsers()) {
             if (!mOriginalUsers.contains(userId)) {
                 getDevice().removeUser(userId);
             }
         }
+    }
+
+    protected int getOrCreateSecondaryUser() throws Exception {
+        if (getDevice().isUserSecondary(mInitialUserId)) {
+            return mInitialUserId;
+        }
+        for (int userId : getDevice().listUsers()) {
+            if (getDevice().isUserSecondary(userId)) {
+                return userId;
+            }
+        }
+        return createUser();
     }
 
     protected int createUser() throws Exception{
