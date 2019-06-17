@@ -27,6 +27,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     ctstestrunner-axt \
     compatibility-device-util-axt \
+    compatibility-common-util-devicesidelib \
     guava \
     platform-test-annotations
 
