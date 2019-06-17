@@ -414,7 +414,9 @@ public class SpinnerTest {
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDropdownMode);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSpinnerDropdownMode, () -> {
+            mSpinnerDropdownMode.performClick();
+        });
         // Verify that we're showing the popup
         PollingCheck.waitFor(() -> mSpinnerDropdownMode.isPopupShowing());
         // And test its fill
