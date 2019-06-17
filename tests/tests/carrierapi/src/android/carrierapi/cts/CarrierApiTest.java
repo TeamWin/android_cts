@@ -471,7 +471,7 @@ public class CarrierApiTest extends AndroidTestCase {
         // {@link TelephonyManager#iccOpenLogicalChannel} sends a Manage Channel (open) APDU
         // followed by a Select APDU with the given AID and p2 values. See Open Mobile API
         // Specification v3.2 Section 6.2.7.h and TS 102 221 for details.
-        int p2 = 0;
+        int p2 = 0x0C; // '0C' for no data returned (TS 102 221 Section 11.1.1.2)
         response = mTelephonyManager.iccOpenLogicalChannel("", p2);
         verifyValidIccOpenLogicalChannelResponse(response);
         mTelephonyManager.iccCloseLogicalChannel(response.getChannel());
