@@ -443,14 +443,23 @@ public class AutoCompleteTextViewTest {
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
 
-        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo");
+        PollingCheck.waitFor(() -> {
+            List<Object> autoCompleteSuggestions = getAutoCompleteSuggestions();
+            return (autoCompleteSuggestions.size() == 1)
+                    && autoCompleteSuggestions.contains("testTwo");
+        });
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAdapter.add("testThree");
             mAutoCompleteTextView.refreshAutoCompleteResults();
         });
 
-        assertThat(getAutoCompleteSuggestions()).containsExactly("testTwo", "testThree");
+        PollingCheck.waitFor(() -> {
+            List<Object> autoCompleteSuggestions = getAutoCompleteSuggestions();
+            return (autoCompleteSuggestions.size() == 2)
+                    && autoCompleteSuggestions.contains("testTwo")
+                    && autoCompleteSuggestions.contains("testThree");
+        });
     }
 
     @Test
