@@ -489,6 +489,11 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
             return;
         }
 
+        if (!getDevice().isMultiUserSupported()) {
+            // device do not support multi-user.
+            return;
+        }
+
         installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
 
         final int userId = getDevice().createUser("test-user");
