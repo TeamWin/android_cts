@@ -110,9 +110,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @Test
     public void testBackgroundActivityBlocked() throws Exception {
-        mAmWmState.getAmState().computeState();
-        int stackCount = mAmWmState.getAmState().getStackCount();
-
         // Start AppA background activity and blocked
         Intent intent = new Intent();
         intent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
@@ -120,7 +117,16 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
-        assertEquals(stackCount, mAmWmState.getAmState().getStackCount());
+
+        // Make sure aborting activity starts won't have any empty task/stack leaks.
+        List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
+        for (ActivityManagerState.ActivityStack stack : stacks) {
+            assertThat(stack.getTopTask()).isNotNull();
+            List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
+            for (ActivityManagerState.ActivityTask task : tasks) {
+                assertThat(task.getActivities().size()).isGreaterThan(0);
+            }
+        }
     }
 
     @Test
