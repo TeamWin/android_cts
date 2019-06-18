@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,4 +56,15 @@ public class Poc16_06 extends SecurityTestCase {
             logcat);
     }
 
+    /*
+     * b/72507607
+     */
+    @SecurityTest(minPatchLevel = "2016-06")
+    public void testPocCVE_2016_2481() throws Exception {
+       AdbUtils.runCommandLine("logcat -c" , getDevice());
+       AdbUtils.runPoc("CVE-2016-2481", getDevice(), 60);
+       String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+       assertNotMatchesMultiLine("Fatal signal 11.*?>>> /system/bin/mediaserver <<<",
+           logcat);
+    }
 }
