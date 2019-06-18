@@ -39,6 +39,15 @@ public class UiAutomatorUtils {
     }
 
     public static UiObject2 waitFindObject(BySelector selector, long timeoutMs) {
+        final UiObject2 view = waitFindObjectOrNull(selector, timeoutMs);
+        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
+            assertNotNull("View not found after waiting for " + timeoutMs + "ms: " + selector,
+                    view);
+        });
+        return view;
+    }
+
+    public static UiObject2 waitFindObjectOrNull(BySelector selector, long timeoutMs) {
         UiObject2 view = null;
         long start = System.currentTimeMillis();
         while (view == null && start + timeoutMs > System.currentTimeMillis()) {
@@ -51,12 +60,6 @@ public class UiAutomatorUtils {
                 }
             }
         }
-        final UiObject2 finalView = view;
-        ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
-            assertNotNull("View not found after waiting for "
-                            + (System.currentTimeMillis() - start) + "ms: " + selector,
-                    finalView);
-        });
         return view;
     }
 }

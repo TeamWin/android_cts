@@ -20,6 +20,7 @@ import static com.android.compatibility.common.util.SystemUtil.callWithShellPerm
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObjectOrNull;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -313,9 +314,10 @@ public class RoleManagerTest {
 
     @Nullable
     private UiObject2 findDontAskAgainCheck(boolean expected) {
-        return waitFindObject(
-                By.text("Don\u2019t ask again"),
-                expected ? TIMEOUT_MILLIS : UNEXPECTED_TIMEOUT_MILLIS);
+        BySelector selector = By.text("Don\u2019t ask again");
+        return expected
+                ? waitFindObject(selector, TIMEOUT_MILLIS)
+                : waitFindObjectOrNull(selector, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Nullable
