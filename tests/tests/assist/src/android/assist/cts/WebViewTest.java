@@ -16,68 +16,33 @@
 
 package android.assist.cts;
 
+import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.os.LocaleList;
 import android.util.Log;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
  *  Test that the AssistStructure returned is properly formatted.
  */
-
 public class WebViewTest extends AssistTestBase {
     private static final String TAG = "WebViewTest";
     private static final String TEST_CASE_TYPE = Utils.WEBVIEW;
 
-    private boolean mWebViewSupported;
-    private final CountDownLatch mTestWebViewLatch = new CountDownLatch(1);
+    private final AutoResetLatch mTestWebViewLatch = new AutoResetLatch();
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setUpAndRegisterReceiver();
+        mActionLatchReceiver = new ActionLatchReceiver(Utils.TEST_ACTIVITY_WEBVIEW_LOADED, mTestWebViewLatch);
         startTestActivity(TEST_CASE_TYPE);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        if (mReceiver != null) {
-            mContext.unregisterReceiver(mReceiver);
-            mReceiver = null;
-        }
-    }
-
-    private void setUpAndRegisterReceiver() {
-        if (mReceiver != null) {
-            mContext.unregisterReceiver(mReceiver);
-        }
-        mReceiver = new WebViewTestBroadcastReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Utils.APP_3P_HASRESUMED);
-        filter.addAction(Utils.ASSIST_RECEIVER_REGISTERED);
-        filter.addAction(Utils.TEST_ACTIVITY_LOADED);
-        mContext.registerReceiver(mReceiver, filter);
-    }
-
-    private void waitForOnResume() throws Exception {
-        Log.i(TAG, "waiting for onResume() before continuing");
-        if (!mHasResumedLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            fail("Activity failed to resume in " + Utils.ACTIVITY_ONRESUME_TIMEOUT_MS + "msec");
-        }
     }
 
     private void waitForTestActivity() throws Exception {
         Log.i(TAG, "waiting for webview in test activity to load");
         if (!mTestWebViewLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            // wait for webView to load completely.
+            fail("failed to receive load web view in " + Utils.TIMEOUT_MS + "msec");
         }
     }
 
@@ -91,29 +56,18 @@ public class WebViewTest extends AssistTestBase {
         }
         start3pApp(TEST_CASE_TYPE);
         startTest(TEST_CASE_TYPE);
-        waitForAssistantToBeReady(mReadyLatch);
-        waitForOnResume();
+        waitForAssistantToBeReady();
         waitForTestActivity();
-        final CountDownLatch latch = startSession();
+
+        // WebView doesn't render fast enough before test runs, so use some arbirary delay
+        Thread.sleep(350);
+
+        final AutoResetLatch latch = startSession();
         waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
                 false /*FLAG_SECURE set*/);
         verifyAssistStructureHasWebDomain(Utils.WEBVIEW_HTML_DOMAIN);
         verifyAssistStructureHasLocaleList(Utils.WEBVIEW_LOCALE_LIST);
-    }
-
-    private class WebViewTestBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals(Utils.APP_3P_HASRESUMED) && mHasResumedLatch != null) {
-                mHasResumedLatch.countDown();
-            } else if (action.equals(Utils.ASSIST_RECEIVER_REGISTERED) && mReadyLatch != null) {
-                mReadyLatch.countDown();
-            } else if (action.equals(Utils.TEST_ACTIVITY_LOADED) && mTestWebViewLatch != null) {
-                mTestWebViewLatch.countDown();
-            }
-        }
     }
 }
