@@ -110,29 +110,34 @@ public class CameraFormatsActivity extends PassFailButtons.Activity
     private static final int MENU_ID_PROGRESS = Menu.FIRST + 1;
 
     private class CameraCombination {
-        private final int cameraIndex;
-        private final int resolutionIndex;
-        private final int formatIndex;
+        private final int mCameraIndex;
+        private final int mResolutionIndex;
+        private final int mFormatIndex;
+        private final int mResolutionWidth;
+        private final int mResolutionHeight;
+        private final String mFormatName;
 
-        private CameraCombination(int cameraIndex, int resolutionIndex, int formatIndex) {
-            this.cameraIndex = cameraIndex;
-            this.resolutionIndex = resolutionIndex;
-            this.formatIndex = formatIndex;
+        private CameraCombination(int cameraIndex, int resolutionIndex, int formatIndex,
+            int resolutionWidth, int resolutionHeight, String formatName) {
+            this.mCameraIndex = cameraIndex;
+            this.mResolutionIndex = resolutionIndex;
+            this.mFormatIndex = formatIndex;
+            this.mResolutionWidth = resolutionWidth;
+            this.mResolutionHeight = resolutionHeight;
+            this.mFormatName = formatName;
         }
 
         @Override
         public String toString() {
-            return String.format("Camera %d, %dx%d, %s", cameraIndex,
-                mPreviewSizes.get(resolutionIndex).width,
-                mPreviewSizes.get(resolutionIndex).height,
-                mPreviewFormatNames.get(mPreviewFormats.get(formatIndex)));
+            return String.format("Camera %d, %dx%d, %s",
+                mCameraIndex, mResolutionWidth, mResolutionHeight, mFormatName);
         }
     }
 
     private static final Comparator<CameraCombination> COMPARATOR =
-        Comparator.<CameraCombination, Integer>comparing(c -> c.cameraIndex)
-            .thenComparing(c -> c.resolutionIndex)
-            .thenComparing(c -> c.formatIndex);
+        Comparator.<CameraCombination, Integer>comparing(c -> c.mCameraIndex)
+            .thenComparing(c -> c.mResolutionIndex)
+            .thenComparing(c -> c.mFormatIndex);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -211,7 +216,7 @@ public class CameraFormatsActivity extends PassFailButtons.Activity
      */
     private void setUntestedCombination() {
         Optional<CameraCombination> combination = mUntestedCombinations.stream().filter(
-            c -> c.cameraIndex == mCurrentCameraId).findFirst();
+            c -> c.mCameraIndex == mCurrentCameraId).findFirst();
         if (!combination.isPresent()) {
             Toast.makeText(this, "All Camera " + mCurrentCameraId + " tests are done.",
                 Toast.LENGTH_SHORT).show();
@@ -219,13 +224,13 @@ public class CameraFormatsActivity extends PassFailButtons.Activity
         }
 
         // There is untested combination for the current camera, set the next untested combination.
-        int mResolutionIndex = combination.get().resolutionIndex;
-        int mFormatIndex = combination.get().formatIndex;
+        int mNextResolutionIndex = combination.get().mResolutionIndex;
+        int mNextFormatIndex = combination.get().mFormatIndex;
 
-        mNextPreviewSize = mPreviewSizes.get(mResolutionIndex);
-        mResolutionSpinner.setSelection(mResolutionIndex);
-        mNextPreviewFormat = mPreviewFormats.get(mFormatIndex);
-        mFormatSpinner.setSelection(mFormatIndex);
+        mNextPreviewSize = mPreviewSizes.get(mNextResolutionIndex);
+        mResolutionSpinner.setSelection(mNextResolutionIndex);
+        mNextPreviewFormat = mPreviewFormats.get(mNextFormatIndex);
+        mFormatSpinner.setSelection(mNextFormatIndex);
     }
 
     @Override
@@ -423,7 +428,10 @@ public class CameraFormatsActivity extends PassFailButtons.Activity
         for (int resolutionIndex = 0; resolutionIndex < mPreviewSizes.size(); resolutionIndex++) {
             for (int formatIndex = 0; formatIndex < mPreviewFormats.size(); formatIndex++) {
                 CameraCombination combination = new CameraCombination(
-                    id, resolutionIndex, formatIndex);
+                    id, resolutionIndex, formatIndex,
+                    mPreviewSizes.get(resolutionIndex).width,
+                    mPreviewSizes.get(resolutionIndex).height,
+                    mPreviewFormatNames.get(mPreviewFormats.get(formatIndex)));
 
                 if (!mTestedCombinations.contains(combination)) {
                     mUntestedCombinations.add(combination);
@@ -628,7 +636,11 @@ public class CameraFormatsActivity extends PassFailButtons.Activity
                     CameraCombination combination = new CameraCombination(
                         mCurrentCameraId,
                         mResolutionSpinner.getSelectedItemPosition(),
-                        mFormatSpinner.getSelectedItemPosition());
+                        mFormatSpinner.getSelectedItemPosition(),
+                        mPreviewSizes.get(mResolutionSpinner.getSelectedItemPosition()).width,
+                        mPreviewSizes.get(mResolutionSpinner.getSelectedItemPosition()).height,
+                        mPreviewFormatNames.get(
+                            mPreviewFormats.get(mFormatSpinner.getSelectedItemPosition())));
 
                     mUntestedCombinations.remove(combination);
                     mTestedCombinations.add(combination);
