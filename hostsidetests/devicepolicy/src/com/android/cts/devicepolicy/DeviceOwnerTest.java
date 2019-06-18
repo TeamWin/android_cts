@@ -113,6 +113,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             }
 
             getDevice().executeShellCommand(" mkdir " + TEST_UPDATE_LOCATION);
+            // Enable the notification listener
+            getDevice().executeShellCommand("cmd notification allow_listener com.android.cts.deviceowner/com.android.cts.deviceowner.NotificationListener");
         }
         mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1)
                 && hasDeviceFeature("android.software.managed_users");
@@ -709,23 +711,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
                     .setAdminPackageName(DEVICE_OWNER_PKG)
                     .build());
-
-        // Requesting a bug report (in AdminActionBookkeepingTest#testRequestBugreport) leaves a
-        // state where future bug report requests will fail
-        // TODO(b/130210665): replace this with use of NotificationListenerService to dismiss the
-        // bug report request
-        rebootAndWaitUntilReady();
-
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
         }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
                 .setAdminPackageName(DEVICE_OWNER_PKG)
                 .build());
-        // Requesting a bug report (in AdminActionBookkeepingTest#testRequestBugreport) leaves a
-        // state where future bug report requests will fail
-        // TODO(b/130210665): replace this with use of NotificationListenerService to dismiss the
-        // bug report request
-        rebootAndWaitUntilReady();
     }
 
     public void testBluetoothRestriction() throws Exception {
