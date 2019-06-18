@@ -21,6 +21,7 @@ import android.app.stubs.DisplayTestActivity;
 import android.app.stubs.OrientationTestUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.Display;
+import static com.android.compatibility.common.util.PackageUtil.supportsRotation;
 
 /**
  * Tests to verify functionality of {@link Display}.
@@ -47,6 +48,10 @@ public class DisplayTest extends ActivityInstrumentationTestCase2<DisplayTestAct
      * updated adjustments after a rotation.
      */
     public void testRotation() throws Throwable {
+        if (!supportsRotation()) {
+          // Skip rotation test if device doesn't support it.
+          return;
+        }
         // Get a {@link Display} instance before rotation.
         final Display origDisplay = mActivity.getDisplay();
 
