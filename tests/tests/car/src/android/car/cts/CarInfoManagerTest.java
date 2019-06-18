@@ -42,6 +42,10 @@ import org.junit.runner.RunWith;
 public class CarInfoManagerTest extends CarApiTestBase {
 
     private CarInfoManager mCarInfoManager;
+    // SCAME EvConnectorType in VHAL
+    private static final int SCAME = 11;
+    // GBT_DC EvConnectorType in VHAL
+    private static final int GBT_DC = 10;
 
     @Before
     public void setUp() throws Exception {
@@ -112,7 +116,8 @@ public class CarInfoManagerTest extends CarApiTestBase {
             Arrays.asList(EvConnectorType.UNKNOWN, EvConnectorType.J1772, EvConnectorType.MENNEKES,
                 EvConnectorType.CHADEMO, EvConnectorType.COMBO_1, EvConnectorType.COMBO_2,
                 EvConnectorType.TESLA_ROADSTER, EvConnectorType.TESLA_HPWC,
-                EvConnectorType.TESLA_SUPERCHARGER, EvConnectorType.GBT, EvConnectorType.OTHER);
+                EvConnectorType.TESLA_SUPERCHARGER, EvConnectorType.GBT, EvConnectorType.OTHER,
+                SCAME, GBT_DC);
 
         for (int result : actualResults) {
             assertThat(expectedResults).contains(result);
