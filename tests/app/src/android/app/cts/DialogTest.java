@@ -57,11 +57,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
-import androidx.test.InstrumentationRegistry;
+
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.FlakyTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -474,7 +476,6 @@ public class DialogTest {
         return event;
     }
 
-    @FlakyTest(bugId = 133760851)
     @Test
     public void testTouchEvent() {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
@@ -491,18 +492,14 @@ public class DialogTest {
         assertNull(d.touchEvent);
         assertFalse(d.isOnTouchEventCalled);
 
-        // Send a touch event outside the dialog window.  Expect the event to be ignored
+        // Tap outside the dialog window.  Expect the event to be ignored
         // because closeOnTouchOutside is false.
         d.setCanceledOnTouchOutside(false);
 
-        long now = SystemClock.uptimeMillis();
-        MotionEvent touchMotionEvent = sendTouchEvent(now, MotionEvent.ACTION_DOWN, x, y);
+        long downTime = SystemClock.uptimeMillis();
 
-        new PollingCheck(TEST_TIMEOUT) {
-            protected boolean check() {
-                return !d.dispatchTouchEventResult;
-            }
-        }.run();
+        sendTouchEvent(downTime, MotionEvent.ACTION_DOWN, x, y).recycle();
+        MotionEvent touchMotionEvent = sendTouchEvent(downTime, MotionEvent.ACTION_UP, x, y);
 
         assertMotionEventEquals(touchMotionEvent, d.touchEvent);
         assertTrue(d.isOnTouchEventCalled);
@@ -510,8 +507,6 @@ public class DialogTest {
         d.isOnTouchEventCalled = false;
         assertTrue(d.isShowing());
         touchMotionEvent.recycle();
-        // Send ACTION_UP to keep the event stream consistent
-        sendTouchEvent(now, MotionEvent.ACTION_UP, x, y).recycle();
 
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             // Watch activities cover the entire screen, so there is no way to touch outside.
@@ -520,23 +515,17 @@ public class DialogTest {
 
         // Send a touch event outside the dialog window. Expect the dialog to be dismissed
         // because closeOnTouchOutside is true.
-
         d.setCanceledOnTouchOutside(true);
-        now = SystemClock.uptimeMillis();
-        touchMotionEvent = sendTouchEvent(now, MotionEvent.ACTION_DOWN, x, y);
+        downTime = SystemClock.uptimeMillis();
 
-        new PollingCheck(TEST_TIMEOUT) {
-            protected boolean check() {
-                return d.dispatchTouchEventResult;
-            }
-        }.run();
+        sendTouchEvent(downTime, MotionEvent.ACTION_DOWN, x, y).recycle();
+        touchMotionEvent = sendTouchEvent(downTime, MotionEvent.ACTION_UP, x, y);
 
         assertMotionEventEquals(touchMotionEvent, d.touchEvent);
         assertTrue(d.isOnTouchEventCalled);
         assertMotionEventEquals(touchMotionEvent, d.onTouchEvent);
         assertFalse(d.isShowing());
         touchMotionEvent.recycle();
-        sendTouchEvent(now, MotionEvent.ACTION_UP, x, y).recycle();
     }
 
     @Test
