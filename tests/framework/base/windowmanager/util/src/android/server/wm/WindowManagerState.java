@@ -117,6 +117,7 @@ public class WindowManagerState {
     private List<Display> mDisplays = new ArrayList();
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
+    private int mFocusedDisplayId = DEFAULT_DISPLAY;
     private String mInputMethodWindowAppToken = null;
     private Rect mDefaultPinnedStackBounds = new Rect();
     private Rect mPinnedStackMovementBounds = new Rect();
@@ -235,6 +236,7 @@ public class WindowManagerState {
         mDisplayFrozen = state.displayFrozen;
         mRotation = state.rotation;
         mLastOrientation = state.lastOrientation;
+        mFocusedDisplayId = state.focusedDisplayId;
     }
 
     static String appStateToString(int appState) {
@@ -445,6 +447,10 @@ public class WindowManagerState {
         return mLastOrientation;
     }
 
+    int getFocusedDisplayId() {
+        return mFocusedDisplayId;
+    }
+
     boolean containsStack(int stackId) {
         for (WindowStack stack : mStacks) {
             if (stackId == stack.mStackId) {
@@ -595,6 +601,7 @@ public class WindowManagerState {
         mPinnedStackMovementBounds.setEmpty();
         mRotation = 0;
         mLastOrientation = 0;
+        mFocusedDisplayId = DEFAULT_DISPLAY;
         mDisplayFrozen = false;
     }
 
