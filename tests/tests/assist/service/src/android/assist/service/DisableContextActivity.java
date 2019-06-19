@@ -16,27 +16,32 @@
 
 package android.assist.service;
 
-import android.app.Activity;
-import android.content.Intent;
+import android.assist.common.BaseRemoteCallbackActivity;
+import android.assist.common.Utils;
 import android.content.ComponentName;
-import android.os.Bundle;
+import android.content.Intent;
+import android.os.RemoteCallback;
 import android.util.Log;
 
-public class DisableContextActivity extends Activity {
+public class DisableContextActivity extends BaseRemoteCallbackActivity {
     static final String TAG = "DisableContextActivity";
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public void onStart() {
         super.onStart();
+
+        RemoteCallback remoteCallback = getIntent().getParcelableExtra(Utils.EXTRA_REMOTE_CALLBACK);
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(this, MainInteractionService.class));
+        intent.putExtra(Utils.EXTRA_REMOTE_CALLBACK, remoteCallback);
         Log.i(TAG, "Starting service.");
         finish();
         startService(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        notify(Utils.TEST_ACTIVITY_DESTROY);
     }
 }

@@ -15,17 +15,11 @@
  */
 package android.assist.cts;
 
+import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Process;
 import android.util.Log;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class ExtraAssistDataTest extends AssistTestBase {
     private static final String TAG = "ExtraAssistDataTest";
@@ -34,28 +28,7 @@ public class ExtraAssistDataTest extends AssistTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        setUpAndRegisterReceiver();
         startTestActivity(TEST_CASE_TYPE);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        if (mReceiver != null) {
-            mContext.unregisterReceiver(mReceiver);
-            mReceiver = null;
-        }
-    }
-
-    private void setUpAndRegisterReceiver() {
-        if (mReceiver != null) {
-            mContext.unregisterReceiver(mReceiver);
-        }
-        mReceiver = new ExtraAssistDataReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Utils.APP_3P_HASRESUMED);
-        filter.addAction(Utils.ASSIST_RECEIVER_REGISTERED);
-        mContext.registerReceiver(mReceiver, filter);
     }
 
     public void testAssistContentAndAssistData() throws Exception {
@@ -64,10 +37,9 @@ public class ExtraAssistDataTest extends AssistTestBase {
             return;
         }
         startTest(TEST_CASE_TYPE);
-        waitForAssistantToBeReady(mReadyLatch);
+        waitForAssistantToBeReady();
         start3pApp(TEST_CASE_TYPE);
-        waitForOnResume();
-        final CountDownLatch latch = startSession();
+        final AutoResetLatch latch = startSession();
         waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
 
@@ -89,29 +61,5 @@ public class ExtraAssistDataTest extends AssistTestBase {
         int expectedUid = Utils.getExpectedUid(extraAssistBundle);
         int actualUid = mAssistBundle.getInt(Intent.EXTRA_ASSIST_UID);
         assertEquals("Wrong value for EXTRA_ASSIST_UID", expectedUid, actualUid);
-
-    }
-
-    private void waitForOnResume() throws Exception {
-        Log.i(TAG, "waiting for onResume() before continuing");
-        if (!mHasResumedLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            fail("Activity failed to resume in " + Utils.ACTIVITY_ONRESUME_TIMEOUT_MS + "msec");
-        }
-    }
-
-    private class ExtraAssistDataReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals(Utils.APP_3P_HASRESUMED)) {
-                if (mHasResumedLatch != null) {
-                    mHasResumedLatch.countDown();
-                }
-            } else if (action.equals(Utils.ASSIST_RECEIVER_REGISTERED)) {
-                if (mReadyLatch != null) {
-                    mReadyLatch.countDown();
-                }
-            }
-        }
     }
 }
