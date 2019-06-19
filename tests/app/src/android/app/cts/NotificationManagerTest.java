@@ -109,7 +109,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
@@ -139,6 +138,10 @@ public class NotificationManagerTest extends AndroidTestCase {
                 Context.NOTIFICATION_SERVICE);
         // clear the deck so that our getActiveNotifications results are predictable
         mNotificationManager.cancelAll();
+
+        assertEquals("Previous test left system in a bad state",
+                0, mNotificationManager.getActiveNotifications().length);
+
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
@@ -1470,12 +1473,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testMediaStyle_empty() throws Exception {
+    public void testMediaStyle_empty() {
         Notification.MediaStyle style = new Notification.MediaStyle();
         assertNotNull(style);
     }
 
-    public void testMediaStyle() throws Exception {
+    public void testMediaStyle() {
         mNotificationManager.cancelAll();
         final int id = 99;
         MediaSession session = new MediaSession(getContext(), "media");
@@ -1502,7 +1505,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testInboxStyle() throws Exception {
+    public void testInboxStyle() {
         final int id = 100;
 
         final Notification notification =
@@ -1526,7 +1529,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testBigTextStyle() throws Exception {
+    public void testBigTextStyle() {
         final int id = 101;
 
         final Notification notification =
@@ -1552,7 +1555,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testBigPictureStyle() throws Exception {
+    public void testBigPictureStyle() {
         final int id = 102;
 
         final Notification notification =
@@ -1579,82 +1582,78 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    @FlakyTest(bugId = 133501804)
     public void testAutogrouping() throws Exception {
-        sendNotification(1, R.drawable.black);
-        sendNotification(2, R.drawable.blue);
-        sendNotification(3, R.drawable.yellow);
-        sendNotification(4, R.drawable.yellow);
+        sendNotification(801, R.drawable.black);
+        sendNotification(802, R.drawable.blue);
+        sendNotification(803, R.drawable.yellow);
+        sendNotification(804, R.drawable.yellow);
 
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
     }
 
-    @FlakyTest(bugId = 133501804)
     public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
-        sendNotification(1, R.drawable.black);
-        sendNotification(2, R.drawable.blue);
-        sendNotification(3, R.drawable.yellow);
-        sendNotification(4, R.drawable.yellow);
+        sendNotification(701, R.drawable.black);
+        sendNotification(702, R.drawable.blue);
+        sendNotification(703, R.drawable.yellow);
+        sendNotification(704, R.drawable.yellow);
 
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
 
         // Assert all notis stay in the same autogroup until all children are canceled
-        for (int i = 4; i > 1; i--) {
+        for (int i = 704; i > 701; i--) {
             cancelAndPoll(i);
-            assertNotificationCount(i);
+            assertNotificationCount(i - 700);
             assertAllPostedNotificationsAutogrouped();
         }
-        cancelAndPoll(1);
+        cancelAndPoll(701);
         assertNotificationCount(0);
     }
 
-    @FlakyTest(bugId = 133501804)
     public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup()
             throws Exception {
         String newGroup = "new!";
-        sendNotification(1, R.drawable.black);
-        sendNotification(2, R.drawable.blue);
-        sendNotification(3, R.drawable.yellow);
-        sendNotification(4, R.drawable.yellow);
+        sendNotification(901, R.drawable.black);
+        sendNotification(902, R.drawable.blue);
+        sendNotification(903, R.drawable.yellow);
+        sendNotification(904, R.drawable.yellow);
 
         List<Integer> postedIds = new ArrayList<>();
-        postedIds.add(1);
-        postedIds.add(2);
-        postedIds.add(3);
-        postedIds.add(4);
+        postedIds.add(901);
+        postedIds.add(902);
+        postedIds.add(903);
+        postedIds.add(904);
 
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
 
         // Assert all notis stay in the same autogroup until all children are canceled
-        for (int i = 4; i > 1; i--) {
+        for (int i = 904; i > 901; i--) {
             sendNotification(i, newGroup, R.drawable.blue);
             postedIds.remove(postedIds.size() - 1);
             assertNotificationCount(5);
             assertOnlySomeNotificationsAutogrouped(postedIds);
         }
-        sendNotification(1, newGroup, R.drawable.blue);
+        sendNotification(901, newGroup, R.drawable.blue);
         assertNotificationCount(4); // no more autogroup summary
         postedIds.remove(0);
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
-    // b/133502627.
-    public void disabledTestNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
+    public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
         throws Exception {
         String newGroup = "new!";
-        sendNotification(10, R.drawable.black);
-        sendNotification(20, R.drawable.blue);
-        sendNotification(30, R.drawable.yellow);
-        sendNotification(40, R.drawable.yellow);
+        sendNotification(910, R.drawable.black);
+        sendNotification(920, R.drawable.blue);
+        sendNotification(930, R.drawable.yellow);
+        sendNotification(940, R.drawable.yellow);
 
         List<Integer> postedIds = new ArrayList<>();
-        postedIds.add(10);
-        postedIds.add(20);
-        postedIds.add(30);
-        postedIds.add(40);
+        postedIds.add(910);
+        postedIds.add(920);
+        postedIds.add(930);
+        postedIds.add(940);
 
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
@@ -1674,8 +1673,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         // send a new non-grouped notification. since the autogroup summary still exists,
         // the notification should be added to it
-        sendNotification(50, R.drawable.blue);
-        postedIds.add(50);
+        sendNotification(950, R.drawable.blue);
+        postedIds.add(950);
         try {
             Thread.sleep(200);
         } catch (InterruptedException ex) {
@@ -1820,7 +1819,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
     }
 
-    @FlakyTest
     public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
@@ -2258,8 +2256,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         listener.onListenerDisconnected();
     }
 
-    // b/133502627
-    public void disabledTestNotificationListener_setNotificationsShown() throws Exception {
+    public void testNotificationListener_setNotificationsShown() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
@@ -2270,8 +2267,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         mListener = TestNotificationListener.getInstance();
         assertNotNull(mListener);
-        final int notificationId1 = 1;
-        final int notificationId2 = 2;
+        final int notificationId1 = 1003;
+        final int notificationId2 = 1004;
 
         sendNotification(notificationId1, R.drawable.black);
         sendNotification(notificationId2, R.drawable.black);
@@ -2355,8 +2352,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    // b/133502627
-    public void disabledTestNotificationListener_getActiveNotifications() throws Exception {
+    public void testNotificationListener_getActiveNotifications() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
@@ -2367,8 +2363,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         mListener = TestNotificationListener.getInstance();
         assertNotNull(mListener);
-        final int notificationId1 = 1;
-        final int notificationId2 = 2;
+        final int notificationId1 = 1001;
+        final int notificationId2 = 1002;
 
         sendNotification(notificationId1, R.drawable.black);
         sendNotification(notificationId2, R.drawable.black);
@@ -2406,8 +2402,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
     }
 
-    // b/133502627
-    public void disabledTestNotificationListener_cancelNotifications() throws Exception {
+    public void testNotificationListener_cancelNotifications() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
@@ -2418,7 +2413,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         mListener = TestNotificationListener.getInstance();
         assertNotNull(mListener);
-        final int notificationId = 1;
+        final int notificationId = 1006;
 
         sendNotification(notificationId, R.drawable.black);
         Thread.sleep(500); // wait for notification listener to receive notification
@@ -2456,7 +2451,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                 lengthGreaterThanZero);
 
         String badNumberString = NotificationManager.Policy.priorityCategoriesToString(1234567);
-        assertNotNull("priorityCategories with a non-relevant int returns a string", oneString);
+        assertNotNull("priorityCategories with a non-relevant int returns a string",
+                badNumberString);
     }
 
     public void testNotificationManagerPolicy_prioritySendersToString() {
@@ -2675,8 +2671,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    // b/133502627
-    public void disabledTestNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
+    public void testNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2710,7 +2705,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
 
             // Should be foreground now
-            a.sendBubble(1);
+            a.sendBubble(4000);
 
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
                     true /* shouldExist */, true /* shouldBeBubble */)) {
@@ -2722,7 +2717,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             homeHelper.goHome();
 
             // The notif should be allowed to update as a bubble
-            a.sendBubble(2);
+            a.sendBubble(4001);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
 
@@ -2735,7 +2730,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             cancelAndPoll(BUBBLE_NOTIF_ID);
 
             // Send it again when not foreground, this should not be a bubble & just be a notif
-            a.sendBubble(3);
+            a.sendBubble(4002);
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
                     true /* shouldExist */, false /* shouldBeBubble */)) {
                 fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
@@ -2750,7 +2745,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotificationManagerBubblePolicy_noFlag_notEmbeddable() throws Exception {
+    public void testNotificationManagerBubblePolicy_noFlag_notEmbeddable() {
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
@@ -2786,7 +2781,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
     }
 
-    public void testNotificationManagerBubblePolicy_noFlag_notDocumentLaunchModeAlways() throws Exception {
+    public void testNotificationManagerBubblePolicy_noFlag_notDocumentLaunchModeAlways() {
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();

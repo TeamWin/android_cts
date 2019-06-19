@@ -41,6 +41,6 @@ public class ViewAnimationUtilsTests extends ActivityTestBase {
                             .start();
                 }, true)
                 .runWithVerifier(new GoldenImageVerifier(getActivity(),
-                        R.drawable.golden_blue_circle, new MSSIMComparer(0.99)));
+                        R.drawable.golden_blue_circle, new MSSIMComparer(0.85)));
     }
 }
