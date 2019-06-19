@@ -275,7 +275,7 @@ public class RestrictedPermissionsTest {
                 null);
 
         // All restricted permission should be whitelisted.
-        assertAllRestrictedPermissionWhitelisted();
+        eventually(this::assertAllRestrictedPermissionWhitelisted);
 
         // Some restricted permission should be granted.
         assertAllRestrictedPermissionGranted();
@@ -1016,6 +1016,17 @@ public class RestrictedPermissionsTest {
             final PackageManager packageManager = getContext().getPackageManager();
             for (String permission : adjustedGrantedPermissions) {
                 packageManager.grantRuntimePermission(PKG, permission,
+                        getContext().getUser());
+            }
+        });
+
+        // Mark all permissions as reviewed as for pre-22 apps the restriction state might not be
+        // applied until reviewed
+        runWithShellPermissionIdentity(() -> {
+            final PackageManager packageManager = getContext().getPackageManager();
+            for (String permission : getRestrictedPermissionsOfApp()) {
+                packageManager.updatePermissionFlags(permission, PKG,
+                        PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED, 0,
                         getContext().getUser());
             }
         });
