@@ -32,9 +32,6 @@ import com.android.compatibility.common.util.CddTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Before;
-import org.junit.Test;
-
 /**
  * Tests if system settings app provides scanning settings.
  */
@@ -52,8 +49,8 @@ public class ScanningSettingsTest extends AndroidTestCase {
     private String mLauncherPackage;
     private PackageManager mPackageManager;
 
-    @Before
-    public void setUp() {
+    @Override
+    protected void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
@@ -64,14 +61,12 @@ public class ScanningSettingsTest extends AndroidTestCase {
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
     }
 
-    @Test
     @CddTest(requirement = "7.4.2/C-2-1")
     public void testWifiScanningSettings() throws PackageManager.NameNotFoundException {
         launchScanningSettings();
         toggleSettingAndVerify(WIFI_SCANNING_TITLE_RES, Settings.Global.WIFI_SCAN_ALWAYS_AVAILABLE);
     }
 
-    @Test
     @CddTest(requirement = "7.4.3/C-4-1")
     public void testBleScanningSettings() throws PackageManager.NameNotFoundException {
         launchScanningSettings();
