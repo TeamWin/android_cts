@@ -119,7 +119,9 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -2944,6 +2946,92 @@ public class ViewTest {
         assertTrue(mockView1.dispatchTouchEvent(event));
         verify(listener, times(1)).onTouch(mockView1, event);
         assertFalse(mockView1.hasCalledOnTouchEvent());
+    }
+
+    /**
+     * Ensure two MotionEvents are equal, for the purposes of this test only.
+     * Only compare actions, source, and times.
+     * Do not compare coordinates, because the injected event has coordinates relative to
+     * the screen, while the event received by view will be adjusted relative to the parent.
+     *
+     * Due to event batching, if two or more input events are injected / occur between two
+     * consecutive vsync's, they might end up getting combined into a single MotionEvent.
+     * It is caller's responsibility to ensure that the events were injected with a gap that's
+     * larger than time between two vsyncs, in order for this function to behave predictably.
+     *
+     * Recycle both MotionEvents.
+     */
+    private static void compareAndRecycleMotionEvents(MotionEvent event1, MotionEvent event2) {
+        if (event1 == null && event2 == null) {
+            return;
+        }
+
+        if (event1 == null) {
+            event2.recycle();
+            fail("Expected non-null event in first position");
+        }
+        if (event2 == null) {
+            event1.recycle();
+            fail("Expected non-null event in second position");
+        }
+
+        assertEquals(event1.getAction(), event2.getAction());
+        assertEquals(event1.getPointerCount(), event2.getPointerCount());
+        assertEquals(event1.getSource(), event2.getSource());
+        assertEquals(event1.getDownTime(), event2.getDownTime());
+        // If resampling occurs, the "real" (injected) events will become historical data,
+        // and resampled events will be inserted into MotionEvent and returned by the standard api.
+        // Since the injected event should contain no history, but the event received by
+        // the view might, we could distinguish them. But for simplicity, only require that
+        // the events are close in time if historical data is present.
+        if (event1.getHistorySize() == 0 && event2.getHistorySize() == 0) {
+            assertEquals(event1.getEventTime(), event2.getEventTime());
+        } else {
+            assertEquals(event1.getEventTime(), event2.getEventTime(), 20 /*delta*/);
+        }
+
+        event1.recycle();
+        event2.recycle();
+    }
+
+    @Test
+    public void testOnTouchListener() {
+        BlockingQueue<MotionEvent> events = new LinkedBlockingQueue<>();
+        class TestTouchListener implements View.OnTouchListener {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                events.add(MotionEvent.obtain(event));
+                return true;
+            }
+        }
+
+        // Inject some touch events
+        TestTouchListener listener = new TestTouchListener();
+        View view = mActivity.findViewById(R.id.mock_view);
+        view.setOnTouchListener(listener);
+
+        int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+
+        final int viewWidth = view.getWidth();
+        final int viewHeight = view.getHeight();
+        final float x = xy[0] + viewWidth / 2.0f;
+        final float y = xy[1] + viewHeight / 2.0f;
+
+        final long downTime = SystemClock.uptimeMillis();
+        MotionEvent downEvent =
+                MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0);
+        downEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        mInstrumentation.getUiAutomation().injectInputEvent(downEvent, true);
+        final long eventTime = SystemClock.uptimeMillis();
+        MotionEvent upEvent =
+                MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP, x, y, 0);
+        upEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        mInstrumentation.getUiAutomation().injectInputEvent(upEvent, true);
+
+        compareAndRecycleMotionEvents(downEvent, events.poll());
+        compareAndRecycleMotionEvents(upEvent, events.poll());
+        assertTrue(events.isEmpty());
     }
 
     @Test
