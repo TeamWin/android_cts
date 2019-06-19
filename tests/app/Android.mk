@@ -32,6 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     mockito-target-minus-junit4 \
     androidx.test.rules \
+    androidx.test.ext.junit \
     platform-test-annotations \
     cts-wm-util \
     androidx.test.rules \
