@@ -41,6 +41,7 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_HOVER_ENTE
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_HOVER_EXIT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
@@ -68,6 +69,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
@@ -91,9 +93,16 @@ public class TouchExplorerTest {
     private EventCapturingLongClickListener mLongClickListener =
             new EventCapturingLongClickListener();
 
-    @Rule
-    public ActivityTestRule<GestureDispatchActivity> mActivityRule =
+    private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mDumpOnFailureRule)
+            .around(mActivityRule);
 
     Point mCenter; // Center of screen. Gestures all start from this point.
     PointF mTapLocation;
