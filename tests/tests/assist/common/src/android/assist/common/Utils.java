@@ -36,6 +36,7 @@ public class Utils {
     public static final String BROADCAST_ASSIST_DATA_INTENT = ACTION_PREFIX + "ASSIST_DATA";
     public static final String BROADCAST_INTENT_START_ASSIST = ACTION_PREFIX + "START_ASSIST";
     public static final String ASSIST_RECEIVER_REGISTERED = ACTION_PREFIX + "ASSIST_READY";
+    public static final String ACTION_END_OF_TEST = ACTION_PREFIX + "END_OF_TEST";
 
     public static final String ACTION_INVALIDATE = "invalidate_action";
     public static final String GET_CONTENT_VIEW_HEIGHT = ACTION_PREFIX + "GET_CONTENT_VIEW_HEIGHT";
@@ -68,11 +69,10 @@ public class Utils {
     public static final String GAINED_FOCUS = ACTION_PREFIX + "focus_changed";
     public static final String LOST_FOCUS = ACTION_PREFIX + "lost_focus";
 
-    /** Flag Secure Test intent constants */
-    public static final String FLAG_SECURE_HASRESUMED = ACTION_PREFIX + "flag_secure_hasResumed";
     public static final String APP_3P_HASRESUMED = ACTION_PREFIX + "app_3p_hasResumed";
     public static final String APP_3P_HASDRAWED = ACTION_PREFIX + "app_3p_hasDrawed";
-    public static final String TEST_ACTIVITY_LOADED = ACTION_PREFIX + "test_activity_hasResumed";
+    public static final String TEST_ACTIVITY_DESTROY = ACTION_PREFIX + "test_activity_destroy";
+    public static final String TEST_ACTIVITY_WEBVIEW_LOADED = ACTION_PREFIX + "test_activity_webview_hasResumed";
 
     // Notice: timeout belows have to be long because some devices / form factors (like car) are
     // slower.
@@ -93,9 +93,11 @@ public class Utils {
      * Extras used to pass RemoteCallback objects responsible for IPC between test, app, and
      * service.
      */
-    public static final String EXTRA_CALLBACK_CONTEXT_READY = "extra_callback_context_ready";
-    public static final String EXTRA_CALLBACK_ACTIVITY_RESUMED = "extra_callback_activity_resumed";
-    public static final String EXTRA_CALLBACK_ACTIVITY_DRAWED = "extra_callback_activity_drawed";
+    public static final String EXTRA_REMOTE_CALLBACK = "extra_remote_callback";
+    public static final String EXTRA_REMOTE_CALLBACK_ACTION = "extra_remote_callback_action";
+
+    public static final String EXTRA_REMOTE_CALLBACK_RECEIVING = "extra_remote_callback_receiving";
+    public static final String EXTRA_REMOTE_CALLBACK_RECEIVING_ACTION = "extra_remote_callback_receiving_action";
 
     /** Test name suffixes */
     public static final String ASSIST_STRUCTURE = "ASSIST_STRUCTURE";
@@ -113,6 +115,7 @@ public class Utils {
 
     /** Session intent constants */
     public static final String HIDE_SESSION = "android.intent.action.hide_session";
+    public static final String HIDE_SESSION_COMPLETE = "android.intent.action.hide_session_complete";
 
     /** Lifecycle activity intent constants */
     /** Session intent constants */
@@ -176,30 +179,6 @@ public class Utils {
         }
     }
 
-    /** The shim activity that starts the service associated with each test. */
-    public static final String getTestActivity(String testCaseType) {
-        switch (testCaseType) {
-            case DISABLE_CONTEXT:
-                // doesn't need to wait for activity to resume
-                // can be activated on top of any non-secure activity.
-                return "service.DisableContextActivity";
-            case ASSIST_STRUCTURE:
-            case FLAG_SECURE:
-            case LIFECYCLE:
-            case LIFECYCLE_NOUI:
-            case SCREENSHOT:
-            case EXTRA_ASSIST:
-            case VERIFY_CONTENT_VIEW:
-            case TEXTVIEW:
-            case LARGE_VIEW_HIERARCHY:
-            case WEBVIEW:
-            case FOCUS_CHANGE:
-                return "service.DelayedAssistantActivity";
-            default:
-                return "";
-        }
-    }
-
     /**
      * The test app associated with each test.
      */
@@ -207,8 +186,6 @@ public class Utils {
         switch (testCaseType) {
             case ASSIST_STRUCTURE:
             case LARGE_VIEW_HIERARCHY:
-                return new ComponentName(
-                        "android.assist.testapp", "android.assist.testapp.TestApp");
             case DISABLE_CONTEXT:
                 return new ComponentName(
                         "android.assist.testapp", "android.assist.testapp.TestApp");
@@ -237,6 +214,14 @@ public class Utils {
             default:
                 return new ComponentName("","");
         }
+    }
+
+    /**
+     * Sets the proper action used to launch an activity in the testapp package.
+     */
+    public static void setTestAppAction(Intent intent, String testCaseName) {
+        intent.putExtra(Utils.TESTCASE_TYPE, testCaseName);
+        intent.setAction("android.intent.action.TEST_APP_" + testCaseName);
     }
 
     /**
@@ -277,5 +262,11 @@ public class Utils {
 
     public static int getExpectedUid(Bundle extras) {
         return extras.getInt(MY_UID_EXTRA);
+    }
+
+    public static Bundle bundleOfRemoteAction(String action) {
+        Bundle bundle = new Bundle();
+        bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, action);
+        return bundle;
     }
 }
