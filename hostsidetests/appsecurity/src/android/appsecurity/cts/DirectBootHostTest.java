@@ -220,9 +220,23 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
         if (featureList.contains("feature:android.hardware.type.watch\n") ||
                 featureList.contains("feature:android.hardware.type.television\n")) {
             return false;
+        } else if (!hasSecureLockScreen(featureList)) {
+            // skip if device doesn't have secure lock screen
+            return false;
         } else {
             return true;
         }
+    }
+
+    /*
+     * Device that don't report android.software.device_admin doesn't have secure lock screen
+     * because device with secure lock screen MUST report android.software.device_admin .
+     *
+     * https://source.android.com/compatibility/7.0/android-7.0-cdd.html#3_9_device_administration
+     *
+     */
+    private boolean hasSecureLockScreen(final String featureList) {
+        return featureList.contains("feature:android.software.device_admin\n");
     }
 
     private void waitForBootCompleted() throws Exception {
