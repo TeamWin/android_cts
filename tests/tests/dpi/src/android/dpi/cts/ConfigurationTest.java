@@ -84,8 +84,10 @@ public class ConfigurationTest extends AndroidTestCase {
         allowedDensities.add(DisplayMetrics.DENSITY_400);
         allowedDensities.add(DisplayMetrics.DENSITY_420);
         allowedDensities.add(DisplayMetrics.DENSITY_440);
+        allowedDensities.add(DisplayMetrics.DENSITY_450);
         allowedDensities.add(DisplayMetrics.DENSITY_XXHIGH);
         allowedDensities.add(DisplayMetrics.DENSITY_560);
+        allowedDensities.add(DisplayMetrics.DENSITY_600);
         allowedDensities.add(DisplayMetrics.DENSITY_XXXHIGH);
         assertTrue("DisplayMetrics.DENSITY_DEVICE_STABLE must be one of the DisplayMetrics.DENSITY_* values: "
                 + allowedDensities, allowedDensities.contains(DisplayMetrics.DENSITY_DEVICE_STABLE));
