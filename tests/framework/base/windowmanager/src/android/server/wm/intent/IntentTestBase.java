@@ -42,7 +42,7 @@ public abstract class IntentTestBase extends ActivityManagerTestBase {
 
         this.getAmWmState().waitForWithAmState(
                 state -> state.containsNoneOf(activitiesInUsedInTest),
-                "Waiting for activity to be removed");
+                "activity to be removed");
     }
 
     @After

@@ -320,7 +320,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
                 logE("Error waiting for valid state: " + e.getMessage());
                 return false;
             }
-        }, "Waiting asset sequence number to be updated and for activity to be resumed.");
+        }, "asset sequence number to be updated and for activity to be resumed.");
 
         // Check if activity is relaunched and asset seq is updated.
         assertRelaunchOrConfigChanged(TEST_ACTIVITY, 1 /* numRelaunch */,

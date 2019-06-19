@@ -145,12 +145,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             final Bitmap tmpWallpaper = wallpaperSession.getTestBitmap();
             wallpaperSession.setImageWallpaper(tmpWallpaper);
 
-            mAmWmState.waitForWithWmState(
-                    (state) -> isWallpaperOnDisplay(state, decoredSystemDisplay.mId),
-                    "Waiting for wallpaper window to show");
-
             assertTrue("Wallpaper must be displayed on system owned display with system decor flag",
-                    isWallpaperOnDisplay(mAmWmState.getWmState(), decoredSystemDisplay.mId));
+                    mAmWmState.waitForWithWmState(
+                            state -> isWallpaperOnDisplay(state, decoredSystemDisplay.mId),
+                            "wallpaper window to show"));
 
             assertFalse("Wallpaper must not be displayed on the untrusted display",
                     isWallpaperOnDisplay(mAmWmState.getWmState(), untrustedDisplay.mId));

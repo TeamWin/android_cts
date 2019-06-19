@@ -52,14 +52,11 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
         assumeActivityNotInFreeformDisplay(ANIMATION_TEST_ACTIVITY);
 
         // Make sure we are in the middle of the animation.
-        mAmWmState.waitForWithWmState(state -> state
-                .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
+        assertTrue("window animation background needs to be showing",
+                mAmWmState.waitForWithWmState(state -> state
+                        .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
                         .isWindowAnimationBackgroundSurfaceShowing(),
-                "***Waiting for animation background showing");
-
-        assertTrue("window animation background needs to be showing", mAmWmState.getWmState()
-                .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
-                .isWindowAnimationBackgroundSurfaceShowing());
+                        "animation background showing"));
     }
 
     @Test

@@ -706,11 +706,11 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
     private void waitForDockMinimized() throws Exception {
         mAmWmState.waitForWithWmState(state -> state.isDockedStackMinimized(),
-                "***Waiting for Dock stack to be minimized");
+                "Dock stack to be minimized");
     }
 
     private void waitForDockNotMinimized() throws Exception {
         mAmWmState.waitForWithWmState(state -> !state.isDockedStackMinimized(),
-                "***Waiting for Dock stack to not be minimized");
+                "Dock stack to not be minimized");
     }
 }
