@@ -16,21 +16,16 @@
 
 package android.assist.cts;
 
+import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.os.Bundle;
 import android.util.Log;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /** Test we receive proper assist data when context is disabled or enabled */
-
 public class LifecycleTest extends AssistTestBase {
     private static final String TAG = "LifecycleTest";
-    private static final String ACTION_HAS_RESUMED = Utils.LIFECYCLE_HASRESUMED;
     private static final String ACTION_HAS_FOCUS = Utils.LIFECYCLE_HASFOCUS;
     private static final String ACTION_LOST_FOCUS = Utils.LIFECYCLE_LOSTFOCUS;
     private static final String ACTION_ON_PAUSE = Utils.LIFECYCLE_ONPAUSE;
@@ -39,44 +34,18 @@ public class LifecycleTest extends AssistTestBase {
 
     private static final String TEST_CASE_TYPE = Utils.LIFECYCLE;
 
-    private BroadcastReceiver mLifecycleTestBroadcastReceiver;
-    private final CountDownLatch mHasFocusLatch = new CountDownLatch(1);
-    private final CountDownLatch mLostFocusLatch = new CountDownLatch(1);
-    private final CountDownLatch mActivityLifecycleLatch = new CountDownLatch(1);
-    private final CountDownLatch mDestroyLatch = new CountDownLatch(1);
+    private AutoResetLatch mHasFocusLatch = new AutoResetLatch(1);
+    private AutoResetLatch mLostFocusLatch = new AutoResetLatch(1);
+    private AutoResetLatch mActivityLifecycleLatch = new AutoResetLatch(1);
+    private AutoResetLatch mDestroyLatch = new AutoResetLatch(1);
     private boolean mLostFocusIsLifecycle;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mLifecycleTestBroadcastReceiver = new LifecycleTestReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_HAS_RESUMED);
-        filter.addAction(ACTION_HAS_FOCUS);
-        filter.addAction(ACTION_LOST_FOCUS);
-        filter.addAction(ACTION_ON_PAUSE);
-        filter.addAction(ACTION_ON_STOP);
-        filter.addAction(ACTION_ON_DESTROY);
-        filter.addAction(Utils.ASSIST_RECEIVER_REGISTERED);
-        mContext.registerReceiver(mLifecycleTestBroadcastReceiver, filter);
+        mActionLatchReceiver = new LifecycleTestReceiver();
         mLostFocusIsLifecycle = false;
         startTestActivity(TEST_CASE_TYPE);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        if (mLifecycleTestBroadcastReceiver != null) {
-            mContext.unregisterReceiver(mLifecycleTestBroadcastReceiver);
-            mLifecycleTestBroadcastReceiver = null;
-        }
-    }
-
-    private void waitForOnResume() throws Exception {
-        Log.i(TAG, "waiting for onResume() before continuing");
-        if (!mHasResumedLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            fail("Activity failed to resume in " + Utils.ACTIVITY_ONRESUME_TIMEOUT_MS + "msec");
-        }
     }
 
     private void waitForHasFocus() throws Exception {
@@ -112,11 +81,10 @@ public class LifecycleTest extends AssistTestBase {
             return;
         }
         startTest(TEST_CASE_TYPE);
-        waitForAssistantToBeReady(mReadyLatch);
+        waitForAssistantToBeReady();
         start3pApp(TEST_CASE_TYPE);
-        waitForOnResume();
         waitForHasFocus();
-        final CountDownLatch latch = startSession();
+        final AutoResetLatch latch = startSession();
         waitForContext(latch);
         // Since there is no UI, focus should not be lost.  We are counting focus lost as
         // a lifecycle event in this case.
@@ -124,7 +92,11 @@ public class LifecycleTest extends AssistTestBase {
         // calling the above (RACY!!!).
         waitForLostFocus();
         waitAndSeeIfLifecycleMethodsAreTriggered();
-        mContext.sendBroadcast(new Intent(Utils.HIDE_LIFECYCLE_ACTIVITY));
+
+        Bundle bundle = new Bundle();
+        bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.HIDE_LIFECYCLE_ACTIVITY);
+        m3pActivityCallback.sendResult(bundle);
+
         waitForDestroy();
     }
 
@@ -135,26 +107,27 @@ public class LifecycleTest extends AssistTestBase {
         }
         mLostFocusIsLifecycle = true;
         startTest(Utils.LIFECYCLE_NOUI);
-        waitForAssistantToBeReady(mReadyLatch);
+        waitForAssistantToBeReady();
         start3pApp(Utils.LIFECYCLE_NOUI);
-        waitForOnResume();
         waitForHasFocus();
-        final CountDownLatch latch = startSession();
+        final AutoResetLatch latch = startSession();
         waitForContext(latch);
         // Do this after waitForContext(), since we don't start looking for context until
         // calling the above (RACY!!!).
         waitAndSeeIfLifecycleMethodsAreTriggered();
-        mContext.sendBroadcast(new Intent(Utils.HIDE_LIFECYCLE_ACTIVITY));
+
+        Bundle bundle = new Bundle();
+        bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.HIDE_LIFECYCLE_ACTIVITY);
+        m3pActivityCallback.sendResult(bundle);
+
         waitForDestroy();
     }
 
-    private class LifecycleTestReceiver extends BroadcastReceiver {
+    private class LifecycleTestReceiver extends ActionLatchReceiver {
+
         @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals(ACTION_HAS_RESUMED) && mHasResumedLatch != null) {
-                mHasResumedLatch.countDown();
-            } else if (action.equals(ACTION_HAS_FOCUS) && mHasFocusLatch != null) {
+        protected void onAction(Bundle bundle, String action) {
+            if (action.equals(ACTION_HAS_FOCUS) && mHasFocusLatch != null) {
                 mHasFocusLatch.countDown();
             } else if (action.equals(ACTION_LOST_FOCUS) && mLostFocusLatch != null) {
                 if (mLostFocusIsLifecycle) {
@@ -169,10 +142,8 @@ public class LifecycleTest extends AssistTestBase {
             } else if (action.equals(ACTION_ON_DESTROY) && mActivityLifecycleLatch != null) {
                 mActivityLifecycleLatch.countDown();
                 mDestroyLatch.countDown();
-            } else if (action.equals(Utils.ASSIST_RECEIVER_REGISTERED)) {
-                if (mReadyLatch != null) {
-                    mReadyLatch.countDown();
-                }
+            } else {
+                super.onAction(bundle, action);
             }
         }
     }
