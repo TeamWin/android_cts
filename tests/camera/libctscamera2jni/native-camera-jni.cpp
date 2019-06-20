@@ -1161,13 +1161,16 @@ class PreviewTestCase {
         }
 
         ret = ACameraDevice_isSessionConfigurationSupported(mDevice, mOutputs);
-        if (ret != ACAMERA_OK && ret != ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
+        if (ret != ACAMERA_OK && ret != ACAMERA_ERROR_UNSUPPORTED_OPERATION &&
+                ret != ACAMERA_ERROR_STREAM_CONFIGURE_FAIL) {
             LOG_ERROR(errorString, "isSessionConfigurationSupported must return either OK "
-                    "or UNSUPPORTED_OPERATION, but returns %d", ret);
+                    ", UNSUPPORTED_OPERATION, or STREAM_CONFIGURE_FAIL, but returns %d", ret);
             return ret;
         }
 
-        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION && !sessionConfigurationDefault) {
+        // If session configuration is not supported by default, return early
+        // when camera device doesn't explicitly claim support.
+        if (ret != ACAMERA_OK && !sessionConfigurationDefault) {
             return ret;
         }
 
@@ -2970,7 +2973,12 @@ bool nativeCameraDeviceLogicalPhysicalStreaming(
 
         ret = testCase.createCaptureSessionWithLog(readerSessionOutputs, false /*isPreviewShared*/,
                 nullptr /*sessionParameters*/, false /*sessionConfigurationDefault*/);
-        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION) {
+        if (ret == ACAMERA_ERROR_UNSUPPORTED_OPERATION ||
+                ret == ACAMERA_ERROR_STREAM_CONFIGURE_FAIL) {
+            // Camera device doesn't support the stream combination, skip the
+            // current camera.
+            testCase.closeCamera();
+            testCase.resetCamera();
             continue;
         } else if (ret != ACAMERA_OK) {
             // Don't log error here. testcase did it
