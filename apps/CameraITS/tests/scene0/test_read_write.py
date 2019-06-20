@@ -29,6 +29,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.manual_sensor(props) and
                              its.caps.per_frame_control(props))
 
@@ -59,7 +60,8 @@ def main():
             print 'format: %s' % fmt
             size = its.objects.get_available_output_sizes(fmt, props)[-1]
             out_surface = {'width': size[0], 'height': size[1], 'format': fmt}
-
+            if cam._hidden_physical_id:
+                out_surface['physicalCamera'] = cam._hidden_physical_id
             reqs = []
             index_list = []
             for exp in exp_range:
