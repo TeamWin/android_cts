@@ -39,14 +39,15 @@ def main():
     # (since ITS doesn't require a perfectly uniformly lit scene).
 
     with its.device.ItsSession() as cam:
-
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.raw(props) and
-                             its.caps.raw16(props) and
-                             its.caps.manual_sensor(props) and
-                             its.caps.read_3a(props) and
-                             its.caps.per_frame_control(props) and
-                             not its.caps.mono_camera(props))
+                its.caps.raw16(props) and
+                its.caps.manual_sensor(props) and
+                its.caps.read_3a(props) and
+                its.caps.per_frame_control(props) and
+                not its.caps.mono_camera(props))
+
         debug = its.caps.debug_mode()
 
         white_level = float(props['android.sensor.info.whiteLevel'])
