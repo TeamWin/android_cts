@@ -87,6 +87,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
 
         # Get basic properties we need.
         sens_min, sens_max = props['android.sensor.info.sensitivityRange']
