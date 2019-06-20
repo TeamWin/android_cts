@@ -186,17 +186,20 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_AMBIENT_DISPLAY.
-        adapter.add(createInteractiveTestItem(this, DISALLOW_AMBIENT_DISPLAY_ID,
-                R.string.device_owner_disallow_ambient_display,
-                R.string.device_owner_disallow_ambient_display_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_user_restriction_set,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
-                                        UserManager.DISALLOW_AMBIENT_DISPLAY, true)),
-                        new ButtonInfo(
-                                R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
+        // TODO: After the ambient display feature flag is added in PackageManager (b/135591614),
+        // uncomment this test and run it only when ambient display is supported by the device.
+
+        // adapter.add(createInteractiveTestItem(this, DISALLOW_AMBIENT_DISPLAY_ID,
+        //         R.string.device_owner_disallow_ambient_display,
+        //         R.string.device_owner_disallow_ambient_display_info,
+        //         new ButtonInfo[] {
+        //                 new ButtonInfo(
+        //                         R.string.device_owner_user_restriction_set,
+        //                         CommandReceiverActivity.createSetUserRestrictionIntent(
+        //                                 UserManager.DISALLOW_AMBIENT_DISPLAY, true)),
+        //                 new ButtonInfo(
+        //                         R.string.device_owner_settings_go,
+        //                         new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
 
         // DISALLOW_CONFIG_VPN
         adapter.add(createInteractiveTestItem(this, DISALLOW_CONFIG_VPN_ID,

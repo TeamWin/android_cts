@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := CtsMockInputMethodLib
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 # TODO: ideally we should split MockIme source files into three categories
 #       1) common, 2) common + IME-only, and 3) common + client-only.
@@ -47,7 +47,7 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 LOCAL_MIN_SDK_VERSION := 19
 
 # tag this module as a cts test artifact
