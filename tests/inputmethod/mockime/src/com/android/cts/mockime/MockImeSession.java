@@ -18,6 +18,8 @@ package com.android.cts.mockime;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -38,6 +40,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSystemProperty;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
@@ -235,6 +238,11 @@ public class MockImeSession implements AutoCloseable {
             @NonNull Context context,
             @NonNull UiAutomation uiAutomation,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
+        // Currently, MockIme doesn't fully support multi-client IME. Skip tests until it does.
+        // TODO: Re-enable when MockIme supports multi-client IME.
+        assumeFalse("MockIme session doesn't support Multi-Client IME, skip it",
+                InputMethodSystemProperty.MULTI_CLIENT_IME_ENABLED);
+
         final MockImeSession client = new MockImeSession(context, uiAutomation);
         client.initialize(imeSettings);
         return client;

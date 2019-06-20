@@ -237,9 +237,15 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
+        MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080);
+        String[] decoderNames = MediaUtils.getDecoderNames(false, format);
 
-        // Play stream for 60 seconds
-        localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, -1, false /*isAudioOnly*/);
+        if (decoderNames.length == 0) {
+            MediaUtils.skipTest("No decoders for " + format);
+        } else {
+            // Play stream for 60 seconds
+            localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, -1, false /*isAudioOnly*/);
+        }
     }
 
 
