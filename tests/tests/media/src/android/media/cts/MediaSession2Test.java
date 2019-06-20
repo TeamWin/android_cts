@@ -26,9 +26,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaController2;
+import android.media.MediaMetadata;
 import android.media.MediaSession2;
 import android.media.Session2Command;
 import android.media.Session2CommandGroup;
@@ -38,6 +40,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
@@ -168,6 +171,42 @@ public class MediaSession2Test {
     }
 
     @Test
+    public void testBuilder_setExtras_withFrameworkParcelable() {
+        final String testKey = "test_key";
+        final Session2Token frameworkParcelable = new Session2Token(mContext,
+                new ComponentName(mContext, this.getClass()));
+
+        Bundle extras = new Bundle();
+        extras.putParcelable(testKey, frameworkParcelable);
+
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setExtras(extras)
+                .build()) {
+            Bundle extrasOut = session.getToken().getExtras();
+            assertNotNull(extrasOut);
+            assertTrue(extrasOut.containsKey(testKey));
+            assertEquals(frameworkParcelable, extrasOut.getParcelable(testKey));
+        }
+    }
+
+    @Test
+    public void testBuilder_setExtras_withCustomParcelable() {
+        final String testKey = "test_key";
+        final CustomParcelable customParcelable = new CustomParcelable(1);
+
+        Bundle extras = new Bundle();
+        extras.putParcelable(testKey, customParcelable);
+
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setExtras(extras)
+                .build()) {
+            fail("Custom Parcelables shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    @Test
     public void testSession2Token() {
         final Bundle extras = new Bundle();
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
@@ -179,7 +218,7 @@ public class MediaSession2Test {
             assertNull(token.getServiceName());
             assertEquals(Session2Token.TYPE_SESSION, token.getType());
             assertEquals(0, token.describeContents());
-            assertSame(extras, token.getExtras());
+            assertTrue(token.getExtras().isEmpty());
         }
     }
 
@@ -188,16 +227,7 @@ public class MediaSession2Test {
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
                 .build()) {
             Session2Token token = session.getToken();
-            assertSame(Bundle.EMPTY, token.getExtras());
-        }
-    }
-
-    @Test
-    public void testSession2Token_extrasSetToNull() {
-        try (MediaSession2 session = new MediaSession2.Builder(mContext)
-                .build()) {
-            Session2Token token = session.getToken();
-            assertSame(Bundle.EMPTY, token.getExtras());
+            assertTrue(token.getExtras().isEmpty());
         }
     }
 
@@ -766,5 +796,37 @@ public class MediaSession2Test {
                 return false;
             }
         }
+    }
+
+    static class CustomParcelable implements Parcelable {
+        public int mValue;
+
+        public CustomParcelable(int value) {
+            mValue = value;
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(mValue);
+        }
+
+        public static final Parcelable.Creator<CustomParcelable> CREATOR =
+                new Parcelable.Creator<CustomParcelable>() {
+            @Override
+            public CustomParcelable createFromParcel(Parcel in) {
+                int value = in.readInt();
+                return new CustomParcelable(value);
+            }
+
+            @Override
+            public CustomParcelable[] newArray(int size) {
+                return new CustomParcelable[size];
+            }
+        };
     }
 }
