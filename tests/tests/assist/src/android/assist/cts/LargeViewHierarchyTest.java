@@ -16,20 +16,13 @@
 
 package android.assist.cts;
 
+import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  *  Test that the AssistStructure returned is properly formatted.
  */
-
 public class LargeViewHierarchyTest extends AssistTestBase {
     private static final String TAG = "LargeViewHierarchyTest";
     private static final String TEST_CASE_TYPE = Utils.LARGE_VIEW_HIERARCHY;
@@ -37,35 +30,7 @@ public class LargeViewHierarchyTest extends AssistTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        setUpAndRegisterReceiver();
         startTestActivity(TEST_CASE_TYPE);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        if (mReceiver != null) {
-            mContext.unregisterReceiver(mReceiver);
-            mReceiver = null;
-        }
-    }
-
-    private void setUpAndRegisterReceiver() {
-        if (mReceiver != null) {
-            mContext.unregisterReceiver(mReceiver);
-        }
-        mReceiver = new LargeViewTestBroadcastReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Utils.APP_3P_HASRESUMED);
-        filter.addAction(Utils.ASSIST_RECEIVER_REGISTERED);
-        mContext.registerReceiver(mReceiver, filter);
-    }
-
-    private void waitForOnResume() throws Exception {
-        Log.i(TAG, "waiting for onResume() before continuing");
-        if (!mHasResumedLatch.await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            fail("Activity failed to resume in " + Utils.ACTIVITY_ONRESUME_TIMEOUT_MS + "msec");
-        }
     }
 
     public void testTextView() throws Exception {
@@ -75,25 +40,12 @@ public class LargeViewHierarchyTest extends AssistTestBase {
         }
         start3pApp(TEST_CASE_TYPE);
         startTest(TEST_CASE_TYPE);
-        waitForAssistantToBeReady(mReadyLatch);
-        waitForOnResume();
-        final CountDownLatch latch = startSession();
+        waitForAssistantToBeReady();
+        final AutoResetLatch latch = startSession();
         waitForContext(latch);
         verifyAssistDataNullness(false, false, false, false);
 
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
                 false /*FLAG_SECURE set*/);
-    }
-
-    private class LargeViewTestBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals(Utils.APP_3P_HASRESUMED) && mHasResumedLatch != null) {
-                mHasResumedLatch.countDown();
-            } else if (action.equals(Utils.ASSIST_RECEIVER_REGISTERED) && mReadyLatch != null) {
-                mReadyLatch.countDown();
-            }
-        }
     }
 }
