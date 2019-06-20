@@ -31,6 +31,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUM
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -354,11 +355,9 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 mAmWmState.getAmState().getTaskByActivity(STANDARD_ACTIVITY).getTaskId());
         // Make sure the second standard activity is finished.
         final String waitFinishMsg = "Instance of second standard activity must not exist";
-        mAmWmState.waitForWithAmState((amState) ->
-            0 == amState.getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY),
-            waitFinishMsg);
-        assertEquals(waitFinishMsg, 0,
-            mAmWmState.getAmState().getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY));
+        assertTrue(waitFinishMsg, mAmWmState.waitForWithAmState(
+                amState -> 0 == amState.getActivityCountInTask(taskId, SECOND_STANDARD_ACTIVITY),
+                waitFinishMsg));
     }
 
     @Test

@@ -317,7 +317,7 @@ public class LaunchRunner {
         SystemClock.sleep(BEFORE_DUMP_TIMEOUT);
         mTestBase.getAmWmState().waitForWithAmState(
                 am -> StateDump.fromStacks(am.getStacks(), mBaseStacks).equals(expected),
-                "Wait until the activity states match up with what we recorded");
+                "the activity states match up with what we recorded");
         mTestBase.getAmWmState().computeState(activity.getComponentName());
 
         List<ActivityManagerState.ActivityStack> endStateStacks =

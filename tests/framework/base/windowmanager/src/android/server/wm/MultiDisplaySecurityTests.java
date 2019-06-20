@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.app.Components.DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCH_BROADCAST_RECEIVER;
@@ -40,7 +39,7 @@ import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -55,11 +54,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.View;
@@ -73,7 +72,6 @@ import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.Before;
 import org.junit.Test;
-
 
 /**
  * Build/Install/Run:
@@ -405,17 +403,16 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
     private void assertActivityStartCheckResult(boolean expected) {
         final String component = ActivityLauncher.TAG;
-        for (int retry = 1; retry <= 5; retry++) {
-            final Bundle extras = TestJournalProvider.TestJournalContainer.get(component).extras;
-            if (extras.containsKey(ActivityLauncher.KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY)) {
-                assertEquals("Activity start check must match", expected, extras
-                        .getBoolean(ActivityLauncher.KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY));
-                return;
-            }
-
-            logAlways("***Waiting for activity start check for " + component
-                    + " ... retry=" + retry);
-            SystemClock.sleep(500);
+        final Bundle resultExtras = Condition.waitForResult(
+                new Condition<Bundle>("activity start check for " + component)
+                        .setRetryIntervalMs(500)
+                        .setResultSupplier(() -> TestJournalContainer.get(component).extras)
+                        .setResultValidator(extras -> extras.containsKey(
+                                ActivityLauncher.KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY)));
+        if (resultExtras != null) {
+            assertEquals("Activity start check must match", expected, resultExtras
+                    .getBoolean(ActivityLauncher.KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY));
+            return;
         }
         fail("Expected activity start check from " + component + " not found");
     }
@@ -692,17 +689,9 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         }
     }
 
-    private void assertSecurityExceptionFromActivityLauncher() {
-        final String component = ActivityLauncher.TAG;
-        for (int retry = 1; retry <= 5; retry++) {
-            if (ActivityLauncher.hasCaughtSecurityException()) {
-                return;
-            }
-
-            logAlways("***Waiting for SecurityException from " + component + " ... retry=" + retry);
-            SystemClock.sleep(500);
-        }
-        fail("Expected exception from " + component + " not found");
+    private static void assertSecurityExceptionFromActivityLauncher() {
+        waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
+                ActivityLauncher::hasCaughtSecurityException);
     }
 
     /**

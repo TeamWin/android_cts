@@ -62,7 +62,6 @@ import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
 import static android.server.wm.StateLogger.log;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.UiDeviceUtils.pressAppSwitchButton;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
@@ -93,7 +92,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -123,7 +122,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
-import android.os.UserHandle;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
@@ -163,7 +161,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -498,6 +495,13 @@ public abstract class ActivityManagerTestBase {
 
         final long upTime = SystemClock.uptimeMillis();
         injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
+
+        mAmWmState.waitForWithWmState(state -> state.getFocusedDisplayId() == displayId,
+                "top focused displayId: " + displayId);
+        // This is needed after a tap in multi-display to ensure that the display focus has really
+        // changed, if needed. The call to syncInputTransaction will wait until focus change has
+        // propagated from WMS to native input before returning.
+        getInstrumentation().getUiAutomation().syncInputTransactions();
     }
 
     protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
@@ -561,6 +565,12 @@ public abstract class ActivityManagerTestBase {
 
     private static void waitForIdle() {
         getInstrumentation().waitForIdleSync();
+    }
+
+    static void waitForOrFail(String message, BooleanSupplier condition) {
+        Condition.waitFor(new Condition<>(message, condition)
+                .setRetryIntervalMs(500)
+                .setOnFailure(unusedResult -> fail("FAILED because unsatisfied: " + message)));
     }
 
     /** Returns the set of stack ids. */
@@ -813,9 +823,8 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(activityName);
         mAmWmState.waitForActivityState(activityName, STATE_RESUMED);
         final String activityClassName = getActivityName(activityName);
-        mAmWmState.waitForWithAmState(state ->
-                        activityClassName.equals(state.getFocusedActivity()),
-                "Waiting for activity to be on top");
+        mAmWmState.waitForWithAmState(state -> activityClassName.equals(state.getFocusedActivity()),
+                "activity to be on top");
 
         mAmWmState.assertSanity();
         mAmWmState.assertFocusedActivity(message, activityName);
@@ -1071,10 +1080,7 @@ public abstract class ActivityManagerTestBase {
                     android.os.Process.myUserHandle().getIdentifier())) {
                 mAmWmState.waitForAodShowing();
             } else {
-                for (int retry = 1; isDisplayOn(DEFAULT_DISPLAY) && retry <= 5; retry++) {
-                    logAlways("***Waiting for display to turn off... retry=" + retry);
-                    SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
-                }
+                Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
             }
             return this;
         }
@@ -1191,7 +1197,10 @@ public abstract class ActivityManagerTestBase {
             mPreviousDegree = value;
 
             if (waitSystemUI) {
-                waitForRotationNotified();
+                Condition.waitFor(new Condition<>("rotation notified",
+                        // There will receive USER_ROTATION changed twice because when the device
+                        // rotates to 0deg, RotationContextButton will also set ROTATION_0 again.
+                        () -> mRotationObserver.count == 2).setRetryIntervalMs(500));
             }
             // Wait for settling rotation.
             mAmWmState.waitForRotation(value);
@@ -1207,19 +1216,6 @@ public abstract class ActivityManagerTestBase {
             mUserRotation.close();
             // Restore accelerometer_rotation preference.
             super.close();
-        }
-
-        private void waitForRotationNotified() {
-            for (int retry = 1; retry <= 5; retry++) {
-                // There will receive USER_ROTATION changed twice because when the device rotates to
-                // 0deg, RotationContextButton will also set ROTATION_0 again.
-                if (mRotationObserver.count == 2) {
-                    return;
-                }
-                logAlways("waitForRotationNotified retry=" + retry);
-                SystemClock.sleep(500);
-            }
-            logE("waitForRotationNotified skip");
         }
 
         private class SettingsObserver extends ContentObserver {
@@ -1380,40 +1376,6 @@ public abstract class ActivityManagerTestBase {
                 FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
-    /**
-     * Base helper class for retrying validator success.
-     */
-    private abstract static class RetryValidator {
-
-        private static final int RETRY_LIMIT = 5;
-        private static final long RETRY_INTERVAL = TimeUnit.SECONDS.toMillis(1);
-
-        /**
-         * @return Error string if validation is failed, null if everything is fine.
-         **/
-        @Nullable
-        protected abstract String validate();
-
-        /**
-         * Executes {@link #validate()}. Retries {@link #RETRY_LIMIT} times with
-         * {@link #RETRY_INTERVAL} interval.
-         *
-         * @param waitingMessage logging message while waiting validation.
-         */
-        void assertValidator(String waitingMessage) {
-            String resultString = null;
-            for (int retry = 1; retry <= RETRY_LIMIT; retry++) {
-                resultString = validate();
-                if (resultString == null) {
-                    return;
-                }
-                logAlways(waitingMessage + ": " + resultString);
-                SystemClock.sleep(RETRY_INTERVAL);
-            }
-            fail(resultString);
-        }
-    }
-
     static class CountSpec<T> {
         static final int DONT_CARE = Integer.MIN_VALUE;
         static final int EQUALS = 1;
@@ -1434,13 +1396,13 @@ public abstract class ActivityManagerTestBase {
             } else {
                 switch (rule) {
                     case EQUALS:
-                        mMessage = event + " + must equal to " + count;
+                        mMessage = event + " must equal to " + count;
                         break;
                     case GREATER_THAN:
-                        mMessage = event + " + must be greater than " + count;
+                        mMessage = event + " must be greater than " + count;
                         break;
                     case LESS_THAN:
-                        mMessage = event + " + must be less than " + count;
+                        mMessage = event + " must be less than " + count;
                         break;
                     default:
                         mMessage = "Don't care";
@@ -1498,7 +1460,7 @@ public abstract class ActivityManagerTestBase {
 
     static void assertSingleLaunch(ComponentName activityName) {
         assertLifecycleCounts(activityName,
-                "***Waiting for activity create, start, and resume",
+                "activity create, start, and resume",
                 1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
                 0 /* pauseCount */, 0 /* stopCount */, 0 /* destroyCount */,
                 CountSpec.DONT_CARE /* configChangeCount */);
@@ -1506,7 +1468,7 @@ public abstract class ActivityManagerTestBase {
 
     static void assertSingleLaunchAndStop(ComponentName activityName) {
         assertLifecycleCounts(activityName,
-                "***Waiting for activity create, start, resume, pause, and stop",
+                "activity create, start, resume, pause, and stop",
                 1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
                 1 /* pauseCount */, 1 /* stopCount */, 0 /* destroyCount */,
                 CountSpec.DONT_CARE /* configChangeCount */);
@@ -1514,7 +1476,7 @@ public abstract class ActivityManagerTestBase {
 
     static void assertSingleStartAndStop(ComponentName activityName) {
         assertLifecycleCounts(activityName,
-                "***Waiting for activity start, resume, pause, and stop",
+                "activity start, resume, pause, and stop",
                 0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
                 1 /* pauseCount */, 1 /* stopCount */, 0 /* destroyCount */,
                 CountSpec.DONT_CARE /* configChangeCount */);
@@ -1522,7 +1484,7 @@ public abstract class ActivityManagerTestBase {
 
     static void assertSingleStart(ComponentName activityName) {
         assertLifecycleCounts(activityName,
-                "***Waiting for activity start and resume",
+                "activity start and resume",
                 0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
                 0 /* pauseCount */, 0 /* stopCount */, 0 /* destroyCount */,
                 CountSpec.DONT_CARE /* configChangeCount */);
@@ -1530,20 +1492,12 @@ public abstract class ActivityManagerTestBase {
 
     /** Assert the activity is either relaunched or received configuration changed. */
     static void assertActivityLifecycle(ComponentName activityName, boolean relaunched) {
-        new RetryValidator() {
-
-            @Nullable
-            @Override
-            protected String validate() {
-                final String failedReason = checkActivityIsRelaunchedOrConfigurationChanged(
+        Condition.<String>waitForResult(activityName + " relaunched", condition -> condition
+                .setResultSupplier(() -> checkActivityIsRelaunchedOrConfigurationChanged(
                         getActivityName(activityName),
-                        TestJournalContainer.get(activityName).callbacks, relaunched);
-                if (failedReason != null) {
-                    return failedReason;
-                }
-                return null;
-            }
-        }.assertValidator("***Waiting for valid lifecycle state");
+                        TestJournalContainer.get(activityName).callbacks, relaunched))
+                .setResultValidator(failedReasons -> failedReasons == null)
+                .setOnFailure(failedReasons -> fail(failedReasons)));
     }
 
     /** Assert the activity is either relaunched or received configuration changed. */
@@ -1580,8 +1534,7 @@ public abstract class ActivityManagerTestBase {
 
     static void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
             int numConfigChange) {
-        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
-                "***Waiting for relaunch or config changed",
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry("relaunch or config changed",
                 countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, numRelaunch),
                 countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, numRelaunch),
                 countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS,
@@ -1589,8 +1542,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     static void assertActivityDestroyed(ComponentName activityName) {
-        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
-                "***Waiting for activity destroyed",
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry("activity destroyed",
                 countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, 1),
                 countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, 0),
                 countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS, 0));
@@ -1602,16 +1554,11 @@ public abstract class ActivityManagerTestBase {
 
     @Nullable
     SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
-        for (int retry = 1; retry <= 5; retry++) {
-            final ConfigInfo result = TestJournalContainer.get(activityName).lastConfigInfo;
-            if (result != null && result.sizeInfo != null) {
-                return result.sizeInfo;
-            }
-            logAlways("***Waiting for sizes to be reported... retry=" + retry);
-            SystemClock.sleep(1000);
-        }
-        logE("***Waiting for activity size failed: activityName=" + getActivityName(activityName));
-        return null;
+        return Condition.waitForResult("sizes of " + activityName + " to be reported",
+                condition -> condition.setResultSupplier(() -> {
+                    final ConfigInfo info = TestJournalContainer.get(activityName).lastConfigInfo;
+                    return info != null ? info.sizeInfo : null;
+                }).setResultValidator(sizeInfo -> sizeInfo != null));
     }
 
     /** Check if a device has display cutout. */
@@ -1628,7 +1575,7 @@ public abstract class ActivityManagerTestBase {
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
         mAmWmState.waitForWithAmState(
                 (state) -> !state.containsActivity(BROADCAST_RECEIVER_ACTIVITY),
-                "Waiting for activity to be removed");
+                "activity to be removed");
 
         return displayCutoutPresent;
     }
@@ -1639,51 +1586,48 @@ public abstract class ActivityManagerTestBase {
      */
     @Nullable
     private Boolean getCutoutStateForActivity(ComponentName activityName) {
-        final String logTag = getLogTag(activityName);
-        for (int retry = 1; retry <= 5; retry++) {
-            final Bundle extras = TestJournalContainer.get(activityName).extras;
-            if (extras.containsKey(EXTRA_CUTOUT_EXISTS)) {
-                return extras.getBoolean(EXTRA_CUTOUT_EXISTS);
-            }
-            logAlways("***Waiting for cutout state to be reported... retry=" + retry);
-            SystemClock.sleep(1000);
-        }
-        logE("***Waiting for activity cutout state failed: activityName=" + logTag);
-        return null;
+        return Condition.waitForResult("cutout state to be reported", condition -> condition
+                .setResultSupplier(() -> {
+                    final Bundle extras = TestJournalContainer.get(activityName).extras;
+                    return extras.containsKey(EXTRA_CUTOUT_EXISTS)
+                            ? extras.getBoolean(EXTRA_CUTOUT_EXISTS)
+                            : null;
+                }).setResultValidator(cutoutExists -> cutoutExists != null));
     }
 
     /** Waits for at least one onMultiWindowModeChanged event. */
     ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName) {
-        int retry = 1;
-        ActivityLifecycleCounts result;
-        do {
-            result = new ActivityLifecycleCounts(activityName);
-            if (result.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED) >= 1) {
-                return result;
-            }
-            logAlways("***waitForOnMultiWindowModeChanged... retry=" + retry);
-            SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
-        } while (retry++ <= 5);
-        return result;
+        final ActivityLifecycleCounts counts = new ActivityLifecycleCounts(activityName);
+        Condition.waitFor(counts.countWithRetry("waitForOnMultiWindowModeChanged", countSpec(
+                ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED, CountSpec.GREATER_THAN, 0)));
+        return counts;
     }
 
     static class ActivityLifecycleCounts {
-        final int[] mCounts = new int[ActivityCallback.SIZE];
-        final int[] mLastIndexes = new int[ActivityCallback.SIZE];
-        final List<ActivityCallback> mCallbackHistory;
+        private final int[] mCounts = new int[ActivityCallback.SIZE];
+        private final int[] mLastIndexes = new int[ActivityCallback.SIZE];
+        private ComponentName mActivityName;
 
         ActivityLifecycleCounts(ComponentName componentName) {
-            this(TestJournalContainer.get(componentName).callbacks);
+            mActivityName = componentName;
+            updateCount(TestJournalContainer.get(componentName).callbacks);
         }
 
         ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
-            mCallbackHistory = callbacks;
-            for (int i = 0; i < callbacks.size(); i++) {
-                final ActivityCallback callback = callbacks.get(i);
-                final int ordinal = callback.ordinal();
-                mCounts[ordinal]++;
-                mLastIndexes[ordinal] = i;
-            }
+            updateCount(callbacks);
+        }
+
+        private void updateCount(List<ActivityCallback> callbacks) {
+            // The callback list could be from the reference of TestJournal. If we are counting for
+            // retrying, there may be new data added to the list from other threads.
+            TestJournalContainer.withThreadSafeAccess(() -> {
+                for (int i = 0; i < callbacks.size(); i++) {
+                    final ActivityCallback callback = callbacks.get(i);
+                    final int ordinal = callback.ordinal();
+                    mCounts[ordinal]++;
+                    mLastIndexes[ordinal] = i;
+                }
+            });
         }
 
         int getCount(ActivityCallback callback) {
@@ -1695,13 +1639,30 @@ public abstract class ActivityManagerTestBase {
         }
 
         @SafeVarargs
+        final Condition<String> countWithRetry(String message,
+                CountSpec<ActivityCallback>... countSpecs) {
+            if (mActivityName == null) {
+                throw new IllegalStateException(
+                        "It is meaningless to retry without specified activity");
+            }
+            return new Condition<String>(message)
+                    .setOnRetry(() -> {
+                        Arrays.fill(mCounts, 0);
+                        Arrays.fill(mLastIndexes, 0);
+                        updateCount(TestJournalContainer.get(mActivityName).callbacks);
+                    })
+                    .setResultSupplier(() -> validateCount(countSpecs))
+                    .setResultValidator(failedReasons -> failedReasons == null);
+        }
+
+        @SafeVarargs
         final void assertCountWithRetry(String message, CountSpec<ActivityCallback>... countSpecs) {
-            new RetryValidator() {
-                @Override
-                protected String validate() {
-                    return validateCount(countSpecs);
-                }
-            }.assertValidator(message);
+            if (mActivityName == null) {
+                throw new IllegalStateException(
+                        "It is meaningless to retry without specified activity");
+            }
+            Condition.<String>waitForResult(countWithRetry(message, countSpecs)
+                    .setOnFailure(failedReasons -> fail(message + ": " + failedReasons)));
         }
 
         @SafeVarargs
@@ -1713,7 +1674,7 @@ public abstract class ActivityManagerTestBase {
                     if (failedReasons == null) {
                         failedReasons = new ArrayList<>();
                     }
-                    failedReasons.add(spec.mMessage);
+                    failedReasons.add(spec.mMessage + " (got " + realCount + ")");
                 }
             }
             return failedReasons == null ? null : String.join("\n", failedReasons);

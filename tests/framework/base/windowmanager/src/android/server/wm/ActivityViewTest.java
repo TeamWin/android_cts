@@ -128,18 +128,16 @@ public class ActivityViewTest extends ActivityManagerTestBase {
                 boundsMatched);
     }
 
+    /** @return {@code true} if the display size for the activity matches the given size. */
     private boolean checkDisplaySize(ComponentName activity, int requestedWidth,
             int requestedHeight) {
-        final int maxTries = 5;
-        final int retryIntervalMs = 1000;
-
-        boolean boundsMatched = false;
-
         // Display size for the activity may not get updated right away. Retry in case.
-        for (int i = 0; i < maxTries; i++) {
-            mAmWmState.getWmState().computeState();
-            int displayId = mAmWmState.getAmState().getDisplayByActivity(activity);
-            WindowManagerState.Display display = mAmWmState.getWmState().getDisplay(displayId);
+        return Condition.waitFor("display size=" + requestedWidth + "x" + requestedHeight, () -> {
+            final WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+
+            final int displayId = mAmWmState.getAmState().getDisplayByActivity(activity);
+            final WindowManagerState.Display display = wmState.getDisplay(displayId);
             int avDisplayWidth = 0;
             int avDisplayHeight = 0;
             if (display != null) {
@@ -149,16 +147,8 @@ public class ActivityViewTest extends ActivityManagerTestBase {
                     avDisplayHeight = bounds.height();
                 }
             }
-            boundsMatched = avDisplayWidth == requestedWidth && avDisplayHeight == requestedHeight;
-            if (boundsMatched) {
-                return true;
-            }
-
-            // wait and try again
-            SystemClock.sleep(retryIntervalMs);
-        }
-
-        return boundsMatched;
+            return avDisplayWidth == requestedWidth && avDisplayHeight == requestedHeight;
+        });
     }
 
     @Test

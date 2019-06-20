@@ -200,7 +200,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_FINISH_SELF, "true");
             mAmWmState.waitFor((amState, wmState) -> !amState.containsActivity(ASSISTANT_ACTIVITY),
-                    "Waiting for " + getActivityName(ASSISTANT_ACTIVITY) + " finished");
+                    getActivityName(ASSISTANT_ACTIVITY) + " finished");
         }
         waitForValidStateWithActivityTypeAndWindowingMode(
                 TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
