@@ -18,6 +18,8 @@ package android.app.cts;
 
 import static android.app.Notification.CATEGORY_CALL;
 import static android.app.Notification.FLAG_BUBBLE;
+import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
+import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
@@ -148,6 +150,11 @@ public class NotificationManagerTest extends AndroidTestCase {
         mPackageManager = mContext.getPackageManager();
         mRuleIds = new ArrayList<>();
 
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), false);
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
             Thread.sleep(500);
@@ -2815,5 +2822,25 @@ public class NotificationManagerTest extends AndroidTestCase {
                         .setIcon(Icon.createWithResource(mContext, R.drawable.black));
 
         sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
+    }
+
+    public void testOriginalChannelImportance() {
+        NotificationChannel channel = new NotificationChannel(
+                "my channel", "my channel", IMPORTANCE_HIGH);
+
+        mNotificationManager.createNotificationChannel(channel);
+
+        NotificationChannel actual = mNotificationManager.getNotificationChannel(channel.getId());
+        assertEquals(IMPORTANCE_HIGH, actual.getImportance());
+        assertEquals(IMPORTANCE_HIGH, actual.getOriginalImportance());
+
+        // Apps are allowed to downgrade channel importance if the user has not changed any
+        // fields on this channel yet.
+        channel.setImportance(IMPORTANCE_DEFAULT);
+        mNotificationManager.createNotificationChannel(channel);
+
+        actual = mNotificationManager.getNotificationChannel(channel.getId());
+        assertEquals(IMPORTANCE_DEFAULT, actual.getImportance());
+        assertEquals(IMPORTANCE_HIGH, actual.getOriginalImportance());
     }
 }
