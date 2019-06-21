@@ -17,6 +17,7 @@
 package android.telecom.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static android.telecom.cts.TestUtils.shouldTestTelecom;
 
 import android.telecom.TelecomManager;
 
@@ -25,6 +26,10 @@ import java.util.concurrent.TimeUnit;
 
 public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
     public void testGetCurrentTtyMode() {
+        if (!TestUtils.shouldTestTelecom(mContext)) {
+            return;
+        }
+
         LinkedBlockingQueue<Integer> queue = new LinkedBlockingQueue(1);
         runWithShellPermissionIdentity(() ->
                 queue.put(mTelecomManager.getCurrentTtyMode()));
@@ -42,6 +47,10 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testIsInEmergencyCall() {
+        if (!TestUtils.shouldTestTelecom(mContext)) {
+            return;
+        }
+
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
         runWithShellPermissionIdentity(() ->
                 queue.put(mTelecomManager.isInEmergencyCall()));
