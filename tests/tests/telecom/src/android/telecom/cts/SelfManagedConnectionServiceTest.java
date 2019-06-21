@@ -433,6 +433,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 ? CallAudioState.ROUTE_WIRED_HEADSET
                 : CallAudioState.ROUTE_EARPIECE;
 
+        counter.clearArgs();
         connection.setAudioRoute(CallAudioState.ROUTE_SPEAKER);
         counter.waitForPredicate(new Predicate<CallAudioState>() {
                 @Override
@@ -441,6 +442,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 }
             }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
+        counter.clearArgs();
         connection.setAudioRoute(secondRoute);
         counter.waitForPredicate(new Predicate<CallAudioState>() {
             @Override
