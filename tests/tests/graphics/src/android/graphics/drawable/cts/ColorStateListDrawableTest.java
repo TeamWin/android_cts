@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.R;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -68,8 +69,22 @@ public class ColorStateListDrawableTest {
 
     @Test
     public void testDraw() {
-        Canvas c = new Canvas();
-        mDrawable.draw(c);
+        Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+
+        try {
+            Canvas canvas = new Canvas(bitmap);
+            mDrawable.setBounds(0, 0, 1, 1);
+
+            mDrawable.setState(STATE_RED);
+            mDrawable.draw(canvas);
+            assertEquals(Color.RED, bitmap.getPixel(0, 0));
+
+            mDrawable.setState(STATE_BLUE);
+            mDrawable.draw(canvas);
+            assertEquals(Color.BLUE, bitmap.getPixel(0, 0));
+        } finally {
+            bitmap.recycle();
+        }
     }
 
     @Test
