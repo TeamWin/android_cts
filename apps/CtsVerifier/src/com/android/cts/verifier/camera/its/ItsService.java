@@ -159,6 +159,7 @@ public class ItsService extends Service implements SensorEventListener {
     private CameraCharacteristics mCameraCharacteristics = null;
     private HashMap<String, CameraCharacteristics> mPhysicalCameraChars =
             new HashMap<String, CameraCharacteristics>();
+    private ItsUtils.ItsCameraIdList mItsCameraIdList = null;
 
     private Vibrator mVibrator = null;
 
@@ -362,11 +363,13 @@ public class ItsService extends Service implements SensorEventListener {
         try {
             if (mMemoryQuota == -1) {
                 // Initialize memory quota on this device
-                List<String> devices = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
-                if (devices.size() == 0) {
+                if (mItsCameraIdList == null) {
+                    mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+                }
+                if (mItsCameraIdList.mCameraIds.size() == 0) {
                     throw new ItsException("No camera devices");
                 }
-                for (String camId : devices) {
+                for (String camId : mItsCameraIdList.mCameraIds) {
                     CameraCharacteristics chars =  mCameraManager.getCameraCharacteristics(camId);
                     Size maxYuvSize = ItsUtils.getMaxOutputSize(
                             chars, ImageFormat.YUV_420_888);
@@ -949,15 +952,17 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void doGetCameraIds() throws ItsException {
-        List<String> devices = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
-        if (devices.size() == 0) {
+        if (mItsCameraIdList == null) {
+            mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+        }
+        if (mItsCameraIdList.mCameraIdCombos.size() == 0) {
             throw new ItsException("No camera devices");
         }
 
         try {
             JSONObject obj = new JSONObject();
             JSONArray array = new JSONArray();
-            for (String id : devices) {
+            for (String id : mItsCameraIdList.mCameraIdCombos) {
                 array.put(id);
             }
             obj.put("cameraIdArray", array);
