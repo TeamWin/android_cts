@@ -25,6 +25,7 @@ import unittest
 import its.error
 import numpy
 
+from collections import namedtuple
 
 class ItsSession(object):
     """Controls a device over adb to run ITS scripts.
@@ -218,8 +219,9 @@ class ItsSession(object):
                 break
         proc.kill()
 
-    def __init__(self, camera_id=None):
+    def __init__(self, camera_id=None, hidden_physical_id=None):
         self._camera_id = camera_id
+        self._hidden_physical_id = hidden_physical_id
 
     def __enter__(self):
         # Initialize device id and adb command.
@@ -230,7 +232,7 @@ class ItsSession(object):
         self.__init_socket_port()
 
         self.__close_camera()
-        self.__open_camera(self._camera_id)
+        self.__open_camera()
         return self
 
     def __exit__(self, type, value, traceback):
@@ -263,18 +265,26 @@ class ItsSession(object):
             buf = numpy.frombuffer(buf, dtype=numpy.uint8)
         return jobj, buf
 
-    def __open_camera(self, camera_id):
+    def __open_camera(self):
         # Get the camera ID to open if it is an argument as a single camera.
         # This allows passing camera=# to individual tests at command line
         # and camera=#,#,# or an no camera argv with tools/run_all_tests.py.
-        if not camera_id:
-            camera_id = 0
+        #
+        # In case the camera is a logical multi-camera, to run ITS on the
+        # hidden physical sub-camera, pass camera=[logical ID]:[physical ID]
+        # to an individual test at the command line, and same applies to multiple
+        # camera IDs for tools/run_all_tests.py: camera=#,#:#,#:#,#
+        if not self._camera_id:
+            self._camera_id = 0
             for s in sys.argv[1:]:
                 if s[:7] == "camera=" and len(s) > 7:
-                    camera_ids = s[7:].split(",")
-                    if len(camera_ids) == 1:
-                        camera_id = camera_ids[0]
-        cmd = {"cmdName":"open", "cameraId":camera_id}
+                    camera_ids = s[7:].split(',')
+                    camera_id_combos = parse_camera_ids(camera_ids)
+                    if len(camera_id_combos) == 1:
+                        self._camera_id = camera_id_combos[0].id
+                        self._hidden_physical_id = camera_id_combos[0].sub_id
+
+        cmd = {"cmdName":"open", "cameraId":self._camera_id}
         self.sock.send(json.dumps(cmd) + "\n")
         data,_ = self.__read_response_from_socket()
         if data['tag'] != 'cameraOpened':
@@ -401,6 +411,23 @@ class ItsSession(object):
         if self.ITS_SERVICE_VERSION != server_version:
             raise its.error.Error('Version mismatch ItsService(%s) vs host script(%s)' % (
                     server_version, ITS_SERVICE_VERSION))
+
+    def override_with_hidden_physical_camera_props(self, props):
+        """If current session is for a hidden physical camera, check that it is a valid
+           sub-camera backing the logical camera, and return the
+           characteristics of sub-camera. Otherwise, return "props" directly.
+
+        Returns: The properties of the hidden physical camera if possible
+        """
+        if self._hidden_physical_id:
+            e_msg = 'Camera %s is not a logical multi-camera' % self._camera_id
+            assert its.caps.logical_multi_camera(props), e_msg
+            physical_ids = its.caps.logical_multi_camera_physical_ids(props)
+            e_msg = 'Camera %s is not a hidden sub-camera of camera %s' % (
+                self._hidden_physical_id, self._camera_id)
+            assert self._hidden_physical_id in physical_ids, e_msg
+            props = self.get_camera_properties_by_id(self._hidden_physical_id)
+        return props
 
     def get_camera_properties(self):
         """Get the camera properties object for the device.
@@ -758,6 +785,9 @@ class ItsSession(object):
         physical_cam_format = None
         logical_cam_formats = []
         for i,s in enumerate(cmd["outputSurfaces"]):
+            if self._hidden_physical_id:
+                s['physicalCamera'] = self._hidden_physical_id
+
             if "format" in s and s["format"] in ["yuv", "raw", "raw10", "raw12"]:
                 if "physicalCamera" in s:
                     if physical_cam_format is not None and s["format"] != physical_cam_format:
@@ -1050,6 +1080,20 @@ def get_device_fingerprint(device_id):
 
     return device_bfp
 
+def parse_camera_ids(ids):
+    """ Parse the string of camera IDs into array of CameraIdCombo tuples.
+    """
+    CameraIdCombo = namedtuple('CameraIdCombo', ['id', 'sub_id'])
+    id_combos = []
+    for one_id in ids:
+        one_combo = one_id.split(':')
+        if len(one_combo) == 1:
+            id_combos.append(CameraIdCombo(one_combo[0], None))
+        elif len(one_combo) == 2:
+            id_combos.append(CameraIdCombo(one_combo[0], one_combo[1]))
+        else:
+            assert(False), 'Camera id parameters must be either ID, or ID:SUB_ID'
+    return id_combos
 
 def _run(cmd):
     """Replacement for os.system, with hiding of stdout+stderr messages.

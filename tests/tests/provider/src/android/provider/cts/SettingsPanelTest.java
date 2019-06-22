@@ -17,6 +17,7 @@
 package android.provider.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +27,8 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
+
+import com.android.compatibility.common.util.RequiredServiceRule;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
@@ -47,11 +50,11 @@ public class SettingsPanelTest {
 
     private static final int TIMEOUT = 8000;
 
-    private static final String SETTINGS_PACKAGE = "com.android.settings";
     private static final String RESOURCE_DONE = "done";
     private static final String RESOURCE_SEE_MORE = "see_more";
     private static final String RESOURCE_TITLE = "panel_title";
 
+    private String mSettingsPackage = "com.android.settings";
     private String mLauncherPackage;
 
     private Context mContext;
@@ -68,6 +71,10 @@ public class SettingsPanelTest {
         launcherIntent.addCategory(Intent.CATEGORY_HOME);
         mLauncherPackage = packageManager.resolveActivity(launcherIntent,
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            mSettingsPackage = "com.android.car.settings";
+        }
     }
 
     @After
@@ -84,7 +91,7 @@ public class SettingsPanelTest {
 
         String currentPackage = mDevice.getCurrentPackageName();
 
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -93,7 +100,7 @@ public class SettingsPanelTest {
 
         String currentPackage = mDevice.getCurrentPackageName();
 
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -102,7 +109,7 @@ public class SettingsPanelTest {
 
         String currentPackage = mDevice.getCurrentPackageName();
 
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -111,14 +118,14 @@ public class SettingsPanelTest {
 
         String currentPackage = mDevice.getCurrentPackageName();
 
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
     }
 
     @Test
     public void internetPanel_correctTitle() {
         launchInternetPanel();
 
-        final UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
 
         assertThat(titleView.getText()).isEqualTo("Internet Connectivity");
     }
@@ -127,7 +134,7 @@ public class SettingsPanelTest {
     public void volumePanel_correctTitle() {
         launchVolumePanel();
 
-        final UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
 
         assertThat(titleView.getText()).isEqualTo("Volume");
     }
@@ -136,7 +143,7 @@ public class SettingsPanelTest {
     public void nfcPanel_correctTitle() {
         launchNfcPanel();
 
-        final UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
 
         assertThat(titleView.getText()).isEqualTo("NFC");
     }
@@ -145,7 +152,7 @@ public class SettingsPanelTest {
     public void wifiPanel_correctTitle() {
         launchWifiPanel();
 
-        final UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
 
         assertThat(titleView.getText()).isEqualTo("Wi\u2011Fi");
     }
@@ -155,15 +162,15 @@ public class SettingsPanelTest {
         // Launch panel
         launchInternetPanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_DONE)).click();
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isNotEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isNotEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -171,15 +178,15 @@ public class SettingsPanelTest {
         // Launch panel
         launchVolumePanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_DONE)).click();
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isNotEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isNotEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -187,15 +194,15 @@ public class SettingsPanelTest {
         // Launch panel
         launchNfcPanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_DONE)).click();
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isNotEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isNotEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -203,15 +210,15 @@ public class SettingsPanelTest {
         // Launch panel
         launchWifiPanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_DONE)).click();
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isNotEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isNotEqualTo(mSettingsPackage);
     }
 
     @Test
@@ -219,16 +226,16 @@ public class SettingsPanelTest {
         // Launch panel
         launchInternetPanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
+        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
-        UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
+        UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
         assertThat(titleView).isNull();
     }
 
@@ -237,16 +244,16 @@ public class SettingsPanelTest {
         // Launch panel
         launchVolumePanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
+        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
-        UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
+        UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
         assertThat(titleView).isNull();
     }
 
@@ -255,16 +262,16 @@ public class SettingsPanelTest {
         // Launch panel
         launchNfcPanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
+        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
-        UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
+        UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
         assertThat(titleView).isNull();
     }
 
@@ -273,16 +280,16 @@ public class SettingsPanelTest {
         // Launch panel
         launchWifiPanel();
         String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
+        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(SETTINGS_PACKAGE);
-        UiObject2 titleView = mDevice.findObject(By.res(SETTINGS_PACKAGE, RESOURCE_TITLE));
+        assertThat(currentPackage).isEqualTo(mSettingsPackage);
+        UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
         assertThat(titleView).isNull();
     }
 
@@ -295,6 +302,7 @@ public class SettingsPanelTest {
     }
 
     private void launchNfcPanel() {
+        assumeTrue("device does not support NFC", RequiredServiceRule.hasService("nfc"));
         launchPanel(Settings.Panel.ACTION_NFC);
     }
 
@@ -313,6 +321,6 @@ public class SettingsPanelTest {
         mContext.startActivity(intent);
 
         // Wait for the app to appear
-        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
+        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
     }
 }
