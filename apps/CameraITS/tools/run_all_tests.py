@@ -72,6 +72,24 @@ NOT_YET_MANDATED = {
         'sensor_fusion': []
 }
 
+# Must match mHiddenPhysicalCameraSceneIds in ItsTestActivity.java
+HIDDEN_PHYSICAL_CAMERA_TESTS = {
+        'scene0': [
+                'test_read_write'
+        ],
+        'scene1': [
+                'test_dng_noise_model'
+        ],
+        'scene2': [],
+        'scene2b': [],
+        'scene2c': [],
+        'scene3': [],
+        'scene4': [],
+        'scene5': [],
+        'sensor_fusion': [
+                'test_sensor_fusion'
+        ]
+}
 
 def run_subprocess_with_timeout(cmd, fout, ferr, outdir):
     """Run subprocess with a timeout.
@@ -103,10 +121,11 @@ def run_subprocess_with_timeout(cmd, fout, ferr, outdir):
         return test_code
 
 
-def calc_camera_fov(camera_id):
+def calc_camera_fov(camera_id, hidden_physical_id):
     """Determine the camera field of view from internal params."""
-    with ItsSession(camera_id) as cam:
+    with ItsSession(camera_id, hidden_physical_id) as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         focal_ls = props['android.lens.info.availableFocalLengths']
         if len(focal_ls) > 1:
             print 'Doing capture to determine logical camera focal length'
@@ -204,7 +223,7 @@ def main():
         "scene5": ["doAF=False"]
     }
 
-    camera_ids = []
+    camera_id_combos = []
     scenes = []
     chart_host_id = None
     result_device_id = None
@@ -213,10 +232,13 @@ def main():
     skip_scene_validation = False
     chart_distance = CHART_DISTANCE
     chart_level = CHART_LEVEL
+    one_camera_argv = sys.argv[1:]
 
-    for s in sys.argv[1:]:
+    for s in list(sys.argv[1:]):
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
+            camera_id_combos = its.device.parse_camera_ids(camera_ids)
+            one_camera_argv.remove(s)
         elif s[:7] == "scenes=" and len(s) > 7:
             scenes = s[7:].split(',')
         elif s[:6] == 'chart=' and len(s) > 6:
@@ -342,11 +364,12 @@ def main():
         assert device_bfp == result_device_bfp, assert_err_msg
 
     # user doesn't specify camera id, run through all cameras
-    if not camera_ids:
+    if not camera_id_combos:
         with its.device.ItsSession() as cam:
             camera_ids = cam.get_camera_ids()
+            camera_id_combos = its.device.parse_camera_ids(camera_ids);
 
-    print "Running ITS on camera: %s, scene %s" % (camera_ids, scenes)
+    print "Running ITS on camera: %s, scene %s" % (camera_id_combos, scenes)
 
     if auto_scene_switch:
         # merge_result only supports run_parallel_tests
@@ -362,15 +385,20 @@ def main():
             wake_code = subprocess.call(cmd)
             assert wake_code == 0
 
-    for camera_id in camera_ids:
-        camera_fov = calc_camera_fov(camera_id)
+    for id_combo in camera_id_combos:
+        camera_fov = calc_camera_fov(id_combo.id, id_combo.sub_id)
+        id_combo_string = id_combo.id;
+        has_hidden_sub_camera = id_combo.sub_id is not None
+        if has_hidden_sub_camera:
+            id_combo_string += ":" + id_combo.sub_id
+            scenes = [scene for scene in scenes if HIDDEN_PHYSICAL_CAMERA_TESTS[scene]]
         # Loop capturing images until user confirm test scene is correct
-        camera_id_arg = "camera=" + camera_id
-        print "Preparing to run ITS on camera", camera_id
+        camera_id_arg = "camera=" + id_combo.id
+        print "Preparing to run ITS on camera", id_combo_string, "for scenes ", scenes
 
-        os.mkdir(os.path.join(topdir, camera_id))
+        os.mkdir(os.path.join(topdir, id_combo_string))
         for d in scenes:
-            os.mkdir(os.path.join(topdir, camera_id, d))
+            os.mkdir(os.path.join(topdir, id_combo_string, d))
 
         tot_tests = []
         tot_pass = 0
@@ -382,17 +410,17 @@ def main():
             tests.sort()
             tot_tests.extend(tests)
 
-            summary = "Cam" + camera_id + " " + scene + "\n"
+            summary = "Cam" + id_combo_string + " " + scene + "\n"
             numpass = 0
             numskip = 0
             num_not_mandated_fail = 0
             numfail = 0
             validate_switch = True
             if scene_req[scene] is not None:
-                out_path = os.path.join(topdir, camera_id, scene+".jpg")
+                out_path = os.path.join(topdir, id_combo_string, scene+".jpg")
                 out_arg = "out=" + out_path
                 if scene == 'sensor_fusion':
-                    skip_code = skip_sensor_fusion(camera_id)
+                    skip_code = skip_sensor_fusion(id_combo.id)
                     if rot_rig_id or skip_code == SKIP_RET_CODE:
                         validate_switch = False
                 if skip_scene_validation:
@@ -400,7 +428,7 @@ def main():
                 cmd = None
                 if auto_scene_switch:
                     if (not merge_result_switch or
-                            (merge_result_switch and camera_ids[0] == '0')):
+                            (merge_result_switch and id_combo_string == '0')):
                         scene_arg = 'scene=' + scene
                         fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
@@ -421,7 +449,7 @@ def main():
                 if cmd is not None:
                     valid_scene_code = subprocess.call(cmd, cwd=topdir)
                     assert valid_scene_code == 0
-            print 'Start running ITS on camera %s, %s' % (camera_id, scene)
+            print 'Start running ITS on camera %s, %s' % (id_combo_string, scene)
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             chart_height = CHART_HEIGHT
@@ -431,14 +459,19 @@ def main():
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
                                            chart_distance, CHART_SCALE_START,
                                            CHART_SCALE_STOP, CHART_SCALE_STEP,
-                                           camera_id)
+                                           id_combo.id)
                 chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
                         chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,
                         chart.scale)
             # Run each test, capturing stdout and stderr.
             for (testname, testpath) in tests:
+                # Only pick predefined tests for hidden physical camera
+                if has_hidden_sub_camera and \
+                        testname not in HIDDEN_PHYSICAL_CAMERA_TESTS[scene]:
+                    numskip += 1
+                    continue
                 if auto_scene_switch:
-                    if merge_result_switch and camera_ids[0] == '0':
+                    if merge_result_switch and id_combo_string == '0':
                         # Send an input event to keep the screen not dimmed.
                         # Since we are not using camera of chart screen, FOCUS event
                         # should do nothing but keep the screen from dimming.
@@ -450,7 +483,7 @@ def main():
                         subprocess.call(cmd.split())
                 t0 = time.time()
                 for num_try in range(NUM_TRYS):
-                    outdir = os.path.join(topdir, camera_id, scene)
+                    outdir = os.path.join(topdir, id_combo_string, scene)
                     outpath = os.path.join(outdir, testname+'_stdout.txt')
                     errpath = os.path.join(outdir, testname+'_stderr.txt')
                     if scene == 'sensor_fusion':
@@ -466,7 +499,7 @@ def main():
                             test_code = skip_code
                     if skip_code is not SKIP_RET_CODE:
                         cmd = ['python', os.path.join(os.getcwd(), testpath)]
-                        cmd += sys.argv[1:] + [camera_id_arg] + [chart_loc_arg]
+                        cmd += one_camera_argv + ["Camera="+id_combo_string] + [chart_loc_arg]
                         cmd += [chart_dist_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
                             test_code = run_subprocess_with_timeout(
@@ -527,7 +560,7 @@ def main():
             print "%s compatibility score: %.f/100\n" % (
                     scene, 100.0 * numpass / len(tests))
 
-            summary_path = os.path.join(topdir, camera_id, scene, "summary.txt")
+            summary_path = os.path.join(topdir, id_combo_string, scene, "summary.txt")
             with open(summary_path, "w") as f:
                 f.write(summary)
 
@@ -536,7 +569,10 @@ def main():
                                           else ItsSession.RESULT_FAIL)
             results[scene][ItsSession.SUMMARY_KEY] = summary_path
 
-        print "Compatibility Score: %.f/100" % (100.0 * tot_pass / len(tot_tests))
+        if tot_tests:
+            print "Compatibility Score: %.f/100" % (100.0 * tot_pass / len(tot_tests))
+        else:
+            print "Compatibility Score: 0/100"
 
         msg = "Reporting ITS result to CtsVerifier"
         print msg
@@ -544,9 +580,10 @@ def main():
         if merge_result_switch:
             # results are modified by report_result
             results_backup = copy.deepcopy(results)
-            its.device.report_result(result_device_id, camera_id, results_backup)
+            its.device.report_result(result_device_id, id_combo_string, results_backup)
 
-        its.device.report_result(device_id, camera_id, results)
+        # Report hidden_physical_id results as well.
+        its.device.report_result(device_id, id_combo_string, results)
 
     if auto_scene_switch:
         if merge_result_switch:

@@ -16,19 +16,22 @@
 
 package android.assist.service;
 
-import android.app.Activity;
+import android.assist.common.BaseRemoteCallbackActivity;
 import android.assist.common.Utils;
-import android.content.Intent;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.RemoteCallback;
 import android.util.Log;
 
-public class DelayedAssistantActivity extends Activity {
+public class DelayedAssistantActivity extends BaseRemoteCallbackActivity {
     static final String TAG = "DelayedAssistantActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        RemoteCallback remoteCallback = getIntent().getParcelableExtra(Utils.EXTRA_REMOTE_CALLBACK);
+
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(this, MainInteractionService.class));
         intent.putExtra(Utils.EXTRA_REGISTER_RECEIVER, true);
@@ -37,8 +40,15 @@ public class DelayedAssistantActivity extends Activity {
                 getIntent().getIntExtra(Utils.DISPLAY_WIDTH_KEY, 0));
         intent.putExtra(Utils.DISPLAY_HEIGHT_KEY,
                 getIntent().getIntExtra(Utils.DISPLAY_HEIGHT_KEY, 0));
+        intent.putExtra(Utils.EXTRA_REMOTE_CALLBACK, remoteCallback);
         finish();
         ComponentName serviceName = startService(intent);
         Log.i(TAG, "Started service: " + serviceName);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        notify(Utils.TEST_ACTIVITY_DESTROY);
     }
 }

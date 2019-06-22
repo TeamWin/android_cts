@@ -18,35 +18,25 @@ package android.assist.service;
 
 import android.app.assist.AssistContent;
 import android.app.assist.AssistStructure;
-import android.assist.service.R;
+import android.assist.common.Utils;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.service.voice.VoiceInteractionSession;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Date;
-
-import android.assist.common.Utils;
-import android.view.WindowManager;
-
 public class MainInteractionSession extends VoiceInteractionSession {
     static final String TAG = "MainInteractionSession";
 
-    Intent mStartIntent;
     Context mContext;
     Bundle mAssistData = new Bundle();
 
@@ -58,7 +48,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
     private BroadcastReceiver mReceiver;
     private String mTestName;
     private View mContentView;
-    private RemoteCallback mContextReadyCallback;
+    private RemoteCallback mRemoteCallback;
 
     MainInteractionSession(Context context) {
         super(context);
@@ -75,11 +65,15 @@ public class MainInteractionSession extends VoiceInteractionSession {
                 if (action.equals(Utils.HIDE_SESSION)) {
                     hide();
                 }
+
+                Bundle bundle = new Bundle();
+                bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.HIDE_SESSION_COMPLETE);
+                mRemoteCallback.sendResult(bundle);
             }
         };
         IntentFilter filter = new IntentFilter();
         filter.addAction(Utils.HIDE_SESSION);
-        mContext.registerReceiver(mReceiver, filter);
+        mContext.registerReceiver(mReceiver, filter, Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
     }
 
     @Override
@@ -109,7 +103,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
         mCurColor = args.getInt(Utils.SCREENSHOT_COLOR_KEY);
         mDisplayHeight = args.getInt(Utils.DISPLAY_HEIGHT_KEY);
         mDisplayWidth = args.getInt(Utils.DISPLAY_WIDTH_KEY);
-        mContextReadyCallback = args.getParcelable(Utils.EXTRA_CALLBACK_CONTEXT_READY);
+        mRemoteCallback = args.getParcelable(Utils.EXTRA_REMOTE_CALLBACK);
         super.onShow(args, showFlags);
         if (mContentView == null) return; // Happens when ui is not enabled.
         mContentView.getViewTreeObserver().addOnPreDrawListener(
@@ -120,11 +114,12 @@ public class MainInteractionSession extends VoiceInteractionSession {
                     Display d = mContentView.getDisplay();
                     Point displayPoint = new Point();
                     d.getRealSize(displayPoint);
-                    Intent intent = new Intent(Utils.BROADCAST_CONTENT_VIEW_HEIGHT);
-                    intent.putExtra(Utils.EXTRA_CONTENT_VIEW_HEIGHT, mContentView.getHeight());
-                    intent.putExtra(Utils.EXTRA_CONTENT_VIEW_WIDTH, mContentView.getWidth());
-                    intent.putExtra(Utils.EXTRA_DISPLAY_POINT, displayPoint);
-                    mContext.sendBroadcast(intent);
+                    Bundle bundle = new Bundle();
+                    bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.BROADCAST_CONTENT_VIEW_HEIGHT);
+                    bundle.putInt(Utils.EXTRA_CONTENT_VIEW_HEIGHT, mContentView.getHeight());
+                    bundle.putInt(Utils.EXTRA_CONTENT_VIEW_WIDTH, mContentView.getWidth());
+                    bundle.putParcelable(Utils.EXTRA_DISPLAY_POINT, displayPoint);
+                    mRemoteCallback.sendResult(bundle);
                     return true;
                 }
             });
@@ -215,17 +210,10 @@ public class MainInteractionSession extends VoiceInteractionSession {
         } else if (!hasReceivedScreenshot) {
             Log.i(TAG, "waiting for screenshot before broadcasting results");
         } else {
-            if (mContextReadyCallback != null) {
-                Log.i(TAG, "maybeBroadcastResults(): calling callback " + mContextReadyCallback);
-                mContextReadyCallback.sendResult(mAssistData);
-            } else {
-                // TODO(b/133431034): should only use callbacks
-                Log.w(TAG, "maybeBroadcastResults(): no callback; broadcasting instead");
-                Intent intent = new Intent(Utils.BROADCAST_ASSIST_DATA_INTENT);
-                intent.putExtras(mAssistData);
-                Log.i(TAG, "broadcasting: " + intent+ ", Bundle = " + mAssistData);
-                mContext.sendBroadcast(intent);
-            }
+            Bundle bundle = new Bundle();
+            bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.BROADCAST_ASSIST_DATA_INTENT);
+            bundle.putAll(mAssistData);
+            mRemoteCallback.sendResult(bundle);
 
             hasReceivedAssistData = false;
             hasReceivedScreenshot = false;

@@ -223,6 +223,9 @@ public class DefaultDialerOperationsTest extends InstrumentationTestCase {
      * package name for the preloaded system dialer app.
      */
     public void testGetSystemDialer() throws Exception {
+        if (!TestUtils.shouldTestTelecom(mContext)) {
+            return;
+        }
         String reportedDialer = mTelecomManager.getSystemDialerPackage();
         assertEquals(mSystemDialer, reportedDialer);
     }
