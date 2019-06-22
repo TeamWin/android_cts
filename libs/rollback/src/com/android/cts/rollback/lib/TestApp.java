@@ -40,7 +40,7 @@ public class TestApp {
     private final String[] mResourceNames;
     private final boolean mIsApex;
 
-    private TestApp(String name, String packageName, long versionCode, boolean isApex,
+    public TestApp(String name, String packageName, long versionCode, boolean isApex,
             String... resourceNames) {
         mName = name;
         mPackageName = packageName;
