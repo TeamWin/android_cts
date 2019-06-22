@@ -161,7 +161,7 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void updateAlarmManagerConstants() throws IOException {
-        String cmd = "settings put global alarm_manager_constants min_interval="
+        String cmd = "settings put global alarm_manager_constants min_futurity=0,min_interval="
                 + MIN_REPEATING_INTERVAL;
         mUiDevice.executeShellCommand(cmd);
     }
