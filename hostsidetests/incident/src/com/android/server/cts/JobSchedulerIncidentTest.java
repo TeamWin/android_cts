@@ -185,7 +185,8 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= ji.getTriggerContentUpdateDelayMs());
         assertTrue(0 <= ji.getTriggerContentMaxDelayMs());
         testNetworkRequestProto(ji.getRequiredNetwork());
-        assertTrue(0 <= ji.getTotalNetworkBytes());
+        // JobInfo.NETWORK_BYTES_UNKNOWN (= -1) is a valid value.
+        assertTrue(-1 <= ji.getTotalNetworkBytes());
         assertTrue(0 <= ji.getMinLatencyMs());
         assertTrue(0 <= ji.getMaxExecutionDelayMs());
         JobStatusDumpProto.JobInfo.Backoff bp = ji.getBackoffPolicy();

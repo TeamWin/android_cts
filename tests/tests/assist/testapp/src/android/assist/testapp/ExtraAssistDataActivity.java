@@ -15,10 +15,8 @@
  */
 package android.assist.testapp;
 
-import android.app.Activity;
 import android.app.assist.AssistContent;
 import android.assist.common.Utils;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -27,7 +25,7 @@ import android.util.Log;
  * provide extra information to the assistant. Verify that the data passed from the activity matches
  * the data received in {@link android.service.voice.VoiceInteractionSession}.
  */
-public class ExtraAssistDataActivity extends Activity {
+public class ExtraAssistDataActivity extends BaseThirdPartyActivity {
     private static final String TAG = "ExtraAssistDataActivity";
 
     @Override
@@ -46,11 +44,5 @@ public class ExtraAssistDataActivity extends Activity {
         } catch (Exception e) {
             Log.i(TAG, "Failed to get Structured JSON to put into the AssistContent.");
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        sendBroadcast(new Intent(Utils.APP_3P_HASRESUMED));
     }
 }

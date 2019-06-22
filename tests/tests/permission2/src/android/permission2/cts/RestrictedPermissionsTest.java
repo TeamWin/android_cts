@@ -597,14 +597,52 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void onSideLoadAllRestrictedPermissionsWhitelisted() throws Exception {
-        installRestrictedPermissionUserApp();
+    public void onSideLoadRestrictedPermissionsWhitelistingDefault() throws Exception {
+        installRestrictedPermissionUserApp(new SessionParams(SessionParams.MODE_FULL_INSTALL));
 
-        // All restricted permissions whitelisted on side-load.
-        assertAllRestrictedPermissionWhitelisted();
+        // All restricted permissions whitelisted on side-load by default
+        eventually(this::assertAllRestrictedPermissionWhitelisted);
     }
 
-    private static void installRestrictedPermissionUserApp() throws Exception {
+    @Test
+    @AppModeFull
+    public void onSideLoadAllRestrictedPermissionsWhitelisted() throws Exception {
+        SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+        params.setWhitelistedRestrictedPermissions(SessionParams.RESTRICTED_PERMISSIONS_ALL);
+
+        installRestrictedPermissionUserApp(params);
+
+        eventually(this::assertAllRestrictedPermissionWhitelisted);
+    }
+
+    @Test
+    @AppModeFull
+    public void onSideLoadWhitelistSomePermissions() throws Exception {
+        Set<String> whitelistedPermissions = new ArraySet<>();
+        whitelistedPermissions.add(Manifest.permission.SEND_SMS);
+        whitelistedPermissions.add(Manifest.permission.READ_CALL_LOG);
+
+        SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+        params.setWhitelistedRestrictedPermissions(whitelistedPermissions);
+
+        installRestrictedPermissionUserApp(params);
+
+        eventually(() -> assertRestrictedPermissionWhitelisted(whitelistedPermissions));
+    }
+
+    @Test
+    @AppModeFull
+    public void onSideLoadWhitelistNoPermissions() throws Exception {
+        SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+        params.setWhitelistedRestrictedPermissions(Collections.emptySet());
+
+        installRestrictedPermissionUserApp(params);
+
+        eventually(this::assertNoRestrictedPermissionWhitelisted);
+    }
+
+    private static void installRestrictedPermissionUserApp(@NonNull SessionParams params)
+            throws Exception {
         final CountDownLatch installLatch = new CountDownLatch(1);
 
         // Create an install result receiver.
@@ -627,8 +665,6 @@ public class RestrictedPermissionsTest {
             // Create a session.
             final PackageInstaller packageInstaller = getContext()
                     .getPackageManager().getPackageInstaller();
-            final SessionParams params = new SessionParams(
-                    SessionParams.MODE_FULL_INSTALL);
             final int sessionId = packageInstaller.createSession(params);
             final Session session = packageInstaller.openSession(sessionId);
 
@@ -862,8 +898,8 @@ public class RestrictedPermissionsTest {
                         | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE);
 
             assertThat(whitelistedPermissions).isNotNull();
-            assertThat(whitelistedPermissions).containsExactlyElementsIn(
-                    expectedWhitelistedPermissions);
+            assertThat(whitelistedPermissions).named("Whitelisted permissions")
+                    .containsExactlyElementsIn(expectedWhitelistedPermissions);
 
             // Also assert that apps ops are properly set
             for (String permission : getRestrictedPermissionsOfApp()) {
