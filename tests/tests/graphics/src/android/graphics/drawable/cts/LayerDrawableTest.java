@@ -1513,6 +1513,16 @@ public class LayerDrawableTest {
         assertEquals(height, dr.getIntrinsicHeight());
     }
 
+    @Test
+    public void testIsProjectedWithNullLayer() {
+        try {
+            LayerDrawable dr = new LayerDrawable(new Drawable[] {null});
+            dr.isProjected();
+        } catch (NullPointerException excep) {
+            fail("isProjected should support null child layer drawables");
+        }
+    }
+
     // Since Mockito can't mock or spy on protected methods, we have a custom extension
     // of Drawable to track calls to protected methods. This class also has empty implementations
     // of the base abstract methods. In addition, this class also updates its padding on every

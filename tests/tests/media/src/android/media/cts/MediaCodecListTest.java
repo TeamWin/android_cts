@@ -794,6 +794,13 @@ public class MediaCodecListTest extends AndroidTestCase {
                                 covered);
                     }
                 }
+                // non-standard points should not be covered by any other performance point
+                for (VideoCapabilities.PerformancePoint pp2 : points) {
+                    // using object equality to determine otherness
+                    assertFalse(pp2 + " for " + info.getCanonicalName()
+                            + " for media type " + mediaType + " covers " + pp,
+                            pp2 != pp && pp2.covers(pp));
+                }
             }
         }
     }

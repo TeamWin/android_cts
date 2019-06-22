@@ -19,6 +19,7 @@ package android.assist.service;
 import static android.service.voice.VoiceInteractionSession.SHOW_WITH_ASSIST;
 import static android.service.voice.VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
 
+import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -31,17 +32,14 @@ import android.service.voice.VoiceInteractionService;
 import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
 
-import java.lang.Exception;
-import java.lang.Override;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 public class MainInteractionService extends VoiceInteractionService {
     static final String TAG = "MainInteractionService";
     private Intent mIntent;
     private boolean mReady = false;
-    private BroadcastReceiver mBroadcastReceiver, mResumeReceiver;
-    private CountDownLatch mResumeLatch;
+    private BroadcastReceiver mBroadcastReceiver;
+    private AutoResetLatch mResumeLatch = new AutoResetLatch();
+
+    private RemoteCallback mRemoteCallback;
 
     @Override
     public void onCreate() {
@@ -60,8 +58,20 @@ public class MainInteractionService extends VoiceInteractionService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand received - intent: " + intent);
         mIntent = intent;
+        mRemoteCallback = mIntent.getParcelableExtra(Utils.EXTRA_REMOTE_CALLBACK);
         maybeStart();
         return START_NOT_STICKY;
+    }
+
+    protected void notify(String action) {
+        if (mRemoteCallback == null) {
+            throw new IllegalStateException("Test ran expecting " + action + " but did not register"
+                    + "callback");
+        } else {
+            Bundle bundle = new Bundle();
+            bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, action);
+            mRemoteCallback.sendResult(bundle);
+        }
     }
 
     private void maybeStart() {
@@ -71,28 +81,25 @@ public class MainInteractionService extends VoiceInteractionService {
         } else {
             if (isActiveService(this, new ComponentName(this, getClass()))) {
                 if (mIntent.getBooleanExtra(Utils.EXTRA_REGISTER_RECEIVER, false)) {
-                    mResumeLatch = new CountDownLatch(1);
                     if (mBroadcastReceiver == null) {
                         mBroadcastReceiver = new MainInteractionServiceBroadcastReceiver();
                         IntentFilter filter = new IntentFilter();
                         filter.addAction(Utils.BROADCAST_INTENT_START_ASSIST);
-                        registerReceiver(mBroadcastReceiver, filter);
+                        registerReceiver(mBroadcastReceiver, filter,
+                                Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
                         Log.i(TAG, "Registered receiver to start session later");
-
-                        IntentFilter resumeFilter = new IntentFilter(Utils.APP_3P_HASRESUMED);
-                        mResumeReceiver = new MainServiceAppResumeReceiver();
-                        registerReceiver(mResumeReceiver, resumeFilter);
-                        Log.i(TAG, "Registered receiver for resuming activity");
                     }
-                    sendBroadcast(new Intent(Utils.ASSIST_RECEIVER_REGISTERED));
-              } else {
-                  Log.i(TAG, "Yay! about to start session");
-                  Bundle bundle = new Bundle();
-                  bundle.putString(Utils.TESTCASE_TYPE,
-                          mIntent.getStringExtra(Utils.TESTCASE_TYPE));
-                  showSession(bundle, VoiceInteractionSession.SHOW_WITH_ASSIST |
-                      VoiceInteractionSession.SHOW_WITH_SCREENSHOT);
-              }
+                    notify(Utils.ASSIST_RECEIVER_REGISTERED);
+                } else {
+                    Log.i(TAG, "Yay! about to start session");
+                    Bundle bundle = new Bundle();
+                    bundle.putString(Utils.TESTCASE_TYPE,
+                            mIntent.getStringExtra(Utils.TESTCASE_TYPE));
+                    bundle.putParcelable(Utils.EXTRA_REMOTE_CALLBACK,
+                            mIntent.getParcelableExtra(Utils.EXTRA_REMOTE_CALLBACK));
+                    showSession(bundle, VoiceInteractionSession.SHOW_WITH_ASSIST |
+                            VoiceInteractionSession.SHOW_WITH_SCREENSHOT);
+                }
             } else {
                 Log.wtf(TAG, "**** Not starting MainInteractionService because" +
                         " it is not set as the current voice interaction service");
@@ -104,53 +111,20 @@ public class MainInteractionService extends VoiceInteractionService {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.i(TAG, "Received broadcast to start session now: " + intent);
-            if (intent.getAction().equals(Utils.BROADCAST_INTENT_START_ASSIST)) {
+            String action = intent.getAction();
+            if (action.equals(Utils.BROADCAST_INTENT_START_ASSIST)) {
                 String testCaseName = intent.getStringExtra(Utils.TESTCASE_TYPE);
-                Log.i(TAG, "trying to start 3p activity: " + testCaseName);
                 Bundle extras = intent.getExtras();
                 if (extras == null) {
                     extras = new Bundle();
                 }
-                RemoteCallback contextReadycallback = intent
-                        .getParcelableExtra(Utils.EXTRA_CALLBACK_CONTEXT_READY);
-                extras.putParcelable(Utils.EXTRA_CALLBACK_CONTEXT_READY, contextReadycallback);
-                if (testCaseName.equals(Utils.SCREENSHOT)) {
-                    try {
-                        // extra info to pass along to 3p activity.
 
-                        Intent intent3p = new Intent();
-                        Log.i(TAG, "starting the 3p app again");
-                        intent3p.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent3p.setAction("android.intent.action.TEST_APP_" + testCaseName);
-                        intent3p.setComponent(Utils.getTestAppComponent(testCaseName));
-                        intent3p.putExtras(extras);
-                        startActivity(intent3p);
-                        if (!MainInteractionService.this.mResumeLatch
-                                .await(Utils.ACTIVITY_ONRESUME_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                            Log.i(TAG, "waited for 3p activity to resume");
-                        }
-                    } catch (Exception e) {
-                        Log.i(TAG, "failed so reload 3p app: " + e.toString());
-                    }
-                }
                 extras.putString(Utils.TESTCASE_TYPE, mIntent.getStringExtra(Utils.TESTCASE_TYPE));
+                extras.putParcelable(Utils.EXTRA_REMOTE_CALLBACK, mRemoteCallback);
                 MainInteractionService.this.showSession(
                         extras, SHOW_WITH_ASSIST | SHOW_WITH_SCREENSHOT);
-            }
-        }
-    }
-
-    private class MainServiceAppResumeReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(Utils.APP_3P_HASRESUMED)) {
-                Log.i(MainInteractionService.TAG,
-                    "3p activity has resumed in this new receiver");
-                if (MainInteractionService.this.mResumeLatch != null) {
-                    MainInteractionService.this.mResumeLatch.countDown();
-                } else {
-                    Log.i(TAG, "mResumeLatch was null");
-                }
+            } else {
+                Log.e(TAG, "MainInteractionServiceBroadcastReceiver: invalid action " + action);
             }
         }
     }

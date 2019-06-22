@@ -429,6 +429,7 @@ def collect_data(fps, w, h, test_length):
     """
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.read_3a and
                              its.caps.sensor_fusion(props) and
                              props["android.lens.facing"] != FACING_EXTERNAL and

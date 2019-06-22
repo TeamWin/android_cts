@@ -321,6 +321,10 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * @throws Exception
      */
     public void testSelfManagedCallNotLogged() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         // First, complete the call which should not be logged.
         Uri unloggedAddress = getTestNumber();
         placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, unloggedAddress);
@@ -433,6 +437,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 ? CallAudioState.ROUTE_WIRED_HEADSET
                 : CallAudioState.ROUTE_EARPIECE;
 
+        counter.clearArgs();
         connection.setAudioRoute(CallAudioState.ROUTE_SPEAKER);
         counter.waitForPredicate(new Predicate<CallAudioState>() {
                 @Override
@@ -441,6 +446,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 }
             }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
+        counter.clearArgs();
         connection.setAudioRoute(secondRoute);
         counter.waitForPredicate(new Predicate<CallAudioState>() {
             @Override
