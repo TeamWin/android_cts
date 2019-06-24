@@ -26,6 +26,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import java.util.regex.Pattern;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +66,7 @@ public class PowerManagerTests extends BaseHostJUnit4Test {
      * @throws Exception
      */
     @Test
+    @Ignore("b/135053775")
     public void testCachedProcessReleasesWakeLock() throws Exception {
         // Turn screen on and unlock keyguard
         mDevice.executeShellCommand("input keyevent 26; input keyevent 82");
