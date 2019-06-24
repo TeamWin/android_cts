@@ -16,15 +16,15 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.cts.install.lib.testapp.A"
-    android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionCode="3"
+    android:versionName="3.0" >
 
 
     <uses-sdk android:minSdkVersion="19" />
 
-    <application android:label="Test App A1">
+    <application android:label="Test App A3">
         <receiver android:name="com.android.cts.install.lib.testapp.ProcessUserData"
-                  android:exported="true" />
+            android:exported="true" />
         <activity android:name="com.android.cts.install.lib.testapp.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

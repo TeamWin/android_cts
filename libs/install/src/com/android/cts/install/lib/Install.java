@@ -108,6 +108,9 @@ public class Install {
         for (String resourceName : app.getResourceNames()) {
             try (OutputStream os = session.openWrite(resourceName, 0, -1);
                     InputStream is = loader.getResourceAsStream(resourceName);) {
+                if (is == null) {
+                    throw new IOException("Resource " + resourceName + " not found");
+                }
                 byte[] buffer = new byte[4096];
                 int n;
                 while ((n = is.read(buffer)) >= 0) {
