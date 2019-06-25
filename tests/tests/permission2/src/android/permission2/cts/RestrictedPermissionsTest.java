@@ -613,6 +613,30 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
+    public void restrictedWritePermDoesNotImplyIsolatedStorageAccess() throws Exception {
+        // Install with whitelisted read permissions.
+        installApp(APK_USES_STORAGE_OPT_OUT_29,
+                Collections.singleton(Manifest.permission.READ_EXTERNAL_STORAGE), null);
+
+        // It does not matter that write is restricted as the storage access level is only
+        // controlled by the read perm
+        assertHasFullStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void whitelistedWritePermDoesNotImplyFullStorageAccess() throws Exception {
+        // Install with whitelisted read permissions.
+        installApp(APK_USES_STORAGE_OPT_OUT_29,
+                Collections.singleton(Manifest.permission.WRITE_EXTERNAL_STORAGE), null);
+
+        // It does not matter that write is white listed as the storage access level is only
+        // controlled by the read perm
+        assertHasIsolatedStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
     public void onSideLoadRestrictedPermissionsWhitelistingDefault() throws Exception {
         installRestrictedPermissionUserApp(new SessionParams(SessionParams.MODE_FULL_INSTALL));
 
