@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.*;
@@ -530,10 +531,13 @@ public class UsageStatsTest {
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
         Context context = InstrumentationRegistry.getContext();
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            // Skip the test for wearable device.
-            return;
-        }
+
+        // Skip the test for wearable devices and televisions; neither has a notification shade.
+        assumeFalse("Test cannot run on a watch- notification shade is not shown",
+                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse("Test cannot run on a television- notifications are not shown",
+                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
+
         NotificationManager mNotificationManager =
             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         int importance = NotificationManager.IMPORTANCE_DEFAULT;
