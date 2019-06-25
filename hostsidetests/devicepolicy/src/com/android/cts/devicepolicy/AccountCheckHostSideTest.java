@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.LargeTest;
+
 import com.android.tradefed.log.LogUtil.CLog;
 
 import junit.framework.AssertionFailedError;
@@ -147,6 +149,7 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
         return Integer.parseInt(count) > 0;
     }
 
+    @LargeTest
     public void testAccountCheck() throws Exception {
         if (!mHasFeature) {
             return;

@@ -16,11 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.cts.devicepolicy.BaseDevicePolicyTest.Settings;
-
-import java.io.File;
-import java.lang.Exception;
+import android.platform.test.annotations.FlakyTest;
 
 /**
  * This class is used for tests that need to do something special before setting the device
@@ -101,6 +97,7 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testCannotSetDeviceOwnerWhenAccountPresent() throws Exception {
         if (!mHasFeature) {
             return;

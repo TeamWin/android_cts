@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.LargeTest;
+
 /**
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi25.
@@ -74,6 +76,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
      *  unlocked, and cannot remove the password even when FBE is unlocked.
      */
     @Override
+    @LargeTest
     public void testResetPasswordFbe() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;

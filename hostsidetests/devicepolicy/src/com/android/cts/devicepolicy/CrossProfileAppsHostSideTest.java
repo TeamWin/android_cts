@@ -2,6 +2,8 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -10,6 +12,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
+
 import javax.annotation.Nullable;
 
 /**
@@ -57,10 +60,14 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         installAppAsUser(SIMPLE_APP_APK, userId);
     }
 
+    @FlakyTest
+    @LargeTest
     public void testPrimaryUserToPrimaryUser() throws Exception {
         verifyCrossProfileAppsApi(mPrimaryUserId, mPrimaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
+    @FlakyTest
+    @LargeTest
     public void testPrimaryUserToManagedProfile() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -68,6 +75,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         verifyCrossProfileAppsApi(mPrimaryUserId, mProfileId, TARGET_USER_TEST_CLASS);
     }
 
+    @LargeTest
     public void testManagedProfileToPrimaryUser() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -75,6 +83,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, TARGET_USER_TEST_CLASS);
     }
 
+    @LargeTest
     public void testStartActivity() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -82,6 +91,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS);
     }
 
+    @LargeTest
     public void testPrimaryUserToSecondaryUser() throws Exception {
         if (!mCanTestMultiUser) {
             return;
@@ -89,6 +99,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         verifyCrossProfileAppsApi(mPrimaryUserId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
+    @LargeTest
     public void testSecondaryUserToManagedProfile() throws Exception {
         if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
@@ -97,6 +108,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
 
     }
 
+    @LargeTest
     public void testManagedProfileToSecondaryUser() throws Exception {
         if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
@@ -104,6 +116,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         verifyCrossProfileAppsApi(mProfileId, mSecondaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
+    @LargeTest
     public void testStartMainActivity_logged() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -123,6 +136,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
                         .build());
     }
 
+    @LargeTest
     public void testGetTargetUserProfiles_logged() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
