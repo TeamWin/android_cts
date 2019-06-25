@@ -16,13 +16,20 @@
 
 package com.android.cts.install.lib;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.HandlerThread;
+
 
 import androidx.test.InstrumentationRegistry;
 
@@ -137,6 +144,65 @@ public class InstallUtils {
         } else if (status > 0) {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
+        }
+    }
+
+    private static final String NO_RESPONSE = "NO RESPONSE";
+
+    /**
+     * Calls into the test app to process user data.
+     * Asserts if the user data could not be processed or was version
+     * incompatible with the previously processed user data.
+     */
+    public static void processUserData(String packageName) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(packageName,
+                "com.android.cts.install.lib.testapp.ProcessUserData"));
+        Context context = InstrumentationRegistry.getContext();
+
+        HandlerThread handlerThread = new HandlerThread("RollbackTestHandlerThread");
+        handlerThread.start();
+
+        // It can sometimes take a while after rollback before the app will
+        // receive this broadcast, so try a few times in a loop.
+        String result = NO_RESPONSE;
+        for (int i = 0; result.equals(NO_RESPONSE) && i < 5; ++i) {
+            BlockingQueue<String> resultQueue = new LinkedBlockingQueue<>();
+            context.sendOrderedBroadcast(intent, null, new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (getResultCode() == 1) {
+                        resultQueue.add("OK");
+                    } else {
+                        // If the test app doesn't receive the broadcast or
+                        // fails to set the result data, then getResultData
+                        // here returns the initial NO_RESPONSE data passed to
+                        // the sendOrderedBroadcast call.
+                        resultQueue.add(getResultData());
+                    }
+                }
+            }, new Handler(handlerThread.getLooper()), 0, NO_RESPONSE, null);
+
+            try {
+                result = resultQueue.take();
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        assertThat(result).isEqualTo("OK");
+    }
+
+    /**
+     * Checks whether the given package is installed on /system and was not updated.
+     */
+    static boolean isSystemAppWithoutUpdate(String packageName) {
+        PackageInfo pi = getPackageInfo(packageName);
+        if (pi == null) {
+            return false;
+        } else {
+            return ((pi.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
+                    && ((pi.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0);
         }
     }
 }

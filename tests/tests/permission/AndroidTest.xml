@@ -50,6 +50,7 @@
         <option name="push" value="CtsAppWithSharedUidThatRequestsLocationPermission28.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsLocationPermission28.apk" />
         <option name="push" value="CtsAppWithSharedUidThatRequestsLocationPermission29.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsLocationPermission29.apk" />
         <option name="push" value="CtsAppThatRequestsCalendarContactsBodySensorCustomPermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsCalendarContactsBodySensorCustomPermission.apk" />
+        <option name="push" value="CtsAppThatRunsRationaleTests.apk->/data/local/tmp/cts/permissions/CtsAppThatRunsRationaleTests.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
