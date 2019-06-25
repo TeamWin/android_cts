@@ -20,12 +20,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.media.MediaController2;
+import android.media.MediaMetadata;
 import android.media.MediaSession2;
 import android.media.Session2Command;
 import android.media.Session2CommandGroup;
+import android.media.Session2Token;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -42,8 +46,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -139,9 +146,106 @@ public class MediaController2Test {
     }
 
     @Test
-    public void testBuilder() {
-        // TODO: Try passing null arguments in setter methods in builder, and check they throws
-        // the exception.
+    public void testBuilder_withIllegalArguments() {
+        final Session2Token token = new Session2Token(
+                mContext, new ComponentName(mContext, this.getClass()));
+
+        try {
+            MediaController2.Builder builder = new MediaController2.Builder(null, token);
+            fail("null context shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            MediaController2.Builder builder = new MediaController2.Builder(mContext, null);
+            fail("null token shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
+            builder.setConnectionHints(null);
+            fail("null connectionHints shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
+            builder.setControllerCallback(null, new MediaController2.ControllerCallback() {});
+            fail("null Executor shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
+            builder.setControllerCallback(Executors.newSingleThreadExecutor(), null);
+            fail("null ControllerCallback shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    @Test
+    public void testBuilder_setConnectionHints_withFrameworkParcelable() throws Exception {
+        final List<MediaSession2.ControllerInfo> controllerInfoList = new ArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        try (MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setId("testBuilder_setConnectionHints_withFrameworkParcelable")
+                .setSessionCallback(sHandlerExecutor, new MediaSession2.SessionCallback() {
+                    @Override
+                    public Session2CommandGroup onConnect(MediaSession2 session,
+                            MediaSession2.ControllerInfo controller) {
+                        if (controller.getUid() == Process.myUid()) {
+                            controllerInfoList.add(controller);
+                            latch.countDown();
+                            return new Session2CommandGroup.Builder().build();
+                        }
+                        return null;
+                    }
+                })
+                .build()) {
+
+            final Session2Token frameworkParcelable = new Session2Token(
+                    mContext, new ComponentName(mContext, this.getClass()));
+            final String testKey = "test_key";
+
+            Bundle connectionHints = new Bundle();
+            connectionHints.putParcelable(testKey, frameworkParcelable);
+
+            MediaController2 controller = new MediaController2.Builder(mContext, session.getToken())
+                    .setConnectionHints(connectionHints)
+                    .build();
+            assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+
+            Bundle connectionHintsOut = controllerInfoList.get(0).getConnectionHints();
+            assertTrue(connectionHintsOut.containsKey(testKey));
+            assertEquals(frameworkParcelable, connectionHintsOut.getParcelable(testKey));
+        }
+    }
+
+    @Test
+    public void testBuilder_setConnectionHints_withCustomParcelable() {
+        final Session2Token token = new Session2Token(
+                mContext, new ComponentName(mContext, this.getClass()));
+        final String testKey = "test_key";
+        final MediaSession2Test.CustomParcelable customParcelable =
+                new MediaSession2Test.CustomParcelable(1);
+
+        Bundle connectionHints = new Bundle();
+        connectionHints.putParcelable(testKey, customParcelable);
+
+        try (MediaController2 controller = new MediaController2.Builder(mContext, token)
+                .setConnectionHints(connectionHints)
+                .build()) {
+            fail("Custom Parcelables shouldn't be accepted!");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
     }
 
     @Test
