@@ -150,7 +150,7 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF clickPoint = new PointF(10, 20);
+        PointF clickPoint = new PointF(mStartPoint.x, mStartPoint.y);
         dispatch(clickWithinView(clickPoint), GESTURE_COMPLETION_TIMEOUT);
         waitForMotionEvents(any(MotionEvent.class), 2);
 
@@ -183,7 +183,7 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF clickPoint = new PointF(10, 20);
+        PointF clickPoint = new PointF(mStartPoint.x, mStartPoint.y);
         dispatch(longClickWithinView(clickPoint),
                 ViewConfiguration.getLongPressTimeout() + GESTURE_COMPLETION_TIMEOUT);
 
@@ -203,8 +203,8 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF startPoint = new PointF(10, 20);
-        PointF endPoint = new PointF(20, 40);
+        PointF startPoint = new PointF(mStartPoint.x, mStartPoint.y);
+        PointF endPoint = new PointF(mStartPoint.x + 10, mStartPoint.y + 20);
         int gestureTime = 500;
 
         dispatch(swipeWithinView(startPoint, endPoint, gestureTime),
@@ -241,11 +241,11 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF startPoint = new PointF(10, 20);
-        PointF intermediatePoint1 = new PointF(10, 21);
-        PointF intermediatePoint2 = new PointF(11, 21);
-        PointF intermediatePoint3 = new PointF(11, 22);
-        PointF endPoint = new PointF(11, 22);
+        PointF startPoint = new PointF(mStartPoint.x, mStartPoint.y);
+        PointF intermediatePoint1 = new PointF(mStartPoint.x, mStartPoint.y + 1);
+        PointF intermediatePoint2 = new PointF(mStartPoint.x + 1, mStartPoint.y + 1);
+        PointF intermediatePoint3 = new PointF(mStartPoint.x + 1, mStartPoint.y + 2);
+        PointF endPoint = new PointF(mStartPoint.x + 1, mStartPoint.y + 2);
         int gestureTime = 1000;
 
         dispatch(swipeWithinView(startPoint, endPoint, gestureTime),
@@ -265,7 +265,7 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF centerPoint = new PointF(50, 60);
+        PointF centerPoint = new PointF(mStartPoint.x, mStartPoint.y);
         int startSpacing = 100;
         int endSpacing = 50;
         int gestureTime = 500;
@@ -397,10 +397,10 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF start = new PointF(10, 20);
-        PointF mid1 = new PointF(20, 20);
-        PointF mid2 = new PointF(20, 25);
-        PointF end = new PointF(20, 30);
+        PointF start = new PointF(mStartPoint.x, mStartPoint.y);
+        PointF mid1 = new PointF(mStartPoint.x + 10, mStartPoint.y);
+        PointF mid2 = new PointF(mStartPoint.x + 10, mStartPoint.y + 5);
+        PointF end = new PointF(mStartPoint.x + 10, mStartPoint.y + 10);
         int gestureTime = 500;
 
         StrokeDescription s1 = new StrokeDescription(
@@ -431,9 +431,9 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF startPoint = new PointF(10, 20);
-        PointF midPoint = new PointF(20, 20);
-        PointF endPoint = new PointF(20, 30);
+        PointF startPoint = new PointF(mStartPoint.x, mStartPoint.y);
+        PointF midPoint = new PointF(mStartPoint.x + 10, mStartPoint.y);
+        PointF endPoint = new PointF(mStartPoint.x + 10, mStartPoint.y + 10);
         int gestureTime = 500;
 
         StrokeDescription stroke1 =
@@ -491,9 +491,9 @@ public class AccessibilityGestureDispatchTest extends
             return;
         }
 
-        PointF startPoint = new PointF(10, 20);
-        PointF midPoint = new PointF(20, 20);
-        PointF endPoint = new PointF(20, 30);
+        PointF startPoint = new PointF(mStartPoint.x, mStartPoint.y);
+        PointF midPoint = new PointF(mStartPoint.x + 10, mStartPoint.y);
+        PointF endPoint = new PointF(mStartPoint.x + 10, mStartPoint.y + 10);
         int gestureTime = 500;
 
         StrokeDescription stroke1 =
