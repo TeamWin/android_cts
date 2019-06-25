@@ -174,6 +174,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testMicrophoneMuteIntent() throws Exception {
+        // Skip this test for automotive.
+        // This tests listens for ACTION_MICROPHONE_MUTE_CHANGED which AudioService only broadcasts
+        // to system user. Automotive devices, which runs in secondary user, will fail this test.
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            return;
+        }
         final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver();
         final boolean initialMicMute = mAudioManager.isMicrophoneMute();
         try {
