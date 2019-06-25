@@ -404,6 +404,9 @@ public class AudioPlaybackCaptureTest {
         assertFalse("Expected data, but only silence was recorded",
                     onlySilence(rawBuffer.asShortBuffer()));
 
+        final int nativeBufferSize = audioRecord.getBufferSizeInFrames()
+                                     * audioRecord.getChannelCount();
+
         // Stop the media projection
         CountDownLatch stopCDL = new CountDownLatch(1);
         mMediaProjection.registerCallback(new MediaProjection.Callback() {
@@ -415,12 +418,18 @@ public class AudioPlaybackCaptureTest {
         assertTrue("Could not stop the MediaProjection in " + STOP_TIMEOUT_MS + "ms",
                    stopCDL.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-        int retry = 10;
+        // With the remote submix disabled, no new samples should feed the track buffer.
+        // As a result, read() should fail after at most the total buffer size read.
+        // Even if the projection is stopped, the policy unregisteration is async,
+        // so double that to be on the conservative side.
+        final int MAX_READ_SIZE = 2 * nativeBufferSize;
+        int readSize = 0;
         ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
-        while (audioRecord.read(buffer, BUFFER_SIZE) > 0) {
-            assertTrue("audioRecord never stopped, current state is " + audioRecord.getState(),
-                       retry > 0);
-            retry--;
+        int status;
+        while ((status = audioRecord.read(buffer, BUFFER_SIZE)) > 0) {
+            readSize += status;
+            assertThat("audioRecord did not stop, current state is "
+                       + audioRecord.getRecordingState(), readSize, lessThan(MAX_READ_SIZE));
         }
         audioRecord.stop();
         audioRecord.startRecording();
