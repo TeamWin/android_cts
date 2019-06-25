@@ -1015,7 +1015,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void setUp() {
             status = READY;
-            MockListener.getInstance().requestInterruptionFilter(
+            MockListener.getInstance().requestListenerHints(
                     MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
         }
 
