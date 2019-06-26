@@ -36,6 +36,7 @@ import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
+import android.util.Size;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
@@ -506,6 +507,16 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    private Size getVideoSizeForTest(VideoCapabilities vidCaps) {
+        Size size = new Size(176, 144);  // Use QCIF by default.
+        if (vidCaps != null && !vidCaps.isSizeSupported(size.getWidth(), size.getHeight())) {
+            int minWidth = vidCaps.getSupportedWidths().getLower();
+            int minHeight = vidCaps.getSupportedHeightsFor(minWidth).getLower();
+            size = new Size(minWidth, minHeight);
+        }
+        return size;
+    }
+
     private MediaFormat createVideoFormatForBitrateMode(String mime, int width, int height,
             int bitrateMode, CodecCapabilities caps) {
         MediaCodecInfo.EncoderCapabilities encoderCaps = caps.getEncoderCapabilities();
@@ -559,12 +570,14 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                 if (!isVideo) {
                     continue;
                 }
+                CodecCapabilities caps = info.getCapabilitiesForType(mime);
+                Size size = getVideoSizeForTest(caps.getVideoCapabilities());
                 skipped = false;
 
                 int numSupportedModes = 0;
                 for (int mode : modes) {
                     MediaFormat format = createVideoFormatForBitrateMode(
-                            mime, 176, 144, mode, info.getCapabilitiesForType(mime));
+                            mime, size.getWidth(), size.getHeight(), mode, caps);
                     if (format == null) {
                         continue;
                     }
@@ -617,9 +630,10 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                 MediaCodec codec = null;
                 MediaFormat format = null;
                 try {
+                    Size size = getVideoSizeForTest(caps.getVideoCapabilities());
                     codec = MediaCodec.createByCodecName(info.getName());
-                    // implicit assumption that QCIF video is always valid.
-                    format = createReasonableVideoFormat(caps, mime, isEncoder, 176, 144);
+                    format = createReasonableVideoFormat(
+                            caps, mime, isEncoder, size.getWidth(), size.getHeight());
                     format.setInteger(
                             MediaFormat.KEY_COLOR_FORMAT,
                             caps.COLOR_FormatYUV420Flexible);
