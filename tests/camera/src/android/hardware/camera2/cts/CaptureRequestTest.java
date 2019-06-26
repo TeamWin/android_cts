@@ -1485,11 +1485,67 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         // TODO: jchowdhary@, b/130323585, this line can be removed.
         requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
         CaptureRequest flashOffRequest = requestBuilder.build();
-        mSession.setRepeatingRequest(flashOffRequest, listener, mHandler);
-        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_TORCH);
-        result = listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
-        mCollector.expectEquals("Flash state result must be READY", CaptureResult.FLASH_STATE_READY,
-                result.get(CaptureResult.FLASH_STATE));
+        int flashModeOffRequests = captureRequestsSynchronized(flashOffRequest, 2, listener,
+                mHandler);
+        // We check that the Nth frame's capture result has flash state as either PARTIAL / READY
+        // and the N+1th frame has its flash state as READY (to take into account flash off ramp
+        // time). For devices supporting per frame control, N is the 1st frame passed into
+        // captureRequestsSynchronized. No two frames can have their flash state as PARTIAL.
+        CaptureResult firstTorchOffResult = null;
+        CaptureResult secondTorchOffResult = null;
+        String torchOffDebugStr = "Timed out waiting for torch off result";
+        if (mStaticInfo.isPerFrameControlSupported()) {
+            firstTorchOffResult =
+                    listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
+            secondTorchOffResult =
+                    listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
+
+        } else {
+            CaptureResult maybeFirstNonFiredResult;
+            int i = 0;
+            while (i < flashModeOffRequests - 1) {
+                maybeFirstNonFiredResult = listener.getCaptureResultForRequest(flashOffRequest,
+                        NUM_RESULTS_WAIT_TIMEOUT);
+                i++;
+                Integer flashState = maybeFirstNonFiredResult.get(CaptureResult.FLASH_STATE);
+                torchOffDebugStr = "Flash not turned off in time";
+                if (flashState != CaptureResult.FLASH_STATE_FIRED) {
+                    firstTorchOffResult = maybeFirstNonFiredResult;
+                    secondTorchOffResult = listener.getCaptureResultForRequest(flashOffRequest,
+                            NUM_RESULTS_WAIT_TIMEOUT);
+                    torchOffDebugStr = "Timed out waiting for torch off result";
+                    break;
+                }
+            }
+            // The next results should all have their flash state as READY
+            for(int j = i + 1 ; j < flashModeOffRequests; j++) {
+                CaptureResult expectedReadyResult =
+                        listener.getCaptureResultForRequest(flashOffRequest,
+                                NUM_RESULTS_WAIT_TIMEOUT);
+                mCollector.expectEquals("Flash state must remain READY after torch is turned off",
+                        CaptureResult.FLASH_STATE_READY,
+                        expectedReadyResult.get(CaptureResult.FLASH_STATE));
+            }
+        }
+        mCollector.expectNotEquals("first torch off result: " + torchOffDebugStr, null,
+                firstTorchOffResult);
+        mCollector.expectNotEquals("second torch off result: " + torchOffDebugStr, null,
+                secondTorchOffResult);
+        check2TorchOffStates(firstTorchOffResult, secondTorchOffResult);
+    }
+
+    private void check2TorchOffStates(CaptureResult first, CaptureResult second) {
+        Integer flashState = first.get(CaptureResult.FLASH_STATE);
+        // The first frame must have its flash state as FLASH_STATE_READY or
+        // FLASH_STATE_PARTIAL.
+        int [] validStates = new int[] { CaptureRequest.FLASH_STATE_READY,
+              CaptureRequest.FLASH_STATE_PARTIAL};
+        mCollector.expectContains("Flash state must be either PARTIAL or READY", validStates,
+                flashState);
+        // The next frame must have its flash state as FLASH_STATE_READY
+        flashState = second.get(CaptureResult.FLASH_STATE);
+        mCollector.expectEquals("Flash state result must be READY",
+                CaptureResult.FLASH_STATE_READY, flashState);
     }
 
     /**
