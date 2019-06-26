@@ -25,9 +25,10 @@ import static org.junit.Assert.assertEquals;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Point;
-import android.view.Display;
+import android.graphics.Rect;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
@@ -74,11 +75,10 @@ public class WindowInputTests {
     @Test
     public void testMoveWindowAndTap() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
-        final Display display = wm.getDefaultDisplay();
         Point displaySize = new Point();
-        display.getSize(displaySize);
+        mActivity.getDisplay().getSize(displaySize);
 
-        WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
         mClickCount = 0;
 
         // Set up window.
@@ -94,26 +94,32 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        final Point locationOnScreen = new Point();
-        // Move the window to a random location on screen and attempt to tap on view multiple times.
+        WindowInsets insets = mActivity.getWindow().getDecorView().getRootWindowInsets();
+        final Rect windowBounds = new Rect(insets.getSystemWindowInsetLeft(),
+                insets.getSystemWindowInsetTop(),
+                displaySize.x - insets.getSystemWindowInsetRight(),
+                displaySize.y - insets.getSystemWindowInsetBottom());
+
+        // Move the window to a random location in the window and attempt to tap on view multiple
+        // times.
+        final Point locationInWindow = new Point();
         for (int i = 0; i < TOTAL_NUMBER_OF_CLICKS; i++) {
-            selectRandomLocationOnScreen(displaySize, locationOnScreen);
+            selectRandomLocationInWindow(windowBounds, locationInWindow);
             mActivityRule.runOnUiThread(() -> {
-                p.x = locationOnScreen.x;
-                p.y = locationOnScreen.y;
+                p.x = locationInWindow.x;
+                p.y = locationInWindow.y;
                 wm.updateViewLayout(mView, p);
             });
             mInstrumentation.waitForIdleSync();
-            CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mView, 0 /* offsetX */,
-                    0 /* offsetY */);
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         }
 
         assertEquals(TOTAL_NUMBER_OF_CLICKS, mClickCount);
     }
 
-    private void selectRandomLocationOnScreen(Point displaySize, Point outLocation) {
-        int randomX = mRandom.nextInt(displaySize.x);
-        int randomY = mRandom.nextInt(displaySize.y);
+    private void selectRandomLocationInWindow(Rect bounds, Point outLocation) {
+        int randomX = mRandom.nextInt(bounds.right - bounds.left) + bounds.left;
+        int randomY = mRandom.nextInt(bounds.bottom - bounds.top) + bounds.top;
         outLocation.set(randomX, randomY);
     }
 }
