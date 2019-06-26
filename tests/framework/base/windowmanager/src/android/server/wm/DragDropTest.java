@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -375,6 +377,9 @@ public class DragDropTest {
         } catch (InterruptedException e) {
             fail("Got InterruptedException while waiting for START event");
         }
+
+        // This is needed after startDragAndDrop to ensure the drag window is ready.
+        getInstrumentation().getUiAutomation().syncInputTransactions();
     }
 
     /**
