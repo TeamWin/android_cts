@@ -47,16 +47,11 @@ public class ThreadsTest {
 
         long threadId1 = Telephony.Threads.getOrCreateThreadId(mContext, destination1);
 
-        Uri inboxUri = saveToTelephony(threadId1, destination1, "testThreadDeletion body");
-
-        // The URI returned by the insert operation points to the message ID in the inbox. Though
-        // this is a valid ID for queries, the SMS provider does not handle it for delete
-        // operations. This takes the ID off the end of the URI and creates a URI pointing at that
-        // row from the root of the SMS provider.
-        Uri rootUri =
-                Uri.withAppendedPath(Telephony.Sms.CONTENT_URI, inboxUri.getLastPathSegment());
-
-        int deletedCount = mContentResolver.delete(rootUri, null, null);
+        int deletedCount =
+                mContentResolver.delete(
+                        saveToTelephony(threadId1, destination1, "testThreadDeletion body"),
+                        null,
+                        null);
 
         assertThat(deletedCount).isEqualTo(1);
 
