@@ -34,7 +34,7 @@ public class ScreenshotTest extends AssistTestBase {
         startTestActivity(TEST_CASE_TYPE);
     }
 
-    public void testRedScreenshot() throws Exception {
+    public void testRedScreenshot() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
@@ -47,12 +47,14 @@ public class ScreenshotTest extends AssistTestBase {
         bundle.putInt(Utils.SCREENSHOT_COLOR_KEY, Color.RED);
         start3pApp(TEST_CASE_TYPE, bundle);
 
-        delayAndStartSession(Color.RED);
-        verifyAssistDataNullness(false, false, false, false);
-        assertTrue(mScreenshotMatches);
+        eventuallyWithSessionClose(() -> {
+            delayAndStartSession(Color.RED);
+            verifyAssistDataNullness(false, false, false, false);
+            assertTrue(mScreenshotMatches);
+        });
     }
 
-    public void testGreenScreenshot() throws Exception {
+    public void testGreenScreenshot() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
@@ -65,12 +67,14 @@ public class ScreenshotTest extends AssistTestBase {
         bundle.putInt(Utils.SCREENSHOT_COLOR_KEY, Color.GREEN);
         start3pApp(TEST_CASE_TYPE, bundle);
 
-        delayAndStartSession(Color.GREEN);
-        verifyAssistDataNullness(false, false, false, false);
-        assertTrue(mScreenshotMatches);
+        eventuallyWithSessionClose(() -> {
+            delayAndStartSession(Color.GREEN);
+            verifyAssistDataNullness(false, false, false, false);
+            assertTrue(mScreenshotMatches);
+        });
     }
 
-    public void testBlueScreenshot() throws Exception {
+    public void testBlueScreenshot() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
@@ -83,17 +87,14 @@ public class ScreenshotTest extends AssistTestBase {
         bundle.putInt(Utils.SCREENSHOT_COLOR_KEY, Color.BLUE);
         start3pApp(TEST_CASE_TYPE, bundle);
 
-        delayAndStartSession(Color.BLUE);
-        verifyAssistDataNullness(false, false, false, false);
-        assertTrue(mScreenshotMatches);
+        eventuallyWithSessionClose(() -> {
+            delayAndStartSession(Color.BLUE);
+            verifyAssistDataNullness(false, false, false, false);
+            assertTrue(mScreenshotMatches);
+        });
     }
 
     private void delayAndStartSession(int color) throws Exception {
-        // Screenshot testing requires the entire screen to settle, including layout requests
-        // and any animations. The time is arbitrary as there is no good event for knowing when
-        // the Activity has settled.
-        Thread.sleep(350);
-
         Bundle extras = new Bundle();
         extras.putInt(Utils.SCREENSHOT_COLOR_KEY, color);
         final AutoResetLatch latch = startSession(TEST_CASE_TYPE, extras);

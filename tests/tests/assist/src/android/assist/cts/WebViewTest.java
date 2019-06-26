@@ -46,7 +46,7 @@ public class WebViewTest extends AssistTestBase {
         }
     }
 
-    public void testWebView() throws Exception {
+    public void testWebView() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
@@ -59,15 +59,13 @@ public class WebViewTest extends AssistTestBase {
         waitForAssistantToBeReady();
         waitForTestActivity();
 
-        // WebView doesn't render fast enough before test runs, so use some arbirary delay
-        Thread.sleep(350);
-
-        final AutoResetLatch latch = startSession();
-        waitForContext(latch);
-        verifyAssistDataNullness(false, false, false, false);
-        verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
-                false /*FLAG_SECURE set*/);
-        verifyAssistStructureHasWebDomain(Utils.WEBVIEW_HTML_DOMAIN);
-        verifyAssistStructureHasLocaleList(Utils.WEBVIEW_LOCALE_LIST);
+        eventuallyWithSessionClose(() -> {
+            waitForContext(startSession());
+            verifyAssistDataNullness(false, false, false, false);
+            verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
+                    false /*FLAG_SECURE set*/);
+            verifyAssistStructureHasWebDomain(Utils.WEBVIEW_HTML_DOMAIN);
+            verifyAssistStructureHasLocaleList(Utils.WEBVIEW_LOCALE_LIST);
+        });
     }
 }
