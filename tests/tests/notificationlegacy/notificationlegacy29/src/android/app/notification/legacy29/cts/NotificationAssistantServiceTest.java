@@ -24,6 +24,7 @@ import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -69,6 +70,7 @@ public class NotificationAssistantServiceTest {
     private TestNotificationAssistant mNotificationAssistantService;
     private TestNotificationListener mNotificationListenerService;
     private NotificationManager mNotificationManager;
+    private ActivityManager mActivityManager;
     private Context mContext;
     private UiAutomation mUi;
 
@@ -80,18 +82,24 @@ public class NotificationAssistantServiceTest {
                 Context.NOTIFICATION_SERVICE);
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
+        mActivityManager = mContext.getSystemService(ActivityManager.class);
     }
 
     @After
     public void tearDown() throws IOException {
         if (mNotificationListenerService != null) mNotificationListenerService.resetData();
-        toggleListenerAccess(false);
-        toggleAssistantAccess(false);
+        if (!mActivityManager.isLowRamDevice()) {
+            toggleListenerAccess(false);
+            toggleAssistantAccess(false);
+        }
         mUi.dropShellPermissionIdentity();
     }
 
     @Test
     public void testOnNotificationEnqueued() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleListenerAccess(true);
         Thread.sleep(SLEEP_TIME);
 
@@ -126,6 +134,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_userSentimentKey() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -157,6 +168,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_importanceKey() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -187,6 +201,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_smartActionKey() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -234,6 +251,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_smartReplyKey() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
         CharSequence smartReply = "Smart Reply!";
 
@@ -277,6 +297,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_importanceKey_notAllowed() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -309,6 +332,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testGetAllowedAssistantCapabilities_permission() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleAssistantAccess(false);
 
         try {
@@ -321,6 +347,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testGetAllowedAssistantCapabilities() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         toggleAssistantAccess(true);
         Thread.sleep(SLEEP_TIME); // wait for assistant to be allowed
         mNotificationAssistantService = TestNotificationAssistant.getInstance();
@@ -350,6 +379,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnActionInvoked_methodExists() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
         final Intent intent = new Intent(Intent.ACTION_MAIN, Telephony.Threads.CONTENT_URI);
 
@@ -367,6 +399,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationDirectReplied_methodExists() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
         // This method has to exist and the call cannot fail
         mNotificationAssistantService.onNotificationDirectReplied("");
@@ -374,6 +409,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationExpansionChanged_methodExists() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
         // This method has to exist and the call cannot fail
         mNotificationAssistantService.onNotificationExpansionChanged("", true, true);
@@ -381,13 +419,19 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationsSeen_methodExists() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
         // This method has to exist and the call cannot fail
-        mNotificationAssistantService.onNotificationsSeen(new ArrayList<String>());
+        mNotificationAssistantService.onNotificationsSeen(new ArrayList<>());
     }
 
     @Test
     public void testOnSuggestedReplySent_methodExists() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
         setUpListeners();
         // This method has to exist and the call cannot fail
         mNotificationAssistantService.onSuggestedReplySent("", "",
@@ -494,6 +538,4 @@ public class NotificationAssistantServiceTest {
             }
         }
     }
-
-
 }
