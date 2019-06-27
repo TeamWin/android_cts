@@ -748,6 +748,11 @@ public class CarrierApiTest extends AndroidTestCase {
         String originalNumber = mTelephonyManager.getLine1Number();
 
         try {
+            // clear any potentially overridden values and cache defaults
+            mTelephonyManager.setLine1NumberForDisplay(null, null);
+            String defaultAlphaTag = mTelephonyManager.getLine1AlphaTag();
+            String defaultNumber = mTelephonyManager.getLine1Number();
+
             assertTrue(mTelephonyManager.setLine1NumberForDisplay(ALPHA_TAG_A, NUMBER_A));
             assertEquals(ALPHA_TAG_A, mTelephonyManager.getLine1AlphaTag());
             assertEquals(NUMBER_A, mTelephonyManager.getLine1Number());
@@ -758,8 +763,8 @@ public class CarrierApiTest extends AndroidTestCase {
 
             // null is used to clear the Line 1 alpha tag and number values.
             assertTrue(mTelephonyManager.setLine1NumberForDisplay(null, null));
-            assertEquals("", mTelephonyManager.getLine1AlphaTag());
-            assertEquals("", mTelephonyManager.getLine1Number());
+            assertEquals(defaultAlphaTag, mTelephonyManager.getLine1AlphaTag());
+            assertEquals(defaultNumber, mTelephonyManager.getLine1Number());
         } finally {
             // Reset original alpha tag and number values.
             mTelephonyManager.setLine1NumberForDisplay(originalAlphaTag, originalNumber);
