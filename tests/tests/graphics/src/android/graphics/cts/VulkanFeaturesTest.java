@@ -292,9 +292,19 @@ public class VulkanFeaturesTest {
     }
 
     private int determineHardwareCompute(JSONObject device) throws JSONException {
-        boolean variablePointers = device.getJSONObject("VK_KHR_variable_pointers")
-                                         .getJSONObject("variablePointerFeaturesKHR")
-                                         .getInt("variablePointers") != 0;
+        boolean variablePointers = false;
+        try {
+            variablePointers = device.getJSONObject("variablePointerFeatures")
+                                             .getInt("variablePointers") != 0;
+        } catch (JSONException exp) {
+            try {
+                variablePointers = device.getJSONObject("VK_KHR_variable_pointers")
+                                                 .getJSONObject("variablePointerFeaturesKHR")
+                                                 .getInt("variablePointers") != 0;
+            }  catch (JSONException exp2) {
+                variablePointers = false;
+            }
+        }
         JSONObject limits = device.getJSONObject("properties").getJSONObject("limits");
         int maxPerStageDescriptorStorageBuffers = limits.getInt("maxPerStageDescriptorStorageBuffers");
         if (DEBUG) {
