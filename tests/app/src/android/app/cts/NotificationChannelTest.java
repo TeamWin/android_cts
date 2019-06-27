@@ -18,6 +18,7 @@ package android.app.cts;
 
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
+import static android.app.NotificationManager.IMPORTANCE_UNSPECIFIED;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -60,11 +61,25 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertTrue(channel.getLightColor() == 0);
         assertTrue(channel.canBubble());
         assertFalse(channel.isImportanceLockedByOEM());
+        assertEquals(IMPORTANCE_UNSPECIFIED, channel.getOriginalImportance());
     }
 
     public void testWriteToParcel() {
         NotificationChannel channel =
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
+        channel.setBypassDnd(true);
+        channel.setOriginalImportance(IMPORTANCE_HIGH);
+        channel.setShowBadge(false);
+        channel.setAllowBubbles(false);
+        channel.setGroup("a thing");
+        channel.setSound(Uri.fromParts("a", "b", "c"),
+                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                        .build());
+        channel.setLightColor(Color.RED);
+        channel.setDeleted(true);
+        channel.setFgServiceShown(true);
+        channel.setVibrationPattern(new long[] {299, 4562});
+        channel.setBlockableSystem(true);
         Parcel parcel = Parcel.obtain();
         channel.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -171,5 +186,18 @@ public class NotificationChannelTest extends AndroidTestCase {
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setImportanceLockedByOEM(true);
         assertTrue(channel.isImportanceLockedByOEM());
+    }
+
+    public void testSystemBlockable() {
+        NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
+        assertEquals(false, channel.isBlockableSystem());
+        channel.setBlockableSystem(true);
+        assertEquals(true, channel.isBlockableSystem());
+    }
+
+    public void testOriginalImportance() {
+        NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
+        channel.setOriginalImportance(IMPORTANCE_HIGH);
+        assertEquals(IMPORTANCE_HIGH, channel.getOriginalImportance());
     }
 }
