@@ -149,7 +149,7 @@ public class RestrictedPermissionsTest {
                 Collections.EMPTY_SET /*grantedPermissions*/);
 
         // Some restricted permission should be whitelisted.
-        eventually(() -> assertRestrictedPermissionWhitelisted(whitelistedPermissions));
+        assertRestrictedPermissionWhitelisted(whitelistedPermissions);
 
         // No restricted permission should be granted.
         assertNoRestrictedPermissionGranted();
@@ -191,7 +191,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_SMS_CALL_LOG_22, whitelistedPermissions, null /*grantedPermissions*/);
 
         // Some restricted permission should be whitelisted.
-        eventually(() -> assertRestrictedPermissionWhitelisted(whitelistedPermissions));
+        assertRestrictedPermissionWhitelisted(whitelistedPermissions);
     }
 
     @Test
@@ -209,28 +209,28 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     public void testLocationBackgroundPermissionWhitelistedAtInstall29() throws Exception {
         installApp(APK_USES_LOCATION_29, null, null);
-        eventually(this::assertAllRestrictedPermissionWhitelisted);
+        assertAllRestrictedPermissionWhitelisted();
     }
 
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionNotWhitelistedAtInstall29() throws Exception {
         installApp(APK_USES_LOCATION_29, Collections.EMPTY_SET, null);
-        eventually(this::assertNoRestrictedPermissionWhitelisted);
+        assertNoRestrictedPermissionWhitelisted();
     }
 
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionWhitelistedAtInstall22() throws Exception {
         installApp(APK_USES_LOCATION_22, null, null);
-        eventually(this::assertAllRestrictedPermissionWhitelisted);
+        assertAllRestrictedPermissionWhitelisted();
     }
 
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionNotWhitelistedAtInstall22() throws Exception {
         installApp(APK_USES_LOCATION_22, Collections.EMPTY_SET, null);
-        eventually(this::assertNoRestrictedPermissionWhitelisted);
+        assertNoRestrictedPermissionWhitelisted();
     }
 
     @Test
@@ -275,7 +275,7 @@ public class RestrictedPermissionsTest {
                 null);
 
         // All restricted permission should be whitelisted.
-        eventually(this::assertAllRestrictedPermissionWhitelisted);
+        assertAllRestrictedPermissionWhitelisted();
 
         // Some restricted permission should be granted.
         assertAllRestrictedPermissionGranted();
@@ -383,7 +383,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -392,7 +392,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -401,7 +401,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -410,7 +410,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -419,7 +419,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -428,7 +428,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -437,7 +437,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -446,7 +446,7 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
 
-        eventually(this::assertHasFullStorageAccess);
+        assertHasFullStorageAccess();
     }
 
     @Test
@@ -475,11 +475,14 @@ public class RestrictedPermissionsTest {
         // Install with no whitelisted permissions.
         installApp(APK_USES_STORAGE_DEFAULT_22, Collections.emptySet(), null);
 
-        // Could not grant permission+app-op as targetSDK<29 and not whitelisted
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
+        eventually(() -> {
+            // Could not grant permission+app-op as targetSDK<29 and not whitelisted
+            assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
 
-        // Permissions are always granted for pre-23 apps
-        assertThat(isPermissionGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+            // Permissions are always granted for pre-23 apps
+            assertThat(
+                    isPermissionGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        });
     }
 
     @Test
@@ -488,11 +491,14 @@ public class RestrictedPermissionsTest {
         // Install with no whitelisted permissions.
         installApp(APK_USES_STORAGE_OPT_IN_22, Collections.emptySet(), null);
 
-        // Could not grant permission as targetSDK<29 and not whitelisted
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
+        eventually(() -> {
+            // Could not grant permission as targetSDK<29 and not whitelisted
+            assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
 
-        // Permissions are always granted for pre-23 apps
-        assertThat(isPermissionGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+            // Permissions are always granted for pre-23 apps
+            assertThat(
+                    isPermissionGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        });
     }
 
     @Test
@@ -502,7 +508,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_22, null, null);
 
         // Could grant permission
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -512,7 +519,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_22, null, null);
 
         // Could grant permission
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -522,7 +530,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, Collections.emptySet(), null);
 
         // Could not grant permission as targetSDK<29 and not whitelisted
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse());
     }
 
     @Test
@@ -532,7 +541,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_28, Collections.emptySet(), null);
 
         // Could not grant permission as targetSDK<29 and not whitelisted
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse());
     }
 
     @Test
@@ -542,7 +552,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, null, null);
 
         // Could grant permission
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -552,7 +563,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_IN_28, null, null);
 
         // Could grant permission
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -562,7 +574,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_29, Collections.emptySet(), null);
 
         // Could grant permission as targetSDK=29 apps can always grant
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -572,7 +585,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_OUT_29, Collections.emptySet(), null);
 
         // Could grant permission as targetSDK=29 apps can always grant
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -582,7 +596,8 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_29, null, null);
 
         // Could grant permission as targetSDK=29 apps can always grant
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
     }
 
     @Test
@@ -592,7 +607,32 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null, null);
 
         // Could grant permission as targetSDK=29 apps can always grant
-        assertThat(isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        eventually(() -> assertThat(
+                isGranted(PKG, Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue());
+    }
+
+    @Test
+    @AppModeFull
+    public void restrictedWritePermDoesNotImplyIsolatedStorageAccess() throws Exception {
+        // Install with whitelisted read permissions.
+        installApp(APK_USES_STORAGE_OPT_OUT_29,
+                Collections.singleton(Manifest.permission.READ_EXTERNAL_STORAGE), null);
+
+        // It does not matter that write is restricted as the storage access level is only
+        // controlled by the read perm
+        assertHasFullStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void whitelistedWritePermDoesNotImplyFullStorageAccess() throws Exception {
+        // Install with whitelisted read permissions.
+        installApp(APK_USES_STORAGE_OPT_OUT_29,
+                Collections.singleton(Manifest.permission.WRITE_EXTERNAL_STORAGE), null);
+
+        // It does not matter that write is white listed as the storage access level is only
+        // controlled by the read perm
+        assertHasIsolatedStorageAccess();
     }
 
     @Test
@@ -601,7 +641,7 @@ public class RestrictedPermissionsTest {
         installRestrictedPermissionUserApp(new SessionParams(SessionParams.MODE_FULL_INSTALL));
 
         // All restricted permissions whitelisted on side-load by default
-        eventually(this::assertAllRestrictedPermissionWhitelisted);
+        assertAllRestrictedPermissionWhitelisted();
     }
 
     @Test
@@ -612,7 +652,7 @@ public class RestrictedPermissionsTest {
 
         installRestrictedPermissionUserApp(params);
 
-        eventually(this::assertAllRestrictedPermissionWhitelisted);
+        assertAllRestrictedPermissionWhitelisted();
     }
 
     @Test
@@ -627,7 +667,7 @@ public class RestrictedPermissionsTest {
 
         installRestrictedPermissionUserApp(params);
 
-        eventually(() -> assertRestrictedPermissionWhitelisted(whitelistedPermissions));
+        assertRestrictedPermissionWhitelisted(whitelistedPermissions);
     }
 
     @Test
@@ -638,7 +678,7 @@ public class RestrictedPermissionsTest {
 
         installRestrictedPermissionUserApp(params);
 
-        eventually(this::assertNoRestrictedPermissionWhitelisted);
+        assertNoRestrictedPermissionWhitelisted();
     }
 
     private static void installRestrictedPermissionUserApp(@NonNull SessionParams params)
@@ -701,8 +741,9 @@ public class RestrictedPermissionsTest {
         runWithShellPermissionIdentity(() -> {
             AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
             final int uid = getContext().getPackageManager().getPackageUid(PKG, 0);
-            assertThat(appOpsManager.unsafeCheckOpRawNoThrow(AppOpsManager.OPSTR_LEGACY_STORAGE,
-                    uid, PKG)).isEqualTo(AppOpsManager.MODE_ALLOWED);
+            eventually(() -> assertThat(appOpsManager.unsafeCheckOpRawNoThrow(
+                    AppOpsManager.OPSTR_LEGACY_STORAGE,
+                    uid, PKG)).isEqualTo(AppOpsManager.MODE_ALLOWED));
         });
     }
 
@@ -710,8 +751,9 @@ public class RestrictedPermissionsTest {
         runWithShellPermissionIdentity(() -> {
             AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
             final int uid = getContext().getPackageManager().getPackageUid(PKG, 0);
-            assertThat(appOpsManager.unsafeCheckOpRawNoThrow(AppOpsManager.OPSTR_LEGACY_STORAGE,
-                    uid, PKG)).isNotEqualTo(AppOpsManager.MODE_ALLOWED);
+            eventually(() -> assertThat(appOpsManager.unsafeCheckOpRawNoThrow(
+                    AppOpsManager.OPSTR_LEGACY_STORAGE,
+                    uid, PKG)).isNotEqualTo(AppOpsManager.MODE_ALLOWED));
         });
     }
 
@@ -886,7 +928,7 @@ public class RestrictedPermissionsTest {
     private void assertRestrictedPermissionWhitelisted(
             @NonNull Set<String> expectedWhitelistedPermissions) throws Exception {
         final PackageManager packageManager = getContext().getPackageManager();
-        runWithShellPermissionIdentity(() -> {
+    eventually(() -> runWithShellPermissionIdentity(() -> {
             final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
             final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
                     PackageManager.GET_PERMISSIONS);
@@ -939,7 +981,7 @@ public class RestrictedPermissionsTest {
                 assertThat(appOpsManager.unsafeCheckOpRawNoThrow(op,
                         packageInfo.applicationInfo.uid, PKG)).named(op).isIn(possibleModes);
             }
-        });
+        }));
     }
 
     private void assertAllRestrictedPermissionGranted() throws Exception {
