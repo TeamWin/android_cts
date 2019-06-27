@@ -499,7 +499,7 @@ def main():
                             test_code = skip_code
                     if skip_code is not SKIP_RET_CODE:
                         cmd = ['python', os.path.join(os.getcwd(), testpath)]
-                        cmd += one_camera_argv + ["Camera="+id_combo_string] + [chart_loc_arg]
+                        cmd += one_camera_argv + ["camera="+id_combo_string] + [chart_loc_arg]
                         cmd += [chart_dist_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
                             test_code = run_subprocess_with_timeout(
