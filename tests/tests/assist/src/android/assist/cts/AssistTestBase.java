@@ -44,11 +44,16 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.ThrowingRunnable;
+import com.android.compatibility.common.util.Timeout;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
@@ -64,6 +69,15 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     // TODO: once tests are migrated to JUnit 4, use a @BeforeClass method or StateChangerRule
     // to avoid this hack
     private static boolean mFirstTest = true;
+
+    private static final Timeout TIMEOUT = new Timeout(
+            "AssistTestBaseTimeout",
+            10000,
+            2F,
+            10000
+    );
+
+    private static final long SLEEP_BEFORE_RETRY_MS = 250L;
 
     protected ActivityManager mActivityManager;
     private TestStartActivity mTestActivity;
@@ -189,18 +203,11 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
      * Starts the shim service activity
      */
     protected void startTestActivity(String testName) {
-        RemoteCallback remoteCallback = new RemoteCallback((result) -> {
-            String action = result.getString(Utils.EXTRA_REMOTE_CALLBACK_ACTION);
-            if (mActionLatchReceiver != null) {
-                mActionLatchReceiver.onAction(result, action);
-            }
-        });
-
         Intent intent = new Intent();
         mTestName = testName;
         intent.setAction("android.intent.action.TEST_START_ACTIVITY_" + testName);
         intent.putExtra(Utils.TESTCASE_TYPE, testName);
-        intent.putExtra(Utils.EXTRA_REMOTE_CALLBACK, remoteCallback);
+        intent.putExtra(Utils.EXTRA_REMOTE_CALLBACK, mRemoteCallback);
         setActivityIntent(intent);
         mTestActivity = getActivity();
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
@@ -588,6 +595,30 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
         mScreenshotMatches = assistData.getBoolean(Utils.COMPARE_SCREENSHOT_KEY, false);
     }
 
+    protected void eventuallyWithSessionClose(@NonNull ThrowingRunnable runnable) throws Throwable {
+        AtomicReference<Throwable> innerThrowable = new AtomicReference<>();
+        try {
+            TIMEOUT.run(getClass().getName(), SLEEP_BEFORE_RETRY_MS, () -> {
+                try {
+                    runnable.run();
+                    return runnable;
+                } catch (Throwable throwable) {
+                    // Immediately close the session so the next run can redo its action
+                    mContext.sendBroadcast(new Intent(Utils.HIDE_SESSION));
+                    mSessionCompletedLatch.await(2, TimeUnit.SECONDS);
+                    innerThrowable.set(throwable);
+                    return null;
+                }
+            });
+        } catch (Throwable throwable) {
+            Throwable inner = innerThrowable.get();
+            if (inner != null) {
+                throw inner;
+            } else {
+                throw throwable;
+            }
+        }
+    }
 
     protected enum StructureEnabled {
         TRUE("1"), FALSE("0");
