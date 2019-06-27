@@ -67,4 +67,18 @@ public class Poc16_12 extends SecurityTestCase {
             return result.substring(index + pattern.length());
         }, getDevice());
     }
+
+    /**
+     *  b/72496732
+     */
+    @SecurityTest(minPatchLevel = "2016-12")
+    public void testPocCVE_2016_8400() throws Exception {
+        safeReboot();
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPoc("CVE-2016-8400", getDevice(), 60);
+        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(
+            "Fatal signal 11.*?>>> /system/bin/mediaserver <<<",
+            logcat);
+    }
 }
