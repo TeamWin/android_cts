@@ -15,10 +15,7 @@
  */
 package android.location.cts;
 
-import android.os.Build;
-import android.os.SystemProperties;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 /**
  * Base Test Case class for all Gnss Tests.
@@ -36,11 +33,6 @@ public abstract class GnssTestCase extends AndroidTestCase {
 
     // On devices using newer hardware, GNSS measurement support is required.
     protected boolean isMeasurementTestStrict() {
-        // Enforce strict measurement test on devices with first API level at least P.
-        if (SystemProperties.getInt("ro.product.first_api_level", 0) >= Build.VERSION_CODES.P) {
-            return true;
-        }
-
         return (mTestLocationManager.getLocationManager().getGnssYearOfHardware() >=
                 MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED);
     }
