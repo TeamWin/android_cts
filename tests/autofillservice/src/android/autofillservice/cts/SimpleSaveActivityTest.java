@@ -405,9 +405,11 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
                 .setVisitor((contexts, builder) -> {
                     final AutofillId passwordId =
                             findAutofillIdByResourceId(contexts.get(1), ID_PASSWORD);
+                    final AutofillId inputId =
+                            findAutofillIdByResourceId(contexts.get(0), ID_INPUT);
                     builder.setSaveInfo(new SaveInfo.Builder(
                             SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
-                            new AutofillId[] {passwordId})
+                            new AutofillId[] {inputId, passwordId})
                             .build());
                 })
                 .build());
@@ -435,6 +437,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Get password from 2nd request.
         final AssistStructure structure2 = saveRequest.contexts.get(1).getStructure();
+        assertTextAndValue(findNodeByResourceId(structure2, ID_INPUT), "108");
         assertTextAndValue(findNodeByResourceId(structure2, ID_PASSWORD), "42");
     }
 
