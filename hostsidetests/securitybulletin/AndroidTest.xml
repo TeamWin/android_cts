@@ -66,6 +66,7 @@
         <option name="push" value="CVE-2016-2482->/data/local/tmp/CVE-2016-2482" />
         <option name="push" value="CVE-2016-2483->/data/local/tmp/CVE-2016-2483" />
         <option name="push" value="CVE-2016-2481->/data/local/tmp/CVE-2016-2481" />
+        <option name="push" value="CVE-2016-2486->/data/local/tmp/CVE-2016-2486" />
 
         <!--__________________-->
         <!-- Bulletin 2016-07 -->
