@@ -124,8 +124,10 @@ public class Install {
 
     /**
      * Commits the install.
+     *
+     * @return the session id of the install session, if the session is successful.
      */
-    public void commit() throws IOException, InterruptedException {
+    public int commit() throws IOException, InterruptedException {
         final int sessionId;
         final PackageInstaller.Session session;
         if (mIsMultiPackage) {
@@ -154,5 +156,6 @@ public class Install {
         if (mIsStaged) {
             InstallUtils.waitForSessionReady(sessionId);
         }
+        return sessionId;
     }
 }
