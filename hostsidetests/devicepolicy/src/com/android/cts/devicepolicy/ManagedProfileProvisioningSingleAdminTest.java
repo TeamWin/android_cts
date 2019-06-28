@@ -15,6 +15,8 @@
  */
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.FlakyTest;
+
 /**
  * This class tests the provisioning flow with an APK that declares a single receiver with
  * BIND_DEVICE_ADMIN permissions, which was a requirement for the app sending the
@@ -52,6 +54,7 @@ public class ManagedProfileProvisioningSingleAdminTest extends BaseDevicePolicyT
         super.tearDown();
     }
 
+    @FlakyTest
     public void testEXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME() throws Exception {
         if (!mHasFeature) {
             return;

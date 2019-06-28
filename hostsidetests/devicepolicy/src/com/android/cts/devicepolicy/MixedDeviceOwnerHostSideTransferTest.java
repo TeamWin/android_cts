@@ -15,6 +15,8 @@
  */
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.LargeTest;
+
 /**
  * Tests the DPC transfer functionality for device owner. Testing is done by having two dummy DPCs,
  * CtsTransferOwnerOutgoingApp and CtsTransferOwnerIncomingApp. The former is the current DPC
@@ -49,6 +51,7 @@ public class MixedDeviceOwnerHostSideTransferTest extends
         }
     }
 
+    @LargeTest
     public void testTransferAffiliatedProfileOwnershipCompleteCallback() throws Exception {
         if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")) {
             return;
@@ -72,6 +75,7 @@ public class MixedDeviceOwnerHostSideTransferTest extends
                 mUserId);
     }
 
+    @LargeTest
     public void testTransferAffiliatedProfileOwnershipInComp() throws Exception {
         if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")) {
             return;

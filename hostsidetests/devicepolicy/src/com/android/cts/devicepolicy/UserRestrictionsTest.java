@@ -15,6 +15,8 @@
  */
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.FlakyTest;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import javax.annotation.Nonnull;
@@ -128,6 +130,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     }
 
     // Checks restrictions for managed profile.
+    @FlakyTest
     public void testUserRestrictions_managedProfileOwnerOnly() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser || !mHasManagedUserFeature) {
             return;
@@ -150,6 +153,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     /**
      * DO + PO combination.  Make sure global DO restrictions are visible on secondary users.
      */
+    @FlakyTest
     public void testUserRestrictions_layering() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -216,6 +220,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * DO sets profile global restrictions (only ENSURE_VERIFY_APPS), should affect all
      * users (not a particularly special case but to be sure).
      */
+    @FlakyTest
     public void testUserRestrictions_profileGlobalRestrictionsAsDo() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -236,6 +241,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * Managed profile owner sets profile global restrictions (only ENSURE_VERIFY_APPS), should
      * affect all users.
      */
+    @FlakyTest
     public void testUserRestrictions_ProfileGlobalRestrictionsAsPo() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser || !mHasManagedUserFeature) {
             return;
