@@ -16,19 +16,21 @@
 
 package android.accessibility.cts.common;
 
-import android.util.Log;
+import androidx.test.rule.ActivityTestRule;
 
-import org.junit.AssumptionViolatedException;
-import org.junit.rules.TestRule;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 
 /**
- * Custom {@code TestRule} that dump UI data upon test failures.
+ * Custom {@code TestRule} that dump accessibility related data upon test failures.
  *
- * <p>Note: when using other {@code TestRule}s, make sure to use a {@code RuleChain} to ensure it
+ * <p>Note: when using other {@code TestRule}s, make sure to use a {@link RuleChain} to ensure it
  * is applied outside of other rules that can fail a test (otherwise this rule may not know that the
- * test failed).
+ * test failed). If using with {@link ExternalResource}-like {@code TestRule}s, {@link
+ * ActivityTestRule} or {@link InstrumentedAccessibilityService}, this rule should chaining as a
+ * inner rule to resources-like rules so that it will dump data before resources are cleaned up.
  *
  * <p>To capture the output of this rule, add the following to AndroidTest.xml:
  * <pre>
@@ -43,41 +45,20 @@ import org.junit.runners.model.Statement;
  *  <application ... android:requestLegacyExternalStorage="true" ... >
  * </pre>
  */
-public class AccessibilityDumpOnFailureRule implements TestRule {
-
-    private static final String LOG_TAG = AccessibilityDumpOnFailureRule.class.getSimpleName();
-
-    private AccessibilityDumper mDumper = new AccessibilityDumper();
-
-    @Override
-    public Statement apply(Statement base, Description description) {
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    base.evaluate();
-                } catch (Throwable t) {
-                    // Ignore AssumptionViolatedException. It's not a test fail.
-                    if (!(t instanceof AssumptionViolatedException)) {
-                        onTestFailure(description, t);
-                        throw t;
-                    }
-                }
-            }
-        };
-    }
+public class AccessibilityDumpOnFailureRule extends TestWatcher {
 
     public void dump(int flag) {
-        mDumper.dump(flag);
+        AccessibilityDumper.getInstance().dump(flag);
     }
 
-    protected void onTestFailure(Description description, Throwable t) {
-        try {
-            mDumper.setName(getTestNameFrom(description));
-            mDumper.dump();
-        } catch (Throwable throwable) {
-            Log.e(LOG_TAG, "Dump fail", throwable);
-        }
+    @Override
+    protected void starting(Description description) {
+        AccessibilityDumper.getInstance().setName(getTestNameFrom(description));
+    }
+
+    @Override
+    protected void failed(Throwable t, Description description) {
+        AccessibilityDumper.getInstance().dump();
     }
 
     private String getTestNameFrom(Description description) {

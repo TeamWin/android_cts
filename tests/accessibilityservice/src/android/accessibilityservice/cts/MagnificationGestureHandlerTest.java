@@ -18,13 +18,12 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.AsyncUtils.waitOn;
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.GestureUtils.distance;
-import static android.accessibilityservice.cts.utils.GestureUtils.drag;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
+import static android.accessibilityservice.cts.utils.GestureUtils.drag;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.lastPointOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
@@ -37,18 +36,12 @@ import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
 
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
@@ -56,10 +49,8 @@ import android.accessibilityservice.cts.utils.EventCapturingTouchListener;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
-import android.view.MotionEvent;
 import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
@@ -72,10 +63,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * Class for testing magnification.
@@ -102,13 +89,18 @@ public class MagnificationGestureHandlerTest {
     private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class);
 
+    private InstrumentedAccessibilityServiceTestRule<StubMagnificationAccessibilityService>
+            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    StubMagnificationAccessibilityService.class, false);
+
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            .around(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     @Before
     public void setUp() throws Exception {
@@ -124,7 +116,7 @@ public class MagnificationGestureHandlerTest {
                         Settings.Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED, 0) == 1;
         setMagnificationEnabled(true);
 
-        mService = StubMagnificationAccessibilityService.enableSelf(mInstrumentation);
+        mService = mServiceRule.enableService();
         mService.getMagnificationController().addListener(
                 (controller, region, scale, centerX, centerY) -> {
                     mCurrentScale = scale;
@@ -151,8 +143,6 @@ public class MagnificationGestureHandlerTest {
         if (!mHasTouchscreen) return;
 
         setMagnificationEnabled(mOriginalIsMagnificationEnabled);
-
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelfAndRemove));
     }
 
     @Test

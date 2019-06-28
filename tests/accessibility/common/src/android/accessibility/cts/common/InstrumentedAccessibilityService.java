@@ -35,6 +35,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
 import androidx.annotation.CallSuper;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -168,7 +169,8 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
     }
 
     public static <T extends InstrumentedAccessibilityService> T enableService(
-            Instrumentation instrumentation, Class<T> clazz) {
+            Class<T> clazz) {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final String serviceName = clazz.getSimpleName();
         final Context context = instrumentation.getContext();
         final String enabledServices =
@@ -235,7 +237,8 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         return null;
     }
 
-    public static void disableAllServices(Instrumentation instrumentation) {
+    public static void disableAllServices() {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final Object waitLockForA11yOff = new Object();
         final Context context = instrumentation.getContext();
         final AccessibilityManager manager =

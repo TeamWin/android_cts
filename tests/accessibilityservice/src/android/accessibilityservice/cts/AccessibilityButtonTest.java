@@ -14,20 +14,17 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
-
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityButtonController;
-import android.app.Instrumentation;
 import android.platform.test.annotations.AppModeFull;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
@@ -39,9 +36,16 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityButtonTest {
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private InstrumentedAccessibilityServiceTestRule<StubAccessibilityButtonService > mServiceRule =
+            new InstrumentedAccessibilityServiceTestRule<>(StubAccessibilityButtonService.class);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     private StubAccessibilityButtonService mService;
     private AccessibilityButtonController mButtonController;
@@ -61,14 +65,8 @@ public class AccessibilityButtonTest {
 
     @Before
     public void setUp() {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        mService = StubAccessibilityButtonService.enableSelf(instrumentation);
+        mService = mServiceRule.getService();
         mButtonController = mService.getAccessibilityButtonController();
-    }
-
-    @After
-    public void tearDown() {
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test

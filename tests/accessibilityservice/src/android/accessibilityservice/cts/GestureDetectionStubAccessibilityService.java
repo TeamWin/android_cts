@@ -17,8 +17,6 @@ package android.accessibilityservice.cts;
 import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
-
-import android.app.Instrumentation;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.ArrayList;
@@ -32,12 +30,6 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     protected final Object mLock = new Object();
     private ArrayList<Integer> mCollectedGestures = new ArrayList();
     protected ArrayList<Integer> mCollectedEvents = new ArrayList();
-
-    public static GestureDetectionStubAccessibilityService enableSelf(
-            Instrumentation instrumentation) {
-        return InstrumentedAccessibilityService.enableService(
-                instrumentation, GestureDetectionStubAccessibilityService.class);
-    }
 
     @Override
     protected boolean onGesture(int gestureId) {
