@@ -84,6 +84,7 @@ import java.util.concurrent.TimeUnit;
 public class PopupWindowTest {
     private static final int WINDOW_SIZE_DP = 50;
     private static final int CONTENT_SIZE_DP = 30;
+    private static final boolean IGNORE_BOTTOM_DECOR = true;
 
     private Instrumentation mInstrumentation;
     private Context mContext;
@@ -733,87 +734,310 @@ public class PopupWindowTest {
                 mPopupWindow.getWindowLayoutType());
     }
 
+    // TODO: Remove this test as it is now broken down into individual tests.
     @Test
     public void testGetMaxAvailableHeight() {
         mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
 
-        Rect displayFrame = new Rect();
-        View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        final View upperAnchorView = mActivity.findViewById(R.id.anchor_upper);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(upperAnchorView);
+        final Rect displayFrame = getDisplayFrame(upperAnchorView);
 
-        // Move the top of the displayFrame to the anchor position.
-        int[] anchorPos = new int[2];
-        anchorView.getLocationOnScreen(anchorPos);
-        displayFrame.top = anchorPos[1];
+        final int bottomDecorationHeight = displayFrame.bottom - visibleDisplayFrame.bottom;
+        final int availableBelowTopAnchor =
+                visibleDisplayFrame.bottom - getViewBottom(upperAnchorView);
+        final int availableAboveTopAnchor = getLoc(upperAnchorView).y - visibleDisplayFrame.top;
 
-        // Move the bottom of the displayFrame to the bottom of the window.
-        Rect window = new Rect();
-        anchorView.getWindowDisplayFrame(window);
-        displayFrame.bottom = window.bottom;
-
-        // Display height is from the bottom of the action bar to the bottom of the screen.
-        int displayHeight = displayFrame.height();
-        int available = displayHeight - anchorView.getHeight();
-        int maxAvailableHeight = mPopupWindow.getMaxAvailableHeight(anchorView);
-        int maxAvailableHeightIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, 0, true);
+        final int maxAvailableHeight = mPopupWindow.getMaxAvailableHeight(upperAnchorView);
+        final int maxAvailableHeightIgnoringBottomDecoration =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, 0, IGNORE_BOTTOM_DECOR);
         assertTrue(maxAvailableHeight > 0);
-        assertTrue(maxAvailableHeight <= available);
+        assertTrue(maxAvailableHeight <= availableBelowTopAnchor);
         assertTrue(maxAvailableHeightIgnoringBottomDecoration >= maxAvailableHeight);
-        assertTrue(maxAvailableHeightIgnoringBottomDecoration <= available);
+        assertTrue(maxAvailableHeightIgnoringBottomDecoration
+                <= availableBelowTopAnchor + bottomDecorationHeight);
 
-        int maxAvailableHeightWithOffset = mPopupWindow.getMaxAvailableHeight(anchorView, 2);
-        assertEquals(maxAvailableHeight - 2, maxAvailableHeightWithOffset);
+        final int maxAvailableHeightWithOffset2 =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, 2);
+        assertEquals(maxAvailableHeight - 2, maxAvailableHeightWithOffset2);
 
-        maxAvailableHeightWithOffset =
-                mPopupWindow.getMaxAvailableHeight(anchorView, maxAvailableHeight);
-        assertTrue(maxAvailableHeightWithOffset > 0);
-        assertTrue(maxAvailableHeightWithOffset <= available);
+        final int maxOffset = maxAvailableHeight;
 
-        maxAvailableHeightWithOffset =
-                mPopupWindow.getMaxAvailableHeight(anchorView, maxAvailableHeight / 2 - 1);
-        assertTrue(maxAvailableHeightWithOffset > 0);
-        assertTrue(maxAvailableHeightWithOffset <= available);
+        final int maxAvailableHeightWithMaxOffset =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, maxOffset);
+        assertTrue(maxAvailableHeightWithMaxOffset > 0);
+        assertTrue(maxAvailableHeightWithMaxOffset <= availableAboveTopAnchor + maxOffset);
 
-        maxAvailableHeightWithOffset = mPopupWindow.getMaxAvailableHeight(anchorView, -1);
-        assertTrue(maxAvailableHeightWithOffset > 0);
-        assertTrue(maxAvailableHeightWithOffset <= available);
+        final int maxAvailableHeightWithHalfMaxOffset =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, maxOffset / 2);
+        assertTrue(maxAvailableHeightWithHalfMaxOffset > 0);
+        assertTrue(maxAvailableHeightWithHalfMaxOffset <= availableBelowTopAnchor);
+        assertTrue(maxAvailableHeightWithHalfMaxOffset
+                        <= Math.max(
+                                availableAboveTopAnchor + maxOffset / 2,
+                                availableBelowTopAnchor - maxOffset / 2));
 
-        int maxAvailableHeightWithOffsetIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, 2, true);
+        // TODO(b/136178425): A negative offset can return a size that is larger than the display.
+        final int maxAvailableHeightWithNegativeOffset =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, -1);
+        assertTrue(maxAvailableHeightWithNegativeOffset > 0);
+        assertTrue(maxAvailableHeightWithNegativeOffset <= availableBelowTopAnchor + 1);
+
+        final int maxAvailableHeightWithOffset2IgnoringBottomDecoration =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, 2, IGNORE_BOTTOM_DECOR);
         assertEquals(maxAvailableHeightIgnoringBottomDecoration - 2,
-                maxAvailableHeightWithOffsetIgnoringBottomDecoration);
+                maxAvailableHeightWithOffset2IgnoringBottomDecoration);
 
-        maxAvailableHeightWithOffsetIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, maxAvailableHeight, true);
+        final int maxAvailableHeightWithMaxOffsetIgnoringBottomDecoration =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, maxOffset, IGNORE_BOTTOM_DECOR);
+        assertTrue(maxAvailableHeightWithMaxOffsetIgnoringBottomDecoration > 0);
+        assertTrue(maxAvailableHeightWithMaxOffsetIgnoringBottomDecoration
+                <= availableAboveTopAnchor + maxOffset);
+
+        final int maxAvailableHeightWithHalfOffsetIgnoringBottomDecoration =
+                mPopupWindow.getMaxAvailableHeight(
+                        upperAnchorView,
+                        maxOffset / 2,
+                        IGNORE_BOTTOM_DECOR);
+        assertTrue(maxAvailableHeightWithHalfOffsetIgnoringBottomDecoration > 0);
+        assertTrue(maxAvailableHeightWithHalfOffsetIgnoringBottomDecoration
+                <= Math.max(
+                        availableAboveTopAnchor + maxOffset / 2,
+                        availableBelowTopAnchor + bottomDecorationHeight - maxOffset / 2));
+
+        final int maxAvailableHeightWithOffsetIgnoringBottomDecoration =
+                mPopupWindow.getMaxAvailableHeight(upperAnchorView, 0, IGNORE_BOTTOM_DECOR);
         assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration > 0);
-        assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration <= available);
+        assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration
+                <= availableBelowTopAnchor + bottomDecorationHeight);
 
-        maxAvailableHeightWithOffsetIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, maxAvailableHeight / 2, true);
-        assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration > 0);
-        assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration <= available);
+        final View lowerAnchorView = mActivity.findViewById(R.id.anchor_lower);
+        final int availableAboveLowerAnchor = getLoc(lowerAnchorView).y - visibleDisplayFrame.top;
+        final int maxAvailableHeightLowerAnchor =
+                mPopupWindow.getMaxAvailableHeight(lowerAnchorView);
+        assertTrue(maxAvailableHeightLowerAnchor > 0);
+        assertTrue(maxAvailableHeightLowerAnchor <= availableAboveLowerAnchor);
 
-        maxAvailableHeightWithOffsetIgnoringBottomDecoration =
-                mPopupWindow.getMaxAvailableHeight(anchorView, 0, true);
-        assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration > 0);
-        assertTrue(maxAvailableHeightWithOffsetIgnoringBottomDecoration <= available);
+        final View middleAnchorView = mActivity.findViewById(R.id.anchor_middle_left);
+        final int availableAboveMiddleAnchor = getLoc(middleAnchorView).y - visibleDisplayFrame.top;
+        final int availableBelowMiddleAnchor =
+                visibleDisplayFrame.bottom - getViewBottom(middleAnchorView);
+        final int maxAvailableHeightMiddleAnchor =
+                mPopupWindow.getMaxAvailableHeight(middleAnchorView);
+        assertTrue(maxAvailableHeightMiddleAnchor > 0);
+        assertTrue(maxAvailableHeightMiddleAnchor
+                <= Math.max(availableAboveMiddleAnchor, availableBelowMiddleAnchor));
+    }
 
-        anchorView = mActivity.findViewById(R.id.anchor_lower);
-        // On some devices the view might actually have larger size than the physical display
-        // due to chin and content will be laid out as if outside of the display. We need to use
-        // larger from the display height and the main view height.
-        available = Math.max(displayHeight,
-                mActivity.findViewById(android.R.id.content).getHeight()) - anchorView.getHeight();
-        maxAvailableHeight = mPopupWindow.getMaxAvailableHeight(anchorView);
-        assertTrue(maxAvailableHeight > 0);
-        assertTrue(maxAvailableHeight <= available);
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
 
-        anchorView = mActivity.findViewById(R.id.anchor_middle_left);
-        available = displayHeight - anchorView.getHeight()
-                - mActivity.findViewById(R.id.anchor_upper).getHeight();
-        maxAvailableHeight = mPopupWindow.getMaxAvailableHeight(anchorView);
-        assertTrue(maxAvailableHeight > 0);
-        assertTrue(maxAvailableHeight <= available);
+        final int expected = getVisibleDisplayFrame(anchorView).bottom - getViewBottom(anchorView);
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_ignoringBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+
+        final int expected = getDisplayFrame(anchorView).bottom - getViewBottom(anchorView);
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, 0, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_offset2() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+
+        final int expected =
+                getVisibleDisplayFrame(anchorView).bottom - getViewBottom(anchorView) - 2;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, 2);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_offset2_ignoringBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+
+        final int expected = getDisplayFrame(anchorView).bottom - getViewBottom(anchorView) - 2;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, 2, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_largeOffset() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(anchorView);
+        final int maxOffset = visibleDisplayFrame.bottom - getViewBottom(anchorView);
+        final int offset = maxOffset / 2;
+
+        final int distanceToTop = getLoc(anchorView).y - visibleDisplayFrame.top + offset;
+        final int distanceToBottom =
+                visibleDisplayFrame.bottom - getViewBottom(anchorView) - offset;
+
+        final int expected = Math.max(distanceToTop, distanceToBottom);
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, offset);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_largeOffset_ignoringBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(anchorView);
+        final Rect displayFrame = getDisplayFrame(anchorView);
+
+        final int maxOffset = visibleDisplayFrame.bottom - getViewBottom(anchorView);
+        final int offset = maxOffset / 2;
+
+        final int distanceToTop = getLoc(anchorView).y - visibleDisplayFrame.top + offset;
+        final int distanceToBottom = displayFrame.bottom - getViewBottom(anchorView) - offset;
+
+        final int expected = Math.max(distanceToTop, distanceToBottom);
+        final int actual =
+                mPopupWindow.getMaxAvailableHeight(anchorView, offset, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_maxOffset() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(anchorView);
+        final int offset = visibleDisplayFrame.bottom - getViewBottom(anchorView);
+
+        final int expected = getLoc(anchorView).y - visibleDisplayFrame.top + offset;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, offset);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_maxOffset_ignoringBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(anchorView);
+        final int offset = visibleDisplayFrame.bottom - getViewBottom(anchorView);
+
+        final int expected = getLoc(anchorView).y - visibleDisplayFrame.top + offset;
+        final int actual =
+                mPopupWindow.getMaxAvailableHeight(anchorView, offset, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_negativeOffset() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+
+        final int expected =
+                getVisibleDisplayFrame(anchorView).bottom - getViewBottom(anchorView) + 1;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, -1);
+
+        assertEquals(expected, actual);
+    }
+
+    // TODO(b/136178425): A negative offset can return a size that is larger than the display.
+    @Test
+    public void testGetMaxAvailableHeight_topAnchor_negativeOffset_ignoringBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+
+        final int expected =
+                getDisplayFrame(anchorView).bottom - getViewBottom(anchorView) + 1;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, -1, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_middleAnchor() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_middle_left);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(anchorView);
+
+        final int distanceToTop = getLoc(anchorView).y - visibleDisplayFrame.top;
+        final int distanceToBottom = visibleDisplayFrame.bottom - getViewBottom(anchorView);
+
+        final int expected = Math.max(distanceToTop, distanceToBottom);
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_middleAnchor_ignoreBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_middle_left);
+        final Rect visibleDisplayFrame = getVisibleDisplayFrame(anchorView);
+        final Rect displayFrame = getDisplayFrame(anchorView);
+
+
+        final int distanceToTop = getLoc(anchorView).y - visibleDisplayFrame.top;
+        final int distanceToBottom = displayFrame.bottom - getViewBottom(anchorView);
+
+        final int expected = Math.max(distanceToTop, distanceToBottom);
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, 0, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_bottomAnchor() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_lower);
+
+        final int expected = getLoc(anchorView).y - getVisibleDisplayFrame(anchorView).top;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetMaxAvailableHeight_bottomAnchor_ignoreBottomDecoration() {
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        final View anchorView = mActivity.findViewById(R.id.anchor_lower);
+
+        final int expected = getLoc(anchorView).y - getVisibleDisplayFrame(anchorView).top;
+        final int actual = mPopupWindow.getMaxAvailableHeight(anchorView, 0, IGNORE_BOTTOM_DECOR);
+
+        assertEquals(expected, actual);
+    }
+
+    private Point getLoc(View view) {
+        final int[] anchorPosition = new int[2];
+        view.getLocationOnScreen(anchorPosition);
+        return new Point(anchorPosition[0], anchorPosition[1]);
+    }
+
+    private int getViewBottom(View view) {
+        return getLoc(view).y + view.getHeight();
+    }
+
+    private Rect getVisibleDisplayFrame(View view) {
+        final Rect visibleDisplayFrame = new Rect();
+        view.getWindowVisibleDisplayFrame(visibleDisplayFrame);
+        return visibleDisplayFrame;
+    }
+
+    private Rect getDisplayFrame(View view) {
+        final Rect displayFrame = new Rect();
+        view.getWindowDisplayFrame(displayFrame);
+        return displayFrame;
     }
 
     @UiThreadTest
