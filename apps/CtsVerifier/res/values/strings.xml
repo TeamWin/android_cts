@@ -139,6 +139,12 @@
       implemented gears then the pass button will be enabled.</string>
     <string name="expected_gear_selection_title">Expected Gear Selection</string>
     <string name="current_gear_selection_title">Current Gear Selection</string>
+    <string name="parking_brake_on_test">PARKING_BRAKE_ON Test</string>
+    <string name="parking_brake_on_test_desc">This test ensures that the
+      PARKING_BRAKE_ON property is implemented correctly.\n\nFollow the
+      instructions on the screen to engage and disengage the parking brake. When
+      the instructions are completed, the pass button will be enabled.</string>
+    <string name="current_parking_brake_on_value_title">Current PARKING_BRAKE_ON Value:</string>
     <string name="da_no_policy">1. Press the \"Generate Policy\" to create a random device
         policy\n\n2. Press \"Apply Policy\" to put the policy into effect.\n\n3. Reboot your
         device and return to this test in the CTS Verifier.
