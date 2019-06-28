@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
-import com.android.compatibility.common.util.HostSideTestUtils;
+import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -80,7 +80,7 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
         assertTrue(getDevice().removeUser(profileUserId));
         mProfileUserId = Optional.empty();
 
-        HostSideTestUtils.waitUntil("wait for backup to be deactivated for removed user",
+        CommonTestUtils.waitUntil("wait for backup to be deactivated for removed user",
                 TIMEOUT_SECONDS, () -> !mBackupUtils.isBackupActivatedForUser(profileUserId));
     }
 }
