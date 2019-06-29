@@ -18,11 +18,14 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
+import android.platform.test.annotations.FlakyTest;
+import android.stats.devicepolicy.EventId;
+import android.platform.test.annotations.LargeTest;
+
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper.Builder;
-import java.util.List;
 
-import android.stats.devicepolicy.EventId;
+import java.util.List;
 
 /**
  * Tests for having both device owner and profile owner. Device owner is setup for you in
@@ -93,6 +96,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     /**
      * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
      */
+    @LargeTest
     public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -116,6 +120,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * Same as {@link #testBindDeviceAdminServiceAsUser_corpOwnedManagedProfile} except
      * creating managed profile through ManagedProvisioning like normal flow
      */
+    @FlakyTest
     public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfileWithManagedProvisioning()
             throws Exception {
         if (!mHasFeature) {
@@ -137,6 +142,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * {@link #testBindDeviceAdminServiceAsUser_corpOwnedManagedProfileWithManagedProvisioning}
      * except we don't enable the profile.
      */
+    @FlakyTest
     public void testBindDeviceAdminServiceAsUser_canBindEvenIfProfileNotEnabled() throws Exception {
         if (!mHasFeature) {
             return;
@@ -174,6 +180,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}), as setup
      * by createAndManagedUser.
      */
+    @FlakyTest
     public void testBindDeviceAdminServiceAsUser_secondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
@@ -195,6 +202,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * Test that the DO can talk to both a managed profile and managed secondary user at the same
      * time.
      */
+    @FlakyTest
     public void testBindDeviceAdminServiceAsUser_compPlusSecondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(2)) {
             return;
@@ -416,6 +424,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testRequestBugreportAvailableIfAffiliated() throws Exception {
         if (!mHasFeature) {
             return;

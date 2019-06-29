@@ -18,6 +18,10 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
+import android.stats.devicepolicy.EventId;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -32,8 +36,6 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import android.stats.devicepolicy.EventId;
 
 /**
  * Set of tests for Device Owner use cases.
@@ -156,6 +158,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 .build());
     }
 
+    @FlakyTest
     public void testWifi() throws Exception {
         if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
             return;
@@ -181,6 +184,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testCreateAndManageUser_LowStorage() throws Exception {
         if (!mHasCreateAndManageUserFeature) {
             return;
@@ -237,6 +241,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * to the user.
      * {@link android.app.admin.DevicePolicyManager#switchUser} is tested.
      */
+    @FlakyTest
     public void testCreateAndManageUser_SwitchUser() throws Exception {
         if (!mHasCreateAndManageUserFeature || !canStartAdditionalUsers(1)) {
             return;
@@ -411,6 +416,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
         if (mHasCreateAndManageUserFeature) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
@@ -445,6 +451,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testSecurityLoggingWithSingleUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -528,6 +535,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testNetworkLoggingWithSingleUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -545,6 +553,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 Collections.singletonMap(ARG_NETWORK_LOGGING_BATCH_COUNT, Integer.toString(2)));
     }
 
+    @LargeTest
     public void testNetworkLogging_rebootResetsId() throws Exception {
         if (!mHasFeature) {
             return;
@@ -570,6 +579,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_containsEmptyString");
     }
 
+    @FlakyTest
     public void testLockTask_deviceOwnerUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -596,6 +606,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @LargeTest
     public void testLockTaskAfterReboot_deviceOwnerUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -618,6 +629,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @LargeTest
     public void testLockTaskAfterReboot_tryOpeningSettings_deviceOwnerUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -669,6 +681,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 userId);
     }
 
+    @FlakyTest
     public void testLockTask_affiliatedSecondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
@@ -677,6 +690,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeAffiliatedProfileOwnerTest("LockTaskTest", userId);
     }
 
+    @LargeTest
     public void testSystemUpdatePolicy() throws Exception {
         if (!mHasFeature) {
             return;
@@ -714,6 +728,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
+    @FlakyTest
     public void testWifiConfigLockdown() throws Exception {
         final boolean hasWifi = hasDeviceFeature("android.hardware.wifi");
         if (hasWifi && mHasFeature) {
@@ -802,6 +817,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testIsProvisioningAllowedTrueForManagedProfileAction");
     }
 
+    @FlakyTest
     public void testAdminActionBookkeeping() throws Exception {
         if (!mHasFeature) {
             return;
@@ -843,6 +859,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
     }
 
+    @FlakyTest
     public void testDisallowFactoryReset() throws Exception {
         if (!mHasFeature) {
             return;
@@ -865,6 +882,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testBackupServiceEnabling() throws Exception {
         final boolean hasBackupService = getDevice().hasFeature(FEATURE_BACKUP);
         // The backup service cannot be enabled if the backup feature is not supported.
@@ -875,6 +893,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testEnablingAndDisablingBackupService");
     }
 
+    @FlakyTest
     public void testDeviceOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Device Owner should have access to all device identifiers.
         if (!mHasFeature) {
@@ -884,6 +903,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testDeviceOwnerCanGetDeviceIdentifiersWithPermission");
     }
 
+    @FlakyTest
     public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
         // The Device Owner must have the READ_PHONE_STATE permission to get access to the device
         // identifiers.
@@ -898,6 +918,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission");
     }
 
+    @FlakyTest
     public void testPackageInstallCache() throws Exception {
         if (!mHasFeature) {
             return;
@@ -941,6 +962,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @LargeTest
     public void testPackageInstallCache_multiUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
@@ -1010,6 +1032,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("OverrideApnTest");
     }
 
+    @FlakyTest
     public void testPrivateDnsPolicy() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1017,6 +1040,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("PrivateDnsPolicyTest");
     }
 
+    @FlakyTest
     public void testInstallUpdate() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1030,6 +1054,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("InstallUpdateTest");
     }
 
+    @FlakyTest
     public void testInstallUpdateLogged() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1066,6 +1091,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         file.delete();
     }
 
+    @FlakyTest
     public void testSetKeyguardDisabledLogged() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1077,6 +1103,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 .build());
     }
 
+    @FlakyTest
     public void testSetStatusBarDisabledLogged() throws Exception {
         if (!mHasFeature) {
             return;

@@ -16,6 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 /**
@@ -67,6 +70,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
      * Verify that screenshots are still possible for activities in the primary user when the policy
      * is set on the profile owner.
      */
+    @LargeTest
     public void testScreenCaptureDisabled_allowedPrimaryUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -80,6 +84,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testScreenCapturePossible");
     }
 
+    @FlakyTest
     public void testScreenCaptureDisabled_assist_allowedPrimaryUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -122,6 +127,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
+    @FlakyTest
     @Override
     public void testAlwaysOnVpn() throws Exception {
         super.testAlwaysOnVpn();
@@ -135,6 +141,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
+    @LargeTest
     public void testAlwaysOnVpnAcrossReboot() throws Exception {
         super.testAlwaysOnVpnAcrossReboot();
     }
@@ -220,4 +227,47 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                 "testSucceedsWithProfileOwnerIdsGrant", mUserId);
     }
 
+    @FlakyTest
+    @Override
+    public void testCaCertManagement() throws Exception {
+        super.testCaCertManagement();
+    }
+
+    @FlakyTest
+    @Override
+    public void testDelegatedCertInstaller() throws Exception {
+        super.testDelegatedCertInstaller();
+    }
+
+    @FlakyTest
+    @Override
+    public void testPackageInstallUserRestrictions() throws Exception {
+        super.testPackageInstallUserRestrictions();
+    }
+
+    @FlakyTest
+    @Override
+    public void testPermissionGrant() throws Exception {
+        super.testPermissionGrant();
+    }
+
+    @FlakyTest
+    @Override
+    public void testPermissionMixedPolicies() throws Exception {
+        super.testPermissionMixedPolicies();
+    }
+
+    @FlakyTest
+    @Override
+    public void testScreenCaptureDisabled_assist() throws Exception {
+        super.testScreenCaptureDisabled_assist();
+    }
+
+
+
+    @FlakyTest
+    @Override
+    public void testSetMeteredDataDisabledPackages() throws Exception {
+        super.testSetMeteredDataDisabledPackages();
+    }
 }

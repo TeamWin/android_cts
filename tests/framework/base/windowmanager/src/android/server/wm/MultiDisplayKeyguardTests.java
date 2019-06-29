@@ -30,8 +30,6 @@ import android.server.wm.ActivityManagerState.ActivityDisplay;
 import org.junit.Before;
 import org.junit.Test;
 
-import androidx.test.filters.FlakyTest;
-
 import java.util.List;
 
 /**
@@ -41,7 +39,6 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:MultiDisplayKeyguardTests
  */
 @Presubmit
-@FlakyTest(bugId = 135104079)
 public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
     @Before

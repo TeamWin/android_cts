@@ -1,5 +1,7 @@
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.LargeTest;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,6 +51,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
+    @LargeTest
     public void testQuietMode_defaultForegroundLauncher() throws Exception {
         if (!mHasFeature) {
           return;
@@ -61,6 +64,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
                 createParams(mProfileId));
     }
 
+    @LargeTest
     public void testQuietMode_notForegroundLauncher() throws Exception {
         if (!mHasFeature) {
             return;
@@ -73,6 +77,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
             createParams(mProfileId));
     }
 
+    @LargeTest
     public void testQuietMode_notDefaultLauncher() throws Exception {
         if (!mHasFeature) {
             return;

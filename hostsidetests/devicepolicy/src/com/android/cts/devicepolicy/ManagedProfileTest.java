@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
-
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -31,8 +31,6 @@ import junit.framework.AssertionFailedError;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -168,6 +166,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    @FlakyTest
     public void testWipeDataWithReason() throws Exception {
         if (!mHasFeature) {
             return;
@@ -188,6 +187,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mParentUserId);
     }
 
+    @FlakyTest
     public void testWipeDataLogged() throws Exception {
         if (!mHasFeature) {
             return;
@@ -208,6 +208,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mParentUserId);
     }
 
+    @FlakyTest
     public void testWipeDataWithoutReason() throws Exception {
         if (!mHasFeature) {
             return;
@@ -249,6 +250,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         getDevice().executeShellCommand(cmd);
     }
 
+    @FlakyTest
     public void testLockNowWithKeyEviction() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -275,6 +277,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     /** Profile should get locked if it is not in foreground no matter what. */
+    @FlakyTest
     public void testWorkProfileTimeoutBackground() throws Exception {
         if (!mHasFeature) {
             return;
@@ -288,6 +291,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     /** Profile should get locked if it is in foreground but with no user activity. */
+    @LargeTest
     public void testWorkProfileTimeoutIdleActivity() throws Exception {
         if (!mHasFeature) {
             return;
@@ -301,6 +305,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     /** User activity in profile should prevent it from locking. */
+    @FlakyTest
     public void testWorkProfileTimeoutUserActivity() throws Exception {
         if (!mHasFeature) {
             return;
@@ -314,6 +319,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     /** Keep screen on window flag in the profile should prevent it from locking. */
+    @FlakyTest
     public void testWorkProfileTimeoutKeepScreenOnWindow() throws Exception {
         if (!mHasFeature) {
             return;
@@ -407,6 +413,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 MANAGED_PROFILE_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mProfileUserId);
     }
 
+    @LargeTest
     public void testCrossProfileIntentFilters() throws Exception {
         if (!mHasFeature) {
             return;
@@ -439,6 +446,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // TODO: Test with startActivity
     }
 
+    @FlakyTest
     public void testDisallowSharingIntoProfileFromProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -475,6 +483,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testSharingFromPersonalSucceeds", mParentUserId);
     }
 
+    @LargeTest
     public void testAppLinks_verificationStatus() throws Exception {
         if (!mHasFeature) {
             return;
@@ -513,6 +522,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         assertAppLinkResult("testReceivedByAppLinkActivityInManaged");
     }
 
+    @LargeTest
     public void testAppLinks_enabledStatus() throws Exception {
         if (!mHasFeature) {
             return;
@@ -577,6 +587,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    @FlakyTest
     public void testCrossProfileContent() throws Exception {
         if (!mHasFeature) {
             return;
@@ -605,6 +616,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     }
 
+    @FlakyTest
     public void testCrossProfileNotificationListeners_EmptyWhitelist() throws Exception {
         if (!mHasFeature) {
             return;
@@ -671,6 +683,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
     }
 
+    @FlakyTest
     public void testCrossProfileCopyPaste() throws Exception {
         if (!mHasFeature) {
             return;
@@ -798,7 +811,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
-
+    @LargeTest
     public void testManagedContactsUris() throws Exception {
         runManagedContactsTest(new Callable<Void>() {
             @Override
@@ -816,6 +829,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         });
     }
 
+    @FlakyTest
     public void testManagedQuickContacts() throws Exception {
         runManagedContactsTest(new Callable<Void>() {
             @Override
@@ -827,6 +841,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         });
     }
 
+    @FlakyTest
     public void testManagedContactsPolicies() throws Exception {
         runManagedContactsTest(new Callable<Void>() {
             @Override
@@ -990,6 +1005,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testNfcShareEnabled", mParentUserId);
     }
 
+    @FlakyTest
     public void testCrossProfileWidgets() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1037,6 +1053,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
     public void testCrossProfileWidgetsLogged() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1134,6 +1151,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
+    @LargeTest
     public void testManagedCall() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1305,6 +1323,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mProfileUserId);
     }
 
+    @FlakyTest
     public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -1319,6 +1338,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
     }
 
+    @FlakyTest
     public void testClearPasswordWithTokenBeforeUnlock() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -1340,6 +1360,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
      * existing password reset token) if it has unified work challenge and the primary user clears
      * the device lock.
      */
+    @FlakyTest
     public void testResetPasswordTokenUsableAfterClearingLock() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -1380,6 +1401,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         verifyUnifiedPassword(false);
     }
 
+    @FlakyTest
+    @LargeTest
     public void testUnlockWorkProfile_deviceWidePassword() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -1402,6 +1425,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest
+    @LargeTest
     public void testRebootDevice_unifiedPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -1464,6 +1489,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     .build());
     }
 
+    @FlakyTest
     public void testCrossProfileCalendar() throws Exception {
         if (!mHasFeature) {
             return;

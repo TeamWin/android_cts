@@ -16,9 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
+import android.platform.test.annotations.FlakyTest;
 
 import java.util.Collections;
 
@@ -62,6 +60,7 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @FlakyTest
     public void testLauncherCallbackPackageAddedMainUser() throws Exception {
         if (!mHasLauncherApps) {
             return;
@@ -75,6 +74,7 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @FlakyTest
     public void testLauncherCallbackPackageRemovedMainUser() throws Exception {
         if (!mHasLauncherApps) {
             return;
@@ -88,6 +88,7 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @FlakyTest
     public void testLauncherCallbackPackageChangedMainUser() throws Exception {
         if (!mHasLauncherApps) {
             return;

@@ -16,16 +16,12 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-
+import android.platform.test.annotations.FlakyTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +70,24 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 runDeviceTestsAsUser("com.android.cts.certinstaller",
                         ".DelegatedDeviceIdAttestationTest",
                         "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId));
+    }
+
+    @FlakyTest
+    @Override
+    public void testCaCertManagement() throws Exception {
+        super.testCaCertManagement();
+    }
+
+    @FlakyTest
+    @Override
+    public void testCannotRemoveUserIfRestrictionSet() throws Exception {
+        super.testCannotRemoveUserIfRestrictionSet();
+    }
+
+    @FlakyTest
+    @Override
+    public void testInstallCaCertLogged() throws Exception {
+        super.testInstallCaCertLogged();
     }
 
     @Override
