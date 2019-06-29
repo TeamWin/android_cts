@@ -762,6 +762,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             format = new MediaFormat();
             format.setString(MediaFormat.KEY_MIME, mimeType);
             format.setInteger(MediaFormat.KEY_BIT_RATE, infoEnc.mBitRate);
+            format.setInteger(MediaFormat.KEY_BITRATE_MODE,
+                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
             format.setInteger(MediaFormat.KEY_WIDTH, w);
             format.setInteger(MediaFormat.KEY_HEIGHT, h);
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mSrcColorFormat);

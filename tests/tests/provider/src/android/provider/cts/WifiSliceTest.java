@@ -17,6 +17,7 @@
 package android.provider.cts;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.slice.Slice;
@@ -30,6 +31,7 @@ import android.net.Uri;
 import android.os.Process;
 
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 import androidx.slice.SliceConvert;
 import androidx.slice.SliceMetadata;
@@ -46,6 +48,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class WifiSliceTest {
+  private static final String TAG = "WifiSliceTest";
 
   private static final Uri WIFI_SLICE_URI =
           Uri.parse("content://android.settings.slices/action/wifi");
@@ -53,9 +56,12 @@ public class WifiSliceTest {
   private static final String ACTION_ASSIST = "android.intent.action.ASSIST";
   private static final String ACTION_VOICE_ASSIST = "android.intent.action.VOICE_ASSIST";
   private static final String CATEGORY_DEFAULT = "android.intent.category.DEFAULT";
+  private static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
   private final Context mContext = InstrumentationRegistry.getContext();
   private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
+  private final boolean mHasVoiceRecognizersFeature =
+          mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
 
   private Slice mWifiSlice;
 
@@ -87,6 +93,10 @@ public class WifiSliceTest {
 
   @Test
   public void wifiSlice_grantedPermissionToDefaultAssistant() throws NameNotFoundException {
+    if (!mHasVoiceRecognizersFeature) {
+      Log.i(TAG, "The device doesn't support feature: " + FEATURE_VOICE_RECOGNIZERS);
+      return;
+    }
     final PackageManager pm = mContext.getPackageManager();
     final Intent requestDefaultAssistant =
             new Intent(ACTION_ASSIST).addCategory(CATEGORY_DEFAULT);
@@ -104,6 +114,10 @@ public class WifiSliceTest {
 
   @Test
   public void wifiSlice_grantedPermissionToDefaultVoiceAssistant() throws NameNotFoundException {
+    if (!mHasVoiceRecognizersFeature) {
+      Log.i(TAG, "The device doesn't support feature: " + FEATURE_VOICE_RECOGNIZERS);
+      return;
+    }
     final PackageManager pm = mContext.getPackageManager();
     final Intent requestDefaultAssistant =
             new Intent(ACTION_VOICE_ASSIST).addCategory(CATEGORY_DEFAULT);
