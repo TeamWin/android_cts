@@ -24,19 +24,20 @@ import android.content.Context
 import android.os.Process
 import android.os.SystemClock
 import androidx.test.InstrumentationRegistry
+import androidx.test.rule.ActivityTestRule
+import androidx.test.uiautomator.UiDevice
 import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.ArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
-import androidx.test.rule.ActivityTestRule
-import androidx.test.uiautomator.UiDevice
-import org.junit.Rule
 
 @RunWith(AndroidJUnit4::class)
 class HistoricalAppopsTest {
@@ -73,26 +74,31 @@ class HistoricalAppopsTest {
         uiAutomation.dropShellPermissionIdentity()
     }
 
+    @Ignore("Feature is disabled in Android Q")
     @Test
     fun testGetHistoricalPackageOpsForegroundAccessInMemoryBucket() {
         testGetHistoricalPackageOpsForegroundAtDepth(0)
     }
 
+    @Ignore("Feature is disabled in Android Q")
     @Test
     fun testGetHistoricalPackageOpsForegroundAccessFirstOnDiskBucket() {
         testGetHistoricalPackageOpsForegroundAtDepth(1)
     }
 
+    @Ignore("Feature is disabled in Android Q")
     @Test
     fun testHistoricalAggregationOneLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(0)
     }
 
+    @Ignore("Feature is disabled in Android Q")
     @Test
     fun testHistoricalAggregationTwoLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(1)
     }
 
+    @Ignore("Feature is disabled in Android Q")
     @Test
     fun testHistoricalAggregationOverflow() {
         // Configure historical registry behavior.
@@ -130,6 +136,7 @@ class HistoricalAppopsTest {
         assertHasCounts(thirdOps!!, 33)
     }
 
+    @Ignore("Feature is disabled in Android Q")
     @Test
     fun testHistoryTimeTravel() {
         // Configure historical registry behavior.
