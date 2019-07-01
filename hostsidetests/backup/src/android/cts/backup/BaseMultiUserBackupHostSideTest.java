@@ -23,7 +23,7 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
-import com.android.compatibility.common.util.HostSideTestUtils;
+import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -138,13 +138,14 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
      * Selects the local transport as the current transport for user {@code userId}. Returns the
      * {@link String} name of the local transport.
      */
-    String switchUserToLocalTransportAndAssertSuccess(int userId) throws IOException {
+    String switchUserToLocalTransportAndAssertSuccess(int userId)
+            throws IOException, InterruptedException {
         // Make sure the user has the local transport.
         String localTransport = mBackupUtils.getLocalTransportName();
 
         // TODO (b/121198010): Update dumpsys or add shell command to query status of transport
         // initialization. Transports won't be available until they are initialized/registered.
-        HostSideTestUtils.waitUntil("wait for user to have local transport",
+        CommonTestUtils.waitUntil("wait for user to have local transport",
                 TRANSPORT_INITIALIZATION_TIMEOUT_SECS,
                 () -> mBackupUtils.userHasBackupTransport(localTransport, userId));
 
