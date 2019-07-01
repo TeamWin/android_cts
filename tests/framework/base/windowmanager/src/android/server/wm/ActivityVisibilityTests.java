@@ -59,6 +59,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.app.Components;
 
 import androidx.test.filters.FlakyTest;
 
@@ -177,15 +180,31 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 110276714)
-    public void testTurnScreenOnActivity() throws Exception {
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            lockScreenSession.sleepDevice();
-            launchActivity(TURN_SCREEN_ON_ACTIVITY);
-
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
-            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+    public void testTurnScreenOnActivity() {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */);
+            testTurnScreenOnActivity(lockScreenSession, activityClient, false /* useWindowFlags */);
         }
+    }
+
+    private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
+            ActivitySessionClient activitySessionClient, boolean useWindowFlags) {
+        lockScreenSession.sleepDevice();
+
+        final ActivitySession activity = activitySessionClient.startActivity(
+                getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setIntentExtra(extra -> extra.putBoolean(
+                                Components.TurnScreenOnActivity.EXTRA_USE_WINDOW_FLAGS,
+                                useWindowFlags))
+                        .setTargetActivity(TURN_SCREEN_ON_ACTIVITY));
+
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
+        assertTrue("Display turns on by " + (useWindowFlags ? "flags" : "APIs"),
+                isDisplayOn(DEFAULT_DISPLAY));
+
+        activity.finish();
     }
 
     @Test
