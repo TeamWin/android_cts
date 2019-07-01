@@ -86,6 +86,8 @@ public class HostTestHelper {
     @Test
     public void testApkOnlyCommitRollback() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
+
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
@@ -117,6 +119,7 @@ public class HostTestHelper {
     @Test
     public void testApkOnlyConfirmRollback() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
 
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isStaged();
@@ -241,6 +244,8 @@ public class HostTestHelper {
     public void testApexAndApkCommitRollback() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
+
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
@@ -274,6 +279,8 @@ public class HostTestHelper {
     @Test
     public void testApexAndApkConfirmRollback() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
 
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isStaged();
