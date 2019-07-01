@@ -80,9 +80,9 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public void CacheCallingInfoFromOneway() {
-    mCachedLatch.countDown();
     mCachedPid = Binder.getCallingPid();
     mCachedUid = Binder.getCallingUid();
+    mCachedLatch.countDown();
   }
 
   @Override
