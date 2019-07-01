@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -3342,5 +3343,69 @@ public class ParcelTest extends AndroidTestCase {
                 reply.readExceptionCode() != 0);
         assertNull("Binder should have been overwritten by the exception",
                 reply.readStrongBinder());
+    }
+
+    public static class ParcelObjectFreeService extends Service {
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return new Binder();
+        }
+
+        @Override
+        public void onCreate() {
+            super.onCreate();
+
+            Parcel parcel = Parcel.obtain();
+
+            // Construct parcel with object in it.
+            parcel.writeInt(1);
+            final int pos = parcel.dataPosition();
+            parcel.writeStrongBinder(new Binder());
+
+            // wipe out the object by setting data size
+            parcel.setDataSize(pos);
+
+            // recycle the parcel. This should not cause a native segfault
+            parcel.recycle();
+        }
+
+        public static class Connection extends AbstractFuture<IBinder>
+                implements ServiceConnection {
+
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                set(service);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+            }
+
+            @Override
+            public IBinder get() throws InterruptedException, ExecutionException {
+                try {
+                    return get(5, TimeUnit.SECONDS);
+                } catch (TimeoutException e) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    public void testObjectDoubleFree() throws Exception {
+
+        final Intent intent = new Intent();
+        intent.setComponent(new ComponentName(
+                "android.os.cts", "android.os.cts.ParcelTest$ParcelObjectFreeService"));
+
+        final ParcelObjectFreeService.Connection connection =
+                new ParcelObjectFreeService.Connection();
+
+        mContext.startService(intent);
+        assertTrue(mContext.bindService(intent, connection,
+                Context.BIND_ABOVE_CLIENT | Context.BIND_EXTERNAL_SERVICE));
+
+        assertNotNull("Service should have started without crashing.", connection.get());
     }
 }
