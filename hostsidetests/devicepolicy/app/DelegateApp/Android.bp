@@ -25,6 +25,8 @@ android_test_helper_app {
         "androidx.legacy_legacy-support-v4",
         "ctstestrunner-axt",
         "androidx.test.rules",
+        "ub-uiautomator",
+        "truth-prebuilt",
     ],
     sdk_version: "current",
     // tag this module as a cts test artifact

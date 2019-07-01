@@ -161,7 +161,7 @@ public class ManagedUserPositiveTestActivity extends PassFailButtons.TestListAct
                                         UserManager.DISALLOW_REMOVE_USER, true)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_SETTINGS))}));
+                                new Intent(Settings.ACTION_USER_SETTINGS))}));
 
         // Policy Transparency
         final Intent policyTransparencyTestIntent = new Intent(this,

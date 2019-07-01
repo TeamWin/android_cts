@@ -36,7 +36,7 @@ import android.view.TextureView.SurfaceTextureListener;
 import android.view.ViewGroup;
 
 import androidx.annotation.ColorInt;
-import androidx.test.filters.MediumTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -48,7 +48,8 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
-@MediumTest
+// Temporarily mark @LargeTest to surpress it from presubmit b/37773896
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class TextureViewTests extends ActivityTestBase {
 

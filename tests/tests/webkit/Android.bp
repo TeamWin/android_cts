@@ -25,6 +25,7 @@ android_test {
         "ctsdeviceutillegacy-axt",
         "ctstestserver",
         "ctstestrunner-axt",
+        "hamcrest-library",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

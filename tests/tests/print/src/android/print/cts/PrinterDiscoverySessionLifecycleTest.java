@@ -118,9 +118,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         waitForWriteAdapterCallback(2);
 
         clickPrintButton();
-        answerPrintServicesWarning(true);
 
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        eventually(() -> {
+            answerPrintServicesWarning(true);
+
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
+
         resetCounters();
     }
 
@@ -186,8 +190,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for preview to load and finish print
         waitForWriteAdapterCallback(1);
-        clickPrintButton();
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        eventually(() -> {
+            clickPrintButton();
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
     }
 
     @Test
@@ -235,8 +242,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for preview to load and finish print
         waitForWriteAdapterCallback(1);
-        clickPrintButton();
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        eventually(() -> {
+            clickPrintButton();
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
     }
 
     @Test
@@ -304,11 +314,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
+        eventually(() -> {
+            // Answer the dialog for the print service cloud warning
+            answerPrintServicesWarning(true);
 
-        // Wait for all print jobs to be handled after which the session destroyed.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+            // Wait for all print jobs to be handled after which the session destroyed.
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
 
         runOnMainThread(() -> assertTrue(sSession.isDestroyed()));
         runOnMainThread(() -> assertFalse(sSession.isPrinterDiscoveryStarted()));
@@ -489,11 +501,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
+        eventually(() -> {
+            // Answer the dialog for the print service cloud warning
+            answerPrintServicesWarning(true);
 
-        // Wait for the print to complete.
-        waitForAdapterFinishCallbackCalled();
+            // Wait for the print to complete.
+            waitForAdapterFinishCallbackCalled();
+        }, OPERATION_TIMEOUT_MILLIS * 2);
 
         // Now print again as we want to confirm that the start
         // printer discovery passes in the priority list.

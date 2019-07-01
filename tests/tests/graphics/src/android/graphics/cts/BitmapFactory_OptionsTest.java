@@ -66,7 +66,7 @@ public class BitmapFactory_OptionsTest {
 
         // Config from source file, RGBA_F16
         AssetManager assets = resources.getAssets();
-        try (InputStream in = assets.open("prophoto-rgba16f.png")) {
+        try (InputStream in = assets.open("blue-16bit-srgb.png")) {
             b = BitmapFactory.decodeStream(in, null, options);
         } catch (IOException e) {
             throw new RuntimeException("Test failed: ", e);

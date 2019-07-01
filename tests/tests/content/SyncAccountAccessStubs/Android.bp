@@ -17,8 +17,9 @@
 android_test_helper_app {
     name: "CtsSyncAccountAccessStubs",
     defaults: ["cts_support_defaults"],
+    static_libs: ["android-support-annotations"],
     srcs: ["src/**/*.java"],
-    platform_apis: true,
+    sdk_version: "current",
     test_suites: [
         "cts",
         "vts",

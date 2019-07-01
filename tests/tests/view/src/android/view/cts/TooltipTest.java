@@ -171,11 +171,11 @@ public class TooltipTest {
     }
 
     private void injectShortClick(View target) {
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, target);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, target);
     }
 
     private void injectLongClick(View target) {
-        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, target,
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mActivityRule, target,
                 target.getWidth() / 2, target.getHeight() / 2);
     }
 

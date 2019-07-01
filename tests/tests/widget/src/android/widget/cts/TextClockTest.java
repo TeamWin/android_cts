@@ -148,19 +148,13 @@ public class TextClockTest {
     @Test
     public void testNoChange() throws Throwable {
         grantWriteSettingsPermission();
-        mActivityRule.runOnUiThread(() -> {
-            mTextClock.disableClockTick();
-        });
+        mActivityRule.runOnUiThread(() -> mTextClock.disableClockTick());
         final ContentResolver resolver = mActivity.getContentResolver();
 
         // Now test that it isn't updated when a non-12/24 hour setting is set
-        mActivityRule.runOnUiThread(() -> {
-            mTextClock.setText("Nothing");
-        });
+        mActivityRule.runOnUiThread(() -> mTextClock.setText("Nothing"));
 
-        mActivityRule.runOnUiThread(() -> {
-            assertEquals("Nothing", mTextClock.getText().toString());
-        });
+        mActivityRule.runOnUiThread(() -> assertEquals("Nothing", mTextClock.getText().toString()));
 
         final CountDownLatch otherChange = registerForChanges(Settings.System.TEXT_AUTO_CAPS);
         mActivityRule.runOnUiThread(() -> {
@@ -175,11 +169,8 @@ public class TextClockTest {
         });
 
         assertTrue(otherChange.await(1, TimeUnit.SECONDS));
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        mActivityRule.runOnUiThread(() -> {
-            assertEquals("Nothing", mTextClock.getText().toString());
-        });
+        mActivityRule.runOnUiThread(() -> assertEquals("Nothing", mTextClock.getText().toString()));
     }
 
     private CountDownLatch registerForChanges(String setting) throws Throwable {

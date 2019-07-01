@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -31,7 +32,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +103,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
 
     private static final String CONFIG_VOICE_CAPABLE = "config_voice_capable";
+
+    private static final String CONFIG_HAS_RECENTS = "config_has_recents";
 
     private final HashSet<String> mDisabledTests;
 
@@ -326,14 +328,23 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private boolean matchAllConfigs(String[] configs) {
         if (configs != null) {
-            TelephonyManager telephonyManager =
-                    (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
             for (String config : configs) {
-                switch(config) {
+                switch (config) {
                     case CONFIG_VOICE_CAPABLE:
+                        TelephonyManager telephonyManager = mContext.getSystemService(
+                                TelephonyManager.class);
                         if (!telephonyManager.isVoiceCapable()) {
                             return false;
                         }
+                        break;
+                    case CONFIG_HAS_RECENTS:
+                        final Resources systemRes = mContext.getResources().getSystem();
+                        final int id = systemRes.getIdentifier("config_hasRecents", "bool",
+                                "android");
+                        if (id == Resources.ID_NULL || !systemRes.getBoolean(id)) {
+                            return false;
+                        }
+                        break;
                     default:
                         break;
                 }

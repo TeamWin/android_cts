@@ -53,6 +53,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 4
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
@@ -82,6 +83,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 4
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
@@ -110,6 +112,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 4
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
@@ -124,6 +127,36 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-version
+
+LOCAL_PROGUARD_ENABLED := disabled
+LOCAL_DEX_PREOPT := false
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+
+#################################################
+# Define a variant requiring a split for install
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := tests
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_MANIFEST_FILE := needsplit/AndroidManifest.xml
+
+LOCAL_PACKAGE_NAME := CtsNeedSplitApp
+LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 4
+LOCAL_PACKAGE_SPLITS := xxhdpi-v4
+
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+LOCAL_ASSET_DIR := $(LOCAL_PATH)/assets
+
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
+LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundredRevisionTwelve --replace-version
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false

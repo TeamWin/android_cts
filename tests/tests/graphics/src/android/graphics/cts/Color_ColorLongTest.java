@@ -92,6 +92,11 @@ public class Color_ColorLongTest {
         colorSpace(0xffffffffffffffffL);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidColorSpace2() {
+        colorSpace((long) ColorSpace.Named.values().length);
+    }
+
     @Test
     public void testIsSrgb() {
         ColorSpace p3 = ColorSpace.get(Named.DISPLAY_P3);
@@ -364,6 +369,14 @@ public class Color_ColorLongTest {
     }
 
     @Test
+    public void testConvertToBT709() {
+        int sRgb = Color.argb(1.0f, 0.5f, 0.5f, 0.5f);
+        long bt709 = Color.convert(sRgb, ColorSpace.get(Named.BT709));
+
+        assertEquals(ColorSpace.get(Named.BT709), Color.colorSpace(bt709));
+    }
+
+    @Test
     public void testConvertColorInt() {
         long color = convert(0xffff8000, ColorSpace.get(Named.ADOBE_RGB));
 
@@ -408,5 +421,12 @@ public class Color_ColorLongTest {
         assertEquals(0.9499f, red(color), 0.01f);
         assertEquals(0.4597f, green(color), 0.01f);
         assertEquals(0.0000f, blue(color), 0.01f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConvertFailureUnnamedColorSpace() {
+        float[] primaries = new float[]{ .7f, .6f, .5f, .4f, .3f, .2f };
+        ColorSpace cs = new ColorSpace.Rgb("mock", primaries, ColorSpace.ILLUMINANT_A, .7);
+        Color.convert(Color.BLUE, cs);
     }
 }

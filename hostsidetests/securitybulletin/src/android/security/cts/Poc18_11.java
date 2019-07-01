@@ -31,4 +31,12 @@ public class Poc18_11 extends SecurityTestCase {
         assertTrue(AdbUtils.runCommandGetExitCode(
                 "pm dump com.android.settings | grep SliceBroadcastReceiver", getDevice()) != 0);
     }
+
+    /**
+     *  b/113027383
+     */
+    @SecurityTest(minPatchLevel = "2018-11")
+    public void testPocCVE_2018_9539() throws Exception {
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2018-9539", getDevice(), 300);
+    }
 }

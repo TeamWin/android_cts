@@ -28,12 +28,14 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
+import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -799,6 +801,42 @@ public class ScrollViewTest {
         assertTrue(myScrollView.getTopFadingEdgeStrength() >= 0.0f);
         assertTrue(myScrollView.getBottomFadingEdgeStrength() <= 1.0f);
         assertTrue(myScrollView.getBottomFadingEdgeStrength() >= 0.0f);
+    }
+
+    @Test
+    public void testScrollDescendant() throws Throwable {
+        assertEquals(0, mScrollViewCustom.getScrollX());
+        assertEquals(0, mScrollViewCustom.getScrollY());
+
+        View lastChild = mScrollViewCustom.findViewById(R.id.last_child);
+        int lastChildTop = (ITEM_COUNT - 1) * mItemHeight;
+
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.scrollToDescendant(lastChild));
+        // smoothScrollBy doesn't scroll in X
+        pollingCheckSmoothScrolling(0, 0, 0, lastChildTop);
+
+        assertEquals(0, mScrollViewCustom.getScrollX());
+        assertEquals(lastChildTop, mScrollViewCustom.getScrollY());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testEdgeEffectColors() {
+        int defaultColor = new EdgeEffect(mScrollViewRegular.getContext()).getColor();
+        assertEquals(mScrollViewRegular.getTopEdgeEffectColor(), defaultColor);
+        assertEquals(mScrollViewRegular.getBottomEdgeEffectColor(), defaultColor);
+
+        mScrollViewRegular.setEdgeEffectColor(Color.BLUE);
+        assertEquals(mScrollViewRegular.getTopEdgeEffectColor(), Color.BLUE);
+        assertEquals(mScrollViewRegular.getBottomEdgeEffectColor(), Color.BLUE);
+
+        mScrollViewRegular.setTopEdgeEffectColor(Color.RED);
+        assertEquals(mScrollViewRegular.getTopEdgeEffectColor(), Color.RED);
+        assertEquals(mScrollViewRegular.getBottomEdgeEffectColor(), Color.BLUE);
+
+        mScrollViewRegular.setBottomEdgeEffectColor(Color.GREEN);
+        assertEquals(mScrollViewRegular.getTopEdgeEffectColor(), Color.RED);
+        assertEquals(mScrollViewRegular.getBottomEdgeEffectColor(), Color.GREEN);
     }
 
     private boolean isInRange(int current, int from, int to) {

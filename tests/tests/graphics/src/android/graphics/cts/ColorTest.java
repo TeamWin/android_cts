@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.util.Log;
 import android.util.TypedValue;
 
 import androidx.test.filters.SmallTest;
@@ -30,12 +31,16 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ColorTest {
+
+    private static final String LOG_TAG = ColorTest.class.getSimpleName();
 
     @Test
     public void resourceColor() {
@@ -117,9 +122,22 @@ public class ColorTest {
                 assertEquals("Color should be expected value", expectedColor, value.data);
             }
         }
+
+        // System-API colors are used to allow updateable platform components to use the same colors
+        // as the system. The actualy value of the color does not matter. Hence only enforce that
+        // 'colors' contains all the public colors and ignore System-api colors.
+        int numPublicApiColors = 0;
+        for (Field declaredColor : android.R.color.class.getDeclaredFields()) {
+            if (Arrays.stream(declaredColor.getDeclaredAnnotations()).anyMatch(
+                    (Annotation a) -> a.toString().contains("SystemApi"))) {
+                Log.i(LOG_TAG, declaredColor.getName() + " is SystemApi");
+            } else {
+                numPublicApiColors++;
+            }
+        }
+
         assertEquals("Test no longer in sync with colors in android.R.color",
-                colors.length,
-                android.R.color.class.getDeclaredFields().length);
+                colors.length, numPublicApiColors);
     }
 
     @Test

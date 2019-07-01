@@ -49,7 +49,7 @@ public class ProfileManager {
             "<ProfileList Version=\"1.0.0\">" +
             "<PeripheralProfile ProfileName=\"AudioBox USB 96\" ProfileDescription=\"PreSonus AudioBox USB 96\" ProductName=\"USB-Audio - AudioBox USB 96\">" +
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
-                "<InputDevInfo ChanCounts=\"1, 2\" ChanPosMasks=\"12, 16\" ChanIndexMasks=\"1,3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
+                "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1,3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
             "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"AudioBox 44VSL\" ProfileDescription=\"Presonus AudioBox 44VSL\" ProductName=\"USB-Audio - AudioBox 44 VSL\">" +
                 "<OutputDevInfo ChanCounts=\"2,3,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"3,7,15\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\" />" +
@@ -88,6 +88,11 @@ public class ProfileManager {
             "<PeripheralProfile ProfileName=\"JBL Reflect Aware\" ProfileDescription=\"JBL Reflect Aware\" ProductName=\"USB-Audio - JBL Reflect Aware\">" +
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"2\" SampleRates=\"44100,48000\" />" +
                 "<InputDevInfo ChanCounts=\"1\" ChanPosMasks=\"16\" ChanIndexMasks=\"1\" Encodings=\"2\" SampleRates=\"44100,48000\" />" +
+                "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" />" +
+            "</PeripheralProfile>" +
+            "<PeripheralProfile ProfileName=\"Libratone Q Adapt\" ProfileDescription=\"Libratone Q Adapt Headset\" ProductName=\"USB-Audio - Libratone_INEAR\">" +
+                "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"2\" SampleRates=\"48000\" />" +
+                "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1\" Encodings=\"2\" SampleRates=\"48000\" />"+
                 "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" />" +
             "</PeripheralProfile>" +
         "</ProfileList>";

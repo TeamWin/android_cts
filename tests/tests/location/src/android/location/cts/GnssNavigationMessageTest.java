@@ -18,7 +18,6 @@ package android.location.cts;
 
 import android.location.GnssNavigationMessage;
 import android.os.Parcel;
-import android.util.Log;
 
 import java.util.List;
 
@@ -74,7 +73,7 @@ public class GnssNavigationMessageTest extends GnssTestCase {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+                isCtsVerifierTest())) {
             return;
         }
 
@@ -92,17 +91,18 @@ public class GnssNavigationMessageTest extends GnssTestCase {
         if (!mTestGnssNavigationMessageListener.verifyState()) {
             return;
         }
-        SoftAssert.failOrWarning(isMeasurementTestStrict(),
+        SoftAssert softAssert = new SoftAssert(TAG);
+        softAssert.assertTrue(
             "Time elapsed without getting enough navigation messages."
                 + " Possibly, the test has been run deep indoors."
                 + " Consider retrying test outdoors.",
             success);
 
-
         List<GnssNavigationMessage> events = mTestGnssNavigationMessageListener.getEvents();
 
         // Verify mandatory GnssNavigationMessage field values.
         TestMeasurementUtil.verifyGnssNavMessageMandatoryField(mTestLocationManager, events);
+        softAssert.assertAll();
     }
 
     private static void setTestValues(GnssNavigationMessage message) {

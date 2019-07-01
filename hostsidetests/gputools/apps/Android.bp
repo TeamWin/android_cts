@@ -20,13 +20,17 @@ cc_test_library {
         "jni/android_gputools_cts_RootlessGpuDebug.cpp",
     ],
     cflags: [
-        "-std=c++14",
         "-Wall",
         "-Werror",
     ],
     shared_libs: [
         "libandroid",
         "libvulkan",
+        "liblog",
+        "libandroid",
+        "libvulkan",
+        "libEGL",
+        "libGLESv3",
         "liblog",
     ],
     stl: "c++_shared",
@@ -62,6 +66,7 @@ android_test_helper_app {
     jni_libs: [
         "libctsgputools_jni",
         "libVkLayer_nullLayerC",
+        "libGLES_glesLayerC",
     ],
     aaptflags: [
         "--rename-manifest-package android.rootlessgpudebug.RELEASE.app",

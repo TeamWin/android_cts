@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -192,7 +193,7 @@ public class DisplayTest {
         HdrCapabilities cap = display.getHdrCapabilities();
         int[] hdrTypes = cap.getSupportedHdrTypes();
         for (int type : hdrTypes) {
-            assertTrue(type >= 1 && type <= 3);
+            assertTrue(type >= 1 && type <= 4);
         }
         assertFalse(cap.getDesiredMaxLuminance() < -1.0f);
         assertFalse(cap.getDesiredMinLuminance() < -1.0f);
@@ -369,6 +370,22 @@ public class DisplayTest {
                 mPresentation.dismiss();
             }
         });
+    }
+
+    /**
+     * Verify that getColorSpace method returns the expected color space of the display.
+     */
+    @Test
+    public void testGetPreferredWideGamutColorSpace() {
+        final Display defaultDisplay = mWindowManager.getDefaultDisplay();
+        final ColorSpace colorSpace = defaultDisplay.getPreferredWideGamutColorSpace();
+
+        if (defaultDisplay.isWideColorGamut()) {
+            assertFalse(colorSpace.isSrgb());
+            assertTrue(colorSpace.isWideGamut());
+        } else {
+            assertNull(colorSpace);
+        }
     }
 
     /**

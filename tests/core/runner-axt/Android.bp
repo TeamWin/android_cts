@@ -16,7 +16,8 @@
 // Build the core runner.
 //==========================================================
 
-// Build library
+// temporary cts-core-test-runner variant that brings in androidx.test transitively, instead
+// of android.support.test target. Will be removed after androidx.test CTS conversion is complete.
 java_library {
     name: "cts-core-test-runner-axt",
 

@@ -443,11 +443,12 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkUserActivity(String[] parts) {
-        assertEquals(8, parts.length);
+        assertEquals(9, parts.length);
         assertInteger(parts[4]); // other
         assertInteger(parts[5]); // button
         assertInteger(parts[6]); // touch
         assertInteger(parts[7]); // accessibility
+        assertInteger(parts[8]); // attention
     }
 
     private void checkBattery(String[] parts) {
@@ -574,7 +575,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkDataConnection(String[] parts) {
-        assertEquals(25, parts.length);
+        assertEquals(26, parts.length);
         assertInteger(parts[4]);  // none
         assertInteger(parts[5]);  // gprs
         assertInteger(parts[6]);  // edge
@@ -595,7 +596,8 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[21]); // td_scdma
         assertInteger(parts[22]); // iwlan
         assertInteger(parts[23]); // lte_ca
-        assertInteger(parts[24]); // other
+        assertInteger(parts[24]); // nr
+        assertInteger(parts[25]); // other
     }
 
     private void checkWifiState(String[] parts) {

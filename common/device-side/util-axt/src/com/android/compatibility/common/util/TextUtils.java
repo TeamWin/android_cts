@@ -63,4 +63,15 @@ public class TextUtils {
         }
         return sb.toString();
     }
+
+    /**
+     * Creates a string consisted of {@code size} chars {@code c}.
+     */
+    public static String repeat(char c, int size) {
+        StringBuilder builder = new StringBuilder(size);
+        for (int i = 1; i <= size; i++) {
+            builder.append(c);
+        }
+        return builder.toString();
+    }
 }

@@ -186,17 +186,20 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_AMBIENT_DISPLAY.
-        adapter.add(createInteractiveTestItem(this, DISALLOW_AMBIENT_DISPLAY_ID,
-                R.string.device_owner_disallow_ambient_display,
-                R.string.device_owner_disallow_ambient_display_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_user_restriction_set,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
-                                        UserManager.DISALLOW_AMBIENT_DISPLAY, true)),
-                        new ButtonInfo(
-                                R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
+        // TODO: After the ambient display feature flag is added in PackageManager (b/135591614),
+        // uncomment this test and run it only when ambient display is supported by the device.
+
+        // adapter.add(createInteractiveTestItem(this, DISALLOW_AMBIENT_DISPLAY_ID,
+        //         R.string.device_owner_disallow_ambient_display,
+        //         R.string.device_owner_disallow_ambient_display_info,
+        //         new ButtonInfo[] {
+        //                 new ButtonInfo(
+        //                         R.string.device_owner_user_restriction_set,
+        //                         CommandReceiverActivity.createSetUserRestrictionIntent(
+        //                                 UserManager.DISALLOW_AMBIENT_DISPLAY, true)),
+        //                 new ButtonInfo(
+        //                         R.string.device_owner_settings_go,
+        //                         new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
 
         // DISALLOW_CONFIG_VPN
         adapter.add(createInteractiveTestItem(this, DISALLOW_CONFIG_VPN_ID,
@@ -313,7 +316,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 new ButtonInfo[] {
                         new ButtonInfo(
                                 R.string.device_owner_set_user_icon_button,
-                                createSetUserIconIntent()),
+                                createSetUserIconIntent(R.drawable.user_icon_1)),
+                        new ButtonInfo(
+                                R.string.disallow_set_user_icon,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_SET_USER_ICON, true)),
+                        new ButtonInfo(
+                                R.string.device_owner_set_user_icon2_button,
+                                createSetUserIconIntent(R.drawable.user_icon_2)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
                                 new Intent(Settings.ACTION_SETTINGS))}));
@@ -400,7 +410,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_USER_SWITCH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_SETTINGS))}));
+                                    new Intent(Settings.ACTION_USER_SETTINGS))}));
 
             // DISALLOW_REMOVE_USER
             adapter.add(createInteractiveTestItem(this, DISALLOW_REMOVE_USER_TEST_ID,
@@ -416,7 +426,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_REMOVE_USER, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_SETTINGS))}));
+                                    new Intent(Settings.ACTION_USER_SETTINGS))}));
         }
 
         // Network logging UI
@@ -431,6 +441,13 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 R.string.device_owner_disable_network_logging_button,
                                 createDisableNetworkLoggingIntent())}));
 
+        // Customize lock screen message
+        adapter.add(TestListItem.newTest(this,
+                R.string.device_owner_customize_lockscreen_message,
+                LockscreenMessageTestActivity.class.getName(),
+                new Intent(this, LockscreenMessageTestActivity.class),
+                /* requiredFeatures */ null));
+
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
@@ -439,7 +456,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         R.string.remove_device_owner_button,
                         createTearDownIntent())));
     }
-
 
     static TestListItem createTestItem(Activity activity, String id, int titleRes,
             Intent intent) {
@@ -459,10 +475,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 .putExtra(CommandReceiverActivity.EXTRA_ENFORCED, value);
     }
 
-    private Intent createSetUserIconIntent() {
+    private Intent createSetUserIconIntent(int iconRes) {
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
-                        CommandReceiverActivity.COMMAND_SET_USER_ICON);
+                        CommandReceiverActivity.COMMAND_SET_USER_ICON)
+                .putExtra(CommandReceiverActivity.EXTRA_VALUE, iconRes);
     }
 
     private Intent createEnableNetworkLoggingIntent() {

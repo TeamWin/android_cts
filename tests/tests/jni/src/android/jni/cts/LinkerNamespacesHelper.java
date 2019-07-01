@@ -48,6 +48,7 @@ class LinkerNamespacesHelper {
     private final static String RUNTIME_APEX_DIR = "/apex/com.android.runtime";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",
+        "libamidi.so",
         "libandroid.so",
         "libbinder_ndk.so",
         "libc.so",

@@ -19,9 +19,10 @@ package android.telecom.cts;
 import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.app.UiModeManager;
-// TODO: uncomment when roleManager is ready.
-// import android.app.role.RoleManager;
+import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -44,8 +45,8 @@ import java.util.concurrent.TimeUnit;
 public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices {
 
     private static final String TAG = ThirdPartyInCallServiceTest.class.getSimpleName();
-    private static final String ROLE_COMPANION_APP = "android.app.role.CALL_COMPANION_APP";
-    private static final String ROLE_CAR_MODE_DIALER_APP = "android.app.role.CAR_MODE_DIALER_APP";
+    private static final String ROLE_COMPANION_APP = "android.app.role.CALL_COMPANION";
+    private static final String ROLE_CAR_MODE_DIALER_APP = "android.app.role.CAR_MODE_DIALER";
     private static final Uri sTestUri = Uri.parse("tel:555-TEST");
     private Context mContext;
     private UiModeManager mUiModeManager;
@@ -231,15 +232,14 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
     }
 
     private void cacheCurrentRoleHolder(String roleName) {
-        // com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-        // runWithShellPermissionIdentity(() -> {
+        runWithShellPermissionIdentity(() -> {
             List<String> previousHolders = mCtsRoleManagerAdapter.getRoleHolders(roleName);
             if (previousHolders == null || previousHolders.isEmpty()) {
                 mPreviousRoleHolder = null;
             } else {
                 mPreviousRoleHolder = previousHolders.get(0);
             }
-        // });
+        });
     }
 
 }

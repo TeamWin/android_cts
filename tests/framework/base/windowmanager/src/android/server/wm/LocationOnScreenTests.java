@@ -26,6 +26,8 @@ import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static org.hamcrest.Matchers.is;
 
 import android.app.Activity;
@@ -46,11 +48,9 @@ import android.view.Window;
 import android.view.WindowManager.LayoutParams;
 import android.widget.FrameLayout;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -61,14 +61,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
-import org.junit.runner.RunWith;
 
 import java.util.function.Supplier;
 
-@RunWith(AndroidJUnit4.class)
+@FlakyTest(detail = "until proven non-flaky")
 @SmallTest
 @Presubmit
-@FlakyTest(detail = "until proven non-flaky")
 public class LocationOnScreenTests {
 
     @Rule
@@ -84,7 +82,7 @@ public class LocationOnScreenTests {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getContext();
+        mContext = getInstrumentation().getContext();
         mLayoutParams = new LayoutParams(MATCH_PARENT, MATCH_PARENT, LayoutParams.TYPE_APPLICATION,
                 LayoutParams.FLAG_LAYOUT_IN_SCREEN | LayoutParams.FLAG_LAYOUT_INSET_DECOR,
                 PixelFormat.TRANSLUCENT);
@@ -144,7 +142,7 @@ public class LocationOnScreenTests {
     }
 
     private void runOnMainSync(Runnable runnable) {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
+        getInstrumentation().runOnMainSync(runnable);
     }
 
     private <T extends Activity> T launchAndWait(ActivityTestRule<T> rule,
@@ -156,8 +154,7 @@ public class LocationOnScreenTests {
     }
 
     private Point findTestColorsInScreenshot(Point guess) {
-        final Bitmap screenshot =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
+        final Bitmap screenshot = getInstrumentation().getUiAutomation().takeScreenshot();
 
         // We have a good guess from locationOnScreen - check there first to avoid having to go over
         // the entire bitmap. Also increases robustness in the extremely unlikely case that those

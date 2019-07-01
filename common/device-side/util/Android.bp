@@ -17,20 +17,24 @@ java_library_static {
     sdk_version: "test_current",
 
     srcs: [
-       "src/**/*.java",
+        "src/**/*.java",
         "src/**/*.aidl",
     ],
 
     static_libs: [
+        "androidx.test.rules",
         "compatibility-common-util-devicesidelib",
         "android-support-test",
         "ub-uiautomator",
         "mockito-target-minus-junit4",
         "androidx.annotation_annotation",
+        "truth-prebuilt",
     ],
 
     libs: [
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
+
+    jarjar_rules: "protobuf-jarjar-rules.txt",
 }

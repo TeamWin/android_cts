@@ -30,6 +30,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -196,10 +197,12 @@ public class NinePatchDrawableTest {
         assertEquals(0, mNinePatchDrawable.getPaint().getAlpha());
 
         mNinePatchDrawable.setAlpha(-1);
-        assertEquals(0xff, mNinePatchDrawable.getPaint().getAlpha());
+        assertTrue(0 <= mNinePatchDrawable.getPaint().getAlpha()
+                   && mNinePatchDrawable.getPaint().getAlpha() <= 255);
 
         mNinePatchDrawable.setAlpha(0xfffe);
-        assertEquals(0xfe, mNinePatchDrawable.getPaint().getAlpha());
+        assertTrue(0 <= mNinePatchDrawable.getPaint().getAlpha()
+                   && mNinePatchDrawable.getPaint().getAlpha() <= 255);
     }
 
     @Test
@@ -220,9 +223,17 @@ public class NinePatchDrawableTest {
         mNinePatchDrawable.setTintMode(Mode.SRC_OVER);
         assertEquals("Nine-patch is tinted", Color.BLACK,
                 DrawableTestUtils.getPixel(mNinePatchDrawable, 0, 0));
+    }
+
+    @Test
+    public void testSetBlendMode() {
+        mNinePatchDrawable.setTint(Color.BLACK);
+        mNinePatchDrawable.setTintBlendMode(BlendMode.SRC_OVER);
+        assertEquals("Nine-patch is tinted", Color.BLACK,
+                DrawableTestUtils.getPixel(mNinePatchDrawable, 0, 0));
 
         mNinePatchDrawable.setTintList(null);
-        mNinePatchDrawable.setTintMode(null);
+        mNinePatchDrawable.setTintBlendMode((BlendMode) null);
     }
 
     @Test

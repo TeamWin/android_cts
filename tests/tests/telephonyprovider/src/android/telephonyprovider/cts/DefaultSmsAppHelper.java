@@ -16,23 +16,50 @@
 
 package android.telephonyprovider.cts;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
-import androidx.test.InstrumentationRegistry;
+import static org.junit.Assert.assertTrue;
+
+import android.app.role.RoleManager;
+import android.content.Context;
+import android.os.Process;
+import android.os.UserHandle;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 
 class DefaultSmsAppHelper {
     static void ensureDefaultSmsApp() {
-        String packageName =
-                InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
+        Context context = ApplicationProvider.getApplicationContext();
 
-        runShellCommand(
-                String.format("settings put secure sms_default_application %s", packageName));
+        String packageName = context.getPackageName();
+        RoleManager roleManager = context.getSystemService(RoleManager.class);
+        Executor executor = context.getMainExecutor();
+        UserHandle user = Process.myUserHandle();
 
+        CountDownLatch latch = new CountDownLatch(1);
+        boolean[] success = new boolean[1];
 
-        // FIXME: Required because setting default SMS app to a given package adds appops WRITE_SMS
-        // permissions to the given package, but changing away from a given package seem to remove
-        // the appops permission from the given package. This is a known issue and should be fixed
-        // for Q.
-        runShellCommand(String.format("appops set %s WRITE_SMS allow", packageName));
+        runWithShellPermissionIdentity(() -> {
+            roleManager.addRoleHolderAsUser(
+                    RoleManager.ROLE_SMS,
+                    packageName,
+                    RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                    user,
+                    executor,
+                    successful -> {
+                        success[0] = successful;
+                        latch.countDown();
+                    });
+        });
+
+        try {
+            latch.await();
+            assertTrue(success[0]);
+        } catch(InterruptedException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
     }
 }

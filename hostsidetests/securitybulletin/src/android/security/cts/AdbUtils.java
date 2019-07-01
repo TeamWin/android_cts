@@ -18,7 +18,6 @@ package android.security.cts;
 
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -41,13 +40,17 @@ public class AdbUtils {
      * @return the console output from running the command
      */
     public static String runCommandLine(String command, ITestDevice device) throws Exception {
+        if ("reboot".equals(command)) {
+            throw new IllegalArgumentException(
+                    "You called a forbidden command! Please fix your tests.");
+        }
         return device.executeShellCommand(command);
     }
 
     /**
      * Pushes and runs a binary to the selected device
      *
-     * @param pathToPoc a string path to poc from the /res folder
+     * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @return the console output from the binary
      */

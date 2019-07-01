@@ -16,7 +16,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
        package="com.android.cts.externalstorageapp">
 
-    <application android:usesCleartextTraffic="true">
+    <application
+            android:usesCleartextTraffic="true"
+            android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
     </application>
 

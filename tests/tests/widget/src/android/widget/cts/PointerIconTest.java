@@ -27,6 +27,7 @@ import android.widget.TabWidget;
 import android.widget.TextView;
 
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -113,6 +114,7 @@ public class PointerIconTest {
         assertDefaultWidgetPointerIconBehavior(mActivity.findViewById(R.id.spinner));
     }
 
+    @FlakyTest(bugId = 124009655)
     @Test
     public void testTabWidget() throws Throwable {
         final TabHost tabHost = (TabHost) mActivity.findViewById(android.R.id.tabhost);

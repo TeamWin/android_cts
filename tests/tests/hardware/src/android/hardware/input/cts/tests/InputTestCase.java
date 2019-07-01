@@ -27,7 +27,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.cts.input.HidDevice;
@@ -96,9 +96,7 @@ public abstract class InputTestCase {
     private void assertReceivedKeyEvent(@NonNull KeyEvent expectedKeyEvent) {
         KeyEvent receivedKeyEvent = waitForKey();
         if (receivedKeyEvent == null) {
-            fail(mCurrentTestCase + ": timed out waiting for "
-                    + KeyEvent.keyCodeToString(expectedKeyEvent.getKeyCode())
-                    + " with action " + KeyEvent.actionToString(expectedKeyEvent.getAction()));
+            failWithMessage("Did not receive " + expectedKeyEvent);
         }
         assertEquals(mCurrentTestCase, expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
         assertEquals(mCurrentTestCase,
@@ -117,10 +115,10 @@ public abstract class InputTestCase {
           */
 
         if (event == null) {
-            fail(mCurrentTestCase + ": timed out waiting for MotionEvent");
+            failWithMessage("Did not receive " + expectedEvent);
         }
         if (event.getHistorySize() > 0) {
-            fail(mCurrentTestCase + ": expected each MotionEvent to only have a single entry");
+            failWithMessage("expected each MotionEvent to only have a single entry");
         }
         assertEquals(mCurrentTestCase, expectedEvent.getAction(), event.getAction());
         for (int axis = MotionEvent.AXIS_X; axis <= MotionEvent.AXIS_GENERIC_16; axis++) {
@@ -140,7 +138,7 @@ public abstract class InputTestCase {
         if (event == null) {
             return;
         }
-        fail(mCurrentTestCase + ": extraneous events generated: " + event);
+        failWithMessage("extraneous events generated: " + event);
     }
 
     protected void testInputEvents(int resourceId) {
@@ -174,7 +172,7 @@ public abstract class InputTestCase {
         try {
             return mEvents.poll(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            fail(mCurrentTestCase + ": unexpectedly interrupted while waiting for InputEvent");
+            failWithMessage("unexpectedly interrupted while waiting for InputEvent");
             return null;
         }
     }
@@ -184,7 +182,6 @@ public abstract class InputTestCase {
         if (event instanceof KeyEvent) {
             return (KeyEvent) event;
         }
-        fail("Expected a KeyEvent, but received: " + event);
         return null;
     }
 
@@ -193,7 +190,6 @@ public abstract class InputTestCase {
         if (event instanceof MotionEvent) {
             return (MotionEvent) event;
         }
-        fail("Expected a MotionEvent, but received: " + event);
         return null;
     }
 
@@ -253,13 +249,20 @@ public abstract class InputTestCase {
         return events;
     }
 
+    /**
+     * Append the name of the currently executing test case to the fail message.
+     */
+    private void failWithMessage(String message) {
+        fail(mCurrentTestCase + ": " + message);
+    }
+
     private class InputListener implements InputCallback {
         @Override
         public void onKeyEvent(KeyEvent ev) {
             try {
                 mEvents.put(new KeyEvent(ev));
             } catch (InterruptedException ex) {
-                fail(mCurrentTestCase + ": interrupted while adding a KeyEvent to the queue");
+                failWithMessage("interrupted while adding a KeyEvent to the queue");
             }
         }
 
@@ -270,7 +273,7 @@ public abstract class InputTestCase {
                     mEvents.put(event);
                 }
             } catch (InterruptedException ex) {
-                fail(mCurrentTestCase + ": interrupted while adding a MotionEvent to the queue");
+                failWithMessage("interrupted while adding a MotionEvent to the queue");
             }
         }
     }

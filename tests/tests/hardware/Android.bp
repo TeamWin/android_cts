@@ -28,6 +28,7 @@ android_test {
     ],
     static_libs: [
         "androidx.annotation_annotation",
+        "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "cts-input-lib",
         "ctstestrunner-axt",
@@ -40,7 +41,5 @@ android_test {
         "libnativehelper_compat_libc++",
     ],
     srcs: ["src/**/*.java"],
-
-    platform_apis: true,
-
+    sdk_version: "test_current",
 }

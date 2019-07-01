@@ -19,6 +19,7 @@ import static android.uirendering.cts.util.MockVsyncHelper.nextFrame;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Mockito.mock;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -133,6 +135,17 @@ public class EdgeEffectTests {
         assertEdgeEffect(edgeEffect -> {
             edgeEffect.setColor(Color.GREEN);
             assertEquals(Color.GREEN, edgeEffect.getColor());
+            edgeEffect.onPull(1);
+        });
+    }
+
+    @Test
+    public void testSetBlendMode() {
+        assertEdgeEffect(edgeEffect -> {
+            edgeEffect.setBlendMode(null);
+            assertNull(edgeEffect.getBlendMode());
+            edgeEffect.setBlendMode(EdgeEffect.DEFAULT_BLEND_MODE);
+            assertEquals(BlendMode.SRC_ATOP, edgeEffect.getBlendMode());
             edgeEffect.onPull(1);
         });
     }

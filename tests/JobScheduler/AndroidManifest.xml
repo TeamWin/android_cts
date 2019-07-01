@@ -27,7 +27,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
-    <application>
+    <application android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
 
         <service android:name="android.jobscheduler.MockJobService"

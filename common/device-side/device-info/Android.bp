@@ -25,17 +25,7 @@ java_library {
 
     libs: [
         "android.test.base.stubs",
-        "framework-stub-for-compatibility-device-info",
     ],
 
     sdk_version: "test_current",
-}
-
-java_library {
-    // This stub library provides some internal APIs (SystemProperties, VintfObject, etc.)
-    // to compatibility-device-info library.
-    name: "framework-stub-for-compatibility-device-info",
-    srcs: ["src_stub/**/*.java"],
-
-    sdk_version: "current",
 }

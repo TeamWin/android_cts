@@ -24,8 +24,6 @@ import android.text.Layout;
 import android.text.PrecomputedText;
 import android.text.PrecomputedText.Params;
 import android.text.PrecomputedText.Params.Builder;
-import android.text.TextDirectionHeuristic;
-import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -68,8 +66,6 @@ public class TextViewPrecomputedTextTest {
     @Parameterized.Parameter(8)
     public boolean differentHyphenationFrequency;
     @Parameterized.Parameter(9)
-    public boolean differentTextDir;
-    @Parameterized.Parameter(10)
     public boolean differentFontVariationSettings;
 
     // text size from the default value.
@@ -136,15 +132,8 @@ public class TextViewPrecomputedTextTest {
             differenceList.add("Hyphenation Frequency");
         }
 
-        TextDirectionHeuristic dir = params.getTextDirection();
-        if (differentTextDir) {
-            dir = dir == TextDirectionHeuristics.LTR
-                    ?  TextDirectionHeuristics.RTL : TextDirectionHeuristics.LTR;
-            differenceList.add("Text Direction");
-        }
-
         final Params outParams = new Builder(paint).setBreakStrategy(strategy)
-                .setHyphenationFrequency(hyFreq).setTextDirection(dir).build();
+                .setHyphenationFrequency(hyFreq).build();
         return new Pair(outParams, differenceList.toArray(new String[differenceList.size()]));
     }
 
@@ -157,7 +146,7 @@ public class TextViewPrecomputedTextTest {
         ArrayList<Object[]> allParams = new ArrayList<>();
 
         // Compute the powerset except for all false case.
-        final int allParameterCount = 11;
+        final int allParameterCount = 10;
         // The 11-th bit is for font variation settings. Don't add test case if the system don't
         // have variable fonts.
         final int fullBits = hasVarFont()

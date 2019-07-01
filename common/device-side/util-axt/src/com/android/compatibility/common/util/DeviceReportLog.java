@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import androidx.test.InstrumentationRegistry;
+
 /**
  * Handles adding results to the report for device side tests.
  *
@@ -40,8 +42,10 @@ public class DeviceReportLog extends ReportLog {
     private ReportLogDeviceInfoStore store;
 
     public DeviceReportLog(String reportLogName, String streamName) {
-        this(reportLogName, streamName,
-                new File(Environment.getExternalStorageDirectory(), "report-log-files"));
+        this(reportLogName, streamName, new File(InstrumentationRegistry
+                .getInstrumentation().getTargetContext()
+                .getExternalFilesDir(null).getPath(),
+                "report-log-files"));
     }
 
     public DeviceReportLog(String reportLogName, String streamName, File logDirectory) {

@@ -195,6 +195,10 @@ public class TabHost_TabSpecTest {
         Uri uri = Uri.parse("ctstest://tabhost_tabspec/test");
         final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        ActivityMonitor am = instrumentation.addMonitor(MockURLSpanTestActivity.class.getName(),
+                null, false);
+
         mActivity.runOnUiThread(() -> {
             TabHost.TabSpec tabSpec = mTabHost.newTabSpec("tab spec");
             tabSpec.setIndicator("tab");
@@ -202,10 +206,6 @@ public class TabHost_TabSpecTest {
             mTabHost.addTab(tabSpec);
             mTabHost.setCurrentTab(1);
         });
-
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        ActivityMonitor am = instrumentation.addMonitor(MockURLSpanTestActivity.class.getName(),
-                null, false);
 
         Activity newActivity = am.waitForActivityWithTimeout(5000);
         assertNotNull(newActivity);

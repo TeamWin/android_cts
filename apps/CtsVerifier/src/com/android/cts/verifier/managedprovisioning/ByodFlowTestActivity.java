@@ -27,8 +27,6 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Toast;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
@@ -58,6 +56,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             "com.android.cts.verifier.managedprovisioning.BYOD_TEST_RESULT";
     // Extra for ACTION_TEST_RESULT containing test result.
     public static final String EXTRA_RESULT = "extra-result";
+    protected static final String HELPER_APP_PATH = "/data/local/tmp/NotificationBot.apk";
 
     private static final String TAG = "ByodFlowTestActivity";
     private static ConnectivityManager mCm;
@@ -79,8 +78,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mCrossProfileIntentFiltersTestFromPersonal;
     private DialogTestListItem mCrossProfileIntentFiltersTestFromWork;
     private DialogTestListItem mAppLinkingTest;
-    private DialogTestListItem mDisableNonMarketTest;
-    private DialogTestListItem mEnableNonMarketTest;
+    private TestListItem mNonMarketAppsTest;
     private DialogTestListItem mWorkNotificationBadgedTest;
     private DialogTestListItem mWorkStatusBarIconTest;
     private DialogTestListItem mWorkStatusBarToastTest;
@@ -106,7 +104,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mPrimaryLocationWhenWorkDisabledTest;
     private DialogTestListItem mSelectWorkChallenge;
     private DialogTestListItem mConfirmWorkCredentials;
+    private DialogTestListItem mPatternWorkChallenge;
     private DialogTestListItem mParentProfilePassword;
+    private DialogTestListItem mPersonalRingtonesTest;
     private TestListItem mVpnTest;
     private TestListItem mKeyChainTest;
     private TestListItem mAlwaysOnVpnSettingsTest;
@@ -133,13 +133,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         mByodFlowTestHelper.setup();
 
         mPrepareTestButton.setText(R.string.provisioning_byod_start);
-        mPrepareTestButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.provisionManagedProfile(ByodFlowTestActivity.this, mAdminReceiverComponent,
-                        REQUEST_MANAGED_PROVISIONING);
-            }
-        });
+        mPrepareTestButton.setOnClickListener(v -> Utils.provisionManagedProfile(
+                ByodFlowTestActivity.this, mAdminReceiverComponent,
+                REQUEST_MANAGED_PROVISIONING));
 
         // If we are started by managed provisioning (fresh managed provisioning after encryption
         // reboot), redirect the user back to the main test list. This is because the test result
@@ -247,6 +243,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     R.string.provisioning_byod_confirm_work_credentials_description,
                     new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
 
+            mPatternWorkChallenge = new DialogTestListItem(this,
+                    R.string.provisioning_byod_pattern_work_challenge,
+                    "BYOD_PatternWorkChallenge",
+                    R.string.provisioning_byod_pattern_work_challenge_description,
+                    new Intent(ByodHelperActivity.ACTION_TEST_PATTERN_WORK_CHALLENGE));
+
             mWiFiDataUsageSettingsVisibleTest = new DialogTestListItem(this,
                     R.string.provisioning_byod_wifi_data_usage_settings,
                     "BYOD_WiFiDataUsageSettingsVisibleTest",
@@ -280,19 +282,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 workStatusToast);
         */
 
-        mDisableNonMarketTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_nonmarket_deny,
-                "BYOD_DisableNonMarketTest",
-                R.string.provisioning_byod_nonmarket_deny_info,
-                new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
-                        .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, false));
-
-        mEnableNonMarketTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_nonmarket_allow,
-                "BYOD_EnableNonMarketTest",
-                R.string.provisioning_byod_nonmarket_allow_info,
-                new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
-                        .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true));
+        mNonMarketAppsTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_non_market_apps,
+                NonMarketAppsActivity.class.getName(),
+                new Intent(this, NonMarketAppsActivity.class), null);
 
         mProfileAccountVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_profile_visible,
@@ -448,6 +441,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_parent_profile_password_description,
                 new Intent(ByodHelperActivity.ACTION_TEST_PARENT_PROFILE_PASSWORD));
 
+        mPersonalRingtonesTest = new DialogTestListItem(this,
+                R.string.provisioning_byod_personal_ringtones,
+                "BYOD_PersonalRingtones",
+                R.string.provisioning_byod_personal_ringtones_instruction,
+                new Intent(Settings.ACTION_SOUND_SETTINGS));
+
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
@@ -483,15 +482,15 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
+        adapter.add(mPersonalRingtonesTest);
 
         adapter.add(mCrossProfileIntentFiltersTestFromPersonal);
         adapter.add(mCrossProfileIntentFiltersTestFromWork);
         /* Disable due to b/33571176
         adapter.add(mAppLinkingTest);
         */
-        adapter.add(mDisableNonMarketTest);
-        adapter.add(mEnableNonMarketTest);
         adapter.add(mIntentFiltersTest);
+        adapter.add(mNonMarketAppsTest);
         adapter.add(mPermissionLockdownTest);
         adapter.add(mKeyguardDisabledFeaturesTest);
         adapter.add(mAuthenticationBoundKeyTest);
@@ -501,6 +500,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mSelectWorkChallenge);
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             adapter.add(mConfirmWorkCredentials);
+            adapter.add(mPatternWorkChallenge);
         }
         adapter.add(mRecentsTest);
         adapter.add(mOrganizationInfoTest);
@@ -564,7 +564,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     .show();
         }
 
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_BEAM)) {
             mDisableNfcBeamTest = new DialogTestListItem(this, R.string.provisioning_byod_nfc_beam,
                     "BYOD_DisableNfcBeamTest",
                     R.string.provisioning_byod_nfc_beam_allowed_instruction,
@@ -594,8 +595,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 }
             };
             adapter.add(mDisableNfcBeamTest);
-            adapter.add(mKeyChainTest);
         }
+
+        adapter.add(mKeyChainTest);
 
         /* If there is an application that handles RECORD_SOUND_ACTION, test that it handles it
          * well.
@@ -656,6 +658,18 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             adapter.add(mWidgetTest);
         }
 
+        adapter.add(new DialogTestListItem(this,
+                R.string.provisioning_byod_uninstall_work_app,
+                "BYOD_UninstallWorkApp",
+                R.string.provisioning_byod_uninstall_work_app_instruction,
+                createInstallWorkProfileAppIntent()));
+    }
+
+    private Intent createInstallWorkProfileAppIntent() {
+        // We place the APK file in /data/local/tmp to make it visible from the work profile.
+        return new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
+                .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true)
+                .putExtra(ByodHelperActivity.EXTRA_PARAMETER_1, HELPER_APP_PATH);
     }
 
     // Return whether the intent can be resolved in the current profile

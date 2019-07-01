@@ -580,7 +580,7 @@ public class AnimationTest {
         anim.setRepeatMode(Animation.REVERSE);
 
         AnimationTestUtils.assertRunAnimation(mInstrumentation, mActivityRule, animWindow, anim,
-                3000);
+                3 * ACCELERATE_ALPHA_DURATION);
         verify(listener, times(1)).onAnimationStart(anim);
         verify(listener, times(2)).onAnimationRepeat(anim);
         verify(listener, times(1)).onAnimationEnd(anim);
@@ -701,7 +701,7 @@ public class AnimationTest {
         // whether it is still animating.
         final View view = mActivity.findViewById(R.id.anim_window);
         mActivityRule.runOnUiThread(() -> {
-            anim.setDuration(delayed ? 150 : 100);
+            anim.setDuration(delayed ? 300 : 200);
             if (repeating) {
                 anim.setRepeatCount(Animation.INFINITE);
             }
@@ -709,12 +709,12 @@ public class AnimationTest {
             if (!delayed) {
                 anim.cancel();
             } else {
-                view.postDelayed(anim::cancel, 50);
+                view.postDelayed(anim::cancel, 100);
             }
             view.postDelayed(() -> {
                 anim.setStillAnimating(false);
-                view.postDelayed(latch::countDown, 50);
-            }, delayed ? 100 : 50);
+                view.postDelayed(latch::countDown, 200);
+            }, delayed ? 300 : 200);
         });
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.Map;
-import java.util.HashMap;
 import com.android.ddmlib.Log;
+import java.util.concurrent.Callable;
+import java.math.BigInteger;
 
 public class SecurityTestCase extends DeviceTestCase {
 
     private static final String LOG_TAG = "SecurityTestCase";
+    private static final int RADIX_HEX = 16;
 
     private long kernelStartTime;
 
@@ -43,48 +44,13 @@ public class SecurityTestCase extends DeviceTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        kernelStartTime = System.currentTimeMillis()/1000 -
-            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
-        //TODO:(badash@): Watch for other things to track.
+        getDevice().waitForDeviceAvailable();
+        getDevice().disableAdbRoot();
+        updateKernelStartTime();
+        // TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
 
         oomCatcher.start();
-    }
-
-    /**
-     * Allows a CTS test to pass if called after a planned reboot.
-     */
-    public void updateKernelStartTime() throws Exception {
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        kernelStartTime = System.currentTimeMillis()/1000 -
-            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
-    }
-
-    /**
-     * Use {@link NativeDevice#enableAdbRoot()} internally.
-     *
-     * The test methods calling this function should run even if enableAdbRoot fails, which is why 
-     * the return value is ignored. However, we may want to act on that data point in the future.
-     */
-    public boolean enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
-        if(mDevice.enableAdbRoot()) {
-            return true;
-        } else {
-            CLog.w("\"enable-root\" set to false! Root is required to check if device is vulnerable.");
-            return false;
-        }
-    }
-
-    /**
-     * Check if a driver is present on a machine
-     */
-    public boolean containsDriver(ITestDevice mDevice, String driver) throws Exception {
-        String result = mDevice.executeShellCommand("ls -Zl " + driver);
-        if(result.contains("No such file or directory")) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -95,45 +61,153 @@ public class SecurityTestCase extends DeviceTestCase {
     public void tearDown() throws Exception {
         oomCatcher.stop(getDevice().getSerialNumber());
 
-        getDevice().waitForDeviceAvailable(120 * 1000);
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        assertTrue("Phone has had a hard reset",
-            (System.currentTimeMillis()/1000 -
-                Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
-                    - kernelStartTime < 2));
-        //TODO(badash@): add ability to catch runtime restart
-        getDevice().disableAdbRoot();
+        try {
+            getDevice().waitForDeviceAvailable(90 * 1000);
+        } catch (DeviceNotAvailableException e) {
+            // Force a disconnection of all existing sessions to see if that unsticks adbd.
+            getDevice().executeAdbCommand("reconnect");
+            getDevice().waitForDeviceAvailable(30 * 1000);
+        }
 
         if (oomCatcher.isOomDetected()) {
+            // we don't need to check kernel start time if we intentionally rebooted because oom
+            updateKernelStartTime();
             switch (oomCatcher.getOomBehavior()) {
                 case FAIL_AND_LOG:
                     fail("The device ran out of memory.");
-                    return;
+                    break;
                 case PASS_AND_LOG:
                     Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG, "Skipping test.");
-                    return;
+                    break;
                 case FAIL_NO_LOG:
                     fail();
-                    return;
+                    break;
             }
+        } else {
+            long deviceTime = getDeviceUptime() + kernelStartTime;
+            long hostTime = System.currentTimeMillis() / 1000;
+            assertTrue("Phone has had a hard reset", (hostTime - deviceTime) < 2);
+
+            // TODO(badash@): add ability to catch runtime restart
         }
     }
 
+    // TODO convert existing assertMatches*() to RegexUtils.assertMatches*()
+    // b/123237827
+    @Deprecated
     public void assertMatches(String pattern, String input) throws Exception {
-        assertTrue("Pattern not found", Pattern.matches(pattern, input));
+        RegexUtils.assertContains(pattern, input);
     }
 
+    @Deprecated
     public void assertMatchesMultiLine(String pattern, String input) throws Exception {
-        assertTrue("Pattern not found: " + pattern,
-          Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
+        RegexUtils.assertContainsMultiline(pattern, input);
     }
 
+    @Deprecated
     public void assertNotMatches(String pattern, String input) throws Exception {
-        assertFalse("Pattern found", Pattern.matches(pattern, input));
+        RegexUtils.assertNotContains(pattern, input);
     }
 
+    @Deprecated
     public void assertNotMatchesMultiLine(String pattern, String input) throws Exception {
-        assertFalse("Pattern found: " + pattern,
-          Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
+        RegexUtils.assertNotContainsMultiline(pattern, input);
+    }
+
+    /**
+     * Runs a provided function that collects a String to test against kernel pointer leaks.
+     * The getPtrFunction function implementation must return a String that starts with the
+     * pointer. i.e. "01234567". Trailing characters are allowed except for [0-9a-fA-F]. In
+     * the event that the pointer appears to be vulnerable, a JUnit assert is thrown. Since kernel
+     * pointers can be hashed, there is a possiblity the the hashed pointer overlaps into the
+     * normal kernel space. The test re-runs to make false positives statistically insignificant.
+     * When kernel pointers won't change without a reboot, provide a device to reboot.
+     *
+     * @param getPtrFunction a function that returns a string that starts with a pointer
+     * @param deviceToReboot device to reboot when kernel pointers won't change
+     */
+    public void assertNotKernelPointer(Callable<String> getPtrFunction, ITestDevice deviceToReboot)
+            throws Exception {
+        String ptr = null;
+        for (int i = 0; i < 4; i++) { // ~0.4% chance of false positive
+            ptr = getPtrFunction.call();
+            if (ptr == null) {
+                return;
+            }
+            if (!isKptr(ptr)) {
+                // quit early because the ptr is likely hashed or zeroed.
+                return;
+            }
+            if (deviceToReboot != null) {
+                deviceToReboot.nonBlockingReboot();
+                deviceToReboot.waitForDeviceAvailable();
+                updateKernelStartTime();
+            }
+        }
+        fail("\"" + ptr + "\" is an exposed kernel pointer.");
+    }
+
+    private boolean isKptr(String ptr) {
+        Matcher m = Pattern.compile("[0-9a-fA-F]*").matcher(ptr);
+        if (!m.find() || m.start() != 0) {
+           // ptr string is malformed
+           return false;
+        }
+        int length = m.end();
+
+        if (length == 8) {
+          // 32-bit pointer
+          BigInteger address = new BigInteger(ptr.substring(0, length), RADIX_HEX);
+          // 32-bit kernel memory range: 0xC0000000 -> 0xffffffff
+          // 0x3fffffff bytes = 1GB /  0xffffffff = 4 GB
+          // 1 in 4 collision for hashed pointers
+          return address.compareTo(new BigInteger("C0000000", RADIX_HEX)) >= 0;
+        } else if (length == 16) {
+          // 64-bit pointer
+          BigInteger address = new BigInteger(ptr.substring(0, length), RADIX_HEX);
+          // 64-bit kernel memory range: 0x8000000000000000 -> 0xffffffffffffffff
+          // 48-bit implementation: 0xffff800000000000; 1 in 131,072 collision
+          // 56-bit implementation: 0xff80000000000000; 1 in 512 collision
+          // 64-bit implementation: 0x8000000000000000; 1 in 2 collision
+          return address.compareTo(new BigInteger("ff80000000000000", RADIX_HEX)) >= 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a driver is present on a machine.
+     * deprecated: use AdbUtils.stat() instead!
+     */
+    @Deprecated
+    protected boolean containsDriver(ITestDevice mDevice, String driver) throws Exception {
+        String result = mDevice.executeShellCommand("ls -Zl " + driver);
+        if(result.contains("No such file or directory")) {
+            return false;
+        }
+        return true;
+    }
+
+    private long getDeviceUptime() throws DeviceNotAvailableException {
+        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+        return Long.parseLong(uptime.substring(0, uptime.indexOf('.')));
+    }
+
+    public void safeReboot() throws DeviceNotAvailableException {
+        getDevice().nonBlockingReboot();
+        getDevice().waitForDeviceAvailable();
+        updateKernelStartTime();
+    }
+
+    /**
+     * Allows a test to pass if called after a planned reboot.
+     */
+    public void updateKernelStartTime() throws DeviceNotAvailableException {
+        long uptime = getDeviceUptime();
+        kernelStartTime = (System.currentTimeMillis() / 1000) - uptime;
+    }
+
+    public HostsideOomCatcher getOomCatcher() {
+        return oomCatcher;
     }
 }

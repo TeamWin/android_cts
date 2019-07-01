@@ -23,6 +23,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
+import android.uirendering.cts.runner.SkipPresubmit;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
@@ -46,6 +47,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 
 @LargeTest
+@SkipPresubmit // TODO: Figure out what's going on with this b/134716377
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
 

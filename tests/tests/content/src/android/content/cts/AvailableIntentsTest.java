@@ -16,20 +16,24 @@
 
 package android.content.cts;
 
+import static com.android.compatibility.common.util.RequiredServiceRule.hasService;
+
 import android.app.DownloadManager;
 import android.app.SearchManager;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.storage.StorageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
-import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
 
@@ -37,9 +41,12 @@ import com.android.compatibility.common.util.FeatureUtil;
 
 import java.util.List;
 
+@AppModeFull // TODO(Instant) Figure out which intents should be visible
 public class AvailableIntentsTest extends AndroidTestCase {
     private static final String NORMAL_URL = "http://www.google.com/";
     private static final String SECURE_URL = "https://www.google.com/";
+    private static final String QRCODE= "DPP:I:SN=4774LH2b4044;M:010203040506;K:MDkwEwYHKoZIzj" +
+            "0CAQYIKoZIzj0DAQcDIgADURzxmttZoIRIPWGoQMV00XHWCAQIhXruVWOz0NjlkIA=;;";
 
     /**
      * Assert target intent can be handled by at least one Activity.
@@ -351,6 +358,13 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    public void testUsageAccessSettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+        }
+    }
+
     public void testPictureInPictureSettings() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
@@ -377,10 +391,69 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    public void testSettingsSearchIntent() {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
+            return;
+        }
+        assertCanBeHandled(new Intent(Settings.ACTION_APP_SEARCH_SETTINGS));
+    }
+
+    public void testChangeDefaultDialer() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            assertCanBeHandled(new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER));
+        }
+    }
+
+    public void testTapAnPaySettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_NFC_PAYMENT_SETTINGS));
+        }
+    }
+
     public void testPowerUsageSummarySettings() {
         if (isHandheld()) {
             assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
         }
+    }
+
+    public void testEasyConnectIntent() {
+        WifiManager manager = mContext.getSystemService(WifiManager.class);
+
+        if (manager.isEasyConnectSupported()) {
+            Intent intent = new Intent(Settings.ACTION_PROCESS_WIFI_EASY_CONNECT_URI);
+            intent.setData(Uri.parse(QRCODE));
+            assertCanBeHandled(intent);
+        }
+    }
+
+    public void testRequestSetAutofillServiceIntent() {
+        Intent intent = new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE)
+                .setData(Uri.parse("package:android.content.cts"));
+        assertCanBeHandled(intent);
+    }
+
+    public void testNotificationPolicyDetailIntent() {
+        if (!isHandheld()) {
+            return;
+        }
+
+        Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_DETAIL_SETTINGS)
+                .setData(Uri.parse("package:android.content.cts"));
+        assertCanBeHandled(intent);
+    }
+
+    public void testRequestEnableContentCaptureIntent() {
+        if (!hasService(Context.CONTENT_CAPTURE_MANAGER_SERVICE)) return;
+
+        Intent intent = new Intent(Settings.ACTION_REQUEST_ENABLE_CONTENT_CAPTURE);
+        assertCanBeHandled(intent);
+    }
+
+    public void testVoiceInputSettingsIntent() {
+        Intent intent = new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS);
+        assertCanBeHandled(intent);
     }
 
     private boolean isHandheld() {

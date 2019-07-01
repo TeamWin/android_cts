@@ -18,6 +18,8 @@ java_library {
         "bouncycastle-unbundled",
         "bouncycastle-bcpkix-unbundled",
         "guava",
+        "truth-prebuilt",
+        "testng",
     ],
     srcs: ["src/**/*.java"],
 }

@@ -28,6 +28,7 @@ android_test {
         "ctstestrunner-axt",
         "androidx.annotation_annotation",
         "junit",
+        "testng",
         "androidx.core_core",
     ],
     jni_libs: ["libctsgraphics_jni"],

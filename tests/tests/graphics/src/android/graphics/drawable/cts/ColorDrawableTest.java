@@ -18,6 +18,7 @@ package android.graphics.drawable.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import android.content.res.Resources;
@@ -146,6 +147,15 @@ public class ColorDrawableTest {
 
         d.setColorFilter(new PorterDuffColorFilter(Color.BLACK, Mode.SRC_OVER));
         assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
+    }
+
+    @Test
+    public void testGetColorFilter() {
+        final ColorDrawable d = new ColorDrawable(Color.WHITE);
+        PorterDuffColorFilter colorFilter = new PorterDuffColorFilter(Color.BLACK, Mode.SRC_OVER);
+        d.setColorFilter(colorFilter);
+
+        assertSame(colorFilter, d.getColorFilter());
     }
 
     @Test

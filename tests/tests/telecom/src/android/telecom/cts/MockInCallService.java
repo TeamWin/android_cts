@@ -354,6 +354,12 @@ public class MockInCallService extends InCallService {
         }
     }
 
+    public void rejectAllCalls() {
+        for (final Call call: mCalls) {
+            call.reject(false, null);
+        }
+    }
+
     public void disconnectAllConferenceCalls() {
         for (final Call call: mConferenceCalls) {
             call.disconnect();

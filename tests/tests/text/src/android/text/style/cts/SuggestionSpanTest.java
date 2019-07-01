@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.text.SpannableString;
@@ -248,5 +249,36 @@ public class SuggestionSpanTest {
                 parcel.recycle();
             }
         }
+    }
+
+    @Test
+    public void testGetUnderlineColor_NoUnderline() {
+        final String[] suggestions = new String[0];
+        final SuggestionSpan span = new SuggestionSpan(Locale.forLanguageTag("en"), suggestions, 0);
+        assertEquals(span.getUnderlineColor(), 0);
+    }
+
+    @Test
+    public void testGetUnderlineColor_EasyCorrectUnderline() {
+        final String[] suggestions = new String[0];
+        final SuggestionSpan span = new SuggestionSpan(Locale.forLanguageTag("en"), suggestions,
+                SuggestionSpan.FLAG_EASY_CORRECT);
+        assertEquals(span.getUnderlineColor(), Color.BLACK);
+    }
+
+    @Test
+    public void testGetUnderlineColor_MisspelledUnderline() {
+        final String[] suggestions = new String[0];
+        final SuggestionSpan span = new SuggestionSpan(Locale.forLanguageTag("en"), suggestions,
+                SuggestionSpan.FLAG_EASY_CORRECT | SuggestionSpan.FLAG_MISSPELLED);
+        assertEquals(span.getUnderlineColor(), Color.BLACK);
+    }
+
+    @Test
+    public void testGetUnderlineColor_AutoCorrectionUnderline() {
+        final String[] suggestions = new String[0];
+        final SuggestionSpan span = new SuggestionSpan(Locale.forLanguageTag("en"), suggestions,
+                SuggestionSpan.FLAG_AUTO_CORRECTION);
+        assertEquals(span.getUnderlineColor(), Color.BLACK);
     }
 }

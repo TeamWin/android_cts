@@ -26,7 +26,6 @@ import android.util.Log;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.lang.reflect.Method;
 import java.util.Random;
@@ -36,28 +35,81 @@ public class BitmapUtils {
 
     private BitmapUtils() {}
 
-    // Compares two bitmaps by pixels.
-    public static boolean compareBitmaps(Bitmap bmp1, Bitmap bmp2) {
+    private static Boolean compareBasicBitmapsInfo(Bitmap bmp1, Bitmap bmp2) {
         if (bmp1 == bmp2) {
-            return true;
+            return Boolean.TRUE;
         }
 
-        if (bmp1 == null || bmp2 == null) {
-            return false;
+        if (bmp1 == null) {
+            Log.d(TAG, "compareBitmaps() failed because bmp1 is null");
+            return Boolean.FALSE;
+        }
+
+        if (bmp2 == null) {
+            Log.d(TAG, "compareBitmaps() failed because bmp2 is null");
+            return Boolean.FALSE;
         }
 
         if ((bmp1.getWidth() != bmp2.getWidth()) || (bmp1.getHeight() != bmp2.getHeight())) {
-            return false;
+            Log.d(TAG, "compareBitmaps() failed because sizes don't match "
+                    + "bmp1=(" + bmp1.getWidth() + "x" + bmp1.getHeight() + "), "
+                    + "bmp2=(" + bmp2.getWidth() + "x" + bmp2.getHeight() + ")");
+            return Boolean.FALSE;
         }
+        return null;
+    }
+
+    /**
+     * Compares two bitmaps by pixels.
+     */
+    public static boolean compareBitmaps(Bitmap bmp1, Bitmap bmp2) {
+        final Boolean basicComparison = compareBasicBitmapsInfo(bmp1, bmp2);
+        if (basicComparison != null) return basicComparison.booleanValue();
 
         for (int i = 0; i < bmp1.getWidth(); i++) {
             for (int j = 0; j < bmp1.getHeight(); j++) {
                 if (bmp1.getPixel(i, j) != bmp2.getPixel(i, j)) {
+                    Log.d(TAG, "compareBitmaps(): pixels (" + i + ", " + j + ") don't match");
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    /**
+     *  Compares two bitmaps by pixels, with a buffer for mistmatches.
+     *
+     *  <p>For example, if {@code minimumPrecision} is 0.99, at least 99% of the pixels should
+     *  match.
+     */
+    public static boolean compareBitmaps(Bitmap bmp1, Bitmap bmp2, double minimumPrecision) {
+        final Boolean basicComparison = compareBasicBitmapsInfo(bmp1, bmp2);
+        if (basicComparison != null) return basicComparison.booleanValue();
+
+        final int width = bmp1.getWidth();
+        final int height = bmp1.getHeight();
+
+        final long numberPixels = width * height;
+        long numberMismatches = 0;
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                if (bmp1.getPixel(i, j) != bmp2.getPixel(i, j)) {
+                    numberMismatches++;
+                    if (numberMismatches <= 10) {
+                        // Let's not spam logcat...
+                        Log.w(TAG, "compareBitmaps(): pixels (" + i + ", " + j + ") don't match");
+                    }
+                }
+            }
+        }
+        final double actualPrecision = ((double) numberPixels - numberMismatches) / (numberPixels);
+        Log.v(TAG, "compareBitmaps(): numberPixels=" + numberPixels
+                + ", numberMismatches=" + numberMismatches
+                + ", minimumPrecision=" + minimumPrecision
+                + ", actualPrecision=" + actualPrecision);
+        return actualPrecision >= minimumPrecision;
     }
 
     public static Bitmap generateRandomBitmap(int width, int height) {

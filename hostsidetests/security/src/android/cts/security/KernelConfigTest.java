@@ -111,7 +111,8 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
     @CddTest(requirement="9.7")
     public void testConfigStackProtectorStrong() throws Exception {
         assertTrue("Linux kernel must have Stack Protector enabled: " +
-                "CONFIG_CC_STACKPROTECTOR_STRONG=y",
+                "CONFIG_STACKPROTECTOR_STRONG=y or CONFIG_CC_STACKPROTECTOR_STRONG=y",
+                configSet.contains("CONFIG_STACKPROTECTOR_STRONG=y") ||
                 configSet.contains("CONFIG_CC_STACKPROTECTOR_STRONG=y"));
     }
 
@@ -177,20 +178,59 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         }
     }
 
+    private String getHardware() throws Exception {
+        String hardware = "DEFAULT";
+        String cpuInfo = mDevice.pullFileContents("/proc/cpuinfo");
+
+        for (String line : cpuInfo.split("\n")) {
+            /* Qualcomm SoCs */
+            if (line.startsWith("Hardware")) {
+                String[] hardwareLine = line.split(" ");
+                hardware = hardwareLine[hardwareLine.length - 1];
+                break;
+            }
+        }
+        /* TODO lookup other hardware as we get exemption requests. */
+        return hardwareMitigations.containsKey(hardware) ? hardware : "DEFAULT";
+    }
+
+    private boolean doesFileExist(String filePath) throws Exception {
+        String lsGrep = mDevice.executeShellCommand(String.format("ls \"%s\"", filePath));
+        return lsGrep.trim().equals(filePath);
+    }
+
+    private Map<String, String[]> hardwareMitigations = new HashMap<String, String[]>() {
+    {
+        put("Kirin980", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("Kirin970", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("Kirin810", null);
+        put("Kirin710", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("SM8150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
+            "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
+    }};
+
+    private String[] lookupMitigations() throws Exception {
+        return hardwareMitigations.get(getHardware());
+    }
+
     /**
-     * Test that the kernel has KTPI enabled for architectures and kernel versions that support it.
+     * Test that the kernel has Spectre/Meltdown mitigations for architectures and kernel versions
+     * that support it. Exempt platforms which are known to not be vulnerable.
      *
      * @throws Exception
      */
     @CddTest(requirement="9.7")
-    public void testConfigKTPI() throws Exception {
+    public void testConfigHardwareMitigations() throws Exception {
         if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
             return;
         }
 
         if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
-            assertTrue("Linux kernel must have KPTI enabled: CONFIG_UNMAP_KERNEL_AT_EL0=y",
-                    configSet.contains("CONFIG_UNMAP_KERNEL_AT_EL0=y"));
+            for (String mitigation : lookupMitigations()) {
+                assertTrue("Linux kernel must have " + mitigation + " enabled.",
+                        configSet.contains(mitigation));
+            }
         } else if (CpuFeatures.isX86(mDevice)) {
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",
                     configSet.contains("CONFIG_PAGE_TABLE_ISOLATION=y"));

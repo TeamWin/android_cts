@@ -23,7 +23,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.UserManager;
 import android.provider.BlockedNumberContract;
-import android.telecom.Log;
+import android.util.Log;
 
 /**
  * CTS tests for backup and restore of blocked numbers using local transport.
@@ -35,7 +35,7 @@ import android.telecom.Log;
 public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
     private static final String TAG = "BlockedNumberBackupRestoreTest";
     private static final String LOCAL_BACKUP_COMPONENT =
-            "android/com.android.internal.backup.LocalTransport";
+            "com.android.localtransport/.LocalTransport";
     private static final String BLOCKED_NUMBERS_PROVIDER_PACKAGE =
             "com.android.providers.blockednumber";
 

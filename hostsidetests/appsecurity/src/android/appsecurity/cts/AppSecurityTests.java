@@ -16,11 +16,14 @@
 
 package android.appsecurity.cts;
 
+import static android.appsecurity.cts.Utils.waitForBootCompleted;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+
 import com.android.ddmlib.Log;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -34,13 +37,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class AppSecurityTests extends BaseAppSecurityTest {
-
-    // testSharedUidDifferentCerts constants
-    private static final String SHARED_UI_APK = "CtsSharedUidInstall.apk";
-    private static final String SHARED_UI_PKG = "com.android.cts.shareuidinstall";
-    private static final String SHARED_UI_DIFF_CERT_APK = "CtsSharedUidInstallDiffCert.apk";
-    private static final String SHARED_UI_DIFF_CERT_PKG =
-        "com.android.cts.shareuidinstalldiffcert";
 
     // testAppUpgradeDifferentCerts constants
     private static final String SIMPLE_APP_APK = "CtsSimpleAppInstall.apk";
@@ -78,33 +74,17 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     private static final String PERMISSION_DIFF_CERT_PKG =
         "com.android.cts.usespermissiondiffcertapp";
 
+    private static final String DUPLICATE_DECLARE_PERMISSION_APK =
+            "CtsDuplicatePermissionDeclareApp.apk";
+    private static final String DUPLICATE_DECLARE_PERMISSION_PKG =
+            "com.android.cts.duplicatepermissiondeclareapp";
+
     private static final String LOG_TAG = "AppSecurityTests";
 
     @Before
     public void setUp() throws Exception {
         Utils.prepareSingleUser(getDevice());
         assertNotNull(getBuild());
-    }
-
-    /**
-     * Test that an app that declares the same shared uid as an existing app, cannot be installed
-     * if it is signed with a different certificate.
-     */
-    @Test
-    @AppModeFull(reason = "Instant applications can't define shared UID")
-    public void testSharedUidDifferentCerts() throws Exception {
-        Log.i(LOG_TAG, "installing apks with shared uid, but different certs");
-        try {
-            getDevice().uninstallPackage(SHARED_UI_PKG);
-            getDevice().uninstallPackage(SHARED_UI_DIFF_CERT_PKG);
-
-            new InstallMultiple().addApk(SHARED_UI_APK).run();
-            new InstallMultiple().addApk(SHARED_UI_DIFF_CERT_APK)
-                    .runExpectingFailure("INSTALL_FAILED_SHARED_USER_INCOMPATIBLE");
-        } finally {
-            getDevice().uninstallPackage(SHARED_UI_PKG);
-            getDevice().uninstallPackage(SHARED_UI_DIFF_CERT_PKG);
-        }
     }
 
     /**
@@ -256,11 +236,39 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             new InstallMultiple().addApk(DECLARE_PERMISSION_COMPAT_APK).run();
 
             new InstallMultiple().addApk(PERMISSION_DIFF_CERT_APK).run();
+
+            // Enable alert window permission so it can start activity in background
+            enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
+
             runDeviceTests(PERMISSION_DIFF_CERT_PKG, null);
         } finally {
             getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
             getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
             getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
+        }
+    }
+
+    /**
+     * Test what happens if an app tried to take a permission away from another
+     */
+    @Test
+    public void rebootWithDuplicatePermission() throws Exception {
+        try {
+            new InstallMultiple(false).addApk(DECLARE_PERMISSION_APK).run();
+            new InstallMultiple(false).addApk(DUPLICATE_DECLARE_PERMISSION_APK).run();
+
+            // Enable alert window permission so it can start activity in background
+            enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
+
+            runDeviceTests(DUPLICATE_DECLARE_PERMISSION_PKG, null);
+
+            // make sure behavior is preserved after reboot
+            getDevice().reboot();
+            waitForBootCompleted(getDevice());
+            runDeviceTests(DUPLICATE_DECLARE_PERMISSION_PKG, null);
+        } finally {
+            getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
+            getDevice().uninstallPackage(DUPLICATE_DECLARE_PERMISSION_PKG);
         }
     }
 
@@ -283,5 +291,15 @@ public class AppSecurityTests extends BaseAppSecurityTest {
                         + (instant ? " --instant" : " --full")
                         + " -S 1024 /data/local/tmp/foo.apk");
         assertTrue("Error text", output.contains("Error"));
+    }
+
+    private void enableAlertWindowAppOp(String pkgName) throws Exception {
+        getDevice().executeShellCommand(
+                "appops set " + pkgName + " android:system_alert_window allow");
+        String result = "No operations.";
+        while (result.contains("No operations")) {
+            result = getDevice().executeShellCommand(
+                    "appops get " + pkgName + " android:system_alert_window");
+        }
     }
 }

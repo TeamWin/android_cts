@@ -15,7 +15,10 @@
 android_test_helper_app {
     name: "CtsJobSchedulerJobPerm",
     defaults: ["cts_defaults"],
-    static_libs: ["compatibility-device-util-axt"],
+    static_libs: [
+        "android-support-annotations",
+        "compatibility-device-util-axt",
+    ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
     test_suites: [

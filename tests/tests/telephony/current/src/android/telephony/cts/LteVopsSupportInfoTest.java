@@ -15,11 +15,17 @@
  */
 package android.telephony.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.os.Parcel;
 import android.telephony.LteVopsSupportInfo;
-import android.test.AndroidTestCase;
 
-public class LteVopsSupportInfoTest extends AndroidTestCase {
+import org.junit.Test;
+
+public class LteVopsSupportInfoTest {
+
+    @Test
     public void testLteVopsSupportInfo() {
         LteVopsSupportInfo lteVops =
                 new LteVopsSupportInfo(LteVopsSupportInfo.LTE_STATUS_SUPPORTED,

@@ -59,7 +59,8 @@ public class ThemeHostTest extends DeviceTestCase {
 
     /** The command to launch the main instrumentation test. */
     private static final String START_CMD = String.format(
-            "am instrument -w --no-window-animation %s/%s", APP_PACKAGE_NAME, TEST_CLASS);
+            "am instrument -w --no-isolated-storage --no-window-animation %s/%s",
+            APP_PACKAGE_NAME, TEST_CLASS);
 
     private static final String CLEAR_GENERATED_CMD = "rm -rf %s/*.png";
     private static final String STOP_CMD = String.format("am force-stop %s", APP_PACKAGE_NAME);
@@ -86,13 +87,13 @@ public class ThemeHostTest extends DeviceTestCase {
     // Density to which the device should be restored, or -1 if unnecessary.
     private int mRestoreDensity;
 
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         mDevice = getDevice();
         mRestoreDensity = resetDensityIfNeeded(mDevice);
-        mDevice.executeShellCommand("settings put system font_scale 1.0");
         final String density = getDensityBucketForDevice(mDevice);
         final String referenceZipAssetPath = String.format("/%s.zip", density);
         mReferences = extractReferenceImages(referenceZipAssetPath);
@@ -159,7 +160,7 @@ public class ThemeHostTest extends DeviceTestCase {
             return;
         }
 
-        assertTrue("Aborted image generation", generateDeviceImages());
+        assertTrue("Aborted image generation, see device log for details", generateDeviceImages());
 
         // Pull ZIP file from remote device.
         final File localZip = File.createTempFile("generated", ".zip");
@@ -275,14 +276,14 @@ public class ThemeHostTest extends DeviceTestCase {
 
     private static int resetDensityIfNeeded(ITestDevice device) throws DeviceNotAvailableException {
         final String output = device.executeShellCommand(WM_DENSITY);
-        final Pattern p = Pattern.compile("Override density: (\\d+)");
-        final Matcher m = p.matcher(output);
-        if (m.find()) {
-            device.executeShellCommand(WM_DENSITY + " reset");
-            int restoreDensity = Integer.parseInt(m.group(1));
-            return restoreDensity;
-        }
-        return -1;
+         final Pattern p = Pattern.compile("Override density: (\\d+)");
+         final Matcher m = p.matcher(output);
+         if (m.find()) {
+             device.executeShellCommand(WM_DENSITY + " reset");
+             int restoreDensity = Integer.parseInt(m.group(1));
+             return restoreDensity;
+         }
+         return -1;
     }
 
     private static void restoreDensityIfNeeded(ITestDevice device, int restoreDensity)
@@ -293,7 +294,6 @@ public class ThemeHostTest extends DeviceTestCase {
     }
 
     private static int getDensityForDevice(ITestDevice device) throws DeviceNotAvailableException {
-
         final String densityProp;
         if (device.getSerialNumber().startsWith("emulator-")) {
             densityProp = DENSITY_PROP_EMULATOR;
