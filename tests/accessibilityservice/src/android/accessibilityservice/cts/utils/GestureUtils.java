@@ -22,11 +22,29 @@ import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.view.MotionEvent;
 import android.view.ViewConfiguration;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
 import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
+
+    public static final Matcher<MotionEvent> IS_ACTION_DOWN =
+            new MotionEventActionMatcher(MotionEvent.ACTION_DOWN);
+    public static final Matcher<MotionEvent> IS_ACTION_POINTER_DOWN =
+            new MotionEventActionMatcher(MotionEvent.ACTION_POINTER_DOWN);
+    public static final Matcher<MotionEvent> IS_ACTION_UP =
+            new MotionEventActionMatcher(MotionEvent.ACTION_UP);
+    public static final Matcher<MotionEvent> IS_ACTION_POINTER_UP =
+            new MotionEventActionMatcher(MotionEvent.ACTION_POINTER_UP);
+    public static final Matcher<MotionEvent> IS_ACTION_CANCEL =
+            new MotionEventActionMatcher(MotionEvent.ACTION_CANCEL);
+    public static final Matcher<MotionEvent> IS_ACTION_MOVE =
+            new MotionEventActionMatcher(MotionEvent.ACTION_MOVE);
 
     private GestureUtils() {}
 
@@ -170,4 +188,58 @@ public class GestureUtils {
         return builder.build();
     }
 
+    private static class MotionEventActionMatcher extends TypeSafeMatcher<MotionEvent> {
+        int mAction;
+
+        MotionEventActionMatcher(int action) {
+            super();
+            mAction = action;
+        }
+
+        @Override
+        protected boolean matchesSafely(MotionEvent motionEvent) {
+            return motionEvent.getActionMasked() == mAction;
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("Matching to action " + MotionEvent.actionToString(mAction));
+        }
+    }
+
+    public static Matcher<MotionEvent> isAtPoint(final PointF point) {
+        return isAtPoint(point, 0.01f);
+    }
+
+    public static Matcher<MotionEvent> isAtPoint(final PointF point, final float tol) {
+        return new TypeSafeMatcher<MotionEvent>() {
+            @Override
+            protected boolean matchesSafely(MotionEvent event) {
+                return Math.hypot(event.getX() - point.x, event.getY() - point.y) < tol;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Matching to point " + point);
+            }
+        };
+    }
+
+    public static Matcher<MotionEvent> isRawAtPoint(final PointF point) {
+        return isRawAtPoint(point, 0.01f);
+    }
+
+    public static Matcher<MotionEvent> isRawAtPoint(final PointF point, final float tol) {
+        return new TypeSafeMatcher<MotionEvent>() {
+            @Override
+            protected boolean matchesSafely(MotionEvent event) {
+                return Math.hypot(event.getRawX() - point.x, event.getRawY() - point.y) < tol;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Matching to point " + point);
+            }
+        };
+    }
 }

@@ -21,6 +21,7 @@ import static android.view.MotionEvent.ACTION_MOVE;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -34,6 +35,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class EventCapturingTouchListener implements View.OnTouchListener {
+    private static final long WAIT_TIME_SECONDS = 5;
+    private static final long MIN_WAIT_TIME_SECONDS = 2;
     // whether or not to keep events from propagating to other listeners
     private boolean shouldConsumeEvents;
     private final BlockingQueue<MotionEvent> events = new LinkedBlockingQueue<>();
@@ -55,8 +58,7 @@ public class EventCapturingTouchListener implements View.OnTouchListener {
     /** Insure that no touch events have been detected. */
     public void assertNonePropagated() {
         try {
-            long waitTime = 1; // seconds
-            MotionEvent event = events.poll(waitTime, SECONDS);
+            MotionEvent event = events.poll(MIN_WAIT_TIME_SECONDS, SECONDS);
             if (event != null) {
                 fail("Unexpected touch event " + event.toString());
             }
@@ -71,20 +73,20 @@ public class EventCapturingTouchListener implements View.OnTouchListener {
      */
     public void assertPropagated(int... eventTypes) {
         MotionEvent ev;
-        long waitTime = 5; // seconds
         try {
             List<String> expected = new ArrayList<>();
             List<String> received = new ArrayList<>();
             for (int e : eventTypes) {
                 expected.add(MotionEvent.actionToString(e));
             }
-            ev = events.poll(waitTime, SECONDS);
+            ev = events.poll(WAIT_TIME_SECONDS, SECONDS);
             assertNotNull(
-                    "Expected " + expected + " but none present after " + waitTime + " seconds",
+                    "Expected " + expected + " but none present after " + WAIT_TIME_SECONDS
+                            + " seconds",
                     ev);
             // By this point there is at least one received event.
             received.add(MotionEvent.actionToString(ev.getActionMasked()));
-            ev = events.poll(waitTime, SECONDS);
+            ev = events.poll(WAIT_TIME_SECONDS, SECONDS);
             while (ev != null) {
                 int action = ev.getActionMasked();
                 if (action != ACTION_MOVE) {
@@ -96,11 +98,27 @@ public class EventCapturingTouchListener implements View.OnTouchListener {
                         received.add(MotionEvent.actionToString(action));
                     }
                 }
-                ev = events.poll(waitTime, SECONDS);
+                ev = events.poll(WAIT_TIME_SECONDS, SECONDS);
             }
             assertEquals(expected, received);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public List<MotionEvent> getRawEvents() {
+        List<MotionEvent> motionEvents = new ArrayList<>();
+        MotionEvent ev;
+        try {
+            ev = events.poll(WAIT_TIME_SECONDS, SECONDS);
+            while (ev != null) {
+                motionEvents.add(ev);
+                ev = events.poll(WAIT_TIME_SECONDS, SECONDS);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        assertFalse(motionEvents.isEmpty());
+        return motionEvents;
     }
 }
