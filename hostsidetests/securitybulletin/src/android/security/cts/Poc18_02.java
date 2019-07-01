@@ -95,4 +95,16 @@ public class Poc18_02 extends SecurityTestCase {
         assertNotMatchesMultiLine(
                 ">>> /system/bin/mediaserver <<<.*signal 11 \\(SIGSEGV\\)", logcat);
     }
+
+    /**
+     * b/72314173
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_6279() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2017-6279", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(
+                "Fatal signal 11.*?>>> /system/bin/mediaserver <<<", logcat);
+    }
 }
