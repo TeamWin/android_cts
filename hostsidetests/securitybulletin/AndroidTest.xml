@@ -241,6 +241,20 @@
         <option name="append-bitness" value="false" />
     </target_preparer>
 
+    <!-- This PoC only hits with the 32-bit binary. Only push 32 for 64 and 32-bit arches -->
+    <!-- This section is reserved for OMX tests that need to be 32-bit so they can get a  -->
+    <!-- proper OMX instance. 64-bit PoCs don't get it and therefore don't hit the vuln.  -->
+    <!-- All tests in this section should take care to only build the 32-bit binary.      -->
+    <!-- In order to pass tradefed presubmit ValidateTestsAbi, add an exception.          -->
+    <!-- For more details, visit b/127856694                                              -->
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
+
+        <option name="push" value="CVE-2018-627932->/data/local/tmp/CVE-2018-6279" />
+
+        <option name="append-bitness" value="false" />
+    </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="OomCatcher.apk" />
