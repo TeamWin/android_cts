@@ -84,6 +84,7 @@ public class RollbackManagerTest {
 
         Install.single(TestApp.A2).setEnableRollback().commit();
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
         assertThat(available).isNotNull();
         assertThat(available).isNotStaged();
@@ -93,6 +94,7 @@ public class RollbackManagerTest {
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
         assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isNotNull();
