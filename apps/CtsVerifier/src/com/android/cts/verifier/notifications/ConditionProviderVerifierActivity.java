@@ -73,6 +73,8 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             tests.add(new UpdateAutomaticZenRuleWithZenPolicyTest());
             tests.add(new GetAutomaticZenRuleTest());
             tests.add(new GetAutomaticZenRulesTest());
+            tests.add(new VerifyRulesIntent());
+            tests.add(new VerifyRulesAvailableToUsers());
             tests.add(new SubscribeAutomaticZenRuleTest());
             tests.add(new DeleteAutomaticZenRuleTest());
             tests.add(new UnsubscribeAutomaticZenRuleTest());
@@ -623,6 +625,62 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
                 mNm.removeAutomaticZenRule(id);
             }
             MockConditionProvider.getInstance().resetData();
+        }
+    }
+
+    protected class VerifyRulesIntent extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createSettingsItem(parent, R.string.cp_show_rules);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            Intent settings = new Intent(Settings.ACTION_CONDITION_PROVIDER_SETTINGS);
+            if (settings.resolveActivity(mPackageManager) == null) {
+                logFail("no settings activity");
+                status = FAIL;
+            } else {
+                if (buttonPressed) {
+                    status = PASS;
+                } else {
+                    status = RETEST_AFTER_LONG_DELAY;
+                }
+                next();
+            }
+        }
+
+        protected void tearDown() {
+            // wait for the service to start
+            delay();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_CONDITION_PROVIDER_SETTINGS);
+        }
+    }
+
+    protected class VerifyRulesAvailableToUsers extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent, R.string.cp_show_rules_verification);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
         }
     }
 

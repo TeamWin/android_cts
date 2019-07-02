@@ -2057,6 +2057,10 @@
     <string name="cp_delete_rule">Deleting Automatic Zen Rule</string>
     <string name="cp_get_rules">Retrieving Automatic Zen Rules</string>
     <string name="cp_get_rule">Retrieving Automatic Zen Rule</string>
+    <string name="cp_show_rules">Click this button to launch the Automatic Zen Rule listing page in settings, and then return to this screen</string>
+    <string name="cp_show_rules_verification">Was the automatic rule screen shown?</string>
+    <string name="iva_pass">Pass</string>
+    <string name="iva_fail">Fail</string>
 
     <string name="cacert_test">CA Cert Notification Test</string>
     <string name="cacert_info">This test checks that when a CA Certificate is installed, the user is notified.</string>
