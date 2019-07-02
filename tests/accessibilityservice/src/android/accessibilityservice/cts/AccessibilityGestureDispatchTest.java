@@ -18,11 +18,18 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchA
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.AsyncUtils.awaitCancellation;
 import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
+import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_CANCEL;
+import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_DOWN;
+import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_MOVE;
+import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_POINTER_DOWN;
+import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_POINTER_UP;
+import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_UP;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.ceil;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.diff;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
+import static android.accessibilityservice.cts.utils.GestureUtils.isAtPoint;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.path;
 import static android.accessibilityservice.cts.utils.GestureUtils.times;
@@ -89,19 +96,6 @@ public class AccessibilityGestureDispatchTest {
 
     private static final int GESTURE_COMPLETION_TIMEOUT = 5000; // millis
     private static final int MOTION_EVENT_TIMEOUT = 1000; // millis
-
-    private static final Matcher<MotionEvent> IS_ACTION_DOWN =
-            new MotionEventActionMatcher(MotionEvent.ACTION_DOWN);
-    private static final Matcher<MotionEvent> IS_ACTION_POINTER_DOWN =
-            new MotionEventActionMatcher(MotionEvent.ACTION_POINTER_DOWN);
-    private static final Matcher<MotionEvent> IS_ACTION_UP =
-            new MotionEventActionMatcher(MotionEvent.ACTION_UP);
-    private static final Matcher<MotionEvent> IS_ACTION_POINTER_UP =
-            new MotionEventActionMatcher(MotionEvent.ACTION_POINTER_UP);
-    private static final Matcher<MotionEvent> IS_ACTION_CANCEL =
-            new MotionEventActionMatcher(MotionEvent.ACTION_CANCEL);
-    private static final Matcher<MotionEvent> IS_ACTION_MOVE =
-            new MotionEventActionMatcher(MotionEvent.ACTION_MOVE);
 
     private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class, false, false);
@@ -662,43 +656,5 @@ public class AccessibilityGestureDispatchTest {
                 .addStroke(new StrokeDescription(path1, 0, duration))
                 .addStroke(new StrokeDescription(path2, 0, duration))
                 .build();
-    }
-
-    private static class MotionEventActionMatcher extends TypeSafeMatcher<MotionEvent> {
-        int mAction;
-
-        MotionEventActionMatcher(int action) {
-            super();
-            mAction = action;
-        }
-
-        @Override
-        protected boolean matchesSafely(MotionEvent motionEvent) {
-            return motionEvent.getActionMasked() == mAction;
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            description.appendText("Matching to action " + MotionEvent.actionToString(mAction));
-        }
-    }
-
-
-    Matcher<MotionEvent> isAtPoint(final PointF point) {
-        return isAtPoint(point, 0.01f);
-    }
-
-    Matcher<MotionEvent> isAtPoint(final PointF point, final float tol) {
-        return new TypeSafeMatcher<MotionEvent>() {
-            @Override
-            protected boolean matchesSafely(MotionEvent event) {
-                return Math.hypot(event.getX() - point.x, event.getY() - point.y) < tol;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("Matching to point " + point);
-            }
-        };
     }
 }
