@@ -233,6 +233,10 @@
             android:launchMode="standard"
             android:taskAffinity=".t1"/>
         <activity
+            android:name="android.server.wm.intent.Activities$TaskAffinity1RelinquishTaskIdentityActivity"
+            android:relinquishTaskIdentity="true"
+            android:taskAffinity=".t1"/>
+        <activity
             android:name="android.server.wm.intent.Activities$TaskAffinity2Activity"
             android:allowTaskReparenting="true"
             android:launchMode="standard"
@@ -264,6 +268,9 @@
             android:name="android.server.wm.intent.Activities$LauncherActivity"
             android:documentLaunchMode="always"
             android:launchMode="singleInstance"/>
+        <activity
+            android:name="android.server.wm.intent.Activities$RelinquishTaskIdentityActivity"
+            android:relinquishTaskIdentity="true"/>
 
         <service
             android:name="android.server.wm.TestLogService"
