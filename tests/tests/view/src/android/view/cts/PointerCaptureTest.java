@@ -89,9 +89,13 @@ public class PointerCaptureTest {
     }
 
     private void requestCaptureSync(View view) throws Throwable {
-        mActivityRule.runOnUiThread(view::requestPointerCapture);
-        PollingCheck.waitFor(TIMEOUT_DELTA,
-                () -> view.hasPointerCapture() && mActivity.hasPointerCapture());
+        PollingCheck.waitFor(TIMEOUT_DELTA, () -> {
+            try {
+                mActivityRule.runOnUiThread(view::requestPointerCapture);
+            } catch (Throwable e) {
+            }
+            return view.hasPointerCapture() && mActivity.hasPointerCapture();
+        });
     }
 
     private void requestCaptureSync() throws Throwable {
@@ -233,7 +237,7 @@ public class PointerCaptureTest {
         // TODO(kaznacheev) replace the below line with a call to showContextMenu once b/65487689
         // is fixed. Meanwhile, emulate a long press which takes long enough time to avoid the race
         // condition.
-        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTarget, 0, 0);
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mActivityRule, mTarget, 0, 0);
         PollingCheck.waitFor(TIMEOUT_DELTA, () -> !mOuter.hasWindowFocus());
         PollingCheck.waitFor(TIMEOUT_DELTA,
                 () -> !mTarget.hasPointerCapture() && !mActivity.hasPointerCapture());

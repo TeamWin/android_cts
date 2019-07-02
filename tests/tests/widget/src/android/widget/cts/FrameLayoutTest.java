@@ -129,7 +129,6 @@ public class FrameLayoutTest {
             mFrameLayout.setForeground(newForeground);
             mFrameLayout.setForegroundGravity(Gravity.CENTER);
         });
-        mInstrumentation.waitForIdleSync();
         assertSame(newForeground, mFrameLayout.getForeground());
         assertTrue(newForeground.isVisible());
         Rect rect2 = newForeground.getBounds();
@@ -148,13 +147,11 @@ public class FrameLayoutTest {
             mFrameLayout.setForeground(foreground);
             mFrameLayout.setForegroundGravity(Gravity.CENTER);
         });
-        mInstrumentation.waitForIdleSync();
         Region region = new Region(foreground.getBounds());
         assertTrue(mFrameLayout.gatherTransparentRegion(region));
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mFrameLayout,
                 () -> container.requestTransparentRegion(mFrameLayout));
-        mInstrumentation.waitForIdleSync();
         region = new Region(foreground.getBounds());
         assertTrue(mFrameLayout.gatherTransparentRegion(region));
     }
@@ -173,11 +170,10 @@ public class FrameLayoutTest {
         assertEquals(textView.getMeasuredWidth(), frameLayout.getMeasuredWidth());
 
         // measureAll is false and text view is GONE, text view will NOT be measured
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, frameLayout, () -> {
             textView.setVisibility(View.GONE);
             frameLayout.requestLayout();
         });
-        mInstrumentation.waitForIdleSync();
         assertFalse(frameLayout.getConsiderGoneChildrenWhenMeasuring());
         Button button = (Button) frameLayout.findViewById(R.id.framelayout_button);
         WidgetTestUtils.assertScaledPixels(15, button.getMeasuredHeight(), mActivity);
@@ -186,11 +182,10 @@ public class FrameLayoutTest {
         assertEquals(button.getMeasuredWidth(), frameLayout.getMeasuredWidth());
 
         // measureAll is true and text view is GONE, text view will be measured
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, frameLayout, () -> {
             frameLayout.setMeasureAllChildren(true);
             frameLayout.requestLayout();
         });
-        mInstrumentation.waitForIdleSync();
         assertTrue(frameLayout.getMeasureAllChildren());
         assertTrue(frameLayout.getConsiderGoneChildrenWhenMeasuring());
         assertEquals(textView.getMeasuredHeight(), frameLayout.getMeasuredHeight());
@@ -298,15 +293,18 @@ public class FrameLayoutTest {
         final ArgumentCaptor<ColorStateList> colorStateListCaptor =
                 ArgumentCaptor.forClass(ColorStateList.class);
         verify(foreground, times(1)).setTintList(colorStateListCaptor.capture());
-        assertEquals(1, colorStateListCaptor.getValue().getColors().length);
-        assertEquals(Color.RED, colorStateListCaptor.getValue().getColors()[0]);
+        assertEquals(1, colorStateListCaptor.getValue().getStates().length);
+        int[] emptyState = new int[0];
+        assertEquals(Color.RED,
+                colorStateListCaptor.getValue().getColorForState(emptyState, Color.BLUE));
 
         reset(foreground);
         view.setForeground(null);
         view.setForeground(foreground);
         verify(foreground, times(1)).setTintList(colorStateListCaptor.capture());
-        assertEquals(1, colorStateListCaptor.getValue().getColors().length);
-        assertEquals(Color.RED, colorStateListCaptor.getValue().getColors()[0]);
+        assertEquals(1, colorStateListCaptor.getValue().getStates().length);
+        assertEquals(Color.RED,
+                colorStateListCaptor.getValue().getColorForState(emptyState, Color.BLUE));
     }
 
     private static void assertCenterAligned(View container, Drawable drawable) {

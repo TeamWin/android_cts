@@ -39,6 +39,8 @@ import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -135,30 +137,28 @@ public class ChronometerTest {
         final Chronometer chronometer = mActivity.getChronometer();
 
         // we will check the text is really updated every 1000ms after start,
-        // so we need sleep a moment to wait wait this time. The sleep code shouldn't
+        // so we need sleep a moment to wait this time. The sleep code shouldn't
         // in the same thread with UI, that's why we use runOnUiThread here.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, chronometer, () -> {
             // the text will update immediately when call start.
             final CharSequence valueBeforeStart = chronometer.getText();
             chronometer.start();
             assertNotSame(valueBeforeStart, chronometer.getText());
         });
-        mInstrumentation.waitForIdleSync();
 
         CharSequence expected = chronometer.getText();
         SystemClock.sleep(1500);
         assertFalse(expected.equals(chronometer.getText()));
 
         // we will check the text is really NOT updated anymore every 1000ms after stop,
-        // so we need sleep a moment to wait wait this time. The sleep code shouldn't
+        // so we need sleep a moment to wait this time. The sleep code shouldn't
         // in the same thread with UI, that's why we use runOnUiThread here.
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, chronometer, () -> {
             // the text will never be updated when call stop.
             final CharSequence valueBeforeStop = chronometer.getText();
             chronometer.stop();
             assertSame(valueBeforeStop, chronometer.getText());
         });
-        mInstrumentation.waitForIdleSync();
 
         expected = chronometer.getText();
         SystemClock.sleep(1500);
@@ -172,11 +172,10 @@ public class ChronometerTest {
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, chronometer, () -> {
             chronometer.setOnChronometerTickListener(mockTickListener);
             chronometer.start();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertEquals(mockTickListener, chronometer.getOnChronometerTickListener());
         verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
@@ -193,12 +192,11 @@ public class ChronometerTest {
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, chronometer, () -> {
             chronometer.setCountDown(true);
             chronometer.setOnChronometerTickListener(mockTickListener);
             chronometer.start();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertTrue(chronometer.isCountDown());
 
@@ -213,12 +211,11 @@ public class ChronometerTest {
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, chronometer, () -> {
             chronometer.setCountDown(false);
             chronometer.setOnChronometerTickListener(mockTickListener);
             chronometer.start();
         });
-        mInstrumentation.waitForIdleSync();
 
         assertFalse(chronometer.isCountDown());
 

@@ -17,7 +17,7 @@
 package android.appsecurity.cts;
 
 /**
- * Set of tests that verify behavior of the Scoped Directory access API.
+ * Set of tests that verify behavior of the deprecated Scoped Directory access API.
  */
 public class ScopedDirectoryAccessTest extends DocumentsTestCase {
 
@@ -25,45 +25,8 @@ public class ScopedDirectoryAccessTest extends DocumentsTestCase {
         runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testInvalidPath");
     }
 
-    public void testUserRejects() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testUserRejects");
-    }
-
-    public void testUserAccepts() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testUserAccepts");
-    }
-
-    public void testUserAcceptsNewDirectory() throws Exception {
+    public void testActivityFailsForAllVolumesAndDirectories() throws Exception {
         runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest",
-                "testUserAcceptsNewDirectory");
-    }
-
-    public void testNotAskedAgain() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testNotAskedAgain");
-    }
-
-    public void testDeniesOnceForAllClearedWhenPackageRemoved() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest",
-                "testRemovePackageStep1UserDenies");
-        reinstallClientPackage();
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest",
-                "testRemovePackageStep2UserAcceptsDoNotClear");
-    }
-
-    public void testDeniesOnceButAllowsAskingAgain() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest",
-                "testDeniesOnceButAllowsAskingAgain");
-    }
-
-    public void testDeniesOnceForAll() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testDeniesOnceForAll");
-    }
-
-    public void testResetDoNotAskAgain() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testResetDoNotAskAgain");
-    }
-
-    public void testResetGranted() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".ScopedDirectoryAccessClientTest", "testResetGranted");
+                "testActivityFailsForAllVolumesAndDirectories");
     }
 }

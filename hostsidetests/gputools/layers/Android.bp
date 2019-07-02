@@ -17,7 +17,6 @@ cc_test_library {
     gtest: false,
     srcs: ["jni/nullLayer.cpp"],
     cflags: [
-        "-std=c++14",
         "-Wall",
         "-Werror",
         "-fvisibility=hidden",
@@ -26,6 +25,8 @@ cc_test_library {
     shared_libs: [
         "libandroid",
         "libvulkan",
+        "libEGL",
+        "libGLESv3",
         "liblog",
     ],
     stl: "c++_shared",
@@ -37,7 +38,6 @@ cc_test_library {
     gtest: false,
     srcs: ["jni/nullLayer.cpp"],
     cflags: [
-        "-std=c++14",
         "-Wall",
         "-Werror",
         "-fvisibility=hidden",
@@ -46,6 +46,8 @@ cc_test_library {
     shared_libs: [
         "libandroid",
         "libvulkan",
+        "libEGL",
+        "libGLESv3",
         "liblog",
     ],
     stl: "c++_shared",
@@ -57,7 +59,6 @@ cc_test_library {
     gtest: false,
     srcs: ["jni/nullLayer.cpp"],
     cflags: [
-        "-std=c++14",
         "-Wall",
         "-Werror",
         "-fvisibility=hidden",
@@ -66,6 +67,71 @@ cc_test_library {
     shared_libs: [
         "libandroid",
         "libvulkan",
+        "libEGL",
+        "libGLESv3",
+        "liblog",
+    ],
+    stl: "c++_shared",
+    sdk_version: "current",
+}
+
+cc_test_library {
+    name: "libGLES_glesLayerA",
+    gtest: false,
+    srcs: ["jni/glesLayer.cpp"],
+    cflags: [
+        "-std=c++14",
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DLAYERNAME=A",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libEGL",
+        "libGLESv3",
+        "liblog",
+    ],
+    stl: "c++_shared",
+    sdk_version: "current",
+}
+
+cc_test_library {
+    name: "libGLES_glesLayerB",
+    gtest: false,
+    srcs: ["jni/glesLayer.cpp"],
+    cflags: [
+        "-std=c++14",
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DLAYERNAME=B",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libEGL",
+        "libGLESv3",
+        "liblog",
+    ],
+    stl: "c++_shared",
+    sdk_version: "current",
+}
+
+cc_test_library {
+    name: "libGLES_glesLayerC",
+    gtest: false,
+    srcs: ["jni/glesLayer.cpp"],
+    cflags: [
+        "-std=c++14",
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DLAYERNAME=C",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libEGL",
+        "libGLESv3",
         "liblog",
     ],
     stl: "c++_shared",
@@ -85,5 +151,24 @@ android_test_helper_app {
         "libVkLayer_nullLayerC",
     ],
     use_embedded_native_libs: false,
+    stl: "c++_shared",
+}
+
+android_test_helper_app {
+    name: "CtsGpuToolsRootlessGpuDebugApp-GLES_LAYERS",
+    defaults: ["cts_support_defaults"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: ["cts"],
+    compile_multilib: "both",
+    jni_libs: [
+        "libGLES_glesLayerA",
+        "libGLES_glesLayerB",
+        "libGLES_glesLayerC",
+    ],
+    use_embedded_native_libs: false,
+    aaptflags: [
+        "--rename-manifest-package android.rootlessgpudebug.GLES_LAYERS.app",
+    ],
     stl: "c++_shared",
 }

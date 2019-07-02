@@ -35,19 +35,15 @@ def main():
     yuv_sizes = {}
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
-                             its.caps.per_frame_control(props) and
-                             its.caps.logical_multi_camera(props) and
-                             its.caps.raw16(props) and
-                             its.caps.manual_sensor(props))
+        its.caps.skip_unless(its.caps.per_frame_control(props) and
+                             its.caps.logical_multi_camera(props))
         ids = its.caps.logical_multi_camera_physical_ids(props)
-        max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         for i in ids:
             physical_props = cam.get_camera_properties_by_id(i)
             its.caps.skip_unless(not its.caps.mono_camera(physical_props))
             yuv_sizes[i] = its.objects.get_available_output_sizes(
-                    'yuv', physical_props, match_ar_size=max_raw_size)
-            if i == ids[0]:
+                    'yuv', physical_props)
+            if i == ids[0]:  # get_available_output_sizes returns sorted list
                 yuv_match_sizes = yuv_sizes[i]
             else:
                 list(set(yuv_sizes[i]).intersection(yuv_match_sizes))
@@ -59,12 +55,31 @@ def main():
         print 'Matched YUV size: (%d, %d)' % (w, h)
 
         # do 3a and create requests
-        avail_fls = props['android.lens.info.availableFocalLengths']
+        avail_fls = sorted(props['android.lens.info.availableFocalLengths'],
+                           reverse=True)
         cam.do_3a()
         reqs = []
         for i, fl in enumerate(avail_fls):
             reqs.append(its.objects.auto_capture_request())
             reqs[i]['android.lens.focalLength'] = fl
+            if i > 0:
+                # Calculate the active sensor region for a non-cropped image
+                zoom = avail_fls[0] / fl
+                a = props['android.sensor.info.activeArraySize']
+                ax, ay = a['left'], a['top']
+                aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
+
+                # Calculate a center crop region.
+                assert zoom >= 1
+                cropw = aw / zoom
+                croph = ah / zoom
+                crop_region = {
+                        'left': aw / 2 - cropw / 2,
+                        'top': ah / 2 - croph / 2,
+                        'right': aw / 2 + cropw / 2,
+                        'bottom': ah / 2 + croph / 2
+                }
+                reqs[i]['android.scaler.cropRegion'] = crop_region
 
         # capture YUVs
         y_means = {}

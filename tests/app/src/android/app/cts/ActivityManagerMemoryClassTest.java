@@ -59,8 +59,12 @@ public class ActivityManagerMemoryClassTest
 
         static {
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_LOW, 32);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_140, 32);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_MEDIUM, 32);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_180, 32);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_200, 32);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_TV, 32);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_220, 36);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_HIGH, 36);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_260, 36);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_280, 36);
@@ -71,15 +75,21 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_400, 56);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_420, 64);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_440, 88);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_450, 88);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_XXHIGH, 88);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_560, 112);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_600, 138);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_XXXHIGH, 154);
         }
 
         static {
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_LOW, 32);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_140, 32);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_MEDIUM, 32);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_180, 48);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_200, 48);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_TV, 48);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_220, 48);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_HIGH, 48);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_260, 48);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_280, 48);
@@ -90,15 +100,21 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_400, 96);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_420, 112);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_440, 128);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_450, 128);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_XXHIGH, 128);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_560, 192);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_600, 228);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 256);
         }
 
         static {
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_LOW, 32);
-            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_MEDIUM, 64);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_140, 48);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_MEDIUM, 48);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_180, 80);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_200, 80);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_TV, 80);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_220, 80);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_HIGH, 80);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_260, 96);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_280, 96);
@@ -109,15 +125,21 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_400, 192);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_420, 228);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_440, 256);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_450, 256);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_XXHIGH, 256);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_560, 384);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_600, 448);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 512);
         }
 
         static {
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_LOW, 48);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_140, 80);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_MEDIUM, 80);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_180, 96);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_200, 96);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_TV, 96);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_220, 96);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_HIGH, 96);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_260, 144);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_280, 144);
@@ -128,8 +150,10 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_400, 288);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_420, 336);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_440, 384);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_450, 384);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_XXHIGH, 384);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_560, 576);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_600, 672);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 768);
         }
 

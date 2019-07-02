@@ -13,7 +13,7 @@
 // limitations under the License.
 
 java_test {
-    name: "compatibility-device-util-axt-tests",
+    name: "compatibility-device-util-tests-axt",
 
     srcs: ["src/**/*.java"],
 

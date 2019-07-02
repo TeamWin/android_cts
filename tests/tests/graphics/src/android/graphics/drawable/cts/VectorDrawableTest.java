@@ -27,6 +27,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffColorFilter;
@@ -421,6 +422,13 @@ public class VectorDrawableTest {
         } finally {
             DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
         }
+    }
+
+    @Test
+    public void testOpticalInsets() {
+        VectorDrawable drawable =
+                (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
+        assertEquals(Insets.of(1, 2, 3, 4), drawable.getOpticalInsets());
     }
 
     private void verifyPreloadDensityInner(Resources res, int densityDpi)

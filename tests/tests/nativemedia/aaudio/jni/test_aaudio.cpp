@@ -186,8 +186,7 @@ void AAudioOutputStreamTest::SetUp() {
     // Allocate a buffer for the audio data.
     // TODO handle possibility of other data formats
     size_t dataSizeSamples = framesPerBurst() * actual().channelCount;
-    mData.reset(new int16_t[dataSizeSamples]);
-    memset(&mData[0], 0, dataSizeSamples);
+    mData.reset(new int16_t[dataSizeSamples]{});
 }
 
 TEST_P(AAudioOutputStreamTest, testWriting) {

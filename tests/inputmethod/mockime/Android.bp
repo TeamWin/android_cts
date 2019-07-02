@@ -28,3 +28,23 @@ java_test_helper_library {
     ],
 }
 
+android_test_helper_app {
+    name: "CtsMockInputMethod",
+    defaults: ["cts_defaults"],
+    optimize: {
+        enabled: false,
+    },
+    sdk_version: "test_current",
+    min_sdk_version: "19",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+        "cts_instant",
+    ],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "CtsMockInputMethodLib",
+    ],
+}

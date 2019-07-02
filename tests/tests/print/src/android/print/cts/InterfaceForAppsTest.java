@@ -183,7 +183,7 @@ public class InterfaceForAppsTest extends BasePrintTest {
     }
 
     @Before
-    public void setPrinter() throws Exception {
+    public void setPrinter() throws Throwable {
         if (!sHasBeenSetUp) {
             resetCounters();
             PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_COMPLETED);

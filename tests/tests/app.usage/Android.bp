@@ -20,6 +20,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "cts-wm-util",
         "junit",
         "ub-uiautomator",
     ],

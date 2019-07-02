@@ -34,7 +34,6 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.BeforeAfterRule;
 import com.android.compatibility.common.util.OnFailureRule;
 
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.Description;

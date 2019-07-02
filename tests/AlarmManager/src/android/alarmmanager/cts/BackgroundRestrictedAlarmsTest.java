@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -46,6 +47,7 @@ import java.io.IOException;
  * Tests that apps put in forced app standby by the user do not get to run alarms while in the
  * background
  */
+@AppModeFull
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class BackgroundRestrictedAlarmsTest {
@@ -137,7 +139,7 @@ public class BackgroundRestrictedAlarmsTest {
     @Test
     public void testAlarmClockNotBlocked() throws Exception {
         final long nowRTC = System.currentTimeMillis();
-        final long waitInterval = 10_000;
+        final long waitInterval = 3_000;
         final long triggerRTC = nowRTC + waitInterval;
         scheduleAlarmClock(triggerRTC);
         Thread.sleep(waitInterval);
@@ -159,7 +161,7 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void updateAlarmManagerConstants() throws IOException {
-        String cmd = "settings put global alarm_manager_constants min_interval="
+        String cmd = "settings put global alarm_manager_constants min_futurity=0,min_interval="
                 + MIN_REPEATING_INTERVAL;
         mUiDevice.executeShellCommand(cmd);
     }

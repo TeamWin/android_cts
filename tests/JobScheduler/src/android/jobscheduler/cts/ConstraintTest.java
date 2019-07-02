@@ -114,6 +114,9 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
             mStorageStateChanged = false;
         }
+
+        // The super method should be called at the end.
+        super.tearDown();
     }
 
     /**
@@ -121,7 +124,7 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
      * considered to be on stable power - that is, plugged in for a period of 2 minutes.
      * Rather than wait for this to happen, we cheat and send this broadcast instead.
      */
-    protected void sendExpediteStableChargingBroadcast() throws Exception {
+    protected void sendExpediteStableChargingBroadcast() throws IOException {
         // Faking the device to be 90% charging and then to be 91%, so that it triggers
         // BatteryManager.ACTION_CHARGING in the upward change-level transition logic.
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set level 90");

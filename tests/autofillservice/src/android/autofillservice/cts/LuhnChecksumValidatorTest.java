@@ -27,13 +27,13 @@ import android.service.autofill.LuhnChecksumValidator;
 import android.service.autofill.ValueFinder;
 import android.view.autofill.AutofillId;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class LuhnChecksumValidatorTest {
 
     @Test

@@ -21,7 +21,10 @@ aidl_interface {
         "test_package/Bar.aidl",
         "test_package/Foo.aidl",
     ],
-    versions: ["1"],
+    versions: [
+        "1",
+        "2",
+    ],
     backend: {
         java: {
             sdk_version: "28",

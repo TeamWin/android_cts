@@ -369,6 +369,33 @@ public class AnimatorSetTest {
     }
 
     @Test
+    public void testSeekAfterPause() throws Throwable {
+        final AnimatorSet set = new AnimatorSet();
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 50f);
+        a1.setDuration(50);
+        ValueAnimator a2 = ValueAnimator.ofFloat(50, 100f);
+        a2.setDuration(50);
+        set.playSequentially(a1, a2);
+        set.setInterpolator(new LinearInterpolator());
+
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+            set.pause();
+            set.setCurrentPlayTime(60);
+            assertEquals((long) set.getCurrentPlayTime(), 60);
+            assertEquals((float) a1.getAnimatedValue(), 50f, EPSILON);
+            assertEquals((float) a2.getAnimatedValue(), 60f, EPSILON);
+
+            set.setCurrentPlayTime(40);
+            assertEquals((long) set.getCurrentPlayTime(), 40);
+            assertEquals((float) a1.getAnimatedValue(), 40f, EPSILON);
+            assertEquals((float) a2.getAnimatedValue(), 50f, EPSILON);
+
+            set.cancel();
+        });
+    }
+
+    @Test
     public void testDuration() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = { xAnimator, yAnimator };

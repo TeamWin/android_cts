@@ -42,6 +42,8 @@ import android.provider.ContactsContract;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.cts.permissiondeclareapp.UtilsProvider;
 
 import java.io.IOException;
@@ -1620,10 +1622,19 @@ public class AccessPermissionWithDiffSigTest extends AndroidTestCase {
             assertReadingClipNotAllowed(clip);
             assertWritingClipNotAllowed(clip);
 
-            // But if someone puts it on the clipboard, we can read it
-            setPrimaryClip(clip);
-            final ClipData clipFromClipboard = getContext().getSystemService(ClipboardManager.class)
-                    .getPrimaryClip();
+            // Use shell's permissions to ensure we can access the clipboard
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity();
+            ClipData clipFromClipboard;
+            try {
+                // But if someone puts it on the clipboard, we can read it
+                setPrimaryClip(clip);
+                clipFromClipboard = getContext()
+                        .getSystemService(ClipboardManager.class).getPrimaryClip();
+            } finally {
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .dropShellPermissionIdentity();
+            }
             assertClipDataEquals(clip, clipFromClipboard);
             assertReadingClipAllowed(clipFromClipboard);
             assertWritingClipNotAllowed(clipFromClipboard);

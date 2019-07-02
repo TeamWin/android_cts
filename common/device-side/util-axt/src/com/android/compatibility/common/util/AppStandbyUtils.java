@@ -18,6 +18,9 @@ package com.android.compatibility.common.util;
 
 import android.util.Log;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class AppStandbyUtils {
     private static final String TAG = "CtsAppStandbyUtils";
 
@@ -56,7 +59,6 @@ public class AppStandbyUtils {
     public static boolean isAppStandbyEnabledAtRuntime() {
         final String result =
                 SystemUtil.runShellCommand("settings get global app_standby_enabled").trim();
-        // framework considers null value as enabled.
         final boolean boolResult = result.equals("1") || result.equals("null");
         Log.d(TAG, "AppStandby is " + (boolResult ? "enabled" : "disabled") + " at runtime.");
         return boolResult;

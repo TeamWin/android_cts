@@ -15,7 +15,6 @@
  */
 package android.media.cts;
 
-import android.media.BufferingParams;
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
@@ -188,7 +187,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
         // Play stream for 60 seconds
         // limit rate to workaround multiplication overflow in framework
-        localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS);
+        localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS, false /*isAudioOnly*/);
     }
 
     public void testHlsWithHeadersCookies() throws Exception {
@@ -216,7 +215,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
         // Play stream for 60 seconds
         // limit rate to workaround multiplication overflow in framework
-        localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS);
+        localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS, false /*isAudioOnly*/);
     }
 
     public void testHlsSampleAes_bbb_audio_only_overridable() throws Exception {
@@ -229,7 +228,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             // if url override provided
             playLiveAudioOnlyTest(mInputUrl, 60 * 1000);
         } else {
-            localHlsTest("audio_only/index.m3u8", 60 * 1000, -1);
+            localHlsTest("audio_only/index.m3u8", 60 * 1000, -1, true /*isAudioOnly*/);
         }
 
     }
@@ -238,9 +237,15 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
+        MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080);
+        String[] decoderNames = MediaUtils.getDecoderNames(false, format);
 
-        // Play stream for 60 seconds
-        localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, -1);
+        if (decoderNames.length == 0) {
+            MediaUtils.skipTest("No decoders for " + format);
+        } else {
+            // Play stream for 60 seconds
+            localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, -1, false /*isAudioOnly*/);
+        }
     }
 
 
@@ -376,100 +381,25 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
-    // TODO: unhide this test when we sort out how to expose buffering control API.
-    private void doTestBuffering() throws Throwable {
-        final String name = "ringer.mp3";
-        mServer = new CtsTestServer(mContext);
-        try {
-            String stream_url = mServer.getAssetUrl(name);
-
-            if (!MediaUtils.checkCodecsForPath(mContext, stream_url)) {
-                Log.w(TAG, "can not find stream " + stream_url + ", skipping test");
-                return; // skip
-            }
-
-            // getBufferingParams should be called after setDataSource.
-            try {
-                BufferingParams params = mMediaPlayer.getBufferingParams();
-                fail("MediaPlayer failed to check state for getBufferingParams");
-            } catch (IllegalStateException e) {
-                // expected
-            }
-
-            // setBufferingParams should be called after setDataSource.
-            try {
-                BufferingParams params = new BufferingParams.Builder()
-                        .setInitialMarkMs(2)
-                        .setResumePlaybackMarkMs(3)
-                        .build();
-                mMediaPlayer.setBufferingParams(params);
-                fail("MediaPlayer failed to check state for setBufferingParams");
-            } catch (IllegalStateException e) {
-                // expected
-            }
-
-            mMediaPlayer.setDataSource(stream_url);
-
-            mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
-            mMediaPlayer.setScreenOnWhilePlaying(true);
-
-            mOnBufferingUpdateCalled.reset();
-            mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    mOnBufferingUpdateCalled.signal();
-                }
-            });
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    fail("Media player had error " + what + " playing " + name);
-                    return true;
-                }
-            });
-
-            assertFalse(mOnBufferingUpdateCalled.isSignalled());
-
-            BufferingParams params = mMediaPlayer.getBufferingParams();
-
-            int newMark = params.getInitialMarkMs() + 2;
-            BufferingParams newParams =
-                    new BufferingParams.Builder(params).setInitialMarkMs(newMark).build();
-
-            mMediaPlayer.setBufferingParams(newParams);
-
-            int checkMark = -1;
-            BufferingParams checkParams = mMediaPlayer.getBufferingParams();
-            checkMark = checkParams.getInitialMarkMs();
-            assertEquals("marks do not match", newMark, checkMark);
-
-            // TODO: add more dynamic checking, e.g., buffering shall not exceed pre-set mark.
-
-            mMediaPlayer.reset();
-        } finally {
-            mServer.shutdown();
-        }
-    }
-
     public void testPlayHlsStream() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
-        localHlsTest("hls.m3u8", false, false);
+        localHlsTest("hls.m3u8", false, false, false /*isAudioOnly*/);
     }
 
     public void testPlayHlsStreamWithQueryString() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
-        localHlsTest("hls.m3u8", true, false);
+        localHlsTest("hls.m3u8", true, false, false /*isAudioOnly*/);
     }
 
     public void testPlayHlsStreamWithRedirect() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
-        localHlsTest("hls.m3u8", false, true);
+        localHlsTest("hls.m3u8", false, true, false /*isAudioOnly*/);
     }
 
     public void testPlayHlsStreamWithTimedId3() throws Throwable {
@@ -652,19 +582,19 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         worker.quit();
     }
 
-    private void localHlsTest(final String name, boolean appendQueryString, boolean redirect)
-            throws Exception {
-        localHlsTest(name, null, null, appendQueryString, redirect, 10, -1);
+    private void localHlsTest(final String name, boolean appendQueryString,
+            boolean redirect, boolean isAudioOnly) throws Exception {
+        localHlsTest(name, null, null, appendQueryString, redirect, 10, -1, isAudioOnly);
     }
 
-    private void localHlsTest(final String name, int playTime, int bitsPerMs)
+    private void localHlsTest(final String name, int playTime, int bitsPerMs, boolean isAudioOnly)
             throws Exception {
-        localHlsTest(name, null, null, false, false, playTime, bitsPerMs);
+        localHlsTest(name, null, null, false, false, playTime, bitsPerMs, isAudioOnly);
     }
 
     private void localHlsTest(String name, Map<String, String> headers, List<HttpCookie> cookies,
-            boolean appendQueryString, boolean redirect, int playTime, int bitsPerMs)
-            throws Exception {
+            boolean appendQueryString, boolean redirect, int playTime, int bitsPerMs,
+            boolean isAudioOnly) throws Exception {
         if (bitsPerMs >= 0) {
             mServer = new CtsTestServer(mContext) {
                 @Override
@@ -685,8 +615,11 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             if (appendQueryString) {
                 stream_url += "?foo=bar/baz";
             }
-
-            playLiveVideoTest(Uri.parse(stream_url), headers, cookies, playTime);
+            if (isAudioOnly) {
+                playLiveAudioOnlyTest(Uri.parse(stream_url), headers, cookies, playTime);
+            } else {
+                playLiveVideoTest(Uri.parse(stream_url), headers, cookies, playTime);
+            }
         } finally {
             mServer.shutdown();
         }

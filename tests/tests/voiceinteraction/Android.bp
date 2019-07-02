@@ -19,10 +19,7 @@ android_test {
         "CtsVoiceInteractionCommon",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
-    ],
-    libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+	"androidx.test.ext.junit",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

@@ -23,7 +23,12 @@ android_test {
         "cts_instant",
     ],
 
-    static_libs: ["ctstestrunner-axt"],
+    static_libs: [
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "mockito-target-minus-junit4",
+        "ub-uiautomator",
+    ],
 
     libs: [
         "android.test.runner.stubs",

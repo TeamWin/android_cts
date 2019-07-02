@@ -49,6 +49,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -337,9 +338,9 @@ public class SpinnerTest {
         });
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDropdownMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDropdownMode);
         // Verify that we're showing the popup
-        assertTrue(mSpinnerDropdownMode.isPopupShowing());
+        PollingCheck.waitFor(() -> mSpinnerDropdownMode.isPopupShowing());
 
         // And test its attributes
         assertEquals(dropDownWidth, mSpinnerDropdownMode.getDropDownWidth());
@@ -371,9 +372,9 @@ public class SpinnerTest {
         });
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDialogMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, mSpinnerDialogMode);
         // Verify that we're showing the popup
-        assertTrue(mSpinnerDialogMode.isPopupShowing());
+        PollingCheck.waitFor(() -> mSpinnerDialogMode.isPopupShowing());
 
         // And test its attributes. Note that we are not testing the result of getDropDownWidth
         // for this mode
@@ -393,9 +394,9 @@ public class SpinnerTest {
                 mSpinnerDropdownMode.setPopupBackgroundResource(R.drawable.blue_fill));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDropdownMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSpinnerDropdownMode);
         // Verify that we're showing the popup
-        assertTrue(mSpinnerDropdownMode.isPopupShowing());
+        PollingCheck.waitFor(() -> mSpinnerDropdownMode.isPopupShowing());
         // And test its fill
         Drawable dropDownBackground = mSpinnerDropdownMode.getPopupBackground();
         TestUtils.assertAllPixelsOfColor("Drop down should be blue", dropDownBackground,
@@ -404,9 +405,8 @@ public class SpinnerTest {
 
         // Dismiss the popup with the emulated back key
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-        mInstrumentation.waitForIdleSync();
         // Verify that we're not showing the popup
-        assertFalse(mSpinnerDropdownMode.isPopupShowing());
+        PollingCheck.waitFor(() -> !mSpinnerDropdownMode.isPopupShowing());
 
         // Set yellow background on the popup
         mActivityRule.runOnUiThread(() ->
@@ -414,9 +414,11 @@ public class SpinnerTest {
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDropdownMode);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSpinnerDropdownMode, () -> {
+            mSpinnerDropdownMode.performClick();
+        });
         // Verify that we're showing the popup
-        assertTrue(mSpinnerDropdownMode.isPopupShowing());
+        PollingCheck.waitFor(() -> mSpinnerDropdownMode.isPopupShowing());
         // And test its fill
         dropDownBackground = mSpinnerDropdownMode.getPopupBackground();
         TestUtils.assertAllPixelsOfColor("Drop down should be yellow", dropDownBackground,
@@ -436,17 +438,16 @@ public class SpinnerTest {
                 mSpinnerDialogMode.setPopupBackgroundResource(R.drawable.blue_fill));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDialogMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, mSpinnerDialogMode);
         // Verify that we're showing the popup
-        assertTrue(mSpinnerDialogMode.isPopupShowing());
+        PollingCheck.waitFor(() -> mSpinnerDialogMode.isPopupShowing());
         // And test that getPopupBackground returns null
         assertNull(mSpinnerDialogMode.getPopupBackground());
 
         // Dismiss the popup with the emulated back key
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-        mInstrumentation.waitForIdleSync();
         // Verify that we're not showing the popup
-        assertFalse(mSpinnerDialogMode.isPopupShowing());
+        PollingCheck.waitFor(() -> !mSpinnerDropdownMode.isPopupShowing());
 
         // Set yellow background on the popup
         mActivityRule.runOnUiThread(() ->
@@ -454,9 +455,9 @@ public class SpinnerTest {
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mSpinnerDialogMode);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, mSpinnerDialogMode);
         // Verify that we're showing the popup
-        assertTrue(mSpinnerDialogMode.isPopupShowing());
+        PollingCheck.waitFor(() -> mSpinnerDialogMode.isPopupShowing());
         // And test that getPopupBackground returns null
         assertNull(mSpinnerDialogMode.getPopupBackground());
     }

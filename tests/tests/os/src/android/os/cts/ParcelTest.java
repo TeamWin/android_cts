@@ -24,7 +24,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.Signature;
 import android.os.BadParcelableException;
 import android.os.Binder;
@@ -38,6 +46,8 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
+
+import com.google.common.util.concurrent.AbstractFuture;
 
 public class ParcelTest extends AndroidTestCase {
 
@@ -3307,5 +3317,120 @@ public class ParcelTest extends AndroidTestCase {
         } catch (BadParcelableException bpe) {
             // good
         }
+    }
+
+    public static class ParcelExceptionConnection extends AbstractFuture<IParcelExceptionService>
+            implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            set(IParcelExceptionService.Stub.asInterface(service));
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+
+        @Override
+        public IParcelExceptionService get() throws InterruptedException, ExecutionException {
+            try {
+                return get(5, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void testExceptionOverwritesObject() throws Exception {
+        final Intent intent = new Intent();
+        intent.setComponent(new ComponentName(
+                "android.os.cts", "android.os.cts.ParcelExceptionService"));
+
+        final ParcelExceptionConnection connection = new ParcelExceptionConnection();
+
+        mContext.startService(intent);
+        assertTrue(mContext.bindService(intent, connection,
+                Context.BIND_ABOVE_CLIENT | Context.BIND_EXTERNAL_SERVICE));
+
+
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        data.writeInterfaceToken("android.os.cts.IParcelExceptionService");
+        IParcelExceptionService service = connection.get();
+        try {
+            assertTrue("Transaction failed", service.asBinder().transact(
+                    IParcelExceptionService.Stub.TRANSACTION_writeBinderThrowException, data, reply,
+                    0));
+        } catch (Exception e) {
+            fail("Exception caught from transaction: " + e);
+        }
+        reply.setDataPosition(0);
+        assertTrue("Exception should have occurred on service-side",
+                reply.readExceptionCode() != 0);
+        assertNull("Binder should have been overwritten by the exception",
+                reply.readStrongBinder());
+    }
+
+    public static class ParcelObjectFreeService extends Service {
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return new Binder();
+        }
+
+        @Override
+        public void onCreate() {
+            super.onCreate();
+
+            Parcel parcel = Parcel.obtain();
+
+            // Construct parcel with object in it.
+            parcel.writeInt(1);
+            final int pos = parcel.dataPosition();
+            parcel.writeStrongBinder(new Binder());
+
+            // wipe out the object by setting data size
+            parcel.setDataSize(pos);
+
+            // recycle the parcel. This should not cause a native segfault
+            parcel.recycle();
+        }
+
+        public static class Connection extends AbstractFuture<IBinder>
+                implements ServiceConnection {
+
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                set(service);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+            }
+
+            @Override
+            public IBinder get() throws InterruptedException, ExecutionException {
+                try {
+                    return get(5, TimeUnit.SECONDS);
+                } catch (TimeoutException e) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    public void testObjectDoubleFree() throws Exception {
+
+        final Intent intent = new Intent();
+        intent.setComponent(new ComponentName(
+                "android.os.cts", "android.os.cts.ParcelTest$ParcelObjectFreeService"));
+
+        final ParcelObjectFreeService.Connection connection =
+                new ParcelObjectFreeService.Connection();
+
+        mContext.startService(intent);
+        assertTrue(mContext.bindService(intent, connection,
+                Context.BIND_ABOVE_CLIENT | Context.BIND_EXTERNAL_SERVICE));
+
+        assertNotNull("Service should have started without crashing.", connection.get());
     }
 }

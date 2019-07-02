@@ -25,8 +25,7 @@ cc_test_library {
         "libnativehelper_compat_libc++",
         "liblog",
     ],
-
-    stl: "libc++_static",
-
+    stl: "none",
+    sdk_version: "current",
     clang: true,
 }

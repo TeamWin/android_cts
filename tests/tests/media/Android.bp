@@ -40,7 +40,7 @@ android_test {
         "truth-prebuilt",
         "mockito-target-minus-junit4",
         "androidx.heifwriter_heifwriter",
-        "androidx.media_media",
+        "androidx.media2_media2",
     ],
     jni_libs: [
         "libaudio_jni",

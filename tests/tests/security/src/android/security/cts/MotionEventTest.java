@@ -85,16 +85,17 @@ public class MotionEventTest {
     public void testActionOutsideDoesNotContainedObscuredInformation() throws Throwable {
         enableAppOps();
         final OnTouchListener listener = new OnTouchListener();
+        final WindowManager wm = mActivity.getSystemService(WindowManager.class);
+        WindowManager.LayoutParams wmlp = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+
         FutureTask<View> addViewTask = new FutureTask<>(() -> {
-            final WindowManager wm = mActivity.getSystemService(WindowManager.class);
             final Point size = new Point();
             wm.getDefaultDisplay().getSize(size);
 
-            WindowManager.LayoutParams wmlp = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
             wmlp.width = size.x / 4;
             wmlp.height = size.y / 4;
             wmlp.gravity = Gravity.TOP | Gravity.LEFT;
@@ -127,6 +128,14 @@ public class MotionEventTest {
         // before getting the location and injecting touches.
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, view, null /*runnable*/,
                 true /*forceLayout*/);
+
+	// This ensures the window is visible, where the code above ensures
+        // the view is on screen.
+        mActivityRule.runOnUiThread(() -> {
+            // This will force WindowManager to relayout, ensuring the
+	    // transaction to show the window are sent to the graphics code.
+            wm.updateViewLayout(view, wmlp);
+        });
 
         FutureTask<Point> clickLocationTask = new FutureTask<>(() -> {
             final int[] viewLocation = new int[2];

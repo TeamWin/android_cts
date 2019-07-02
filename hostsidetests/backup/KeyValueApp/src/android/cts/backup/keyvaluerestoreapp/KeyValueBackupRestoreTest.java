@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -57,6 +58,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class KeyValueBackupRestoreTest {
     private static final String TAG = "KeyValueBackupRestore";
 

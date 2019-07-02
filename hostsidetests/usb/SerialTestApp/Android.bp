@@ -15,10 +15,13 @@
 android_test_helper_app {
     name: "CtsUsbSerialTestApp",
     defaults: ["cts_defaults"],
-    static_libs: ["ctstestrunner-axt"],
+    static_libs: [
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+    ],
     libs: ["android.test.base.stubs"],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    sdk_version: "test_current",
     min_sdk_version: "27",
     // Tag this module as a cts test artifact
     test_suites: [

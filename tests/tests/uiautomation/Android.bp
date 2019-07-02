@@ -23,6 +23,7 @@ android_test {
         "cts_instant",
     ],
     static_libs: [
+        "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "ub-uiautomator",
     ],

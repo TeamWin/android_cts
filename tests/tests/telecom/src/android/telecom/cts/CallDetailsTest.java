@@ -716,6 +716,19 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Tests whether the getCallDirection() getter returns correct call direction.
+     */
+    public void testGetCallDirection() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        assertEquals(Call.Details.DIRECTION_OUTGOING, mCall.getDetails().getCallDirection());
+        assertFalse(Call.Details.DIRECTION_INCOMING == mCall.getDetails().getCallDirection());
+        assertFalse(Call.Details.DIRECTION_UNKNOWN == mCall.getDetails().getCallDirection());
+    }
+
+    /**
      * Asserts that a call's extras contain a specified key.
      *
      * @param call The call.

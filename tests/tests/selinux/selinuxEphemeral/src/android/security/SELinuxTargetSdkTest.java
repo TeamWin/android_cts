@@ -28,6 +28,15 @@ import java.io.IOException;
 @AppModeInstant
 public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
 {
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        assertTrue("This class is annotated with @AppModeInstant and must never "
+                   + "be run as a normal CTS test",
+            getContext().getPackageManager().isInstantApp());
+    }
+
     public void testCanNotExecuteFromHomeDir() throws Exception {
         assertFalse(canExecuteFromHomeDir());
     }

@@ -24,6 +24,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
+import android.Manifest.permission;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
@@ -53,6 +56,8 @@ import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -214,6 +219,7 @@ public class CellInfoTest {
         mPm = getContext().getPackageManager();
         Pair<Integer, Integer> verPair = mTm.getRadioHalVersion();
         mRadioHalVersion = makeRadioVersion(verPair.first, verPair.second);
+        TelephonyManagerTest.grantLocationPermissions();
     }
 
     /**
@@ -222,6 +228,8 @@ public class CellInfoTest {
      */
     @Test
     public void testPhoneStateListenerCallback() throws Throwable {
+        if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+
         CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
         // Prime the system by requesting a CellInfoUpdate
         mTm.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);
