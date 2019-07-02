@@ -207,6 +207,8 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
             mAudioRecord.startRecording();
             callback.await(TEST_TIMING_TOLERANCE_MS);
             assertFalse("Unregistered callback was called", callback.mCalled);
+            mAudioRecord.stop();
+            Thread.sleep(SLEEP_AFTER_STOP_FOR_INACTIVITY_MS);
 
             // just call the callback once directly so it's marked as tested
             final AudioManager.AudioRecordingCallback arc =
