@@ -18,6 +18,8 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
+import android.stats.devicepolicy.EventId;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -32,8 +34,6 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import android.stats.devicepolicy.EventId;
 
 /**
  * Set of tests for Device Owner use cases.
@@ -568,113 +568,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_containsEmptyString");
     }
 
-    public void testLockTask_deviceOwnerUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        try {
-            installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
-            executeDeviceOwnerTest("LockTaskTest");
-            assertMetricsLogged(getDevice(), () -> {
-                runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskTest", "testStartLockTask",
-                        mPrimaryUserId);
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .setBoolean(true)
-                    .setStrings(DEVICE_OWNER_PKG)
-                    .build());
-        } catch (AssertionError ex) {
-            // STOPSHIP(b/32771855), remove this once we fixed the bug.
-            executeShellCommand("dumpsys activity activities");
-            executeShellCommand("dumpsys window -a");
-            executeShellCommand("dumpsys activity service com.android.systemui");
-            throw ex;
-        } finally {
-            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
-        }
-    }
-
-    public void testLockTaskAfterReboot_deviceOwnerUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        try {
-            // Just start kiosk mode
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest", "startLockTask",
-                    mPrimaryUserId);
-
-            // Reboot while in kiosk mode and then unlock the device
-            rebootAndWaitUntilReady();
-
-            // Check that kiosk mode is working and can't be interrupted
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
-                    "testLockTaskIsActiveAndCantBeInterrupted", mPrimaryUserId);
-        } finally {
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
-                    "clearDefaultHomeIntentReceiver", mPrimaryUserId);
-        }
-    }
-
-    public void testLockTaskAfterReboot_tryOpeningSettings_deviceOwnerUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        try {
-            // Just start kiosk mode
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest", "startLockTask",
-                    mPrimaryUserId);
-
-            // Reboot while in kiosk mode and then unlock the device
-            rebootAndWaitUntilReady();
-
-            // Try to open settings via adb
-            executeShellCommand("am start -a android.settings.SETTINGS");
-
-            // Check again
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
-                    "testLockTaskIsActiveAndCantBeInterrupted", mPrimaryUserId);
-        } finally {
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
-                    "clearDefaultHomeIntentReceiver", mPrimaryUserId);
-        }
-    }
-
-    public void testLockTask_unaffiliatedUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
-
-        final int userId = createUser();
-        installAppAsUser(DEVICE_OWNER_APK, userId);
-        setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
-
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG,
-                ".AffiliationTest",
-                "testLockTaskMethodsThrowExceptionIfUnaffiliated",
-                userId);
-
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG,
-                ".AffiliationTest",
-                "testSetLockTaskPackagesClearedIfUserBecomesUnaffiliated",
-                userId);
-    }
-
-    public void testLockTask_affiliatedSecondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
-        final int userId = createAffiliatedSecondaryUser();
-        executeAffiliatedProfileOwnerTest("LockTaskTest", userId);
-    }
-
     public void testSystemUpdatePolicy() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1135,15 +1028,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId);
     }
 
-    private void executeAffiliatedProfileOwnerTest(String testClassName, int userId)
-            throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        String testClass = DEVICE_OWNER_PKG + "." + testClassName;
-        runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, userId);
-    }
-
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
         if (!mHasFeature) {
             return;
@@ -1162,7 +1046,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         waitForBroadcastIdle();
         wakeupAndDismissKeyguard();
 
-        // Setting the same affiliation ids on both users and running the lock task tests.
+        // Setting the same affiliation ids on both users
         runDeviceTestsAsUser(
                 DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
         runDeviceTestsAsUser(

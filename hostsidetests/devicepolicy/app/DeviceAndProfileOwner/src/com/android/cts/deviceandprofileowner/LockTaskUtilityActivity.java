@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -28,11 +28,11 @@ public class LockTaskUtilityActivity extends Activity {
     public static final String START_ACTIVITY = "startActivity";
     public static final String FINISH = "finish";
 
-    public static final String CREATE_ACTION = "com.android.cts.deviceowner.LOCK_TASK_CREATE";
-    public static final String DESTROY_ACTION = "com.android.cts.deviceowner.LOCK_TASK_DESTROY";
-    public static final String PAUSE_ACTION = "com.android.cts.deviceowner.LOCK_TASK_PAUSE";
-    public static final String RESUME_ACTION = "com.android.cts.deviceowner.LOCK_TASK_RESUME";
-    public static final String INTENT_ACTION = "com.android.cts.deviceowner.LOCK_TASK_INTENT";
+    public static final String CREATE_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_CREATE";
+    public static final String DESTROY_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_DESTROY";
+    public static final String PAUSE_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_PAUSE";
+    public static final String RESUME_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_RESUME";
+    public static final String INTENT_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_INTENT";
 
     @Override
     protected void onNewIntent(Intent intent) {
