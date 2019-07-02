@@ -262,8 +262,8 @@ public class AdbUtils {
             test_failed = true;
         } finally {
             if (inputFiles != null) {
-                for (int i = 0; i < inputFiles.length; i++) {
-                    AdbUtils.runCommandLine("rm /data/local/tmp/" + inputFiles[i], device);
+                for (String tempFile : inputFiles) {
+                    AdbUtils.runCommandLine("rm /data/local/tmp/" + tempFile, device);
                 }
             }
             if (test_failed == true) {
@@ -283,10 +283,10 @@ public class AdbUtils {
      */
     public static void checkCrash(String crashPatternList[], String logcat)
             throws Exception {
-        for (int i = 0; i < crashPatternList.length; i++) {
+        for (String crashPattern : crashPatternList) {
             assertFalse("Crash log pattern found!",
-                    Pattern.compile(crashPatternList[i],
-                            Pattern.MULTILINE).matcher(logcat).find());
+                    Pattern.compile(crashPattern, Pattern.MULTILINE)
+                            .matcher(logcat).find());
         }
     }
 }
