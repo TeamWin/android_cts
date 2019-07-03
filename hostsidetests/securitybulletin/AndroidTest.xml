@@ -250,7 +250,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
 
-        <option name="push" value="CVE-2018-627932->/data/local/tmp/CVE-2018-6279" />
+        <option name="push" value="CVE-2017-627932->/data/local/tmp/CVE-2017-6279" />
 
         <option name="append-bitness" value="false" />
     </target_preparer>
