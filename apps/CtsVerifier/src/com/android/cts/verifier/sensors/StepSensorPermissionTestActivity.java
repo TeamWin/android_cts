@@ -42,6 +42,13 @@ import static org.junit.Assert.assertTrue;
  */
 public class StepSensorPermissionTestActivity extends SensorCtsVerifierTestActivity
         implements SensorEventListener {
+    private static final int STEP_DETECT_DELAY_SECONDS = 2;
+    private static final int STEP_COUNT_DELAY_SECONDS = 10;
+    // Additional amount of time to give for receiving either a step detect or
+    // count event in case the user hasn't started walking at the time the test
+    // starts.
+    private static final int ADDITIONAL_EVENT_DELAY_SECONDS = 2;
+
     private SensorManager mSensorManager;
 
     private boolean mHasAccelFeature = false;
@@ -116,11 +123,11 @@ public class StepSensorPermissionTestActivity extends SensorCtsVerifierTestActiv
         checkPermission(Manifest.permission.ACTIVITY_RECOGNITION, permissionGranted);
 
         if (mHasStepDetectorFeature) {
-            checkSensor(Sensor.TYPE_STEP_DETECTOR, permissionGranted);
+            checkSensor(Sensor.TYPE_STEP_DETECTOR, permissionGranted, STEP_DETECT_DELAY_SECONDS);
         }
 
         if (mHasStepCounterFeature) {
-            checkSensor(Sensor.TYPE_STEP_COUNTER, permissionGranted);
+            checkSensor(Sensor.TYPE_STEP_COUNTER, permissionGranted, STEP_COUNT_DELAY_SECONDS);
         }
     }
 
@@ -152,7 +159,8 @@ public class StepSensorPermissionTestActivity extends SensorCtsVerifierTestActiv
         }
     }
 
-    private void checkSensor(int sensorType, boolean expected) throws InterruptedException {
+    private void checkSensor(int sensorType, boolean expected, int eventDelaySeconds)
+            throws InterruptedException {
         if (mHasAccelFeature && !expected) {
             // Record accel when no events are expected to ensure that the device is moving during
             // the test.
@@ -167,7 +175,8 @@ public class StepSensorPermissionTestActivity extends SensorCtsVerifierTestActiv
                 expected ? "" : "not ", sensor.getName());
         assertTrue(msg, mSensorManager.registerListener(this, sensor, 0, 0) == expected);
 
-        boolean eventReceived = mEventReceivedLatch.await(5, TimeUnit.SECONDS);
+        boolean eventReceived = mEventReceivedLatch.await(
+                eventDelaySeconds + ADDITIONAL_EVENT_DELAY_SECONDS, TimeUnit.SECONDS);
 
         // Ensure that events are only received when the application has permission
         if (expected) {
