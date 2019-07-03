@@ -36,11 +36,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.By;
@@ -51,6 +53,8 @@ import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.text.Html;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowInsets;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -1015,15 +1019,49 @@ public final class UiBot {
         }
     }
 
+    private Rect cropScreenshotWithoutScreenDecoration(Activity activity) {
+        final WindowInsets[] inset = new WindowInsets[1];
+        final View[] rootView = new View[1];
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            rootView[0] = activity.getWindow().getDecorView();
+            inset[0] = rootView[0].getRootWindowInsets();
+        });
+        final int navBarHeight = inset[0].getStableInsetBottom();
+        final int statusBarHeight = inset[0].getStableInsetTop();
+
+        return new Rect(0, statusBarHeight, rootView[0].getWidth(),
+                rootView[0].getHeight() - navBarHeight - statusBarHeight);
+    }
+
     // TODO(b/74358143): ideally we should take a screenshot limited by the boundaries of the
     // activity window, so external elements (such as the clock) are filtered out and don't cause
     // test flakiness when the contents are compared.
     public Bitmap takeScreenshot() {
+        return takeScreenshotWithRect(null);
+    }
+
+    public Bitmap takeScreenshot(@NonNull Activity activity) {
+        // crop the screenshot without screen decoration to prevent test flakiness.
+        final Rect rect = cropScreenshotWithoutScreenDecoration(activity);
+        return takeScreenshotWithRect(rect);
+    }
+
+    private Bitmap takeScreenshotWithRect(@Nullable Rect r) {
         final long before = SystemClock.elapsedRealtime();
         final Bitmap bitmap = mAutoman.takeScreenshot();
         final long delta = SystemClock.elapsedRealtime() - before;
         Log.v(TAG, "Screenshot taken in " + delta + "ms");
-        return bitmap;
+        if (r == null) {
+            return bitmap;
+        }
+        try {
+            return Bitmap.createBitmap(bitmap, r.left, r.top, r.right, r.bottom);
+        } finally {
+            if (bitmap != null) {
+                bitmap.recycle();
+            }
+        }
     }
 
     /**

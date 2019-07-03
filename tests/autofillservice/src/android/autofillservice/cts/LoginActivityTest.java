@@ -519,10 +519,6 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testDatasetPickerPosition() throws Exception {
-        // TODO(b/75281985): currently disabled because the screenshot contains elements external to
-        // the activity that can change (for example, clock), which causes flakiness to the test.
-        final boolean compareBitmaps = false;
-
         final boolean pickerAndViewBoundsMatches = !isAutofillWindowFullScreen(mContext);
 
         // Set service.
@@ -544,7 +540,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
         callback.assertUiShownEvent(username);
         final Rect usernamePickerBoundaries1 = mUiBot.assertDatasets("DUDE").getVisibleBounds();
-        final Bitmap usernameScreenshot1 = compareBitmaps ? mUiBot.takeScreenshot() : null;
+        final Bitmap usernameScreenshot1 = mUiBot.takeScreenshot(mActivity);
         Log.v(TAG,
                 "Username1 at " + usernameBoundaries1 + "; picker at " + usernamePickerBoundaries1);
         // TODO(b/37566627): assertions below might be too aggressive - use range instead?
@@ -558,7 +554,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
         final Rect passwordPickerBoundaries1 = mUiBot.assertDatasets("SWEET").getVisibleBounds();
-        final Bitmap passwordScreenshot1 = compareBitmaps ? mUiBot.takeScreenshot() : null;
+        final Bitmap passwordScreenshot1 = mUiBot.takeScreenshot(mActivity);
         Log.v(TAG,
                 "Password1 at " + passwordBoundaries1 + "; picker at " + passwordPickerBoundaries1);
         // TODO(b/37566627): assertions below might be too aggressive - use range instead?
@@ -572,7 +568,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         callback.assertUiHiddenEvent(password);
         callback.assertUiShownEvent(username);
         final Rect usernamePickerBoundaries2 = mUiBot.assertDatasets("DUDE").getVisibleBounds();
-        final Bitmap usernameScreenshot2 = compareBitmaps ? mUiBot.takeScreenshot() : null;
+        final Bitmap usernameScreenshot2 = mUiBot.takeScreenshot(mActivity);
         Log.v(TAG,
                 "Username2 at " + usernameBoundaries2 + "; picker at " + usernamePickerBoundaries2);
 
@@ -581,7 +577,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
         final Rect passwordPickerBoundaries2 = mUiBot.assertDatasets("SWEET").getVisibleBounds();
-        final Bitmap passwordScreenshot2 = compareBitmaps ? mUiBot.takeScreenshot() : null;
+        final Bitmap passwordScreenshot2 = mUiBot.takeScreenshot(mActivity);
         Log.v(TAG,
                 "Password2 at " + passwordBoundaries2 + "; picker at " + passwordPickerBoundaries2);
 
@@ -589,15 +585,12 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // ... for username
         assertThat(usernameBoundaries2).isEqualTo(usernameBoundaries1);
         assertThat(usernamePickerBoundaries2).isEqualTo(usernamePickerBoundaries1);
-        if (compareBitmaps) {
-            Helper.assertBitmapsAreSame("username", usernameScreenshot1, usernameScreenshot2);
-        }
+        Helper.assertBitmapsAreSame("username", usernameScreenshot1, usernameScreenshot2);
+
         // ... for password
         assertThat(passwordBoundaries2).isEqualTo(passwordBoundaries1);
         assertThat(passwordPickerBoundaries2).isEqualTo(passwordPickerBoundaries1);
-        if (compareBitmaps) {
-            Helper.assertBitmapsAreSame("password", passwordScreenshot1, passwordScreenshot2);
-        }
+        Helper.assertBitmapsAreSame("password", passwordScreenshot1, passwordScreenshot2);
 
         // Final sanity check
         callback.assertNumberUnhandledEvents(0);
