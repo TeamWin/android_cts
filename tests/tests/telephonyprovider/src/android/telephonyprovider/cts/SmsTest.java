@@ -233,7 +233,7 @@ public class SmsTest {
             cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID))).isEqualTo(-1);
 
         assertThat(
-            cursor.getInt(cursor.getColumnIndex(Telephony.Sms.ERROR_CODE))).isEqualTo(0);
+            cursor.getInt(cursor.getColumnIndex(Telephony.Sms.ERROR_CODE))).isEqualTo(-1);
 
         assertThat(
             cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SEEN))).isEqualTo(0);
