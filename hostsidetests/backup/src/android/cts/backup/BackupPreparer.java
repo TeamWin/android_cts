@@ -20,7 +20,6 @@ import com.android.compatibility.common.util.BackupHostSideUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
-import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -66,10 +65,6 @@ public class BackupPreparer implements ITargetCleaner {
         mDevice = device;
 
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
-
-        // In case the device was just rebooted, wait for the broadcast queue to get idle to avoid
-        // any interference from services doing backup clean up on reboot.
-        waitForBroadcastIdle();
 
         if (mIsBackupSupported) {
             // Enable backup and select local backup transport
@@ -151,25 +146,4 @@ public class BackupPreparer implements ITargetCleaner {
             throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
         }
     }
-
-    // Copied over from BaseDevicePolicyTest
-    private void waitForBroadcastIdle() throws DeviceNotAvailableException, TargetSetupError {
-        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        try {
-            // we allow 20 min for the command to complete and 10 min for the command to start to
-            // output something
-            mDevice.executeShellCommand(
-                    "am wait-for-broadcast-idle", receiver, 20, 10, TimeUnit.MINUTES, 0);
-        } finally {
-            String output = receiver.getOutput();
-            CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
-            if (!output.contains("All broadcast queues are idle!")) {
-                // the call most likely failed we should fail the test
-                throw new TargetSetupError("'am wait-for-broadcase-idle' did not complete.",
-                        mDevice.getDeviceDescriptor());
-                // TODO: consider adding a reboot or recovery before failing if necessary
-            }
-        }
-    }
-
 }
