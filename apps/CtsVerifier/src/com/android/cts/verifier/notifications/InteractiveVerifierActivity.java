@@ -98,6 +98,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         protected int status;
         private View view;
         protected long delayTime = 3000;
+        boolean buttonPressed;
 
         protected abstract View inflate(ViewGroup parent);
         View getView(ViewGroup parent) {
@@ -247,7 +248,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
     protected View createUserItem(ViewGroup parent, int actionId, int messageId,
             Object... messageFormatArgs) {
         View item = mInflater.inflate(R.layout.nls_item, parent, false);
-        TextView instructions = (TextView) item.findViewById(R.id.nls_instructions);
+        TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(getString(messageId, messageFormatArgs));
         Button button = (Button) item.findViewById(R.id.nls_action_button);
         button.setText(actionId);
@@ -255,12 +256,19 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         return item;
     }
 
-    protected View  createAutoItem(ViewGroup parent, int stringId) {
+    protected View createAutoItem(ViewGroup parent, int stringId) {
         View item = mInflater.inflate(R.layout.nls_item, parent, false);
-        TextView instructions = (TextView) item.findViewById(R.id.nls_instructions);
+        TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(stringId);
         View button = item.findViewById(R.id.nls_action_button);
         button.setVisibility(View.GONE);
+        return item;
+    }
+
+    protected View createPassFailItem(ViewGroup parent, int stringId) {
+        View item = mInflater.inflate(R.layout.iva_pass_fail_item, parent, false);
+        TextView instructions = item.findViewById(R.id.nls_instructions);
+        instructions.setText(stringId);
         return item;
     }
 
@@ -381,7 +389,22 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             }
             if (mCurrentTest != null) {
                 mCurrentTest.mUserVerified = true;
+                mCurrentTest.buttonPressed = true;
             }
+        }
+    }
+
+    public void actionPassed(View v) {
+        if (mCurrentTest != null) {
+            mCurrentTest.mUserVerified = true;
+            mCurrentTest.status = PASS;
+            next();
+        }
+    }
+
+    public void actionFailed(View v) {
+        if (mCurrentTest != null) {
+            mCurrentTest.setFailed();
         }
     }
 
