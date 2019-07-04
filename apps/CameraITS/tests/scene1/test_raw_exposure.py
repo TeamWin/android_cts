@@ -41,6 +41,7 @@ def main():
     with its.device.ItsSession() as cam:
 
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.raw16(props) and
                              its.caps.manual_sensor(props) and
                              its.caps.per_frame_control(props) and
@@ -93,10 +94,11 @@ def main():
                 else:
                     caps += cam.do_capture(reqs[i*slice_len:(i+1)*slice_len], raw_stat_fmt)
             last_n = len(reqs) % slice_len
-            if debug:
-                caps += cam.do_capture(reqs[-last_n:], cam.CAP_RAW)
-            else:
-                caps += cam.do_capture(reqs[-last_n:], raw_stat_fmt)
+            if last_n:
+                if debug:
+                    caps += cam.do_capture(reqs[-last_n:], cam.CAP_RAW)
+                else:
+                    caps += cam.do_capture(reqs[-last_n:], raw_stat_fmt)
 
             # Measure the mean of each channel.
             # Each shot should be brighter (except underexposed/overexposed scene)
@@ -112,7 +114,6 @@ def main():
                 else:
                     mean_image, _ = its.image.unpack_rawstats_capture(cap)
                     mean = mean_image[IMG_STATS_GRID/2, IMG_STATS_GRID/2]
-
                 print "ISO=%d, exposure time=%.3fms, mean=%s" % (
                         s, e_test[i] / 1000000.0, str(mean))
                 means.append(mean)
