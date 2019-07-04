@@ -75,16 +75,28 @@ NOT_YET_MANDATED = {
 # Must match mHiddenPhysicalCameraSceneIds in ItsTestActivity.java
 HIDDEN_PHYSICAL_CAMERA_TESTS = {
         'scene0': [
-                'test_read_write'
+                'test_burst_capture',
+                'test_metadata',
+                'test_read_write',
+                'test_sensor_events'
         ],
         'scene1': [
-                'test_dng_noise_model'
+                'test_exposure',
+                'test_dng_noise_model',
+                'test_linearity',
+                'test_raw_exposure',
+                'test_raw_sensitivity'
         ],
-        'scene2': [],
+        'scene2': [
+                'test_faces',
+                'test_num_faces'
+        ],
         'scene2b': [],
         'scene2c': [],
         'scene3': [],
-        'scene4': [],
+        'scene4': [
+                'test_aspect_ratio_and_crop'
+        ],
         'scene5': [],
         'sensor_fusion': [
                 'test_sensor_fusion'
