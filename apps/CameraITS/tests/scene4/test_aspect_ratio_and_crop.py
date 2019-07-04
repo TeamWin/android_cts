@@ -208,6 +208,7 @@ def main():
     ref_fov = {}
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.read_3a(props))
         full_device = its.caps.full_or_better(props)
         limited_device = its.caps.limited(props)
