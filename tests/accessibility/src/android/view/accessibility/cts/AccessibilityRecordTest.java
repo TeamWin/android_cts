@@ -98,10 +98,10 @@ public class AccessibilityRecordTest {
        TestCase.assertEquals("removedCount not properly recycled", -1, record.getRemovedCount());
        TestCase.assertTrue("text not properly recycled", record.getText().isEmpty());
        TestCase.assertFalse("scrollable not properly recycled", record.isScrollable());
-       TestCase.assertSame("maxScrollX not properly recycled", -1, record.getMaxScrollX());
-       TestCase.assertSame("maxScrollY not properly recycled", -1, record.getMaxScrollY());
-       TestCase.assertSame("scrollX not properly recycled", -1, record.getScrollX());
-       TestCase.assertSame("scrollY not properly recycled", -1, record.getScrollY());
+       TestCase.assertSame("maxScrollX not properly recycled", 0, record.getMaxScrollX());
+       TestCase.assertSame("maxScrollY not properly recycled", 0, record.getMaxScrollY());
+       TestCase.assertSame("scrollX not properly recycled", 0, record.getScrollX());
+       TestCase.assertSame("scrollY not properly recycled", 0, record.getScrollY());
        TestCase.assertSame("toIndex not properly recycled", -1, record.getToIndex());
    }
 
