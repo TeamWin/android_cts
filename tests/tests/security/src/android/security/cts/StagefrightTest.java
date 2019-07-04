@@ -1192,6 +1192,21 @@ public class StagefrightTest extends InstrumentationTestCase {
                 // and see if more errors show up.
                 SystemClock.sleep(1000);
             }
+            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+                JSONArray crashes = getCrashReport(getName(), 5000);
+                if (crashes == null) {
+                    Log.e(TAG, "Crash results not found for test " + getName());
+                    return what;
+                } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
+                    return what;
+                } else {
+                    Log.i(TAG, "Crash ignored due to no security crash found for test " +
+                        getName());
+                    // 0 is the code for no error.
+                    return 0;
+                }
+
+            }
             return what;
         }
 

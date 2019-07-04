@@ -23,6 +23,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -141,6 +142,7 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String LOCK_AE_KEY = "aeLock";
     public static final String LOCK_AWB_KEY = "awbLock";
     public static final String TRIGGER_KEY = "triggers";
+    public static final String PHYSICAL_ID_KEY = "physicalId";
     public static final String TRIGGER_AE_KEY = "ae";
     public static final String TRIGGER_AF_KEY = "af";
     public static final String VIB_PATTERN_KEY = "pattern";
@@ -1066,8 +1068,16 @@ public class ItsService extends Service implements SensorEventListener {
             // Start a 3A action, and wait for it to converge.
             // Get the converged values for each "A", and package into JSON result for caller.
 
+            // Configure streams on physical sub-camera if PHYSICAL_ID_KEY is specified.
+            String physicalId = null;
+            CameraCharacteristics c = mCameraCharacteristics;
+            if (params.has(PHYSICAL_ID_KEY)) {
+                physicalId = params.getString(PHYSICAL_ID_KEY);
+                c = mPhysicalCameraChars.get(physicalId);
+            }
+
             // 3A happens on full-res frames.
-            Size sizes[] = ItsUtils.getYuvOutputSizes(mCameraCharacteristics);
+            Size sizes[] = ItsUtils.getYuvOutputSizes(c);
             int outputFormats[] = new int[1];
             outputFormats[0] = ImageFormat.YUV_420_888;
             Size[] outputSizes = new Size[1];
@@ -1077,10 +1087,17 @@ public class ItsService extends Service implements SensorEventListener {
 
             prepareImageReaders(outputSizes, outputFormats, /*inputSize*/null, /*inputFormat*/0,
                     /*maxInputBuffers*/0);
-            List<Surface> outputSurfaces = new ArrayList<Surface>(1);
-            outputSurfaces.add(mOutputImageReaders[0].getSurface());
+
+            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>(1);
+            OutputConfiguration config =
+                    new OutputConfiguration(mOutputImageReaders[0].getSurface());
+            if (physicalId != null) {
+                config.setPhysicalCameraId(physicalId);
+            }
+            outputConfigs.add(config);
             BlockingSessionCallback sessionListener = new BlockingSessionCallback();
-            mCamera.createCaptureSession(outputSurfaces, sessionListener, mCameraHandler);
+            mCamera.createCaptureSessionByOutputConfigurations(
+                    outputConfigs, sessionListener, mCameraHandler);
             mSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
 
             // Add a listener that just recycles buffers; they aren't saved anywhere.
@@ -1092,25 +1109,30 @@ public class ItsService extends Service implements SensorEventListener {
             // Note that the user specifies normalized [x,y,w,h], which is converted below
             // to an [x0,y0,x1,y1] region in sensor coords. The capture request region
             // also has a fifth "weight" element: [x0,y0,x1,y1,w].
+            // Use logical camera's active array size for 3A regions.
+            Rect activeArray = mCameraCharacteristics.get(
+                    CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            int aaWidth = activeArray.right - activeArray.left;
+            int aaHeight = activeArray.bottom - activeArray.top;
             MeteringRectangle[] regionAE = new MeteringRectangle[]{
-                    new MeteringRectangle(0,0,width,height,1)};
+                    new MeteringRectangle(0,0,aaWidth,aaHeight,1)};
             MeteringRectangle[] regionAF = new MeteringRectangle[]{
-                    new MeteringRectangle(0,0,width,height,1)};
+                    new MeteringRectangle(0,0,aaWidth,aaHeight,1)};
             MeteringRectangle[] regionAWB = new MeteringRectangle[]{
-                    new MeteringRectangle(0,0,width,height,1)};
+                    new MeteringRectangle(0,0,aaWidth,aaHeight,1)};
             if (params.has(REGION_KEY)) {
                 JSONObject regions = params.getJSONObject(REGION_KEY);
                 if (regions.has(REGION_AE_KEY)) {
                     regionAE = ItsUtils.getJsonWeightedRectsFromArray(
-                            regions.getJSONArray(REGION_AE_KEY), true, width, height);
+                            regions.getJSONArray(REGION_AE_KEY), true, aaWidth, aaHeight);
                 }
                 if (regions.has(REGION_AF_KEY)) {
                     regionAF = ItsUtils.getJsonWeightedRectsFromArray(
-                            regions.getJSONArray(REGION_AF_KEY), true, width, height);
+                            regions.getJSONArray(REGION_AF_KEY), true, aaWidth, aaHeight);
                 }
                 if (regions.has(REGION_AWB_KEY)) {
                     regionAWB = ItsUtils.getJsonWeightedRectsFromArray(
-                            regions.getJSONArray(REGION_AWB_KEY), true, width, height);
+                            regions.getJSONArray(REGION_AWB_KEY), true, aaWidth, aaHeight);
                 }
             }
 
@@ -1133,7 +1155,7 @@ public class ItsService extends Service implements SensorEventListener {
                     doAF = triggers.getBoolean(TRIGGER_AF_KEY);
                 }
             }
-            Float minFocusDistance = mCameraCharacteristics.get(
+            Float minFocusDistance = c.get(
                     CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
             boolean isFixedFocusLens = minFocusDistance != null && minFocusDistance == 0.0;
             if (doAF && isFixedFocusLens) {
@@ -1754,7 +1776,7 @@ public class ItsService extends Service implements SensorEventListener {
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountJpg.getAndIncrement();
-                    mSocketRunnableObj.sendResponseCaptureBuffer("jpegImage", buf);
+                    mSocketRunnableObj.sendResponseCaptureBuffer("jpegImage"+physicalCameraId, buf);
                 } else if (format == ImageFormat.YUV_420_888) {
                     Logt.i(TAG, "Received YUV capture");
                     byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
@@ -1821,7 +1843,8 @@ public class ItsService extends Service implements SensorEventListener {
                             FloatBuffer fBuf = bBuf.asFloatBuffer();
                             fBuf.put(stats);
                             fBuf.position(0);
-                            mSocketRunnableObj.sendResponseCaptureBuffer("rawStatsImage", bBuf);
+                            mSocketRunnableObj.sendResponseCaptureBuffer(
+                                    "rawStatsImage"+physicalCameraId, bBuf);
                         }
                     } else {
                         // Wait until the corresponding capture result is ready, up to a timeout.
