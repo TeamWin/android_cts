@@ -31,6 +31,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.backward_compatible(props))
         req = its.objects.auto_capture_request()
         caps = cam.do_capture([req]*NUM_TEST_FRAMES)
