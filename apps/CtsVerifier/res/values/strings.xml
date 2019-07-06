@@ -24,6 +24,10 @@
     <string name="next_button_text">Next</string>
     <string name="go_button_text">Go</string>
 
+    <string name="retry_button_text">Retry</string>
+    <string name="finish_button_text">Finish</string>
+    <string name="fail_and_next_button_text">Fail and Next</string>
+
     <!-- Strings for TestListActivity -->
     <string name="test_category_audio">Audio</string>
     <string name="test_category_camera">Camera</string>
@@ -1023,6 +1027,8 @@
     <string name="snsr_keep_device_rotating_clockwise">Once the test begins, you will have to keep rotating the device clockwise.</string>
     <string name="snsr_wait_for_user">Press \'Next\' to continue.</string>
     <string name="snsr_wait_to_begin">Press \'Next\' to begin.</string>
+    <string name="snsr_wait_to_retry">Press \'Retry\' to rerun or \'Fail and Next\' to skip to next.</string>
+    <string name="snsr_wait_to_finish">Press \'Retry\' to rerun or \'Finish\' to end.</string>
     <string name="snsr_on_complete_return">After completing the task, go back to this test.</string>
     <string name="snsr_movement_expected">Movement was expected during the test. Found=%1$b.</string>
     <string name="snsr_sensor_feature_deactivation">IMPORTANT NOTE: Please also turn off any special features in the
@@ -3175,8 +3181,9 @@ You should be prompted to select credentials; choose the ones you just installed
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Home button is hidden.\n
-            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) The software Home button is hidden.\n
+            4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
+            work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
@@ -3191,8 +3198,9 @@ You should be prompted to select credentials; choose the ones you just installed
             1) Notification icons are still hidden on the status bar.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Home button is hidden.\n
-            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) The software Home button is hidden.\n
+            4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
+            work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
@@ -3208,7 +3216,8 @@ You should be prompted to select credentials; choose the ones you just installed
             including Quick Settings and any link to the Settings app.\n\n
             The rest of the UI restrictions should still apply:\n
             1) System info area is still hidden on the status bar.\n
-            2) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            2) The software Overview button is hidden and the Overview gesture (swipe-up) does not
+            work.\n
             3) Holding the Home button and swiping to the right does not bring up other tasks.\n
             4) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
@@ -3226,7 +3235,8 @@ You should be prompted to select credentials; choose the ones you just installed
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) The software Overview button is hidden and the Overview gesture (swipe-up) does not
+            work.\n
             4) Holding the Home button and swiping to the right does not bring up other tasks.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
@@ -3263,8 +3273,9 @@ You should be prompted to select credentials; choose the ones you just installed
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Home button is hidden.\n
-            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) The software Home button is hidden.\n
+            4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
+            work.\n
             5) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
             6) The assistant gesture isn\'t available.\n\n
@@ -3280,8 +3291,9 @@ You should be prompted to select credentials; choose the ones you just installed
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar, even on the lock screen.\n
-            3) The Home button is hidden.\n
-            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) The software Home button is hidden.\n
+            4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
+            work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) The assistant gesture isn\'t available.\n\n
