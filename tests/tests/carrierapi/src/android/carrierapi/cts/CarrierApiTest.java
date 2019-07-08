@@ -60,7 +60,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -114,8 +116,10 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String STATUS_WARNING_A = "62";
     private static final String STATUS_WARNING_B = "63";
     private static final String STATUS_FILE_NOT_FOUND = "6a82";
-    private static final String STATUS_FUNCTION_NOT_SUPPORTED = "6a81";
     private static final String STATUS_INCORRECT_PARAMETERS = "6a86";
+    private static final String STATUS_WRONG_PARAMETERS = "6b00";
+    private static final Set<String> INVALID_PARAMETERS_STATUSES =
+            new HashSet<>(Arrays.asList(STATUS_INCORRECT_PARAMETERS, STATUS_WRONG_PARAMETERS));
     private static final String STATUS_WRONG_CLASS = "6e00";
     // File ID for the EF ICCID. TS 102 221
     private static final String ICCID_FILE_ID = "2FE2";
@@ -719,7 +723,7 @@ public class CarrierApiTest extends AndroidTestCase {
         String data = "";
         String response = mTelephonyManager
                 .iccTransmitApduLogicalChannel(channel, cla, COMMAND_STATUS, p1, p2, p3, data);
-        assertEquals(STATUS_INCORRECT_PARAMETERS, response);
+        assertTrue(INVALID_PARAMETERS_STATUSES.contains(response));
 
         // Select a file that doesn't exist
         cla = CLA_SELECT;
@@ -739,7 +743,7 @@ public class CarrierApiTest extends AndroidTestCase {
         data = "";
         response = mTelephonyManager
             .iccTransmitApduLogicalChannel(channel, cla, COMMAND_MANAGE_CHANNEL, p1, p2, p3, data);
-        assertEquals(STATUS_FUNCTION_NOT_SUPPORTED, response);
+        assertTrue(isErrorResponse(response));
 
         // Use an incorrect class byte for Status apdu
         cla = 0xFF;
