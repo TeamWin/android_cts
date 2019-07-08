@@ -239,6 +239,7 @@
         <option name="push" value="testhevc_mem232->/data/local/tmp/testhevc_mem2" />
         <option name="push" value="testavc_mem232->/data/local/tmp/testavc_mem2" />
         <option name="push" value="testmpeg2_mem232->/data/local/tmp/testmpeg2_mem2" />
+        <option name="push" value="CVE-2017-068432->/data/local/tmp/CVE-2017-0684" />
 
         <option name="append-bitness" value="false" />
     </target_preparer>
