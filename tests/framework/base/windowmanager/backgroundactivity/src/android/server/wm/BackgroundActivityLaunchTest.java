@@ -82,6 +82,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
     private static final String APP_A_PACKAGE_NAME = APP_A_FOREGROUND_ACTIVITY.getPackageName();
 
+    private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
+    private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
@@ -108,6 +111,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        stopTestPackage(TEST_PACKAGE_APP_A);
+        stopTestPackage(TEST_PACKAGE_APP_B);
         pressHomeButton();
         AppOpsUtils.reset(APP_A_PACKAGE_NAME);
         mAmWmState.waitForHomeActivityVisible();
