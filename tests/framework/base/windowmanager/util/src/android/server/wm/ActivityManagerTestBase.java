@@ -47,6 +47,7 @@ import static android.server.wm.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.wm.ActivityLauncher.KEY_INTENT_EXTRAS;
 import static android.server.wm.ActivityLauncher.KEY_INTENT_FLAGS;
 import static android.server.wm.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.wm.ActivityLauncher.KEY_LAUNCH_TASK_BEHIND;
 import static android.server.wm.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
 import static android.server.wm.ActivityLauncher.KEY_MULTIPLE_INSTANCES;
 import static android.server.wm.ActivityLauncher.KEY_MULTIPLE_TASK;
@@ -1700,6 +1701,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mNewTask;
         private boolean mMultipleTask;
         private boolean mAllowMultipleInstances = true;
+        private boolean mLaunchTaskBehind;
         private int mDisplayId = INVALID_DISPLAY;
         private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
         // A proxy activity that launches other activities including mTargetActivityName
@@ -1750,6 +1752,11 @@ public abstract class ActivityManagerTestBase {
 
         public LaunchActivityBuilder allowMultipleInstances(boolean allowMultipleInstances) {
             mAllowMultipleInstances = allowMultipleInstances;
+            return this;
+        }
+
+        public LaunchActivityBuilder setLaunchTaskBehind(boolean launchTaskBehind) {
+            mLaunchTaskBehind = launchTaskBehind;
             return this;
         }
 
@@ -1883,6 +1890,7 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_NEW_TASK, mNewTask);
             b.putBoolean(KEY_MULTIPLE_TASK, mMultipleTask);
             b.putBoolean(KEY_MULTIPLE_INSTANCES, mAllowMultipleInstances);
+            b.putBoolean(KEY_LAUNCH_TASK_BEHIND, mLaunchTaskBehind);
             b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
             b.putInt(KEY_DISPLAY_ID, mDisplayId);
             b.putInt(KEY_ACTIVITY_TYPE, mActivityType);
