@@ -21,12 +21,9 @@ import static android.content.pm.ApplicationInfo.CATEGORY_PRODUCTIVITY;
 import static android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED;
 import static android.content.pm.ApplicationInfo.FLAG_MULTIARCH;
 import static android.content.pm.ApplicationInfo.FLAG_SUPPORTS_RTL;
-import static android.os.Process.FIRST_APPLICATION_UID;
-import static android.os.Process.LAST_APPLICATION_UID;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -38,9 +35,10 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.StringBuilderPrinter;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

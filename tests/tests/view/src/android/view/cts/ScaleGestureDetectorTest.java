@@ -21,12 +21,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
+
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;

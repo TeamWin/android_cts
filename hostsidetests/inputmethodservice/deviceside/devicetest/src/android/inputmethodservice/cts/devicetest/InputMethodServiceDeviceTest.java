@@ -49,7 +49,7 @@ import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObject2;
 
 import org.junit.Test;

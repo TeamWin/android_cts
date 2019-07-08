@@ -24,12 +24,13 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 

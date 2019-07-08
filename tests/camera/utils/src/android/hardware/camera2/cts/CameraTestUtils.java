@@ -1868,7 +1868,7 @@ public class CameraTestUtils extends Assert {
      * @param src The source image to be copied from.
      * @param dst The destination image to be copied to.
      * @throws IllegalArgumentException If the source and destination images have
-     *             different format, or one of the images is not copyable.
+     *             different format, size, or one of the images is not copyable.
      */
     public static void imageCopy(Image src, Image dst) {
         if (src == null || dst == null) {
@@ -1882,6 +1882,13 @@ public class CameraTestUtils extends Assert {
             throw new IllegalArgumentException("PRIVATE format images are not copyable");
         }
 
+        Size srcSize = new Size(src.getWidth(), src.getHeight());
+        Size dstSize = new Size(dst.getWidth(), dst.getHeight());
+        if (!srcSize.equals(dstSize)) {
+            throw new IllegalArgumentException("source image size " + srcSize + " is different"
+                    + " with " + "destination image size " + dstSize);
+        }
+
         // TODO: check the owner of the dst image, it must be from ImageWriter, other source may
         // not be writable. Maybe we should add an isWritable() method in image class.
 
@@ -1891,13 +1898,97 @@ public class CameraTestUtils extends Assert {
         ByteBuffer dstBuffer = null;
         for (int i = 0; i < srcPlanes.length; i++) {
             srcBuffer = srcPlanes[i].getBuffer();
+            dstBuffer = dstPlanes[i].getBuffer();
             int srcPos = srcBuffer.position();
             srcBuffer.rewind();
-            dstBuffer = dstPlanes[i].getBuffer();
             dstBuffer.rewind();
-            dstBuffer.put(srcBuffer);
+            int srcRowStride = srcPlanes[i].getRowStride();
+            int dstRowStride = dstPlanes[i].getRowStride();
+            int srcPixStride = srcPlanes[i].getPixelStride();
+            int dstPixStride = dstPlanes[i].getPixelStride();
+
+            if (srcPixStride > 2 || dstPixStride > 2) {
+                throw new IllegalArgumentException("source pixel stride " + srcPixStride +
+                        " with destination pixel stride " + dstPixStride +
+                        " is not supported");
+            }
+
+            if (srcRowStride == dstRowStride && srcPixStride == dstPixStride) {
+                // Fast path, just copy the content in the byteBuffer all together.
+                dstBuffer.put(srcBuffer);
+            } else {
+                Size effectivePlaneSize = getEffectivePlaneSizeForImage(src, i);
+                int srcRowByteCount = srcRowStride;
+                byte[] srcDataRow = new byte[srcRowByteCount];
+
+                if (srcPixStride == dstPixStride) {
+                    // Row by row copy case
+                    for (int row = 0; row < effectivePlaneSize.getHeight(); row++) {
+                        if (row == effectivePlaneSize.getHeight() - 1) {
+                            // Special case for interleaved planes: need handle the last row
+                            // carefully to avoid memory corruption. Check if we have enough bytes
+                            // to copy.
+                            int remainingBytes = srcBuffer.remaining();
+                            if (srcRowByteCount > remainingBytes) {
+                                srcRowByteCount = remainingBytes;
+                            }
+                        }
+                        srcBuffer.get(srcDataRow, /*offset*/0, srcRowByteCount);
+                        dstBuffer.put(srcDataRow, /*offset*/0, srcRowByteCount);
+                    }
+                } else {
+                    // Row by row per pixel copy case
+                    int dstRowByteCount = dstRowStride;
+                    byte[] dstDataRow = new byte[dstRowByteCount];
+                    for (int row = 0; row < effectivePlaneSize.getHeight(); row++) {
+                        if (row == effectivePlaneSize.getHeight() - 1) {
+                            // Special case for interleaved planes: need handle the last row
+                            // carefully to avoid memory corruption. Check if we have enough bytes
+                            // to copy.
+                            int remainingBytes = srcBuffer.remaining();
+                            if (srcRowByteCount > remainingBytes) {
+                                srcRowByteCount = remainingBytes;
+                            }
+                            remainingBytes = dstBuffer.remaining();
+                            if (dstRowByteCount > remainingBytes) {
+                                dstRowByteCount = remainingBytes;
+                            }
+                        }
+                        srcBuffer.get(srcDataRow, /*offset*/0, srcRowByteCount);
+                        int pos = dstBuffer.position();
+                        dstBuffer.get(dstDataRow, /*offset*/0, dstRowByteCount);
+                        dstBuffer.position(pos);
+                        for (int x = 0; x < effectivePlaneSize.getWidth(); x++) {
+                            dstDataRow[x * dstPixStride] = srcDataRow[x * srcPixStride];
+                        }
+                        dstBuffer.put(dstDataRow, /*offset*/0, dstRowByteCount);
+                    }
+                }
+            }
             srcBuffer.position(srcPos);
             dstBuffer.rewind();
+        }
+    }
+
+    private static Size getEffectivePlaneSizeForImage(Image image, int planeIdx) {
+        switch (image.getFormat()) {
+            case ImageFormat.YUV_420_888:
+                if (planeIdx == 0) {
+                    return new Size(image.getWidth(), image.getHeight());
+                } else {
+                    return new Size(image.getWidth() / 2, image.getHeight() / 2);
+                }
+            case ImageFormat.JPEG:
+            case ImageFormat.RAW_SENSOR:
+            case ImageFormat.RAW10:
+            case ImageFormat.RAW12:
+            case ImageFormat.DEPTH16:
+                return new Size(image.getWidth(), image.getHeight());
+            case ImageFormat.PRIVATE:
+                return new Size(0, 0);
+            default:
+                throw new UnsupportedOperationException(
+                        String.format("Invalid image format %d", image.getFormat()));
         }
     }
 
@@ -1964,9 +2055,42 @@ public class CameraTestUtils extends Assert {
         for (int i = 0; i < lhsPlanes.length; i++) {
             lhsBuffer = lhsPlanes[i].getBuffer();
             rhsBuffer = rhsPlanes[i].getBuffer();
-            if (!lhsBuffer.equals(rhsBuffer)) {
-                Log.i(TAG, "byte buffers for plane " +  i + " don't matach.");
-                return false;
+            lhsBuffer.rewind();
+            rhsBuffer.rewind();
+            // Special case for YUV420_888 buffer with different chroma layout
+            if (lhsImg.getFormat() == ImageFormat.YUV_420_888 && (i != 0) &&
+                    (lhsPlanes[i].getPixelStride() != rhsPlanes[i].getPixelStride() ||
+                     lhsPlanes[i].getRowStride() != rhsPlanes[i].getRowStride())) {
+                int width = lhsImg.getWidth() / 2;
+                int height = lhsImg.getHeight() / 2;
+                int rowSizeL = lhsPlanes[i].getRowStride();
+                int rowSizeR = rhsPlanes[i].getRowStride();
+                byte[] lhsRow = new byte[rowSizeL];
+                byte[] rhsRow = new byte[rowSizeR];
+                int pixStrideL = lhsPlanes[i].getPixelStride();
+                int pixStrideR = rhsPlanes[i].getPixelStride();
+                for (int r = 0; r < height; r++) {
+                    if (r == height -1) {
+                        rowSizeL = lhsBuffer.remaining();
+                        rowSizeR = rhsBuffer.remaining();
+                    }
+                    lhsBuffer.get(lhsRow, /*offset*/0, rowSizeL);
+                    rhsBuffer.get(rhsRow, /*offset*/0, rowSizeR);
+                    for (int c = 0; c < width; c++) {
+                        if (lhsRow[c * pixStrideL] != rhsRow[c * pixStrideR]) {
+                            Log.i(TAG, String.format(
+                                    "byte buffers for plane %d row %d col %d don't match.",
+                                    i, r, c));
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                // Compare entire buffer directly
+                if (!lhsBuffer.equals(rhsBuffer)) {
+                    Log.i(TAG, "byte buffers for plane " +  i + " don't match.");
+                    return false;
+                }
             }
         }
 

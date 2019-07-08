@@ -25,8 +25,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.InternalTransformation;
 import android.service.autofill.Transformation;
-import android.support.test.runner.AndroidJUnit4;
 import android.widget.RemoteViews;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -29,10 +29,10 @@ LOCAL_MULTILIB := both
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
-    compatibility-device-util \
-    ctsdeviceutillegacy \
-    ctstestrunner \
+    androidx.test.rules \
+    compatibility-device-util-axt \
+    ctsdeviceutillegacy-axt \
+    ctstestrunner-axt \
     mockito-target-minus-junit4 \
     platform-test-annotations \
     ub-uiautomator

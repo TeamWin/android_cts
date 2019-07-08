@@ -36,10 +36,6 @@ import static org.mockito.Mockito.when;
 import android.content.Context;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.Xml;
@@ -53,6 +49,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
 

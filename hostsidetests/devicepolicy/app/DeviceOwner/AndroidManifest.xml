@@ -94,7 +94,7 @@
 
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="com.android.cts.deviceowner"
                      android:label="Device Owner CTS tests">
         <meta-data

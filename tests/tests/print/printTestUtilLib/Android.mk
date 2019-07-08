@@ -22,7 +22,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := print-test-util-lib
 
-LOCAL_STATIC_JAVA_LIBRARIES := mockito-target-minus-junit4 ctstestrunner ub-uiautomator compatibility-device-util android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := mockito-target-minus-junit4 ctstestrunner-axt ub-uiautomator compatibility-device-util-axt androidx.test.rules
 
 LOCAL_SDK_VERSION := test_current
 

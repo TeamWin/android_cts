@@ -19,8 +19,9 @@ package android.server.am;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
 import static android.server.am.StateLogger.logAlways;
-import static android.support.test.InstrumentationRegistry.getContext;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+
+import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.fail;
 
@@ -29,6 +30,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
+
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;

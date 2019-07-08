@@ -310,7 +310,7 @@
 
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.content.cts"
                      android:label="CTS tests of android.content">
         <meta-data android:name="listener"

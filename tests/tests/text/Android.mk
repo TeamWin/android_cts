@@ -24,10 +24,10 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
-    compatibility-device-util \
-    ctsdeviceutillegacy \
-    ctstestrunner \
-    android-support-test \
+    compatibility-device-util-axt \
+    ctsdeviceutillegacy-axt \
+    ctstestrunner-axt \
+    androidx.test.rules \
     mockito-target-minus-junit4 \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)

@@ -513,6 +513,19 @@ def debug_mode():
     return False
 
 
+def backward_compatible(props):
+    """Returns whether a device supports BACKWARD_COMPATIBLE.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.request.availableCapabilities") and \
+              0 in props["android.request.availableCapabilities"]
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """

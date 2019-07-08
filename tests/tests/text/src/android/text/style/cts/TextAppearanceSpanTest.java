@@ -26,11 +26,12 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Parcel;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.TextPaint;
 import android.text.style.TextAppearanceSpan;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

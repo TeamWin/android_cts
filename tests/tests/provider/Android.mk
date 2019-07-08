@@ -33,8 +33,8 @@ LOCAL_JAVA_LIBRARIES := android.test.mock android.test.base.stubs android.test.r
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctstestrunner-axt \
     ub-uiautomator \
     junit
 

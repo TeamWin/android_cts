@@ -26,13 +26,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

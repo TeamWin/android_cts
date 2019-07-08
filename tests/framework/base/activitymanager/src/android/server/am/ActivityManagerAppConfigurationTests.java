@@ -36,7 +36,6 @@ import static android.server.am.Components.NIGHT_MODE_ACTIVITY;
 import static android.server.am.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
-import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.server.am.translucentapp.Components.TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.server.am.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
@@ -44,6 +43,8 @@ import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
+
+import static com.android.compatibility.common.util.PackageUtil.supportsRotation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
@@ -55,12 +56,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static com.android.compatibility.common.util.PackageUtil.supportsRotation;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Ignore;
 import org.junit.Test;

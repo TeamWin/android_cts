@@ -20,7 +20,7 @@ LOCAL_PACKAGE_NAME := CtsNetSecConfigNestedDomainConfigTestCases
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt androidx.test.rules
 
 LOCAL_JAVA_LIBRARIES := org.apache.http.legacy
 

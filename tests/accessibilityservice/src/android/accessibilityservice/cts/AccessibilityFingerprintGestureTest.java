@@ -16,7 +16,6 @@ package android.accessibilityservice.cts;
 
 import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
@@ -30,9 +29,10 @@ import android.app.Instrumentation;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

@@ -26,11 +26,11 @@ import android.media.MediaCodec;
 import android.media.MediaDescrambler;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
 
 import java.lang.ArrayIndexOutOfBoundsException;
 import java.nio.ByteBuffer;

@@ -448,6 +448,7 @@ def collect_data(fps, w, h, test_length):
         fmt = {"format": "yuv", "width": w, "height": h}
         s, e, _, _, _ = cam.do_3a(get_results=True, do_af=False)
         req = its.objects.manual_capture_request(s, e)
+        its.objects.turn_slow_filters_off(props, req)
         req["android.lens.focusDistance"] = 1 / (CHART_DISTANCE * CM_TO_M)
         req["android.control.aeTargetFpsRange"] = [fps, fps]
         req["android.sensor.frameDuration"] = int(1000.0/fps * MSEC_TO_NSEC)

@@ -2328,12 +2328,12 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Sanity check.
         final AutofillManager afm = mActivity.getAutofillManager();
-        assertThat(afm.isEnabled()).isTrue();
+        Helper.assertAutofillEnabled(afm, true);
 
         // Now disable user_complete and try again.
         try {
             setUserComplete(mContext, false);
-            assertThat(afm.isEnabled()).isFalse();
+            Helper.assertAutofillEnabled(afm, false);
         } finally {
             setUserComplete(mContext, true);
         }

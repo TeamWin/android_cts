@@ -17,6 +17,7 @@
 package com.android.cts.usepermission;
 
 import static junit.framework.Assert.assertEquals;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
@@ -31,8 +32,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
@@ -47,20 +46,26 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.widget.ScrollView;
 import android.widget.Switch;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import junit.framework.Assert;
+
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
-import junit.framework.Assert;
-import org.junit.Before;
-import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public abstract class BasePermissionsTest {
     private static final String PLATFORM_PACKAGE_NAME = "android";
 
-    private static final long IDLE_TIMEOUT_MILLIS = 500;
-    private static final long GLOBAL_TIMEOUT_MILLIS = 5000;
+    private static final long IDLE_TIMEOUT_MILLIS = 1000;
+    private static final long GLOBAL_TIMEOUT_MILLIS = 10000;
 
     private static final long RETRY_TIMEOUT = 3 * GLOBAL_TIMEOUT_MILLIS;
     private static final String LOG_TAG = "BasePermissionsTest";
@@ -552,12 +557,18 @@ public abstract class BasePermissionsTest {
             throws Exception {
         AccessibilityNodeInfo result = current;
         while (result != null) {
-            if (result.getCollectionItemInfo() != null) {
+            // Nodes that are in the hierarchy but not yet on screen may not have collection item
+            // info populated. Use a parent with collection info as an indicator in those cases.
+            if (result.getCollectionItemInfo() != null || hasCollectionAsParent(result)) {
                 return result;
             }
             result = result.getParent();
         }
         return null;
+    }
+
+    private static boolean hasCollectionAsParent(AccessibilityNodeInfo node) {
+        return node.getParent() != null && node.getParent().getCollectionInfo() != null;
     }
 
     private static AccessibilityNodeInfo findSwitch(AccessibilityNodeInfo root) throws Exception {

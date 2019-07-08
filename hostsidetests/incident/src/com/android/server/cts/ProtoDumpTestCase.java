@@ -38,9 +38,9 @@ import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
 import java.io.FileNotFoundException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,7 +70,7 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
 
     protected IBuildInfo mCtsBuild;
 
-    private static final String TEST_RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
     @Override
     protected void setUp() throws Exception {

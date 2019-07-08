@@ -1998,8 +1998,8 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
 
     private static final int MIN_SUPPORTED_KEY_COUNT = 1500;
     private static final long MINUTE_IN_MILLIS = 1000 * 60;
-    private static final long LARGE_NUMBER_OF_KEYS_TEST_MAX_DURATION_MILLIS = 2 * MINUTE_IN_MILLIS;
-    private static final long LARGE_NUMBER_OF_KEYS_TEST_MAX_DURATION_WATCH_MILLIS = 3 * MINUTE_IN_MILLIS;
+    private static final long LARGE_NUMBER_OF_KEYS_TEST_MAX_DURATION_MILLIS = 4 * MINUTE_IN_MILLIS;
+    private static final long LARGE_NUMBER_OF_KEYS_TEST_MAX_DURATION_WATCH_MILLIS = 6 * MINUTE_IN_MILLIS;
 
     private static boolean isDeadlineReached(long startTimeMillis, long durationMillis) {
         long nowMillis = System.currentTimeMillis();

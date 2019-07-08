@@ -32,8 +32,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -45,6 +43,9 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.TestThread;
 

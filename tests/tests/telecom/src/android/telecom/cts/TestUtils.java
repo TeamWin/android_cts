@@ -31,10 +31,11 @@ import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserManager;
-import android.support.test.InstrumentationRegistry;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+
+import androidx.test.InstrumentationRegistry;
 
 import junit.framework.TestCase;
 

@@ -72,6 +72,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String KEY_REQUEST_CODE = "request_code";
     public static final String BG_VS_FG_TAG = "BatteryStatsBgVsFgActions";
 
+    // Constants from BatteryMangager.
+    public static final int BATTERY_STATUS_DISCHARGING = 3;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -109,11 +112,13 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     protected void batteryOnScreenOn() throws Exception {
         getDevice().executeShellCommand("dumpsys battery unplug");
+        getDevice().executeShellCommand("dumpsys battery set status " + BATTERY_STATUS_DISCHARGING);
         getDevice().executeShellCommand("dumpsys batterystats disable pretend-screen-off");
     }
 
     protected void batteryOnScreenOff() throws Exception {
         getDevice().executeShellCommand("dumpsys battery unplug");
+        getDevice().executeShellCommand("dumpsys battery set status " + BATTERY_STATUS_DISCHARGING);
         getDevice().executeShellCommand("dumpsys batterystats enable pretend-screen-off");
     }
 

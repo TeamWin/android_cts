@@ -26,8 +26,9 @@ import android.appwidget.cts.provider.SecondAppWidgetProvider;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;

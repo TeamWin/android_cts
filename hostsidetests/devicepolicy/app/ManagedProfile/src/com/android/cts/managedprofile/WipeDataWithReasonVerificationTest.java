@@ -1,11 +1,12 @@
 package com.android.cts.managedprofile;
 
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
+
+import androidx.test.InstrumentationRegistry;
 
 /**
  * Test wipeDataWithReason() has indeed shown the notification.

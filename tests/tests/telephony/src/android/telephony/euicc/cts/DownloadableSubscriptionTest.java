@@ -23,8 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.test.runner.AndroidJUnit4;
 import android.telephony.euicc.DownloadableSubscription;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

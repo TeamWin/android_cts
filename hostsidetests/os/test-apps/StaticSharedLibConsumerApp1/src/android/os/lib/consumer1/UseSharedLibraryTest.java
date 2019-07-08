@@ -27,14 +27,16 @@ import android.content.pm.PackageInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.VersionedPackage;
 import android.os.lib.provider.StaticSharedLib;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 @RunWith(AndroidJUnit4.class)
 public class UseSharedLibraryTest {

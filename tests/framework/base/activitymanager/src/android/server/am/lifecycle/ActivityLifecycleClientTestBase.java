@@ -19,10 +19,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.lifecycle.ActivityLifecycleMonitor;
-import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitor;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import android.util.Pair;
 
 import org.junit.After;

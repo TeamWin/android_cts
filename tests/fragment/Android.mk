@@ -29,13 +29,13 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
-    android-support-test \
+    androidx.test.rules \
     mockito-target-minus-junit4 \
     android-common \
-    compatibility-device-util \
-    ctstestrunner
+    compatibility-device-util-axt \
+    ctstestrunner-axt
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
-#LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test
+#LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt androidx.test.rules
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

@@ -119,7 +119,7 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
             runTestAsPrimaryUser(CALL_BLOCKING_TEST_CLASS_NAME, "testUnregisterPhoneAccount");
 
             // Run tests as secondary user.
-            assertTrue(getDevice().startUser(mSecondaryUserId));
+            startUserAndWait(mSecondaryUserId);
 
             // Ensure that a privileged app cannot block numbers when the current user is a
             // secondary user.
@@ -140,6 +140,29 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
             runTestAsPrimaryUser(
                     NUMBER_BLOCKING_APP_TEST_CLASS_NAME, "testUnblockNumberAsPrimaryUserSucceeds");
         }
+    }
+
+    /** Starts user {@code userId} and waits until it is in state RUNNING_UNLOCKED. */
+    protected void startUserAndWait(int userId) throws Exception {
+        getDevice().startUser(userId);
+
+        final String desiredState = "RUNNING_UNLOCKED";
+        final long USER_STATE_TIMEOUT_MS = 60_0000; // 1 minute
+        final long timeout = System.currentTimeMillis() + USER_STATE_TIMEOUT_MS;
+        final String command = String.format("am get-started-user-state %d", userId);
+        String output = "";
+        while (System.currentTimeMillis() <= timeout) {
+            output = getDevice().executeShellCommand(command);
+            if (output.contains(desiredState)) {
+                return;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // Do nothing.
+            }
+        }
+        fail("User state of " + userId + " was '" + output + "' rather than " + desiredState);
     }
 
     private void createSecondaryUser() throws Exception {
@@ -171,7 +194,7 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
                 className, methodName, userId);
         RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
                 NUMBER_BLOCKING_TESTS_PKG,
-                "android.support.test.runner.AndroidJUnitRunner",
+                "androidx.test.runner.AndroidJUnitRunner",
                 getDevice().getIDevice());
         testRunner.addInstrumentationArg("blocked_number", BLOCKED_NUMBER);
         testRunner.addInstrumentationArg("phone_account_id", PHONE_ACCOUNT_ID);

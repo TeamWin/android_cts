@@ -19,26 +19,21 @@ package android.car.cts;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeTrue;
-
 import android.car.Car;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
-import android.test.AndroidTestCase;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FeatureUtil;
 
+import org.junit.After;
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.After;
 
 public abstract class CarApiTestBase {
     protected static final long DEFAULT_WAIT_TIMEOUT_MS = 1000;

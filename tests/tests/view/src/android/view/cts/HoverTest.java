@@ -30,13 +30,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsMouseUtil.ActionMatcher;
 import com.android.compatibility.common.util.CtsMouseUtil.PositionMatcher;

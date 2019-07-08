@@ -35,11 +35,12 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 

@@ -17,12 +17,13 @@
 package android.widget.cts;
 
 import android.app.Instrumentation;
-import android.support.test.InstrumentationRegistry;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.cts.util.ListUtil;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 

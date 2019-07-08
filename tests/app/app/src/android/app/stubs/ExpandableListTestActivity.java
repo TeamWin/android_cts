@@ -15,25 +15,27 @@
  */
 package android.app.stubs;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import android.app.ExpandableListActivity;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.MessageQueue;
 import android.view.ContextMenu;
-import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.support.test.InstrumentationRegistry;
+import android.view.View;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.internal.R;
 import com.android.internal.view.menu.ContextMenuBuilder;
+
 import com.google.android.collect.Lists;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ExpandableListTestActivity extends ExpandableListActivity {
     private static final String NAME = "NAME";

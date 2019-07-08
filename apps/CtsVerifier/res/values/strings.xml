@@ -1016,6 +1016,9 @@
     firstEventReceivedMs=%2$d diffMs=%3$d toleranceMs=%4$d </string>
     <string name="snsr_device_suspend_test_instr">One you begin the test, disconnect USB, turn off the display and allow
     the device to go into suspend mode. The screen will turn on and a sound will be played once all the tests are completed.</string>
+    <string name="snsr_device_suspend_service">Device Suspend Service</string>
+    <string name="snsr_device_suspend_service_active">Device Suspend Test Active</string>
+    <string name="snsr_device_suspend_service_notification">Device Suspend Test is using sensors.</string>
 
     <!-- Significant Motion -->
     <string name="snsr_significant_motion_test">Significant Motion Tests</string>
@@ -1301,9 +1304,8 @@
     <string name="no_camera_manager">
         No camera manager exists!  This test device is in a bad state.
     </string>
-    <string name="all_legacy_devices">
-        All cameras on this device are LEGACY mode only - ITS tests are only required on LIMITED
-        or better devices.  Pass.
+    <string name="all_exempted_devices">
+        All cameras on this device are exempted from ITS - Pass.
     </string>
     <string name="its_test_passed">All Camera ITS tests passed.  Pass button enabled!</string>
     <string name="its_test_failed">Some Camera ITS tests failed.</string>

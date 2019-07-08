@@ -16,6 +16,9 @@
 
 package android.server.am;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.Context;
@@ -34,12 +37,16 @@ import android.opengl.GLES10;
 import android.os.Build;
 import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
-import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -57,12 +64,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 public class ActivityManagerGetConfigTests {
     Context mContext;

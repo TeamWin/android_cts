@@ -17,7 +17,8 @@
 package android.cts.backup.keyvaluerestoreapp;
 
 import static android.content.Context.MODE_PRIVATE;
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,8 +31,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

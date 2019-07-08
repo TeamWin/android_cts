@@ -26,12 +26,13 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.MutableBoolean;
 import android.widget.TextClock;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;

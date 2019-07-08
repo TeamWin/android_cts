@@ -19,10 +19,11 @@ package android.server.am;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
 import android.view.Display;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 class AspectRatioTestsBase {
     // The delta allowed when comparing two floats for equality. We consider them equal if they are

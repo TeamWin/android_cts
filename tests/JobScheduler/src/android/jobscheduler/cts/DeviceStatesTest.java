@@ -19,8 +19,9 @@ package android.jobscheduler.cts;
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
 
 /**
  * Make sure the state of {@link android.app.job.JobScheduler} is correct.

@@ -894,6 +894,8 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
         SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
 
+        Size QCIF = new Size(176, 144);
+        Size FULL_HD = new Size(1920, 1080);
         for (Size stillSz : mOrderedStillSizes)
             for (Size previewSz : mOrderedPreviewSizes) {
                 if (VERBOSE) {
@@ -901,6 +903,20 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                             + " with preview size " + previewSz.toString() + " for camera "
                             + mCamera.getId());
                 }
+
+                // Skip testing QCIF + >FullHD combinations
+                if (stillSz.equals(QCIF) &&
+                        ((previewSz.getWidth() > FULL_HD.getWidth()) ||
+                         (previewSz.getHeight() > FULL_HD.getHeight()))) {
+                    continue;
+                }
+
+                if (previewSz.equals(QCIF) &&
+                        ((stillSz.getWidth() > FULL_HD.getWidth()) ||
+                         (stillSz.getHeight() > FULL_HD.getHeight()))) {
+                    continue;
+                }
+
                 CaptureRequest.Builder previewRequest =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                 CaptureRequest.Builder stillRequest =

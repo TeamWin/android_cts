@@ -24,12 +24,13 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.content.Context;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 

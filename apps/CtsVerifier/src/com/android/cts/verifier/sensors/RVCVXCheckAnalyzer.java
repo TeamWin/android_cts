@@ -66,7 +66,7 @@ public class RVCVXCheckAnalyzer {
 
     private static final boolean OUTPUT_DEBUG_IMAGE = false;
     private static final double VALID_FRAME_THRESHOLD = 0.8;
-    private static final double REPROJECTION_THRESHOLD_RATIO = 0.03;
+    private static final double REPROJECTION_THRESHOLD_RATIO = 0.01;
     private static final boolean FORCE_CV_ANALYSIS  = false;
     private static final boolean TRACE_VIDEO_ANALYSIS = false;
     private static final double DECIMATION_FPS_TARGET = 15.0;
@@ -880,13 +880,6 @@ public class RVCVXCheckAnalyzer {
             // reproject points to for evaluation of result accuracy of solvePnP
             Calib3d.projectPoints(grid, rvec, tvec, camMat, coeff, reprojCenters);
 
-            // error is evaluated in norm2, which is real error in pixel distance / sqrt(2)
-            double error = Core.norm(centers, reprojCenters, Core.NORM_L2);
-
-            if (LOCAL_LOGV) {
-                Log.v(TAG, "Found attitude, re-projection error = " + error);
-            }
-
             // Calculate the average distance between opposite corners of the pattern in pixels
             Point[] centerPoints = centers.toArray();
             Point bottomLeftPos = centerPoints[0];
@@ -896,10 +889,27 @@ public class RVCVXCheckAnalyzer {
             double avgPixelDist = (getDistanceBetweenPoints(bottomLeftPos, topRightPos)
                     + getDistanceBetweenPoints(bottomRightPos, topLeftPos)) / 2;
 
+            // Calculate the average pixel error between the circle centers from the video and the
+            // reprojected circle centers based on the estimated camera position. The error provides
+            // a way to estimate how accurate the assumed test device's position is. If the error
+            // is high, then the frame should be discarded to prevent an inaccurate test device's
+            // position from being compared against the rotation vector sample at that time.
+            Point[] reprojectedPointsArray = reprojCenters.toArray();
+            double avgCenterError = 0.0;
+            for (int curCenter = 0; curCenter < reprojectedPointsArray.length; curCenter++) {
+                avgCenterError += getDistanceBetweenPoints(
+                        reprojectedPointsArray[curCenter], centerPoints[curCenter]);
+            }
+            avgCenterError /= reprojectedPointsArray.length;
+
+            if (LOCAL_LOGV) {
+                Log.v(TAG, "Found attitude, re-projection error = " + avgCenterError);
+            }
+
             // if error is reasonable, add it into the results. Use a dynamic threshold based on
             // the pixel distance of opposite corners of the pattern to prevent higher resolution
             // video or the distance between the camera and the test pattern from impacting the test
-            if (error < REPROJECTION_THRESHOLD_RATIO * avgPixelDist) {
+            if (avgCenterError < REPROJECTION_THRESHOLD_RATIO * avgPixelDist) {
                 double [] rv = new double[3];
                 double timestamp;
 

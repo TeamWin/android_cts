@@ -27,9 +27,10 @@ import static org.testng.Assert.assertThrows;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.ImageTransformation;
 import android.service.autofill.ValueFinder;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

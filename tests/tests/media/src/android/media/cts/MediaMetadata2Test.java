@@ -23,11 +23,10 @@ import android.media.MediaMetadata2;
 import android.media.MediaMetadata2.Builder;
 import android.media.Rating2;
 import android.os.Bundle;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
 
-import org.junit.Before;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -24,9 +24,9 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.annotation_annotation \
-    compatibility-device-util \
-    ctsdeviceutillegacy \
-    ctstestrunner \
+    compatibility-device-util-axt \
+    ctsdeviceutillegacy-axt \
+    ctstestrunner-axt \
     truth-prebuilt \
     ub-uiautomator \
     testng # TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows

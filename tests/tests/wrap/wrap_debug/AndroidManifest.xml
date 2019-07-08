@@ -31,7 +31,7 @@
 
     <!--  self-instrumenting test package. -->
     <instrumentation
-        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:name="androidx.test.runner.AndroidJUnitRunner"
         android:label="CTS tests for wrap.sh"
         android:targetPackage="android.wrap.wrap_debug.cts" >
     </instrumentation>

@@ -365,4 +365,20 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(new Intent("android.settings.LOCATION_SCANNING_SETTINGS"));
         }
     }
+
+    public void testPowerUsageSummarySettings() {
+        if (isHandheld()) {
+            assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
+        }
+    }
+
+    private boolean isHandheld() {
+        // handheld nature is not exposed to package manager, for now
+        // we check for touchscreen and NOT watch, NOT tv and NOT car
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(pm.FEATURE_TOUCHSCREEN)
+                && !pm.hasSystemFeature(pm.FEATURE_WATCH)
+                && !pm.hasSystemFeature(pm.FEATURE_TELEVISION)
+                && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
+    }
 }

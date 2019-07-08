@@ -139,7 +139,7 @@
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.os.cts"
                      android:label="CTS tests of android.os">
         <meta-data android:name="listener"

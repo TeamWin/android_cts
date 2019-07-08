@@ -19,8 +19,10 @@ package com.android.cts.verifier.camera.its;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.params.MeteringRectangle;
@@ -295,5 +297,48 @@ public class ItsUtils {
             default:
                 return false;
         }
+    }
+
+    public static List<String> getItsCompatibleCameraIds(CameraManager manager)
+            throws ItsException {
+        if (manager == null) {
+            throw new IllegalArgumentException("CameraManager is null");
+        }
+
+        ArrayList<String> outList = new ArrayList<String>();
+        try {
+            String[] cameraIds = manager.getCameraIdList();
+            for (String id : cameraIds) {
+                CameraCharacteristics characteristics = manager.getCameraCharacteristics(id);
+                int[] actualCapabilities = characteristics.get(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+                boolean haveBC = false;
+                final int BACKWARD_COMPAT =
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
+                for (int capability : actualCapabilities) {
+                    if (capability == BACKWARD_COMPAT) {
+                        haveBC = true;
+                        break;
+                    }
+                }
+
+                // Skip devices that does not support BACKWARD_COMPATIBLE capability
+                if (!haveBC) continue;
+
+                int hwLevel = characteristics.get(
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+                if (hwLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY ||
+                        hwLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL) {
+                    // Skip LEGACY and EXTERNAL devices
+                    continue;
+                }
+                outList.add(id);
+            }
+        } catch (CameraAccessException e) {
+            Logt.e(TAG,
+                    "Received error from camera service while checking device capabilities: " + e);
+            throw new ItsException("Failed to get device ID list", e);
+        }
+        return outList;
     }
 }

@@ -25,43 +25,36 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.content.res.Resources.Theme;
+import android.content.Context;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.Shader;
+import android.graphics.Shader.TileMode;
 import android.graphics.cts.R;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable.ConstantState;
+import android.util.AttributeSet;
+import android.view.Gravity;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.content.Context;
-import android.content.res.Resources;
-import android.content.res.XmlResourceParser;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.Shader;
-import android.graphics.Bitmap.Config;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.Shader.TileMode;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Drawable.ConstantState;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.util.AttributeSet;
-import android.util.LayoutDirection;
-import android.util.Xml;
-import android.view.Gravity;
-
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 

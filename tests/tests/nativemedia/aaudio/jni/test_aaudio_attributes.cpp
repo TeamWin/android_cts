@@ -22,6 +22,8 @@
 #include <aaudio/AAudio.h>
 #include <gtest/gtest.h>
 
+#include "utils.h"
+
 constexpr int64_t kNanosPerSecond = 1000000000;
 constexpr int kNumFrames = 256;
 constexpr int kChannelCount = 2;
@@ -33,6 +35,10 @@ static void checkAttributes(aaudio_performance_mode_t perfMode,
                             aaudio_content_type_t contentType,
                             aaudio_input_preset_t preset = DONT_SET,
                             aaudio_direction_t direction = AAUDIO_DIRECTION_OUTPUT) {
+    if (direction == AAUDIO_DIRECTION_INPUT
+            && !deviceSupportsFeature(FEATURE_RECORDING)) return;
+    else if (direction == AAUDIO_DIRECTION_OUTPUT
+            && !deviceSupportsFeature(FEATURE_PLAYBACK)) return;
 
     float *buffer = new float[kNumFrames * kChannelCount];
 

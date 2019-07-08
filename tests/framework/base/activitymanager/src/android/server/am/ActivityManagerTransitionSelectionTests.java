@@ -38,7 +38,8 @@ import static org.junit.Assert.assertEquals;
 import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Assume;
 import org.junit.Before;

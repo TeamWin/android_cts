@@ -18,11 +18,14 @@ package com.android.compatibility.common.util;
 import static com.android.compatibility.common.util.SettingsUtils.putGlobalSetting;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
+import android.content.pm.PackageManager;
 import android.os.BatteryManager;
 import android.os.PowerManager;
 import android.provider.Settings.Global;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import org.junit.Assume;
 
 public class BatteryUtils {
     private static final String TAG = "CtsBatteryUtils";
@@ -102,5 +105,16 @@ public class BatteryUtils {
         }
         AmUtils.waitForBroadcastIdle();
         Log.d(TAG, "Screen turned " + (on ? "ON" : "OFF"));
+    }
+
+    /** @return true if the device supports battery saver. */
+    public static boolean isBatterySaverSupported() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
+    /** "Assume" the current device supports battery saver. */
+    public static void assumeBatterySaverFeature() {
+        Assume.assumeTrue("Device doesn't support battery saver", isBatterySaverSupported());
     }
 }

@@ -16,6 +16,10 @@
 
 package android.os.cts;
 
+import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
+import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -25,17 +29,15 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.List;
-
-import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
-import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
-import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 
 /**
  * Tests whether all platform components that are implemented

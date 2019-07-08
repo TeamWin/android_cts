@@ -26,11 +26,12 @@ import android.graphics.PixelFormat;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.SpannedString;
 import android.view.Gravity;
 import android.view.WindowManager;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

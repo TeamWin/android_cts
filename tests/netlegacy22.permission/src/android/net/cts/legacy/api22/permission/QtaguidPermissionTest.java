@@ -1,23 +1,19 @@
 package android.net.cts.legacy.api22.permission;
 
-import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.TrafficStats;
-import android.support.test.filters.MediumTest;
 import android.test.AndroidTestCase;
 
-import java.io.File;
-import java.net.ServerSocket;
-import java.net.Socket;
+import androidx.test.filters.MediumTest;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class QtaguidPermissionTest extends AndroidTestCase {
 

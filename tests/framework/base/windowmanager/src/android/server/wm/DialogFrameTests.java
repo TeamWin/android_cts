@@ -40,8 +40,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 import android.server.am.WindowManagerState.WindowState;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Ignore;
 import org.junit.Rule;

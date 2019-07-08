@@ -22,13 +22,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.test.runner.AndroidJUnit4;
+import android.telephony.euicc.EuiccInfo;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import android.telephony.euicc.EuiccInfo;
 
 @RunWith(AndroidJUnit4.class)
 public class EuiccInfoTest {

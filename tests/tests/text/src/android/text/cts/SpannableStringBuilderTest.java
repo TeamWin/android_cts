@@ -23,8 +23,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Selection;
@@ -37,6 +35,9 @@ import android.text.style.StrikethroughSpan;
 import android.text.style.SubscriptSpan;
 import android.text.style.TabStopSpan;
 import android.text.style.UnderlineSpan;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

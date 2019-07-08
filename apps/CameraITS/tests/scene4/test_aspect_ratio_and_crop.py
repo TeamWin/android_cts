@@ -334,8 +334,8 @@ def main():
                 h_iter = size_iter[1]
                 # Skip testing same format/size combination
                 # ITS does not handle that properly now
-                if (dual_target and w_iter == size_cmpr[0]
-                            and h_iter == size_cmpr[1]
+                if (dual_target
+                            and w_iter*h_iter == size_cmpr[0]*size_cmpr[1]
                             and fmt_iter == fmt_cmpr):
                     continue
                 out_surface = [{"width": w_iter,

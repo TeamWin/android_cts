@@ -22,7 +22,7 @@ LOCAL_SDK_VERSION := current
 LOCAL_DEX_PREOPT := false
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs cts-junit
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
 
 include $(BUILD_STATIC_JAVA_LIBRARY)

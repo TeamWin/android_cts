@@ -25,7 +25,7 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner compatibility-device-util
+    ctstestrunner-axt compatibility-device-util-axt
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 

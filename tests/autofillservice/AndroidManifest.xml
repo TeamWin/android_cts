@@ -29,8 +29,7 @@
 
         <uses-library android:name="android.test.runner" />
 
-        <activity android:name=".LoginActivity"
-                  android:screenOrientation="portrait">
+        <activity android:name=".LoginActivity" >
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
                      this app during CTS development... -->
@@ -144,7 +143,7 @@
     </application>
 
     <instrumentation
-        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:name="androidx.test.runner.AndroidJUnitRunner"
         android:label="CTS tests for the AutoFill Framework APIs."
         android:targetPackage="android.autofillservice.cts" >
     </instrumentation>

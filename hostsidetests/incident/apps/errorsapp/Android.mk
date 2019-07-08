@@ -32,8 +32,8 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs cts-junit
 LOCAL_JNI_SHARED_LIBRARIES := libcrash-jni
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
     androidx.legacy_legacy-support-v4
 
 LOCAL_SDK_VERSION := test_current

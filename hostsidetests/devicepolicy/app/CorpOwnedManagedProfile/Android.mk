@@ -34,7 +34,7 @@ LOCAL_AIDL_INCLUDES := $(LOCAL_PATH)/src
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs cts-junit android.test.base.stubs
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt compatibility-device-util-axt
 
 LOCAL_SDK_VERSION := test_current
 
@@ -59,7 +59,7 @@ LOCAL_AIDL_INCLUDES := $(LOCAL_PATH)/src
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs cts-junit android.test.base.stubs
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt compatibility-device-util-axt
 
 LOCAL_SDK_VERSION := test_current
 

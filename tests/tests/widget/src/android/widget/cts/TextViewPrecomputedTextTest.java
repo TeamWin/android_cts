@@ -16,10 +16,10 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.graphics.Typeface;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.text.Layout;
 import android.text.PrecomputedText;
 import android.text.PrecomputedText.Params;
@@ -31,7 +31,8 @@ import android.text.TextUtils;
 import android.util.Pair;
 import android.widget.TextView;
 
-import static org.junit.Assert.fail;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

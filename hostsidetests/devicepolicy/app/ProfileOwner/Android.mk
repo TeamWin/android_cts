@@ -32,8 +32,8 @@ LOCAL_JAVA_LIBRARIES := \
 
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner \
-    compatibility-device-util \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
     ub-uiautomator
 
 # tag this module as a cts test artifact

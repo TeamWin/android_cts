@@ -32,17 +32,18 @@ import android.app.Instrumentation;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toolbar;
 import android.widget.cts.util.TestUtils;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
 

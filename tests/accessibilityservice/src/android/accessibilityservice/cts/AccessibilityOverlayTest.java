@@ -22,14 +22,13 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.utils.AsyncUtils;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.os.Debug;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.WindowManager;
-import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;

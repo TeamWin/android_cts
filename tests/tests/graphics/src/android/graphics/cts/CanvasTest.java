@@ -44,23 +44,24 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region.Op;
 import android.graphics.Shader;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 import android.util.DisplayMetrics;
 
-import com.android.compatibility.common.util.ColorUtils;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.android.compatibility.common.util.ColorUtils;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)

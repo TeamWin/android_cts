@@ -24,8 +24,6 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.ArcMotion;
 import android.transition.AutoTransition;
 import android.transition.ChangeBounds;
@@ -49,6 +47,9 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

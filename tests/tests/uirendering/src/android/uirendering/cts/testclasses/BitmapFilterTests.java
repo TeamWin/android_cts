@@ -21,14 +21,15 @@ import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.Rect;
 import android.graphics.Region;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.RegionVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -26,8 +26,6 @@ def main():
 
         pprint.pprint(props)
 
-        its.caps.skip_unless(its.caps.manual_sensor(props))
-
         # Test that a handful of required keys are present.
         assert(props.has_key('android.sensor.info.sensitivityRange'))
         assert(props.has_key('android.sensor.orientation'))

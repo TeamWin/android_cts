@@ -29,13 +29,13 @@ import static com.google.common.collect.Sets.newHashSet;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
 
-import com.android.compatibility.common.util.PropertyUtil;
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
@@ -91,7 +91,8 @@ public class PrivappPermissionsTest extends AndroidTestCase {
             }
 
             PackageInfo factoryPkg = pm
-                    .getPackageInfo(packageName, MATCH_FACTORY_ONLY | GET_PERMISSIONS);
+                    .getPackageInfo(packageName, MATCH_FACTORY_ONLY | GET_PERMISSIONS
+                        | MATCH_UNINSTALLED_PACKAGES);
 
             assertNotNull("No system image version found for " + packageName, factoryPkg);
 

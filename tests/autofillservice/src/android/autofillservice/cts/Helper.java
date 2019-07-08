@@ -46,7 +46,6 @@ import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory;
-import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -54,12 +53,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.RequiredFeatureRule;
@@ -1231,7 +1232,27 @@ final class Helper {
                 "bitmap comparison failed; check contents of " + dump1 + " and " + dump2);
     }
 
-    @Nullable
+    /**
+     * Asserts that autofill is enabled in the context, retrying if necessariy.
+     */
+    public static void assertAutofillEnabled(@NonNull Context context, boolean expected)
+        throws Exception {
+      assertAutofillEnabled(context.getSystemService(AutofillManager.class), expected);
+    }
+
+    /**
+     * Asserts that autofill is enabled in the manager, retrying if necessariy.
+     */
+    public static void assertAutofillEnabled(@NonNull AutofillManager afm, boolean expected)
+        throws Exception {
+      Timeouts.IDLE_UNBIND_TIMEOUT.run("assertEnabled(" + expected + ")", () -> {
+            final boolean actual = afm.isEnabled();
+            Log.v(TAG, "assertEnabled(): expected=" + expected + ", actual=" + actual);
+            return actual == expected ? "not_used" : null;
+          });
+    }
+
+  @Nullable
     private static File dumpBitmap(@NonNull Bitmap bitmap, @NonNull File dir,
             @NonNull String filename) throws IOException {
         final File file = new File(dir, filename);

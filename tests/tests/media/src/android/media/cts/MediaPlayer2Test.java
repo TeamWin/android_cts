@@ -15,19 +15,13 @@
  */
 package android.media.cts;
 
-import android.media.cts.R;
-
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.DataSourceDesc;
-import android.media.MediaCodec;
 import android.media.Media2DataSource;
-import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer2;
@@ -36,22 +30,18 @@ import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
 import android.media.SubtitleData;
 import android.media.SyncParams;
-import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
+import android.media.cts.R;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
-import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.ServiceManager;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -61,17 +51,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import junit.framework.AssertionFailedError;
 
 /**
  * Tests for the MediaPlayer2 API and local video/audio playback.

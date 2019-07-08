@@ -33,8 +33,9 @@ import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import libcore.io.Streams;
 

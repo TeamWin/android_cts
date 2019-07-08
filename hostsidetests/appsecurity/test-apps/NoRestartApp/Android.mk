@@ -20,7 +20,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules
 
 LOCAL_PACKAGE_NAME := CtsNoRestartBase
 LOCAL_SDK_VERSION := current

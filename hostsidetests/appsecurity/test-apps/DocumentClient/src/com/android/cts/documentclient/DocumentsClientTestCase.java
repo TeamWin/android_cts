@@ -146,7 +146,8 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
 
     protected boolean supportedHardwareForScopedDirectoryAccess() {
         final PackageManager pm = getInstrumentation().getContext().getPackageManager();
-        if (pm.hasSystemFeature("android.hardware.type.watch")) {
+        if (pm.hasSystemFeature("android.hardware.type.watch")
+                || pm.hasSystemFeature("android.hardware.type.automotive")) {
             return false;
         }
         return true;

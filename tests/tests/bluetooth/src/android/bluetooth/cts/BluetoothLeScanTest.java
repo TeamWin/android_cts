@@ -30,11 +30,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.ParcelUuid;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 import android.util.SparseArray;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;

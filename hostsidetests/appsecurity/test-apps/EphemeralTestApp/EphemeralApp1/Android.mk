@@ -21,9 +21,9 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 LOCAL_MODULE_TAGS := tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-aia-util \
-    android-support-test \
-    ctsdeviceutillegacy \
-    ctstestrunner
+    androidx.test.rules \
+    ctsdeviceutillegacy-axt \
+    ctstestrunner-axt
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

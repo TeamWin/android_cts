@@ -21,14 +21,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.widget.ExpandableListView;
 import android.widget.cts.util.ListUtil;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;

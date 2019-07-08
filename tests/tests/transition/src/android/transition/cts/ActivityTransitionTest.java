@@ -34,14 +34,15 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.transition.TransitionListenerAdapter;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.transition.TargetTracking;

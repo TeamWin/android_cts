@@ -79,14 +79,23 @@ public class HostsideOomCatcher {
      * Utility to get the device memory total by reading /proc/meminfo and returning MemTotal
      */
     private static long getMemTotal(ITestDevice device) throws DeviceNotAvailableException {
-        String memInfo = device.executeShellCommand("cat /proc/meminfo");
-        Pattern pattern = Pattern.compile("MemTotal:\\s*(.*?)\\s*[kK][bB]");
-        Matcher matcher = pattern.matcher(memInfo);
-        if (matcher.find()) {
-            return Long.parseLong(matcher.group(1));
-        } else {
-            throw new RuntimeException("Could not get device memory total");
+        // cache device TotalMem to avoid an adb shell for every test.
+        String serial = device.getSerialNumber();
+        Long totalMemory = totalMemories.get(serial);
+        if (totalMemory == null) {
+            String memInfo = device.executeShellCommand("cat /proc/meminfo");
+            Pattern pattern = Pattern.compile("MemTotal:\\s*(.*?)\\s*[kK][bB]");
+            Matcher matcher = pattern.matcher(memInfo);
+            if (matcher.find()) {
+                totalMemory = Long.parseLong(matcher.group(1));
+            } else {
+                throw new RuntimeException("Could not get device memory total.");
+            }
+            Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG,
+                    "Device " + serial + " has " + totalMemory + "KB total memory.");
+            totalMemories.put(serial, totalMemory);
         }
+        return totalMemory;
     }
 
     /**
@@ -94,24 +103,14 @@ public class HostsideOomCatcher {
      * Match this call to SecurityTestCase.setup().
      */
     public synchronized void start() throws Exception {
-        // cache device TotalMem to avoid and adb shell for every test.
-        Long totalMemory = totalMemories.get(getDevice().getSerialNumber());
-        if (totalMemory == null) {
-            totalMemory = getMemTotal(getDevice());
-            totalMemories.put(getDevice().getSerialNumber(), totalMemory);
-        }
+        long totalMemory = getMemTotal(getDevice());
         isLowMemoryDevice = totalMemory < LOW_MEMORY_DEVICE_THRESHOLD_KB;
 
         // reset test oom behavior
-        // Low memory devices should skip (pass) tests when OOMing and log so that the
-        // high-memory-test flag can be added. Normal devices should fail tests that OOM so that
-        // they'll be ran again with --retry. If the test OOMs because previous tests used the
-        // memory, it will likely pass on a second try.
-        if (isLowMemoryDevice) {
-            oomBehavior = OomBehavior.PASS_AND_LOG;
-        } else {
-            oomBehavior = OomBehavior.FAIL_AND_LOG;
-        }
+        // Devices should fail tests that OOM so that they'll be ran again with --retry.
+        // If the test OOMs because previous tests used the memory, it will likely pass
+        // on a second try.
+        oomBehavior = OomBehavior.FAIL_AND_LOG;
         oomDetected = false;
 
         // Cache OOM detection in separate persistent threads for each device.
@@ -207,12 +206,11 @@ public class HostsideOomCatcher {
                     Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG,
                             "lowmemorykiller detected; rebooting device.");
                     synchronized (HostsideOomCatcher.this) { // synchronized for oomDetected
-                        oomDetected = true;
+                        oomDetected = true; // set HostSideOomCatcher var
                     }
                     try {
                         device.nonBlockingReboot();
                         device.waitForDeviceOnline(60 * 2 * 1000); // 2 minutes
-                        context.updateKernelStartTime();
                     } catch (Exception e) {
                         Log.e(LOG_TAG, e.toString());
                     }

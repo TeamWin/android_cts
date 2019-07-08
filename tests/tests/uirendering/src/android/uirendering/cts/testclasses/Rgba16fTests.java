@@ -24,11 +24,12 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Shader;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

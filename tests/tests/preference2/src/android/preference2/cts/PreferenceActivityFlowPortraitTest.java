@@ -17,14 +17,16 @@
 package android.preference2.cts;
 
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+
 import static org.junit.Assume.assumeFalse;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;

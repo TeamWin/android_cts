@@ -47,8 +47,13 @@ import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
+import com.android.compatibility.common.util.CrashUtils;
+
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -64,6 +69,10 @@ import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.security.cts.R;
 
 
@@ -76,6 +85,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     static final String TAG = "StagefrightTest";
 
     private final long TIMEOUT_NS = 10000000000L;  // 10 seconds.
+    private final static long CHECK_INTERVAL = 50;
 
     public StagefrightTest() {
     }
@@ -84,6 +94,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add K tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest(minPatchLevel = "2019-04")
+    public void testStagefright_cve_2019_2244() throws Exception {
+        doStagefrightTestRawBlob(R.raw.cve_2019_2244, "video/mpeg2", 320, 420);
+    }
 
     @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_36725407() throws Exception {
@@ -1128,10 +1143,41 @@ public class StagefrightTest extends InstrumentationTestCase {
         return new Surface(surfaceTex);
     }
 
+    public JSONArray getCrashReport(String testname, long timeout)
+        throws InterruptedException {
+        Log.i(TAG, CrashUtils.UPLOAD_REQUEST);
+        File reportFile = new File(CrashUtils.DEVICE_PATH, testname);
+        File lockFile = new File(CrashUtils.DEVICE_PATH, CrashUtils.LOCK_FILENAME);
+        while ((!reportFile.exists() || !lockFile.exists()) && timeout > 0) {
+            Thread.sleep(CHECK_INTERVAL);
+            timeout -= CHECK_INTERVAL;
+        }
+        if (!reportFile.exists() || !reportFile.isFile() || !lockFile.exists()) {
+            return null;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(reportFile))) {
+            StringBuilder json = new StringBuilder();
+            String line = reader.readLine();
+            while (line != null) {
+                json.append(line);
+                line = reader.readLine();
+            }
+            return new JSONArray(json.toString());
+        } catch (IOException | JSONException e) {
+            Log.e(TAG, "Failed to deserialize crash list with error " + e.getMessage());
+            return null;
+        }
+    }
+
     class MediaPlayerCrashListener
-    implements MediaPlayer.OnErrorListener,
+        implements MediaPlayer.OnErrorListener,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
+
+        private final String[] validProcessNames = {
+            "mediaserver", "mediadrmserver", "media.extractor", "media.codec", "media.metrics"
+        };
+
         @Override
         public boolean onError(MediaPlayer mp, int newWhat, int extra) {
             Log.i(TAG, "error: " + newWhat + "/" + extra);
@@ -1171,6 +1217,21 @@ public class StagefrightTest extends InstrumentationTestCase {
                 // due to additional in-flight buffers being processed, so wait a little
                 // and see if more errors show up.
                 SystemClock.sleep(1000);
+            }
+            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+                JSONArray crashes = getCrashReport(getName(), 5000);
+                if (crashes == null) {
+                    Log.e(TAG, "Crash results not found for test " + getName());
+                    return what;
+                } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
+                    return what;
+                } else {
+                    Log.i(TAG, "Crash ignored due to no security crash found for test " +
+                        getName());
+                    // 0 is the code for no error.
+                    return 0;
+                }
+
             }
             return what;
         }
@@ -1544,6 +1605,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2017-08")
     public void testCve_2017_0687() throws Exception {
         doStagefrightTestRawBlob(R.raw.cve_2017_0687, "video/avc", 320, 240);
+    }
+
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testCve_2017_0696() throws Exception {
+        doStagefrightTestRawBlob(R.raw.cve_2017_0696, "video/avc", 320, 240);
     }
 
     @SecurityTest(minPatchLevel = "2018-01")

@@ -6,7 +6,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
+    androidx.test.rules \
     cts-amwm-util \
 
 LOCAL_SRC_FILES := \

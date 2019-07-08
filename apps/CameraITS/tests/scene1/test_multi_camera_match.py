@@ -71,6 +71,8 @@ def main():
         msg = ''
         fmt = [{'format': 'yuv', 'width': w, 'height': h}]
         caps = cam.do_capture(reqs, fmt)
+        if not isinstance(caps, list):
+            caps = [caps]  # handle canonical case where caps is not list
 
         for i, fl in enumerate(avail_fls):
             img = its.image.convert_capture_to_rgb_image(caps[i], props=props)

@@ -20,9 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.SpannableStringBuilder;
@@ -32,6 +29,10 @@ import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

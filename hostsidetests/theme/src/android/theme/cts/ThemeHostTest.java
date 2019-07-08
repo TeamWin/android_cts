@@ -55,7 +55,7 @@ public class ThemeHostTest extends DeviceTestCase {
     private static final String GENERATED_ASSETS_ZIP = "/sdcard/cts-theme-assets.zip";
 
     /** The class name of the main activity in the APK. */
-    private static final String TEST_CLASS = "android.support.test.runner.AndroidJUnitRunner";
+    private static final String TEST_CLASS = "androidx.test.runner.AndroidJUnitRunner";
 
     /** The command to launch the main instrumentation test. */
     private static final String START_CMD = String.format(
@@ -83,12 +83,15 @@ public class ThemeHostTest extends DeviceTestCase {
 
     private ExecutorCompletionService<Pair<String, File>> mCompletionService;
 
+    // Density to which the device should be restored, or -1 if unnecessary.
+    private int mRestoreDensity;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         mDevice = getDevice();
+        mRestoreDensity = resetDensityIfNeeded(mDevice);
         mDevice.executeShellCommand("settings put system font_scale 1.0");
         final String density = getDensityBucketForDevice(mDevice);
         final String referenceZipAssetPath = String.format("/%s.zip", density);
@@ -138,6 +141,8 @@ public class ThemeHostTest extends DeviceTestCase {
 
         // Remove generated images.
         mDevice.executeShellCommand(CLEAR_GENERATED_CMD);
+
+        restoreDensityIfNeeded(mDevice, mRestoreDensity);
 
         super.tearDown();
     }
@@ -268,14 +273,26 @@ public class ThemeHostTest extends DeviceTestCase {
         return bucket;
     }
 
-    private static int getDensityForDevice(ITestDevice device) throws DeviceNotAvailableException {
+    private static int resetDensityIfNeeded(ITestDevice device) throws DeviceNotAvailableException {
         final String output = device.executeShellCommand(WM_DENSITY);
         final Pattern p = Pattern.compile("Override density: (\\d+)");
         final Matcher m = p.matcher(output);
         if (m.find()) {
-            throw new RuntimeException("Cannot test device running at non-default density: "
-                    + Integer.parseInt(m.group(1)));
+            device.executeShellCommand(WM_DENSITY + " reset");
+            int restoreDensity = Integer.parseInt(m.group(1));
+            return restoreDensity;
         }
+        return -1;
+    }
+
+    private static void restoreDensityIfNeeded(ITestDevice device, int restoreDensity)
+            throws DeviceNotAvailableException {
+        if (restoreDensity > 0) {
+            device.executeShellCommand(WM_DENSITY + " " + restoreDensity);
+        }
+    }
+
+    private static int getDensityForDevice(ITestDevice device) throws DeviceNotAvailableException {
 
         final String densityProp;
         if (device.getSerialNumber().startsWith("emulator-")) {

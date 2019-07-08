@@ -30,11 +30,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.SmallTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.Spannable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -43,6 +38,12 @@ import android.view.KeyCharacterMap;
 import android.widget.DialerFilter;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;

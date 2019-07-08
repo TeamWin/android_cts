@@ -16,12 +16,8 @@
 
 package android.database.sqlite.cts;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.Semaphore;
+import static android.database.sqlite.cts.DatabaseTestUtils.getDbInfoOutput;
+import static android.database.sqlite.cts.DatabaseTestUtils.waitForConnectionToClose;
 
 import android.app.ActivityManager;
 import android.content.ContentValues;
@@ -38,15 +34,17 @@ import android.database.sqlite.SQLiteGlobal;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 
-import static android.database.sqlite.cts.DatabaseTestUtils.getDbInfoOutput;
-import static android.database.sqlite.cts.DatabaseTestUtils.waitForConnectionToClose;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.Semaphore;
 
 public class SQLiteDatabaseTest extends AndroidTestCase {
 

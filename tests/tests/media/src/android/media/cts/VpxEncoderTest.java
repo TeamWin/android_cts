@@ -67,7 +67,7 @@ public class VpxEncoderTest extends VpxCodecTestBase {
     // Maximum allowed average PSNR difference of the encoder running in a looper thread with 0 ms
     // buffer dequeue timeout comparing to the encoder running in a callee's thread with 100 ms
     // buffer dequeue timeout.
-    private static final double MAX_ASYNC_AVERAGE_PSNR_DIFFERENCE = 0.5;
+    private static final double MAX_ASYNC_AVERAGE_PSNR_DIFFERENCE = 1.5;
     // Maximum allowed minimum PSNR difference of the encoder running in a looper thread
     // comparing to the encoder running in a callee's thread.
     private static final double MAX_ASYNC_MINIMUM_PSNR_DIFFERENCE = 2;

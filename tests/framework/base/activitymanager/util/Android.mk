@@ -25,8 +25,9 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     platformprotosnano \
-    compatibility-device-util \
-    android-support-test
+    compatibility-device-util-axt \
+    androidx.test.rules \
+    hamcrest-library
 
 LOCAL_MODULE := cts-amwm-util
 

@@ -31,8 +31,8 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -42,9 +42,10 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.alertwindowservice.AlertWindowService;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 

@@ -38,8 +38,6 @@ import static org.mockito.Mockito.verify;
 import android.animation.Animator;
 import android.graphics.Rect;
 import android.os.SystemClock;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.ArcMotion;
 import android.transition.AutoTransition;
 import android.transition.ChangeBounds;
@@ -59,6 +57,9 @@ import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

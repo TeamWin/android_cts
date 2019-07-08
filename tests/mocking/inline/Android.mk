@@ -22,8 +22,8 @@ LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES = \
     mockito-target-inline \
-    android-support-test \
-    ctstestrunner
+    androidx.test.rules \
+    ctstestrunner-axt
 LOCAL_MULTILIB := \
     both
 LOCAL_JNI_SHARED_LIBRARIES := \

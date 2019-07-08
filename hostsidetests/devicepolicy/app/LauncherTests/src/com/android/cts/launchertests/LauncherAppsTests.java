@@ -35,8 +35,9 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.List;
 import java.util.concurrent.Semaphore;

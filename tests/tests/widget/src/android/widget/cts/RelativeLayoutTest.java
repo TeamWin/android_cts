@@ -25,10 +25,6 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.XmlResourceParser;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.ViewAsserts;
 import android.util.AttributeSet;
 import android.util.Xml;
@@ -39,6 +35,11 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.AbsListView;
 import android.widget.RelativeLayout;
 import android.widget.cts.util.XmlUtils;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;

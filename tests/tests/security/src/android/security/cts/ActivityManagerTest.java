@@ -26,9 +26,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Process;
 import android.platform.test.annotations.SecurityTest;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
 
 import junit.framework.TestCase;
 

@@ -25,8 +25,6 @@ import android.animation.Animator;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.transition.ChangeBounds;
 import android.transition.Transition;
 import android.transition.TransitionValues;
@@ -35,6 +33,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.LinearInterpolator;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 
