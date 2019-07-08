@@ -21,6 +21,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.database.ContentObserver;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -32,10 +35,15 @@ import com.android.compatibility.common.util.CddTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Tests if system settings app provides scanning settings.
  */
 public class ScanningSettingsTest extends AndroidTestCase {
+    private static final String TAG = "ScanningSettingsTest";
+
     private static final int TIMEOUT = 8_000;  // 8 seconds
     private static final String SETTINGS_PACKAGE = "com.android.settings";
 
@@ -88,6 +96,31 @@ public class ScanningSettingsTest extends AndroidTestCase {
         mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
     }
 
+    private void clickAndWaitForSettingChange(UiObject2 pref, ContentResolver resolver,
+            String settingKey) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        final ContentObserver observer = new ContentObserver(
+                new Handler(handlerThread.getLooper())) {
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+                latch.countDown();
+            }
+        };
+        resolver.registerContentObserver(Settings.Global.getUriFor(settingKey), false, observer);
+        pref.click();
+        try {
+            latch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        handlerThread.quit();
+        resolver.unregisterContentObserver(observer);
+        assertEquals(0, latch.getCount());
+    }
+
     private void toggleSettingAndVerify(String prefTitleRes, String settingKey)
             throws PackageManager.NameNotFoundException {
         final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
@@ -97,13 +130,11 @@ public class ScanningSettingsTest extends AndroidTestCase {
         final boolean checked = Settings.Global.getInt(resolver, settingKey, 0) == 1;
 
         // Click the preference to toggle the setting.
-        pref.click();
-        mDevice.waitForIdle();
+        clickAndWaitForSettingChange(pref, resolver, settingKey);
         assertEquals(!checked, Settings.Global.getInt(resolver, settingKey, 0) == 1);
 
         // Click the preference again to toggle the setting back.
-        pref.click();
-        mDevice.waitForIdle();
+        clickAndWaitForSettingChange(pref, resolver, settingKey);
         assertEquals(checked, Settings.Global.getInt(resolver, settingKey, 0) == 1);
     }
 }
