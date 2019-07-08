@@ -24,6 +24,8 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.LargeTest;
+
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -76,6 +78,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      * Tests staged install involving only one apk.
      */
     @Test
+    @LargeTest
     public void testInstallStagedApk() throws Exception {
         runPhase("testInstallStagedApk_Commit");
         getDevice().reboot();
@@ -109,6 +112,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testAbandonStagedApkBeforeReboot() throws Exception {
         runPhase("testAbandonStagedApkBeforeReboot_CommitAndAbandon");
         getDevice().reboot();
@@ -116,6 +120,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testInstallMultipleStagedApks() throws Exception {
         runPhase("testInstallMultipleStagedApks_Commit");
         getDevice().reboot();
@@ -143,6 +148,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testStagedInstallDowngrade_DowngradeRequested_DebugBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
 
@@ -166,6 +172,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testInstallStagedApex() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
@@ -198,6 +205,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testStageApkWithSameNameAsApexShouldFail() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
@@ -213,6 +221,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
@@ -223,6 +232,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
@@ -234,6 +244,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails()
             throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
@@ -247,6 +258,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testInstallStagedApex_SameGrade() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
