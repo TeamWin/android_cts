@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
 public class LockTaskUtilityActivityIfWhitelisted extends LockTaskUtilityActivity {
 }
