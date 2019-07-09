@@ -43,6 +43,8 @@ import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
@@ -65,8 +67,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import androidx.test.InstrumentationRegistry;
 
 public class SubscriptionManagerTest {
     private SubscriptionManager mSm;
@@ -550,10 +550,11 @@ public class SubscriptionManagerTest {
             }
         };
 
-        int [] subList = mSm.getActiveSubscriptionIdList();
+        List<SubscriptionInfo> subscriptionInfos = mSm.getActiveSubscriptionInfoList();
         boolean changes = false;
 
-        for (int subId : subList) {
+        for (SubscriptionInfo subInfo : subscriptionInfos) {
+            int subId = subInfo.getSubscriptionId();
             if (subId != preferredSubId) {
                 int newPreferredSubId = subId;
                 // Change to a new value.
