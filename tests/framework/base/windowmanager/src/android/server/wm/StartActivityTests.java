@@ -16,7 +16,10 @@
 
 package android.server.wm;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
+import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 
 import static org.junit.Assert.assertFalse;
@@ -24,8 +27,8 @@ import static org.junit.Assert.assertFalse;
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.rule.ActivityTestRule;
 import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,7 +49,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
      * {@link android.content.Context}.
      */
     @Test
-    public void testStartActivityContexts() throws Exception {
+    public void testStartActivityContexts() {
         // Launch Activity from application context.
         getLaunchActivityBuilder()
                 .setTargetActivity(TEST_ACTIVITY)
@@ -85,6 +88,30 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 TEST_ACTIVITY);
     }
 
+    @Test
+    public void testStartActivityTaskLaunchBehind() {
+        // launch an activity
+        getLaunchActivityBuilder()
+                .setTargetActivity(TEST_ACTIVITY)
+                .setUseInstrumentation()
+                .setNewTask(true)
+                .execute();
+
+        // launch an activity behind
+        getLaunchActivityBuilder()
+                .setTargetActivity(TRANSLUCENT_ACTIVITY)
+                .setUseInstrumentation()
+                .setIntentFlags(FLAG_ACTIVITY_NEW_DOCUMENT)
+                .setNewTask(true)
+                .setLaunchTaskBehind(true)
+                .execute();
+
+        waitAndAssertActivityState(TRANSLUCENT_ACTIVITY, STATE_STOPPED,
+                "Activity should be stopped");
+        mAmWmState.assertResumedActivity("Test Activity should be remained on top and resumed",
+                TEST_ACTIVITY);
+    }
+
     /**
      * Ensures you can start an {@link Activity} from a non {@link Activity}
      * {@link android.content.Context} when the target sdk is between N and O Mr1.
@@ -92,7 +119,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
      */
     @Test
     @FlakyTest(bugId = 131005232)
-    public void testLegacyStartActivityFromNonActivityContext() throws Exception {
+    public void testLegacyStartActivityFromNonActivityContext() {
         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
                 .setLaunchingActivity(SDK_27_LAUNCHING_ACTIVITY)
                 .setUseApplicationContext(true)

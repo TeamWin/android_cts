@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeThat;
 
+import android.platform.test.annotations.LargeTest;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -87,6 +89,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testRejectsApexWithAdditionalFile() throws Exception {
         runPhase("testRejectsApexWithAdditionalFile_Commit");
         getDevice().reboot();
@@ -94,6 +97,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testRejectsApexWithAdditionalFolder() throws Exception {
         runPhase("testRejectsApexWithAdditionalFolder_Commit");
         getDevice().reboot();
@@ -101,6 +105,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testRejectsApexWithPostInstallHook() throws Exception {
         runPhase("testRejectsApexWithPostInstallHook_Commit");
         getDevice().reboot();
@@ -108,6 +113,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testRejectsApexWithPreInstallHook() throws Exception {
         runPhase("testRejectsApexWithPreInstallHook_Commit");
         getDevice().reboot();
@@ -115,6 +121,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testRejectsApexWrongSHA() throws Exception {
         runPhase("testRejectsApexWrongSHA_Commit");
         getDevice().reboot();
