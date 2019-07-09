@@ -29,9 +29,9 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class NoOpDeviceTest {
 
-    /** Does nothing but just wait 3 seconds. */
+    /** Does nothing but just wait 15 seconds. */
     @Test
-    public void testWait3Sec() {
-        SystemClock.sleep(3000);
+    public void testWait15Sec() {
+        SystemClock.sleep(15000);
     }
 }
