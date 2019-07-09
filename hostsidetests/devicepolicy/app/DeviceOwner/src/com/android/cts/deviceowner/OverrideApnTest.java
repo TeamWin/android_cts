@@ -242,7 +242,7 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
         assertNull(new ApnSetting.Builder()
             .setEntryName(UPDATE_ETNRY_NAME)
             .setApnName(UPDATE_APN_NAME)
-            .setApnTypeBitmask(1 << 20)
+            .setApnTypeBitmask(1 << 30)
             .build());
 
         assertNull(new ApnSetting.Builder()
