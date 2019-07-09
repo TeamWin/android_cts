@@ -44,6 +44,15 @@
                  android:process=":secureRandom"/>
 
         <activity android:name="android.security.cts.activity.MotionEventTestActivity"/>
+
+        <activity
+            android:name="android.security.cts.SkiaJpegDecodingActivity"
+            android:label="Test overflow in libskia JPG processing">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
