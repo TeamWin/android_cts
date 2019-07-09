@@ -2030,6 +2030,7 @@ public class MediaCodecTest extends AndroidTestCase {
         private int mBufOut = 0;
         private int mBufCounter = 0;
 
+        private MediaExtractor mExtractor; // Read from Extractor instead of InputStream
         // helper for bytewise read()
         private byte[] mOneByte = new byte[1];
 
@@ -2072,6 +2073,12 @@ public class MediaCodecTest extends AndroidTestCase {
             mBufferInputStream = input;
         }
 
+        MediaCodecStream(MediaExtractor mediaExtractor,
+                MediaFormat format) throws Exception {
+            this(format, false /* encode */);
+            mExtractor = mediaExtractor;
+        }
+
         @Override
         public ByteBuffer read() throws IOException {
 
@@ -2091,8 +2098,19 @@ public class MediaCodecTest extends AndroidTestCase {
                     buf.clear();
                     int inBufLen = buf.limit();
                     int numRead = 0;
-
-                    if (mBufferInputStream != null) {
+                    long timestampUs = 0; // non-zero for MediaExtractor mode
+                    if (mExtractor != null) {
+                        numRead = mExtractor.readSampleData(buf, 0 /* offset */);
+                        timestampUs = mExtractor.getSampleTime();
+                        Log.v(TAG, "MediaCodecStream.read using Extractor, numRead "
+                                + numRead +" timestamp " + timestampUs);
+                        mExtractor.advance();
+                        if(numRead < 0) {
+                           mSawInputEOS = true;
+                           timestampUs = 0;
+                           numRead =0;
+                        }
+                    } else if (mBufferInputStream != null) {
                         ByteBuffer in = null;
                         do {
                             in = mBufferInputStream.read();
@@ -2122,7 +2140,7 @@ public class MediaCodecTest extends AndroidTestCase {
                     }
 
                     int flags = mSawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
-                    if (!mEncode && !mSentConfig) {
+                    if (!mEncode && !mSentConfig && mExtractor == null) {
                         flags |= MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
                         mSentConfig = true;
                     }
@@ -2132,7 +2150,7 @@ public class MediaCodecTest extends AndroidTestCase {
                     mCodec.queueInputBuffer(index,
                             0 /* offset */,
                             numRead,
-                            0 /* presentationTimeUs */,
+                            timestampUs /* presentationTimeUs */,
                             flags);
                     Log.i(TAG, "queued input buffer " + index + ", size " + numRead);
                 }
