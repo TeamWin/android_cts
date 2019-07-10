@@ -1451,7 +1451,7 @@ public class AudioTrackTest {
         // constant for test
         final String TEST_NAME = "testGetMinBufferSizeTooHighSR";
         // FIXME need an API to retrieve AudioTrack.SAMPLE_RATE_HZ_MAX
-        final int TEST_SR = 192001;
+        final int TEST_SR = AudioFormat.SAMPLE_RATE_HZ_MAX + 1;
         final int TEST_CONF = AudioFormat.CHANNEL_CONFIGURATION_MONO;
         final int TEST_FORMAT = AudioFormat.ENCODING_PCM_8BIT;
 

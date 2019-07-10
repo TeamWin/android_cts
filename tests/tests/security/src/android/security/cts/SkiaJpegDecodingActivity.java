@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package android.inputmethodservice.cts.devicetest;
+package android.security.cts;
 
-import android.os.SystemClock;
+import android.app.Activity;
+import android.os.Bundle;
 
-import androidx.test.runner.AndroidJUnit4;
+import android.security.cts.R;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-/**
- * Provides a no-op test to work around b/.
- */
-@RunWith(AndroidJUnit4.class)
-public class NoOpDeviceTest {
-
-    /** Does nothing but just wait 15 seconds. */
-    @Test
-    public void testWait15Sec() {
-        SystemClock.sleep(15000);
+public class SkiaJpegDecodingActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 }
