@@ -16,22 +16,35 @@
 
 package android.systemui.cts;
 
+import static android.provider.DeviceConfig.NAMESPACE_WINDOW_MANAGER;
+import static android.provider.DeviceConfig.WindowManager.KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP;
+import static android.view.View.SYSTEM_UI_CLEARABLE_FLAGS;
+import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+import static android.view.View.SYSTEM_UI_FLAG_VISIBLE;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.fail;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
+import android.provider.DeviceConfig;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -40,11 +53,18 @@ import android.support.test.uiautomator.Until;
 import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.ThrowingRunnable;
+
+import com.google.common.collect.Lists;
 
 import org.junit.After;
 import org.junit.Before;
@@ -57,8 +77,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 public class WindowInsetsBehaviorTests {
@@ -69,9 +89,15 @@ public class WindowInsetsBehaviorTests {
     private static final int STEPS = 10;
     private static final int DIP_INTERVAL = 40;
 
+    // The minimum value of the system gesture exclusion limit is 200 dp. The value here should be
+    // greater than that, so that we can test if the limit can be changed by DeviceConfig or not.
+    private static final int EXCLUSION_LIMIT_DP = 210;
+
     private final boolean mForceEnableGestureNavigation;
     private final Map<String, Boolean> mSystemGestureOptionsMap;
     private float mPixelsPerDp;
+    private int mDisplayWidth;
+    private int mExclusionLimit;
     private UiDevice mDevice;
     private Rect mDragBound;
     private String mEdgeToEdgeNavigationTitle;
@@ -257,6 +283,8 @@ public class WindowInsetsBehaviorTests {
         final DisplayMetrics metrics = new DisplayMetrics();
         display.getRealMetrics(metrics);
         mPixelsPerDp = metrics.density;
+        mDisplayWidth = metrics.widthPixels;
+        mExclusionLimit = (int) (EXCLUSION_LIMIT_DP * mPixelsPerDp);
 
         // To setup the Edge to Edge environment by do the operation on Settings
         boolean isOperatedSettingsToExpectedOption = launchToSettingsSystemGesture();
@@ -617,5 +645,168 @@ public class WindowInsetsBehaviorTests {
         assertEquals("The number of click not match", count, mClickCount);
         assertEquals("The Number of the canceled points not match", 0,
                 mActionCancelPoints.size());
+    }
+
+    @Test
+    public void swipeInsideLimit_systemUiVisible_noEventCanceled() throws Throwable {
+        final int swipeCount = 1;
+        final boolean insideLimit = true;
+        testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_VISIBLE);
+
+        assertEquals("Swipe must not be canceled.", 0, mActionCancelPoints.size());
+        assertEquals("Action up points.", swipeCount, mActionUpPoints.size());
+        assertEquals("Action down points.", swipeCount, mActionDownPoints.size());
+    }
+
+    @Test
+    public void swipeOutsideLimit_systemUiVisible_allEventsCanceled() throws Throwable {
+        final int swipeCount = 1;
+        final boolean insideLimit = false;
+        testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_VISIBLE);
+
+        assertEquals("Swipe must be always canceled.", swipeCount, mActionCancelPoints.size());
+        assertEquals("Action up points.", 0, mActionUpPoints.size());
+        assertEquals("Action down points.", swipeCount, mActionDownPoints.size());
+    }
+
+    @Test
+    public void swipeInsideLimit_immersiveSticky_noEventCanceled() throws Throwable {
+        // The first event may be never canceled. So we need to swipe at least twice.
+        final int swipeCount = 2;
+        final boolean insideLimit = true;
+        testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
+        assertEquals("Swipe must not be canceled.", 0, mActionCancelPoints.size());
+        assertEquals("Action up points.", swipeCount, mActionUpPoints.size());
+        assertEquals("Action down points.", swipeCount, mActionDownPoints.size());
+    }
+
+    @Test
+    public void swipeOutsideLimit_immersiveSticky_noEventCanceled() throws Throwable {
+        // The first event may be never canceled. So we need to swipe at least twice.
+        final int swipeCount = 2;
+        final boolean insideLimit = false;
+        testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
+        assertEquals("Swipe must not be canceled.", 0, mActionCancelPoints.size());
+        assertEquals("Action up points.", swipeCount, mActionUpPoints.size());
+        assertEquals("Action down points.", swipeCount, mActionDownPoints.size());
+    }
+
+    private void testSystemGestureExclusionLimit(int swipeCount, boolean insideLimit,
+            int systemUiVisibility) throws Throwable {
+        final int shiftY = insideLimit ? 1 : -1;
+        assumeGestureNavigation();
+        doInExclusionLimitSession(() -> {
+            setSystemUiVisibility(systemUiVisibility);
+            setFullscreenExclusion();
+
+            // The limit is consumed from bottom to top.
+            final int[] bottom = new int[1];
+            mainThreadRun(() -> {
+                final View rootView = mActivity.getWindow().getDecorView();
+                bottom[0] = rootView.getLocationOnScreen()[1] + rootView.getHeight();
+            });
+            final int swipeY = bottom[0] - mExclusionLimit + shiftY;
+
+            for (int i = 0; i < swipeCount; i++) {
+                swipeFromLeftToRight(swipeY, mDisplayWidth);
+            }
+
+            mainThreadRun(() -> {
+                mActionDownPoints = mActivity.getActionDownPoints();
+                mActionUpPoints = mActivity.getActionUpPoints();
+                mActionCancelPoints = mActivity.getActionCancelPoints();
+            });
+        });
+    }
+
+    private void assumeGestureNavigation() {
+        final Insets[] insets = new Insets[1];
+        mainThreadRun(() -> {
+            final View view = mActivity.getWindow().getDecorView();
+            insets[0] = view.getRootWindowInsets().getSystemGestureInsets();
+        });
+        assumeTrue("Gesture navigation required.", insets[0].left > 0);
+    }
+
+    /**
+     * Set system UI visibility and wait for it is applied by the system.
+     *
+     * @param flags the visibility flags.
+     * @throws InterruptedException when the test gets aborted.
+     */
+    private void setSystemUiVisibility(int flags) throws InterruptedException {
+        final CountDownLatch flagsApplied = new CountDownLatch(1);
+        final int targetFlags = SYSTEM_UI_CLEARABLE_FLAGS & flags;
+        mainThreadRun(() -> {
+            final View view = mActivity.getWindow().getDecorView();
+            if ((view.getSystemUiVisibility() & SYSTEM_UI_CLEARABLE_FLAGS) == targetFlags) {
+                // System UI visibility is already what we want. Stop waiting for the callback.
+                flagsApplied.countDown();
+                return;
+            }
+            view.setOnSystemUiVisibilityChangeListener(visibility -> {
+                if (visibility == targetFlags) {
+                    flagsApplied.countDown();
+                }
+            });
+            view.setSystemUiVisibility(flags);
+        });
+        assertTrue("System UI visibility must be applied.", flagsApplied.await(3, SECONDS));
+    }
+
+    /**
+     * Set an exclusion rectangle which fills the fullscreen decor view and wait for it is applied
+     * by the system.
+     *
+     * @throws InterruptedException when the test gets aborted.
+     */
+    private void setFullscreenExclusion() throws InterruptedException {
+        final CountDownLatch exclusionApplied = new CountDownLatch(1);
+        mainThreadRun(() -> {
+            final View view = mActivity.getWindow().getDecorView();
+            final ViewTreeObserver vto = view.getViewTreeObserver();
+            vto.addOnSystemGestureExclusionRectsChangedListener(
+                    rects -> exclusionApplied.countDown());
+            view.setSystemGestureExclusionRects(Lists.newArrayList(
+                    new Rect(0, 0, view.getWidth(), view.getHeight())));
+        });
+        assertTrue("Exclusion must be applied.", exclusionApplied.await(3, SECONDS));
+    }
+
+    private void swipeFromLeftToRight(int y, int distance) {
+        mDevice.swipe(0, y, distance, y, STEPS);
+    }
+
+    /**
+     * Run the given task while the system gesture exclusion limit has been changed to
+     * {@link #EXCLUSION_LIMIT_DP}, and then restore the value while the task is finished.
+     *
+     * @param task the task to be run.
+     * @throws Throwable when something goes unexpectedly.
+     */
+    private static void doInExclusionLimitSession(ThrowingRunnable task) throws Throwable {
+        final int[] originalLimitDp = new int[1];
+        try {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                originalLimitDp[0] = DeviceConfig.getInt(NAMESPACE_WINDOW_MANAGER,
+                        KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP, -1);
+                DeviceConfig.setProperty(
+                        NAMESPACE_WINDOW_MANAGER,
+                        KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP,
+                        Integer.toString(EXCLUSION_LIMIT_DP), false /* makeDefault */);
+            });
+            task.run();
+        } finally {
+            // Restore the value
+            SystemUtil.runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
+                    NAMESPACE_WINDOW_MANAGER,
+                    KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP,
+                    (originalLimitDp[0] != -1) ? Integer.toString(originalLimitDp[0]) : null,
+                    false /* makeDefault */));
+        }
     }
 }

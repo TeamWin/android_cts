@@ -351,13 +351,13 @@ public class MultiUserTest extends BaseHostJUnit4Test {
             try {
                 // This test should never fail.  If this fails, it means that the system was not yet
                 // ready to run tests in this APK.
-                runTestAsUser(DeviceTestConstants.TEST_WAIT_3SEC, userId);
+                runTestAsUser(DeviceTestConstants.TEST_WAIT_15SEC, userId);
                 return;
             } catch (AssertionError e) {
                 // Ignoring because it can be because of Bug 132082599.
             }
         }
-        runTestAsUser(DeviceTestConstants.TEST_WAIT_3SEC, userId);
+        runTestAsUser(DeviceTestConstants.TEST_WAIT_15SEC, userId);
     }
 
 

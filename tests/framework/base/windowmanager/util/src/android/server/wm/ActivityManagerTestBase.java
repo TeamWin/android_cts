@@ -941,6 +941,7 @@ public abstract class ActivityManagerTestBase {
                 "doze_pulse_on_long_press",
                 "doze_pulse_on_double_tap",
                 "doze_wake_screen_gesture",
+                "doze_wake_display_gesture",
                 "doze_tap_gesture"
         };
 

@@ -35,11 +35,4 @@ public class ScreenshotActivity extends BaseThirdPartyActivity {
         view.setBackgroundColor(backgroundColor);
         view.requestLayout();
     }
-
-    @Override
-    public void onPause() {
-        Log.i(TAG, "onPause");
-        finish();
-        super.onPause();
-    }
 }
