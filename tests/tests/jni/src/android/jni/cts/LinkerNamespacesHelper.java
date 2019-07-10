@@ -350,14 +350,30 @@ class LinkerNamespacesHelper {
         return null;
     }
 
-    public static String runDlopenPublicLibrariesInRuntimeNamespace() {
-        for (String lib : PUBLIC_RUNTIME_LIBRARIES) {
-            String error = LinkerNamespacesHelper.tryDlopen(lib);
-            if (error != null) {
-                return error;
+    public static String runDlopenPublicLibraries() {
+        String error;
+        try {
+            List<String> publicLibs = new ArrayList<>();
+            Collections.addAll(publicLibs, PUBLIC_SYSTEM_LIBRARIES);
+            Collections.addAll(publicLibs, PUBLIC_RUNTIME_LIBRARIES);
+            error = readExtensionConfigFiles(PUBLIC_CONFIG_DIR, publicLibs);
+            if (error != null) return error;
+            error = readExtensionConfigFiles(PRODUCT_CONFIG_DIR, publicLibs);
+            if (error != null) return error;
+            publicLibs.addAll(readPublicLibrariesFile(new File(VENDOR_CONFIG_FILE)));
+            for (String lib : publicLibs) {
+                String result = LinkerNamespacesHelper.tryDlopen(lib);
+                if (result != null) {
+                    if (error == null) {
+                        error = "";
+                    }
+                    error += result + "\n";
+                }
             }
+        } catch (IOException e) {
+            return e.toString();
         }
-        return null;
+        return error;
     }
 
     public static native String tryDlopen(String lib);
