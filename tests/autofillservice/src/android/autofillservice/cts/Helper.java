@@ -21,6 +21,7 @@ import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_CONTEXT_COMMITTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_DATASETS_SHOWN;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
@@ -1139,7 +1140,7 @@ public final class Helper {
      * @param value the only value expected in the client state bundle
      */
     public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
-            @NonNull String datasetId, @NonNull String key, @NonNull String value) {
+            @Nullable String datasetId, @NonNull String key, @NonNull String value) {
         assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, key, value, null);
     }
 
@@ -1151,8 +1152,31 @@ public final class Helper {
      * @param datasetId dataset set id expected in the event
      */
     public static void assertFillEventForSaveShown(@NonNull FillEventHistory.Event event,
-            @NonNull String datasetId) {
+            @Nullable String datasetId) {
         assertFillEvent(event, TYPE_SAVE_SHOWN, datasetId, null, null, null);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_DATASETS_SHOWN} event.
+     *
+     * @param event event to be asserted
+     * @param key the only key expected in the client state bundle
+     * @param value the only value expected in the client state bundle
+     */
+    public static void assertFillEventForDatasetShown(@NonNull FillEventHistory.Event event,
+            @NonNull String key, @NonNull String value) {
+        assertFillEvent(event, TYPE_DATASETS_SHOWN, NULL_DATASET_ID, key, value, null);
+    }
+
+    /**
+     * Asserts the content of a
+     * {@link android.service.autofill.FillEventHistory.Event#TYPE_DATASETS_SHOWN} event.
+     *
+     * @param event event to be asserted
+     */
+    public static void assertFillEventForDatasetShown(@NonNull FillEventHistory.Event event) {
+        assertFillEvent(event, TYPE_DATASETS_SHOWN, NULL_DATASET_ID, null, null, null);
     }
 
     /**
