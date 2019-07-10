@@ -338,6 +338,60 @@ public class ResourcesTest extends AndroidTestCase {
         assertNull(mResources.getDrawable(R.drawable.fake_image_will_not_decode));
     }
 
+    public void testGetDrawable_ColorResource() {
+        final Drawable drawable = mResources.getDrawable(R.color.testcolor1, null);
+        assertTrue(drawable instanceof ColorDrawable);
+        assertEquals(
+                mResources.getColor(R.color.testcolor1, null),
+                ((ColorDrawable) drawable).getColor()
+        );
+    }
+
+    public void testGetDrawable_ColorStateListResource() {
+        final Drawable drawable = mResources.getDrawable(R.color.testcolor, null);
+        assertTrue(drawable instanceof ColorStateListDrawable);
+
+        final ColorStateList colorStateList = mResources.getColorStateList(
+                R.color.testcolor, null);
+        assertEquals(
+                colorStateList.getDefaultColor(),
+                ((ColorStateListDrawable) drawable).getColorStateList().getDefaultColor());
+    }
+
+    public void testGetDrawable_ColorStateListConfigurations() {
+        final Configuration dayConfiguration = new Configuration(mResources.getConfiguration());
+        final Configuration nightConfiguration = new Configuration(mResources.getConfiguration());
+
+        dayConfiguration.uiMode = dayConfiguration.uiMode
+                & (~Configuration.UI_MODE_NIGHT_MASK)
+                | Configuration.UI_MODE_NIGHT_NO;
+
+        nightConfiguration.uiMode = nightConfiguration.uiMode
+                & (~Configuration.UI_MODE_NIGHT_MASK)
+                | Configuration.UI_MODE_NIGHT_YES;
+
+        final ColorStateListDrawable dayDrawable = (ColorStateListDrawable) getContext()
+                .createConfigurationContext(dayConfiguration)
+                .getResources()
+                .getDrawable(R.color.testcolor_daynight, null);
+
+        final ColorStateListDrawable nightDrawable = (ColorStateListDrawable) getContext()
+                .createConfigurationContext(nightConfiguration)
+                .getResources()
+                .getDrawable(R.color.testcolor_daynight, null);
+
+        assertEquals(
+                mResources.getColor(android.R.color.white, null),
+                dayDrawable.getColorStateList().getDefaultColor());
+
+        assertEquals(
+                mResources.getColor(android.R.color.black, null),
+                nightDrawable.getColorStateList().getDefaultColor());
+
+        assertEquals(ActivityInfo.CONFIG_UI_MODE, dayDrawable.getChangingConfigurations());
+        assertEquals(ActivityInfo.CONFIG_UI_MODE, nightDrawable.getChangingConfigurations());
+    }
+
     public void testGetDrawable_StackOverflowErrorDrawable() {
         try {
             mResources.getDrawable(R.drawable.drawable_recursive);
