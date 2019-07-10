@@ -604,11 +604,14 @@ public class CarrierApiTest extends AndroidTestCase {
 
         // Valid p2 values are defined in TS 102 221 Table 11.2. Per Table 11.2, 0xF0 should be
         // invalid. Any p2 values that produce non '9000'/'62xx'/'63xx' status words are treated as
-        // an error and the channel is not opened.
-        p2 = 0xF0;
-        response = mTelephonyManager.iccOpenLogicalChannel("", p2);
-        assertEquals(INVALID_CHANNEL, response.getChannel());
-        assertNotEquals(STATUS_NO_ERROR, response.getStatus());
+        // an error and the channel is not opened. Due to compatibility issues with older devices,
+        // this check is only enabled for new devices launching on Q+.
+        if (Build.VERSION.FIRST_SDK_INT >= Build.VERSION_CODES.Q) {
+            p2 = 0xF0;
+            response = mTelephonyManager.iccOpenLogicalChannel("", p2);
+            assertEquals(INVALID_CHANNEL, response.getChannel());
+            assertNotEquals(STATUS_NO_ERROR, response.getStatus());
+        }
     }
 
     /**
