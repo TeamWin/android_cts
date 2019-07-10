@@ -50,6 +50,7 @@ import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
@@ -74,7 +75,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -108,13 +108,18 @@ public class TouchExplorerTest {
     private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class, false);
 
+    private InstrumentedAccessibilityServiceTestRule<TouchExplorationStubAccessibilityService>
+            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    TouchExplorationStubAccessibilityService.class, false);
+
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            .around(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     Point mCenter; // Center of screen. Gestures all start from this point.
     PointF mTapLocation;
@@ -124,7 +129,8 @@ public class TouchExplorerTest {
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mUiAutomation = mInstrumentation.getUiAutomation();
+        mUiAutomation = mInstrumentation.getUiAutomation(
+            UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         PackageManager pm = mInstrumentation.getContext().getPackageManager();
         mHasTouchscreen = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                 || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
@@ -139,7 +145,7 @@ public class TouchExplorerTest {
         mTapLocation = new PointF(mCenter);
         mScreenBigEnough = (metrics.widthPixels / (2 * metrics.xdpi) > GESTURE_LENGTH_INCHES);
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        mService = TouchExplorationStubAccessibilityService.enableSelf(mInstrumentation);
+        mService = mServiceRule.enableService();
         mView = mActivityRule.getActivity().findViewById(R.id.full_screen_text_view);
         mView.setOnHoverListener(mHoverListener);
         mView.setOnTouchListener(mTouchListener);
@@ -149,15 +155,6 @@ public class TouchExplorerTest {
                     mView.setOnClickListener(mClickListener);
                     mView.setOnLongClickListener(mLongClickListener);
                 });
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
-        if (mService != null) {
-            mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
-            mService = null;
-        }
     }
 
     /** Test a slow swipe which should initiate touch exploration. */

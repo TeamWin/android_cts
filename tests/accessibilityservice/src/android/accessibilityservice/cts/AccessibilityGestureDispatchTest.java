@@ -14,10 +14,10 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibility.cts.common.InstrumentedAccessibilityService.enableService;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.AsyncUtils.awaitCancellation;
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_CANCEL;
 import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_DOWN;
 import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_MOVE;
@@ -48,6 +48,7 @@ import static org.junit.Assert.assertTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
@@ -72,10 +73,7 @@ import android.widget.TextView;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -100,13 +98,18 @@ public class AccessibilityGestureDispatchTest {
     private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class, false, false);
 
+    private InstrumentedAccessibilityServiceTestRule<StubGestureAccessibilityService> mServiceRule =
+            new InstrumentedAccessibilityServiceTestRule<>(
+                    StubGestureAccessibilityService.class, false);
+
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            .around(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     final List<MotionEvent> mMotionEvents = new ArrayList<>();
     StubGestureAccessibilityService mService;
@@ -146,19 +149,10 @@ public class AccessibilityGestureDispatchTest {
             mStartPoint.set(mViewLocation[0] + midX, mViewLocation[1] + midY);
         });
 
-        mService = StubGestureAccessibilityService.enableSelf(instrumentation);
+        mService = mServiceRule.enableService();
 
         mMotionEvents.clear();
         mGotUpEvent = false;
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (!mHasTouchScreen) {
-            return;
-        }
-
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test
@@ -349,7 +343,7 @@ public class AccessibilityGestureDispatchTest {
         final WindowManager wm = (WindowManager) getInstrumentation().getContext().getSystemService(
                 Context.WINDOW_SERVICE);
         final StubMagnificationAccessibilityService magnificationService =
-                StubMagnificationAccessibilityService.enableSelf(getInstrumentation());
+                enableService(StubMagnificationAccessibilityService.class);
         final AccessibilityService.MagnificationController
                 magnificationController = magnificationService.getMagnificationController();
 

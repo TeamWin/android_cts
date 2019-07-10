@@ -14,32 +14,31 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibility.cts.common.InstrumentedAccessibilityService.enableService;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_AUTO;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_HIDDEN;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_IGNORE_HARD_KEYBOARD;
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController.OnShowModeChangedListener;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.accessibilityservice.cts.utils.AsyncUtils;
-import android.app.Instrumentation;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
@@ -50,7 +49,6 @@ import org.junit.runner.RunWith;
 public class AccessibilitySoftKeyboardModesTest {
     private int mLastCallbackValue;
 
-    private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private InstrumentedAccessibilityService mService;
     private final Object mLock = new Object();
     private final OnShowModeChangedListener mListener = (c, showMode) -> {
@@ -60,19 +58,21 @@ public class AccessibilitySoftKeyboardModesTest {
         }
     };
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private InstrumentedAccessibilityServiceTestRule<InstrumentedAccessibilityService>
+            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    InstrumentedAccessibilityService.class);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
-    @Before
-    public void setUp() throws Exception {
-        mService = InstrumentedAccessibilityService.enableService(mInstrumentation,
-                InstrumentedAccessibilityService.class);
-    }
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mServiceRule)
+            .around(mDumpOnFailureRule);
 
-    @After
-    public void tearDown() throws Exception {
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
+    @Before
+    public void setUp() {
+        mService = mServiceRule.getService();
     }
 
     @Test
@@ -100,7 +100,7 @@ public class AccessibilitySoftKeyboardModesTest {
         assertEquals(SHOW_MODE_AUTO, controller.getShowMode());
 
         final InstrumentedAccessibilityService secondService =
-                StubAccessibilityButtonService.enableSelf(mInstrumentation);
+                enableService(StubAccessibilityButtonService.class);
         try {
             // Listen on the first service
             controller.addOnShowModeChangedListener(mListener);

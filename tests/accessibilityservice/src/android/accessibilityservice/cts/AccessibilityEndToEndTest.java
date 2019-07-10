@@ -16,6 +16,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibility.cts.common.InstrumentedAccessibilityService.enableService;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithResource;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
@@ -141,8 +142,8 @@ public class AccessibilityEndToEndTest {
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            .around(mDumpOnFailureRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {
@@ -511,8 +512,8 @@ public class AccessibilityEndToEndTest {
     public void testInterrupt_notifiesService() {
         sInstrumentation
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
-                sInstrumentation, InstrumentedAccessibilityService.class);
+        InstrumentedAccessibilityService service =
+                enableService(InstrumentedAccessibilityService.class);
 
         try {
             assertFalse(service.wasOnInterruptCalled());

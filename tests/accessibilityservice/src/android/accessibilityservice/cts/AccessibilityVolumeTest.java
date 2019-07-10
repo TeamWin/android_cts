@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -31,6 +32,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
@@ -45,9 +47,17 @@ public class AccessibilityVolumeTest {
     // If a11y volume is stuck at a single value, don't run the tests
     boolean mFixedA11yVolume;
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private InstrumentedAccessibilityServiceTestRule<InstrumentedAccessibilityService>
+            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    InstrumentedAccessibilityService.class, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     @Before
     public void setUp() {
@@ -89,20 +99,13 @@ public class AccessibilityVolumeTest {
         final int MIN = mAudioManager.getStreamMinVolume(AudioManager.STREAM_ACCESSIBILITY);
         final int MAX = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_ACCESSIBILITY);
         final int otherVolume = (startingVolume == MIN) ? MAX : MIN;
-        final InstrumentedAccessibilityService service = InstrumentedAccessibilityService
-                .enableService(mInstrumentation, InstrumentedAccessibilityService.class);
-        try {
-            service.runOnServiceSync(() ->
-                    mAudioManager.setStreamVolume(AudioManager.STREAM_ACCESSIBILITY, otherVolume,
-                            0));
-            assertEquals("Accessibility service should be able to change accessibility volume",
-                    otherVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY));
-            service.runOnServiceSync(() -> mAudioManager.setStreamVolume(
-                    AudioManager.STREAM_ACCESSIBILITY, startingVolume, 0));
-        } finally {
-            if (service != null) {
-                service.runOnServiceSync(() -> service.disableSelf());
-            }
-        }
+        final InstrumentedAccessibilityService service = mServiceRule.enableService();
+
+        service.runOnServiceSync(() -> mAudioManager.setStreamVolume(
+                AudioManager.STREAM_ACCESSIBILITY, otherVolume, 0));
+        assertEquals("Accessibility service should be able to change accessibility volume",
+                otherVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY));
+        service.runOnServiceSync(() -> mAudioManager.setStreamVolume(
+                AudioManager.STREAM_ACCESSIBILITY, startingVolume, 0));
     }
 }

@@ -14,7 +14,6 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
@@ -26,6 +25,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
@@ -43,10 +43,10 @@ import android.view.accessibility.AccessibilityEvent;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -61,9 +61,17 @@ public class AccessibilityGestureDetectorTest {
     private static final long GESTURE_DISPATCH_TIMEOUT_MS = 3000;
     private static final long EVENT_DISPATCH_TIMEOUT_MS = 3000;
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private InstrumentedAccessibilityServiceTestRule<GestureDetectionStubAccessibilityService>
+            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    GestureDetectionStubAccessibilityService.class, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     // Test AccessibilityService that collects gestures.
     GestureDetectionStubAccessibilityService mService; 
@@ -103,15 +111,7 @@ public class AccessibilityGestureDetectorTest {
             return;
         }
         // Start stub accessibility service.
-        mService = GestureDetectionStubAccessibilityService.enableSelf(instrumentation);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (!mHasTouchScreen || !mScreenBigEnough) {
-            return;
-        }
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
+        mService = mServiceRule.enableService();
     }
 
     @Test
