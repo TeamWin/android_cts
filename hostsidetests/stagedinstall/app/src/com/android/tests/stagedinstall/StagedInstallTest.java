@@ -94,7 +94,6 @@ public class StagedInstallTest {
 
     private static final Duration WAIT_FOR_SESSION_REMOVED_TTL = Duration.ofSeconds(10);
     private static final Duration SLEEP_DURATION = Duration.ofMillis(200);
-
     @Before
     public void adoptShellPermissions() {
         InstrumentationRegistry
@@ -627,6 +626,26 @@ public class StagedInstallTest {
         packageInstaller.abandonSession(sessionId);
     }
 
+    @Test
+    public void testInstallStagedApexWithoutApexSuffix_Commit() throws Exception {
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+
+        int sessionId = stageSingleApk("com.android.apex.cts.shim.v2.apex", "package")
+                .assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+        // Version shouldn't change before reboot.
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+    }
+
+    @Test
+    public void testInstallStagedApexWithoutApexSuffix_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
+    }
+
     private static PackageInstaller getPackageInstaller() {
         return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
                 .getPackageInstaller();
@@ -679,11 +698,16 @@ public class StagedInstallTest {
     }
 
     private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
+        return stageSingleApk(apkFileName, apkFileName);
+    }
+
+    private static StageSessionResult stageSingleApk(String apkFileName, String outputFileName)
+            throws Exception {
         Log.i(TAG, "Staging an install of " + apkFileName);
         PackageInstaller packageInstaller = getPackageInstaller();
 
         Pair<Integer, PackageInstaller.Session> sessionPair =
-                prepareSingleApkStagedSession(packageInstaller, apkFileName, false);
+                prepareSingleApkStagedSession(packageInstaller, apkFileName, outputFileName, false);
         // Commit the session (this will start the installation workflow).
         Log.i(TAG, "Committing session for apk: " + apkFileName);
         sessionPair.second.commit(LocalIntentSender.getIntentSender());
@@ -694,10 +718,18 @@ public class StagedInstallTest {
             prepareSingleApkStagedSession(PackageInstaller packageInstaller, String apkFileName,
             boolean isDowngrade)
             throws Exception {
+        return prepareSingleApkStagedSession(packageInstaller, apkFileName, apkFileName,
+                isDowngrade);
+    }
+
+    private static Pair<Integer, PackageInstaller.Session>
+            prepareSingleApkStagedSession(PackageInstaller packageInstaller, String apkFileName,
+            String outputFileName, boolean isDowngrade)
+            throws Exception {
         int sessionId = createStagedSession(packageInstaller, false, isDowngrade,
                 apkFileName.endsWith(".apex"));
         PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-        writeApk(session, apkFileName);
+        writeApk(session, apkFileName, outputFileName);
         return new Pair<>(sessionId, session);
     }
 
@@ -777,7 +809,13 @@ public class StagedInstallTest {
 
     private static void writeApk(PackageInstaller.Session session, String apkFileName)
             throws Exception {
-        try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
+        writeApk(session, apkFileName, apkFileName);
+    }
+
+    private static void writeApk(PackageInstaller.Session session, String apkFileName,
+            String outputFileName)
+            throws Exception {
+        try (OutputStream packageInSession = session.openWrite(outputFileName, 0, -1);
              InputStream is =
                      StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
             byte[] buffer = new byte[4096];

@@ -296,6 +296,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testStagedApkSessionCallbacks");
     }
 
+    @Test
+    @LargeTest
+    public void testInstallStagedApexWithoutApexSuffix() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallStagedApexWithoutApexSuffix_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedApexWithoutApexSuffix_VerifyPostReboot");
+    }
+
     /**
      * Uninstalls a shim apex only if it's latest version is installed on /data partition (i.e.
      * it has a version higher than {@code 1}).
