@@ -32,7 +32,7 @@ import com.android.tradefed.util.AbiUtils;
 /**
  * Tests that verify intent filters.
  */
-@AppModeFull(reason="Instant applications can never be system or privileged")
+@AppModeFull // TODO: Needs porting to instant
 public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
     private static final String TAG = "PrivilegedUpdateTests";
     private static final String SHIM_PKG = "com.android.cts.priv.ctsshim";
