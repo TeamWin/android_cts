@@ -31,12 +31,7 @@ import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
 
-import android.app.appops.cts.AppOpsUtils.Companion.allowedOperationLogged
-import android.app.appops.cts.AppOpsUtils.Companion.rejectedOperationLogged
-import android.app.appops.cts.AppOpsUtils.Companion.setOpMode
-
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.reset
 import org.mockito.Mockito.timeout
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyZeroInteractions
@@ -52,6 +47,7 @@ import androidx.test.InstrumentationRegistry
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 
 import java.util.HashMap
 import java.util.HashSet
@@ -136,7 +132,7 @@ class AppOpsTest {
         mOpPackageName = mContext.opPackageName
         assertNotNull(mAppOps)
         // Reset app ops state for this test package to the system default.
-        AppOpsUtils.reset(mOpPackageName)
+        reset(mOpPackageName)
     }
 
     @Test
@@ -260,19 +256,19 @@ class AppOpsTest {
             mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, watcher)
 
             // Make a change to the app op's mode.
-            reset(watcher)
+            Mockito.reset(watcher)
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
             verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
                     .onOpChanged(OPSTR_WRITE_CALENDAR, mOpPackageName)
 
             // Make another change to the app op's mode.
-            reset(watcher)
+            Mockito.reset(watcher)
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
             verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
                     .onOpChanged(OPSTR_WRITE_CALENDAR, mOpPackageName)
 
             // Set mode to the same value as before - expect no call to the listener.
-            reset(watcher)
+            Mockito.reset(watcher)
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
             verifyZeroInteractions(watcher)
 
@@ -280,7 +276,7 @@ class AppOpsTest {
 
             // Make a change to the app op's mode. Since we already stopped watching the mode, the
             // listener shouldn't be called.
-            reset(watcher)
+            Mockito.reset(watcher)
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
             verifyZeroInteractions(watcher)
         } finally {
